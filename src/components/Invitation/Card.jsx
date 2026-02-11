@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Button, Col } from 'antd'
 import { CustomCard, } from './Steps'
-import { buttonsColorText, darker, } from '../../helpers/functions'
+import { buttonsColorText, } from '../../helpers/functions'
 import { LuBadgeHelp } from 'react-icons/lu';
 import { iconsItinerary } from '../../helpers';
 import { FaArrowDown, FaArrowRight } from 'react-icons/fa';

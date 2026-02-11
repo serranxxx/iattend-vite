@@ -14,10 +14,9 @@ const { useBreakpoint } = Grid;
 
 const { Option } = Select;
 
-export const NewGuestDrawer = ({ rowData, invitationID, ticketsFree, visible, setDrawerState, available, refreshPage, drawerState }) => {
+export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshPage, drawerState }) => {
 
     const screens = useBreakpoint();
-    const [availableTickets, setavailableTickets] = useState(null)
     const inputRef = useRef(null);
     const [newTag, setNewTag] = useState(null)
     const [localTags, setLocalTags] = useState([])
@@ -371,8 +370,6 @@ export const NewGuestDrawer = ({ rowData, invitationID, ticketsFree, visible, se
         else {
             if (companionsData?.length > 0) setCompanionsData((prev) => prev.slice(0, -1));
         }
-
-        setavailableTickets((prev) => prev + (isAdd ? -1 : 1));
     };
 
     const handleClose = () => {
@@ -463,7 +460,6 @@ export const NewGuestDrawer = ({ rowData, invitationID, ticketsFree, visible, se
     useEffect(() => {
 
         if (drawerState.visible) {
-            setavailableTickets(available)
             setNewTag(null)
             getTags()
             // setNextStep(false)

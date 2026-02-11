@@ -1,7 +1,7 @@
 import { Button, Modal, Row } from 'antd'
 import { iconsItinerary } from '../../helpers/services/menuIcons'
 
-export const IconsModal = ({ isModalOpen, setIsModalOpen, currentIcon, setCurrentIcon, handleImage, id }) => {
+export const IconsModal = ({ isModalOpen, setIsModalOpen, currentIcon, setCurrentIcon, handleImage }) => {
 
     const handleIcon = (index, id) => {
         setCurrentIcon(index)

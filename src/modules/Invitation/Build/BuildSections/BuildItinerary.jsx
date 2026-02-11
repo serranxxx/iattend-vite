@@ -988,7 +988,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                         <Switch
                                                                                             size='small'
                                                                                             checked={item.address ? true : false}
-                                                                                            onChange={(e) => handleAdress(item.id)} />
+                                                                                            onChange={() => handleAdress(item.id)} />
 
 
 

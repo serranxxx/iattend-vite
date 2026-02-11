@@ -95,7 +95,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
                         flexDirection: 'row', gap: '0px'
                     }}>
                         {
-                            navItems.map((item, index) => {
+                            navItems.map((item) => {
                                 // Condiciones para ocultar el elemento 'Admin'
                                 if (item.name === 'Admin' && (!session?.logged || session?.user?.role !== "Administration")) {
                                     return null;  // No renderiza nada
@@ -194,7 +194,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
 
                     <div className="mobile-menu-routes">
                         {
-                            navItems.map((item, index) => {
+                            navItems.map((item) => {
                                 // Condiciones para ocultar el elemento 'Admin'
                                 if (item.name === 'Admin' && (!session?.logged || session?.user?.role !== "Administration")) {
                                     return null;  // No renderiza nada
@@ -225,7 +225,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
     )
 }
 
-export const FooterMobile = ({ position, setOpenLogin, isVisible }) => {
+export const FooterMobile = ({ position, isVisible }) => {
     const [setIsScrollTop] = useState(false);
 
 

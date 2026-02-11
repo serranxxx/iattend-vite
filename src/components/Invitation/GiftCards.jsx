@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AmazonLogo, SearsLogo } from './Logos';
 
-export const GiftCards = ({ dev, cards, theme, font, colorPalette, content, generals }) => {
+export const GiftCards = ({ dev, cards, theme, font, colorPalette, content }) => {
 
     const [card, setCard] = useState(cards)
 

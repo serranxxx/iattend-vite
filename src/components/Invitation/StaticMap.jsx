@@ -13,15 +13,11 @@ function MapaInteractivo({ direccion, numero, colonia, codigoPostal, ciudad, est
                 .then(data => {
                     // Verificar si se encontraron resultados de geocodificación
                     if (data.status === 'OK' && data.results.length > 0) {
-                        const location = data.results[0].geometry.location;
-                        const lat = location.lat;
-                        const lng = location.lng;
+                        
+                        
 
                         // Inicializar el mapa con las coordenadas obtenidas
-                        const map = new window.google.maps.Map(document.getElementById('map'), {
-                            center: { lat: lat, lng: lng },
-                            zoom: 12
-                        });
+                        
                     } else {
                         console.error('No se encontraron resultados de geocodificación.');
                     }

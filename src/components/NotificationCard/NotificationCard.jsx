@@ -8,7 +8,7 @@ import { GoArrowRight } from 'react-icons/go'
 dayjs.extend(relativeTime)
 dayjs.locale('es')
 
-export const NotificationCard = ({ noti, guests = [], refreshPage }) => {
+export const NotificationCard = ({ noti, guests = [] }) => {
     const formatDate = (date) => {
         const now = dayjs()
         const d = dayjs(date)
@@ -29,7 +29,7 @@ export const NotificationCard = ({ noti, guests = [], refreshPage }) => {
         return guests.filter(g => g.companion_id === noti.id)
     }
 
-    const { mainText, subText, footerText } = useMemo(() => {
+    const { mainText, footerText } = useMemo(() => {
         if (!noti) return { mainText: '', subText: '', footerText: '' }
 
         const { name, state, last_action, last_action_by, has_companion } = noti

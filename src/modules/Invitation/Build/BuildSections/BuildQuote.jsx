@@ -182,7 +182,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
         setSaved(false)
     }
 
-    const handleURL = (url, index) => {
+    const handleURL = (url) => {
         // setUrl(url)
         // message.success('Image uploaded')
         setInvitation(prevInvitation => ({
@@ -450,7 +450,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
 
                                                 <Button
                                                     className={`quote-shadow-btn`}
-                                                    onClick={(e) => setInvitation(prevInvitation => ({
+                                                    onClick={() => setInvitation(prevInvitation => ({
                                                         ...prevInvitation,
                                                         quote: {
                                                             ...prevInvitation.quote,

@@ -563,7 +563,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                         {
                                             invitation.dresscode.images_active &&
                                                 invitation.dresscode.dev.length > 0 ?
-                                                invitation.dresscode.dev.map((item, index) => (
+                                                invitation.dresscode.dev.map((item) => (
                                                     <div style={{
                                                         width: '100%', borderRadius: '8px', border: '1px solid #D9D9D9',
                                                         backgroundColor: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'flex-end',

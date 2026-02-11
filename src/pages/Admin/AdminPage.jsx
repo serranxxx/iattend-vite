@@ -118,7 +118,7 @@ export const AdminPage = () => {
 
     const [currentUser, setCurrentUser] = useState(null)
     const [users, setUsers] = useState([])
-    const [invitations, setInvitations] = useState([])
+    const [ setInvitations] = useState([])
     const [mode, setMode] = useState('my-invitations')
     const [currentInvitation] = useState(null)
     // const [saved, setSaved] = useState(true)
@@ -143,17 +143,12 @@ export const AdminPage = () => {
         }
     };
 
-    const onEditInvitation = (id) => {
+    const onEditInvitation = () => {
         // setCurrentInvitation(id)
         setMode('on-edit')
     }
 
-    useEffect(() => {
-        getUSers(operation)
-        getAllInvitations(operation)
-        getNewInvitations()
-        getNewUsers()
-    }, [])
+    
 
 
 
@@ -219,46 +214,13 @@ export const AdminPage = () => {
     };
 
     useEffect(() => {
+        getUSers(operation)
+        getAllInvitations(operation)
+        getNewInvitations()
+        getNewUsers()
+    }, [])
 
-        if (response) {
-
-            if (response.data.ok) {
-                switch (response.data.msg) {
-                    case "Get all Users":
-                        setUsers(response.data.data.Userlist)
-
-                        break;
-
-                    case "Get all invitations":
-                        setInvitations(response.data.data)
-                        break;
-
-                    case "Invitation updated":
-                        message.success("Invitación actualizada")
-                        refreshData()
-                        break;
-
-                    // case "Get invitation By Id":
-                    //     const inv = response.data.data
-                    //     setContent(inv.cover)
-                    //     setGenerals(inv.generals)
-                    //     setLabel(inv.label)
-                    //     setinvitation(inv)
-                    //     setVisibleShare(true)
-                    //     setOnQR(false)
-
-                    //     break;
-
-                    default:
-                        break;
-                }
-
-
-
-            }
-        }
-
-    }, [response])
+   
 
     const editState = async (inv) => {
 
@@ -322,6 +284,47 @@ export const AdminPage = () => {
         setOnNewInvitation(true)
     }
 
+    useEffect(() => {
+
+        if (response) {
+
+            if (response.data.ok) {
+                switch (response.data.msg) {
+                    case "Get all Users":
+                        setUsers(response.data.data.Userlist)
+
+                        break;
+
+                    case "Get all invitations":
+                        setInvitations(response.data.data)
+                        break;
+
+                    case "Invitation updated":
+                        message.success("Invitación actualizada")
+                        refreshData()
+                        break;
+
+                    // case "Get invitation By Id":
+                    //     const inv = response.data.data
+                    //     setContent(inv.cover)
+                    //     setGenerals(inv.generals)
+                    //     setLabel(inv.label)
+                    //     setinvitation(inv)
+                    //     setVisibleShare(true)
+                    //     setOnQR(false)
+
+                    //     break;
+
+                    default:
+                        break;
+                }
+
+
+
+            }
+        }
+
+    }, [response])
 
     return (
         <>

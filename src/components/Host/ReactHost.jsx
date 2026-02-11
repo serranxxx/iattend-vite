@@ -60,13 +60,11 @@ export default function ReactHost({
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetOrigin, config]);
 
   // 2) Re-enviar cada que cambie `config`
   useEffect(() => {
     postProps("config-change");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, targetOrigin]);
 
   // 3) (Opcional) al cargar/navegar el iframe, vuelve a enviar
@@ -76,7 +74,6 @@ export default function ReactHost({
     const onLoad = () => postProps("iframe-load");
     iframe.addEventListener("load", onLoad);
     return () => iframe.removeEventListener("load", onLoad);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, targetOrigin, config]);
 
   return (

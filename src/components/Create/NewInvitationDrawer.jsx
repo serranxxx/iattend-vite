@@ -1,16 +1,15 @@
 import { Button, Col, Drawer, Input, Row, Steps, message } from 'antd'
 import React, { useEffect, useState } from 'react'
-import { useInvitation } from '../../hooks/customHook'
+// import { useInvitation } from '../../hooks/customHook'
 
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
 import { Link } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
-import { toNewInvitation } from '../../helpers/invitation/transformInvitation'
+// import { supabase } from '../../lib/supabase'
 import { TbSquareRoundedArrowLeft, TbSquareRoundedArrowRight } from 'react-icons/tb'
 import { FaCheck, FaPencilAlt, FaWhatsapp } from 'react-icons/fa'
 import { MdError, MdOutlineContentCopy } from 'react-icons/md'
 import { images } from '../../helpers/assets/images'
-import { createGuests, getAllDominios, newInvitation } from '../../services/apiInvitation'
+// import { newInvitation } from '../../services/apiInvitation'
 import { design_types, inv_planes, inv_types } from '../../helpers/invitation/newInvitation'
 
 const list_items = [
@@ -24,28 +23,28 @@ const list_items = [
     'Administración de invitados'
 ]
 
-export const NewInvitationDrawer = ({ user, visible, setVisible, refreshInvitations }) => {
+export const NewInvitationDrawer = ({ visible, setVisible,  }) => {
 
     // const { user } = useContext(appContext)
-    const { response, operation } = useInvitation()
+    // const { response, operation } = useInvitation()
 
     const [currentTemplate, setCurrentTemplate] = useState(null)
     const [currentType, setCurrentType] = useState(null)
     const [currentPlan, setCurrentPlan] = useState('pro')
     const [load, setLoad] = useState(false)
-    const [dominios, setDominios] = useState(null)
+    const [dominios] = useState(null)
     const [availableNext, setAvailableNext] = useState(false)
-    const [ready, setReady] = useState(false)
+    const [setReady] = useState(false)
 
     // const [userAdmin, setUserAdmin] = useState(false)
     const [current, setCurrent] = useState(0);
     const [dominio, setDominio] = useState(null)
     const [currentDesign, setCurrentDesign] = useState('blank')
 
-    useEffect(() => {
-        setDominio(null)
-        setCurrent(0)
-    }, [visible])
+    // useEffect(() => {
+    //     setDominio(null)
+    //     setCurrent(0)
+    // }, [visible])
 
 
     const steps = [
@@ -91,7 +90,7 @@ export const NewInvitationDrawer = ({ user, visible, setVisible, refreshInvitati
     const nextAndGet = () => {
         setCurrent(current + 1);
         setAvailableNext(false)
-        getAllDominios(operation, currentTemplate)
+        // getAllDominios(operation, currentTemplate)
         setLoad(true)
     };
 
@@ -104,84 +103,84 @@ export const NewInvitationDrawer = ({ user, visible, setVisible, refreshInvitati
         setVisible(false)
     }
 
-    const onNewInvitation = async () => {
-        if (currentType && currentPlan && currentTemplate && dominio) {
-            const invitation = handleTemplates(user.id, currentType, currentPlan, dominio, currentTemplate, currentDesign)
-            newInvitation(operation, invitation)
+    // const onNewInvitation = async () => {
+    //     if (currentType && currentPlan && currentTemplate && dominio) {
+    //         // const invitation = handleTemplates(user.id, currentType, currentPlan, dominio, currentTemplate, currentDesign)
+    //         // newInvitation(operation, invitation)
 
-        } else {
-            message.error('Necesitas seleccionar todos los campos')
-        }
-
-
-    }
-
-    useEffect(() => {
-        setCurrentTemplate(null)
-        setAvailableNext(false)
-        // setUserAdmin(false)
-
-    }, [])
-
-    const newSupaInvitation = async (invitation) => {
-        try {
-            const { data, error } = await supabase
-                .from("invitations")   // 👈 nombre de tu tabla
-                .insert([invitation])  // 👈 recibe un array de objetos               // opcional: para devolver lo insertado
-
-            if (error) {
-                console.error("Error al insertar:", error.message);
-                return null;
-            }
-            return data;
-        } catch (err) {
-            console.error("Error inesperado:", err);
-            return null;
-        }
-
-    }
+    //     } else {
+    //         message.error('Necesitas seleccionar todos los campos')
+    //     }
 
 
-    useEffect(() => {
-        if (response) {
-            if (response.data.ok) {
-                switch (response.data.msg) {
-                    case "Get all event names":
-                        setDominios(response.data.eventNames)
-                        setLoad(false)
-                        break;
+    // }
 
-                    case "New invitation added":
-                        const guests = {
-                            userID: user.id,
-                            invitationID: response.data.invitationID,
-                            tickets: 300,
-                            type: currentType,
-                            guests: [],
-                            share: [],
-                            tables: []
-                        }
+    // useEffect(() => {
+    //     setCurrentTemplate(null)
+    //     setAvailableNext(false)
+    //     // setUserAdmin(false)
 
-                        const newi = toNewInvitation(response.data.invitation, user.email, user.id)
+    // }, [])
 
-                        newSupaInvitation(newi)
-                        createGuests(operation, guests)
+    // const newSupaInvitation = async (invitation) => {
+    //     try {
+    //         const { data, error } = await supabase
+    //             .from("invitations")   // 👈 nombre de tu tabla
+    //             .insert([invitation])  // 👈 recibe un array de objetos               // opcional: para devolver lo insertado
+
+    //         if (error) {
+    //             console.error("Error al insertar:", error.message);
+    //             return null;
+    //         }
+    //         return data;
+    //     } catch (err) {
+    //         console.error("Error inesperado:", err);
+    //         return null;
+    //     }
+
+    // }
 
 
-                        break;
+    // useEffect(() => {
+    //     if (response) {
+    //         if (response.data.ok) {
+    //             switch (response.data.msg) {
+    //                 case "Get all event names":
+    //                     setDominios(response.data.eventNames)
+    //                     setLoad(false)
+    //                     break;
 
-                    case "Guest created successfully":
-                        message.success("Nueva invitación agregada")
-                        refreshInvitations(operation, user.id)
-                        setVisible(false)
-                        break;
+    //                 case "New invitation added":
+    //                     const guests = {
+    //                         userID: user.id,
+    //                         invitationID: response.data.invitationID,
+    //                         tickets: 300,
+    //                         type: currentType,
+    //                         guests: [],
+    //                         share: [],
+    //                         tables: []
+    //                     }
 
-                    default:
-                        break;
-                }
-            }
-        }
-    }, [response])
+    //                     const newi = toNewInvitation(response.data.invitation, user.email, user.id)
+
+    //                     newSupaInvitation(newi)
+    //                     createGuests(operation, guests)
+
+
+    //                     break;
+
+    //                 case "Guest created successfully":
+    //                     message.success("Nueva invitación agregada")
+    //                     refreshInvitations(operation, user.id)
+    //                     setVisible(false)
+    //                     break;
+
+    //                 default:
+    //                     break;
+    //             }
+    //         }
+    //     }
+    // }, [response])
 
 
 
@@ -203,14 +202,14 @@ export const NewInvitationDrawer = ({ user, visible, setVisible, refreshInvitati
                 <h2 className='new-invitation--title'>Configura tu invitación desde cero</h2>
 
 
-                {
+                {/* {
                     ready ?
                         <Button
                             onClick={onNewInvitation}
                             id='new-invitation-create-button'
                         >Crear</Button>
                         : <></>
-                }
+                } */}
 
 
             </div>
@@ -290,14 +289,14 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio }) => {
         }
     };
 
-    useEffect(() => {
-        if (dominio) {
-            compareDominios(dominio)
-        } else {
-            setAvailableNext(false)
-        }
+    // useEffect(() => {
+    //     if (dominio) {
+    //         compareDominios(dominio)
+    //     } else {
+    //         setAvailableNext(false)
+    //     }
 
-    }, [])
+    // }, [])
 
     useEffect(() => {
         if (!dominio) {

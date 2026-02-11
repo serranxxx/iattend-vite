@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 
 function SpotifyWidget({ url }) {
 

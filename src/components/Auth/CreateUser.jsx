@@ -54,24 +54,26 @@ export const CreateAccount = ({ refreshData, setVisible }) => {
                         break;
 
                     case "Valid user":
-                        localStorage.setItem("user-email", username)
-                        setUsername(null)
-                        setPassword(null)
+                        {
+                            localStorage.setItem("user-email", username)
+                            setUsername(null)
+                            setPassword(null)
 
-                        const token = response.data.data.token
-                        localStorage.setItem("token", token)
-                        localStorage.setItem("token-expires", tokenExpires())
-                        navigate("/invitations")
+                            const token = response.data.data.token
+                            localStorage.setItem("token", token)
+                            localStorage.setItem("token-expires", tokenExpires())
+                            navigate("/invitations")
 
-                        const user = {
-                            name: response.data.data.username,
-                            uid: response.data.data.uid,
-                            role: response.data.data.role
+                            const user = {
+                                name: response.data.data.username,
+                                uid: response.data.data.uid,
+                                role: response.data.data.role
+                            }
+
+                            message.success("Sesión iniciada")
+                            login(user)
+                            break
                         }
-
-                        message.success("Sesión iniciada")
-                        login(user)
-                        break
 
                     default:
                         break;

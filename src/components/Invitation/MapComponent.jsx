@@ -17,7 +17,7 @@ export const MapComponent = ({ direccion, numero, colonia, codigoPostal, ciudad,
                     throw new Error('No se encontraron resultados para la dirección proporcionada.');
                 }
             } catch (error) {
-                throw new Error('Error al comunicarse con el servicio de geocodificación.');
+                throw new Error(error, 'Error al comunicarse con el servicio de geocodificación.');
             }
         };
 

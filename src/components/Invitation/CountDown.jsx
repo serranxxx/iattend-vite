@@ -1,6 +1,6 @@
 import { Col, Row } from 'antd';
 import React, { useState, useEffect } from 'react';
-import { darker, formatDate, lighter } from '../../helpers/assets/functions';
+import { formatDate, lighter } from '../../helpers/assets/functions';
 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -12,15 +12,9 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 
-function Countdown({ targetDate, mainColor, theme, font, dev, colorPalette, color }) {
+function Countdown({ targetDate, theme, font, colorPalette, color }) {
 
     const [isToday, setIsToday] = useState(false)
-    const [currentColor, setCurrentColor] = useState(null)
-
-    useEffect(() => {
-        setCurrentColor(color ? color : mainColor)
-    }, [])
-
 
     const cleanDate = (dateString) => {
         if (dateString) {
@@ -78,7 +72,7 @@ function Countdown({ targetDate, mainColor, theme, font, dev, colorPalette, colo
         );
     };
 
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+    const [setTimeLeft] = useState(calculateTimeLeft());
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -87,9 +81,6 @@ function Countdown({ targetDate, mainColor, theme, font, dev, colorPalette, colo
 
         return () => clearTimeout(timer);
     });
-
-    const { days, hours, minutes, seconds } = timeLeft;
-
 
     useEffect(() => {
         setIsToday(checkIfToday(targetDate));
@@ -126,10 +117,10 @@ function Countdown({ targetDate, mainColor, theme, font, dev, colorPalette, colo
                             {['days', 'hours', 'minutes', 'seconds'].map(unit => (
                                 <Col key={unit} className="date-col">
                                     <span className="date-time" style={{ color: !color ? theme ? lighter(colorPalette.primary, 0.6) : lighter(colorPalette.accent, 0.6) : color, fontFamily: font }}>
-                                        {eval(unit)}
+                                        {/* {eval(unit)} */}
                                     </span>
                                     <span className="date-unit" style={{ color: !color ? theme ? lighter(colorPalette.primary, 0.6) : lighter(colorPalette.accent, 0.6) : color, fontFamily: font }}>
-                                        {eval(unit) === 1 ? unit.slice(0, -1) : unit}
+                                        {/* {eval(unit) === 1 ? unit.slice(0, -1) : unit} */}
                                     </span>
                                 </Col>
                             ))}
@@ -141,7 +132,7 @@ function Countdown({ targetDate, mainColor, theme, font, dev, colorPalette, colo
     );
 }
 
-export function CountdownDev({ targetDate, MainColor, theme, font, dev, colorPalette, color }) {
+export function CountdownDev({ targetDate, theme, font, colorPalette, color }) {
 
     const calculateTimeLeft = () => {
         const difference = +new Date(targetDate) - +new Date();
@@ -159,7 +150,7 @@ export function CountdownDev({ targetDate, MainColor, theme, font, dev, colorPal
         return timeLeft;
     };
 
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+    const [setTimeLeft] = useState(calculateTimeLeft());
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -168,8 +159,6 @@ export function CountdownDev({ targetDate, MainColor, theme, font, dev, colorPal
 
         return () => clearTimeout(timer);
     });
-
-    const { days, hours, minutes, seconds } = timeLeft;
 
     return (
         <div className="date-container">
@@ -189,10 +178,10 @@ export function CountdownDev({ targetDate, MainColor, theme, font, dev, colorPal
                 {['days', 'hours', 'minutes', 'seconds'].map(unit => (
                     <Col key={unit} className="date-col">
                         <p className="date-time" style={{ color: !color ? theme ? lighter(colorPalette.primary, 0.6) : lighter(colorPalette.accent, 0.6) : color, fontFamily: font, fontSize: '18px', margin: 0 }}>
-                            {eval(unit)}
+                            {/* {eval(unit)} */}
                         </p>
                         <p className="date-unit" style={{ color: !color ? theme ? lighter(colorPalette.primary, 0.6) : lighter(colorPalette.accent, 0.6) : color, fontFamily: font, fontSize: '12px', margin: 0 }}>
-                            {eval(unit) === 1 ? unit.slice(0, -1) : unit}
+                            {/* {eval(unit) === 1 ? unit.slice(0, -1) : unit} */}
                         </p>
                     </Col>
                 ))}

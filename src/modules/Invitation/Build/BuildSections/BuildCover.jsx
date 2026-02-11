@@ -250,7 +250,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
         setSaved(false)
     };
 
-    const onChangeCover = (e, index) => {
+    const onChangeCover = (e) => {
         setInvitation(prevInvitation => ({
             ...prevInvitation,
             cover: {
@@ -753,7 +753,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     alignSelf: 'stretch'
                                 }}
                                 className={`primarybutton`}
-                                onClick={(e) => setInvitation(prevInvitation => ({
+                                onClick={() => setInvitation(prevInvitation => ({
                                     ...prevInvitation,
                                     cover: {
                                         ...prevInvitation.cover,
@@ -774,7 +774,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     alignSelf: 'stretch'
                                 }}
                                 className={`primarybutton`}
-                                onClick={(e) => setInvitation(prevInvitation => ({
+                                onClick={() => setInvitation(prevInvitation => ({
                                     ...prevInvitation,
                                     cover: {
                                         ...prevInvitation.cover,
@@ -795,7 +795,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     alignSelf: 'stretch'
                                 }}
                                 className={`primarybutton`}
-                                onClick={(e) => setInvitation(prevInvitation => ({
+                                onClick={() => setInvitation(prevInvitation => ({
                                     ...prevInvitation,
                                     cover: {
                                         ...prevInvitation.cover,

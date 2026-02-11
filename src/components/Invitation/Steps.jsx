@@ -9,7 +9,7 @@ import { RiMapPin2Fill } from 'react-icons/ri'
 import { textures } from '../../helpers/textures'
 
 
-export const CustomCard = ({ dev, onClose, item, MainColor, theme, font, colorPalette, invertedColors, generals }) => {
+export const CustomCard = ({ onClose, item, MainColor, theme, font, colorPalette, invertedColors, generals }) => {
 
 
     return (

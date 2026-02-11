@@ -11,9 +11,9 @@ import { BuildPage } from '../../modules/Invitation/Build/PageSections/BuildPage
 export const ShareGuests = ({ invitation_id, admin }) => {
 
     const [mode, setMode] = useState('on-dashboard')
-    const [validated, setValidated] = useState(false)
+    const [validated] = useState(false)
     const [access, setAccess] = useState(null)
-    const [usuario, setUsuario] = useState(null)
+    const [usuario] = useState(null)
     const [saved, setSaved] = useState(true)
 
     const [onQR, setOnQR] = useState(false)

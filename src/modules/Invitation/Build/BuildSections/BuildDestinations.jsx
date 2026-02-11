@@ -267,7 +267,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
         setSaved(false);
     };
 
-    const handleURL = (url, index) => {
+    const handleURL = (url) => {
         setDestImage(url)
     }
 

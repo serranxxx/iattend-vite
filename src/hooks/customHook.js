@@ -4,7 +4,7 @@ import axios from "axios";
 
 // Base URL para la primera API
 const baseURL1 = "https://api.openweathermap.org/data/2.5/";
-const baseURL2 = "http://localhost:4000/api";
+// const baseURL2 = "http://localhost:4000/api";
 const baseProd = "https://i-attend-22z4h.ondigitalocean.app/api"
 
 export const useWeather = () => {

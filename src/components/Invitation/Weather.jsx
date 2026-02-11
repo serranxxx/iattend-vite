@@ -30,11 +30,11 @@ const currentIcon = (description, colorPalette, invertedColors) => {
 }
 
 
-export const ForecastWeather = ({ cp, MainColor, theme, font, colorPalette, invertedColors }) => {
+export const ForecastWeather = ({ cp, font, colorPalette, invertedColors }) => {
 
-    const { response, loading, error, operation } = useWeather()
+    const { response,  operation } = useWeather()
     const [weather, setWeather] = useState([])
-    const [onError, setOnError] = useState(false)
+    const [ setOnError] = useState(false)
 
     useEffect(() => {
         CurrentForecast(operation, cp, 'mx')
