@@ -1,0 +1,192 @@
+.admin-panel-layout {
+    width: 100%;
+    /* height: 100vh; */
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-direction: row;
+    padding: 40px;
+    box-sizing: border-box;
+    padding-top: 60px;
+    background-color: var(--ft-color);
+}
+
+.title-new-user-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    margin: 10px 0px 20px 0px;
+}
+
+.admin-head-text {
+    font-family: var(--font-family);
+    font-size: 18px;
+    color: var(--text-color);
+    text-align: left;
+    font-weight: 700;
+    width: 100%;
+}
+
+.user-table-container {
+    display: flex;
+    flex: 2;
+    height: 100%;
+    /*  */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.admin-table-background {
+    width: 100%;
+    height: 100%;
+    background-color: var(--ft-color);
+    border-radius: 12px;
+    padding: 7px;
+    border: 1px solid var(--borders);
+}
+
+.admin-table-header-container {
+    width: 100%;
+    height: 50px;
+    background-color: var(--sc-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    padding: 10px;
+    border-radius: 6px;
+
+}
+
+.admin-table-header-item,
+.admin-table-sub-header-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 2px solid var(--borders);
+    font-family: var(--font-family);
+    color: var(--text-color);
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-table-sub-header-item {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.admin-table-header-item:last-of-type,
+.admin-table-sub-header-item:last-of-type {
+    border: none;
+}
+
+.admin-table-content-container {
+    /* height: 650px; */
+    width: 100%;
+    flex-direction: column;
+
+
+}
+
+.admin-subtable-cont {
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    border-bottom: 1px solid var(--borders);
+    transition: all 0.3s ease;
+    padding: 10px 0px;
+}
+
+.admin-subtable-cont:last-of-type {
+    border: none;
+}
+
+.admin-table-content-row {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+}
+
+.admin-table-active {
+    height: 350px;
+    align-items: flex-start;
+}
+
+.admin-table-content,
+.admin-table-content-subt {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: var(--font-family);
+    color: var(--text-color);
+    overflow: hidden;
+}
+
+.admin-table-content-subt {
+    font-size: 12px;
+}
+
+.admin-table-content-current {
+    /* height: 300px; */
+    /*  */
+    height: 100%;
+    overflow: auto;
+    width: 100%;
+    /* border: 1px solid green; */
+}
+
+.admin-invitations-container {
+    display: flex;
+    min-width: 370px;
+    height: 100%;
+    border-left: 1px solid var(--borders);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    /* height: 100vh; */
+    /* padding: 0px 10px; */
+}
+
+.new-invitations-container {
+    height: 300px;
+    width: 90%;
+    /* border: 1px solid red; */
+    overflow: auto;
+
+}
+
+.admin-card-invitation {
+    width: 100%;
+    background-color: var(--sc-color);
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    position: relative;
+}
+
+.admin-card-invitation span {
+    font-family: var(--font-family);
+    font-size: 14px;
+    margin: 3px 0px;
+}

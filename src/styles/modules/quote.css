@@ -1,0 +1,80 @@
+
+.quote-container {
+    width: 100%;
+    max-width: 1450px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+
+.quote-row-btween {
+    align-self: stretch;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.quote-settings-container {
+    align-self: stretch;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.background-image-quote-container {
+    height: 400px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.background-image-quote-container img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+.quote-font-settings {
+    align-self: stretch;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quote-image-container {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 12px;
+    position: relative;
+}
+
+.quote-image-container img {
+    width: 100%;
+    object-fit: cover;
+}
+
+.quote-settings-container .ant-upload-wrapper {
+    width: 100% !important;
+}
+
+
+@media (min-width: 751px) {
+    .qt-image-cnt {
+        max-width: 950px !important;
+        height: 650px !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+    }
+}

@@ -1,0 +1,244 @@
+.tools-main-container {
+    /* width: 85px; */
+    background-color: transparent;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 3;
+    gap: 16px;
+}
+
+.tools-main-container-onTry {
+    width: auto;
+    height: 85px;
+    flex-direction: row;
+    min-width: auto;
+    max-width: 90px;
+}
+
+
+.tools-container,
+.tools-container-onTry {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    /* width: 65px; */
+    padding: 8px;
+    gap: 8px;
+    /* height: 100%; */
+    transition: all 0.3s ease;
+    background-color: var(--sc-color-80);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+}
+
+.single-button,
+.single-button--selected,
+.cta-upload-button,
+.cta-upload-button-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    border-radius: 50px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3 ease;
+}
+
+
+.single-button {
+    color: #87878799;
+}
+
+.single-button svg,
+.single-button--selected svg {
+    height: 18px;
+}
+
+.single-button:hover,
+.single-button--selected:hover {
+    color: var(--brand-color-500);
+}
+
+
+.single-button--selected {
+    background-color: var(--ft-color);
+    color: var(--text-color);
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.05);
+    /* border: 0.5px solid #d9d9d9; */
+}
+
+
+
+.cta-upload-button {
+    height: 55px;
+    width: 55px;
+    margin-top: 10px;
+    color: var(--ft-color);
+    background: var(--gradient);
+    border: none;
+    /* box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.15); */
+
+}
+
+#cta-upload-button:hover {
+    border: 2px solid var(--brand-color-500);
+    color: var(--brand-color-500);
+
+}
+
+
+.cta-upload-button-secondary {
+    height: 55px;
+    width: 55px;
+    margin-top: 10px;
+    color: var(--text-color);
+    background-color: var(--sc-color);
+    border: 1px solid var(--sc-color);
+    /* box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.15); */
+
+}
+
+
+#popup-confirm {
+    width: 350px;
+}
+
+
+#popup-confirm .ant-btn-primary {
+    background-color: var(--brand-color-500);
+    color: var(--text-color);
+    border-radius: 5px;
+    border: none;
+    width: 80px;
+    font-weight: 600;
+}
+
+#popup-confirm .ant-btn-primary:hover {
+    background-color: var(--brand-color-600);
+}
+
+
+#popup-confirm .ant-btn-default {
+    border: none;
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+#popup-confirm .ant-btn-default:hover {
+    color: var(--brand-color-500);
+}
+
+.ant-popconfirm .ant-popconfirm-message>.ant-popconfirm-message-icon .anticon {
+    color: var(--brand-color-500);
+}
+
+
+#save-changes-button,
+#save-changes-button-share {
+    /* background-image: linear-gradient(to right, var(--brand-color-500) 0%, var(--dark-accent-color) 51%, var(--brand-color-500) 100%); */
+    transition: 0.5s;
+    background-size: 200% auto;
+    /* display: block; */
+    /* width: 200px; */
+    /* height: 35px; */
+    border-radius: 10px;
+    color: var(--ft-color);
+    font-family: var(--font-family);
+    font-weight: 500;
+    font-size: 12px;
+    height: 28px;
+    border: none;
+    background-color: var(--brand-color-900);
+    /* background: var(--gradient) !important; */
+    /* padding: 0px 12px; */
+    /* box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.15); */
+}
+
+#save-changes-button-share {
+    background-image: linear-gradient(to right, #B1B1B1 0%, #CECECE 51%, #B1B1B1 100%);
+    color: var(--text-color);
+}
+
+
+#refresh-changes-button,
+#refresh-changes-button-active,
+#refresh-changes-button-secondary {
+    background-color: var(--sc-color);
+    transition: 0.5s;
+    background-size: 200% auto;
+    height: 35px;
+    border-radius: 10px;
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-weight: 600;
+    font-size: 12px;
+    border: none;
+    padding: 0px 10px;
+    border: 1px solid var(--borders);
+}
+
+#refresh-changes-button-active {
+    background-color: none;
+}
+
+#refresh-changes-button-secondary {
+    background-color: #4d4d4d;
+    color: #e7e7e7;
+}
+
+#refresh-changes-button-secondary:hover {
+    opacity: 0.8;
+}
+
+#save-changes-button:hover,
+#save-changes-button-share:hover {
+    background-position: right center;
+    background: var(--brand-color-800);
+}
+
+#refresh-changes-button:hover {
+    background-color: var(--secondary-focus);
+}
+
+.header-shared-label {
+    font-family: var(--font-family);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-color);
+}
+
+.header-shared-label b {
+    color: var(--brand-color-500);
+    font-weight: 800;
+}
+
+@media (max-width: 750px) {
+    .tools-main-container,
+    #save-changes-button {
+        display: none;
+    }
+}
+
+
+
+
+
+
+
+
+
+/* .tools-container :where(.css-dev-only-do-not-override-djtmh8) a {
+    color: #FFA700;
+    text-decoration: none;
+    background-color: transparent;
+    outline: none;
+    cursor: pointer;
+    transition: color 0.3s;
+    -webkit-text-decoration-skip: objects;
+} */

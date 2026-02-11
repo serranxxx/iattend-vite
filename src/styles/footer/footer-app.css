@@ -1,0 +1,6 @@
+.footer-app {
+    width: 100%;
+    background-color: var(--ft-color);
+    border-top: 1px solid var(--borders);
+    height: 500px;
+}

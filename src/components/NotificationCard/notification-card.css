@@ -1,0 +1,125 @@
+.card-not {
+    width: 95%;
+    background-color: #ffffff;
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid var(--borders) !important;
+    box-sizing: border-box;
+    padding: 12px;
+    box-shadow: 0px 0px 12px 4px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.card-not:first-of-type {
+    margin-top: 24px;
+}
+
+.card-not:last-of-type {
+    margin-bottom: 24px;
+}
+  
+.card-not-body {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    gap: 12px;
+}
+  
+.card-not-main {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 400;
+    color: #222222;
+    line-height: 1.4;
+    text-align: left;
+}
+  
+.card-not-sub {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: #444444;
+    line-height: 1.4;
+    /* border: 1px solid; */
+}
+  
+.card-not-footer {
+    font-size: 12px;
+    font-weight: 500;
+    color: #c0c0c0;
+    text-align: center;
+    /* border: 1px solid; */
+}
+
+.status-box {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 12px;
+    background-color: #f6f6f6;
+    border: 1px solid var(--borders);
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    margin: 4px 0 2px 0;
+    width: fit-content;
+    text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100%;
+    min-width: 96px;
+}
+
+.state-confirmado {
+    background-color: #EFEAFF;
+    color: #6D3CFA;
+    border-color: #6D3CFA99;
+}
+
+.state-creado {
+    background-color: #E5F3FE;
+    color: #008DFF;
+    border-color: #008DFF;
+}
+
+
+.state-esperando {
+    background-color: #FCF4DB;
+    color: #E6961F;
+    border-color: #E6961F99;
+}
+
+.state-rechazado {
+    background-color: #F1F1F1;
+    color: #787878;
+    border-color: #78787899;
+}
+
+.card-confirmado {
+    background-color: #EFEAFF60;
+    color: #6D3CFA;
+    border-color: #6D3CFA99;
+}
+
+.card-creado {
+    background-color: #E5F3FE60;
+    color: #008DFF;
+    border-color: #008DFF;
+}
+
+
+.card-esperando {
+    background-color: #FCF4DB60;
+    color: #E6961F;
+    border-color: #E6961F99;
+}
+
+.card-rechazado {
+    background-color: #F1F1F160;
+    color: #787878;
+    border-color: #78787899;
+}

@@ -1,0 +1,119 @@
+.pricing-main-container {
+    margin-top: 80px;
+    width: 100%;
+    max-width: 1480px;
+    height: auto;
+    background-color: var(--ft-color);
+    padding: 0px;
+    gap: 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    padding-top: 30px;
+    padding-bottom: 80px;
+}
+
+
+.pricing-title-subtext-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    width: 100%;
+    padding: 0px 50px;
+    box-sizing: border-box;
+    gap: 24px;
+}
+
+.pricing-title-page {
+    font-family: var(--font-family);
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: 0;
+    width: 70%;
+    line-height: 1;
+    text-align: left;
+    color: var(--text-color);
+}
+
+
+.pricing-sub-text {
+    font-family: var(--font-family);
+    font-weight: 400;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 1.2;
+    color: var(--text-color-50);
+    width: 80%;
+    text-align: left;
+}
+
+.pricing-features-conainer {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    padding: 0px 50px;
+    gap: 24px;
+}
+
+
+.prcing-feature-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    padding: 10px 0px;
+    width: 100%;
+    border-bottom: 1px solid var(--borders);
+}
+
+.prcing-feature-row:last-of-type {
+    border: none;
+}
+
+.pricing-feature-text {
+    /* margin-left: 15px; */
+    font-family: var(--font-family);
+    color: var(--text-color);
+    font-size: 14px;
+
+}
+
+
+@media (max-width: 750px) {
+
+    .pricing-features-conainer {
+        padding: 0px 20px;
+    }
+
+    .pricing-title-subtext-container {
+        padding: 0px 20px;
+        gap: 16px;
+    }
+
+
+    .pricing-sub-text {
+        font-size: 14px;
+        font-weight: 400;
+        margin-top: 10px;
+
+    }
+
+    .pricing-title-page {
+        font-size: 36px;
+        line-height: 1;
+        text-align: left;
+        width: 100%;
+    }
+
+    .features-title {
+        margin: 50px 0;
+    }
+
+    .pricing-hidde-item {
+        display: none;
+    }
+}

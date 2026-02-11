@@ -1,0 +1,15 @@
+.ant-slider .ant-slider-handle::after {
+    box-shadow: 0 0 0 2px var(--brand-color-600);
+  }
+  
+  .ant-slider .ant-slider-handle:focus::after {
+    box-shadow: 0 0 0 4px var(--brand-color-600);
+  }
+  
+  .ant-slider:hover .ant-slider-handle::after {
+    box-shadow: 0 0 0 2px var(--brand-color-800);
+  }
+  
+  .ant-color-picker-trigger .css-dev-only-do-not-override-m4timi .ant-popover-open .ant-color-picker-trigger-active {
+    border-color: var(--brand-color-500);
+  }

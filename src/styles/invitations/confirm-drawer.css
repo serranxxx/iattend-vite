@@ -1,0 +1,147 @@
+.confirm-componentes-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    height: 100%;
+
+}
+
+.confirm-drawer::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+}
+
+.confirm-main-container {
+    width: 100%;
+
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+
+
+.icon-container {
+    height: 100px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drawer-confirm-label {
+    width: auto;
+    margin: 30px 0px 40px 0px;
+    font-size: 20px;
+    font-weight: 400;
+    text-align: center;
+    width: calc(100% - 50px);
+}
+
+.how-much-tickets-container {
+    width: 100%;
+    border-radius: 15px;
+    padding-bottom: 30px;
+    margin-bottom: 30px;
+    /* height: 500px; */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+.input-number-tickets-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+}
+
+.simulated-input {
+    height: 35px;
+    width: 170px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0px 10px;
+}
+
+#ticket-button {
+    border-radius: 50px;
+    height: 35px;
+    width: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+#ticket-button:hover {
+    opacity: 0.8;
+    color: var(--text-color);
+}
+
+.confirm-inputs-container {
+    width: 100%;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.confirm-input {
+    height: 35px;
+    border-radius: 50px;
+    width: 85%;
+    margin-bottom: 15px;
+}
+
+.confirm-input:last-of-type {
+    margin: 0;
+}
+
+#confirm-confirm-button {
+    margin-left: 10px;
+    padding: 0px 20px;
+    height: 50px;
+    width: 250px;
+    /* height: 35px; */
+    font-family: var(--font-family);
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 50px;
+    border: none;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+#confirm-confirm-button:hover {
+    opacity: 0.8;
+}
+
+.confirm-buttons-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+
+.confirm-buttons-container:last-child {
+    margin: 0;
+}
+
+.ant-drawer-header-title button {
+    display: none;
+}

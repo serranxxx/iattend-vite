@@ -1,0 +1,266 @@
+.itinerary-cards-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    width: 100%;
+    gap: 24px;
+    /* padding: 0px 24px; */
+
+}
+
+
+.card-container {
+    width: 100%;
+    /* padding: 10px; */
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+
+.card-container-active {
+    justify-content: center;
+    flex-direction: column;
+}
+
+.card-icon-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.card-icon {
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    height: 100%;
+    width: 70px;
+}
+
+.card-content {
+    flex: 5;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-direction: column;
+    text-align: left;
+    line-height: 1.1;
+    gap: 4px;
+    /* padding: 0px 20px; */
+}
+
+
+.card-time,
+.card-time-dev,
+.card-subname,
+.card-subname-dev {
+    margin: 0;
+    width: 100%;
+    text-align: left;
+    line-height: 1.2;
+    font-size: 0.9em;
+}
+
+.card-time,
+.card-time-dev {
+    line-height: 1.4;
+    font-size: 1em;
+}
+
+
+
+.custom-card-container {
+    width: 100%;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+    position: relative;
+    gap: 8px;
+}
+
+.custom-card-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-card-title,
+.custom-card-time,
+.custom-card-subname {
+    width: 97%;
+    text-align: left;
+    font-size: 14px;
+    /* margin: 8px 0; */
+}
+
+.custom-card-title {
+    font-size: 16px;
+}
+
+.custom-card-time{
+    line-height: 0.8;
+    margin: 0;
+}
+
+/* .custom-card-subname,
+.custom-card-subname-dev {
+    margin: 8px 0;
+} */
+
+.custom-card-address {
+    width: 97%;
+    text-align: left;
+}
+
+.custom-card-subitems {
+    width: 85%;
+    border-left: 3px solid;
+    height: auto;
+    /* margin-top: 12px; */
+}
+
+.custom-card-subitem {
+    width: 100%;
+    position: relative;
+    margin-top: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+.custom-card-subitem-bullet {
+    height: 10px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    position: absolute;
+    left: -6px;
+}
+
+.custom-card-subitem-title,
+.custom-card-subitem-time,
+.custom-card-subitem-description {
+    text-align: left;
+    margin-left: 15px;
+}
+
+.custom-card-subitem-title {
+    font-weight: 600;
+}
+
+.custom-card-row {
+    width: 97%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.custom-card-row-column {
+    flex-direction: column;
+}
+
+.custom-card-weather {
+    width: 100%;
+    border-radius: 15px;
+    background-color: transparent;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.custom-card-map {
+    height: 250px;
+    width: 100%;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #E5E5E5;
+}
+
+.custom-card-link {
+    width: 97%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* margin: 5% 0 0 0; */
+}
+
+.custom-card-link-button  {
+    width: 200px;
+    height: 40px;
+    /* margin-bottom: 3%; */
+    border-radius: 30px;
+    font-size: 1em;
+    font-weight: 600;
+    border: none;
+}
+
+
+@media (min-width: 751px) {
+
+
+    .card-container {
+        border-radius: 25px;
+
+    }
+
+
+    .card-time,
+    .card-subname {
+
+        font-size: 1.2em;
+    }
+
+    /* .custom-card-title {
+        font-size: 24px;
+        font-weight: 600;
+    } */
+
+    .custom-card-time,
+    .custom-card-subname,
+    .custom-card-address {
+        font-size: 18px;
+    }
+
+    .custom-card-map {
+        border-radius: 20px;
+        height: 400px;
+    }
+
+    .custom-card-link-button {
+        width: 250px;
+        height: 50px;
+        margin-bottom: 20px;
+        border-radius: 30px;
+        font-size: 18px;
+        font-weight: 700;
+        border: none;
+    }
+}
+
+
+@media (min-width: 900px) {
+
+    .card-container {
+        width: 60%;
+        /* height: 100px; */
+    }
+
+
+}

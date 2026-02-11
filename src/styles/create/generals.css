@@ -1,0 +1,68 @@
+.scroll-invitation::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    /* Ancho del scrollbar */
+}
+
+.scroll-invitation::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    /* Color del fondo del scrollbar */
+}
+
+.scroll-invitation::-webkit-scrollbar-thumb {
+    background: #888;
+    /* Color del scrollbar */
+}
+
+.scroll-invitation::-webkit-scrollbar-thumb:hover {
+    background: #555;
+    /* Color del scrollbar al pasar el cursor sobre él */
+}
+
+.iframe_class::-webkit-scrollbar {
+    border: 1px solid green;
+}
+
+
+.rounded-buttons {
+    background-color: #F5F5F7;
+    border: 1px solid #d9d9d9;
+}
+
+.rounded-buttons:active {
+    background-color: #1777FF;
+    border: 1px solid #1777FF;
+    color: var(--ft-color);
+}
+
+.build-invitation-layout {
+    background-color: var(--ft-color);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 1450px;
+    overflow: auto;
+    padding: 0px;
+
+}
+
+.build-content-modules-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    /* padding-top: 50px; */
+}
+
+.build-gallery-scroll::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+}
+
+/* @media (max-width: 750px) {
+    .build-invitation-layout {
+        margin-top: 70px !important;
+    }
+} */

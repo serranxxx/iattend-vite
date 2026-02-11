@@ -1,0 +1,165 @@
+.login-general-container-page {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+
+.login-container {
+    width: 50%;
+    /* height: 200px; */
+    background-color: var(--ft-color);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    /* padding: 10px; */
+    /* border: 1px solid blue; */
+}
+
+
+.login-container-mini {
+    /* height: 50px; */
+    width: 50px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.15);
+
+}
+
+.login-image-container {
+
+    width: 100%;
+    background-color: var(--ft-color);
+    transition: all 0.3s ease;
+    overflow: visible;
+    /* border: 1px solid red; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    max-height: 300px;
+
+}
+.login-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+.login-form-container {
+    margin-top: 50px;
+    /* width: 50%;
+    min-width: 350px; */
+    max-width: 350px;
+    min-width: 300px;
+    width: 50%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    /* border: 1px solid yellow; */
+}
+
+.login-input {
+    margin-bottom: 15px;
+    height: 40px;
+    width: 100%;
+    padding-left: 20px;
+}
+
+.login-input:last-of-type {
+    margin-bottom: 10px;
+}
+
+
+
+.label-forgot-password {
+    text-align: right;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-family: var(--font-family);
+    width: 100%;
+    font-weight: 600;
+    text-decoration: underline;
+    color: var(--text-color);
+}
+
+.label-forgot-password:hover {
+    color: var(--brand-color-500);
+}
+
+
+.login-label  {
+    font-size: 14px;
+    font-family: var(--font-family);
+    width: 100%;
+    text-align: center;
+    margin-bottom: 5px;
+    margin-top: 20px;
+}
+.mt {
+    margin-top: 20px;
+}
+
+.password-button-container {
+    width: 100%;
+    position: relative;
+}
+
+.see-password-button {
+    position: absolute;
+    right: 10px;
+    top: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+#whatsapp-button {
+    background-color: #51F06C;
+    font-weight: 700;
+    color: #000;
+    border: none;
+    height: 40px;
+    width: 235px;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.15);
+    font-size: 16px;
+}
+
+@media (max-width: 1200px) {
+    .login-container {
+        width: 60%;
+    }
+}
+
+@media (max-width: 1050px) {
+    .login-container {
+        width: 70%;
+    }
+}
+
+@media (max-width: 850px) {
+    .login-container {
+        width: 80%;
+    }
+
+    .login-form-container {
+        margin-top: -50px;
+        /* border: 1px solid yellow; */
+    }
+}
+
+@media (max-width: 650px) {
+    .login-container {
+        width: 100%;
+    }
+}

@@ -1,0 +1,73 @@
+:root {
+  --error-color: #D32F2F;
+
+  --brand-color-900: #29262D;
+  --brand-color-800: #5E566A;
+  --brand-color-600: #978BAB;
+  --brand-color-500: #B4A5CC;
+  --brand-color-300: #CCC2DC;
+  --brand-color-100: #EAE6F1;
+  --brand-color-100-80: #EAE6F180;
+  --brand-color-900-80: #29262D80;
+  --brand-color-800-80: #5E566A80;
+  --brand-color-600-80: #978BAB80;
+  --brand-color-500-80: #B4A5CC80;
+  --brand-color-500-40: #B4A5CC40;
+  --brand-color-500-20: #B4A5CC20;
+  --brand-color-300-80: #CCC2DC80;
+
+  --text-color: #29262D;
+  --text-color-80: #29262D80;
+  --text-color-50: #29262D50;
+  --text-color-20: #29262D20;
+
+  --ft-color: #FFFFFF;
+  --ft-color-80: #FFFFFF80;
+  --ft-color-50: #FFFFFF50;
+  --ft-color-20: #FFFFFF20;
+
+  --sc-color: #F5F3F2;
+  --sc-color-80: #F5F3F280;
+  --sc-color-50: #F5F3F250;
+  --sc-color-20: #F5F3F220;
+
+  --gray-color: #787878;
+  --gray-color-80: #78787880;
+  --gray-color-40: #78787840;
+  --gray-color-20: #78787820;
+
+  --borders: #EBEBEB;
+  --font-family: 'Poppins';
+  --gradient: linear-gradient(to right, var(--brand-color-500), var(--brand-color-300));
+  --gradient-reverse: linear-gradient(to left, var(--brand-color-500), var(--brand-color-300));
+}
+
+
+
+
+
+.main-dash-layout {
+  background-color: white;
+  background-image: radial-gradient(var(--general-borders) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.VIpgJd-ZVi9od-ORHb-OEVmcd {
+  left: 0;
+  top: none;
+  bottom: 0px !important;
+  height: 39px;
+  width: 100%;
+  z-index: 10000001;
+  position: fixed;
+  margin-top: 19px;
+  border: none;
+  border-bottom: 1px solid #6B90DA;
+  margin: 0;
+  box-shadow: 0 0 8px 1px #999
+}
+
+/* Previene desplazamiento hacia abajo cuando aparece la barra */
+body {
+  top: 0px !important;
+}
