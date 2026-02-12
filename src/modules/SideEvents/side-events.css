@@ -85,7 +85,7 @@
 
 .side_guest_list {
     height: 70vh;
-    width: 350px;
+    /* width: 450px; */
     background-color: #FFF;
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
     border-radius: 16px;
@@ -317,6 +317,31 @@
     flex-direction: column;
     gap: 12px;
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+}
+
+.state-confirmado {
+    background-color: #EFEAFF;
+    color: #6D3CFA;
+    border-color: #6D3CFA40;
+}
+
+.state-creado {
+    background-color: #E5F3FE;
+    color: #008DFF;
+    border-color: #008DFF40;
+}
+
+
+.state-esperando {
+    background-color: #FCF4DB;
+    color: #E6961F;
+    border-color: #E6961F40;
+}
+
+.state-rechazado {
+    background-color: #F1F1F1;
+    color: #787878;
+    border-color: #78787840;
 }
 
 /* body: {

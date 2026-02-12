@@ -114,11 +114,10 @@ export const AdminPage = () => {
 
     // ]
 
-    const { response, operation } = useInvitation()
+    const { operation } = useInvitation()
 
     const [currentUser, setCurrentUser] = useState(null)
-    const [users, setUsers] = useState([])
-    const [ setInvitations] = useState([])
+    const [users] = useState([])
     const [mode, setMode] = useState('my-invitations')
     const [currentInvitation] = useState(null)
     // const [saved, setSaved] = useState(true)
@@ -284,47 +283,47 @@ export const AdminPage = () => {
         setOnNewInvitation(true)
     }
 
-    useEffect(() => {
+    // useEffect(() => {
 
-        if (response) {
+    //     if (response) {
 
-            if (response.data.ok) {
-                switch (response.data.msg) {
-                    case "Get all Users":
-                        setUsers(response.data.data.Userlist)
+    //         if (response.data.ok) {
+    //             switch (response.data.msg) {
+    //                 case "Get all Users":
+    //                     setUsers(response.data.data.Userlist)
 
-                        break;
+    //                     break;
 
-                    case "Get all invitations":
-                        setInvitations(response.data.data)
-                        break;
+    //                 case "Get all invitations":
+    //                     setInvitations(response.data.data)
+    //                     break;
 
-                    case "Invitation updated":
-                        message.success("Invitación actualizada")
-                        refreshData()
-                        break;
+    //                 case "Invitation updated":
+    //                     message.success("Invitación actualizada")
+    //                     refreshData()
+    //                     break;
 
-                    // case "Get invitation By Id":
-                    //     const inv = response.data.data
-                    //     setContent(inv.cover)
-                    //     setGenerals(inv.generals)
-                    //     setLabel(inv.label)
-                    //     setinvitation(inv)
-                    //     setVisibleShare(true)
-                    //     setOnQR(false)
+    //                 // case "Get invitation By Id":
+    //                 //     const inv = response.data.data
+    //                 //     setContent(inv.cover)
+    //                 //     setGenerals(inv.generals)
+    //                 //     setLabel(inv.label)
+    //                 //     setinvitation(inv)
+    //                 //     setVisibleShare(true)
+    //                 //     setOnQR(false)
 
-                    //     break;
+    //                 //     break;
 
-                    default:
-                        break;
-                }
+    //                 default:
+    //                     break;
+    //             }
 
 
 
-            }
-        }
+    //         }
+    //     }
 
-    }, [response])
+    // }, [response])
 
     return (
         <>

@@ -89,7 +89,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
             dataIndex: "password",
             key: "password",
             width: 120,
-            render: (value) => (
+            render: (value,) => (
                 <div className="tag-container">
                     <Dropdown popupRender={() => (
                         <div className='passwords_container_se'>
@@ -289,7 +289,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         rowKey: "id",
         columns: columns,
         pagination: false,
-        // scroll: { x: 1400 },
+        scroll: { y: '80vh' },
 
     }), [columns]);
 
@@ -720,7 +720,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
 
         console.log(list)
 
-        const { error: guestError } = await supabase
+        const {  error: guestError } = await supabase
             .from('side_events_guests')
             .insert(list)
             .select('*');
@@ -859,6 +859,10 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         }
     }, [])
 
+    const truncate = (text, max = 50) =>
+        text.length > max ? text.slice(0, max) + '...' : text;
+
+
 
     return (
         <>
@@ -987,6 +991,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
 
                                                 <div className={`scroll-invitation ios-invitation `}>
                                                     <SideEventHost config={current} />
+                                                    {/* <InvitationTest setCurrentOffsetTop={setCurrentOffsetTop} positionY={positionY} invitation={invitation} size={size} /> */}
                                                 </div>
                                                 <div className={`inv-light-space-ios`} />
                                             </div>
@@ -1419,8 +1424,9 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                                                         <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>Agregar</Button>
                                                                     </div>
                                                                     <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder='Búscar invitado' style={{ borderRadius: '99px' }} />
-                                                                    <div className='single_col' style={{
-                                                                        alignSelf: 'stretch', gap: '2px'
+                                                                    <div className='single_col scroll-invitation' style={{
+                                                                        alignSelf: 'stretch', gap: '2px',
+                                                                        maxHeight: '100%', overflowY: 'auto'
                                                                     }}>
                                                                         {
                                                                             mainGuests ? mainGuests?.filter(i =>
@@ -1435,7 +1441,16 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                                                                                 : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
                                                                                         }
 
-                                                                                        <span>{i.name}</span>
+                                                                                        <span style={{ minWidth: '130px', }}>{truncate(i.name, 16)}</span>
+
+                                                                                        <div className='new-table-tag' style={{display:'flex',alignItems:'center',justifyContent:'center', minWidth:'60px'}}>
+                                                                                            <span style={{fontSize:'12px'}}>{i.tag ?? "-"}</span>
+                                                                                        </div>
+
+                                                                                        <div className={`new-table-tag state-${i.state}`} style={{display:'flex',alignItems:'center',justifyContent:'center', minWidth:'80px', opacity:'0.7'}}>
+                                                                                            <span style={{fontSize:'12px'}}>{i.state ?? "-"}</span>
+                                                                                        </div>
+
                                                                                     </div>
                                                                                 ))
 
@@ -1468,7 +1483,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                 onClick={() => setActiveTickets(true)}
                                 // onClick={() => setOnBubble(true)}
                                 onMouseEnter={() => setOnTickets(true)} onMouseLeave={() => setOnTickets(false)}
-                                style={{ bottom: '10%', right: '6.5%', maxHeight: '220px', borderRadius: activeTickets && '16px' }}
+                                style={{ bottom: '2%', right: '1.4%', maxHeight: '220px', borderRadius: activeTickets && '16px',  }}
                                 className={`tickets_button ${activeTickets ? 'tickets_button_active' : ''}`}>
                                 {!activeTickets && (
                                     <>
