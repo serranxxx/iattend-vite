@@ -344,6 +344,18 @@
     border-color: #78787840;
 }
 
+.blur-cover {
+    content: "";
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    mask: linear-gradient(transparent, transparent,transparent,transparent, black, black);
+    backdrop-filter: blur(6px);
+}
+
 /* body: {
     address: {
         street: null,
