@@ -96,7 +96,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                             <Button style={{ width: '100%' }} icon={<LuCopy size={14} />} onClick={() => copyToClipboard(value)} >{value}</Button>
                             <Button
                                 style={{ width: '100%' }}
-                                onClick={() => copyToClipboard(`www.iattend.site/side-event/${current?.id}?password=${value}`)}
+                                onClick={() => copyToClipboard(`www.iattend.events/side-event/${current?.id}?password=${value}`)}
                                 icon={<LuCopy size={14} />}
                             >Link mágico</Button>
                         </div>

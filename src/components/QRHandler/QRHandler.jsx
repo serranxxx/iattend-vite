@@ -9,7 +9,7 @@ import { load } from '../../helpers/assets/images';
 
 
 
-const baseProd = "https://www.iattend.site"
+const baseProd = "https://www.iattend.events"
 
 
 export const QRHandler = ({ visible, setVisible, }) => {

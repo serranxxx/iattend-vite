@@ -9,7 +9,7 @@ import { FaInstagram } from "react-icons/fa";
 import { supabase } from '../../../lib/supabase'
 import ReactHost from '../../../components/Host/ReactHost'
 import { FooterApp } from '../../../modules/Footer/FooterApp'
-const baseProd = "https://www.iattend.site"
+const baseProd = "https://www.iattend.events"
 
 export const LinkTree = () => {
   const [invitations, setInvitations] = useState([])

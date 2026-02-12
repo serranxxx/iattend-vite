@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef } from "react";
 
 // Dominios permitidos del remoto (Next)
 const ALLOWED_ORIGINS = new Set([
-  "https://www.iattend.site",
-  "https://iattend.site",
+  "https://www.iattend.events",
+  "https://iattend.events",
   "http://localhost:3000",
 ]);
 
@@ -17,7 +17,7 @@ export default function ReactHost({
 
   // URL del componente remoto: /shared/[invitation_label]/[invitation_name]
   const url = useMemo(() => {
-    return new URL("https://www.iattend.site/host/").toString();
+    return new URL("https://www.iattend.events/host/").toString();
   }, []);
 
   // Origin destino calculado desde la URL (soporta prod/local)

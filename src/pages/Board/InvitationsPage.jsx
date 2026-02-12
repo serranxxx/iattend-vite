@@ -15,7 +15,7 @@ import { LoginPage } from '../LoginPage';
 
 const { Content } = Layout;
 
-const baseProd = "https://www.iattend.site"
+const baseProd = "https://www.iattend.events"
 
 
 export const InvitationsPage = () => {
