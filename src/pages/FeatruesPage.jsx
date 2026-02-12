@@ -1,6 +1,4 @@
 import { Button, Layout, Modal, Popover, Row } from 'antd'
-import React, { useState } from 'react'
-import { Login } from '../components/Auth/Login'
 import { FooterApp } from '../modules/Footer/FooterApp'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { FaCheck } from 'react-icons/fa'
@@ -20,9 +18,6 @@ export const FeaturesPage = () => {
         'Administración de invitados'
     ]
     
-
-    const [openLogin, setOpenLogin] = useState(false)
-
     return (
         <>
 
@@ -33,7 +28,7 @@ export const FeaturesPage = () => {
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: 'var(--ft-color)'
                 }}>
-                <HeaderBuild position={'pricing'} setOpenLogin={setOpenLogin} isVisible={true} />
+                <HeaderBuild position={'pricing'}  isVisible={true} />
                 <div className='pricing-main-container'>
 
                     <div className='pricing-title-subtext-container'>
@@ -87,20 +82,6 @@ export const FeaturesPage = () => {
 
                 </div >
                 <FooterApp></FooterApp>
-
-                <Modal
-                    open={openLogin}
-                    onClose={() => setOpenLogin(false)}
-                    onCancel={() => setOpenLogin(false)}
-                    footer={null} // Opcional: Elimina el footer del modal si no es necesario
-                    style={{
-                        top: 40,
-                        display: 'flex',
-                        alignItems: 'center', justifyContent: 'center'
-                    }}>
-                    <Login position={'land-page'} setOpenLogin={setOpenLogin} />
-
-                </Modal>
 
 
             </Layout >

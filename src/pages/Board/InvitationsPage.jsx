@@ -11,6 +11,7 @@ import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
 import { darker } from '../../helpers/assets/functions';
 import { RiArrowRightSLine } from 'react-icons/ri';
+import { LoginPage } from '../LoginPage';
 
 const { Content } = Layout;
 
@@ -19,7 +20,7 @@ const baseProd = "https://www.iattend.site"
 
 export const InvitationsPage = () => {
 
-    const [openLogin, setOpenLogin] = useState(false)
+    // const [openLogin, setOpenLogin] = useState(false)
     const [invitationsCopy, setInvitationsCopy] = useState(null)
     const [loader, setLoader] = useState(false)
     const { pathname } = useLocation();
@@ -185,8 +186,8 @@ export const InvitationsPage = () => {
                                                                             }}>
 
 
-                                                                            <div  style={{
-                                                                                alignItems: invitation.data.cover.title.position.align_y, 
+                                                                            <div style={{
+                                                                                alignItems: invitation.data.cover.title.position.align_y,
                                                                                 padding: invitation.data.cover.date.active ? 0 : '10px',
 
                                                                             }}>
@@ -287,13 +288,16 @@ export const InvitationsPage = () => {
 
                                         </div>
 
-                                        :
-                                        <div style={{
-                                            width: '100%', display: 'flex', alignItems: 'center', flexDirection: 'flex-start',
-                                            paddingTop: '100px', justifyContent: 'center'
-                                        }}>
-                                            <Login position={'land-page'} setOpenLogin={setOpenLogin} />
-                                        </div>
+                                        : <Layout
+                                            style={{
+                                                position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
+                                                alignItems: 'center', justifyContent: 'center',
+                                                backgroundColor: 'var(--ft-color)', minHeight: '60vh', marginTop: '160px'
+                                                // height: '100vh'
+                                            }}>
+                                            <Login />
+                                        </Layout>
+                                    // <LoginPage />
                                 }
 
 
@@ -485,20 +489,6 @@ export const InvitationsPage = () => {
             </Layout >
             <FooterApp></FooterApp>
 
-            <Modal
-                open={openLogin}
-                onClose={() => setOpenLogin(false)}
-                onCancel={() => setOpenLogin(false)}
-                footer={null} // Opcional: Elimina el footer del modal si no es necesario
-                style={{
-                    top: 40,
-                    display: 'flex',
-                    alignItems: 'center', justifyContent: 'center'
-                }}
-            >
-                <Login position={'land-page'} setOpenLogin={setOpenLogin} />
-
-            </Modal>
         </div>
     )
 }
