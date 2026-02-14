@@ -1,0 +1,15 @@
+{
+    "redirects": [
+      {
+        "source": "/:invitation_label/:invitation_name",
+        "destination": "https://iattend.events/:invitation_label/:invitation_name",
+        "permanent": false
+      },
+      {
+        "source": "/side-event/:side_event_id",
+        "destination": "https://iattend.events/side-event/:side_event_id",
+        "permanent": false
+      }
+    ]
+  }
+  
