@@ -1,0 +1,39 @@
+{
+  "redirects": [
+    {
+      "source": "/wedding/:invitation_name",
+      "destination": "https://iattend.events/wedding/:invitation_name",
+      "permanent": false
+    },
+    {
+      "source": "/xv/:invitation_name",
+      "destination": "https://iattend.events/xv/:invitation_name",
+      "permanent": false
+    },
+    {
+      "source": "/bap/:invitation_name",
+      "destination": "https://iattend.events/bap/:invitation_name",
+      "permanent": false
+    },
+    {
+      "source": "/kids/:invitation_name",
+      "destination": "https://iattend.events/kids/:invitation_name",
+      "permanent": false
+    },
+    {
+      "source": "/event/:invitation_name",
+      "destination": "https://iattend.events/event/:invitation_name",
+      "permanent": false
+    },
+    {
+      "source": "/party/:invitation_name",
+      "destination": "https://iattend.events/party/:invitation_name",
+      "permanent": false
+    },
+    {
+      "source": "/side-event/:side_event_id",
+      "destination": "https://iattend.events/side-event/:side_event_id",
+      "permanent": false
+    }
+  ]
+}
