@@ -35,5 +35,8 @@
       "destination": "https://iattend.events/side-event/:side_event_id",
       "permanent": false
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
