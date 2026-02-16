@@ -1,7 +1,7 @@
 import { Button, Checkbox, Col, ColorPicker, DatePicker, Dropdown, Input, Layout, message, Modal, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import './side-events.css'
-import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
+import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
 import dayjs from 'dayjs'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
@@ -900,9 +900,20 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                     }
 
                                     {
-                                        ((plan === 'pro' && sideEvent.length <= 2) || (plan === "lite" && sideEvent.length === 0)) &&
+                                        ((plan === 'pro' && sideEvent.length <= 2) || (plan === "lite" && sideEvent.length === 0)) ?
                                         <Button icon={<LuPlus size={44} />} onClick={insertSideEvent} className='side_event_item side_event_btn' style={{ width: '100%', height: '100%' }}>
+                                            
                                         </Button>
+
+                                        : <div className='new_side_event'>
+                                            <span style={{color:'#00000080'}}>Haz llegado al límite de tus Side events</span>
+                                            <img 
+                                            style={{width:'100%'}}
+                                            src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt=''/>
+                                            <Button style={{
+                                                fontSize:'16px', minHeight:'44px',fontWeight:400
+                                            }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
+                                        </div>
                                     }
                                 </div>
                                 : <div className='side_events_spin'>

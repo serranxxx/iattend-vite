@@ -89,7 +89,7 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                                     {
                                         prices.map((p, index) => {
 
-                                            if (p.productName === 'PRO' || p.productName === 'Lite' || p.productName === 'Paperless' || p.productName === 'TEST' || p.productName === 'credito') {
+                                            if (p.productName === 'PRO' || p.productName === 'Lite' || p.productName === 'Paperless' || p.productName === 'TEST' || p.productName === 'credito' || p.productName === 'Side Event') {
                                                 return null
                                             }
                                             return (

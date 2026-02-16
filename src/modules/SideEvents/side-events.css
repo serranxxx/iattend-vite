@@ -356,6 +356,23 @@
     backdrop-filter: blur(6px);
 }
 
+.new_side_event {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 24px;
+    font-size: 18px;
+    text-align: center;
+    background-color: #FFF;
+    border: 1px solid #ebebeb;
+    border-radius: 16px;
+    color: #00000020;
+}
+
 /* body: {
     address: {
         street: null,
