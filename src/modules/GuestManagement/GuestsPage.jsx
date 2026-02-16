@@ -26,6 +26,7 @@ import { Grid } from "antd";
 import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { HiLockClosed, HiLockOpen } from 'react-icons/hi2';
+import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 
 const { useBreakpoint } = Grid;
 
@@ -74,8 +75,6 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
     const [expandedRowKeys, setExpandedRowKeys] = useState([]);
     const [credits, setCredits] = useState(0)
     const [activeKey, setActiveKey] = useState('confirmado');
-    const [prices, setPrices] = useState([])
-
 
 
     const openColumns = useMemo(() => ([
@@ -1286,13 +1285,6 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         }
     }
 
-    const fetchPrices = async () => {
-        const res = await axios.get(
-            "https://i-attend-22z4h.ondigitalocean.app/api/payment/prices"
-        );
-        console.log('products: ', res.data)
-        setPrices(res.data);
-    };
 
     useEffect(() => {
         if (supabase) {
@@ -1353,7 +1345,6 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
             getTickets()
             getNotifications()
             getType()
-            fetchPrices()
             getTables()
         }
     }, [invitationID])
@@ -1384,33 +1375,6 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         }
     }, [onShare])
 
-
-
-
-
-
-    const handleCheckout = async (priceId) => {
-        try {
-            if (!invitationID || !priceId) {
-                console.error("Falta invitationID o priceId");
-                return;
-            }
-
-            const response = await axios.post(
-                "https://i-attend-22z4h.ondigitalocean.app/api/payment/create-checkout",
-                {
-                    invitationId: invitationID,
-                    priceId: priceId,
-                }
-            );
-
-            // Redirigir a Stripe Checkout
-            window.open(response.data.url, "_blank");
-
-        } catch (error) {
-            console.error("Error al iniciar el pago:", error.response?.data || error.message);
-        }
-    };
 
 
 
@@ -1751,78 +1715,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
 
                                         <div className='edit-tickets-buttons-container'>
 
-                                            <div className='edit-tickets-dash'>
-                                                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Creditos</span>
-                                                    <Button onClick={getType} icon={<LuRefreshCcw />}>Actualizar</Button>
-
-                                                </div>
-
-                                                <div className='dash-row-pie'>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                                                        <Progress
-                                                            type="dashboard"
-                                                            steps={10}
-                                                            percent={(credits * 100) / 300}
-                                                            strokeWidth={10}
-                                                            strokeColor={'#6D3CFA'}
-                                                            trailColor='#F5F3F2'
-                                                            showInfo={false}
-                                                        />
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0px', position: 'absolute' }}>
-                                                            <span style={{ fontWeight: 600, fontSize: '22px', lineHeight: 1 }}>{credits}</span>
-                                                            <span style={{ fontSize: '8px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Disponibles</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', fontSize: '13px' }}>
-                                                        <span><b>¿Qué son los créditos?</b></span>
-                                                        <span>Cada invitación enviada usa 1 crédito y puedes recargar cuando lo necesites.</span>
-
-                                                        <Dropdown
-                                                            trigger={['click']}
-                                                            placement='topRight'
-                                                            arrow
-                                                            popupRender={() => (
-                                                                <div className='credits_checkout_cont'>
-                                                                    {
-                                                                        prices.map((p, index) => {
-
-                                                                            if (p.productName === 'PRO' || p.productName === 'Lite' || p.productName === 'Paperless' || p.productName === 'TEST' || p.productName === 'credito') {
-                                                                                return null
-                                                                            }
-                                                                            return (
-                                                                                <div key={index} className='price_row'>
-                                                                                    <div className='image_price'>
-                                                                                        <img src={`/images/c_${p.amount}.png`} alt='' style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                                                                                    </div>
-                                                                                    {/* <div className='price_col'> */}
-                                                                                    <span style={{minWidth:'120px'}}>{p.productName}</span>
-                                                                                    <span style={{minWidth:'100px'}}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
-
-                                                                                    {/* </div> */}
-
-                                                                                    <Button icon={<LuShoppingCart />} type='primary' onClick={() => handleCheckout(p.priceId)} > Comprar</Button>
-                                                                                </div>
-                                                                            )
-                                                                        }
-
-
-                                                                        )
-                                                                    }
-
-                                                                </div>
-                                                            )}
-                                                        >
-                                                            <Button icon={<FaCoins />} type='primary' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar credtios</Button>
-                                                        </Dropdown>
-                                                        {/* onClick={() => handleCheckout('price_1T1DRoAAdNlITNVbLwiUVWAj')} */}
-
-                                                    </div>
-
-                                                </div>
-
-                                            </div>
+                                            <CreditsComponent getType={getType} credits={credits} invitationID={invitationID}/>
 
                                         </div>
                                     </div>

@@ -1,0 +1,89 @@
+.credits-dash {
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+}
+
+.credits-row-pie {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 24px;
+}
+
+.credits_main {
+    border-radius: 16px;
+    background-color: #FFF;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    padding: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.credits_checkout_cont {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+    gap: 12px;
+}
+
+
+
+
+.price_card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    background-color: #F5F3F2;
+    border-radius: 12px;
+    box-sizing: border-box;
+    padding: 12px;
+    max-width: 140px;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.price_card:hover {
+    transform: scale(1.02);
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card_col {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 0px;
+    line-height: 1.1;
+    font-family: 'Poppins';
+}
+
+.image_price {
+    width: 100%;
+    background-color: #FFFFFF80;
+    max-height: 100px;
+    height: auto;
+    border-radius: 8px;
+}
+
+.credits_row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+}
+
+.selected_card {
+    background-color: var(--brand-color-500-80);
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+}
