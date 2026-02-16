@@ -175,7 +175,7 @@ export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_use
                             </div>
 
                             {
-                                // user.role === 'Admin' &&
+                                plan === 'pro' || plan ==- 'lite' &&
                                 <div className='side_events_dash' style={{
                                     // maxHeight: screens.xs ? '180px' : undefined
                                 }}>

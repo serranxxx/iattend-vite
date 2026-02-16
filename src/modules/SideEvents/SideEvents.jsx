@@ -1,7 +1,7 @@
 import { Button, Checkbox, Col, ColorPicker, DatePicker, Dropdown, Input, Layout, message, Modal, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import './side-events.css'
-import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
+import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
 import dayjs from 'dayjs'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
@@ -35,6 +35,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
     const [activeTickets, setActiveTickets] = useState(false)
     const [onBubble, setOnBubble] = useState(false)
     const [credits, setCredits] = useState(0)
+    const [prices, setPrices] = useState([])
     const [plan, setPlan] = useState(null)
     const { TextArea } = Input;
 
@@ -472,6 +473,14 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         setCredits(data.credits)
     }
 
+    const fetchPrices = async () => {
+        const res = await axios.get(
+            "https://i-attend-22z4h.ondigitalocean.app/api/payment/prices"
+        );
+        console.log('products: ', res.data)
+        setPrices(res.data);
+    };
+
     const renderTag = (value) => {
         if (value == null) return "-";
         if (typeof value === "object") return "-"; // o JSON.stringify(value)
@@ -720,7 +729,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
 
         console.log(list)
 
-        const {  error: guestError } = await supabase
+        const { error: guestError } = await supabase
             .from('side_events_guests')
             .insert(list)
             .select('*');
@@ -800,6 +809,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
     useEffect(() => {
         getInvitationImages(invitationID);
         getCredits()
+        fetchPrices()
         getSideEvents()
     }, [invitationID])
 
@@ -861,6 +871,29 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
 
     const truncate = (text, max = 50) =>
         text.length > max ? text.slice(0, max) + '...' : text;
+
+    const handleCheckout = async (priceId) => {
+        try {
+            if (!invitationID || !priceId) {
+                console.error("Falta invitationID o priceId");
+                return;
+            }
+
+            const response = await axios.post(
+                "https://i-attend-22z4h.ondigitalocean.app/api/payment/create-checkout",
+                {
+                    invitationId: invitationID,
+                    priceId: priceId,
+                }
+            );
+
+            // Redirigir a Stripe Checkout
+            window.open(response.data.url, "_blank");
+
+        } catch (error) {
+            console.error("Error al iniciar el pago:", error.response?.data || error.message);
+        }
+    };
 
 
 
@@ -1443,12 +1476,12 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
 
                                                                                         <span style={{ minWidth: '130px', }}>{truncate(i.name, 16)}</span>
 
-                                                                                        <div className='new-table-tag' style={{display:'flex',alignItems:'center',justifyContent:'center', minWidth:'60px'}}>
-                                                                                            <span style={{fontSize:'12px'}}>{i.tag ?? "-"}</span>
+                                                                                        <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px' }}>
+                                                                                            <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
                                                                                         </div>
 
-                                                                                        <div className={`new-table-tag state-${i.state}`} style={{display:'flex',alignItems:'center',justifyContent:'center', minWidth:'80px', opacity:'0.7'}}>
-                                                                                            <span style={{fontSize:'12px'}}>{i.state ?? "-"}</span>
+                                                                                        <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', opacity: '0.7' }}>
+                                                                                            <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
                                                                                         </div>
 
                                                                                     </div>
@@ -1483,7 +1516,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                 onClick={() => setActiveTickets(true)}
                                 // onClick={() => setOnBubble(true)}
                                 onMouseEnter={() => setOnTickets(true)} onMouseLeave={() => setOnTickets(false)}
-                                style={{ bottom: '2%', right: '1.4%', maxHeight: '220px', borderRadius: activeTickets && '16px',  }}
+                                style={{ bottom: '2%', right: '1.4%', maxHeight: '220px', borderRadius: activeTickets && '16px', }}
                                 className={`tickets_button ${activeTickets ? 'tickets_button_active' : ''}`}>
                                 {!activeTickets && (
                                     <>
@@ -1541,7 +1574,43 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                                             <span><b>¿Qué son los créditos?</b></span>
                                                             <span>Cada invitación enviada usa 1 crédito y puedes recargar cuando lo necesites.</span>
 
-                                                            <Button icon={<FaCoins />} type='primary' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar credtios</Button>
+                                                            <Dropdown
+                                                                trigger={['click']}
+                                                                placement='topRight'
+                                                                arrow
+                                                                popupRender={() => (
+                                                                    <div className='credits_checkout_cont'>
+                                                                        {
+                                                                            prices.map((p, index) => {
+
+                                                                                if (p.productName === 'PRO' || p.productName === 'Lite' || p.productName === 'Paperless' || p.productName === 'TEST' || p.productName === 'credito') {
+                                                                                    return null
+                                                                                }
+                                                                                return (
+                                                                                    <div key={index} className='price_row'>
+                                                                                        <div className='image_price'>
+                                                                                            <img src={`/images/c_${p.amount}.png`} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                                        </div>
+                                                                                        {/* <div className='price_col'> */}
+                                                                                        <span style={{ minWidth: '120px' }}>{p.productName}</span>
+                                                                                        <span style={{ minWidth: '100px' }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
+
+                                                                                        {/* </div> */}
+
+                                                                                        <Button icon={<LuShoppingCart />} type='primary' onClick={() => handleCheckout(p.priceId)} > Comprar</Button>
+                                                                                    </div>
+                                                                                )
+                                                                            }
+
+
+                                                                            )
+                                                                        }
+
+                                                                    </div>
+                                                                )}
+                                                            >
+                                                                <Button icon={<FaCoins />} type='primary' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar credtios</Button>
+                                                            </Dropdown>
                                                         </div>
 
                                                     </div>
