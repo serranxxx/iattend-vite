@@ -9,6 +9,7 @@ import { AdminPage } from '../pages/Admin/AdminPage'
 import { FeaturesPage } from '../pages/FeatruesPage'
 import { LegalPage } from '../pages/Extras/Legal/LegalPage'
 import { LinkTree } from '../pages/Extras/LinkTree/LinkTree'
+import { Success } from '../pages/Success/Success'
 
 
 
@@ -25,6 +26,7 @@ export const AppRouter = () => {
       <Route path="/linktree" element={<LinkTree />} />
       <Route path="/legal" element={<LegalPage />} />
       <Route path="/*" element={<PageNotFound />} />
+      <Route path="/dashboard/success" element={<Success />} />
 
 
       <Route path="/admin"

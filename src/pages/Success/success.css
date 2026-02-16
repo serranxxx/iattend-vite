@@ -1,0 +1,33 @@
+.success_cont {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+    height: 100vh;
+    gap: 36px;
+    font-size: 62px;
+    font-family: 'Poppins';
+    font-weight: 600;
+    line-height: 1.2;
+    background-image: linear-gradient(to top, #FFF, var(--brand-color-500));
+}
+
+.loop_1 {
+    z-index: 0;
+    /* width: 100%; */
+    bottom: 0;
+    transform: rotate(0deg
+    );
+    position: fixed;
+}
+
+.succes_row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+    z-index: 2;
+    align-self: stretch;
+}

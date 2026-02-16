@@ -6,7 +6,7 @@ import { NewGuestDrawer } from '../../components/Create/NewGuestDrawer';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoMdAdd, } from 'react-icons/io';
 import { FooterApp } from '../Footer/FooterApp';
 import { supabase } from '../../lib/supabase';
-import { FaChair, FaCheck, FaPaperPlane, FaPlus, FaRegClock, FaRegCopy, } from 'react-icons/fa';
+import { FaChair, FaCheck, FaCoins, FaPaperPlane, FaPlus, FaRegClock, FaRegCopy, } from 'react-icons/fa';
 import { AiOutlineClockCircle, } from 'react-icons/ai';
 import { FiArrowUpRight, FiMinus } from 'react-icons/fi';
 import { NotificationCard } from '../../components/NotificationCard/NotificationCard';
@@ -17,7 +17,7 @@ import axios from 'axios';
 import { TbLocationFilled } from 'react-icons/tb';
 import { GoChevronDown } from 'react-icons/go';
 import { BsArrowReturnRight } from 'react-icons/bs';
-import { LuSettings2 } from 'react-icons/lu';
+import { LuRefreshCcw, LuSettings2, LuShoppingCart } from 'react-icons/lu';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { type } from '@testing-library/user-event/dist/type';
@@ -74,6 +74,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
     const [expandedRowKeys, setExpandedRowKeys] = useState([]);
     const [credits, setCredits] = useState(0)
     const [activeKey, setActiveKey] = useState('confirmado');
+    const [prices, setPrices] = useState([])
 
 
 
@@ -1285,6 +1286,14 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         }
     }
 
+    const fetchPrices = async () => {
+        const res = await axios.get(
+            "https://i-attend-22z4h.ondigitalocean.app/api/payment/prices"
+        );
+        console.log('products: ', res.data)
+        setPrices(res.data);
+    };
+
     useEffect(() => {
         if (supabase) {
             const channel = supabase
@@ -1344,6 +1353,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
             getTickets()
             getNotifications()
             getType()
+            fetchPrices()
             getTables()
         }
     }, [invitationID])
@@ -1373,6 +1383,34 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
             setOnEditTickets(false)
         }
     }, [onShare])
+
+
+
+
+
+
+    const handleCheckout = async (priceId) => {
+        try {
+            if (!invitationID || !priceId) {
+                console.error("Falta invitationID o priceId");
+                return;
+            }
+
+            const response = await axios.post(
+                "https://i-attend-22z4h.ondigitalocean.app/api/payment/create-checkout",
+                {
+                    invitationId: invitationID,
+                    priceId: priceId,
+                }
+            );
+
+            // Redirigir a Stripe Checkout
+            window.open(response.data.url, "_blank");
+
+        } catch (error) {
+            console.error("Error al iniciar el pago:", error.response?.data || error.message);
+        }
+    };
 
 
 
@@ -1716,6 +1754,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
                                             <div className='edit-tickets-dash'>
                                                 <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                                     <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Creditos</span>
+                                                    <Button onClick={getType} icon={<LuRefreshCcw />}>Actualizar</Button>
 
                                                 </div>
 
@@ -1740,7 +1779,45 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
                                                         <span><b>¿Qué son los créditos?</b></span>
                                                         <span>Cada invitación enviada usa 1 crédito y puedes recargar cuando lo necesites.</span>
 
-                                                        {/* <Button icon={<FaCoins />} type='primary' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar credtios</Button> */}
+                                                        <Dropdown
+                                                            trigger={['click']}
+                                                            placement='topRight'
+                                                            arrow
+                                                            popupRender={() => (
+                                                                <div className='credits_checkout_cont'>
+                                                                    {
+                                                                        prices.map((p, index) => {
+
+                                                                            if (p.productName === 'PRO' || p.productName === 'Lite' || p.productName === 'Paperless' || p.productName === 'TEST' || p.productName === 'credito') {
+                                                                                return null
+                                                                            }
+                                                                            return (
+                                                                                <div key={index} className='price_row'>
+                                                                                    <div className='image_price'>
+                                                                                        <img src={`/images/c_${p.amount}.png`} alt='' style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                                                                                    </div>
+                                                                                    {/* <div className='price_col'> */}
+                                                                                    <span style={{minWidth:'120px'}}>{p.productName}</span>
+                                                                                    <span style={{minWidth:'100px'}}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
+
+                                                                                    {/* </div> */}
+
+                                                                                    <Button icon={<LuShoppingCart />} type='primary' onClick={() => handleCheckout(p.priceId)} > Comprar</Button>
+                                                                                </div>
+                                                                            )
+                                                                        }
+
+
+                                                                        )
+                                                                    }
+
+                                                                </div>
+                                                            )}
+                                                        >
+                                                            <Button icon={<FaCoins />} type='primary' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar credtios</Button>
+                                                        </Dropdown>
+                                                        {/* onClick={() => handleCheckout('price_1T1DRoAAdNlITNVbLwiUVWAj')} */}
+
                                                     </div>
 
                                                 </div>
@@ -1753,7 +1830,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
                             }
                         </div>
                     </Tooltip>
-                </Layout>
+                </Layout >
 
                 <div
                     style={{
