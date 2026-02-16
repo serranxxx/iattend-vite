@@ -9,7 +9,7 @@ import { PiDress, PiHandWaving } from 'react-icons/pi'
 import { RiParentLine } from 'react-icons/ri'
 import { FiFeather } from 'react-icons/fi'
 import { FaTasks } from 'react-icons/fa'
-import { LuNewspaper } from 'react-icons/lu'
+import { LuClipboardList, LuFeather, LuFrame, LuGift, LuHeartHandshake, LuImage, LuMapPin, LuNewspaper, LuSettings, LuShirt, LuUsers } from 'react-icons/lu'
 import { GrGallery } from 'react-icons/gr'
 import { HeaderDashboard } from '../../../Header/Header'
 import { ButtonsMenu } from './ButtonsMenu'
@@ -20,12 +20,12 @@ import { load } from '../../../../helpers/assets/images'
 export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared_user }) => {
 
 
-    const size = 20
+    const size = 18
     const styleIcon = {
     }
     const buttons = [
         {
-            icon: <IoSettingsOutline size={size} style={styleIcon} />,
+            icon: <LuSettings size={size} style={styleIcon} />,
             action: null,
             name: 'Generales',
             type: 'generals',
@@ -34,7 +34,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 0,
         },
         {
-            icon: <MdFullscreen size={size} style={styleIcon} />,
+            icon: <LuFrame size={size} style={styleIcon} />,
             action: null,
             name: 'Portada',
             type: 'cover',
@@ -43,7 +43,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 0,
         },
         {
-            icon: <PiHandWaving size={size} style={styleIcon} />,
+            icon: <LuHeartHandshake size={size} style={styleIcon} />,
             action: null,
             name: 'Bienvenida',
             type: 'greeting',
@@ -52,7 +52,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 1,
         },
         {
-            icon: <RiParentLine size={size} style={styleIcon} />,
+            icon: <LuUsers size={size} style={styleIcon} />,
             action: null,
             name: 'Personas',
             type: 'family',
@@ -61,7 +61,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 2,
         },
         {
-            icon: <FiFeather size={size} style={styleIcon} />,
+            icon: <LuFeather size={size} style={styleIcon} />,
             action: null,
             name: 'Cita',
             type: 'quote',
@@ -70,7 +70,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 3,
         },
         {
-            icon: <FaTasks size={size} style={styleIcon} />,
+            icon: <LuClipboardList size={size} style={styleIcon} />,
             action: null,
             name: 'Itinerario',
             type: 'itinerary',
@@ -79,7 +79,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 4,
         },
         {
-            icon: <PiDress size={size} style={styleIcon} />,
+            icon: <LuShirt size={size} style={styleIcon} />,
             action: null,
             name: 'Dresscode',
             type: 'dresscode',
@@ -88,7 +88,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 5,
         },
         {
-            icon: <MdCardGiftcard size={size} style={styleIcon} />,
+            icon: <LuGift size={size} style={styleIcon} />,
             action: null,
             name: 'Regalos',
             type: 'gifts',
@@ -97,7 +97,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 6,
         },
         {
-            icon: <MdOutlineBeachAccess size={size} style={styleIcon} />,
+            icon: <LuMapPin size={size} style={styleIcon} />,
             action: null,
             name: 'Destinos',
             type: 'destinations',
@@ -115,7 +115,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             index: 8,
         },
         {
-            icon: <GrGallery size={size} style={styleIcon} />,
+            icon: <LuImage size={size} style={styleIcon} />,
             action: null,
             name: 'Galería',
             type: 'gallery',
