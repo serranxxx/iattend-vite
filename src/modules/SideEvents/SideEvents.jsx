@@ -13,6 +13,7 @@ import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
+import { handleCheckout } from '../../components/Payment/functions'
 
 
 const { Option } = Select;
@@ -794,6 +795,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         }
     }
 
+
     useEffect(() => {
         getInvitationImages(invitationID);
         getCredits()
@@ -910,7 +912,9 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                             <img 
                                             style={{width:'100%'}}
                                             src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt=''/>
-                                            <Button style={{
+                                            <Button 
+                                            onClick={() => handleCheckout(invitationID, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
+                                            style={{
                                                 fontSize:'16px', minHeight:'44px',fontWeight:400
                                             }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
                                         </div>

@@ -1,47 +1,18 @@
-import axios from 'axios';
+
 import React, { useEffect, useState } from 'react'
 import './credits.css'
 import { Button, Dropdown, Progress } from 'antd';
 import { LuChevronDown, LuCoins, LuRefreshCcw, LuShoppingCart } from 'react-icons/lu';
-import { FaCoins } from 'react-icons/fa6';
+import { fetchPrices, handleCheckout, PRODUCTS } from '../functions';
 
 export const CreditsComponent = ({ getType, credits, invitationID, isClosable, setOnClose }) => {
 
     const [prices, setPrices] = useState([])
     const [selectedItem, setSelectedItem] = useState('price_1Sx8RWAAdNlITNVbj7c85GlG')
 
-    const fetchPrices = async () => {
-        const res = await axios.get(
-            `${import.meta.env.VITE_API_URL}/api/payment/prices`
-        );
-        setPrices(res.data);
-    };
-
-    const handleCheckout = async (priceId) => {
-        try {
-            if (!invitationID || !priceId) {
-                console.error("Falta invitationID o priceId");
-                return;
-            }
-
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/payment/create-checkout`,
-                {
-                    invitationId: invitationID,
-                    priceId: priceId,
-                }
-            );
-
-            // Redirigir a Stripe Checkout
-            window.open(response.data.url, "_blank");
-
-        } catch (error) {
-            console.error("Error al iniciar el pago:", error.response?.data || error.message);
-        }
-    };
 
     useEffect(() => {
-        fetchPrices()
+        fetchPrices(setPrices)
     }, [])
 
 
@@ -89,24 +60,26 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                                     {
                                         prices.map((p, index) => {
 
-                                            if (p.productName === 'PRO' || p.productName === 'Lite' || p.productName === 'Paperless' || p.productName === 'TEST' || p.productName === 'credito' || p.productName === 'Side Event') {
-                                                return null
+                                            const product = PRODUCTS[p.priceId];
+
+                                            if (product?.type === 'credits') {
+
+                                                return (
+                                                    <div key={index} className={`price_card ${selectedItem === p.priceId && 'selected_card'}`} onClick={() => setSelectedItem(p.priceId)}>
+                                                        <div className='image_price'>
+                                                            <img src={`/images/c_${p.amount}.png`} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        </div>
+
+                                                        <div className='card_col'>
+                                                            <span style={{ minWidth: '120px', fontSize: '14px', fontWeight: 400 }}>{p.productName}</span>
+                                                            <span style={{ minWidth: '100px', fontSize: '16px', fontWeight: 600 }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
+                                                        </div>
+
+
+                                                        {/* <Button icon={<LuShoppingCart />} type='primary' onClick={() => handleCheckout(p.priceId)} > Comprar</Button> */}
+                                                    </div>
+                                                )
                                             }
-                                            return (
-                                                <div key={index} className={`price_card ${selectedItem === p.priceId && 'selected_card'}`} onClick={() => setSelectedItem(p.priceId)}>
-                                                    <div className='image_price'>
-                                                        <img src={`/images/c_${p.amount}.png`} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                    </div>
-
-                                                    <div className='card_col'>
-                                                        <span style={{ minWidth: '120px', fontSize: '14px', fontWeight: 400 }}>{p.productName}</span>
-                                                        <span style={{ minWidth: '100px', fontSize: '16px', fontWeight: 600 }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
-                                                    </div>
-
-
-                                                    {/* <Button icon={<LuShoppingCart />} type='primary' onClick={() => handleCheckout(p.priceId)} > Comprar</Button> */}
-                                                </div>
-                                            )
                                         }
 
 
@@ -114,7 +87,7 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                                     }
 
                                 </div>
-                                <Button style={{width:'100%', fontSize:'16px', minHeight:'44px'}} icon={<LuShoppingCart />} onClick={() => handleCheckout(selectedItem)}  type='primary'>Comprar</Button>
+                                <Button style={{ width: '100%', fontSize: '16px', minHeight: '44px' }} icon={<LuShoppingCart />} onClick={() => handleCheckout(invitationID, selectedItem)} type='primary'>Comprar</Button>
 
                             </div>
                         )}
