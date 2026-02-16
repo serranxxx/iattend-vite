@@ -724,12 +724,12 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                 <span className={'module--title'}
                                 >Imagen</span>
 
-                                {
+                                {/* {
                                     invitation.cover.image.dev &&
                                     <Button
                                         onClick={() => setSettingsModal(true)}
                                         icon={<TbArrowsMove />} className='primarybutton'>Editar posición</Button>
-                                }
+                                } */}
 
 
                             </div>
