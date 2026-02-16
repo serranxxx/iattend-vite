@@ -174,8 +174,7 @@ export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_use
                                 </div>
                             </div>
 
-                            {
-                                plan === 'pro' || plan ==- 'lite' &&
+                        
                                 <div className='side_events_dash' style={{
                                     // maxHeight: screens.xs ? '180px' : undefined
                                 }}>
@@ -187,7 +186,7 @@ export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_use
                                         {/* <img alt='/images/loop2.svg' style={{ objectFit: 'cover', width: '100%', height: '100%'}} /> */}
                                     </div>
                                 </div>
-                            }
+                         
                         </div>
 
 
