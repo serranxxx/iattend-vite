@@ -14,6 +14,7 @@ import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import { handleCheckout } from '../../components/Payment/functions'
+import { useSearchParams } from 'react-router-dom'
 
 
 const { Option } = Select;
@@ -21,7 +22,7 @@ const { Option } = Select;
 
 
 
-export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID }) => {
+export const SideEvents = () => {
     const [sideEvent, setsideEvent] = useState(null)
     const [open, setOpen] = useState(false)
     const [current, setCurrent] = useState(null)
@@ -38,6 +39,8 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
     const [onBubble, setOnBubble] = useState(false)
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
+    const [searchParams] = useSearchParams();
+    const id = searchParams.get("id");
     const { TextArea } = Input;
 
     const columns = useMemo(() => ([
@@ -445,7 +448,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         const { data, error } = await supabase
             .from('side_events')
             .select('*')
-            .eq('invitation_id', invitationID)
+            .eq('invitation_id', id)
 
         if (error) {
             console.error(error)
@@ -459,7 +462,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         const { data, error } = await supabase
             .from('invitations')
             .select('credits, plan')
-            .eq('id', invitationID)
+            .eq('id', id)
             .maybeSingle()
 
         if (error) {
@@ -506,7 +509,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
             // 2. Subir
             const imageUrl = await uploadInvitationImage({
                 file: file,
-                invitationID,
+                id,
             });
 
             // 3. Guardar en estado
@@ -519,7 +522,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
             }));
 
             onSuccess();
-            getInvitationImages(invitationID)
+            getInvitationImages(id)
             console.log('Imagen subida correctamente');
         } catch (err) {
             console.error(err);
@@ -575,7 +578,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         const { data, error } = await supabase
             .from('side_events')
             .insert({
-                invitation_id: invitationID, // uuid
+                invitation_id: id, // uuid
                 date: new Date().toISOString(), // timestamp
                 name: null,
                 body: {
@@ -674,7 +677,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
             const { data, error } = await supabase
                 .from("guests")
                 .select("*")
-                .eq("invitation_id", invitationID)
+                .eq("invitation_id", id)
 
             if (error) {
                 console.error("Error al obtener invitaciones:", error);
@@ -737,7 +740,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         const { data, error } = await supabase
             .from('invitations')
             .select('credits')
-            .eq('id', invitationID)
+            .eq('id', id)
             .maybeSingle()
 
         if (error) {
@@ -765,7 +768,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
         const { data: updateCredits, error: updateError } = await supabase
             .from('invitations')
             .update({ credits: newCredits })
-            .eq('id', invitationID)
+            .eq('id', id)
             .select()
 
         if (updateError) {
@@ -796,11 +799,13 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
     }
 
 
+
+
     useEffect(() => {
-        getInvitationImages(invitationID);
+        getInvitationImages(id);
         getCredits()
         getSideEvents()
-    }, [invitationID])
+    }, [id])
 
 
     useEffect(() => {
@@ -871,7 +876,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                     backgroundColor: 'var(--ft-color)',
                     width: '100%',
                 }}>
-                <HeaderDashboard setMode={setMode} mode={mode} setOnQR={setOnQR} invitation={invitation} />
+                <HeaderDashboard mode={'side'} />
                 <Layout className='build-invitation-layout' style={{
                     padding: '24px', paddingTop: '0px',
                     marginTop: '65px', paddingBottom: '24px', position: 'relative',
@@ -913,7 +918,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                             style={{width:'100%'}}
                                             src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt=''/>
                                             <Button 
-                                            onClick={() => handleCheckout(invitationID, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
+                                            onClick={() => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
                                             style={{
                                                 fontSize:'16px', minHeight:'44px',fontWeight:400
                                             }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
@@ -1262,7 +1267,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
 
                                                     <Select
 
-                                                        value={current?.body?.title?.font ?? invitation?.generals?.fonts?.body?.typeFace}
+                                                        value={current?.body?.title?.font }
                                                         onChange={(e) => setCurrent((prev) => ({
                                                             ...prev, body: {
                                                                 ...prev.body, title: {
@@ -1521,7 +1526,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
                                         <div onClick={(e) => e.stopPropagation()} className='active_tickets_cont' style={{position:'relative'}}>
                                             
 
-                                            <CreditsComponent getType={getCredits} credits={credits} invitationID={invitationID} isClosable={true} setOnClose={setActiveTickets}/>
+                                            <CreditsComponent getType={getCredits} credits={credits} invitationID={id} isClosable={true} setOnClose={setActiveTickets}/>
                                             
                                         </div>
                                     )
@@ -1534,7 +1539,7 @@ export const SideEvents = ({ setMode, mode, setOnQR, invitation, invitationID })
 
                 </Layout >
 
-                <CreateGuest sideID={current?.id} setOnCreate={setOnCreate} onCreate={onCreate} invitationID={invitationID} getGuests={getGuests} />
+                <CreateGuest sideID={current?.id} setOnCreate={setOnCreate} onCreate={onCreate} invitationID={id} getGuests={getGuests} />
             </Layout >
         </>
     )

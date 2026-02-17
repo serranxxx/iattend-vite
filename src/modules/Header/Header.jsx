@@ -1,17 +1,12 @@
 
-import { Button, Popconfirm, Row, Tooltip, message } from "antd"
-import { useContext, useEffect, useState } from "react"
-import { Link } from "react-router-dom"
+import { Breadcrumb, Button, Popconfirm, Row, Tooltip, message } from "antd"
+import { useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { Link, useSearchParams } from "react-router-dom"
 import { appContext } from "../../context"
-import { Footer } from "antd/es/layout/layout"
 import { useNavigate } from 'react-router-dom';
-import { LuArrowBigUpDash, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuPhone, LuShield, LuShieldCheck, } from "react-icons/lu"
-import { IoClose, IoPricetags, IoPricetagsOutline } from "react-icons/io5"
-import { BsClipboard, BsClipboardFill } from "react-icons/bs"
-import { FaWhatsapp } from "react-icons/fa"
-import { GoArrowLeft } from "react-icons/go"
-import { MdKeyboardArrowRight } from "react-icons/md"
-import { BiSupport } from "react-icons/bi"
+import { LuArrowBigUpDash, LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuPhone, LuShield, LuShieldCheck, } from "react-icons/lu"
+import { IoClose, } from "react-icons/io5"
+import { supabase } from "../../lib/supabase";
 
 
 const baseProd = "https://www.iattend.events"
@@ -224,344 +219,249 @@ export const HeaderBuild = ({ position, isVisible }) => {
         </>
     )
 }
+export const HeaderDashboard = ({ saved, mode, onSaveChanges }) => {
 
-export const FooterMobile = ({ position, isVisible }) => {
-    const [setIsScrollTop] = useState(false);
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const id = searchParams.get("id");
+    const sessionId = searchParams.get("session_id");
+    const canceled = searchParams.get("canceled");
+
+    const [messageApi, contextHolder] = message.useMessage();
+    const [invitation, setInvitation] = useState(null)
+    const [plan, setPlan] = useState(null)
+
+    const isEditing = mode === "edit" || mode === "on-edit";
+    const hasUnsavedChanges = isEditing && !saved;
+
+    const getInvitation = async () => {
+
+        const { data, error } = await supabase
+            .from("invitations")
+            .select("data, plan")
+            .eq("id", id)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Error al obtener invitaciones:", error);
+        } else {
+            setInvitation(data.data)
+            setPlan(data.plan)
+        }
+    }
+
+    /* ========================
+       HELPERS
+    ======================== */
+
+    const copyToClipboard = useCallback(async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            message.success("Link copiado");
+        } catch (err) {
+            console.error("Error al copiar:", err);
+        }
+    }, []);
+
+    const handleBack = useCallback(() => {
+        if (mode === 'dashboard') {
+            navigate('/invitations');
+        } else {
+            navigate(-1);
+        }
+
+    }, [navigate]);
+
+    const goToDashboard = useCallback(() => {
+        navigate(`/dashboard?id=${id}`);
+    }, [navigate, id]);
+
+    const goToInvitations = useCallback(() => {
+        navigate("/invitations");
+    }, [navigate]);
+
+    /* ========================
+       BREADCRUMB ITEMS
+    ======================== */
+
+    const breadcrumbItems = useMemo(() => {
+        if (!invitation) return [];
+
+        const confirmWrapper = (node, action) =>
+            hasUnsavedChanges ? (
+                <Popconfirm
+                    title="Salir sin guardar"
+                    description="Tienes cambios sin guardar. Si sales ahora, se perderán."
+                    onConfirm={action}
+                    okText="Salir"
+                    cancelText="Cancelar"
+                >
+                    {node}
+                </Popconfirm>
+            ) : (
+                node
+            );
+
+        const items = [
+            {
+                title: confirmWrapper(
+                    <span style={{ cursor: "pointer" }} onClick={goToInvitations}>
+                        Mis invitaciones
+                    </span>,
+                    goToInvitations
+                )
+            },
+            {
+                title: confirmWrapper(
+                    <span style={{ cursor: "pointer" }} onClick={goToDashboard}>
+                        {invitation?.cover?.title?.text?.value}
+                    </span>,
+                    goToDashboard
+                )
+            }
+        ];
+
+        const modeMap = {
+            side: "Side events",
+            edit: "Paperless",
+            guests: "Guest management",
+            "on-dashboard-guests": "Mis invitados"
+        };
+
+        if (modeMap[mode]) {
+            items.push({ title: modeMap[mode] });
+        }
+
+        return items;
+    }, [
+        invitation,
+        mode,
+        hasUnsavedChanges,
+        goToDashboard,
+        goToInvitations
+    ]);
 
 
     useEffect(() => {
-        if (position === 'land-page') {
-            const handleScroll = () => {
-                if (window.scrollY >= 0 && window.scrollY <= 100) {
-                    setIsScrollTop(false);
-                } else {
-                    setIsScrollTop(false);
-                }
-            };
+        if (sessionId) {
+            messageApi.success("Tu compra se realizó con éxito 🎉");
+            console.log("Tu compra se realizó con éxito 🎉")
 
-            window.addEventListener('scroll', handleScroll);
-
-            // Limpiar el event listener al desmontar el componente
-            return () => {
-                window.removeEventListener('scroll', handleScroll);
-            };
+            searchParams.delete("session_id");
+            setSearchParams(searchParams, { replace: true });
         }
 
-    }, []);
+        if (canceled === "true") {
+            messageApi.warning("El pago fue cancelado");
+            console.log("El pago fue cancelado");
 
-
-    const navItems = [
-
-        {
-            name: 'Tablero',
-            icon: BsClipboard,
-            selected: BsClipboardFill,
-            path: "/invitations",
-            position: "invitations"
-        },
-
-        {
-            name: 'Precios',
-            icon: IoPricetagsOutline,
-            selected: IoPricetags,
-            path: "/features",
-            position: "pricing"
-        },
-        {
-            name: 'Contacto',
-            icon: FaWhatsapp,
-            selected: FaWhatsapp,
-            path: 'https://wa.me/6145394836',
-            position: 'contact'
+            searchParams.delete("canceled");
+            setSearchParams(searchParams, { replace: true });
         }
+    }, [sessionId, canceled]);
+
+    useEffect(() => {
+        if (id) {
+            getInvitation(id)
+        }
+    }, [id])
 
 
-    ]
 
+    /* ========================
+       RENDER
+    ======================== */
 
     return (
-        <Footer className="footer-main-container" style={{
-            opacity: isVisible ? 1 : 0,
-            transition: 'all 0.5s ease'
-        }}>
+        <>
+            {contextHolder}
+            <div className="header-dashboard-main-container" style={{ justifyContent: "flex-start" }}>
+                <div className="header-dashboard-container">
 
+                    {/* LEFT SIDE */}
+                    <div className="header-dashboard-single-row">
 
-            <Row style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexDirection: 'row', width: '100%', gap: '10px'
-            }}>
-                {
-                    navItems.map((item, index) => (
-                        <Link key={index} to={item.path} >
-                            <div key={index}
-                                className={`nav-item-col ${item.position === position ? '--selected' : ''}`}>
-                                {
-                                    item.position === position ? <item.selected className="nav-item-icon-selec" />
-                                        : <item.icon className="nav-item-icon" />
-                                }
-                                <p className="nav-item-label">{item.name}</p>
-                            </div>
-                        </Link>
-
-                    ))
-                }
-            </Row>
-
-        </Footer >
-    )
-}
-
-export const HeaderDashboard = ({ saved, invitation, setMode, mode, onSaveChanges }) => {
-
-    const navigate = useNavigate();
-
-
-    const copyToClipboard = async (textToCopy) => {
-        try {
-            await navigator.clipboard.writeText(textToCopy);
-            message.success('Link copiado')
-        } catch (err) {
-            console.error('Error al copiar el texto: ', err);
-        }
-    };
-
-    const handleBack = () => {
-        switch (mode) {
-            case 'on-dashboard':
-                navigate('/invitations');
-                break;
-
-            case 'on-edit':
-                setMode('on-dashboard');
-                break;
-
-            case 'side-events':
-                setMode('on-dashboard');
-                break;
-
-            case 'on-dashboard-guests':
-                setMode('on-dashboard');
-                break;
-
-            default:
-                console.warn(`Modo no reconocido: ${mode}`);
-                break;
-        }
-    };
-
-    return (
-        <div className="header-dashboard-main-container" style={{ justifyContent: 'flex-start' }}>
-            <div className="header-dashboard-container">
-                <div className="header-dashboard-single-row">
-                    {
-                        !saved && mode === "on-edit" ?
+                        {hasUnsavedChanges ? (
                             <Popconfirm
                                 title="Salir sin guardar"
-                                description="Tienes cambios sin guardar. Si sales ahora, todos los cambios se perderán. ¿Estás seguro de que deseas continuar?"
+                                description="Tienes cambios sin guardar. ¿Deseas salir?"
                                 onConfirm={handleBack}
-                                placement="bottomLeft"
                                 okText="Salir"
                                 cancelText="Cancelar"
-                                style={{ width: '400px' }}
-                                id="popup-confirm"
                             >
-                                <Button type="ghost" className="headerbutton" icon={<GoArrowLeft size={14} style={{ marginTop: '1px' }} />}></Button>
-                            </Popconfirm> :
+                                <Button
+                                    type="ghost"
+                                    className="headerbutton"
+                                    icon={<LuArrowLeft size={14} />}
+                                />
+                            </Popconfirm>
+                        ) : (
                             <Button
                                 onClick={handleBack}
-                                type="ghost" className="headerbutton" icon={<GoArrowLeft size={14} style={{ marginTop: '1px' }} />}></Button>
-                    }
+                                type="ghost"
+                                className="headerbutton"
+                                icon={<LuArrowLeft size={14} />}
+                            />
+                        )}
 
-                    <Button onClick={() => copyToClipboard(`${baseProd}/${invitation.generals.event.label}/${invitation.generals.event.name}`)} type="ghost" className="primarybutton--active" style={{ maxHeight: '25px', padding: '0px 12px', marginLeft: '4px' }} icon={<LuLink size={12} style={{ marginTop: '1px' }} />}>Copiar link</Button>
-
-                    {
-                        invitation &&
-                        <div className="header-dashboard-single-row" style={{
-                            marginLeft: '8px', gap: '8px', borderLeft: '1px solid var(--borders)',
-                            paddingLeft: '8px'
-                        }}>
-                            {
-                                // !shared_user?.active &&
-                                <div className="header-dashboard-single-row" style={{
-                                    gap: '8px'
-                                }}>
-                                    {
-                                        !saved && mode === "on-edit" ?
-                                            <Popconfirm
-                                                title="Salir sin guardar"
-                                                description="Tienes cambios sin guardar. Si sales ahora, todos los cambios se perderán. ¿Estás seguro de que deseas continuar?"
-                                                onConfirm={() => navigate('/invitations')}
-                                                placement="bottomLeft"
-                                                okText="Salir"
-                                                cancelText="Cancelar"
-                                                style={{ width: '400px' }}
-                                                id="popup-confirm"
-                                            >
-                                                <span className="navbar-item-label">Mis invitaciones</span>
-                                            </Popconfirm> :
-                                            <span className="navbar-item-label" onClick={() => navigate('/invitations')}>Mis invitaciones</span>
-                                    }
-
-                                    <span className="navbar-item-label"><MdKeyboardArrowRight style={{ marginTop: '3px' }} /></span>
-                                </div>
+                        <Button
+                            onClick={() =>
+                                copyToClipboard(
+                                    `${baseProd}/${invitation?.generals?.event?.label}/${invitation?.generals?.event?.name}`
+                                )
                             }
+                            type="ghost"
+                            className="primarybutton--active"
+                            style={{ maxHeight: 25, padding: "0px 12px", marginLeft: 4 }}
+                            icon={<LuLink size={12} />}
+                        >
+                            Copiar link
+                        </Button>
 
-                            {
-                                !saved && mode === "on-edit" ?
-                                    <Popconfirm
-                                        title="Salir sin guardar"
-                                        description="Tienes cambios sin guardar. Si sales ahora, todos los cambios se perderán. ¿Estás seguro de que deseas continuar?"
-                                        onConfirm={() => setMode('on-dashboard')}
-                                        placement="bottomLeft"
-                                        okText="Salir"
-                                        cancelText="Cancelar"
-                                        style={{ width: '400px' }}
-                                        id="popup-confirm"
-                                    >
-                                        <span className="navbar-item-label" >{invitation?.cover?.title?.text?.value}</span>
-                                    </Popconfirm> :
-                                    <span className="navbar-item-label" onClick={() => setMode('on-dashboard')} >{invitation?.cover?.title?.text?.value}</span>
-                            }
+                        <Breadcrumb style={{ marginLeft: 8 }} items={breadcrumbItems} />
+                    </div>
 
+                    {/* RIGHT SIDE */}
+                    <div className="header-dashboard-single-row" style={{ gap: 8 }}>
 
-                            {
-                                mode === 'side-events' ?
-                                    <div className="header-dashboard-single-row" style={{
-                                        gap: '8px'
-                                    }}>
-                                        <span className="navbar-item-label"><MdKeyboardArrowRight style={{ marginTop: '3px' }} /></span>
-                                        <span className="navbar-item-label" >Side events</span>
-                                    </div>
-                                    :
-                                    mode === 'on-edit' ?
-                                        <div className="header-dashboard-single-row" style={{
-                                            gap: '8px'
-                                        }}>
-                                            <span className="navbar-item-label"><MdKeyboardArrowRight style={{ marginTop: '3px' }} /></span>
-                                            <span className="navbar-item-label" >Paperless</span>
-                                        </div>
-                                        : mode === 'dashboard' ?
-                                            <div className="header-dashboard-single-row" style={{
-                                                gap: '8px'
-                                            }}>
-                                                <span className="navbar-item-label"><MdKeyboardArrowRight style={{ marginTop: '3px' }} /></span>
-                                                <span className="navbar-item-label" >Guest management</span>
-                                            </div>
-                                            :
-                                            mode === 'on-dashboard-guests' &&
-                                            <div className="header-dashboard-single-row" style={{
-                                                gap: '8px'
-                                            }}>
-                                                <span className="navbar-item-label"><MdKeyboardArrowRight style={{ marginTop: '3px' }} /></span>
-                                                <span onClick={() => setMode('dashboard')} className="navbar-item-label" >Mis Invitados</span>
-                                            </div>
+                        <img src={`/images/plan_${plan}.png`} alt="" style={{maxHeight:'30px', borderRadius:'8px', boxShadow:'0px 0px 8px rgba(0,0,0,0.2)'}}/>
 
-                            }
-                        </div>
-                    }
+                        <Link to="https://wa.me/6145338500" target="_blank">
+                            <Button  icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
+                                ¿Necesitas ayuda?
+                            </Button>
+                        </Link>
 
-                </div>
-
-                <div className="header-dashboard-single-row" style={{
-                    gap: '8px'
-                }}>
-
-                    <Link to="https://wa.me/6145338500" target='_blank' >
-                        <Button className="need-help-button" type="ghost" icon={<BiSupport />}>¿Necesitas ayuda?</Button>
-                    </Link>
-
-                    {
-                        (mode === 'dashboard' || mode === 'responses' || mode === 'table') ?
-                            <></>
-                            : mode === 'on-edit' ?
-
-                                <Tooltip color="var(--gradient)" text="Publicar cambios" placement="bottomLeft">
-                                    <Button id="save-changes-button" icon={<LuArrowBigUpDash size={14} />} style={{
-                                        borderRadius: '99px', position: 'relative'
-                                    }} onClick={onSaveChanges}>Publicar
-                                        {
-                                            !saved && (
-                                                <div style={{
-                                                    position: 'absolute', top: 0, right: 0,
-                                                    height: '10px', width: '10px', borderRadius: '50px',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    backgroundColor: '#FF0033'
-                                                }} >
-                                                </div>
-                                            )
-                                        }
-                                    </Button>
-                                </Tooltip>
-                                : <></>
-                    }
-                </div>
-
-
-            </div>
-        </div>
-    )
-}
-
-export const HeaderMainDashboard = ({ invitation, setMode, mode, }) => {
-
-    const navigate = useNavigate();
-
-    const handleBack = () => {
-        switch (mode) {
-            case 'on-dashboard':
-                navigate('/invitations');
-                break;
-
-            case 'on-edit':
-                setMode('on-dashboard');
-                break;
-
-            case 'dashboard':
-                setMode('on-dashboard');
-                break;
-
-            case 'responses':
-                setMode('dashboard');
-                break;
-
-            case 'table':
-                setMode('dashboard');
-                break;
-
-            default:
-                console.warn(`Modo no reconocido: ${mode}`);
-                break;
-        }
-    };
-
-
-
-    return (
-
-        <div className="header-dashboard-main-container--main">
-            <div className="header-dashboard-container">
-                <div className="header-dashboard-single-row">
-
-                    <Button onClick={handleBack} type="ghost" className="headerbutton" icon={<GoArrowLeft size={14} style={{ marginTop: '1px' }} />}></Button>
-
-                    <div className="header-title-border" style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
-                        borderLeft: '1px solid var(--borders)',
-                        paddingLeft: '16px', gap: '8px',
-                        marginLeft: '16px'
-                    }}>
-                        <span className="navbar-item-label" style={{ display: 'flex', fontWeight: 600 }}>{invitation?.cover?.title?.text?.value}</span>
+                        {isEditing && (
+                            <Tooltip title="Publicar cambios" placement="bottomLeft">
+                                <Button
+                                    icon={<LuArrowBigUpDash size={14} />}
+                                    style={{ borderRadius: 99, position: "relative" }}
+                                    onClick={onSaveChanges}
+                                >
+                                    Publicar
+                                    {!saved && (
+                                        <div
+                                            style={{
+                                                position: "absolute",
+                                                top: 0,
+                                                right: 0,
+                                                height: 10,
+                                                width: 10,
+                                                borderRadius: 50,
+                                                backgroundColor: "#FF0033"
+                                            }}
+                                        />
+                                    )}
+                                </Button>
+                            </Tooltip>
+                        )}
 
                     </div>
                 </div>
-
-                <Link to="https://wa.me/6145394836" target='_blank' >
-                    <Button className="need-help-button" type="ghost" icon={<BiSupport />}>¿Necesitas ayuda?</Button>
-                </Link>
-
-
             </div>
-        </div>
-    )
-}
+        </>
+    );
+};
+
 

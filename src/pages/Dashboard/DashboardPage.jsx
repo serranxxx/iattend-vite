@@ -7,56 +7,26 @@ import { IoChevronForward } from 'react-icons/io5'
 import { LuCalendar, LuCalendarCheck2, LuCalendarClock } from "react-icons/lu";
 import { supabase } from '../../lib/supabase'
 import { Grid } from "antd";
-import { HeaderMainDashboard } from '../../modules/Header/Header'
+import { HeaderDashboard } from '../../modules/Header/Header'
 import { load } from '../../helpers/assets/images'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const { useBreakpoint } = Grid;
 
 
-export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_user }) => {
+export const DashboardPage = () => {
 
 
     const [confirmed, setConfirmed] = useState(0)
     const [waiting, setWaiting] = useState(0)
     const [available, setAvailable] = useState(0)
+    const [invitation, setInvitation] = useState(null)
     const [plan, setPlan] = useState(null)
     const screens = useBreakpoint();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
-    const getGuests = async (invitation_id) => {
-
-        // 1️⃣ Obtener invitación
-        const { data: invitation, error } = await supabase
-            .from("invitations")
-            .select("id, tickets, plan")
-            .eq("id", invitation_id)
-            .single();
-
-        if (error || !invitation) {
-            console.error("Error al obtener invitación:", error);
-            return;
-        }
-
-        setPlan(invitation?.plan)
-
-        // 2️⃣ Obtener invitados
-        const { data: guests, error: guestsError } = await supabase
-            .from("guests")
-            .select("*")
-            .eq("invitation_id", invitation_id);
-
-        if (guestsError) {
-            console.error("Error al obtener invitados:", guestsError);
-            return;
-        }
-        // 3️⃣ Filtrar estados
-        const conf = guests.filter(g => g.state === "confirmado").length;
-        const wait = guests.filter(g => g.state === "esperando").length;
-
-        setAvailable(invitation.tickets - (conf + wait))
-        setConfirmed(conf);
-        setWaiting(wait);
-    };
-
+    const id = searchParams.get("id");
 
     const chartData = {
         labels: ['Confirmados', 'En espera', 'Disponibles'],
@@ -84,16 +54,63 @@ export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_use
         },
     };
 
+    const getData = async (invitation_id) => {
+
+        // 1️⃣ Obtener invitación
+        const { data: invitation, error } = await supabase
+            .from("invitations")
+            .select("tickets, plan, data")
+            .eq("id", invitation_id)
+            .single();
+
+        if (error || !invitation) {
+            console.error("Error al obtener invitación:", error);
+            return;
+        }
+
+        setPlan(invitation?.plan)
+        setInvitation(invitation?.data);
+
+        // 2️⃣ Obtener invitados
+        const { data: guests, error: guestsError } = await supabase
+            .from("guests")
+            .select("*")
+            .eq("invitation_id", invitation_id);
+
+        if (guestsError) {
+            console.error("Error al obtener invitados:", guestsError);
+            return;
+        }
+        // 3️⃣ Filtrar estados
+        const conf = guests.filter(g => g.state === "confirmado").length;
+        const wait = guests.filter(g => g.state === "esperando").length;
+
+        setAvailable(invitation.tickets - (conf + wait))
+        setConfirmed(conf);
+        setWaiting(wait);
+    };
+
     useEffect(() => {
-        getGuests(invitationID)
-    }, [invitationID])
+        if (id) {
+            getData(id)
+        } else {
+            navigate("/invitations");
+        }
+    }, [id]);
+
+    const handleMoode = (path) => {
+        const params = new URLSearchParams({ id });
+        navigate(`/dashboard/${path}/?${params.toString()}`);
+    };
 
 
     return (
 
-        supaInv && plan ?
+        invitation && plan ?
             <div className='dashboard-page-container'>
-                <HeaderMainDashboard setMode={setMode} mode={mode} invitation={supaInv}  />
+
+                <HeaderDashboard mode={'dashboard'} invitation={invitation} />
+
                 <img src='/images/loop2.svg' alt='' className='loop_1' />
                 <div className='dashboard_body'>
 
@@ -110,84 +127,89 @@ export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_use
                         }}>
                             <div className='invitation_header_dash'>
                                 <span style={{ fontWeight: 600 }}>Paperless</span>
-                                <Button onClick={() => setMode('on-edit')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                <Button onClick={() => handleMoode('build')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                             </div>
 
                             <div className="dash_inv_cont">
-                                <img src={supaInv.cover.image.prod} alt='' style={{ objectFit: 'cover', width: '100%', height: '100%', opacity: '0.8', backdropFilter: 'blur(10px)' }} />
+                                <img src={invitation.cover.image.prod} alt='' style={{ objectFit: 'cover', width: '100%', height: '100%', opacity: '0.8', backdropFilter: 'blur(10px)' }} />
                             </div>
                         </div>
 
-                        <div className='single_col' style={{
-                           gap: '24px', alignSelf: 'auto'
-                        }}>
-
-                            <div className='dashboard_guests' style={{
-                                maxHeight: screens.xs ? '300px' : undefined,
-                                width: screens.xs ? '320px' : undefined,
+                        {
+                            plan !== 'paperless' &&
+                            <div className='single_col' style={{
+                                gap: '24px', alignSelf: 'auto'
                             }}>
-                                <div className='invitation_header_dash'>
-                                    <span style={{ fontWeight: 600 }}>Guest management</span>
-                                    <Button onClick={() => setMode('on-dashboard-guests')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
-                                </div>
 
-                                <div className='guests_dash_cont'>
-                                    <div className='guest_dash_row'>
+                                <div className='dashboard_guests' style={{
+                                    maxHeight: screens.xs ? '300px' : undefined,
+                                    width: screens.xs ? '320px' : undefined,
+                                }}>
+                                    <div className='invitation_header_dash'>
+                                        <span style={{ fontWeight: 600 }}>Guest management</span>
+                                        <Button onClick={() => handleMoode('guests')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                    </div>
 
-                                        {
-                                            !screens.xs &&
-                                            <div style={{width:'160px', height:'160px'}}>
-                                                <Pie data={chartData} options={options} />
-                                            </div>
-                                        }
+                                    <div className='guests_dash_cont'>
+                                        <div className='guest_dash_row'>
 
-                                        <div className='two_col_grid'>
-                                            <div className='dash_col'>
-                                                <span style={{ opacity: '0.4' }}>Confirmados</span>
-                                                <div className='dash_row'>
-                                                    <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{confirmed}</span>
-                                                    <LuCalendarCheck2 size={28} style={{ color: '#BFBFBF' }} />
+                                            {
+                                                !screens.xs &&
+                                                <div style={{ width: '160px', height: '160px' }}>
+                                                    <Pie data={chartData} options={options} />
+                                                </div>
+                                            }
+
+                                            <div className='two_col_grid'>
+                                                <div className='dash_col'>
+                                                    <span style={{ opacity: '0.4' }}>Confirmados</span>
+                                                    <div className='dash_row'>
+                                                        <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{confirmed}</span>
+                                                        <LuCalendarCheck2 size={28} style={{ color: '#BFBFBF' }} />
+                                                    </div>
+                                                </div>
+
+                                                <div className='dash_col'>
+                                                    <span style={{ opacity: '0.4' }}>Esperando</span>
+                                                    <div className='dash_row'>
+                                                        <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{waiting}</span>
+                                                        <LuCalendarClock size={28} style={{ color: '#BFBFBF' }} />
+                                                    </div>
+                                                </div>
+
+                                                <div className='dash_col'>
+                                                    <span style={{ opacity: '0.4' }}>Disponible</span>
+                                                    <div className='dash_row'>
+                                                        <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{available}</span>
+                                                        <LuCalendar size={28} style={{ color: '#BFBFBF' }} />
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div className='dash_col'>
-                                                <span style={{ opacity: '0.4' }}>Esperando</span>
-                                                <div className='dash_row'>
-                                                    <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{waiting}</span>
-                                                    <LuCalendarClock size={28} style={{ color: '#BFBFBF' }} />
-                                                </div>
-                                            </div>
 
-                                            <div className='dash_col'>
-                                                <span style={{ opacity: '0.4' }}>Disponible</span>
-                                                <div className='dash_row'>
-                                                    <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{available}</span>
-                                                    <LuCalendar size={28} style={{ color: '#BFBFBF' }} />
-                                                </div>
-                                            </div>
+
+
                                         </div>
-
-
-
-
                                     </div>
                                 </div>
-                            </div>
 
-                        
+
                                 <div className='side_events_dash' style={{
                                     // maxHeight: screens.xs ? '180px' : undefined
                                 }}>
                                     <div className='invitation_header_dash'>
                                         <span style={{ fontWeight: 600 }}>Side events</span>
-                                        <Button onClick={() => setMode('side-events')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        <Button onClick={() => handleMoode('side')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
                                     <div className="guests_dash_cont" style={{ minHeight: '80px' }}>
                                         {/* <img alt='/images/loop2.svg' style={{ objectFit: 'cover', width: '100%', height: '100%'}} /> */}
                                     </div>
                                 </div>
-                         
-                        </div>
+
+                            </div>
+                        }
+
+
 
 
                     </div>
@@ -212,7 +234,7 @@ export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_use
 
                                     </Button>
                                 </div>
-                                <img alt='' src={supaInv.cover.image.prod} />
+                                <img alt='' src={invitation.cover.image.prod} />
 
                             </div>
 
@@ -294,7 +316,7 @@ export const DashboardPage = ({ invitationID, supaInv, mode, setMode, shared_use
                     </div>
                 </div> */}
 
-                <FooterApp shared_user={shared_user}></FooterApp>
+                <FooterApp ></FooterApp>
             </div>
             :
 

@@ -27,6 +27,7 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { HiLockClosed, HiLockOpen } from 'react-icons/hi2';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
+import { useSearchParams } from 'react-router-dom';
 
 const { useBreakpoint } = Grid;
 
@@ -35,7 +36,7 @@ const { useBreakpoint } = Grid;
 
 ChartJS.register(ArcElement, Legend);
 
-export default function GuestsPage({ invitationID, setMode, mode, invitation }) {
+export default function GuestsPage() {
 
     const screens = useBreakpoint();
     const [confirmed, setConfirmed] = useState(0)
@@ -46,7 +47,6 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
     const [api, contextHolder] = notification.useNotification();
     const [onNotificationCenter, setOnNotificationCenter] = useState(false)
     const [onEditTickets, setOnEditTickets] = useState(false)
-    // const [onViewID, setOnViewID] = useState(false)
     const [drawerState, setDrawerState] = useState({
         currentGuest: null,
         onEditGuest: false,
@@ -75,6 +75,9 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
     const [expandedRowKeys, setExpandedRowKeys] = useState([]);
     const [credits, setCredits] = useState(0)
     const [activeKey, setActiveKey] = useState('confirmado');
+    const [invitation, setInvitation] = useState(null)
+    const [searchParams] = useSearchParams();
+    const id = searchParams.get("id");
 
 
     const openColumns = useMemo(() => ([
@@ -861,7 +864,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         const { error } = await supabase
             .from('invitations')
             .update({ type: newType })
-            .eq("id", invitationID)
+            .eq("id", id)
 
 
         if (error) {
@@ -907,7 +910,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         const { data, error } = await supabase
             .from('invitations')
             .update({ tickets: value })           // nuevo valor
-            .eq('id', invitationID)            // o usa .eq('mongo_id', '...') si prefieres
+            .eq('id', id)            // o usa .eq('mongo_id', '...') si prefieres
             .select('id, tickets')
             .single()
 
@@ -936,7 +939,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         const { data, error } = await supabase
             .from("guests")
             .select("*")
-            .eq("invitation_id", invitationID)
+            .eq("invitation_id", id)
 
         if (error) {
             console.error("Error al obtener invitaciones:", error);
@@ -953,14 +956,15 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
 
         const { data, error } = await supabase
             .from("invitations")
-            .select("tickets")
-            .eq("id", invitationID)
+            .select("tickets, data")
+            .eq("id", id)
             .maybeSingle();
 
         if (error) {
             console.error("Error al obtener invitaciones:", error);
         } else {
             setTickets(data.tickets)
+            setInvitation(data.data)
         }
     }
 
@@ -984,7 +988,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         const { data, error } = await supabase
             .from('guests')
             .select('*')
-            .eq('invitation_id', invitationID)
+            .eq('invitation_id', id)
             .order('last_update_date', { ascending: false }) // 👈 ordena descendente
 
         if (error) {
@@ -1001,7 +1005,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         const { data, error } = await supabase
             .from('invitations')
             .select('type, credits')
-            .eq('id', invitationID)
+            .eq('id', id)
             .maybeSingle()
 
         if (error) {
@@ -1016,11 +1020,11 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
     }
 
     const getTables = async () => {
-        if (invitationID) {
+        if (id) {
             const { data, error } = await supabase
                 .from('tables')
                 .select('*')
-                .eq('invitation_id', invitationID)
+                .eq('invitation_id', id)
 
             if (error) {
                 console.error('Error al obtener mesas:', error)
@@ -1185,7 +1189,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         const { data, error } = await supabase
             .from('invitations')
             .select('credits')
-            .eq('id', invitationID)
+            .eq('id', id)
             .maybeSingle()
 
         if (error) {
@@ -1213,7 +1217,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
         const { data: updateCredits, error: updateError } = await supabase
             .from('invitations')
             .update({ credits: newCredits })
-            .eq('id', invitationID)
+            .eq('id', id)
             .select()
 
         if (updateError) {
@@ -1300,7 +1304,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
                     (payload) => {
 
 
-                        if (payload.new.invitation_id === invitationID) {
+                        if (payload.new.invitation_id === id) {
                             if (!payload.new.last_action_by) {
                                 refreshPage()
                                 handleNotification(payload.new)
@@ -1340,14 +1344,14 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
     }, [drawerState])
 
     useEffect(() => {
-        if (invitationID) {
+        if (id) {
             setIsLoading(false)
             getTickets()
             getNotifications()
             getType()
             getTables()
         }
-    }, [invitationID])
+    }, [id])
 
     useEffect(() => {
         if (rowData.length > 0) {
@@ -1387,7 +1391,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: 'var(--ft-color)',
                 }}>
-                <HeaderDashboard setMode={setMode} mode={mode} invitation={invitation} />
+                <HeaderDashboard mode={'guests'} />
 
                 <Layout className='build-invitation-layout' style={{
                     marginTop: '65px', paddingBottom: '24px', position: 'relative'
@@ -1715,7 +1719,7 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
 
                                         <div className='edit-tickets-buttons-container'>
 
-                                            <CreditsComponent getType={getType} credits={credits} invitationID={invitationID}/>
+                                            <CreditsComponent getType={getType} credits={credits} invitationID={id}/>
 
                                         </div>
                                     </div>
@@ -1785,10 +1789,10 @@ export default function GuestsPage({ invitationID, setMode, mode, invitation }) 
                     }
                 }}
             >
-                <TablesPage invitationID={invitationID} />
+                <TablesPage invitationID={IDBFactory} />
             </Drawer>
 
-            <NewGuestDrawer rowData={rowData} invitationID={invitationID} ticketsFree={tickets} setDrawerState={setDrawerState} available={tickets - (confirmed + waiting)} refreshPage={refreshPage} drawerState={drawerState} />
+            <NewGuestDrawer rowData={rowData} invitationID={id} ticketsFree={tickets} setDrawerState={setDrawerState} available={tickets - (confirmed + waiting)} refreshPage={refreshPage} drawerState={drawerState} />
         </>
     )
 }

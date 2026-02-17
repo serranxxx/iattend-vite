@@ -1,4 +1,4 @@
-import {  Layout, message } from 'antd'
+import { Layout, message } from 'antd'
 import React, { useEffect, useState } from 'react'
 import './build-invitation.css'
 import { supabase } from '../../../../lib/supabase'
@@ -9,8 +9,9 @@ import { ButtonsMenu } from './ButtonsMenu'
 import { BuildMenu } from './BuildMenu'
 import { BuildContent } from './BuildContent'
 import { load } from '../../../../helpers/assets/images'
+import { useSearchParams } from 'react-router-dom'
 
-export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared_user }) => {
+export const BuildPage = () => {
 
 
     const size = 18
@@ -126,6 +127,9 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
     const [device, setDevice] = useState('ios')
     const [settingsModal, setSettingsModal] = useState(false)
     const [invitation, setInvitation] = useState(null)
+    const [saved, setSaved] = useState(true);
+    const [searchParams] = useSearchParams();
+    const id = searchParams.get("id");
 
     // const [saved, setSaved] = useState(true)
 
@@ -172,7 +176,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
         const { data, error } = await supabase
             .from('invitations')
             .update({ data: savedInvitation })
-            .eq("id", invitationID)
+            .eq("id", id)
 
         if (error) {
             console.error('Error actualizando:', error)
@@ -200,7 +204,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
             .from("invitations")
             .select("data, id")
             // .eq("user_id", session.user.id)
-            .eq("id", invitationID)
+            .eq("id", id)
             .maybeSingle();
 
 
@@ -219,7 +223,7 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
     useEffect(() => {
         getNewInvitations()
         setSaved(true)
-    }, [])
+    }, [id])
 
 
     useEffect(() => {
@@ -299,9 +303,9 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
 
             {
                 copy ?
-                    <Layout className='main-build-layout' style={{ minHeight: '100vh', overflow:'hidden' }}>
+                    <Layout className='main-build-layout' style={{ minHeight: '100vh', overflow: 'hidden' }}>
 
-                        <HeaderDashboard saved={saved} invitation={copy} setMode={setMode} mode={mode} onSaveChanges={onSaveChanges} />
+                        <HeaderDashboard saved={saved} mode={'edit'} onSaveChanges={onSaveChanges} />
 
 
                         <div className='build-componentes-container' style={{ margin: '0px', position: 'relative', justifyContent: 'flex-start' }}>
@@ -312,18 +316,18 @@ export const BuildPage = ({ invitationID, setMode, saved, setSaved, mode, shared
                                 <ButtonsMenu invitation={copy} setOnHide={setOnHide} buttons={buttons} currentSection={currentSection} handleClick={handleClick} />
 
                                 <BuildMenu
-                                    invitationID={invitationID}
+                                    invitationID={id}
                                     setSettingsModal={setSettingsModal} settingsModal={settingsModal} setSaved={setSaved} saved={saved} onHide={onHide} setOnHide={setOnHide}
                                     buttons={buttons} currentSection={currentSection} setPositionY={setPositionY} positionY={positionY} invitation={copy} setInvitation={setCopy} />
 
                             </div>
 
-                            <BuildContent invitationID={invitationID}
+                            <BuildContent invitationID={id}
                                 setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={copy} />
 
                         </div>
 
-                        <FooterApp shared_user={shared_user}></FooterApp>
+                        <FooterApp ></FooterApp>
 
                     </Layout >
                     : <div className='build-loading-container'>
