@@ -123,6 +123,7 @@ export const BuildPage = () => {
     const [coverUpdated, setCoverUpdated] = useState(false)
     const [copy, setCopy] = useState(null)
     const [currentSection, setCurrentSection] = useState(1)
+    const [messageApi, contextHolder] = message.useMessage();
     const [onHide, setOnHide] = useState(false)
     const [device, setDevice] = useState('ios')
     const [settingsModal, setSettingsModal] = useState(false)
@@ -181,7 +182,7 @@ export const BuildPage = () => {
         if (error) {
             console.error('Error actualizando:', error)
         } else {
-            message.success('Cambios guardados')
+            messageApi.success('Cambios guardados')
             console.log(data)
             setSaved(true)
 
@@ -300,6 +301,7 @@ export const BuildPage = () => {
     return (
 
         <>
+            {contextHolder}
 
             {
                 copy ?

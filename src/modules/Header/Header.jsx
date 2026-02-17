@@ -4,7 +4,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { appContext } from "../../context"
 import { useNavigate } from 'react-router-dom';
-import { LuArrowBigUpDash, LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuPhone, LuShield, LuShieldCheck, } from "react-icons/lu"
+import { LuArrowBigUpDash, LuArrowLeft, LuArrowUpFromDot, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuPhone, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 
@@ -435,8 +435,9 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges }) => {
                         {isEditing && (
                             <Tooltip title="Publicar cambios" placement="bottomLeft">
                                 <Button
-                                    icon={<LuArrowBigUpDash size={14} />}
-                                    style={{ borderRadius: 99, position: "relative" }}
+                                    icon={<LuUpload size={14} />}
+                                    type="primary"
+                                    style={{  position: "relative" }}
                                     onClick={onSaveChanges}
                                 >
                                     Publicar
@@ -449,7 +450,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges }) => {
                                                 height: 10,
                                                 width: 10,
                                                 borderRadius: 50,
-                                                backgroundColor: "#FF0033"
+                                                backgroundColor: "#A88AFF"
                                             }}
                                         />
                                     )}
