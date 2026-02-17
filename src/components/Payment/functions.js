@@ -25,7 +25,7 @@ export const handleCheckout = async (invitationID, priceId) => {
         );
 
         // Redirigir a Stripe Checkout
-        window.open(response.data.url, "_blank");
+        window.location.href = response.data.url;
 
     } catch (error) {
         console.error("Error al iniciar el pago:", error.response?.data || error.message);
