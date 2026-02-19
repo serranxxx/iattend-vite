@@ -13,12 +13,12 @@
 }
 
 .title-new-user-container {
-    width: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     flex-direction: row;   
+    justify-content: space-between;
     gap: 12px;
+    margin-bottom: 12px;
 }
 
 .admin-head-text {
@@ -32,16 +32,23 @@
 
 .user-table-container {
     display: flex;
-    flex: 2;
-    height: 100%;
-    /*  */
-    display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
     flex-direction: column;
-    /* padding: 20px; */
     gap: 24px;
-    margin-top: 36px;
+    margin-top: 0px;
+    padding: 82px 36px;
+    box-sizing: border-box;
+    background-color: #FFF;
+}
+
+.col_adm {
+    align-self: stretch;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .admin-table-background {
