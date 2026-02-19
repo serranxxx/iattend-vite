@@ -236,7 +236,7 @@ export const InvitationsPage = () => {
                                                                             boxShadow: '0px 0px 8px rgba(0,0,0,0.2)'
                                                                         }}
                                                                         disabled={!invitation.active}
-                                                                        onClick={() => copyToClipboard(`${baseProd}/${invitation.data.generals.event.label}/${invitation.data.generals.event.name}`)}
+                                                                        onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
                                                                         // onClick={() => handleQRO(invitation.mongo_id)}
                                                                         i
                                                                     ><LuLink2 size={14} /> Copiar link</button>

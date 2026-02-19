@@ -471,7 +471,7 @@ export default function GuestsPage() {
             key: "link",
             width: 160,
             render: (_, record) => {
-                const url = `www.iattend.events/${invitation.generals.event.label}/${invitation.generals.event.name}?password=${record.password}`;
+                const url = `www.iattend.events/${invitation?.generals?.event?.label}/${invitation?.generals?.event?.name}?password=${record.password}`;
                 return (
                     <div
                         style={{
@@ -1158,7 +1158,7 @@ export default function GuestsPage() {
                             parameters: [
                                 {
                                     type: "text",
-                                    text: `${invitation.generals.event.label}/${invitation.generals.event.name}?password=${guest.password}`,
+                                    text: `${invitation?.generals?.event?.label}/${invitation?.generals?.event?.name}?password=${guest?.password}`,
                                 },
                             ],
                         },

@@ -91,7 +91,7 @@ export const LinkTree = () => {
                       <div className={`inv-light-space-ios`} />
                     </div>
                   </div>
-                  <Link to={`${baseProd}/${inv.data.generals.event.label}/${inv.data.generals.event.name}`} target='_blank'>
+                  <Link to={`${baseProd}/${inv?.data?.generals?.event?.label}/${inv?.data?.generals?.event?.name}`} target='_blank'>
                     <Button className='primarybutton--black--active' style={{ padding: '8px 16px', height: '40px', width: '150px' }}>Ver ejemplo</Button>
                   </Link>
                 </div>
