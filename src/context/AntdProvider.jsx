@@ -51,7 +51,7 @@ export const AntdProvider = ({ children }) => {
               colorPrimary: "#6D3CFA",
               colorPrimaryActive: "#6D3CFA",
               colorPrimaryHover: "#6D3CFA",
-              fontSize: 12
+              fontSize: 12,
               // fontWeight: 600, fontSizeSM: 12, lineHeightSM: 16, 
               // fontSize: 14, lineHeight: 16, fontSizeLG: 16, lineHeightLG: 20, 
               // defaultBg: 'var(--secondary-color-500)', 

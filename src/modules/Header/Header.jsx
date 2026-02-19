@@ -390,7 +390,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 cancelText="Cancelar"
                             >
                                 <Button
-                                    type="ghost"
+                                    type="text"
                                     className="headerbutton"
                                     icon={<LuArrowLeft size={14} />}
                                 />
@@ -398,7 +398,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                         ) : (
                             <Button
                                 onClick={handleBack}
-                                type="ghost"
+                                type="text"
                                 className="headerbutton"
                                 icon={<LuArrowLeft size={14} />}
                             />
@@ -410,7 +410,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                     `${baseProd}/${invitation?.generals?.event?.label}/${invitation?.generals?.event?.name}`
                                 )
                             }
-                            type="ghost"
+                            type="text"
                             className="primarybutton--active"
                             style={{ maxHeight: 25, padding: "0px 12px", marginLeft: 4 }}
                             icon={<LuLink size={12} />}

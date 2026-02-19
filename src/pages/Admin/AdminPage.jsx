@@ -22,7 +22,7 @@ export const AdminPage = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const [filterName, setFilterName] = useState(null)
     const [actualCredits, setActualCredits] = useState(null)
-    const [activeKey, setActiveKey] = useState('todos');
+    const [activeKey, setActiveKey] = useState('esperando');
     const [nextEvents, setNextEvents] = useState([])
 
     const copyToClipboard = async (textToCopy) => {
@@ -127,23 +127,23 @@ export const AdminPage = () => {
     };
 
 
-    const updateInvitationActive = async (inv) => {
+    // const updateInvitationActive = async (inv) => {
 
-        try {
-            await axios.patch(
-                `${import.meta.env.VITE_API_URL}/api/invitation/update-active`,
-                // 'http://localhost:4000/api/invitation/update-active',
-                { id: inv.id, active: !inv.active }
-            );
+    //     try {
+    //         await axios.patch(
+    //             `${import.meta.env.VITE_API_URL}/api/invitation/update-active`,
+    //             // 'http://localhost:4000/api/invitation/update-active',
+    //             { id: inv.id, active: !inv.active }
+    //         );
 
-            messageApi.success('Editado con éxito')
-            refreshData()
+    //         messageApi.success('Editado con éxito')
+    //         refreshData()
 
-        } catch (error) {
-            console.error('Error updating active:', error.response?.data || error.message);
-            throw error;
-        }
-    };
+    //     } catch (error) {
+    //         console.error('Error updating active:', error.response?.data || error.message);
+    //         throw error;
+    //     }
+    // };
 
     const refreshData = () => {
         getNewInvitations()
@@ -170,12 +170,12 @@ export const AdminPage = () => {
 
         },
         {
-            title: 'URL Invitación',
-            dataIndex: 'address',
+            title: 'ID',
+            dataIndex: 'invitation_id',
             key: 'address',
-            render: (_, record) => (
-                <a target='_blank' href={`www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>www.iattend.events/{record?.data?.generals?.event?.label}/{record?.data?.generals?.event?.name}</a>
-            )
+            // render: (_, record) => (
+            //     <a target='_blank' href={`www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>www.iattend.events/{record?.data?.generals?.event?.label}/{record?.data?.generals?.event?.name}</a>
+            // )
         },
         {
             title: 'Plan',
@@ -203,13 +203,24 @@ export const AdminPage = () => {
             render: text => <span>{text.slice(0, 10)}</span>,
         },
         {
-            title: '',
+            title: 'Acciones',
             dataIndex: '',
             key: 'address',
             render: (_, record) => (
-                <Link target='_blank' to={`https://www.iattend.site/dashboard?id=${record.invitation_id}`}>
-                    <Button icon={<LuArrowUpRight />} />
-                </Link>
+
+                // <Link target='_blank' to={`https://www.iattend.site/dashboard?id=${record.invitation_id}`}>
+                //     <Button icon={<LuArrowUpRight />} />
+                // </Link>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <Link target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
+                        <Button icon={<LuLink />} >Link</Button>
+                    </Link>
+                    <Link target='_blank' to={`https://www.iattend.site/dashboard?id=${record?.invitation_id}`}>
+                        <Button icon={<LuArrowUpRight />} >Abrir</Button>
+                    </Link>
+
+                </div>
             )
         },
 
@@ -219,7 +230,7 @@ export const AdminPage = () => {
 
         {
             title: 'Nombre',
-            dataIndex: 'full_name',
+            dataIndex: 'name',
             key: 'name',
             //   render: text => <a>{text}</a>,
         },
@@ -231,54 +242,14 @@ export const AdminPage = () => {
         },
         {
             title: 'ID',
-            dataIndex: 'user_id',
-            key: 'address',
-        },
-        {
-            title: '',
-            dataIndex: '',
-            key: 'address',
-            render: (_, record) => (
-                <Button onClick={() => handleNewInvitation(record)} icon={<LuPlus />} >Agregar evento</Button>
-            )
-        },
-
-
-    ];
-
-    const expandableCols = [
-
-        {
-            title: 'Nombre',
-            dataIndex: 'name',
-            key: 'name',
-            //   render: text => <a>{text}</a>,
-        },
-        {
-            title: 'ID',
             dataIndex: 'id',
-            key: 'email',
-
+            key: 'address',
         },
         {
             title: 'Plan',
             dataIndex: 'plan',
             key: 'address',
             render: text => <img src={`/images/plan_${text}.png`} style={{ height: '30px', borderRadius: '8px' }} alt='' />,
-        },
-        {
-            title: 'Estado',
-            dataIndex: 'active',
-            key: 'address',
-            render: (text, record) => (
-                <Button
-                    onClick={() => updateInvitationActive(record)}
-                    icon={text ? <LuPower size={14} /> : <LuPowerOff size={14} />} style={{
-                        backgroundColor: text ? '#ECF7EF' : '#F1F1F1',
-                        color: text ? '#61AD8C' : '#C1C1C1',
-                        border: 'none',
-                    }}>{text ? 'Activa' : 'Inactiva'}</Button>
-            )
         },
         {
             title: 'Creditos',
@@ -292,6 +263,12 @@ export const AdminPage = () => {
 
                 </div>
             )
+        },
+        {
+            title: 'Fecha',
+            dataIndex: 'cover_date',
+            key: 'address',
+            render: (text, record) => <span>{record?.data?.cover?.date.value?.slice(0, 10)}</span>,
         },
         {
             title: 'Acciones',
@@ -310,8 +287,45 @@ export const AdminPage = () => {
             )
         },
 
+    ];
+
+    const userCols = [
+
+        {
+            title: 'Nombre',
+            dataIndex: 'full_name',
+            key: 'name',
+            //   render: text => <a>{text}</a>,
+        },
+        {
+            title: 'Email',
+            dataIndex: 'user_email',
+            key: 'email',
+
+        },
+        {
+            title: 'Id',
+            dataIndex: 'user_id',
+            key: 'email',
+
+        },
+
+        {
+            title: 'Acciones',
+            dataIndex: '',
+            key: 'address',
+            render: (_, record) => (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+
+                    <Button onClick={() => handleNewInvitation(record)} icon={<LuPlus />} >Agregar evento</Button>
+
+                </div>
+            )
+        },
+
 
     ];
+
 
 
     const items = useMemo(() => ([
@@ -331,30 +345,26 @@ export const AdminPage = () => {
             ),
         },
         {
-            label: `Todos (${newProfiles?.length} usuarios / ${newInvitations?.length} eventos)`,
+            label: `Todos (${newInvitations?.filter(i => i.user_email !== 'albserrano8@gmail.com' && i.user_email !== 'pa.perez98@gmail.com' && i.user_email !== 'pau@iattend.mx')?.length})`,
             key: "todos",
             children: (
                 <Table
-                    rowKey="user_id"
+                    rowKey="id"
                     columns={allUsersCols}
-                    dataSource={newProfiles?.filter((i) => {
-                        if (filterName) {
-                            return i?.full_name?.toLowerCase().includes(filterName.toLowerCase());
-                        }
-                        return true;
-                    })}
-                    expandable={{
-                        expandedRowRender: (record) => (
-                            <Table
-                                rowKey="invitation_id"
-                                columns={expandableCols}
-                                dataSource={newInvitations?.filter(
-                                    (i) => i?.user_id === record?.user_id
-                                )}
-                                pagination={false}
-                            />
-                        ),
-                    }}
+                    dataSource={
+                        [...(newInvitations ?? [])]
+                            ?.filter((i) => {
+                                if (filterName) {
+                                    return i.user_email
+                                        ?.toLowerCase()
+                                        .includes(filterName.toLowerCase());
+                                }
+                                return true;
+                            })
+                            ?.filter(i => i.user_email !== 'albserrano8@gmail.com' && i.user_email !== 'pa.perez98@gmail.com' && i.user_email !== 'pau@iattend.mx')
+                            ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    }
+
                     pagination={false}
                 />
 
@@ -539,6 +549,46 @@ export const AdminPage = () => {
                 //     </div>
 
                 // </div>
+            ),
+        },
+        {
+            label: `Pruebas (${newInvitations?.filter(i => i.user_email === 'albserrano8@gmail.com' || i.user_email === 'pa.perez98@gmail.com' || i.user_email === 'pau@iattend.mx')?.length})`,
+            key: "pruebas",
+            children: (
+                <Table
+                    rowKey="id"
+                    columns={allUsersCols}
+                    dataSource={
+                        [...(newInvitations ?? [])]
+                            ?.filter((i) => {
+                                if (filterName) {
+                                    return i.user_email
+                                        ?.toLowerCase()
+                                        .includes(filterName.toLowerCase());
+                                }
+                                return true;
+                            })
+                            ?.filter(i => i.user_email === 'albserrano8@gmail.com'|| i.user_email === 'pa.perez98@gmail.com' || i.user_email === 'pau@iattend.mx')
+                            ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    }
+
+                    pagination={false}
+                />
+
+            ),
+        },
+        {
+            label: `Usuarios (${newProfiles?.length})`,
+            key: "users",
+            children: (
+                <Table
+                    rowKey="id"
+                    columns={userCols}
+                    dataSource={newProfiles}
+
+                    pagination={false}
+                />
+
             ),
         },
 

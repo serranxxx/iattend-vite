@@ -63,9 +63,9 @@ export const FeaturesPage = () => {
                                                     }}> {feature.bold}</span>
                                                     <Popover content={feature.text} trigger="click" style={{ width: '100px' }} className='pricing-hidde-item'>
                                                         <Button
-
+                                                            
                                                             icon={<FaCircleInfo style={{ color: 'var(--text-color-50)' }} />}
-                                                            type='ghost'
+                                                            type='text'
                                                         />
                                                     </Popover>
                                                 </Row>
