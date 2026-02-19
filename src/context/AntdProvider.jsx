@@ -36,6 +36,9 @@ export const AntdProvider = ({ children }) => {
         //   },
         // }}
         theme={{
+          token: {
+            colorPrimary: '#B5A5CC',
+          },
           components: {
             /* 👇 deja aquí todo tu objeto "components" tal cual */
             // Splitter: { splitBarDraggableSize: 100, splitBarSize: 4, splitTriggerSize: 8, colorFill: "var(--brand-color)", controlItemBgHover: "var(--secondary-color-500)", controlItemBgActive: "var(--secondary-color-600-80)", controlItemBgActiveHover: "var(--secondary-color-600-80)" },
@@ -112,6 +115,9 @@ export const AntdProvider = ({ children }) => {
             },
             Spin: {
               colorPrimary: 'var(--brand-color-500)'
+            },
+            Steps: {
+              colorPrimary:'var(--brand-color-500)',
             }
           },
         }}

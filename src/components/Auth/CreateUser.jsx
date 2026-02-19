@@ -1,109 +1,99 @@
-import { useNavigate } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
-import { appContext } from "../../context";
-import { onNewUser } from "../../services/apiLogin";
+
 import { Button, Input, message } from "antd";
-import { tokenExpires } from "../../helpers/assets/functions";
-import { RiEye2Line, RiEyeCloseLine } from "react-icons/ri";
-import { getAllUserInvitations } from "../../services/apiInvitation";
+import { LuPlus } from "react-icons/lu";
+import axios from "axios";
+import { useState } from "react";
 
-export const CreateAccount = ({ refreshData, setVisible }) => {
+export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
 
-    const { response, operation } = getAllUserInvitations()
-    const navigate = useNavigate();
-    const { login, } = useContext(appContext)
-    const [setCreateAccount] = useState(false)
-    const [username, setUsername] = useState(null)
-    const [setPassword] = useState(null)
 
     const [newName, setNewName] = useState(null)
     const [newUsername, setNewUsername] = useState(null)
     const [newPassword, setNewPassword] = useState(null)
-
-    const [seePasswrod, setSeePasswrod] = useState(false)
-
+    const [messageApi, contextHolder] = message.useMessage();
 
     const handleCreate = async () => {
-        if (newName && newUsername && newPassword) {
-            onNewUser(operation, newName, newUsername, newPassword)
-        }
-        else {
-            if (!newName) {
-                message.error('Por favor escribe un nombre');
-            } else if (!newUsername) {
-                message.error('Por favor escribe un correo electrónico');
-            } else {
-                message.error('Por favor escribe una contraseña');
+
+        try {
+
+            // 1️⃣ Validaciones básicas
+            if (!newName || !newUsername || !newPassword) {
+                return messageApi.error('Todos los campos son obligatorios')
             }
+
+            // Validación simple de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!emailRegex.test(newUsername)) {
+                return messageApi.error('Email inválido')
+            }
+
+            // Validar password mínima
+            if (newPassword.length < 6) {
+                return messageApi.error('La contraseña debe tener mínimo 6 caracteres')
+            }
+
+            // 2️⃣ Petición al backend
+            const { data } = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/auth/create-user`,
+                // 'http://localhost:4000/api/auth/create-user', // ajusta la ruta si es diferente
+                {
+                    Name: newName,
+                    Email: newUsername,
+                    Password: newPassword,
+                }
+            )
+
+            if (data.ok) {
+                messageApi.success('Usuario creado correctamente')
+                console.log(data)
+
+                refreshData()
+                setVisible(true)
+                setUserData(data.data)
+
+                // Limpiar campos
+                setNewName('')
+                setNewUsername('')
+                setNewPassword('')
+            }
+
+        } catch (error) {
+
+            console.log(error);
+
+            if (error.response) {
+                // Error que viene del backend
+                const backendMessage = error.response.data.msg;
+
+                messageApi.warning(backendMessage || 'Error al crear el usuario');
+            } else {
+                // Error de red o servidor caído
+                messageApi.error('Error de conexión con el servidor');
+            }
+
         }
     }
 
 
-    useEffect(() => {
-        if (response) {
-            if (response.data.ok) {
-                switch (response.data.msg) {
-                    case "User uploaded":
-                        message.success('¡Nuevo usuario creado!');
-                        setNewName(null);
-                        setNewUsername(null);
-                        setNewPassword(null);
-                        setCreateAccount(false)
-                        refreshData()
-                        setVisible(false)
-                        break;
-
-                    case "Valid user":
-                        {
-                            localStorage.setItem("user-email", username)
-                            setUsername(null)
-                            setPassword(null)
-
-                            const token = response.data.data.token
-                            localStorage.setItem("token", token)
-                            localStorage.setItem("token-expires", tokenExpires())
-                            navigate("/invitations")
-
-                            const user = {
-                                name: response.data.data.username,
-                                uid: response.data.data.uid,
-                                role: response.data.data.role
-                            }
-
-                            message.success("Sesión iniciada")
-                            login(user)
-                            break
-                        }
-
-                    default:
-                        break;
-                }
-
-
-            } else {
-                message.error(response.data.msg)
-            }
-
-        }
-    }, [response])
-
-
     return (
 
-        <div className='login-form-container' style={{ width: '100%' }}>
-            <Input onChange={(e) => setNewName(e.target.value)} value={newName} placeholder='Nombre' className='gc-input-text login-input' />
-            <Input onChange={(e) => setNewUsername(e.target.value)} value={newUsername} placeholder='Email' className='gc-input-text login-input' />
-            <div className='password-button-container'>
-                <Input type={!seePasswrod ? 'password' : ''} onChange={(e) => setNewPassword(e.target.value)} value={newPassword} placeholder='Contraseña' className='gc-input-text login-input' />
-                <Button
-                    onClick={() => setSeePasswrod(!seePasswrod)} type='ghost' className='see-password-button'
-                    icon={!seePasswrod ? <RiEyeCloseLine size={18} /> : <RiEye2Line size={18} />} />
+        <>
+            {contextHolder}
+            <div className='create_account_cont'>
+                <div className="create_row">
+                    <span style={{
+                        fontFamily: 'Poppins', fontWeight: '600', fontSize: '16px',
+                    }}>Crear nuevo usuario</span>
+
+                    <Button icon={<LuPlus size={16} />} type="primary" onClick={handleCreate}>Crear</Button>
+                </div>
+                <Input onChange={(e) => setNewName(e.target.value)} value={newName} placeholder='Nombre' />
+                <Input onChange={(e) => setNewUsername(e.target.value)} value={newUsername} placeholder='Email' />
+                <Input.Password onChange={(e) => setNewPassword(e.target.value)} value={newPassword} placeholder='Contraseña' />
+
             </div>
-            <Button onClick={handleCreate} className='primarybutton mt'>Crear cuenta</Button>
-            {/* <span className={'login-label'}>¿Ya tienes una cuenta? <a onClick={() => setCreateAccount(false)} className={'label-forgot-password'}>Inicia sesión</a></span> */}
 
-        </div>
-
+        </>
 
     )
 }

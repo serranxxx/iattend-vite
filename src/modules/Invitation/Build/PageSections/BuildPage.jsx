@@ -10,6 +10,7 @@ import { BuildMenu } from './BuildMenu'
 import { BuildContent } from './BuildContent'
 import { load } from '../../../../helpers/assets/images'
 import { useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 
 export const BuildPage = () => {
 
@@ -132,12 +133,63 @@ export const BuildPage = () => {
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
 
+    const session = JSON.parse(localStorage.getItem("session"));
+
     // const [saved, setSaved] = useState(true)
 
 
     const handleClick = (item) => {
         setCurrentSection(item.value)
         setPositionY(item.type)
+    }
+
+    const onWriteChanges = async () => {
+
+        const savedInvitation = {
+            ...copy,
+            cover: {
+                ...copy.cover,
+                image: {
+                    ...copy.cover.image,
+                    prod: copy.cover.image.dev,
+                    dev: null
+                }
+            },
+            quote: {
+                ...copy.quote,
+                image: {
+                    ...copy.quote.image,
+                    prod: copy.quote.image.dev,
+                    dev: null
+                }
+            },
+            dresscode: {
+                ...copy.dresscode,
+                prod: copy.dresscode.dev,
+                dev: null
+            },
+            gallery: {
+                ...copy.gallery,
+                prod: copy.gallery.dev,
+                dev: null
+            }
+
+        }
+
+        try {
+            await axios.patch(
+                `${import.meta.env.VITE_API_URL}/api/invitation/update-data`,
+                { id, data: savedInvitation }
+            );
+
+            messageApi.info('Cambios escrito')
+            setSaved(true)
+
+        } catch (error) {
+            console.error('Error updating invitation data:', error.response?.data || error.message);
+            throw error;
+        }
+
     }
 
 
@@ -174,7 +226,7 @@ export const BuildPage = () => {
 
         }
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('invitations')
             .update({ data: savedInvitation })
             .eq("id", id)
@@ -183,7 +235,6 @@ export const BuildPage = () => {
             console.error('Error actualizando:', error)
         } else {
             messageApi.success('Cambios guardados')
-            console.log(data)
             setSaved(true)
 
         }
@@ -307,7 +358,7 @@ export const BuildPage = () => {
                 copy ?
                     <Layout className='main-build-layout' style={{ minHeight: '100vh', overflow: 'hidden' }}>
 
-                        <HeaderDashboard saved={saved} mode={'edit'} onSaveChanges={onSaveChanges} />
+                        <HeaderDashboard saved={saved} mode={'edit'} onSaveChanges={onSaveChanges} session={session} onWriteChanges={onWriteChanges} />
 
 
                         <div className='build-componentes-container' style={{ margin: '0px', position: 'relative', justifyContent: 'flex-start' }}>

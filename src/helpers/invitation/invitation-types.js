@@ -1,44 +1,45 @@
 import { BiChurch, BiParty } from "react-icons/bi";
 import { BsCalendar4Event, BsEnvelopeOpenHeart } from "react-icons/bs";
 import { FaChildDress } from "react-icons/fa6";
-import { LuBaby } from "react-icons/lu";
+import { LuBaby,  LuCalendar,  LuCalendarCheck2, LuCalendarClock, LuCalendarDays, LuCalendarHeart, LuPartyPopper } from "react-icons/lu";
+import { PiDress } from "react-icons/pi";
 
 export const invitationsTypes = [
     {
         name: 'Boda',
         type: 'wedding',
         id: 1,
-        icon: BsEnvelopeOpenHeart
+        icon: LuCalendarHeart
     },
     {
         name: 'XV años',
         type: 'xv',
         id: 2,
-        icon: FaChildDress
+        icon: PiDress,
     },
-    {
-        name: 'Bautizo',
-        type: 'bap',
-        id: 3,
-        icon: BiChurch
-    },
+    // {
+    //     name: 'Bautizo',
+    //     type: 'bap',
+    //     id: 3,
+    //     icon: LuCalendarDays
+    // },
     {
         name: 'Infantiles',
         type: 'kids',
         id: 4,
-        icon: LuBaby
+        icon: LuPartyPopper
     },
     {
         name: 'Eventos',
         type: 'event',
         id: 5,
-        icon: BsCalendar4Event,
+        icon: LuCalendar,
     },
-    {
-        name: 'Fiestas',
-        type: 'party',
-        id: 6,
-        icon: BiParty
-    }
+    // {
+    //     name: 'Fiestas',
+    //     type: 'party',
+    //     id: 6,
+    //     icon: LuCalendarClock,
+    // }
 ]
 

@@ -1,0 +1,139 @@
+.plans_cont {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0px 24px;
+    gap: 24px;
+    position: relative;
+    transform: scale(0.9);
+    margin: -10px 0px;
+
+  }
+  
+  .plan_card {
+    flex: 1;
+    display: flex;
+    /* flex-direction: column; */
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: "Outfit", "Poppins";
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+    max-height: 140px;
+    width: 100%;
+    padding-right: 24px;
+  }
+  
+  .card_relative_cont {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    border: 4px solid var(--brand-color-500);
+    position: relative;
+  }
+  
+  .plan_image {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+  
+  .plan_description {
+    max-width: 180px;
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 400;
+    opacity: 0.5;
+    font-size: 12px;
+    margin-top: 12px;
+  }
+  
+  .plan_info_cont {
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
+    padding: 0px 24px;
+    width: 100%;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .plan_item {
+    width: 100%;
+    padding: 4px 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .price_cont {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 38px;
+    font-weight: 900;
+    color: #9f95af;
+    padding: 8px 0px;
+    gap: 12px;
+  }
+  
+  .old_price {
+    text-decoration: line-through;
+    font-size: 20px;
+    font-weight: 500;
+    opacity: 0.5;
+  }
+  
+  .single_row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  
+  .tag {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translate(-50%);
+    background-color: var(--brand-color-500);
+    padding: 4px 12px;
+    border-radius: 99px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.4);
+    width: 120px;
+  }
+  
+  .price_tag {
+    background-color: #716886;
+    padding: 2px 12px;
+    border-radius: 99px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+
+  }
+  
+  @media (min-width: 768px) {
+
+    .plan_card {
+      position: static !important;
+      transform: rotate(0deg) !important;
+    }
+  
+  }
+  

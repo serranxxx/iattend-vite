@@ -1,50 +1,30 @@
-import { Button, Col, Drawer, Input, Row, Steps, message } from 'antd'
+import { Button, Drawer, Input, message, Space, Steps } from 'antd'
 import React, { useEffect, useState } from 'react'
-// import { useInvitation } from '../../hooks/customHook'
-
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
-import { Link } from 'react-router-dom'
-// import { supabase } from '../../lib/supabase'
 import { TbSquareRoundedArrowLeft, TbSquareRoundedArrowRight } from 'react-icons/tb'
-import { FaCheck, FaPencilAlt, FaWhatsapp } from 'react-icons/fa'
-import { MdError, MdOutlineContentCopy } from 'react-icons/md'
 import { images } from '../../helpers/assets/images'
-// import { newInvitation } from '../../services/apiInvitation'
-import { design_types, inv_planes, inv_types } from '../../helpers/invitation/newInvitation'
+import { supabase } from '../../lib/supabase'
+import Plans from '../Plans/Plans'
+import { LuCheck, LuPlus, LuX } from 'react-icons/lu'
+import { CustomButton } from '../CustomButton/CustomButton'
+import { FaPlus } from 'react-icons/fa6'
 
-const list_items = [
-    'Configuraciones generales',
-    'Portada',
-    'Mensajes',
-    'Itinerario',
-    'Dress code',
-    'Mesa de regalos',
-    'Galería',
-    'Administración de invitados'
-]
 
-export const NewInvitationDrawer = ({ visible, setVisible,  }) => {
 
-    // const { user } = useContext(appContext)
-    // const { response, operation } = useInvitation()
+export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitations }) => {
+
 
     const [currentTemplate, setCurrentTemplate] = useState(null)
-    const [currentType, setCurrentType] = useState(null)
-    const [currentPlan, setCurrentPlan] = useState('pro')
+    const [currentPlan, setCurrentPlan] = useState(null)
     const [load, setLoad] = useState(false)
-    const [dominios] = useState(null)
+    const [dominios, setDominios] = useState(null)
     const [availableNext, setAvailableNext] = useState(false)
     const [setReady] = useState(false)
-
-    // const [userAdmin, setUserAdmin] = useState(false)
     const [current, setCurrent] = useState(0);
-    const [dominio, setDominio] = useState(null)
-    const [currentDesign, setCurrentDesign] = useState('blank')
+    const [dominio, setDominio] = useState(null);
+    const [currentPhone, setCurrentPhone] = useState(null)
+    const [messageApi, contextHolder] = message.useMessage();
 
-    // useEffect(() => {
-    //     setDominio(null)
-    //     setCurrent(0)
-    // }, [visible])
 
 
     const steps = [
@@ -54,28 +34,14 @@ export const NewInvitationDrawer = ({ visible, setVisible,  }) => {
         },
         {
             title: 'Ruta',
-            content: <Dominio dominio={dominio} setDominio={setDominio} load={load} dominios={dominios} setAvailableNext={setAvailableNext} />,
+            content: <Dominio dominio={dominio} setDominio={setDominio} load={load} dominios={dominios} setAvailableNext={setAvailableNext} setCurrentPhone={setCurrentPhone} />,
         },
-        {
-            title: 'Seguridad',
-            content: <Tipos setAvailableNext={setAvailableNext} currentType={currentType} setCurrentType={setCurrentType} />
-        },
-        {
-            title: 'Diseño',
-            content: <Design setAvailableNext={setAvailableNext} currentType={currentDesign} setCurrentType={setCurrentDesign} />
-        },
+
         {
             title: 'Plan',
-            content: <Plan setAvailableNext={setAvailableNext} currentPlan={currentPlan} setCurrentPlan={setCurrentPlan} currentDesign={currentDesign} />,
+            content: <Pago currentPlan={currentPlan} setCurrentPlan={setCurrentPlan} setReady={setReady} />,
         },
-        {
-            title: 'Pago',
-            content: <Pago currentPlan={currentPlan} setCurrentPlan={setCurrentPlan} setReady={setReady} currentDesign={currentDesign} />,
-        },
-        // {
-        //     title: 'Comprobante',
-        //     content: <Plan currentPlan={currentPlan} setCurrentPlan={setCurrentPlan} setReady={setReady} />,
-        // },
+
     ];
 
     const next = () => {
@@ -90,8 +56,10 @@ export const NewInvitationDrawer = ({ visible, setVisible,  }) => {
     const nextAndGet = () => {
         setCurrent(current + 1);
         setAvailableNext(false)
-        // getAllDominios(operation, currentTemplate)
         setLoad(true)
+        getDominios()
+        // getAllDominios(operation, currentTemplate)
+
     };
 
     const items = steps.map((item) => ({
@@ -103,146 +71,356 @@ export const NewInvitationDrawer = ({ visible, setVisible,  }) => {
         setVisible(false)
     }
 
-    // const onNewInvitation = async () => {
-    //     if (currentType && currentPlan && currentTemplate && dominio) {
-    //         // const invitation = handleTemplates(user.id, currentType, currentPlan, dominio, currentTemplate, currentDesign)
-    //         // newInvitation(operation, invitation)
+    const getDominios = async () => {
+        const { data, error } = await supabase
+            .from('invitations')
+            .select('name');
 
-    //     } else {
-    //         message.error('Necesitas seleccionar todos los campos')
-    //     }
+        if (error) {
+            console.error('Error actualizando:', error);
+        } else {
+            const names = data.map(item => item.name);
+            setDominios(names)
+            setLoad(false);
+        }
+
+    }
+
+    const handleNew = async () => {
+        const newEvent = {
+            user_id: user.user_id,
+            credits: currentPlan === 'pro' ? 300 : 0,
+            user_email: user.user_email,
+            type: "closed",
+            plan: currentPlan,
+            label: currentTemplate,
+            name: dominio,
+            tickets: 300,
+            active:true,
+            phone_number: currentPhone,
+
+            data: {
+                cover: {
+                    date: {
+                        type: null,
+                        color: "#FFFFFF",
+                        value: "2026-05-20T00:00:00.000Z",
+                        active: true,
+                    },
+                    image: {
+                        dev: null,
+                        blur: false,
+                        prod: "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/14376896-4930-4429-b427-96e047695396/1769460961115-couple.jpeg",
+                        zoom: 1,
+                        position: { x: 0, y: 0 },
+                        background: true,
+                    },
+                    title: {
+                        text: {
+                            size: 54,
+                            color: "#ffffff",
+                            value: "Andrés & Julieta",
+                            weight: 1000,
+                            opacity: 0.95,
+                            typeFace: "WindSong",
+                        },
+                        position: {
+                            align_x: "center",
+                            align_y: "flex-end",
+                            column_reverse: "column",
+                        },
+                    },
+                },
+
+                gifts: {
+                    cards: [
+                        {
+                            url: "https://www.amazon.com.mx/",
+                            bank: null,
+                            kind: "store",
+                            name: null,
+                            brand: "Palacio de hierro",
+                            number: null,
+                        },
+                        {
+                            url: "https://www.amazon.com.mx/",
+                            bank: null,
+                            kind: "store",
+                            name: null,
+                            brand: "Sears",
+                            number: null,
+                        },
+                        {
+                            url: null,
+                            bank: "BBVA",
+                            kind: "bank",
+                            name: "Luis Serrano",
+                            brand: null,
+                            number: "4242424242424242",
+                        },
+                    ],
+                    title: "MESA DE REGALOS",
+                    active: true,
+                    inverted: true,
+                    separator: false,
+                    background: false,
+                    description:
+                        "¡Tu presencia es el mejor regalo, pero tus buenos deseos se hacen aún más especiales con un toque personal!",
+                },
+
+                quote: {
+                    text: {
+                        font: {
+                            size: 18,
+                            color: "#ffffff",
+                            value:
+                                "Nuestro amor es el comienzo de un ‘para siempre’ que no tiene final.",
+                            weight: 500,
+                            opacity: 0.87,
+                            typeFace: "Noto Sans",
+                        },
+                        align: "flex-start",
+                        width: 90,
+                        shadow: false,
+                        justify: "center",
+                    },
+                    image: {
+                        dev: null,
+                        prod: "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fquote%2FLyPl6vhxCk?alt=media&token=17b6cda0-8146-4100-8f19-2f86f306883a",
+                        active: true,
+                    },
+                    active: true,
+                    inverted: false,
+                    separator: false,
+                    background: false,
+                },
+
+                people: {
+                    title: "Nuestros padres",
+                    active: true,
+                    inverted: true,
+                    personas: [
+                        { title: "Padre del novio", description: "Manuel Velázquez " },
+                        { title: "Madre del novio", description: "María Lourdes " },
+                        { title: "Padre de la novia", description: "Edgar González " },
+                        { title: "Madre de la novia", description: "Ericka Gutiérrez " },
+                    ],
+                    separator: false,
+                    background: false,
+                },
+
+                gallery: {
+                    dev: null,
+                    prod: [
+                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fgallery%2FeFLO43QYMc?alt=media&token=b7898198-6597-4d73-9f02-099a3bd29144",
+                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fgallery%2F1IFd1jvgfo?alt=media&token=71bf153e-7a96-43d3-afa0-f9698f3b7a88",
+                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fgallery%2FToBhZMReXW?alt=media&token=61079e78-25a0-4cf8-92de-1fb1e84ff945",
+                    ],
+                    title: "GALERÍA",
+                    active: true,
+                    inverted: false,
+                    separator: false,
+                    background: false,
+                },
+
+                notices: {
+                    title: "AVISOS",
+                    active: false,
+                    notices: [],
+                    inverted: false,
+                    separator: false,
+                    background: false,
+                },
+
+                generals: {
+                    event: {
+                        name: "test",
+                        label: "wedding",
+                    },
+                    fonts: {
+                        body: {
+                            size: 0,
+                            color: "#000000",
+                            value: "Noto Sans",
+                            weight: 0,
+                            opacity: 1,
+                            typeFace: "Noto Sans",
+                        },
+                        titles: {
+                            size: 0,
+                            color: "#000000",
+                            value: "Noto Sans",
+                            weight: 0,
+                            opacity: 1,
+                            typeFace: "Noto Sans",
+                        },
+                    },
+                    colors: {
+                        accent: "#252525",
+                        actions: "#87bee9",
+                        primary: "#ffffff",
+                        secondary: "#939faf",
+                    },
+                    texture: 9,
+                    positions: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                    separator: 5,
+                },
+
+                greeting: {
+                    title: "¡Nos casamos!",
+                    active: true,
+                    inverted: false,
+                    separator: true,
+                    background: false,
+                    description:
+                        "Con mucha ilusión y amor, les invitamos a compartir con nosotros uno de los días más importantes de nuestras vidas.",
+                },
+
+                dresscode: {
+                    dev: null,
+                    prod: [
+                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdresscode%2FeaEBaR4QgL?alt=media&token=eba80adb-0251-45b9-b225-3e96d965d49b",
+                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdresscode%2FdSRYh8q9dX?alt=media&token=2ebda00a-25a8-4d35-aa78-59588fe8f5ff",
+                    ],
+                    links: [],
+                    title: "Dress code",
+                    active: true,
+                    colors: ["#e9e9e9", "#79abd1"],
+                    inverted: true,
+                    separator: false,
+                    background: false,
+                    description:
+                        "Sigue el código de vestimenta formal con tu propio toque. Encuentra opciones que se ajusten a tu estilo en nuestra galería de Pinterest.",
+                    links_active: false,
+                    images_active: true,
+                },
+
+                itinerary: {
+                    type: "cards",
+                    title: "ITINERARIO",
+                    active: true,
+                    inverted: true,
+                    separator: false,
+                    background: false,
+                    object: [
+                        {
+                            id: null,
+                            icon: 55,
+                            name: "Ceremonia",
+                            time: "5:00 pm",
+                            image: null,
+                            music: null,
+                            subtext: "San Antonio de Padua",
+                        },
+                        {
+                            id: null,
+                            icon: 16,
+                            name: "Recepción",
+                            time: "8:00 pm",
+                            image: null,
+                            music: null,
+                            subtext: "Los Aduanales",
+                        },
+                    ],
+                },
+
+                destinations: {
+                    cards: [
+                        {
+                            url: "sadcdacc",
+                            name: "Sheraton",
+                            type: "hotel",
+                            image:
+                                "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdestinations%2FcRvWs5A1fe?alt=media&token=92798d5a-e561-46c4-9607-3029db188f5f",
+                            description: null,
+                        },
+                        {
+                            url: "sodded",
+                            name: "Hotel One",
+                            type: "hotel",
+                            image:
+                                "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdestinations%2FzrYoKKvOVx?alt=media&token=4dc56c12-b329-4c97-ab1a-0bdc4f8ef5b4",
+                            description: null,
+                        },
+                    ],
+                    title: "DESTINOS",
+                    active: true,
+                    inverted: false,
+                    separator: false,
+                    background: false,
+                    description:
+                        "Sabemos que este viaje es especial y queremos que lo disfrutes al máximo. Aquí encontrarás una selección de lugares para hospedarte",
+                },
+            },
+        };
+
+        const { error } = await supabase
+            .from("invitations")
+            .insert([newEvent])
+
+        if (error) {
+            console.error("Error al insertar invitacion:", error);
+        } else {
+            messageApi.success('Invitación creada')
+            setCurrentPhone(null)
+            setCurrentPlan(null)
+            setCurrentTemplate(null)
+            setDominio(null)
+            setVisible(false)
+            refreshInvitations()
+        }
 
 
-    // }
-
-    // useEffect(() => {
-    //     setCurrentTemplate(null)
-    //     setAvailableNext(false)
-    //     // setUserAdmin(false)
-
-    // }, [])
-
-    // const newSupaInvitation = async (invitation) => {
-    //     try {
-    //         const { data, error } = await supabase
-    //             .from("invitations")   // 👈 nombre de tu tabla
-    //             .insert([invitation])  // 👈 recibe un array de objetos               // opcional: para devolver lo insertado
-
-    //         if (error) {
-    //             console.error("Error al insertar:", error.message);
-    //             return null;
-    //         }
-    //         return data;
-    //     } catch (err) {
-    //         console.error("Error inesperado:", err);
-    //         return null;
-    //     }
-
-    // }
-
-
-    // useEffect(() => {
-    //     if (response) {
-    //         if (response.data.ok) {
-    //             switch (response.data.msg) {
-    //                 case "Get all event names":
-    //                     setDominios(response.data.eventNames)
-    //                     setLoad(false)
-    //                     break;
-
-    //                 case "New invitation added":
-    //                     const guests = {
-    //                         userID: user.id,
-    //                         invitationID: response.data.invitationID,
-    //                         tickets: 300,
-    //                         type: currentType,
-    //                         guests: [],
-    //                         share: [],
-    //                         tables: []
-    //                     }
-
-    //                     const newi = toNewInvitation(response.data.invitation, user.email, user.id)
-
-    //                     newSupaInvitation(newi)
-    //                     createGuests(operation, guests)
-
-
-    //                     break;
-
-    //                 case "Guest created successfully":
-    //                     message.success("Nueva invitación agregada")
-    //                     refreshInvitations(operation, user.id)
-    //                     setVisible(false)
-    //                     break;
-
-    //                 default:
-    //                     break;
-    //             }
-    //         }
-    //     }
-    // }, [response])
+    };
 
 
 
     return (
-        <Drawer
-            // title="Basic Drawer"
-            placement="right"
-            className='help-drawer'
-            closable={false}
-            onClose={handleClose}
-            open={visible}
-            width={'70%'}
+        <>
+            {contextHolder}
+            <Drawer
+                // title="Basic Drawer"
+                placement="right"
+                className='help-drawer'
+                closable={false}
+                onClose={handleClose}
+                open={visible}
+                width={'50%'}
+                title={'Configura tu evento'}
+                extra={(currentPlan && currentPhone && currentTemplate && dominio) && <CustomButton onClick={handleNew} icon={<LuPlus size={18} style={{ marginTop: '4px' }} />} label="Crear Evento" variant="primary" />}
+
+            >
+
+                <div className='steps-content-container'>
+                    <Steps current={current} items={items} />
+                    {steps[current].content}
+                    <div className={`steps-buttons-container${current === 0 ? '-start' : ''}`}
+                    >
+                        {current > 0 && (
+                            <Button
+                                id="prev-next-button"
+
+                                type='ghost' onClick={() => prev()}
+                            >
+                                <TbSquareRoundedArrowLeft size={25} style={{ marginRight: '5px' }} /> Anterior
+                            </Button>
+                        )}
+
+                        {current < steps.length - 1 && (
+                            <Button
+                                id="prev-next-button"
+                                disabled={availableNext ? false : true}
+                                type="ghost" onClick={current === 0 ? () => nextAndGet() : () => next()}>
+                                Siguiente <TbSquareRoundedArrowRight size={25} style={{ marginLeft: '5px' }} />
+                            </Button>
+                        )}
 
 
-        // key={placement}
-        >
-
-            <div className='new-invitation-header'>
-                <h2 className='new-invitation--title'>Configura tu invitación desde cero</h2>
-
-
-                {/* {
-                    ready ?
-                        <Button
-                            onClick={onNewInvitation}
-                            id='new-invitation-create-button'
-                        >Crear</Button>
-                        : <></>
-                } */}
-
-
-            </div>
-
-            <div className='steps-content-container'>
-                <Steps current={current} items={items} />
-                {steps[current].content}
-                <div className={`steps-buttons-container${current === 0 ? '-start' : ''}`}
-                >
-                    {current > 0 && (
-                        <Button
-                            id="prev-next-button"
-
-                            type='ghost' onClick={() => prev()}
-                        >
-                            <TbSquareRoundedArrowLeft size={25} style={{ marginRight: '5px' }} /> Anterior
-                        </Button>
-                    )}
-
-                    {current < steps.length - 1 && (
-                        <Button
-                            id="prev-next-button"
-                            disabled={availableNext ? false : true}
-                            type="ghost" onClick={current === 0 ? () => nextAndGet() : () => next()}>
-                            Siguiente <TbSquareRoundedArrowRight size={25} style={{ marginLeft: '5px' }} />
-                        </Button>
-                    )}
-
-
+                    </div>
                 </div>
-            </div>
 
-        </Drawer>
+            </Drawer>
+        </>
     )
 }
 
@@ -250,20 +428,17 @@ export const NewInvitationDrawer = ({ visible, setVisible,  }) => {
 
 
 
-const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio }) => {
+const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCurrentPhone }) => {
 
     const [isMatch, setIsMatch] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
-
-
-    
-
+    const [code, setCode] = useState("+52")
+    const [phone, setPhone] = useState(null)
 
     const compareDominios = (value) => {
         // Set the value
         setDominio(value);
 
-        // Convert to lower case
         const lowerCaseValue = value.toLowerCase();
         const lowerCaseDominios = dominios.map(dominio => dominio.toLowerCase());
 
@@ -289,39 +464,63 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio }) => {
         }
     };
 
-    // useEffect(() => {
-    //     if (dominio) {
-    //         compareDominios(dominio)
-    //     } else {
-    //         setAvailableNext(false)
-    //     }
-
-    // }, [])
 
     useEffect(() => {
-        if (!dominio) {
+        if (!dominio || !code || !phone || phone?.length !== 10) {
             setAvailableNext(false)
         }
     }, [dominio])
+
+    useEffect(() => {
+        if (code && phone?.length === 10)
+            setCurrentPhone(`${code}${phone}`)
+        else {
+            setCurrentPhone(null)
+        }
+    }, [code, phone])
+
 
     return (
 
         !load ?
             <div className='new-invitation-dominio-container'>
                 <span className='new-invitation-label'>Ruta de la invitación</span>
-                <div className='dominio-new-invitation-container'>
-                    <Input
+                <span className='route-info'>La ruta de la invitación es el enlace web donde tus invitados podrán acceder a la invitación. Debe de ser única y especial. Es fundamental evitar el uso de puntos u otros caracteres especiales para garantizar que el enlace sea claro y fácil de compartir.</span>
+
+                <div className='dominio-new-invitation-container' style={{ marginTop: '12px', gap: '12px' }}>
+                    {/* <Input
                         onChange={(e) => compareDominios(e.target.value)}
+
                         value={dominio}
                         className='gc-input-text'
                         style={{
                             width: '400px', marginRight: '10px',
-                            marginTop: '5px'
                         }}
                         placeholder={'Dominio'}
-                    />
+                    /> */}
+
+                    <Input
+                        style={{ borderRadius: '99px', height: '34px', paddingLeft: '16px' }}
+                        onChange={(e) => compareDominios(e.target.value)}
+                        status={isMatch ? "" : "error"} placeholder={isMatch ? "" : "Dominio ocupado"} />
+
+                    <div className='dominio_status' style={{
+                        backgroundColor: isMatch ? 'var(--brand-color-500)' : '#D32F2F'
+                    }}>
+                        {
+                            isMatch ? <LuCheck /> : <LuX />
+                        }
+                    </div>
 
                     {
+                        !isMatch &&
+                        <span style={{
+                            fontWeight: 600, color: isMatch ? 'var(--brand-color-500)' : '#D32F2F',
+                            marginLeft: '-8px', fontSize: '16px', textAlign: 'left'
+                        }}>{errorMessage}</span>
+                    }
+
+                    {/* {
                         !dominio ?
                             <div className='dominio-state-inactive'>
                                 <FaCheck />
@@ -339,24 +538,21 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio }) => {
                                     <MdError size={25} />
                                     <span>{errorMessage}</span>
                                 </div>
-                    }
-
-
+                    } */}
 
                 </div>
 
-                <div className='dominio-info-container'>
-
-                    <div className='route-image-container'>
-                        <img src={images.route} alt='' />
-                    </div>
-
-                    <span className='route-info'>La ruta de la invitación es el enlace web donde tus invitados podrán acceder a la invitación. Debe de ser única y especial. Es fundamental evitar el uso de puntos u otros caracteres especiales para garantizar que el enlace sea claro y fácil de compartir.</span>
+                <img src={images.route} alt='' style={{ width: '100%', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '24px', margin: '24px 0px' }} />
 
 
+                <span className='new-invitation-label'>Whatsapp</span>
+                <span className='route-info'>Comparte una cuenta de whatsapp a la cual estará asociada tu evento</span>
 
+                <Space.Compact>
+                    <Input status={!code ? "error" : 'success'} style={{ borderRadius: '99px 0px 0px 99px', width: '20%' }} value={code} onChange={(e) => setCode(e.target.value)} />
+                    <Input status={phone?.length < 10 ? "error" : 'success'} style={{ borderRadius: '0px 99px 99px 0px', width: '80%' }} value={phone} onChange={(e) => setPhone(e.target.value)} />
+                </Space.Compact>
 
-                </div>
             </div>
             : <></>
 
@@ -380,12 +576,9 @@ const Plantillas = ({ currentTemplate, setCurrentTemplate, setAvailableNext }) =
                     invitationsTypes.map((template) => (
                         <div
                             onClick={() => setCurrentTemplate(template.type)}
-                            style={{ width: '30%', height: '150px' }}
                             key={template.id} className={`template-item${template.type === currentTemplate ? '-selected' : ''}`}>
                             <template.icon style={{ fontSize: '50px', color: '#1B1B1B' }} />
-                            <span className="template-name-label" style={{
-                                marginTop: '30px'
-                            }}>{template.name}</span>
+                            <span className="template-name-label" >{template.name}</span>
                         </div>
                     ))
                 }
@@ -397,187 +590,44 @@ const Plantillas = ({ currentTemplate, setCurrentTemplate, setAvailableNext }) =
 }
 
 
-const Tipos = ({ currentType, setCurrentType, setAvailableNext }) => {
-    useEffect(() => {
-        if (currentType) {
-            setAvailableNext(true)
-        }
-    }, [currentType])
-    return (
-        <div className='new-invitation-dominio-container'>
-            <span className='new-invitation-label'>Tipo de Invitación</span>
-            <div className='new-inv-templates-container'>
-                {
-                    inv_types.map((type, index) => (
-                        <div
-                            onClick={() => setCurrentType(type.type)}
-                            key={index} className={`type-item${type.type === currentType ? '-selected' : ''}`}>
-                            <div className='type-image-container'>
-                                <type.icon style={{ fontSize: '45px' }} />
-                            </div>
-                            <div className='type-info-container'>
-                                <span className="type--title">{type.title}</span>
-                                <span className="type--description">{type.description}</span>
-                            </div>
+const Pago = ({ setCurrentPlan, currentPlan }) => {
 
-                        </div>
-                    ))
-                }
-            </div>
-        </div>
-    )
-}
-
-const Plan = ({ currentPlan, setCurrentPlan, currentDesign, setAvailableNext }) => {
-
-    // useEffect(() => {
-    //     if (currentPlan) {
-    //         setReady(true)
-    //     }
-    // }, [currentPlan])
-
-    useEffect(() => {
-        if (currentPlan) {
-            setAvailableNext(true)
-        }
-    }, [currentPlan])
-
-
-    return (
-        <div className='new-invitation-dominio-container'>
-            <span className='new-invitation-label'>Plan de Publicación</span>
-            <div className='new-inv-templates-container'>
-                {
-                    inv_planes.map((plan, index) => (
-                        <div
-                            onClick={() => setCurrentPlan(plan.type)}
-                            key={index} className={`plan-item${plan.type === currentPlan ? '-selected' : ''}`}>
-
-                            <div className='plan-image-container'>
-                                {plan.icon}
-                            </div>
-
-                            <span className="plan-name-label">{plan.name}</span>
-                            <span className="plan-price-label">{currentDesign === 'design' ? `$${(plan.amount + 300).toLocaleString('en-US')}` : plan.price}</span>
-                            <span className="plan-time-label">{plan.time}</span>
-
-
-                            <div className='plan-features-container'>
-                                {
-                                    list_items.map((benefit, index) => (
-                                        <div key={index} className='benefit-row'>
-                                            <FaCheck style={{
-                                                marginRight: '10px'
-                                            }} />
-                                            <span className="plan-name-label">{benefit}</span>
-                                        </div>
-                                    ))
-                                }
-
-                                <a href='/features'
-                                    className="plan-name-label label-tag"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-
-                                        margin: '7px 0px', fontWeight: 500, textDecoration: 'underline',
-                                        width: '100%', textAlign: 'center',
-                                    }}>
-                                    Conoce más
-                                </a>
-
-                            </div>
-
-
-
-                            {
-                                plan.type === currentPlan ? <Button id="new-inv-choose-plan--selected">Seleccionar</Button>
-                                    : <Button id="new-inv-choose-plan">Seleccionar</Button>
-                            }
-
-
-                        </div>
-                    ))
-                }
-            </div>
-        </div>
-    )
-}
-
-const Design = ({ currentType, setCurrentType, setAvailableNext }) => {
-    useEffect(() => {
-        if (currentType) {
-            setAvailableNext(true)
-        }
-    }, [currentType])
-
-    return (
-        <div className='new-invitation-dominio-container'>
-            <span className='new-invitation-label'>Modo de diseño</span>
-            <div className='new-inv-templates-container'>
-                {
-                    design_types.map((type, index) => (
-                        <div
-                            onClick={() => setCurrentType(type.type)}
-                            key={index} className={`type-item${type.type === currentType ? '-selected' : ''}`}>
-                            <div className='type-image-container'>
-                                <type.icon style={{ fontSize: '45px' }} />
-                            </div>
-                            <div className='type-info-container'>
-                                <span className="type--title">{type.title}</span>
-                                <span className="type--description">{type.description}</span>
-                            </div>
-
-                        </div>
-                    ))
-            }
-            </div>
-        </div>
-    )
-}
-
-const Pago = ({ currentPlan, setReady, currentDesign }) => {
-
-    useEffect(() => {
-        setReady(true)
-    }, [])
-
-
-    const copyToClipboard = async (textToCopy) => {
-        try {
-            await navigator.clipboard.writeText(textToCopy);
-            message.success('Copiado')
-        } catch (err) {
-            console.error('Error al copiar el texto: ', err);
-        }
-    };
 
     return (
         <div className='new-invitation-dominio-container'>
             {/* <span className='new-invitation-label'>Comprobante de pago</span> */}
             <div style={{
                 width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexDirection: 'column'
+                flexDirection: 'column', gap: '16px'
             }}>
-                <span className='new-invitation-fnl-label'>¡Tu invitación está casi lista!</span>
-                <span className='new-invitation-fnl-label-scnd'>Antes de oprimir el botón de <b>Crear</b>, por favor transfiere y envíanos el comprobante de pago por un total de <b>
-                    ${(
-                        currentDesign === 'design'
-                            ? inv_planes.find((plan) => plan.type === currentPlan).amount + 300
-                            : inv_planes.find((plan) => plan.type === currentPlan).amount
-                    ).toLocaleString('en-US')} MXN
-                </b></span>
-                {/* <span className='new-invitation-fnl-total'>
-                    <b>
-                        ${(
-                            currentDesign === 'design'
-                                ? inv_planes.find((plan) => plan.type === currentPlan).amount + 300
-                                : inv_planes.find((plan) => plan.type === currentPlan).amount
-                        ).toLocaleString('en-US')} MXN
-                    </b>
-                </span> */}
+                <span className='new-invitation-fnl-label'>Elige el plan que más te funcione</span>
 
-                <div style={{
+                <div className='plans_cont' style={{ flexDirection: 'column' }}>
+
+
+                    <div onClick={() => setCurrentPlan('pro')} className='plan_card' style={{ backgroundColor: "#20212B", outline: currentPlan === 'pro' && '6px solid #A99FC7' }}>
+                        <img src="/images/plan_pro.png" alt='' style={{ width: '220px' }} />
+                        <CustomButton icon={<FaPlus size={16} style={{ marginTop: '4px' }} />} label="Seleccionar" />
+
+                    </div>
+
+                    <div onClick={() => setCurrentPlan('lite')} className='plan_card' style={{ backgroundImage: "linear-gradient(to right, #A99FC7 10%, #C0B9D6 30%)", outline: currentPlan === 'lite' && '6px solid #A99FC7' }}>
+                        <img src="/images/plan_lite.png" alt='' style={{ width: '220px' }} />
+                        <CustomButton icon={<FaPlus size={16} style={{ marginTop: '4px' }} />} label="Seleccionar" />
+
+                    </div>
+
+                    <div onClick={() => setCurrentPlan('paperless')} className='plan_card' style={{ backgroundImage: "linear-gradient(to bottom, #FFFFFF, #F8F9F9)", outline: currentPlan === 'paperless' && '6px solid #A99FC7' }}>
+                        <img src="/images/plan_paperless.png" alt='' style={{ width: '220px' }} />
+                        <CustomButton icon={<FaPlus size={16} style={{ marginTop: '4px' }} />} label="Seleccionar" />
+
+                    </div>
+
+                </div>
+
+                {/* <Plans /> */}
+
+                {/* <div style={{
                     width: '350px', height: '180px',
                     margin: '20px 0px', borderRadius: '10px',
                     background: 'linear-gradient(135deg, #7B1FA2, #9C27B0)',
@@ -627,24 +677,18 @@ const Pago = ({ currentPlan, setReady, currentDesign }) => {
                     width: '100%', height: '1px', backgroundColor: '#d9d9d9', margin: '30px 0px'
                 }} />
 
-                {
-                    currentDesign === 'design' && (
-                        <>
-                            <span className='new-invitation-fnl-label-scnd'>Para que nuestro equipo pueda crear tu invitación personalizada, por favor <b>completa el siguiente formulario</b> con los detalles de tu evento:</span>
-                            <Link to="https://forms.gle/VpnBxvc6n5sL6rs26" target='_blank' style={{
-                                margin: '30px 0px'
-                            }}>
-                                <Button
-                                    id="whatsapp-button"
-                                    style={{ width: 'auto', backgroundColor: '#673AB7', color: 'var(--ft-color)' }}
-                                    icon={<FaPencilAlt size={14} />}
-                                >
-                                    Completar formulario de diseño
-                                </Button>
-                            </Link>
-                        </>
-                    )
-                }
+                <span className='new-invitation-fnl-label-scnd'>Para que nuestro equipo pueda crear tu invitación personalizada, por favor <b>completa el siguiente formulario</b> con los detalles de tu evento:</span>
+                <Link to="https://forms.gle/VpnBxvc6n5sL6rs26" target='_blank' style={{
+                    margin: '30px 0px'
+                }}>
+                    <Button
+                        id="whatsapp-button"
+                        style={{ width: 'auto', backgroundColor: '#673AB7', color: 'var(--ft-color)' }}
+                        icon={<FaPencilAlt size={14} />}
+                    >
+                        Completar formulario de diseño
+                    </Button>
+                </Link> */}
 
 
 

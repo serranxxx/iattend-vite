@@ -9,6 +9,7 @@
     box-sizing: border-box;
     padding-top: 60px;
     background-color: var(--ft-color);
+    gap: 24px;
 }
 
 .title-new-user-container {
@@ -16,17 +17,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-direction: row;
-    margin: 10px 0px 20px 0px;
+    flex-direction: row;   
+    gap: 12px;
 }
 
 .admin-head-text {
     font-family: var(--font-family);
-    font-size: 18px;
+    font-size: 16px;
     color: var(--text-color);
     text-align: left;
-    font-weight: 700;
-    width: 100%;
+    font-weight: 600;
+    /* width: 100%; */
 }
 
 .user-table-container {
@@ -38,7 +39,9 @@
     align-items: center;
     justify-content: flex-start;
     flex-direction: column;
-    padding: 20px;
+    /* padding: 20px; */
+    gap: 24px;
+    margin-top: 36px;
 }
 
 .admin-table-background {
@@ -68,13 +71,14 @@
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     border-right: 2px solid var(--borders);
     font-family: var(--font-family);
     color: var(--text-color);
     text-align: center;
     font-size: 14px;
     font-weight: 600;
+    padding: 0px 8px;
 }
 
 .admin-table-sub-header-item {
@@ -119,6 +123,7 @@
     align-items: center;
     justify-content: space-between;
     flex-direction: row;
+    padding: 0px 12px;
 }
 
 .admin-table-active {
@@ -131,11 +136,12 @@
     display: flex;
     flex: 1;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: center;
     font-family: var(--font-family);
     color: var(--text-color);
     overflow: hidden;
+    text-align: left;
 }
 
 .admin-table-content-subt {

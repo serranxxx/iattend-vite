@@ -4,7 +4,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { appContext } from "../../context"
 import { useNavigate } from 'react-router-dom';
-import { LuArrowBigUpDash, LuArrowLeft, LuArrowUpFromDot, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuPhone, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
+import { LuArrowBigUpDash, LuArrowLeft, LuArrowUpFromDot, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuPhone, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 
@@ -219,7 +219,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
         </>
     )
 }
-export const HeaderDashboard = ({ saved, mode, onSaveChanges }) => {
+export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges }) => {
 
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -424,10 +424,10 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges }) => {
                     {/* RIGHT SIDE */}
                     <div className="header-dashboard-single-row" style={{ gap: 8 }}>
 
-                        <img src={`/images/plan_${plan}.png`} alt="" style={{maxHeight:'30px', borderRadius:'8px', boxShadow:'0px 0px 8px rgba(0,0,0,0.2)'}}/>
+                        <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />
 
                         <Link to="https://wa.me/6145338500" target="_blank">
-                            <Button  icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
+                            <Button icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
                                 ¿Necesitas ayuda?
                             </Button>
                         </Link>
@@ -437,7 +437,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges }) => {
                                 <Button
                                     icon={<LuUpload size={14} />}
                                     type="primary"
-                                    style={{  position: "relative" }}
+                                    style={{ position: "relative" }}
                                     onClick={onSaveChanges}
                                 >
                                     Publicar
@@ -457,6 +457,32 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges }) => {
                                 </Button>
                             </Tooltip>
                         )}
+
+
+                        {
+                            session?.user?.role === "Administration" &&
+                            <Button
+                                icon={<LuSendHorizontal size={14} />}
+                                type="primary"
+                                style={{ position: "relative", backgroundColor:"#20212B" }}
+                                onClick={onWriteChanges}
+                            >
+                                Escribir
+                                {!saved && (
+                                    <div
+                                        style={{
+                                            position: "absolute",
+                                            top: 0,
+                                            right: 0,
+                                            height: 10,
+                                            width: 10,
+                                            borderRadius: 50,
+                                            backgroundColor: "#A88AFF"
+                                        }}
+                                    />
+                                )}
+                            </Button>
+                        }
 
                     </div>
                 </div>

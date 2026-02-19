@@ -67,6 +67,23 @@
     /* border: 1px solid yellow; */
 }
 
+.create_account_cont {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 350px;
+}
+
+.create_row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+    margin-bottom: 8px;
+}
+
 .login-input {
     margin-bottom: 15px;
     height: 40px;
@@ -120,6 +137,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+
+.new_user_col {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 16px;
+    font-family: 'Poppins';
 }
 
 

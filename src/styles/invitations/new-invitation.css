@@ -25,8 +25,8 @@
 
 
 .steps-content-container {
-    margin-top: 70px;
-    padding: 0px 20px;
+    padding: 0px 24px;
+    box-sizing: border-box;
 }
 
 .steps-content-container .ant-steps .ant-steps-item-finish .ant-steps-item-icon>.ant-steps-icon {
@@ -74,7 +74,10 @@
     align-items: center;
     justify-content: space-between;
     flex-direction: row;
-    padding: 0px 20px;
+    position: absolute;
+    bottom: 5%;
+    width: 90%;
+    /* padding: 0px 20px; */
 }
 
 .steps-buttons-container-start {
@@ -110,7 +113,8 @@
     justify-content: flex-start;
     flex-direction: column;
     width: 100%;
-    margin-top: 55px;
+    gap: 16px;
+    margin-top: 36px;
 }
 
 .dominio-new-invitation-container {
@@ -118,7 +122,7 @@
     align-items: center;
     justify-content: flex-start;
     flex-direction: row;
-    margin: 30px 0px;
+    
 }
 
 .dominio-state-inactive {
@@ -166,28 +170,59 @@
     width: auto;
     font-family: var(--font-family);
     color: var(--text-color);
+    width: 100%;
+    text-align: left;
 }
 
 .dominio-info-container {
     width: 100%;
-    height: 300px;
-    margin-bottom: 30px;
-    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: flex-start;
     flex-direction: column;
+    box-sizing: border-box;
+    gap: 16px;
 
 }
 
 .route-info {
     font-family: var(--font-family);
-    font-size: 16px;
-    line-height: 1.3;
-    width: 80%;
-    text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: left;
     color: var(--text-color);
-    margin-top: 30px;
+    opacity: 0.6;
+    font-weight: 400;
+    margin-top: -12px;
+    width: 100%;
+
+}
+
+.plans_cont {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plan_card {
+    box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.22);
+    border-radius: 16px;
+    min-width: 160px;
+    padding: 12px 0px;
+    box-sizing: border-box;
+}
+
+.dominio_status {
+    height: 30px;
+    width: 30px;
+    min-width: 30px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.15);
+    background-color: #F5F3F2;
+    color: #FFF;;
 }
 
 .route-image-container {
@@ -205,30 +240,27 @@
 }
 
 .new-inv-templates-container {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 30px 0px;
-
-
+    width: 80%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+    gap: 12px; /* espacio entre items */
 }
+
 
 .template-item,
 .template-item-selected {
-    width: 150px;
-    aspect-ratio: 1;
+    width: 100%;
+    height: 100%;
     border: 1px solid var(--borders);
-    border-radius: 15px;
-    margin: 5px 0px;
-    padding: 10px;
+    border-radius: 16px;
+    padding: 16px;
+    box-sizing: border-box;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     flex-direction: column;
+    gap: 16px;
 }
 
 .type-item,
