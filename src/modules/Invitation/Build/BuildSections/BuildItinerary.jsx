@@ -728,13 +728,13 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                             <>
 
                                                 <Button
-                                                    type='ghost'
+                                                    type='text'
                                                     onClick={() => onChangeSeparator(!invitation.itinerary.separator)}
                                                     id={`build-cover-date-buttons${invitation.itinerary.separator ? '--active' : ''}`}
                                                     icon={<LuSeparatorHorizontal size={18} />} />
 
                                                 <Button
-                                                    type='ghost'
+                                                    type='text'
                                                     onClick={() => onChangeBackground(!invitation.itinerary.background)}
                                                     id={`build-cover-date-buttons${invitation.itinerary.background ? '--active' : ''}`}
                                                     icon={<BiSolidColorFill size={18} />} />
@@ -742,7 +742,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
                                                 <Tooltip color="var(--text-color)" title="Invertir color de texto">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onInvertedColor(!invitation.itinerary.inverted)}
                                                         id={`build-cover-date-buttons${invitation.itinerary.inverted ? '--active' : ''}`}
                                                         icon={<MdInvertColors size={18} />} />
@@ -856,7 +856,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                                     <Button
                                                                                                         id={`gc-cta-buttons${icon.index === currentIcon ? '--selected' : ''}`}
                                                                                                         className='gc-icons-modal-icon'
-                                                                                                        type='ghost'
+                                                                                                        type='text'
                                                                                                         onClick={() => handleIcon(icon.index, item.id)}
                                                                                                         key={index}
                                                                                                         icon={<icon.value size={20} />}
@@ -1135,7 +1135,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                         {
                                                                                             item.moments &&
                                                                                             <Button
-                                                                                                type='ghost'
+                                                                                                type='text'
 
                                                                                                 onClick={() => addNewSubitem(item)}
                                                                                                 className='primarybutton--active'

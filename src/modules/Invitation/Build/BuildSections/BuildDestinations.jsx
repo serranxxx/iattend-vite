@@ -306,7 +306,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
 
                                                 <Tooltip color="var(--text-color)" title="Activar separador">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeSeparator(!invitation.destinations.separator)}
                                                         id={`build-cover-date-buttons${invitation.destinations.separator ? '--active' : ''}`}
                                                         icon={<LuSeparatorHorizontal size={18} />} />
@@ -315,7 +315,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
 
                                                 <Tooltip color="var(--text-color)" title="Activar color de fondo">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeBackground(!invitation.destinations.background)}
                                                         id={`build-cover-date-buttons${invitation.destinations.background ? '--active' : ''}`}
                                                         icon={<BiSolidColorFill size={18} />} />
@@ -325,7 +325,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                                     invitation.destinations.background &&
                                                     <Tooltip color="var(--text-color)" title="Invertir color de texto">
                                                         <Button
-                                                            type='ghost'
+                                                            type='text'
                                                             onClick={() => onInvertedColor(!invitation.destinations.inverted)}
                                                             id={`build-cover-date-buttons${invitation.destinations.inverted ? '--active' : ''}`}
                                                             icon={<MdInvertColors size={18} />} />

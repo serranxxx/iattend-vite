@@ -19,7 +19,7 @@ export const IconsModal = ({ isModalOpen, setIsModalOpen, currentIcon, setCurren
                         <Button
                             id={`gc-cta-buttons${icon.index === currentIcon ? '--selected' : ''}`}
                             className='gc-icons-modal-icon'
-                            type='ghost'
+                            type='text'
                             onClick={() => handleIcon(icon.index)}
                             key={index}
                             icon={<icon.value size={20} />}

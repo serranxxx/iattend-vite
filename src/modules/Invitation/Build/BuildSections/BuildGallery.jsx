@@ -121,13 +121,13 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
 
                                             <>
                                                 <Button
-                                                    type='ghost'
+                                                    type='text'
                                                     onClick={() => onChangeSeparator(!invitation.gallery.separator)}
                                                     id={`build-cover-date-buttons${invitation.gallery.separator ? '--active' : ''}`}
                                                     icon={<LuSeparatorHorizontal size={18} />} />
 
                                                 <Button
-                                                    type='ghost'
+                                                    type='text'
                                                     onClick={() => onChangeBackground(!invitation.gallery.background)}
                                                     id={`build-cover-date-buttons${invitation.gallery.background ? '--active' : ''}`}
                                                     icon={<BiSolidColorFill size={18} />} />
@@ -136,7 +136,7 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
                                                     invitation.gallery.background && !invitation.gallery.image &&
                                                     <Tooltip color="var(--text-color)" title="Invertir color de texto">
                                                         <Button
-                                                            type='ghost'
+                                                            type='text'
                                                             onClick={() => onInvertedColor(!invitation.gallery.inverted)}
                                                             id={`build-cover-date-buttons${invitation.gallery.inverted ? '--active' : ''}`}
                                                             icon={<MdInvertColors size={18} />} />

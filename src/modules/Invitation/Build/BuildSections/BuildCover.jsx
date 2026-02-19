@@ -566,7 +566,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         )}
                                     >
                                         <Button
-                                            type='ghost'
+                                            type='text'
                                             style={{ minWidth: '32px', maxWidth: '32px' }}
                                             onClick={() => setOnSettings(!onSettings)}
                                             className={`primarybutton${onSettings ? '--active' : ''}`}
@@ -990,7 +990,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                             </div>
 
                             <Button
-                                type='ghost'
+                                type='text'
                                 // id="expandedbutton"
                                 // className='full-screen-button'
                                 onClick={() => setSettingsModal(false)}

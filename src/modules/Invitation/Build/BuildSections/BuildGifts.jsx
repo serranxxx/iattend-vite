@@ -313,7 +313,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
 
                                                 <Tooltip color="var(--text-color)" title="Activar separador">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeSeparator(!invitation.gifts.separator)}
                                                         id={`build-cover-date-buttons${invitation.gifts.separator ? '--active' : ''}`}
                                                         icon={<LuSeparatorHorizontal size={18} />} />
@@ -322,7 +322,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
 
                                                 <Tooltip color="var(--text-color)" title="Activar color de fondo">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeBackground(!invitation.gifts.background)}
                                                         id={`build-cover-date-buttons${invitation.gifts.background ? '--active' : ''}`}
                                                         icon={<BiSolidColorFill size={18} />} />
@@ -331,7 +331,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
 
                                                 <Tooltip color="var(--text-color)" title="Invertir color de texto">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onInvertedColor(!invitation.gifts.inverted)}
                                                         id={`build-cover-date-buttons${invitation.gifts.inverted ? '--active' : ''}`}
                                                         icon={<MdInvertColors size={18} />} />
@@ -342,7 +342,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
                                                     <Button
                                                         onMouseEnter={() => setOnButton(true)}
                                                         onMouseLeave={() => setOnButton(false)}
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={handleGenerating}
                                                         style={{ background: 'var(--gradient)', color: 'var(--ft-color)' }}
                                                         id={`build-cover-date-buttons${!onButton ? '--active' : ''}`}
@@ -459,7 +459,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
                                                                         }}>
                                                                             <span className='gc-content-label'>Tienda digital</span>
                                                                             <Button
-                                                                                type='ghost'
+                                                                                type='text'
                                                                                 style={{
                                                                                     backgroundColor: '#F5F5F5',
                                                                                     borderRadius: '99px'

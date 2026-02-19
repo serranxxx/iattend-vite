@@ -341,7 +341,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
 
                                                 <Tooltip color="var(--text-color)" title="Activar separador">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeSeparator(!invitation.dresscode.separator)}
                                                         id={`build-cover-date-buttons${invitation.dresscode.separator ? '--active' : ''}`}
                                                         icon={<LuSeparatorHorizontal size={18} />} />
@@ -350,7 +350,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
 
                                                 <Tooltip color="var(--text-color)" title="Activar color de fondo">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeBackground(!invitation.dresscode.background)}
                                                         id={`build-cover-date-buttons${invitation.dresscode.background ? '--active' : ''}`}
                                                         icon={<BiSolidColorFill size={18} />} />
@@ -360,7 +360,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                                     invitation.dresscode.background &&
                                                     <Tooltip color="var(--text-color)" title="Invertir color de texto">
                                                         <Button
-                                                            type='ghost'
+                                                            type='text'
                                                             onClick={() => onInvertedColor(!invitation.dresscode.inverted)}
                                                             id={`build-cover-date-buttons${invitation.dresscode.inverted ? '--active' : ''}`}
                                                             icon={<MdInvertColors size={18} />} />
@@ -371,7 +371,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                                     <Button
                                                         onMouseEnter={() => setOnButton(true)}
                                                         onMouseLeave={() => setOnButton(false)}
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={handleGenerating}
                                                         style={{ background: 'var(--gradient)', color: 'var(--ft-color)' }}
                                                         id={`build-cover-date-buttons${!onButton ? '--active' : ''}`}

@@ -497,7 +497,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                                             }}>Títulos</span>
                                             <Button
-                                                type='ghost'
+                                                type='text'
                                                 style={{ minWidth: '24px', maxWidth: '24px', maxHeight: '24px' }}
                                                 className="primarybutton"
                                                 icon={<LuSettings2 size={12} />} />
@@ -638,7 +638,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                                 }}
                                             >Cuerpo</span>
                                             <Button
-                                                type='ghost'
+                                                type='text'
                                                 style={{ minWidth: '24px', maxWidth: '24px', maxHeight: '24px' }}
                                                 className="primarybutton"
                                                 icon={<LuSettings2 size={12} />} />

@@ -359,7 +359,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
 
                                                 <Tooltip color="var(--text-color)" title="Activar separador">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeSeparator(!invitation.quote.separator)}
                                                         id={`build-cover-date-buttons${invitation.quote.separator ? '--active' : ''}`}
                                                         icon={<LuSeparatorHorizontal size={18} />} />
@@ -368,7 +368,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
 
                                                 <Tooltip color="var(--text-color)" title="Activar color de fondo">
                                                     <Button
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={() => onChangeBackground(!invitation.quote.background)}
                                                         id={`build-cover-date-buttons${invitation.quote.background ? '--active' : ''}`}
                                                         icon={<BiSolidColorFill size={18} />} />
@@ -378,7 +378,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                     invitation.quote.background &&
                                                     <Tooltip color="var(--text-color)" title="Invertir color de texto">
                                                         <Button
-                                                            type='ghost'
+                                                            type='text'
                                                             onClick={() => onInvertedColor(!invitation.quote.invertedColors)}
                                                             id={`build-cover-date-buttons${invitation.quote.invertedColors ? '--active' : ''}`}
                                                             icon={<MdInvertColors size={18} />} />
@@ -389,7 +389,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                     <Button
                                                         onMouseEnter={() => setOnButton(true)}
                                                         onMouseLeave={() => setOnButton(false)}
-                                                        type='ghost'
+                                                        type='text'
                                                         onClick={handleGenerating}
                                                         style={{ background: 'var(--gradient)', color: 'var(--ft-color)' }}
                                                         id={`build-cover-date-buttons${!onButton ? '--active' : ''}`}

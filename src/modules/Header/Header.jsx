@@ -169,7 +169,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
 
                     </div>
 
-                    <Button onClick={() => setOpenMenu(true)} type="ghost" icon={<LuMenu size={36} />} />
+                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<LuMenu size={36} />} />
 
                 </div>
 
@@ -183,7 +183,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
                                 width: '90%', position: 'relative',
                             }}>
                             {/* <span className="mobile-menu-label">Menú</span> */}
-                            <Button onClick={() => setOpenMenu(false)} type="ghost" icon={<IoClose size={36} />} />
+                            <Button onClick={() => setOpenMenu(false)} type="text" icon={<IoClose size={36} />} />
                         </div>
                     </div>
 

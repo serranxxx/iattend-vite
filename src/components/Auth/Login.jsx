@@ -165,7 +165,7 @@ export const Login = () => {
                                 <div className='password-button-container'>
                                     <Input type={!seePasswrod ? 'password' : ''} onChange={(e) => setPassword(e.target.value)} value={password} placeholder='Contraseña' className='gc-input-text login-input' />
                                     <Button
-                                        onClick={() => setSeePasswrod(!seePasswrod)} type='ghost' className='see-password-button'
+                                        onClick={() => setSeePasswrod(!seePasswrod)} type='text' className='see-password-button'
                                         icon={!seePasswrod ? <RiEyeCloseLine size={18} /> : <RiEye2Line size={18} />} />
                                 </div>
 
@@ -189,7 +189,7 @@ export const Login = () => {
                                     <div className='password-button-container'>
                                         <Input type={!seePasswrod ? 'password' : ''} onChange={(e) => setNewPassword(e.target.value)} value={newPassword} placeholder='Contraseña' className='gc-input-text login-input' />
                                         <Button
-                                            onClick={() => setSeePasswrod(!seePasswrod)} type='ghost' className='see-password-button'
+                                            onClick={() => setSeePasswrod(!seePasswrod)} type='text' className='see-password-button'
                                             icon={!seePasswrod ? <RiEyeCloseLine size={18} /> : <RiEye2Line size={18} />} />
                                     </div>
                                     <Button onClick={handleCreate} className='primarybutton mt'>Crear cuenta</Button>
