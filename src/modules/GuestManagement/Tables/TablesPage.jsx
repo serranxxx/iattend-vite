@@ -113,15 +113,15 @@ export const TablesPage = ({ invitationID }) => {
 
         let newTable = {}
 
-        const sortedTables = [...tables_].sort(
-            (a, b) => Number(a.number) - Number(b.number)
-        );
+        const sortedTables = Array.isArray(tables_)
+            ? [...tables_].sort((a, b) => Number(a.number) - Number(b.number))
+            : [];
 
         const lastTable = sortedTables[sortedTables.length - 1];
 
         if (lastTable) {
 
-        
+
             const { data: latestTable, error: tableError } = await supabase
                 .from("tables")
                 .select("*")
@@ -231,6 +231,8 @@ export const TablesPage = ({ invitationID }) => {
     };
 
     const getTables = async () => {
+
+        console.log('tables id: ', invitationID)
         if (invitationID) {
             const { data, error } = await supabase
                 .from('tables')
@@ -1263,7 +1265,7 @@ export const TablesPage = ({ invitationID }) => {
                         icon={<FaList size={16} />}
                         className='button-mobile confirmedlistvutton primarybutton--active'></Button>
                     {
-                         onGuestList &&
+                        onGuestList &&
                         <>
                             <div style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0px 20px', alignSelf: 'stretch'

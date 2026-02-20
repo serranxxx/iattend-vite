@@ -1789,7 +1789,7 @@ export default function GuestsPage() {
                     }
                 }}
             >
-                <TablesPage invitationID={IDBFactory} />
+                <TablesPage invitationID={id} />
             </Drawer>
 
             <NewGuestDrawer rowData={rowData} invitationID={id} ticketsFree={tickets} setDrawerState={setDrawerState} available={tickets - (confirmed + waiting)} refreshPage={refreshPage} drawerState={drawerState} />
