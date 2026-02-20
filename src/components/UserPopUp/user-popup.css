@@ -1,0 +1,138 @@
+.user_modal {
+    font-family: 'Poppins';
+    font-family: 16px;
+    background-color: #F5F3F2;
+    border-radius: 99px;
+    height: 34px;
+    width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #20212B;
+    cursor: pointer;
+    position: fixed;
+    top: 12px;
+    right: max(16px, calc((100vw - 1480px) / 2 + 16px));
+    transition: all 0.3s ease;
+    z-index: 999;
+
+ }
+
+ .user_open {
+    width: 370px;
+    height: 250px;
+    /* height: 310px; */
+    border-radius: 36px;
+    background: none;
+    background-image:  linear-gradient(to bottom, #FFFFFF80, #B4A5CC80);
+    border: 2px solid #FFFFFF80;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0px 8px 32px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.user_col {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 0px;
+    font-family: 'Poppins';
+    color: #20212B;
+}
+
+.user_name {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.user_email {
+    font-size: 14px;
+    font-weight: 200;
+    opacity: 0.6;
+}
+
+.user_row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+}
+
+.border_r {
+    height: 18px;
+    width: 1px;
+    background-color: #20212B;
+    margin: 0px 6px;
+}
+
+.stat_label {
+    font-size: 20px;
+    font-weight: 600;
+
+}
+
+.liquid-btn_user {
+    position: relative;
+    padding: 8px 32px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.05)
+    );
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow:
+      0 0px 24px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+  }
+  
+  /* Reflejo líquido */
+  .liquid-btn_user::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle at top left,
+      rgba(255, 255, 255, 0.6),
+      transparent 40%
+    );
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  
+
+  /* Active */
+  .liquid-btn_user:active {
+    transform: translateY(0);
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.3),
+      inset 0 2px 4px rgba(0, 0, 0, 0.25);
+  }
+  
+
+ 

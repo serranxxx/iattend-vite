@@ -122,7 +122,7 @@
     align-items: center;
     justify-content: flex-start;
     flex-direction: row;
-    
+
 }
 
 .dominio-state-inactive {
@@ -212,6 +212,48 @@
     box-sizing: border-box;
 }
 
+.plan_pro {
+    background: #20212B;
+}
+
+.plan_lite {
+    background-image: linear-gradient(to right, #A99FC7 10%, #C0B9D6 30%);
+}
+
+.plan_paperless {
+    background-image: linear-gradient(to bottom, #FFFFFF, #F8F9F9);
+}
+
+
+
+.price_label,
+.label_paperless {
+    font-size: 24px;
+    color: #FFF;
+    font-weight: 800;
+}
+
+.label_paperless {
+    color: #20212B;
+}
+
+.price_col {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    flex-direction: column;
+}
+
+.featrues_grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 16px;
+    width: 100%;
+    text-align: left;
+    
+}
+
+
 .dominio_status {
     height: 30px;
     width: 30px;
@@ -222,7 +264,8 @@
     justify-content: center;
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.15);
     background-color: #F5F3F2;
-    color: #FFF;;
+    color: #FFF;
+    ;
 }
 
 .route-image-container {
@@ -242,8 +285,10 @@
 .new-inv-templates-container {
     width: 80%;
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 columnas */
-    gap: 12px; /* espacio entre items */
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 columnas */
+    gap: 12px;
+    /* espacio entre items */
 }
 
 

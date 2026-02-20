@@ -1,13 +1,14 @@
-import { Button, Drawer, Input, message, Space, Steps } from 'antd'
+import { Button, Drawer, Input, message, Modal, Space, Steps } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
 import { TbSquareRoundedArrowLeft, TbSquareRoundedArrowRight } from 'react-icons/tb'
 import { images } from '../../helpers/assets/images'
 import { supabase } from '../../lib/supabase'
 import Plans from '../Plans/Plans'
-import { LuCheck, LuPlus, LuX } from 'react-icons/lu'
+import { LuArrowUpRight, LuCheck, LuPlus, LuX } from 'react-icons/lu'
 import { CustomButton } from '../CustomButton/CustomButton'
 import { FaPlus } from 'react-icons/fa6'
+import { fetchPrices, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
 
 
 
@@ -34,7 +35,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
         },
         {
             title: 'Ruta',
-            content: <Dominio dominio={dominio} setDominio={setDominio} load={load} dominios={dominios} setAvailableNext={setAvailableNext} setCurrentPhone={setCurrentPhone} />,
+            content: <Dominio dominio={dominio} setDominio={setDominio} load={load} dominios={dominios} setAvailableNext={setAvailableNext} setCurrentPhone={setCurrentPhone} currentPhone={currentPhone} />,
         },
 
         {
@@ -96,7 +97,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
             label: currentTemplate,
             name: dominio,
             tickets: 300,
-            active:true,
+            active: true,
             phone_number: currentPhone,
 
             data: {
@@ -370,10 +371,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
             refreshInvitations()
         }
 
-
     };
-
-
 
     return (
         <>
@@ -387,7 +385,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                 open={visible}
                 width={'50%'}
                 title={'Configura tu evento'}
-                extra={(currentPlan && currentPhone && currentTemplate && dominio) && <CustomButton onClick={handleNew} icon={<LuPlus size={18} style={{ marginTop: '4px' }} />} label="Crear Evento" variant="primary" />}
+                extra={<Button disabled={!(currentPlan && currentPhone && currentTemplate && dominio)} icon={<FaPlus />} className='primarybutton--active' style={{ fontWeight: 800 }} onClick={handleNew}>Crear evento</Button>}
 
             >
 
@@ -426,9 +424,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
 
 
 
-
-
-const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCurrentPhone }) => {
+const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCurrentPhone, currentPhone }) => {
 
     const [isMatch, setIsMatch] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
@@ -447,7 +443,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
 
         if (invalidChars.test(lowerCaseValue)) {
             // If invalid characters are found, set an error message
-            setAvailableNext(false);
+            // setAvailableNext(false);
             setIsMatch(false);
             setErrorMessage('Evita los caracteres especiales')
             return; // Exit the function
@@ -455,28 +451,29 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
 
         // Check for matches in the domain list
         if (lowerCaseDominios.includes(lowerCaseValue)) {
-            setAvailableNext(false);
+            // setAvailableNext(false);
             setIsMatch(false); // Set the state to false if there's a match
             setErrorMessage('Ocupado')
         } else {
-            setAvailableNext(true);
+            // setAvailableNext(true);
             setIsMatch(true); // Set the state to true if there's no match
         }
     };
 
 
     useEffect(() => {
-        if (!dominio || !code || !phone || phone?.length !== 10) {
+        if (dominio && currentPhone) {
+            setAvailableNext(true)
+        } else {
             setAvailableNext(false)
         }
-    }, [dominio])
+    }, [dominio, currentPhone])
 
     useEffect(() => {
-        if (code && phone?.length === 10)
+        if (code && phone?.length === 10) {
             setCurrentPhone(`${code}${phone}`)
-        else {
-            setCurrentPhone(null)
         }
+        else setCurrentPhone(null)
     }, [code, phone])
 
 
@@ -488,19 +485,11 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                 <span className='route-info'>La ruta de la invitación es el enlace web donde tus invitados podrán acceder a la invitación. Debe de ser única y especial. Es fundamental evitar el uso de puntos u otros caracteres especiales para garantizar que el enlace sea claro y fácil de compartir.</span>
 
                 <div className='dominio-new-invitation-container' style={{ marginTop: '12px', gap: '12px' }}>
-                    {/* <Input
-                        onChange={(e) => compareDominios(e.target.value)}
-
-                        value={dominio}
-                        className='gc-input-text'
-                        style={{
-                            width: '400px', marginRight: '10px',
-                        }}
-                        placeholder={'Dominio'}
-                    /> */}
 
                     <Input
+
                         style={{ borderRadius: '99px', height: '34px', paddingLeft: '16px' }}
+                        value={dominio}
                         onChange={(e) => compareDominios(e.target.value)}
                         status={isMatch ? "" : "error"} placeholder={isMatch ? "" : "Dominio ocupado"} />
 
@@ -520,26 +509,6 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                         }}>{errorMessage}</span>
                     }
 
-                    {/* {
-                        !dominio ?
-                            <div className='dominio-state-inactive'>
-                                <FaCheck />
-                            </div>
-                            : isMatch ?
-                                <div className='dominio-state-not-available'>
-                                    <div className='dominio-state-available'>
-                                        <FaCheck />
-
-                                    </div>
-                                    <span className='available-label'>Disponible</span>
-                                </div>
-                                :
-                                <div className='dominio-state-not-available'>
-                                    <MdError size={25} />
-                                    <span>{errorMessage}</span>
-                                </div>
-                    } */}
-
                 </div>
 
                 <img src={images.route} alt='' style={{ width: '100%', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '24px', margin: '24px 0px' }} />
@@ -549,8 +518,8 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                 <span className='route-info'>Comparte una cuenta de whatsapp a la cual estará asociada tu evento</span>
 
                 <Space.Compact>
-                    <Input status={!code ? "error" : 'success'} style={{ borderRadius: '99px 0px 0px 99px', width: '20%' }} value={code} onChange={(e) => setCode(e.target.value)} />
-                    <Input status={phone?.length < 10 ? "error" : 'success'} style={{ borderRadius: '0px 99px 99px 0px', width: '80%' }} value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    <Input status={!currentPhone ? "error" : 'success'} style={{ borderRadius: '99px 0px 0px 99px', width: '20%' }} value={code} onChange={(e) => setCode(e.target.value)} />
+                    <Input status={!currentPhone ? "error" : 'success'} style={{ borderRadius: '0px 99px 99px 0px', width: '80%' }} value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </Space.Compact>
 
             </div>
@@ -592,6 +561,35 @@ const Plantillas = ({ currentTemplate, setCurrentTemplate, setAvailableNext }) =
 
 const Pago = ({ setCurrentPlan, currentPlan }) => {
 
+    const [prices, setPrices] = useState([])
+    const [openInfo, setOpenInfo] = useState(null)
+
+    const handleFeatures = (plan) => {
+        switch (plan) {
+            case 'pro': return plan_pro
+            case 'lite': return plan_lite
+            case 'paperless': return plan_paperless
+            default:
+                break;
+        }
+    }
+
+    const handleTheme = (plan) => {
+        switch (plan) {
+            case 'pro': return { background: '#20212B', color: '#FFF', accent: 'var(--brand-color-500)' }
+            case 'lite': return { background: 'var(--brand-color-500)', color: '#FFF', accent: '#20212B' }
+            case 'paperless': return { background: '#F5F5F5', color: '#20212B', accent: 'var(--brand-color-500)' }
+
+            default:
+                break;
+        }
+    }
+
+    useEffect(() => {
+        fetchPrices(setPrices)
+    }, [])
+
+
 
     return (
         <div className='new-invitation-dominio-container'>
@@ -603,96 +601,67 @@ const Pago = ({ setCurrentPlan, currentPlan }) => {
                 <span className='new-invitation-fnl-label'>Elige el plan que más te funcione</span>
 
                 <div className='plans_cont' style={{ flexDirection: 'column' }}>
+                    {
+                        prices.map((p, index) => {
 
+                            const product = PRODUCTS[p.priceId];
 
-                    <div onClick={() => setCurrentPlan('pro')} className='plan_card' style={{ backgroundColor: "#20212B", outline: currentPlan === 'pro' && '6px solid #A99FC7' }}>
-                        <img src="/images/plan_pro.png" alt='' style={{ width: '220px' }} />
-                        <CustomButton icon={<FaPlus size={16} style={{ marginTop: '4px' }} />} label="Seleccionar" />
-
-                    </div>
-
-                    <div onClick={() => setCurrentPlan('lite')} className='plan_card' style={{ backgroundImage: "linear-gradient(to right, #A99FC7 10%, #C0B9D6 30%)", outline: currentPlan === 'lite' && '6px solid #A99FC7' }}>
-                        <img src="/images/plan_lite.png" alt='' style={{ width: '220px' }} />
-                        <CustomButton icon={<FaPlus size={16} style={{ marginTop: '4px' }} />} label="Seleccionar" />
-
-                    </div>
-
-                    <div onClick={() => setCurrentPlan('paperless')} className='plan_card' style={{ backgroundImage: "linear-gradient(to bottom, #FFFFFF, #F8F9F9)", outline: currentPlan === 'paperless' && '6px solid #A99FC7' }}>
-                        <img src="/images/plan_paperless.png" alt='' style={{ width: '220px' }} />
-                        <CustomButton icon={<FaPlus size={16} style={{ marginTop: '4px' }} />} label="Seleccionar" />
-
-                    </div>
-
-                </div>
-
-                {/* <Plans /> */}
-
-                {/* <div style={{
-                    width: '350px', height: '180px',
-                    margin: '20px 0px', borderRadius: '10px',
-                    background: 'linear-gradient(135deg, #7B1FA2, #9C27B0)',
-                    position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
-                    // padding: '20px'
-                }}>
-                    <img src={images.Nu} alt='' style={{ position: 'absolute', top: '20px', left: '20px', height: '25px' }} />
-
-                    <Col style={{ position: 'absolute', bottom: '20px', left: '20px', width: '300px' }} >
-                        <Row style={{ marginBottom: '-10px', flexDirection: 'space-between' }}>
-                            <span className="label-nu" >Luis Alberto Serrano Garcia</span>
-                            <Button
-                                onClick={() => copyToClipboard('Luis Alberto Serrano Garcia')}
-                                style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    marginLeft: '15px'
-                                }} type='ghost' icon={<MdOutlineContentCopy size={20} style={{ color: 'var(--ft-color)' }} />} />
-                        </Row>
-                        <Row style={{ flexDirection: 'space-between' }}>
-                            <span className="label-nu" >638180000145155539</span>
-                            <Button
-                                onClick={() => copyToClipboard('638180000145155539')}
-                                style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    marginLeft: '15px'
-                                }} type='ghost' icon={<MdOutlineContentCopy size={20} style={{ color: 'var(--ft-color)' }} />} />
-                        </Row>
-                    </Col>
-
-
+                            if (product?.type === 'plan')
+                                return (
+                                    <div key={index} onClick={() => setCurrentPlan(product.value)} className={`plan_card plan_${product.value}`} style={{ outline: currentPlan === product.value && '6px solid #A99FC7' }}>
+                                        <img src={`/images/plan_${product.value}.png`} alt='' style={{ width: '180px' }} />
+                                        <div className='price_col'>
+                                            <span className={`price_label label_${product.value}`}>  {new Intl.NumberFormat('es-MX', {
+                                                style: 'currency',
+                                                currency: 'MXN',
+                                            }).format(p.amount)} MXN</span>
+                                            <a onClick={(e) => { e.stopPropagation(); setOpenInfo(product.value) }} className={`price_label label_${product.value}`} style={{ fontSize: '16px' }}><LuArrowUpRight /> Ver más</a>
+                                        </div>
+                                    </div>
+                                )
+                        })
+                    }
 
                 </div>
-                <Link to="https://wa.me/6145394836" target='_blank' style={{
-                    margin: '0px 10px'
-                }}>
-                    <Button
-                        id="whatsapp-button"
-                        style={{ width: 'auto', marginBottom: '15px' }}
-                        icon={<FaWhatsapp size={18} />}
-                    >
-                        Enviar comprobante de pago
-                    </Button>
-                </Link>
-                <span className='new-invitation-fnl-label-scnd'>Una vez recibido, activaremos tu invitación y podrás comenzar a diseñar.</span>
-
-                <div style={{
-                    width: '100%', height: '1px', backgroundColor: '#d9d9d9', margin: '30px 0px'
-                }} />
-
-                <span className='new-invitation-fnl-label-scnd'>Para que nuestro equipo pueda crear tu invitación personalizada, por favor <b>completa el siguiente formulario</b> con los detalles de tu evento:</span>
-                <Link to="https://forms.gle/VpnBxvc6n5sL6rs26" target='_blank' style={{
-                    margin: '30px 0px'
-                }}>
-                    <Button
-                        id="whatsapp-button"
-                        style={{ width: 'auto', backgroundColor: '#673AB7', color: 'var(--ft-color)' }}
-                        icon={<FaPencilAlt size={14} />}
-                    >
-                        Completar formulario de diseño
-                    </Button>
-                </Link> */}
-
-
 
             </div>
+
+            <Modal
+                open={!!openInfo}
+                onCancel={() => setOpenInfo(null)}
+                footer={null}
+                width={'250px'}
+                title={<span className={`price_label label_${openInfo}`} style={{ fontSize: '24px' }}>Plan <b style={{ textTransform: 'uppercase', color: handleTheme(openInfo)?.accent }}>{openInfo}</b></span>}
+                styles={{
+                    container: {
+                        borderRadius: '24px',
+                        padding: '24px',
+                        // height: '90vh',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        background: handleTheme(openInfo)?.background
+                    },
+                    body: {
+                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
+                        color: handleTheme(openInfo)?.color,
+                        position: 'relative',
+
+
+                    }
+                }}
+            >
+
+                <div className='featrues_grid'>
+                    {
+                        handleFeatures(openInfo)?.map((i) => (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px' }}>
+                                {<i.icon style={{ color: handleTheme(openInfo)?.accent }} />} <span style={{ lineHeight: '1.1' }}>{i.text}</span>
+                            </div>
+                        ))
+                    }
+                </div>
+
+            </Modal>
         </div>
     )
 }

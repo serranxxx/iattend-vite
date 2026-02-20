@@ -8,6 +8,7 @@ import { HeaderBuild } from '../../modules/Header/Header'
 import { LuArrowUpFromLine, LuArrowUpRight, LuChevronDown, LuCopy, LuLink, LuPlus, LuPower, LuPowerOff, LuUserPlus } from 'react-icons/lu'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import UserPopUp from '../../components/UserPopUp/UserPopUp'
 
 
 export const AdminPage = () => {
@@ -568,7 +569,7 @@ export const AdminPage = () => {
                                 }
                                 return true;
                             })
-                            ?.filter(i => i.user_email === 'albserrano8@gmail.com'|| i.user_email === 'pa.perez98@gmail.com' || i.user_email === 'pau@iattend.mx')
+                            ?.filter(i => i.user_email === 'albserrano8@gmail.com' || i.user_email === 'pa.perez98@gmail.com' || i.user_email === 'pau@iattend.mx')
                             ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                     }
 
@@ -601,18 +602,20 @@ export const AdminPage = () => {
 
 
     return (
-        <>
+        <div className='invitations-page-main-container'>
             {contextHolder}
-            <Layout >
+            <Layout style={{
+                position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
+                alignItems: 'flex-start', justifyContent: 'flex-start',
+                backgroundColor: 'var(--ft-color)',
+                maxWidth: '1480px',
+                gap:'24px'
+            }}>
                 <HeaderBuild position={'admin'} />
 
 
-
+                <UserPopUp />
                 <div className='user-table-container'>
-
-
-                    {/* <span className='admin-head-text'>Adminsitración de invtiaciones </span> */}
-
                     <Tabs
                         style={{ width: '100%', }}
                         type="card"
@@ -689,7 +692,7 @@ export const AdminPage = () => {
                 visible={onNewInvitation} setVisible={setOnNewInvitation} refreshInvitations={refreshData} user={user}
             />
 
-        </>
+        </div>
 
     )
 

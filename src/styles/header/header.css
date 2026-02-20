@@ -15,8 +15,6 @@
     /* border-bottom: 1px solid var(--borders); */
 }
 
-
-
 .footer-main-container {
     justify-content: center;
     align-items: center;
@@ -496,6 +494,9 @@
 .mobile-label-item {
     display: none;
 }
+
+
+
 
 @media (max-width: 750px) {
 

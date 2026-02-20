@@ -1,29 +1,25 @@
 
 import { Breadcrumb, Button, Popconfirm, Row, Tooltip, message } from "antd"
-import { useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-import { appContext } from "../../context"
 import { useNavigate } from 'react-router-dom';
-import { LuArrowBigUpDash, LuArrowLeft, LuArrowUpFromDot, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuPhone, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
+import {  LuArrowLeft, LuBadgeHelp,  LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
-
 
 const baseProd = "https://www.iattend.events"
 
 export const HeaderBuild = ({ position, isVisible }) => {
 
-    const { logged, logout, } = useContext(appContext)
+    
     const [setIsScrollTop] = useState(false);
     const [openMenu, setOpenMenu] = useState(false)
     const session = JSON.parse(localStorage.getItem("session"));
 
-
-
-    const getFirstLetterUpperCase = (str) => {
-        if (!str) return '';
-        return str.charAt(0).toUpperCase();
-    }
+    // const getFirstLetterUpperCase = (str) => {
+    //     if (!str) return '';
+    //     return str.charAt(0).toUpperCase();
+    // }
 
     useEffect(() => {
         if (position === 'land-page') {
@@ -116,29 +112,17 @@ export const HeaderBuild = ({ position, isVisible }) => {
 
                     </Row>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <Link to={`https://wa.me/6145338500?text=${encodeURIComponent("Hola, estoy interesado en las invitaciones digitales")}`} target='_blank' style={{
-                        }}>
-                            <Button
-                                icon={<LuPhone />}
-                                id={'contact-us'}
-                            >
-                                {logged ? '¿Necesitas ayuda?' : 'CONTÁCTANOS'}
-                            </Button>
-                        </Link>
-
+                    <div style={{
+                        height: '60px', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        position:'relative', width:'120px',zIndex:999
+                    }}>
+{/* 
                         {
                             session?.logged &&
-                            <Button
-                                onClick={logout}
-                                id={session?.user?.role === 'Administration' ? 'on-logged-admin' : "on-logged-circle"} >
-                                {
-                                    session?.user ? getFirstLetterUpperCase(session?.user?.name)
-                                        : 'B'
+                            <UserPopUp session={session} logout={logout} />
 
-                                }
-                            </Button>
-                        }
+                        } */}
                     </div>
 
 
@@ -464,7 +448,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             <Button
                                 icon={<LuSendHorizontal size={14} />}
                                 type="primary"
-                                style={{ position: "relative", backgroundColor:"#20212B" }}
+                                style={{ position: "relative", backgroundColor: "#20212B" }}
                                 onClick={onWriteChanges}
                             >
                                 Escribir

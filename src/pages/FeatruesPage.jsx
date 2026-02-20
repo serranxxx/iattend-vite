@@ -4,6 +4,7 @@ import { FaCircleInfo } from 'react-icons/fa6'
 import { FaCheck } from 'react-icons/fa'
 import { HeaderBuild } from '../modules/Header/Header'
 import { all_features } from '../helpers/assets/app-features'
+import UserPopUp from '../components/UserPopUp/UserPopUp'
 
 export const FeaturesPage = () => {
 
@@ -19,16 +20,16 @@ export const FeaturesPage = () => {
     ]
     
     return (
-        <>
-
+        <div className='invitations-page-main-container'>
             <Layout
-                // className='responsive-web'
                 style={{
-                    position: 'relative',
+                    position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: 'var(--ft-color)'
+                    backgroundColor: 'var(--ft-color)',
+                    maxWidth:'1480px', 
                 }}>
                 <HeaderBuild position={'pricing'}  isVisible={true} />
+                <UserPopUp />
                 <div className='pricing-main-container'>
 
                     <div className='pricing-title-subtext-container'>
@@ -86,6 +87,6 @@ export const FeaturesPage = () => {
 
             </Layout >
 
-        </>
+        </div>
     )
 }

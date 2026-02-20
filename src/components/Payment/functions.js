@@ -1,4 +1,5 @@
 import axios from "axios";
+import { LuArmchair, LuClipboardList, LuPalette, LuPartyPopper, LuPencilRuler, LuSend, LuSmartphone, LuTicket } from "react-icons/lu";
 
 export const fetchPrices = async (setPrices) => {
     const res = await axios.get(
@@ -8,7 +9,7 @@ export const fetchPrices = async (setPrices) => {
     setPrices(res.data);
 };
 
-export const handleCheckout = async (invitationID, priceId) => {
+export const handleCheckout = async (invitationID, priceId, userId) => {
     try {
         if (!invitationID || !priceId) {
             console.error("Falta invitationID o priceId");
@@ -21,6 +22,7 @@ export const handleCheckout = async (invitationID, priceId) => {
             {
                 invitationId: invitationID,
                 priceId: priceId,
+                userId: userId
             }
         );
 
@@ -47,3 +49,96 @@ export const PRODUCTS = {
     price_1T1WY5AAdNlITNVbGrRJx77i: {type: "side", value: "side_event"}
   };
   
+
+  export const plan_paperless = [
+    {
+      text: "Invitación Paperless",
+      icon: LuSmartphone,
+    },
+    {
+      text: "Diseño libre",
+      icon: LuPalette,
+    },
+    {
+      text: "Ediciones ilimitadas",
+      icon: LuPencilRuler,
+    },
+    {
+      text: "Evento público",
+      icon: LuPencilRuler,
+    },
+    {
+      text: "Confirmación manual",
+      icon: LuPencilRuler,
+    },
+  ];
+  
+  export const plan_pro = [
+    {
+      text: "Invitación Paperless",
+      icon: LuSmartphone,
+    },
+    {
+      text: "Diseño libre",
+      icon: LuPalette,
+    },
+    {
+      text: "Ediciones ilimitadas",
+      icon: LuPencilRuler,
+    },
+    {
+      text: "Evento público o privado",
+      icon: LuPencilRuler,
+    },
+    {
+      text: "Lista de asistencia",
+      icon: LuClipboardList,
+    },
+    {
+      text: "Mapa de mesas",
+      icon: LuArmchair,
+    },
+    {
+      text: "Envíos automáticos",
+      icon: LuSend,
+    },
+    {
+      text: "Pases digitales",
+      icon: LuTicket,
+    },
+    {
+      text: "3 Side events",
+      icon: LuPartyPopper,
+    },
+  ];
+  
+  export const plan_lite = [
+    {
+      text: "Invitación Paperless",
+      icon: LuSmartphone,
+    },
+    {
+      text: "Diseño libre",
+      icon: LuPalette,
+    },
+    {
+      text: "Ediciones ilimitadas",
+      icon: LuPencilRuler,
+    },
+    {
+      text: "Evento público o privado",
+      icon: LuPencilRuler,
+    },
+    {
+      text: "Lista de asistencia",
+      icon: LuClipboardList,
+    },
+    {
+      text: "Mapa de mesas",
+      icon: LuArmchair,
+    },
+    {
+      text: "1 Side event",
+      icon: LuPartyPopper,
+    },
+  ];
