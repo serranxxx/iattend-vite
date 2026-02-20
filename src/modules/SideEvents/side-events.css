@@ -372,6 +372,15 @@
     border-radius: 16px;
     color: #00000020;
 }
+.content_modal_side {
+    border-radius: 24px;
+    padding: 0px;
+    height: 90vh;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+}
+
 
 /* body: {
     address: {

@@ -658,7 +658,7 @@ export const AdminPage = () => {
                     title="Nuevo usuario agregado exitosamente"
                     width={400}
                     styles={{
-                        content: {
+                        container: {
                             borderRadius: '24px',
                             padding: '32px',
                         },

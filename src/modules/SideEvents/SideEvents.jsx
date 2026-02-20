@@ -49,7 +49,7 @@ export const SideEvents = () => {
             dataIndex: "name",
             key: "name",
             fixed: "left",
-            minWidth: 180,
+            minWidth: 140,
             // render: (value, record) => {
             //     return (
             //         <div
@@ -70,7 +70,7 @@ export const SideEvents = () => {
             title: "Contacto",
             dataIndex: "phone_number",
             key: "phone_number",
-            width: 100,
+            width: 160,
             //   render: (value) => phoneFormatter(value),
         },
 
@@ -132,38 +132,6 @@ export const SideEvents = () => {
             ),
         },
 
-        // {
-        //     title: "Link mágico",
-        //     key: "link",
-        //     width: 160,
-        //     render: (_, record) => {
-        //         const url = `www.iattend.site/side-event/${current?.id}?password=${record.password}`;
-        //         return (
-        //             <div
-        //                 style={{
-        //                     display: "flex",
-        //                     alignItems: "center",
-        //                     justifyContent: "center", gap: '2px',
-        //                     width: "100%",
-        //                 }}
-        //             >
-        //                 <span >
-        //                     www.iatten...
-        //                 </span>
-        //                 <Tooltip title="Copiar link mágico">
-        //                     <Button
-        //                         onClick={() => copyToClipboard(url)}
-        //                         type='text'
-        //                         // className="primarybutton"
-        //                         // style={{ maxHeight: 26 }}
-        //                         icon={<FaRegCopy size={14} />}
-        //                     />
-        //                 </Tooltip>
-
-        //             </div>
-        //         );
-        //     },
-        // },
         {
             title: "Etiqueta",
             dataIndex: "tag",
@@ -940,7 +908,7 @@ export const SideEvents = () => {
                         width="90%"
                         closeIcon={false}
                         styles={{
-                            content: {
+                            container: {
                                 borderRadius: '24px',
                                 padding: '0px',
                                 height: '90vh',
