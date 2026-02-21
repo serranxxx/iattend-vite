@@ -23,6 +23,7 @@
     letter-spacing: 0;
     font-size: 16px;
     margin: 0;
+    text-align: left;
 }
 
 .module-sub-title{
@@ -540,6 +541,10 @@
   .global-scroll {
     scrollbar-width: thin;              /* auto | thin | none */
     scrollbar-color: rgba(0,0,0,0.4) transparent;
+  }
+
+  .full-screen-button {
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.15) !important;
   }
   
 

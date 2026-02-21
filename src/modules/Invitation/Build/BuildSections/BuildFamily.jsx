@@ -1,9 +1,7 @@
-import { Button, Col, Input, Switch, Tooltip } from 'antd'
-import { BiSolidColorFill } from 'react-icons/bi';
+import { Button, Col, Input, } from 'antd'
 import { IoMdAdd } from 'react-icons/io';
-import { LuSeparatorHorizontal } from 'react-icons/lu';
-import { MdInvertColors } from 'react-icons/md';
 import { TbEyeClosed } from 'react-icons/tb';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 
 export const BuildFamily = ({ invitation, setInvitation, setSaved }) => {
@@ -87,52 +85,6 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved }) => {
         setSaved(false)
     }
 
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            people: {
-                ...prevInvitation.people,
-                active: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            people: {
-                ...prevInvitation.people,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            people: {
-                ...prevInvitation.people,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onInvertedColor = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            people: {
-                ...prevInvitation.people,
-                inverted: e,
-            },
-        }));
-        setSaved(false)
-    }
 
     return (
         <>
@@ -148,45 +100,11 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved }) => {
                                             width: 'auto',
                                         }}
                                     >Personas</span>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.people.active}
-                                        onChange={handleActive} />
+                                   
                                 </div>
 
-
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.people.active && (
-
-                                            <>
-
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeSeparator(!invitation.people.separator)}
-                                                    id={`build-cover-date-buttons${invitation.people.separator ? '--active' : ''}`}
-                                                    icon={<LuSeparatorHorizontal size={18} />} />
-
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeBackground(!invitation.people.background)}
-                                                    id={`build-cover-date-buttons${invitation.people.background ? '--active' : ''}`}
-                                                    icon={<BiSolidColorFill size={18} />} />
-
-                                                {
-                                                    invitation.people.background &&
-                                                    <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                        <Button
-                                                            type='text'
-                                                            onClick={() => onInvertedColor(!invitation.people.inverted)}
-                                                            id={`build-cover-date-buttons${invitation.people.inverted ? '--active' : ''}`}
-                                                            icon={<MdInvertColors size={18} />} />
-                                                    </Tooltip>
-                                                }
-                                            </>
-                                        )
-                                    }
-                                </div>
+                                <BuildMenu active={invitation.people.active} separator={invitation.people.separator} inverted={invitation.people.inverted} background={invitation.people.background} label={'people'} setInvitation={setInvitation} setSaved={setSaved} />
+                               
 
                             </div>
 

@@ -408,7 +408,8 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                         <div className='build-component-elements'>
                             <span className={'module--title'}
                                 style={{
-                                    width: '100%',
+                                    width: '100%', 
+                                    textAlign:'left'
                                 }}
                             >Portada</span>
                             <span className='gc-content-label'>Título</span>
@@ -644,6 +645,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                             <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
 
                                 <span className={'module--title'}
+                                style={{textAlign:'left'}}
                                 >Fecha</span>
 
                                 <div className='general-cards-single-row' style={{ gap: '6px' }}>
@@ -722,15 +724,8 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch'
                             }}>
                                 <span className={'module--title'}
+                                style={{textAlign:'left'}}
                                 >Imagen</span>
-
-                                {/* {
-                                    invitation.cover.image.dev &&
-                                    <Button
-                                        onClick={() => setSettingsModal(true)}
-                                        icon={<TbArrowsMove />} className='primarybutton'>Editar posición</Button>
-                                } */}
-
 
                             </div>
 

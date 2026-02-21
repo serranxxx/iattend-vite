@@ -107,48 +107,6 @@ export const BuildContent = ({
 
                         <StorageImages invitationID={invitationID}/>
 
-                        {/* <Dropdown
-                            trigger={['click']}
-                            placement='bottomLeft'
-                            arrow
-                            popupRender={() => (
-                                <div className='images_storage_cont'>
-                                    <div className='storage_row'>
-                                        <span style={{ fontSize: '16px' }}><b>Almacenamiento de imágenes</b></span>
-                                        <Upload
-                                            accept="image/*"
-                                            showUploadList={false}
-                                            customRequest={customUpload}
-                                        >
-                                            <Button icon={<LuUpload />} className='primarybutton'>Subir imagen</Button>
-                                        </Upload>
-
-                                    </div>
-                                    {
-                                        images.length > 0 ?
-                                            <div className='storage_imgs_cont scroll-invitation'>
-                                                {
-                                                    [...images].reverse()?.map((i, index) => (
-                                                        <div className='storage_img' key={index}>
-                                                            <img src={i.url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                            <Button onClick={() => deleteImageFromSupabase(i.path, invitationID, setImages)} className='storage_delete'>Eliminar</Button>
-                                                        </div>
-                                                    ))
-                                                }
-                                            </div>
-                                            : <div className='empty_cont'>
-                                                <Empty description="No tienes imágenes" />
-                                            </div>
-                                    }
-                                </div>
-                            )}
-                        >
-                            <Button
-                                className='full-screen-button'
-                                id="expandedbutton" icon={<LuArchive size={16} style={{ marginTop: '2px' }} />} />
-
-                        </Dropdown> */}
-
 
                         <div className='slider-container'>
                             <LuPlus />

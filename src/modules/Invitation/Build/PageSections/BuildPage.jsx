@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import './build-invitation.css'
 import { supabase } from '../../../../lib/supabase'
 import { FooterApp } from '../../../Footer/FooterApp'
-import { LuClipboardList, LuFeather, LuFrame, LuGift, LuHeartHandshake, LuImage, LuMapPin, LuNewspaper, LuSettings, LuShirt, LuUsers } from 'react-icons/lu'
 import { HeaderDashboard } from '../../../Header/Header'
 import { ButtonsMenu } from './ButtonsMenu'
 import { BuildMenu } from './BuildMenu'
@@ -11,16 +10,15 @@ import { BuildContent } from './BuildContent'
 import { load } from '../../../../helpers/assets/images'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
+import { BookUser, Camera, Feather, Gift, HeartHandshake, MapPinned, MessageSquareHeart, ScanHeart, ScrollText, Settings, Shirt } from 'lucide-react'
 
 export const BuildPage = () => {
 
 
-    const size = 18
-    const styleIcon = {
-    }
+    const size = 16
     const buttons = [
         {
-            icon: <LuSettings size={size} style={styleIcon} />,
+            icon: <Settings size={size}  />,
             action: null,
             name: 'Generales',
             type: 'generals',
@@ -29,7 +27,7 @@ export const BuildPage = () => {
             index: 0,
         },
         {
-            icon: <LuFrame size={size} style={styleIcon} />,
+            icon: <ScanHeart size={size} />,
             action: null,
             name: 'Portada',
             type: 'cover',
@@ -38,7 +36,7 @@ export const BuildPage = () => {
             index: 0,
         },
         {
-            icon: <LuHeartHandshake size={size} style={styleIcon} />,
+            icon: <HeartHandshake size={size} />,
             action: null,
             name: 'Bienvenida',
             type: 'greeting',
@@ -47,7 +45,7 @@ export const BuildPage = () => {
             index: 1,
         },
         {
-            icon: <LuUsers size={size} style={styleIcon} />,
+            icon: <BookUser size={size} />,
             action: null,
             name: 'Personas',
             type: 'family',
@@ -56,7 +54,7 @@ export const BuildPage = () => {
             index: 2,
         },
         {
-            icon: <LuFeather size={size} style={styleIcon} />,
+            icon: <Feather size={size} />,
             action: null,
             name: 'Cita',
             type: 'quote',
@@ -65,7 +63,7 @@ export const BuildPage = () => {
             index: 3,
         },
         {
-            icon: <LuClipboardList size={size} style={styleIcon} />,
+            icon: <ScrollText size={size} />,
             action: null,
             name: 'Itinerario',
             type: 'itinerary',
@@ -74,7 +72,7 @@ export const BuildPage = () => {
             index: 4,
         },
         {
-            icon: <LuShirt size={size} style={styleIcon} />,
+            icon: <Shirt size={size} />,
             action: null,
             name: 'Dresscode',
             type: 'dresscode',
@@ -83,7 +81,7 @@ export const BuildPage = () => {
             index: 5,
         },
         {
-            icon: <LuGift size={size} style={styleIcon} />,
+            icon: <Gift size={size} />,
             action: null,
             name: 'Regalos',
             type: 'gifts',
@@ -92,7 +90,7 @@ export const BuildPage = () => {
             index: 6,
         },
         {
-            icon: <LuMapPin size={size} style={styleIcon} />,
+            icon: <MapPinned size={size} />,
             action: null,
             name: 'Destinos',
             type: 'destinations',
@@ -101,7 +99,7 @@ export const BuildPage = () => {
             index: 7,
         },
         {
-            icon: <LuNewspaper size={size} style={styleIcon} />,
+            icon: <MessageSquareHeart size={size} />,
             action: null,
             name: 'Avisos',
             type: 'notices',
@@ -110,7 +108,7 @@ export const BuildPage = () => {
             index: 8,
         },
         {
-            icon: <LuImage size={size} style={styleIcon} />,
+            icon: <Camera size={size} />,
             action: null,
             name: 'Galería',
             type: 'gallery',
@@ -182,7 +180,7 @@ export const BuildPage = () => {
                 { id, data: savedInvitation }
             );
 
-            messageApi.info('Cambios escrito')
+            messageApi.info('Cambios escritos')
             setSaved(true)
 
         } catch (error) {

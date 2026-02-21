@@ -1,13 +1,9 @@
-import { Button, Input, Select, Switch, Tooltip } from 'antd'
+import { Button, Input, Select,} from 'antd'
 import { useEffect, useState } from 'react';
-import { MdInvertColors } from 'react-icons/md';
-import { giftsAI } from '../../../../helpers/services/messages';
-import { LuSeparatorHorizontal } from 'react-icons/lu';
-import { BiSolidColorFill } from 'react-icons/bi';
-import { BsStars } from 'react-icons/bs';
 import { IoMdAdd } from 'react-icons/io';
 import { RiDeleteBack2Line } from 'react-icons/ri';
 import { TbEyeClosed } from 'react-icons/tb';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 const { Option } = Select;
 
@@ -31,34 +27,33 @@ const stores = [
 
 export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
 
-    const [onButton, setOnButton] = useState(false)
-    const [onGeneration, setOnGeneration] = useState(false)
+    const [onGeneration] = useState(false)
     const [descriptionValue, setDescriptionValue] = useState(null)
 
-    const handleGenerating = () => {
+    // const handleGenerating = () => {
 
-        let local_description = giftsAI[Math.floor(Math.random() * 9)]
+    //     let local_description = giftsAI[Math.floor(Math.random() * 9)]
 
-        setDescriptionValue('Generando ...');
+    //     setDescriptionValue('Generando ...');
 
-        setTimeout(() => {
-            setDescriptionValue(local_description)
-        }, 4500);
+    //     setTimeout(() => {
+    //         setDescriptionValue(local_description)
+    //     }, 4500);
 
-        setOnGeneration(true);
+    //     setOnGeneration(true);
 
-        setTimeout(() => {
-            setInvitation(prevInvitation => ({
-                ...prevInvitation,
-                gifts: {
-                    ...prevInvitation.gifts,
-                    description: local_description,
-                },
-            }));
-            setSaved(false);
-            setOnGeneration(false);
-        }, 5000);
-    };
+    //     setTimeout(() => {
+    //         setInvitation(prevInvitation => ({
+    //             ...prevInvitation,
+    //             gifts: {
+    //                 ...prevInvitation.gifts,
+    //                 description: local_description,
+    //             },
+    //         }));
+    //         setSaved(false);
+    //         setOnGeneration(false);
+    //     }, 5000);
+    // };
 
     const onChangeTitle = (e) => {
 
@@ -79,17 +74,6 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
             gifts: {
                 ...prevInvitation.gifts,
                 description: e ? e.target.value : prevInvitation.gifts.description,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gifts: {
-                ...prevInvitation.gifts,
-                active: e,
             },
         }));
         setSaved(false)
@@ -244,42 +228,6 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
         setSaved(false)
     }
 
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gifts: {
-                ...prevInvitation.gifts,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gifts: {
-                ...prevInvitation.gifts,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onInvertedColor = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gifts: {
-                ...prevInvitation.gifts,
-                inverted: e,
-            },
-        }));
-        setSaved(false)
-    }
-
     useEffect(() => {
         setDescriptionValue(invitation.gifts.description)
     }, [])
@@ -298,63 +246,11 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
                                             width: 'auto', lineHeight: 1
                                         }}
                                     >Regalos</span>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.gifts.active}
-                                        onChange={handleActive} />
                                 </div>
 
 
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.gifts.active && (
+                                <BuildMenu active={invitation.gifts.active} separator={invitation.gifts.separator} inverted={invitation.gifts.inverted} background={invitation.gifts.background} label={'gifts'} setInvitation={setInvitation} setSaved={setSaved} />
 
-                                            <>
-
-                                                <Tooltip color="var(--text-color)" title="Activar separador">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeSeparator(!invitation.gifts.separator)}
-                                                        id={`build-cover-date-buttons${invitation.gifts.separator ? '--active' : ''}`}
-                                                        icon={<LuSeparatorHorizontal size={18} />} />
-                                                </Tooltip>
-
-
-                                                <Tooltip color="var(--text-color)" title="Activar color de fondo">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeBackground(!invitation.gifts.background)}
-                                                        id={`build-cover-date-buttons${invitation.gifts.background ? '--active' : ''}`}
-                                                        icon={<BiSolidColorFill size={18} />} />
-                                                </Tooltip>
-
-
-                                                <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onInvertedColor(!invitation.gifts.inverted)}
-                                                        id={`build-cover-date-buttons${invitation.gifts.inverted ? '--active' : ''}`}
-                                                        icon={<MdInvertColors size={18} />} />
-                                                </Tooltip>
-
-
-                                                <Tooltip color="var(--gradient)" title="Generar texto">
-                                                    <Button
-                                                        onMouseEnter={() => setOnButton(true)}
-                                                        onMouseLeave={() => setOnButton(false)}
-                                                        type='text'
-                                                        onClick={handleGenerating}
-                                                        style={{ background: 'var(--gradient)', color: 'var(--ft-color)' }}
-                                                        id={`build-cover-date-buttons${!onButton ? '--active' : ''}`}
-                                                        icon={<BsStars size={16} />}>
-
-                                                    </Button>
-                                                </Tooltip>
-
-                                            </>
-                                        )
-                                    }
-                                </div>
 
                             </div>
                             {
@@ -440,7 +336,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
                                                         className='regular-card'
                                                         style={{
                                                             width: '100%', padding: '0px', overflow: 'hidden',
-                                                            borderRadius:'16px'
+                                                            borderRadius: '16px'
                                                         }}
                                                         key={index}
                                                     >

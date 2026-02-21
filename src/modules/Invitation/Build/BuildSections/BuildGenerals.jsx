@@ -336,6 +336,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                         <div className='build-component-elements'>
                             <span className={'module--title'}
+                            style={{textAlign:'left'}}
                             >Ajustes Generales</span>
 
                             <div className='single_row'>

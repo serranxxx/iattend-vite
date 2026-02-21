@@ -1,50 +1,11 @@
-import { Button, Col, Empty, Input, Switch, Tooltip,  } from 'antd'
-import { MdInvertColors } from 'react-icons/md';
+import { Button, Col, Empty, Input,} from 'antd'
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
-import { LuSeparatorHorizontal } from 'react-icons/lu';
-import { BiSolidColorFill } from 'react-icons/bi';
 import { IoMdAdd } from 'react-icons/io';
 import { TbEyeClosed } from 'react-icons/tb';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 
 export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved }) => {
-
-
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gallery: {
-                ...prevInvitation.gallery,
-                active: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gallery: {
-                ...prevInvitation.gallery,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gallery: {
-                ...prevInvitation.gallery,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
 
     const handleURL = (url, index, id) => {
         setInvitation(prevInvitation => {
@@ -81,19 +42,6 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
         setSaved(false)
     }
 
-    const onInvertedColor = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            gallery: {
-                ...prevInvitation.gallery,
-                inverted: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-
 
     return (
         <>
@@ -108,44 +56,11 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
                                             width: 'auto',
                                         }}
                                     >Galería</span>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.gallery.active}
-                                        onChange={handleActive} />
                                 </div>
 
 
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.gallery.active && (
+                                <BuildMenu active={invitation.gallery.active} separator={invitation.gallery.separator} inverted={invitation.gallery.inverted} background={invitation.gallery.background} label={'gallery'} setInvitation={setInvitation} setSaved={setSaved} />
 
-                                            <>
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeSeparator(!invitation.gallery.separator)}
-                                                    id={`build-cover-date-buttons${invitation.gallery.separator ? '--active' : ''}`}
-                                                    icon={<LuSeparatorHorizontal size={18} />} />
-
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeBackground(!invitation.gallery.background)}
-                                                    id={`build-cover-date-buttons${invitation.gallery.background ? '--active' : ''}`}
-                                                    icon={<BiSolidColorFill size={18} />} />
-
-                                                {
-                                                    invitation.gallery.background && !invitation.gallery.image &&
-                                                    <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                        <Button
-                                                            type='text'
-                                                            onClick={() => onInvertedColor(!invitation.gallery.inverted)}
-                                                            id={`build-cover-date-buttons${invitation.gallery.inverted ? '--active' : ''}`}
-                                                            icon={<MdInvertColors size={18} />} />
-                                                    </Tooltip>
-                                                }
-                                            </>
-                                        )
-                                    }
-                                </div>
 
                             </div>
 

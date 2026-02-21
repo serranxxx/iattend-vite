@@ -1,66 +1,51 @@
-import { Button, ColorPicker, Empty, Input, Switch, Tooltip, message } from 'antd'
+import { Button, ColorPicker, Empty, Input, Tooltip, message } from 'antd'
 import { useEffect, useState } from 'react';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
-import { MdInvertColors } from 'react-icons/md';
-import {  LuImage, LuImageOff, LuLink, LuLink2Off, LuSeparatorHorizontal } from 'react-icons/lu';
+import {  LuImage, LuImageOff, LuLink, LuLink2Off } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
-import { dresscodeAI } from '../../../../helpers/services/messages';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
-import { BiSolidColorFill } from 'react-icons/bi';
-import { BsStars } from 'react-icons/bs';
 import { IoMdAdd } from 'react-icons/io';
 import { TbEyeClosed } from 'react-icons/tb';
 import { RiDeleteBack2Line } from 'react-icons/ri';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
+import { Plus } from 'lucide-react';
 
 
 export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSaved, }) => {
 
     const [visible, setVisible] = useState(false)
     const [type, setType] = useState(null)
-
-    const [onButton, setOnButton] = useState(false)
-    const [onGeneration, setOnGeneration] = useState(false)
+    const [onGeneration] = useState(false)
     const [descriptionValue, setDescriptionValue] = useState(null)
     const [presets, setPresets] = useState(null)
     const [hideLink, setHideLink] = useState(false)
     const [hideImages, setHideImages] = useState(false)
     const [handleLinks, setHandleLinks] = useState(null)
 
-    const handleGenerating = () => {
+    // const handleGenerating = () => {
 
-        let local_description = dresscodeAI[Math.floor(Math.random() * 9)]
+    //     let local_description = dresscodeAI[Math.floor(Math.random() * 9)]
 
-        setDescriptionValue('Generando ...');
+    //     setDescriptionValue('Generando ...');
 
-        setTimeout(() => {
-            setDescriptionValue(local_description)
-        }, 4500);
+    //     setTimeout(() => {
+    //         setDescriptionValue(local_description)
+    //     }, 4500);
 
-        setOnGeneration(true);
+    //     setOnGeneration(true);
 
-        setTimeout(() => {
-            setInvitation(prevInvitation => ({
-                ...prevInvitation,
-                dresscode: {
-                    ...prevInvitation.dresscode,
-                    description: local_description,
-                },
-            }));
-            setSaved(false);
-            setOnGeneration(false);
-        }, 5000);
-    };
-
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            dresscode: {
-                ...prevInvitation.dresscode,
-                active: e,
-            },
-        }));
-        setSaved(false)
-    }
+    //     setTimeout(() => {
+    //         setInvitation(prevInvitation => ({
+    //             ...prevInvitation,
+    //             dresscode: {
+    //                 ...prevInvitation.dresscode,
+    //                 description: local_description,
+    //             },
+    //         }));
+    //         setSaved(false);
+    //         setOnGeneration(false);
+    //     }, 5000);
+    // };
 
     const handleOnImages = (e) => {
         setInvitation(prevInvitation => ({
@@ -127,30 +112,6 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
             changeLinkbyIndex(handleLinks)
         }
     }, [handleLinks])
-
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            dresscode: {
-                ...prevInvitation.dresscode,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            dresscode: {
-                ...prevInvitation.dresscode,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
 
     const handleURL = (url, index) => {
         setInvitation(prevInvitation => {
@@ -220,19 +181,6 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                 ...prevInvitation.dresscode,
                 colors: prevInvitation.dresscode.colors.filter((_, i) => i !== index)
             }
-        }));
-        setSaved(false)
-    }
-
-
-    const onInvertedColor = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            dresscode: {
-                ...prevInvitation.dresscode,
-                inverted: e,
-            },
         }));
         setSaved(false)
     }
@@ -325,65 +273,11 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                             width: 'auto',
                                         }}
                                     >Dresscode</span>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.dresscode.active}
-                                        onChange={handleActive} />
                                 </div>
 
 
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.dresscode.active && (
-
-                                            <>
-
-
-                                                <Tooltip color="var(--text-color)" title="Activar separador">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeSeparator(!invitation.dresscode.separator)}
-                                                        id={`build-cover-date-buttons${invitation.dresscode.separator ? '--active' : ''}`}
-                                                        icon={<LuSeparatorHorizontal size={18} />} />
-                                                </Tooltip>
-
-
-                                                <Tooltip color="var(--text-color)" title="Activar color de fondo">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeBackground(!invitation.dresscode.background)}
-                                                        id={`build-cover-date-buttons${invitation.dresscode.background ? '--active' : ''}`}
-                                                        icon={<BiSolidColorFill size={18} />} />
-                                                </Tooltip>
-
-                                                {
-                                                    invitation.dresscode.background &&
-                                                    <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                        <Button
-                                                            type='text'
-                                                            onClick={() => onInvertedColor(!invitation.dresscode.inverted)}
-                                                            id={`build-cover-date-buttons${invitation.dresscode.inverted ? '--active' : ''}`}
-                                                            icon={<MdInvertColors size={18} />} />
-                                                    </Tooltip>
-                                                }
-
-                                                <Tooltip color="var(--gradient)" title="Generar texto">
-                                                    <Button
-                                                        onMouseEnter={() => setOnButton(true)}
-                                                        onMouseLeave={() => setOnButton(false)}
-                                                        type='text'
-                                                        onClick={handleGenerating}
-                                                        style={{ background: 'var(--gradient)', color: 'var(--ft-color)' }}
-                                                        id={`build-cover-date-buttons${!onButton ? '--active' : ''}`}
-                                                        icon={<BsStars size={16} />}>
-
-                                                    </Button>
-                                                </Tooltip>
-
-                                            </>
-                                        )
-                                    }
-                                </div>
+                                <BuildMenu active={invitation.dresscode.active} separator={invitation.dresscode.separator} inverted={invitation.dresscode.inverted} background={invitation.dresscode.background} label={'dresscode'} setInvitation={setInvitation} setSaved={setSaved} />
+                              
 
                             </div>
 
@@ -426,9 +320,10 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                             >Paleta de colores</span>
 
                                             <Button
-                                                id='build-cover-date-buttons'
+                                                className='primarybutton'
+                                                style={{minWidth:'32px'}}
                                                 onClick={addNewColor}
-                                                icon={<IoMdAdd size={20} />} />
+                                                icon={<Plus size={16} style={{marginTop:'4px'}} />} />
                                         </div>
 
                                         {

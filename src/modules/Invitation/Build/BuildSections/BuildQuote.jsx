@@ -1,15 +1,11 @@
 import { Button, Col, ColorPicker, Input, Row, Select, Slider, Switch, Tooltip, } from 'antd'
 import { useEffect, useState } from 'react';
-import { MdInvertColors } from 'react-icons/md';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
-import { LuSeparatorHorizontal } from 'react-icons/lu';
-import { BiSolidColorFill } from 'react-icons/bi';
-import { BsStars } from 'react-icons/bs';
 import { fonts } from '../../../../helpers/assets/fonts';
 import { TbEyeClosed } from 'react-icons/tb';
-import { quotesAI } from '../../../../helpers/services/messages'
 import '../../../../styles/modules/quote.css'
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 const coordenadas = [
     {
@@ -72,8 +68,7 @@ const { Option } = Select;
 
 export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
-    const [onButton, setOnButton] = useState(false)
-    const [onGeneration, setOnGeneration] = useState(false)
+    const [onGeneration] = useState(false)
     const [quoteValue, setQuoteValue] = useState(null)
     // const [textAppear, setTextAppear] = useState(false)
     const [position] = useState(coordenadas)
@@ -96,37 +91,37 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
         setSaved(false)
     }
 
-    const handleGenerating = () => {
+    // const handleGenerating = () => {
 
-        let local_quote = quotesAI.wedding[Math.floor(Math.random() * 9)]
+    //     let local_quote = quotesAI.wedding[Math.floor(Math.random() * 9)]
 
-        setQuoteValue('Generando ...');
+    //     setQuoteValue('Generando ...');
 
-        setTimeout(() => {
-            setQuoteValue(local_quote)
-        }, 4500);
+    //     setTimeout(() => {
+    //         setQuoteValue(local_quote)
+    //     }, 4500);
 
-        setOnGeneration(true);
+    //     setOnGeneration(true);
 
-        setTimeout(() => {
-            setInvitation(prevInvitation => ({
-                ...prevInvitation,
-                quote: {
-                    ...prevInvitation.quote,
-                    // description: local_quote,
-                    text: {
-                        ...prevInvitation.quote.text,
-                        font: {
-                            ...prevInvitation.quote.text.font,
-                            value: local_quote,
-                        }
-                    }
-                },
-            }));
-            setSaved(false);
-            setOnGeneration(false);
-        }, 5000);
-    };
+    //     setTimeout(() => {
+    //         setInvitation(prevInvitation => ({
+    //             ...prevInvitation,
+    //             quote: {
+    //                 ...prevInvitation.quote,
+    //                 // description: local_quote,
+    //                 text: {
+    //                     ...prevInvitation.quote.text,
+    //                     font: {
+    //                         ...prevInvitation.quote.text.font,
+    //                         value: local_quote,
+    //                     }
+    //                 }
+    //             },
+    //         }));
+    //         setSaved(false);
+    //         setOnGeneration(false);
+    //     }, 5000);
+    // };
 
     const onChangeQuote = (e) => {
 
@@ -147,40 +142,6 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
         setSaved(false)
     }
 
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            quote: {
-                ...prevInvitation.quote,
-                active: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            quote: {
-                ...prevInvitation.quote,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            quote: {
-                ...prevInvitation.quote,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
 
     const handleURL = (url) => {
         // setUrl(url)
@@ -234,18 +195,6 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
         }));
         setSaved(false)
     };
-
-    const onInvertedColor = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            quote: {
-                ...prevInvitation.quote,
-                inverted: e,
-            },
-        }));
-        setSaved(false)
-    }
 
     useEffect(() => {
         setQuoteValue(invitation.quote.text.font.value)
@@ -344,64 +293,9 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                             width: 'auto',
                                         }}
                                     >Cita</span>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.quote.active}
-                                        onChange={handleActive} />
                                 </div>
 
-
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.quote.active && (
-
-                                            <>
-
-                                                <Tooltip color="var(--text-color)" title="Activar separador">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeSeparator(!invitation.quote.separator)}
-                                                        id={`build-cover-date-buttons${invitation.quote.separator ? '--active' : ''}`}
-                                                        icon={<LuSeparatorHorizontal size={18} />} />
-                                                </Tooltip>
-
-
-                                                <Tooltip color="var(--text-color)" title="Activar color de fondo">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeBackground(!invitation.quote.background)}
-                                                        id={`build-cover-date-buttons${invitation.quote.background ? '--active' : ''}`}
-                                                        icon={<BiSolidColorFill size={18} />} />
-                                                </Tooltip>
-
-                                                {
-                                                    invitation.quote.background &&
-                                                    <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                        <Button
-                                                            type='text'
-                                                            onClick={() => onInvertedColor(!invitation.quote.invertedColors)}
-                                                            id={`build-cover-date-buttons${invitation.quote.invertedColors ? '--active' : ''}`}
-                                                            icon={<MdInvertColors size={18} />} />
-                                                    </Tooltip>
-                                                }
-
-                                                <Tooltip color="var(--gradient)" title="Generar texto">
-                                                    <Button
-                                                        onMouseEnter={() => setOnButton(true)}
-                                                        onMouseLeave={() => setOnButton(false)}
-                                                        type='text'
-                                                        onClick={handleGenerating}
-                                                        style={{ background: 'var(--gradient)', color: 'var(--ft-color)' }}
-                                                        id={`build-cover-date-buttons${!onButton ? '--active' : ''}`}
-                                                        icon={<BsStars size={16} />}>
-
-                                                    </Button>
-                                                </Tooltip>
-
-                                            </>
-                                        )
-                                    }
-                                </div>
+                                <BuildMenu active={invitation.quote.active} separator={invitation.quote.separator} inverted={invitation.quote.inverted} background={invitation.quote.background} label={'quote'} setInvitation={setInvitation} setSaved={setSaved} />
 
                             </div>
 
@@ -422,6 +316,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
 
                                         <div className='quote-row-btween'>
                                             <span className={'module--title'}
+                                                style={{ textAlign: 'left' }}
                                             >Imagen de fondo</span>
                                             <Switch
                                                 size='small'

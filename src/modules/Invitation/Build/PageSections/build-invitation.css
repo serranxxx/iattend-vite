@@ -48,7 +48,8 @@
 }
 
 .build-content-modules-main-container {
-    background-color: var(--ft-color);
+    background-color: #FFFFFF60;
+    backdrop-filter: blur(10px);
     position: relative;
     height: 80vh;
     /* padding: 22px; */

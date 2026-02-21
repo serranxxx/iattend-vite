@@ -4,33 +4,10 @@ import { IoMdAdd } from 'react-icons/io';
 import { LuSeparatorHorizontal } from 'react-icons/lu';
 import { MdInvertColors } from 'react-icons/md';
 import { TbEyeClosed } from 'react-icons/tb';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 
 export const BuildNotices = ({ invitation, setInvitation, setSaved }) => {
-
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            notices: {
-                ...prevInvitation.notices,
-                active: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onInvertedColor = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            notices: {
-                ...prevInvitation.notices,
-                inverted: e,
-            },
-        }));
-        setSaved(false)
-    }
-
 
 
     const addNewNotice = () => {
@@ -74,30 +51,6 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved }) => {
         setSaved(false)
     }
 
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            notices: {
-                ...prevInvitation.notices,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            notices: {
-                ...prevInvitation.notices,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
-
     const onChangeTitle = (e) => {
         setInvitation(prevInvitation => ({
             ...prevInvitation,
@@ -126,43 +79,10 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved }) => {
                                             width: 'auto',
                                         }}
                                     >Avisos</spanx>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.notices.active}
-                                        onChange={handleActive} />
                                 </div>
 
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.notices.active && (
+                                <BuildMenu active={invitation.notices.active} separator={invitation.notices.separator} inverted={invitation.notices.inverted} background={invitation.notices.background} label={'notices'} setInvitation={setInvitation} setSaved={setSaved} />
 
-                                            <>
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeSeparator(!invitation.notices.separator)}
-                                                    id={`build-cover-date-buttons${invitation.notices.separator ? '--active' : ''}`}
-                                                    icon={<LuSeparatorHorizontal size={18} />} />
-
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeBackground(!invitation.notices.background)}
-                                                    id={`build-cover-date-buttons${invitation.notices.background ? '--active' : ''}`}
-                                                    icon={<BiSolidColorFill size={18} />} />
-
-                                                {
-                                                    invitation.notices.background && !invitation.notices.image &&
-                                                    <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                        <Button
-                                                            type='text'
-                                                            onClick={() => onInvertedColor(!invitation.notices.inverted)}
-                                                            id={`build-cover-date-buttons${invitation.notices.inverted ? '--active' : ''}`}
-                                                            icon={<MdInvertColors size={18} />} />
-                                                    </Tooltip>
-                                                }
-                                            </>
-                                        )
-                                    }
-                                </div>
 
                             </div>
 

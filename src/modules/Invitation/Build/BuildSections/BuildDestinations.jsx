@@ -7,6 +7,7 @@ import { StorageImages } from '../../../../components/ImagesStorage/StorageImage
 import { BiSolidColorFill } from 'react-icons/bi';
 import { IoMdAdd } from 'react-icons/io';
 import { TbEyeClosed } from 'react-icons/tb';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 const { Option } = Select;
 
 const types = [
@@ -63,53 +64,6 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
             destinations: {
                 ...prevInvitation.destinations,
                 description: e ? e.target.value : prevInvitation.destinations.description,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            destinations: {
-                ...prevInvitation.destinations,
-                active: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            destinations: {
-                ...prevInvitation.destinations,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            destinations: {
-                ...prevInvitation.destinations,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onInvertedColor = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            destinations: {
-                ...prevInvitation.destinations,
-                inverted: e,
             },
         }));
         setSaved(false)
@@ -291,51 +245,11 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                             width: 'auto', lineHeight: 1
                                         }}
                                     >Destinos</span>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.destinations.active}
-                                        onChange={handleActive} />
                                 </div>
 
 
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.destinations.active && (
-
-                                            <>
-
-                                                <Tooltip color="var(--text-color)" title="Activar separador">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeSeparator(!invitation.destinations.separator)}
-                                                        id={`build-cover-date-buttons${invitation.destinations.separator ? '--active' : ''}`}
-                                                        icon={<LuSeparatorHorizontal size={18} />} />
-                                                </Tooltip>
-
-
-                                                <Tooltip color="var(--text-color)" title="Activar color de fondo">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onChangeBackground(!invitation.destinations.background)}
-                                                        id={`build-cover-date-buttons${invitation.destinations.background ? '--active' : ''}`}
-                                                        icon={<BiSolidColorFill size={18} />} />
-                                                </Tooltip>
-
-                                                {
-                                                    invitation.destinations.background &&
-                                                    <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                        <Button
-                                                            type='text'
-                                                            onClick={() => onInvertedColor(!invitation.destinations.inverted)}
-                                                            id={`build-cover-date-buttons${invitation.destinations.inverted ? '--active' : ''}`}
-                                                            icon={<MdInvertColors size={18} />} />
-                                                    </Tooltip>
-                                                }
-
-                                            </>
-                                        )
-                                    }
-                                </div>
+                                <BuildMenu active={invitation.destinations.active} separator={invitation.destinations.separator} inverted={invitation.destinations.inverted} background={invitation.destinations.background} label={'destinations'} setInvitation={setInvitation} setSaved={setSaved} />
+                              
 
                             </div>
                             {

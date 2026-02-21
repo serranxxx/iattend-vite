@@ -1,19 +1,18 @@
 import { Button, Dropdown, Input, InputNumber, Row, Switch, TimePicker, Tooltip, } from 'antd'
 import React, { useState, useRef, } from 'react'
 import dayjs from 'dayjs';
-import { MdInvertColors } from 'react-icons/md';
-import { LuArrowUpRight, LuBadgeHelp, LuImage, LuSeparatorHorizontal, } from 'react-icons/lu';
+import { LuArrowUpRight, LuBadgeHelp, LuImage, } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { IconsModal } from '../../../../components/Helpers/IconsModal';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer'
 import { HowToDrawer } from '../../../../components/Helpers/HowToDrawer'
 import { iconsItinerary } from '../../../../helpers/services/menuIcons';
-import { BiSolidColorFill } from 'react-icons/bi';
 import { IoMdAdd } from 'react-icons/io';
 import { FaRegTrashAlt } from 'react-icons/fa';
 import { convert12HrTo24Hr, formatTimeTo12Hours } from '../../../../helpers/assets/functions';
 import { RiDeleteBack2Line } from 'react-icons/ri';
 import { TbEyeClosed } from 'react-icons/tb';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSaved, }) => {
 
@@ -589,43 +588,6 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         setSaved(false)
     };
 
-    const handleActive = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            itinerary: {
-                ...prevInvitation.itinerary,
-                active: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-
-    const onChangeBackground = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            itinerary: {
-                ...prevInvitation.itinerary,
-                background: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-    const onChangeSeparator = (e) => {
-
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            itinerary: {
-                ...prevInvitation.itinerary,
-                separator: e,
-            },
-        }));
-        setSaved(false)
-    }
-
-
     const instanciasToBottom = (item) => {
         if (instanciasContainer.current) {
             instanciasContainer.current.scrollTo({
@@ -661,17 +623,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         }));
         setSaved(false)
     }
-    const onInvertedColor = (e) => {
 
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
-            itinerary: {
-                ...prevInvitation.itinerary,
-                inverted: e,
-            },
-        }));
-        setSaved(false)
-    }
 
     const handleURL = (url, index, objectId) => {
         setInvitation(prevInvitation => ({
@@ -714,44 +666,11 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                             width: 'auto',
                                         }}
                                     >Itinerario</span>
-                                    <Switch
-                                        size='small'
-                                        value={invitation.itinerary.active}
-                                        onChange={handleActive} />
                                 </div>
 
 
-                                <div className='general-cards-single-row' style={{ gap: '5px' }}>
-                                    {
-                                        invitation.itinerary.active && (
-
-                                            <>
-
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeSeparator(!invitation.itinerary.separator)}
-                                                    id={`build-cover-date-buttons${invitation.itinerary.separator ? '--active' : ''}`}
-                                                    icon={<LuSeparatorHorizontal size={18} />} />
-
-                                                <Button
-                                                    type='text'
-                                                    onClick={() => onChangeBackground(!invitation.itinerary.background)}
-                                                    id={`build-cover-date-buttons${invitation.itinerary.background ? '--active' : ''}`}
-                                                    icon={<BiSolidColorFill size={18} />} />
-
-
-                                                <Tooltip color="var(--text-color)" title="Invertir color de texto">
-                                                    <Button
-                                                        type='text'
-                                                        onClick={() => onInvertedColor(!invitation.itinerary.inverted)}
-                                                        id={`build-cover-date-buttons${invitation.itinerary.inverted ? '--active' : ''}`}
-                                                        icon={<MdInvertColors size={18} />} />
-                                                </Tooltip>
-
-                                            </>
-                                        )
-                                    }
-                                </div>
+                                <BuildMenu active={invitation.itinerary.active} separator={invitation.itinerary.separator} inverted={invitation.itinerary.inverted} background={invitation.itinerary.background} label={'itinerary'} setInvitation={setInvitation} setSaved={setSaved} />
+                               
 
                             </div>
 
