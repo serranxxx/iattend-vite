@@ -295,7 +295,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                     >Cita</span>
                                 </div>
 
-                                <BuildMenu active={invitation.quote.active} separator={invitation.quote.separator} inverted={invitation.quote.inverted} background={invitation.quote.background} label={'quote'} setInvitation={setInvitation} setSaved={setSaved} />
+                                <BuildMenu invitation={invitation} label={'quote'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
                             </div>
 

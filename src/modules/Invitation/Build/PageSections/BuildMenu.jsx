@@ -17,14 +17,14 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
         switch (type) {
             case 'generals': return <BuildGenerals  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'cover': return <BuildCover invitationID={invitationID} settingsModal={settingsModal} setSettingsModal={setSettingsModal} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'greeting': return <BuildGreeting  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'family': return <BuildFamily  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'greeting': return <BuildGreeting  invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'family': return <BuildFamily   invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'quote': return <BuildQuote invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'itinerary': return <BuildItinerary invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'dresscode': return <BuildDressCode invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'gifts': return <BuildGifts  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'gifts': return <BuildGifts  invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'destinations': return <BuildDestinations invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'notices': return <BuildNotices  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'notices': return <BuildNotices  invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'gallery': return <BuildGallery invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
 
             default:

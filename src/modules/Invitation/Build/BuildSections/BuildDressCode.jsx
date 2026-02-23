@@ -275,9 +275,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                     >Dresscode</span>
                                 </div>
 
-
-                                <BuildMenu active={invitation.dresscode.active} separator={invitation.dresscode.separator} inverted={invitation.dresscode.inverted} background={invitation.dresscode.background} label={'dresscode'} setInvitation={setInvitation} setSaved={setSaved} />
-                              
+                                <BuildMenu invitation={invitation} label={'dresscode'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />                              
 
                             </div>
 

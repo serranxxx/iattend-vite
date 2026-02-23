@@ -7,7 +7,7 @@
 .menu_cont {
     width: 220px;
     /* height: 600px; */
-    background-color: #F5F3F240;
+    background-color: #F5F3F280;
     backdrop-filter: blur(10px);
     border-radius: 16px;
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
@@ -17,7 +17,9 @@
     align-self: flex-start;
     justify-content: flex-start;
     flex-direction: column;
-    overflow: hidden;
+    gap: 6px;
+    padding: 6px;
+    /* overflow: hidden; */
     cursor: pointer;
 }   
 
@@ -28,8 +30,20 @@
     justify-content: flex-start;
     gap: 8px;
     padding: 16px;
-    border-bottom: 1px solid #F5F3F2;
+    /* border-bottom: 1px solid #F5F3F2; */
     transition: all 0.3 ease;
+    border-radius: 16px;
+}
+
+.single_row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.menu_father {
+    justify-content: space-between;
 }
 
 .menu_item:hover {
@@ -47,4 +61,35 @@
 .inactive_item {
     opacity: 0.3;
     cursor:not-allowed
+}
+
+.sep_img_cont {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    height: 140px;
+    border-radius: 16px;
+    border: 1px solid #FFFFFF40;
+    overflow: hidden;
+    position: relative;
+}
+
+.image_col {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-self: stretch;
+    gap: 12px;
+}
+
+.slider_col {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 0px;
+    width: 100%;
+    line-height: 1;
 }

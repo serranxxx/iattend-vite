@@ -668,9 +668,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                     >Itinerario</span>
                                 </div>
 
-
-                                <BuildMenu active={invitation.itinerary.active} separator={invitation.itinerary.separator} inverted={invitation.itinerary.inverted} background={invitation.itinerary.background} label={'itinerary'} setInvitation={setInvitation} setSaved={setSaved} />
-                               
+                                <BuildMenu invitation={invitation} label={'itinerary'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />                               
 
                             </div>
 

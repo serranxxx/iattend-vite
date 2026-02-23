@@ -247,9 +247,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                     >Destinos</span>
                                 </div>
 
-
-                                <BuildMenu active={invitation.destinations.active} separator={invitation.destinations.separator} inverted={invitation.destinations.inverted} background={invitation.destinations.background} label={'destinations'} setInvitation={setInvitation} setSaved={setSaved} />
-                              
+                                <BuildMenu invitation={invitation} label={'destinations'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />                              
 
                             </div>
                             {

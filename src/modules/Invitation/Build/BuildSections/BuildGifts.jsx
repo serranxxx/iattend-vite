@@ -25,7 +25,7 @@ const stores = [
     "Sears",
 ]
 
-export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
+export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
     const [onGeneration] = useState(false)
     const [descriptionValue, setDescriptionValue] = useState(null)
@@ -248,9 +248,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved }) => {
                                     >Regalos</span>
                                 </div>
 
-
-                                <BuildMenu active={invitation.gifts.active} separator={invitation.gifts.separator} inverted={invitation.gifts.inverted} background={invitation.gifts.background} label={'gifts'} setInvitation={setInvitation} setSaved={setSaved} />
-
+                                <BuildMenu invitation={invitation} label={'gifts'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
                             </div>
                             {

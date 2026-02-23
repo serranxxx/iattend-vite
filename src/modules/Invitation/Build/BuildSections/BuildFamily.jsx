@@ -4,7 +4,7 @@ import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 
-export const BuildFamily = ({ invitation, setInvitation, setSaved }) => {
+export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
 
     const onChangeTitle = (e) => {
@@ -100,11 +100,10 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved }) => {
                                             width: 'auto',
                                         }}
                                     >Personas</span>
-                                   
+
                                 </div>
 
-                                <BuildMenu active={invitation.people.active} separator={invitation.people.separator} inverted={invitation.people.inverted} background={invitation.people.background} label={'people'} setInvitation={setInvitation} setSaved={setSaved} />
-                               
+                                <BuildMenu invitation={invitation} label={'people'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
                             </div>
 
@@ -122,21 +121,21 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved }) => {
                                             Nueva persona
                                         </Button>
                                         <div style={{
-                                            display:'flex',alignItems:'flex-start',justifyContent:'flex-start',flexDirection:'column',
-                                            gap:'16px',alignSelf:'stretch'
+                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                            gap: '16px', alignSelf: 'stretch', 
                                         }}>
                                             {
                                                 invitation.people.personas.map((persona, index) => (
                                                     <div style={{
                                                         display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                        alignSelf: 'stretch'
+                                                        alignSelf: 'stretch', 
                                                     }}>
                                                         <Col
                                                             key={index}
                                                             className='regular-card'
                                                             style={{
                                                                 borderRadius: '16px 16px 0px 0px', padding: '12px',
-                                                                paddingBottom: '16px'
+                                                                paddingBottom: '16px',  width:'100%'
                                                             }}>
 
                                                             <span className='simple-content-label'>Título</span>

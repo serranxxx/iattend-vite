@@ -1,13 +1,10 @@
-import { Button, Col, Input, Switch, Tooltip } from 'antd'
-import { BiSolidColorFill } from 'react-icons/bi';
+import { Button, Col, Input, } from 'antd'
 import { IoMdAdd } from 'react-icons/io';
-import { LuSeparatorHorizontal } from 'react-icons/lu';
-import { MdInvertColors } from 'react-icons/md';
 import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 
-export const BuildNotices = ({ invitation, setInvitation, setSaved }) => {
+export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
 
     const addNewNotice = () => {
@@ -80,9 +77,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved }) => {
                                         }}
                                     >Avisos</spanx>
                                 </div>
-
-                                <BuildMenu active={invitation.notices.active} separator={invitation.notices.separator} inverted={invitation.notices.inverted} background={invitation.notices.background} label={'notices'} setInvitation={setInvitation} setSaved={setSaved} />
-
+                                <BuildMenu invitation={invitation} label={'notices'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
                             </div>
 

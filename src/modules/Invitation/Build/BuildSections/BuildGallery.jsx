@@ -58,9 +58,7 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
                                     >Galería</span>
                                 </div>
 
-
-                                <BuildMenu active={invitation.gallery.active} separator={invitation.gallery.separator} inverted={invitation.gallery.inverted} background={invitation.gallery.background} label={'gallery'} setInvitation={setInvitation} setSaved={setSaved} />
-
+                                <BuildMenu invitation={invitation} label={'gallery'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
                             </div>
 

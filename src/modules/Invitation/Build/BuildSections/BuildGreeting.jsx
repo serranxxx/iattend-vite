@@ -1,10 +1,10 @@
-import { Input} from 'antd'
+import { Input } from 'antd'
 import { useEffect, useState } from 'react';
 import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 
-export const BuildGreeting = ({ invitation, setInvitation, setSaved }) => {
+export const BuildGreeting = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
     const [onGeneration] = useState(false)
     const [titleValue, setTitleValue] = useState(null)
@@ -68,7 +68,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved }) => {
             ...prevInvitation,
             greeting: {
                 ...prevInvitation.greeting,
-                title: e.target.value 
+                title: e.target.value
             },
         }));
         setSaved(false)
@@ -80,7 +80,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved }) => {
             ...prevInvitation,
             greeting: {
                 ...prevInvitation.greeting,
-                description:  e.target.value
+                description: e.target.value
             },
         }));
         setSaved(false)
@@ -90,6 +90,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved }) => {
         setTitleValue(invitation.greeting.title)
         setDescriptionValue(invitation.greeting.description)
     }, [])
+    
 
     return (
         <>
@@ -107,7 +108,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved }) => {
                                     >Bienvenida</span>
                                 </div>
 
-                                <BuildMenu active={invitation.greeting.active} separator={invitation.greeting.separator} inverted={invitation.greeting.inverted} background={invitation.greeting.background} label={'greeting'} setInvitation={setInvitation} setSaved={setSaved}/>
+                                <BuildMenu invitation={invitation} label={'greeting'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
                             </div>
 
@@ -123,7 +124,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved }) => {
                                                 onChange={onChangeTitle}
                                                 value={titleValue}
                                                 autoSize={{ minRows: 2, maxRows: 10 }}
-                                                style={{ width: '100%', transition: 'all 0.3s ease', borderRadius:'12px' }}
+                                                style={{ width: '100%', transition: 'all 0.3s ease', borderRadius: '12px' }}
                                                 className={`gc-input-text ${onGeneration ? 'magic-effect' : ''}`} />
                                         </div>
 
