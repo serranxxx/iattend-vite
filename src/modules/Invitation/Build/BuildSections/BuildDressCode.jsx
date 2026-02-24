@@ -1,7 +1,7 @@
 import { Button, ColorPicker, Empty, Input, Tooltip, message } from 'antd'
 import { useEffect, useState } from 'react';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
-import {  LuImage, LuImageOff, LuLink, LuLink2Off } from 'react-icons/lu';
+import { LuImage, LuImageOff, LuLink, LuLink2Off } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { IoMdAdd } from 'react-icons/io';
@@ -113,16 +113,18 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
         }
     }, [handleLinks])
 
-    const handleURL = (url, index) => {
+    const handleURL = (url, index, id) => {
+
+        
         setInvitation(prevInvitation => {
             const newDev = [...prevInvitation.dresscode.dev];
 
             if (url === null) {
                 // elimina el elemento en ese index
-                newDev.splice(index, 1);
+                newDev.splice(id, 1);
             } else {
                 // reemplaza el valor en ese index
-                newDev[index] = url;
+                newDev[id] = url;
             }
 
             return {
@@ -257,6 +259,11 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
         setPresets(presetColors)
     }, [])
 
+    // useEffect(() => {
+    //   console.log(invitation.dresscode)
+    // }, [invitation])
+    
+
 
     return (
         <>
@@ -275,7 +282,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                     >Dresscode</span>
                                 </div>
 
-                                <BuildMenu invitation={invitation} label={'dresscode'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />                              
+                                <BuildMenu invitation={invitation} label={'dresscode'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
                             </div>
 
@@ -319,9 +326,9 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
 
                                             <Button
                                                 className='primarybutton'
-                                                style={{minWidth:'32px'}}
+                                                style={{ minWidth: '32px' }}
                                                 onClick={addNewColor}
-                                                icon={<Plus size={16} style={{marginTop:'4px'}} />} />
+                                                icon={<Plus size={16} style={{ marginTop: '4px' }} />} />
                                         </div>
 
                                         {
@@ -456,22 +463,25 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                         {
                                             invitation.dresscode.images_active &&
                                                 invitation.dresscode.dev.length > 0 ?
-                                                invitation.dresscode.dev.map((item) => (
-                                                    <div style={{
+                                                invitation.dresscode.dev.map((item, index) => (
+                                                    <div key={index} style={{
                                                         width: '100%', borderRadius: '8px', border: '1px solid #D9D9D9',
                                                         backgroundColor: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
                                                         position: 'relative', height: '70px', overflow: 'hidden', padding: '8px'
                                                     }}>
 
 
-                                                        <img alt='' src={item} style={{
-                                                            width: '400px', height: '40vh', objectFit: 'cover', position: 'absolute',
-                                                            right: 0
-                                                        }} />
+                                                        {
+                                                            item &&
+                                                            <img alt='' src={item} style={{
+                                                                width: '400px', height: '40vh', objectFit: 'cover', position: 'absolute',
+                                                                right: 0
+                                                            }} />
+                                                        }
 
-                                                        <StorageImages placement={'right'} absolute={true} isNull={true} invitationID={invitationID} handleImage={handleURL} />
+                                                        <StorageImages placement={'right'} absolute={true} isNull={true} invitationID={invitationID} handleImage={handleURL} id={index} />
 
-                                                </div>
+                                                    </div>
                                                 ))
                                                 : <Empty description={false} style={{
                                                     marginTop: '30px', marginLeft: '20%'
