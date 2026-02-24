@@ -38,7 +38,7 @@ export const FooterApp = ({ shared_user }) => {
 
                             !screens.xs &&
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                                <img src="images/morado.png" alt='' style={{ width: '100px' }} />
+                                <img src="images/negro-morado.png" alt='' style={{ width: '100px' }} />
                                 {/* <span style={{fontSize:'12px'}} className='footer-link'>Diseña, comparte, celebra</span> */}
                             </div>
 

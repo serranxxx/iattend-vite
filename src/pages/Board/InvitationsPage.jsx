@@ -114,9 +114,9 @@ export const InvitationsPage = () => {
                     position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: 'var(--ft-color)',
-                    maxWidth:'1480px', 
+                    maxWidth: '1480px',
                 }}>
-                
+
                 <HeaderBuild position={'invitations'} isVisible={true} />
                 <UserPopUp logout={logout} />
                 <Layout className='scroll-invitation build-invitation-layout main-dash-layout' style={{
@@ -296,7 +296,8 @@ export const InvitationsPage = () => {
                                             style={{
                                                 position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
-                                                backgroundColor: 'var(--ft-color)', minHeight: '60vh', marginTop: '160px'
+                                                minHeight: 'auto', height: '100vh',
+                                                backgroundImage: 'radial-gradient(circle, #FFFFFF 50%, var(--brand-color-500-40) 100%)'
                                                 // height: '100vh'
                                             }}>
                                             <Login />

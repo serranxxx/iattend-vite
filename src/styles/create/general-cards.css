@@ -359,8 +359,10 @@
 }
 
 .gc-input-text:focus {
-    border: 1px solid var(--brand-color-500)
+    border: 1px solid var(--brand-color-500);
 }
+
+
 
 .gc-date-picker {
     width: 100%;

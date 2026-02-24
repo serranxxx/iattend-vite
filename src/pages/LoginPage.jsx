@@ -13,7 +13,8 @@ export const LoginPage = () => {
                 style={{
                     position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: '#FFF', minHeight:'auto', marginTop:'160px',
+                    minHeight:'auto', height:'100vh',
+                    backgroundImage:'radial-gradient(circle, #FFFFFF 50%, var(--brand-color-500-40) 100%)'
                     
                     // height: '100vh'
                 }}>

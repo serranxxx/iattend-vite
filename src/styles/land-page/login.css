@@ -1,8 +1,8 @@
 .login-general-container-page {
     width: 100%;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
     position: relative;
     padding-top: 100px;
     padding-bottom: 100px;
@@ -10,14 +10,11 @@
 
 .login-container {
     width: 50%;
-    /* height: 200px; */
-    background-color: var(--ft-color);
     display: flex;
     align-items: center;
     justify-content: flex-start;
     flex-direction: column;
     /* padding: 10px; */
-    /* border: 1px solid blue; */
 }
 
 
@@ -26,29 +23,24 @@
     width: 50px;
     border-radius: 50px;
     display: flex;
-    align-items: center;
+    align-items: fle;
     justify-content: center;
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.15);
+
 
 }
 
 .login-image-container {
 
-    width: 100%;
-    background-color: var(--ft-color);
-    transition: all 0.3s ease;
-    overflow: visible;
-    /* border: 1px solid red; */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 70%;
     min-height: 200px;
-    max-height: 300px;
+    overflow: auto;
+    /* max-height: 300px; */
 
 }
 .login-image-container img {
     width: 100%;
-    height: 100%;
+    /* height: 100%; */
     object-fit: cover;
 }
 

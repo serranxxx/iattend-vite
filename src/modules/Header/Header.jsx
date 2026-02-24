@@ -70,14 +70,14 @@ export const HeaderBuild = ({ position, isVisible }) => {
     return (
 
         <>
-            <div className="header-main-container web-opt">
+            <div className="header-main-container web-opt" style={{borderBottom:'1px solid #ebebeb80'}}>
                 <Row className="header-container" >
                     <div style={{
                         width: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
-                        marginTop: '24px'
+                       
                     }}>
-                        <img alt='' src="/images/negro-morado.png" style={{
-                            width: '100%', objectFit: 'cover'
+                        <img alt='' src="/images/icon_pp.png" style={{
+                            height:'32px', width:'32px', borderRadius:'99px'
                         }} />
 
                     </div>

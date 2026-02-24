@@ -156,14 +156,16 @@ export const Login = () => {
 
                         <>
                             <div className='login-image-container'>
-                                <img src={images.decoration_5} alt='' />
+                                <img alt='' src="/images/negro-morado.png" />
                             </div>
 
 
                             <div className='login-form-container'>
-                                <Input onChange={(e) => setUsername(e.target.value)} value={username} placeholder='Email' className='gc-input-text login-input' />
+                                <Input onChange={(e) => setUsername(e.target.value)} value={username} placeholder='Email' className='gc-input-text login-input' style={{ backgroundColor:'#FFFFFF60', backdropFilter:'blur(10px)'}}/>
                                 <div className='password-button-container'>
-                                    <Input type={!seePasswrod ? 'password' : ''} onChange={(e) => setPassword(e.target.value)} value={password} placeholder='Contraseña' className='gc-input-text login-input' />
+                                    <Input type={!seePasswrod ? 'password' : ''} onChange={(e) => setPassword(e.target.value)} value={password} placeholder='Contraseña' style={{
+                                        backgroundColor:'#FFFFFF60', backdropFilter:'blur(10px)'
+                                    }} className='gc-input-text login-input' />
                                     <Button
                                         onClick={() => setSeePasswrod(!seePasswrod)} type='text' className='see-password-button'
                                         icon={!seePasswrod ? <RiEyeCloseLine size={18} /> : <RiEye2Line size={18} />} />
