@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState, } from 'react'
-import { Button, Dropdown, Slider } from 'antd';
+import { Button, Dropdown, Select, Slider } from 'antd';
 import 'react-resizable/css/styles.css';
 import ios_settings from '../../../../assets/images/iphone-settings.svg'
 import android_settings from '../../../../assets/images/android-settings.png'
 import ReactHost from '../../../../components/Host/ReactHost';
 import { LuMinus, LuMonitorSmartphone, LuPlus } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
+import { Languages } from 'lucide-react';
+import { languages_select } from '../../../../helpers/services/languages';
+const { Option } = Select;
 
 
 
@@ -105,7 +108,7 @@ export const BuildContent = ({
 
                         </Dropdown>
 
-                        <StorageImages invitationID={invitationID}/>
+                        <StorageImages invitationID={invitationID} />
 
 
                         <div className='slider-container'>
@@ -120,6 +123,46 @@ export const BuildContent = ({
                             />
                             <LuMinus />
                         </div>
+
+                        <Dropdown
+                            trigger={['click']}
+                            placement='bottomLeft'
+                            arrow
+                            popupRender={() => (
+                                <div className='languague_container'>
+                                    <span className='lang_title'>Agrega un idioma adicional a tu invitación</span>
+                                    <span className='lang_sub'>Ideal para eventos con invitados internacionales.</span>
+
+                                    <Select style={{
+                                        minWidth: '100%'
+                                    }}>
+                                        {
+                                            languages_select.map((i) => (
+                                                <Option value={i.value} key={i.value}>
+                                                    {i.label}
+                                                </Option>
+                                            ))
+                                        }
+                                    </Select>
+
+                                    <div className='lang_price_row'>
+                                        <div className='lang_icon_row'>
+                                            <img src='/images/c_100.png' alt='' style={{ width: '40px', height: '40px' }} />
+                                            <span><b>150 créditos</b></span>
+                                        </div>
+
+                                        <Button icon={<Languages size={16} />} type='primary'>Agregar Idioma</Button>
+                                    </div>
+
+
+                                </div>
+                            )}
+                        >
+                            <Button
+                                className='full-screen-button'
+                                id="expandedbutton" icon={<Languages size={16} style={{ marginTop: '2px' }} />} />
+
+                        </Dropdown>
 
                     </div>
 
@@ -161,7 +204,7 @@ export const BuildContent = ({
 
                                 <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
                                     <ReactHost config={invitation} />
-    
+
                                 </div>
                                 <div className={`inv-light-space-${currentDevice}`} />
                             </div>
