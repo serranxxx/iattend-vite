@@ -3,15 +3,17 @@ import { Breadcrumb, Button, Popconfirm, Row, Tooltip, message } from "antd"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
-import {  LuArrowLeft, LuBadgeHelp,  LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
+import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
+import { Compass, Plus } from "lucide-react";
+import { CreditController } from "../../components/Payment/Controller/CreditController";
 
 const baseProd = "https://www.iattend.events"
 
 export const HeaderBuild = ({ position, isVisible }) => {
 
-    
+
     const [setIsScrollTop] = useState(false);
     const [openMenu, setOpenMenu] = useState(false)
     const session = JSON.parse(localStorage.getItem("session"));
@@ -51,7 +53,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
         },
         {
             name: 'Conoce',
-            icon: LuFolderOpen,
+            icon: Compass,
             selected: LuFolderHeart,
             path: "/features",
             position: "pricing"
@@ -70,14 +72,14 @@ export const HeaderBuild = ({ position, isVisible }) => {
     return (
 
         <>
-            <div className="header-main-container web-opt" style={{borderBottom:'1px solid #ebebeb80'}}>
+            <div className="header-main-container web-opt" style={{ borderBottom: '1px solid #ebebeb80' }}>
                 <Row className="header-container" >
                     <div style={{
-                        width: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
-                       
+                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
+
                     }}>
                         <img alt='' src="/images/icon_pp.png" style={{
-                            height:'32px', width:'32px', borderRadius:'99px'
+                            height: '32px', width: '32px', borderRadius: '99px'
                         }} />
 
                     </div>
@@ -99,8 +101,8 @@ export const HeaderBuild = ({ position, isVisible }) => {
                                             className={`nav-item-col ${item.position === position ? '--selected' : ''}`}>
                                             {
                                                 item.position === position
-                                                    ? <item.selected className="nav-item-icon-selec" />
-                                                    : <item.icon className="nav-item-icon" />
+                                                    ? <item.selected size={16} className="nav-item-icon-selec" />
+                                                    : <item.icon size={16} className="nav-item-icon" />
                                             }
                                             <span className="nav-item-label">{item.name}</span>
                                         </div>
@@ -115,9 +117,9 @@ export const HeaderBuild = ({ position, isVisible }) => {
                     <div style={{
                         height: '60px', display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
-                        position:'relative', width:'120px',zIndex:999
+                        position: 'relative', width: '120px', zIndex: 999
                     }}>
-{/* 
+                        {/* 
                         {
                             session?.logged &&
                             <UserPopUp session={session} logout={logout} />
@@ -359,7 +361,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     return (
         <>
             {contextHolder}
-            <div className="header-dashboard-main-container" style={{ justifyContent: "flex-start" }}>
+            <div className="header-dashboard-main-container" style={{ justifyContent: "flex-start", border: '1px solid #ebebeb80' }}>
                 <div className="header-dashboard-container">
 
                     {/* LEFT SIDE */}
@@ -388,6 +390,17 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             />
                         )}
 
+                        <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
+
+                        }}>
+                            <img alt='' src="/images/icon_pp.png" style={{
+                                height: '25px', width: '25px', borderRadius: '99px',
+                                marginLeft: 4 
+                            }} />
+
+                        </div>
+
                         <Button
                             onClick={() =>
                                 copyToClipboard(
@@ -404,6 +417,8 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         <Breadcrumb style={{ marginLeft: 8 }} items={breadcrumbItems} />
                     </div>
+
+                    <CreditController id={id} />
 
                     {/* RIGHT SIDE */}
                     <div className="header-dashboard-single-row" style={{ gap: 8 }}>

@@ -13,21 +13,21 @@ const { Option } = Select;
 
 
 
-const devices = [
-    {
-        name: 'iOS',
-        value: 'ios'
-    },
-    {
-        name: 'Android',
-        value: 'android'
-    }
-]
+// const devices = [
+//     {
+//         name: 'iOS',
+//         value: 'ios'
+//     },
+//     {
+//         name: 'Android',
+//         value: 'android'
+//     }
+// ]
 
 
 
 export const BuildContent = ({
-    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID
+    positionY, setPositionY, invitation, coverUpdated, currentDevice, invitationID
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -93,42 +93,6 @@ export const BuildContent = ({
                             placement='bottomLeft'
                             arrow
                             popupRender={() => (
-                                <div className='devices-conatinaer'>
-                                    {
-                                        devices.map((device) => (
-                                            <span className='devices-item' onClick={() => setDevice(device.value)} >{device.name}</span>
-                                        ))
-                                    }
-                                </div>
-                            )}
-                        >
-                            <Button
-                                className='full-screen-button'
-                                id="expandedbutton" icon={<LuMonitorSmartphone size={16} style={{ marginTop: '2px' }} />} />
-
-                        </Dropdown>
-
-                        <StorageImages invitationID={invitationID} />
-
-
-                        <div className='slider-container'>
-                            <LuPlus />
-                            <Slider
-                                vertical
-                                min={minZoom}
-                                max={maxZoom}
-                                step={zoomStep}
-                                onChange={(e) => setZoomLevel(e)}
-                                value={zoomLevel}
-                            />
-                            <LuMinus />
-                        </div>
-
-                        <Dropdown
-                            trigger={['click']}
-                            placement='bottomLeft'
-                            arrow
-                            popupRender={() => (
                                 <div className='languague_container'>
                                     <span className='lang_title'>Agrega un idioma adicional a tu invitación</span>
                                     <span className='lang_sub'>Ideal para eventos con invitados internacionales.</span>
@@ -163,6 +127,44 @@ export const BuildContent = ({
                                 id="expandedbutton" icon={<Languages size={16} style={{ marginTop: '2px' }} />} />
 
                         </Dropdown>
+
+                        {/* <Dropdown
+                            trigger={['click']}
+                            placement='bottomLeft'
+                            arrow
+                            popupRender={() => (
+                                <div className='devices-conatinaer'>
+                                    {
+                                        devices.map((device) => (
+                                            <span className='devices-item' onClick={() => setDevice(device.value)} >{device.name}</span>
+                                        ))
+                                    }
+                                </div>
+                            )}
+                        >
+                            <Button
+                                className='full-screen-button'
+                                id="expandedbutton" icon={<LuMonitorSmartphone size={16} style={{ marginTop: '2px' }} />} />
+
+                        </Dropdown> */}
+
+                        <StorageImages invitationID={invitationID} />
+
+
+                        <div className='slider-container'>
+                            <LuPlus />
+                            <Slider
+                                vertical
+                                min={minZoom}
+                                max={maxZoom}
+                                step={zoomStep}
+                                onChange={(e) => setZoomLevel(e)}
+                                value={zoomLevel}
+                            />
+                            <LuMinus />
+                        </div>
+
+
 
                     </div>
 

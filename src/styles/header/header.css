@@ -397,7 +397,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--ft-color);
+    background-color: #FFFFFF60;
+    backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     position: fixed;
     top: 0px;
@@ -428,6 +429,7 @@
     justify-content: flex-start;
     gap: 4px;
 }
+
 
 .headerbutton {
     max-height: 25px;
