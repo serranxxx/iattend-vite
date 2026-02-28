@@ -1,19 +1,15 @@
-import { Button, Col, ColorPicker, DatePicker, Dropdown, Input, Row, Select, Slider, Tooltip } from 'antd'
-import React, { useEffect, useRef, useState } from 'react'
+import { Button, Col, ColorPicker, DatePicker, Dropdown, Input, Modal, Row, Select, Slider, Tooltip } from 'antd'
+import React, { useEffect, useState } from 'react'
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import ios_settings from '../../../../assets/images/iphone-settings.svg'
-import Countdown from '../../../../components/Invitation/CountDown';
 import { FaMinus, FaPlus } from 'react-icons/fa';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { colorFactoryToHex, darker, formatDateToISO, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
-import { LuRuler, LuSettings2 } from 'react-icons/lu';
+import { LuSettings2 } from 'react-icons/lu';
 import { BiHide, BiShow } from 'react-icons/bi';
-import { TbArrowsMove } from 'react-icons/tb';
-import { PiAlignCenterHorizontal, PiAlignCenterVertical, PiAlignCenterVerticalSimple } from 'react-icons/pi';
-import { IoClose } from 'react-icons/io5';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Ratio, ZoomIn, ZoomOut } from 'lucide-react';
 
 
 
@@ -26,7 +22,7 @@ const { Option } = Select;
 
 
 
-export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, setSettingsModal, settingsModal }) => {
+export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, }) => {
 
 
     const coordenadas = [
@@ -93,13 +89,10 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
     const [zoom] = useState(1);
     const [onSettings, setOnSettings] = useState(false)
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
+    // const [isDragging, setIsDragging] = useState(false);
+    // const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
     const [zoomLevel, setZoomLevel] = useState(1);
-    const [ruleLines, setRuleLines] = useState(true)
     const [presets, setPresets] = useState(null)
-
-    const mapContainerRef = useRef(null);
     const zoomStep = 0.01;
     const minZoom = 0.1;
     const maxZoom = 3;
@@ -264,42 +257,42 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
         setSaved(false)
     };
 
-    const startDrag = (event) => {
-        setIsDragging(true);
-        setLastMousePosition({ x: event.clientX, y: event.clientY });
-    };
+    // const startDrag = (event) => {
+    //     setIsDragging(true);
+    //     setLastMousePosition({ x: event.clientX, y: event.clientY });
+    // };
 
-    const drag = (event) => {
-        if (isDragging) {
-            const deltaX = event.clientX - lastMousePosition.x;
-            const deltaY = event.clientY - lastMousePosition.y;
+    // const drag = (event) => {
+    //     if (isDragging) {
+    //         const deltaX = event.clientX - lastMousePosition.x;
+    //         const deltaY = event.clientY - lastMousePosition.y;
 
-            setMapPosition((prevPosition) => {
-                // Definir límites
-                const minX = -550;
-                const maxX = 550; // Ancho máximo del contenedor
-                const minY = -500;
-                const maxY = 150; // Altura máxima del contenedor
+    //         setMapPosition((prevPosition) => {
+    //             // Definir límites
+    //             const minX = -550;
+    //             const maxX = 550; // Ancho máximo del contenedor
+    //             const minY = -500;
+    //             const maxY = 150; // Altura máxima del contenedor
 
-                // Calcular nueva posición con límites
-                const newX = Math.min(Math.max(prevPosition.x + deltaX, minX), maxX);
-                const newY = Math.min(Math.max(prevPosition.y + deltaY, minY), maxY);
+    //             // Calcular nueva posición con límites
+    //             const newX = Math.min(Math.max(prevPosition.x + deltaX, minX), maxX);
+    //             const newY = Math.min(Math.max(prevPosition.y + deltaY, minY), maxY);
 
-                return { x: newX, y: newY };
-            });
+    //             return { x: newX, y: newY };
+    //         });
 
-            setLastMousePosition({ x: event.clientX, y: event.clientY });
-        }
-    };
+    //         setLastMousePosition({ x: event.clientX, y: event.clientY });
+    //     }
+    // };
 
-    const stopDrag = () => {
-        setIsDragging(false);
-    };
+    // const stopDrag = () => {
+    //     setIsDragging(false);
+    // };
 
-    const resetPositions = () => {
-        setMapPosition({ x: 0, y: 0 })
-        setZoomLevel(1)
-    }
+    // const resetPositions = () => {
+    //     setMapPosition({ x: 0, y: 0 })
+    //     setZoomLevel(1)
+    // }
 
     useEffect(() => {
         setSaved(false)
@@ -408,8 +401,8 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                         <div className='build-component-elements'>
                             <span className={'module--title'}
                                 style={{
-                                    width: '100%', 
-                                    textAlign:'left'
+                                    width: '100%',
+                                    textAlign: 'left'
                                 }}
                             >Portada</span>
                             <span className='gc-content-label'>Título</span>
@@ -645,7 +638,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                             <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
 
                                 <span className={'module--title'}
-                                style={{textAlign:'left'}}
+                                    style={{ textAlign: 'left' }}
                                 >Fecha</span>
 
                                 <div className='general-cards-single-row' style={{ gap: '6px' }}>
@@ -724,8 +717,77 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch'
                             }}>
                                 <span className={'module--title'}
-                                style={{textAlign:'left'}}
+                                    style={{ textAlign: 'left' }}
                                 >Imagen</span>
+
+                                <Dropdown
+                                    arrow
+                                    trigger={['click']}
+                                    popupRender={() => (
+                                        <div className='adjust_controller'>
+
+                                            <div className='controller_cont'>
+                                                <Button onClick={() => setMapPosition((prev) => ({ x: prev.x - 20, y: prev.y }))} icon={<ArrowLeft size={16} style={{ marginTop: '2px' }} />}></Button>
+                                                <div className='controller_butons_col'>
+                                                    <Button onClick={() => setMapPosition((prev) => ({ x: prev.x, y: prev.y - 20 }))} icon={<ArrowUp size={16} style={{ marginTop: '2px' }} />}></Button>
+                                                    <Button onClick={() => setMapPosition((prev) => ({ x: prev.x, y: prev.y + 20 }))} icon={<ArrowDown size={16} style={{ marginTop: '2px' }} />}></Button>
+                                                </div>
+                                                <Button onClick={() => setMapPosition((prev) => ({ x: prev.x + 20, y: prev.y }))} icon={<ArrowRight size={16} style={{ marginTop: '2px' }} />}></Button>
+                                            </div>
+
+                                            <div className='slider-container-adj-image' >
+                                                <ZoomIn size={16} />
+                                                <Slider
+                                                    // vertical
+                                                    min={minZoom}
+                                                    max={maxZoom}
+                                                    step={zoomStep}
+                                                    onChange={(e) => setZoomLevel(e)}
+                                                    value={zoomLevel}
+                                                    style={{ flex: 1 }}
+                                                />
+                                                <ZoomOut size={16} />
+                                            </div>
+
+                                            {/* <div className='controller_butons_col' style={{
+                                                alignItems:'flex-start', justifyContent:'flex-start',alignSelf:'stretch', gap:'6px'
+                                            }}>
+                                                <Button
+                                                    onClick={() => setMapPosition((prev) => ({ x: prev.x, y: 0 }))}
+                                                    icon={<AlignStartHorizontal size={16} />}
+                                                />
+
+                                                <Button
+                                                    onClick={() => setMapPosition((prev) => ({ x: 0, y: prev.y }))}
+                                                    icon={<AlignStartVertical size={16} />}
+
+                                                />
+                                            </div> */}
+
+
+
+                                            {/* <Button
+                                                id="expandedbutton"
+                                                className={`full-screen-button`}
+                                                onClick={() => setMapPosition({ x: 0, y: mapPosition.y })}
+                                                icon={<PiAlignCenterHorizontal size={20} />}
+                                                style={{ backgroundColor: 'var(--ft-color)' }}
+                                            />
+
+                                            <Button
+                                                id="expandedbutton"
+                                                className={`full-screen-button`}
+                                                onClick={() => setMapPosition({ x: mapPosition.x, y: 0 })}
+                                                icon={<PiAlignCenterVertical size={20} />}
+                                                style={{ backgroundColor: 'var(--ft-color)' }}
+                                            /> */}
+                                        </div>
+                                    )}
+                                >
+                                    <Button icon={<Ratio size={16} style={{ marginTop: '2px' }} />}>Ajustar</Button>
+                                </Dropdown>
+
+
 
                             </div>
 
@@ -735,9 +797,9 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})` }}
                                 />
 
-                                <StorageImages absolute={true} invitationID={invitationID} handleImage={onChangeCover}/>
+                                <StorageImages absolute={true} invitationID={invitationID} handleImage={onChangeCover} />
 
-                               
+
 
                             </div>
 
@@ -813,189 +875,214 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                     </div >
                 }
 
-                {
-                    settingsModal &&
-                    <div style={{
-                    }} className='adjust-image-modal-main-cont'>
+                {/* <Modal
+                    open={open}
+                    footer={false}
+                    onCancel={() => setOpen(false)}
+                    onOk={() => setOpen(false)}
+                    style={{ top: 20 }}
+                    // width="90%"
+                    closeIcon={false}
+                    styles={{
+                        container: {
+                            borderRadius: '24px',
+                            padding: '0px',
+                            height: '90vh',
+                            overflow: 'hidden',
+                            position: 'relative'
+                        },
+                        body: {
+                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
+                            width: '100%',
+                            position: 'relative'
 
-                        <div className='adj-cover-cont'>
+                        }
+                    }}
+                >
+                    <div className='adj-cover-cont'>
 
 
-                            <div
-                                style={{ transform: `scale(0.8)` }}
-                                className={`inv-device-main-container-ios`}>
-                                <div className={`device-buttons-container-ios`}>
-                                    <div className={`device-button-ios`} />
-                                    <div className={`device-button-ios`} />
-                                    <div className={`device-button-ios`} />
-                                </div>
-                                <div className={`device-power-button-ios`} />
-                                <div className={`inv-device-container-ios`}>
+                        <div
+                            style={{ transform: `scale(0.8)` }}
+                            className={`inv-device-main-container-ios`}>
+                            <div className={`device-buttons-container-ios`}>
+                                <div className={`device-button-ios`} />
+                                <div className={`device-button-ios`} />
+                                <div className={`device-button-ios`} />
+                            </div>
+                            <div className={`device-power-button-ios`} />
+                            <div className={`inv-device-container-ios`}>
 
-                                    <div className={`inv-black-space-ios`}>
-                                        <span>5:15</span>
-                                        <div className={`camera-ios`} />
-                                        <div>
-                                            <img alt='' src={ios_settings} style={{
-                                                height: '100%', objectFit: 'cover'
-                                            }} />
-                                        </div>
+                                <div className={`inv-black-space-ios`}>
+                                    <span>5:15</span>
+                                    <div className={`camera-ios`} />
+                                    <div>
+                                        <img alt='' src={ios_settings} style={{
+                                            height: '100%', objectFit: 'cover'
+                                        }} />
                                     </div>
+                                </div>
+
+                                <div
+                                    className={`ios-invitation inv-set-position grid-guides`}
+                                    style={{
+                                        background: invitation.generals.colors.primary,
+                                    }}
+                                >
 
                                     <div
-                                        className={`ios-invitation inv-set-position grid-guides`}
+                                        onMouseDown={startDrag}
+                                        onMouseMove={drag}
+                                        onMouseUp={stopDrag}
+                                        onMouseLeave={stopDrag}
+                                        ref={mapContainerRef}
                                         style={{
-                                            background: invitation.generals.colors.primary,
+                                            top: `${invitation.cover.image.position.y}px`,
+                                            left: `${invitation.cover.image.position.x}px`,
+                                            transform: `scale(${invitation.cover.image.zoom ?? 1})`,
+                                            zIndex: 3,
+                                            border: '1px solid'
                                         }}
-                                    >
+                                        className='adj-image-container'>
+                                        <img alt=''
+                                            src={invitation.cover.image.dev}
+                                        />
+                                        {/* <div style={{
+                                            position: 'absolute', width: '100%', height: '100%', top: '0px', left: '0px',
+                                            background: `linear-gradient(to top, ${darker(invitation.generals.colors?.primary, 0.2)}, rgba(0,0,0,0))`
+                                        }}>
+                                            
+                                        </div> 
 
-                                        <div
-                                            onMouseDown={startDrag}
-                                            onMouseMove={drag}
-                                            onMouseUp={stopDrag}
-                                            onMouseLeave={stopDrag}
-                                            ref={mapContainerRef}
-                                            style={{
-                                                top: `${invitation.cover.image.position.y}px`,
-                                                left: `${invitation.cover.image.position.x}px`,
-                                                transform: `scale(${invitation.cover.image.zoom})`,
-                                                zIndex: 3
-                                            }}
-                                            className='adj-image-container'>
-                                            <img alt=''
-                                                src={invitation.cover.image.dev}
-                                            />
-                                            <div style={{
-                                                position: 'absolute', width: '100%', height: '100%', top: '0px', left: '0px',
-                                                background: `linear-gradient(to top, ${darker(invitation.generals.colors?.primary, 0.2)}, rgba(0,0,0,0))`
-                                            }}></div>
-
-
-                                        </div>
-                                        <div className='background-cover'
-                                            style={{
-                                                flexDirection: invitation.cover.title.position?.column_reverse,
-                                                pointerEvents: 'none',
-                                                zIndex: 3
-                                            }}>
-
-
-
-                                            <div className='cover--title-container' style={{
-                                                alignItems: invitation.cover.title.position?.align_y, height: invitation.cover.date?.active ? '75%' : '100%',
-                                                padding: invitation.cover.date ? 0 : '10px',
-
-                                            }}>
-                                                <span style={{
-                                                    color: invitation.cover.title.text.color, width: '100%',
-                                                    textAlign: invitation.cover.title.position.align_x, fontSize: `${invitation.cover.title.text.size}px`, wordBreak: 'break-word',
-                                                    opacity: invitation.cover.title.text.opacity, fontFamily: invitation.cover.title.text.typeFace, fontWeight: invitation.cover.title.text.weight,
-                                                    lineHeight: '1'
-                                                }}>{invitation.cover.title.text.value}</span>
-                                            </div>
-
-                                            {
-                                                invitation.cover.date.active && (
-                                                    <div style={{
-                                                        width: '100%',
-                                                        backgroundColor: `transparent`,
-
-                                                        height: '25%', marginTop: '10px',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                    }}>
-
-                                                        <Countdown mainColor={invitation.cover.title.text.color} color={invitation.cover.date.color} colorcolors={invitation.generals.colors} targetDate={invitation.cover.date.value} theme={true} font={invitation.generals.fonts.body.typeFace} fontWeight={invitation.cover.title.text.weight} dev={true} />
-
-                                                    </div>
-                                                )
-                                            }
-
-
-
-                                        </div>
-
-                                        {
-                                            ruleLines &&
-                                            <div className="guides-container">
-                                                <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line vertical center"></div>
-                                                <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line horizontal center"></div>
-                                                <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line vertical left-quarter"></div>
-                                                <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line vertical right-quarter"></div>
-                                                <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line horizontal top-quarter"></div>
-                                                <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line horizontal bottom-quarter"></div>
-                                            </div>
-                                        }
 
                                     </div>
-                                    <div className={`inv-light-space-ios`} />
+                                    <div className='background-cover'
+                                        style={{
+                                            flexDirection: invitation.cover.title.position?.column_reverse,
+                                            pointerEvents: 'none',
+                                            zIndex: 3,
+                                            position: 'absolute'
+                                        }}>
+
+                                        {invitation.cover.image.zoom} /
+                                        y: {invitation.cover.image.position.y} /
+                                        x:  {invitation.cover.image.position.y}
+
+
+
+                                        {/* <div className='cover--title-container' style={{
+                                            alignItems: invitation.cover.title.position?.align_y, height: invitation.cover.date?.active ? '75%' : '100%',
+                                            padding: invitation.cover.date ? 0 : '10px',
+
+                                        }}>
+                                            <span style={{
+                                                color: invitation.cover.title.text.color, width: '100%',
+                                                textAlign: invitation.cover.title.position.align_x, fontSize: `${invitation.cover.title.text.size}px`, wordBreak: 'break-word',
+                                                opacity: invitation.cover.title.text.opacity, fontFamily: invitation.cover.title.text.typeFace, fontWeight: invitation.cover.title.text.weight,
+                                                lineHeight: '1'
+                                            }}>{invitation.cover.title.text.value}</span>
+                                        </div> */}
+
+                {/* {
+                                            invitation.cover.date.active && (
+                                                <div style={{
+                                                    width: '100%',
+                                                    backgroundColor: `transparent`,
+
+                                                    height: '25%', marginTop: '10px',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}>
+
+                                                    <Countdown mainColor={invitation.cover.title.text.color} color={invitation.cover.date.color} colorcolors={invitation.generals.colors} targetDate={invitation.cover.date.value} theme={true} font={invitation.generals.fonts.body.typeFace} fontWeight={invitation.cover.title.text.weight} dev={true} />
+
+                                                </div>
+                                            )
+                                        } 
+
+
+
+                                    </div>
+
+                                    {
+                                        ruleLines &&
+                                        <div className="guides-container">
+                                            <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line vertical center"></div>
+                                            <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line horizontal center"></div>
+                                            <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line vertical left-quarter"></div>
+                                            <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line vertical right-quarter"></div>
+                                            <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line horizontal top-quarter"></div>
+                                            <div style={{ background: `${invitation.generals.colors.actions}80` }} className="line horizontal bottom-quarter"></div>
+                                        </div>
+                                    }
+
                                 </div>
+                                <div className={`inv-light-space-ios`} />
                             </div>
+                        </div>
 
-                            <div className='adj-image-tools-container'>
+                        <div className='adj-image-tools-container'>
 
-                                <Button
-                                    id="expandedbutton"
-                                    className={`full-screen-button${ruleLines ? '--active' : ''}`}
-                                    onClick={() => setRuleLines(!ruleLines)}
-                                    icon={<LuRuler size={20} />}
-                                    style={{ backgroundColor: 'var(--ft-color)' }}
+                            <Button
+                                id="expandedbutton"
+                                className={`full-screen-button${ruleLines ? '--active' : ''}`}
+                                onClick={() => setRuleLines(!ruleLines)}
+                                icon={<LuRuler size={20} />}
+                                style={{ backgroundColor: 'var(--ft-color)' }}
+                            />
+
+
+                            <div className='slider-container-adj-image' style={{ maxWidth: '10px' }}>
+                                <FaPlus size={12} />
+                                <Slider
+                                    vertical
+                                    min={minZoom}
+                                    max={maxZoom}
+                                    step={zoomStep}
+                                    onChange={(e) => setZoomLevel(e)}
+                                    value={zoomLevel}
+                                    style={{ flex: 1, }}
                                 />
-
-
-                                <div className='slider-container-adj-image' >
-                                    <FaPlus size={12} />
-                                    <Slider
-                                        vertical
-                                        min={minZoom}
-                                        max={maxZoom}
-                                        step={zoomStep}
-                                        onChange={(e) => setZoomLevel(e)}
-                                        value={zoomLevel}
-                                        style={{ flex: 1 }}
-                                    />
-                                    <FaMinus size={12} />
-                                </div>
-
-                                <Button
-                                    id="expandedbutton"
-                                    className={`full-screen-button`}
-                                    onClick={resetPositions}
-                                    icon={<PiAlignCenterVerticalSimple size={20} />}
-                                    style={{ backgroundColor: 'var(--ft-color)' }}
-                                />
-
-                                <Button
-                                    id="expandedbutton"
-                                    className={`full-screen-button`}
-                                    onClick={() => setMapPosition({ x: 0, y: mapPosition.y })}
-                                    icon={<PiAlignCenterHorizontal size={20} />}
-                                    style={{ backgroundColor: 'var(--ft-color)' }}
-                                />
-
-                                <Button
-                                    id="expandedbutton"
-                                    className={`full-screen-button`}
-                                    onClick={() => setMapPosition({ x: mapPosition.x, y: 0 })}
-                                    icon={<PiAlignCenterVertical size={20} />}
-                                    style={{ backgroundColor: 'var(--ft-color)' }}
-                                />
-
-
-
+                                <FaMinus size={12} />
                             </div>
 
                             <Button
-                                type='text'
-                                // id="expandedbutton"
-                                // className='full-screen-button'
-                                onClick={() => setSettingsModal(false)}
-                                icon={<IoClose size={20} />}
-                                style={{ position: 'absolute', top: '15px', right: '15px' }}
+                                id="expandedbutton"
+                                className={`full-screen-button`}
+                                onClick={resetPositions}
+                                icon={<PiAlignCenterVerticalSimple size={20} />}
+                                style={{ backgroundColor: 'var(--ft-color)' }}
                             />
+
+                            <Button
+                                id="expandedbutton"
+                                className={`full-screen-button`}
+                                onClick={() => setMapPosition({ x: 0, y: mapPosition.y })}
+                                icon={<PiAlignCenterHorizontal size={20} />}
+                                style={{ backgroundColor: 'var(--ft-color)' }}
+                            />
+
+                            <Button
+                                id="expandedbutton"
+                                className={`full-screen-button`}
+                                onClick={() => setMapPosition({ x: mapPosition.x, y: 0 })}
+                                icon={<PiAlignCenterVertical size={20} />}
+                                style={{ backgroundColor: 'var(--ft-color)' }}
+                            />
+
+
+
                         </div>
 
+                        <Button
+                            type='text'
+                            // id="expandedbutton"
+                            // className='full-screen-button'
+                            onClick={() => setOpen(false)}
+                            icon={<IoClose size={20} />}
+                            style={{ position: 'absolute', top: '15px', right: '15px' }}
+                        />
                     </div>
-                }
+                </Modal> */}
 
 
             </>
