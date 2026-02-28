@@ -107,6 +107,13 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
         }
     }, [invitation])
 
+    useEffect(() => {
+      if (invitation) {
+        setMapPosition(invitation.cover.image.position)
+      }
+    }, [])
+    
+
 
     const onIsDate = (e) => {
 
