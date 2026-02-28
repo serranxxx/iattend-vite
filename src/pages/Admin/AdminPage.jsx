@@ -217,7 +217,7 @@ export const AdminPage = () => {
                     <Link target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
                         <Button icon={<LuLink />} >Link</Button>
                     </Link>
-                    <Link target='_blank' to={`http://localhost:3001/dashboard?id=${record?.invitation_id}`}>
+                    <Link target='_blank' to={`https://www.iattend.site/dashboard?id=${record?.invitation_id}`}>
                         <Button icon={<LuArrowUpRight />} >Abrir</Button>
                     </Link>
 
