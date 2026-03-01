@@ -235,8 +235,8 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
 
                 generals: {
                     event: {
-                        name: "test",
-                        label: "wedding",
+                        name: dominio,
+                        label: currentTemplate,
                     },
                     fonts: {
                         body: {
