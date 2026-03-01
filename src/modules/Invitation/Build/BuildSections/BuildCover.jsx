@@ -91,11 +91,11 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
     // const [isDragging, setIsDragging] = useState(false);
     // const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
-    const [zoomLevel, setZoomLevel] = useState(1);
+    const [zoomLevel, ] = useState(1);
     const [presets, setPresets] = useState(null)
-    const zoomStep = 0.01;
-    const minZoom = 0.1;
-    const maxZoom = 3;
+    // const zoomStep = 0.01;
+    // const minZoom = 0.1;
+    // const maxZoom = 3;
 
     useEffect(() => {
         if (invitation) {
@@ -726,7 +726,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                 <span className={'module--title'}
                                     style={{ textAlign: 'left' }}
                                 >Imagen</span>
-
+{/* 
                                 <Dropdown
                                     arrow
                                     trigger={['click']}
@@ -756,43 +756,11 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                                 <ZoomOut size={16} />
                                             </div>
 
-                                            {/* <div className='controller_butons_col' style={{
-                                                alignItems:'flex-start', justifyContent:'flex-start',alignSelf:'stretch', gap:'6px'
-                                            }}>
-                                                <Button
-                                                    onClick={() => setMapPosition((prev) => ({ x: prev.x, y: 0 }))}
-                                                    icon={<AlignStartHorizontal size={16} />}
-                                                />
-
-                                                <Button
-                                                    onClick={() => setMapPosition((prev) => ({ x: 0, y: prev.y }))}
-                                                    icon={<AlignStartVertical size={16} />}
-
-                                                />
-                                            </div> */}
-
-
-
-                                            {/* <Button
-                                                id="expandedbutton"
-                                                className={`full-screen-button`}
-                                                onClick={() => setMapPosition({ x: 0, y: mapPosition.y })}
-                                                icon={<PiAlignCenterHorizontal size={20} />}
-                                                style={{ backgroundColor: 'var(--ft-color)' }}
-                                            />
-
-                                            <Button
-                                                id="expandedbutton"
-                                                className={`full-screen-button`}
-                                                onClick={() => setMapPosition({ x: mapPosition.x, y: 0 })}
-                                                icon={<PiAlignCenterVertical size={20} />}
-                                                style={{ backgroundColor: 'var(--ft-color)' }}
-                                            /> */}
                                         </div>
                                     )}
                                 >
                                     <Button icon={<Ratio size={16} style={{ marginTop: '2px' }} />}>Ajustar</Button>
-                                </Dropdown>
+                                </Dropdown> */}
 
 
 
