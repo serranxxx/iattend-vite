@@ -77,6 +77,7 @@ export default function GuestsPage() {
     const [activeKey, setActiveKey] = useState('confirmado');
     const [invitation, setInvitation] = useState(null)
     const [searchParams] = useSearchParams();
+    const [name, setName] = useState(null)
     const id = searchParams.get("id");
 
 
@@ -471,7 +472,7 @@ export default function GuestsPage() {
             key: "link",
             width: 160,
             render: (_, record) => {
-                const url = `www.iattend.events/${invitation?.generals?.event?.label}/${invitation?.generals?.event?.name}?password=${record.password}`;
+                const url = `www.iattend.events/${invitation?.generals?.event?.label}/${name}?password=${record.password}`;
                 return (
                     <div
                         style={{
@@ -482,7 +483,7 @@ export default function GuestsPage() {
                         }}
                     >
                         <span >
-                            www.iatten...
+                           www.iattend...
                         </span>
                         <Tooltip title="Copiar link mágico">
                             <Button
@@ -704,7 +705,7 @@ export default function GuestsPage() {
                 return null;
             },
         },
-    ]), [rowData, onGroupTable, expandedRowKeys]);
+    ]), [rowData, onGroupTable, expandedRowKeys, name]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
@@ -1004,7 +1005,7 @@ export default function GuestsPage() {
     const getType = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('type, credits')
+            .select('type, credits, name')
             .eq('id', id)
             .maybeSingle()
 
@@ -1015,6 +1016,7 @@ export default function GuestsPage() {
 
 
         setCredits(data.credits)
+        setName(data.name)
         setOpenCard(data.type === 'open' ? true : false)
         getGuests()
     }
@@ -1158,7 +1160,7 @@ export default function GuestsPage() {
                             parameters: [
                                 {
                                     type: "text",
-                                    text: `${invitation?.generals?.event?.label}/${invitation?.generals?.event?.name}?password=${guest?.password}`,
+                                    text: `${invitation?.generals?.event?.label}/${name}?password=${guest?.password}`,
                                 },
                             ],
                         },

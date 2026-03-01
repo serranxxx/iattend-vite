@@ -218,11 +218,13 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
 
+    const [name, setName] = useState(null)
+
     const getInvitation = async () => {
 
         const { data, error } = await supabase
             .from("invitations")
-            .select("data, plan")
+            .select("data, plan, name")
             .eq("id", id)
             .maybeSingle();
 
@@ -231,6 +233,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         } else {
             setInvitation(data.data)
             setPlan(data.plan)
+            setName(data.name)
         }
     }
 
@@ -391,7 +394,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                         <Button
                             onClick={() =>
                                 copyToClipboard(
-                                    `${baseProd}/${invitation?.generals?.event?.label}/${invitation?.generals?.event?.name}`
+                                    `${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`
                                 )
                             }
                             type="text"
