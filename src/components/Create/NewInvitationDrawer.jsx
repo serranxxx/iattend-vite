@@ -167,6 +167,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                     background: false,
                     description:
                         "¡Tu presencia es el mejor regalo, pero tus buenos deseos se hacen aún más especiales con un toque personal!",
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: false,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 quote: {
@@ -194,6 +221,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                     inverted: false,
                     separator: false,
                     background: false,
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: false,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 people: {
@@ -208,6 +262,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                     ],
                     separator: false,
                     background: false,
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: true,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 gallery: {
@@ -222,6 +303,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                     inverted: false,
                     separator: false,
                     background: false,
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: false,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 notices: {
@@ -231,12 +339,39 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                     inverted: false,
                     separator: false,
                     background: false,
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: false,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 generals: {
                     event: {
-                        name: dominio,
-                        label: currentTemplate,
+                        name: "test",
+                        label: "wedding",
                     },
                     fonts: {
                         body: {
@@ -275,6 +410,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                     background: false,
                     description:
                         "Con mucha ilusión y amor, les invitamos a compartir con nosotros uno de los días más importantes de nuestras vidas.",
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: false,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 dresscode: {
@@ -294,6 +456,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                         "Sigue el código de vestimenta formal con tu propio toque. Encuentra opciones que se ajusten a tu estilo en nuestra galería de Pinterest.",
                     links_active: false,
                     images_active: true,
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: true,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 itinerary: {
@@ -323,6 +512,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                             subtext: "Los Aduanales",
                         },
                     ],
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: false,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
 
                 destinations: {
@@ -351,6 +567,33 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                     background: false,
                     description:
                         "Sabemos que este viaje es especial y queremos que lo disfrutes al máximo. Aquí encontrarás una selección de lugares para hospedarte",
+                    dynamic_separator: {
+                        type: "single",
+                        image: {
+                            zoom: 1,
+                            value: null,
+                            width: 100,
+                            height: 300,
+                            position: {
+                                x: 0,
+                                y: 0
+                            }
+                        },
+                        active: false,
+                        single: {
+                            color: "#252525",
+                            value: 5
+                        }
+                    },
+                    dynamic_background: {
+                        color: "#939faf",
+                        shape: "square",
+                        width: 90,
+                        active: false,
+                        shadow: true,
+                        texture: null,
+                        border_radius: 0
+                    }
                 },
             },
         };
