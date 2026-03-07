@@ -339,7 +339,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                             <>
                                                 <div className='quote-image-container'>
                                                     <img src={invitation.quote.image.dev} alt='' />
-                                                    <StorageImages absolute={true} invitationID={invitationID} handleImage={handleURL} />
+                                                    <StorageImages type={'quote'} absolute={true} invitationID={invitationID} handleImage={handleURL} />
 
                                                 </div>
 

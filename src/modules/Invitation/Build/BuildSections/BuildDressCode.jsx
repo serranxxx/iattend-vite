@@ -479,7 +479,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                                             }} />
                                                         }
 
-                                                        <StorageImages placement={'right'} absolute={true} isNull={true} invitationID={invitationID} handleImage={handleURL} id={index} />
+                                                        <StorageImages type={'dresscode'} placement={'right'} absolute={true} isNull={true} invitationID={invitationID} handleImage={handleURL} id={index} />
 
                                                     </div>
                                                 ))

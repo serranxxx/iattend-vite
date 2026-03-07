@@ -772,7 +772,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})` }}
                                 />
 
-                                <StorageImages absolute={true} invitationID={invitationID} handleImage={onChangeCover} />
+                                <StorageImages type={'cover'} absolute={true} invitationID={invitationID} handleImage={onChangeCover} />
 
 
 

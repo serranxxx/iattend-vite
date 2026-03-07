@@ -7,7 +7,6 @@ import dayjs from 'dayjs'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
 import { CreateGuest } from '../../components/Create/CreateGuest'
 import axios from 'axios'
-import { GoChevronDown } from 'react-icons/go'
 import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
@@ -15,6 +14,7 @@ import { fonts } from '../../helpers/assets/fonts'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import { handleCheckout } from '../../components/Payment/functions'
 import { useSearchParams } from 'react-router-dom'
+import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 
 
 const { Option } = Select;
@@ -26,7 +26,7 @@ export const SideEvents = () => {
     const [sideEvent, setsideEvent] = useState(null)
     const [open, setOpen] = useState(false)
     const [current, setCurrent] = useState(null)
-    const [images, setImages] = useState([])
+    // const [images, setImages] = useState([])
     const [handlePreview, setHandlePreview] = useState(false)
     const [rawData, setRawData] = useState([])
     const [mainGuests, setMainGuests] = useState(null)
@@ -70,7 +70,7 @@ export const SideEvents = () => {
             title: "Contacto",
             dataIndex: "phone_number",
             key: "phone_number",
-            width: 160,
+            minWidth: 160,
             //   render: (value) => phoneFormatter(value),
         },
 
@@ -78,7 +78,7 @@ export const SideEvents = () => {
             title: "Estado",
             dataIndex: "state",
             key: "state",
-            width: 120,
+            minWidth: 120,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -93,7 +93,7 @@ export const SideEvents = () => {
             title: "Accesos",
             dataIndex: "password",
             key: "password",
-            width: 120,
+            minWidth: 120,
             render: (value,) => (
                 <div className="tag-container">
                     <Dropdown popupRender={() => (
@@ -149,7 +149,7 @@ export const SideEvents = () => {
         {
             title: "Acciones",
             key: "send",
-            width: 200,
+            minWidth: 200,
             fixed: "right",
             render: (_, record) => {
                 const { state, phone_number } = record;
@@ -447,92 +447,92 @@ export const SideEvents = () => {
         return String(value);
     };
 
-    const uploadInvitationImage = async ({
-        file,
-        invitationID,
-    }) => {
-        const filePath = `${invitationID}/${Date.now()}-${file.name}`;
+    // const uploadInvitationImage = async ({
+    //     file,
+    //     invitationID,
+    // }) => {
+    //     const filePath = `${invitationID}/${Date.now()}-${file.name}`;
 
-        const { error } = await supabase.storage
-            .from('user_images')
-            .upload(filePath, file, {
-                upsert: true,
-                contentType: file.type,
-            });
+    //     const { error } = await supabase.storage
+    //         .from('user_images')
+    //         .upload(filePath, file, {
+    //             upsert: true,
+    //             contentType: file.type,
+    //         });
 
-        if (error) throw error;
+    //     if (error) throw error;
 
-        const { data } = supabase.storage
-            .from('side_events')
-            .getPublicUrl(filePath);
+    //     const { data } = supabase.storage
+    //         .from('side_events')
+    //         .getPublicUrl(filePath);
 
-        return data.publicUrl;
-    };
+    //     return data.publicUrl;
+    // };
 
-    const customUpload = async ({ file, onSuccess, onError }) => {
-        try {
-            // 1. Comprimir
-            // const compressedFile = await compressImage(file);
+    // const customUpload = async ({ file, onSuccess, onError }) => {
+    //     try {
+    //         // 1. Comprimir
+    //         // const compressedFile = await compressImage(file);
 
-            // 2. Subir
-            const imageUrl = await uploadInvitationImage({
-                file: file,
-                id,
-            });
+    //         // 2. Subir
+    //         const imageUrl = await uploadInvitationImage({
+    //             file: file,
+    //             id,
+    //         });
 
-            // 3. Guardar en estado
-            setCurrent((prev) => ({
-                ...prev,
-                body: {
-                    ...prev.body,
-                    image: imageUrl,
-                },
-            }));
+    //         // 3. Guardar en estado
+    //         setCurrent((prev) => ({
+    //             ...prev,
+    //             body: {
+    //                 ...prev.body,
+    //                 image: imageUrl,
+    //             },
+    //         }));
 
-            onSuccess();
-            getInvitationImages(id)
-            console.log('Imagen subida correctamente');
-        } catch (err) {
-            console.error(err);
-            console.log('Error al subir imagen');
-            onError(err);
-        }
-    };
+    //         onSuccess();
+    //         getInvitationImages(id)
+    //         console.log('Imagen subida correctamente');
+    //     } catch (err) {
+    //         console.error(err);
+    //         console.log('Error al subir imagen');
+    //         onError(err);
+    //     }
+    // };
 
-    const getInvitationImages = async (invitationID) => {
-        const { data, error } = await supabase.storage
-            .from('user_images')
-            .list(invitationID, {
-                limit: 100,
-                sortBy: { column: 'created_at', order: 'desc' },
-            });
+    // const getInvitationImages = async (invitationID) => {
+    //     const { data, error } = await supabase.storage
+    //         .from('user_images')
+    //         .list(invitationID, {
+    //             limit: 100,
+    //             sortBy: { column: 'created_at', order: 'desc' },
+    //         });
 
-        if (error) {
-            console.error(error);
-            return;
-        }
+    //     if (error) {
+    //         console.error(error);
+    //         return;
+    //     }
 
-        if (!data) {
-            console.log([]);
-            return;
-        }
+    //     if (!data) {
+    //         console.log([]);
+    //         return;
+    //     }
 
-        const images = data.map((file) => {
-            const path = `${invitationID}/${file.name}`;
+    //     const images = data.map((file) => {
+    //         const path = `${invitationID}/${file.name}`;
 
-            const { data: urlData } = supabase.storage
-                .from('user_images')
-                .getPublicUrl(path);
+    //         const { data: urlData } = supabase.storage
+    //             .from('user_images')
+    //             .getPublicUrl(path);
 
-            return {
-                path,
-                url: urlData.publicUrl,
-            };
-        });
+    //         return {
+    //             path,
+    //             url: urlData.publicUrl,
+    //         };
+    //     });
 
-        console.log(images);
-        setImages(images)
-    };
+    //     console.log(images);
+    //     setImages(images)
+    // };
 
     dayjs.locale('es');
 
@@ -770,7 +770,7 @@ export const SideEvents = () => {
 
 
     useEffect(() => {
-        getInvitationImages(id);
+        // getInvitationImages(id);
         getCredits()
         getSideEvents()
     }, [id])
@@ -829,10 +829,16 @@ export const SideEvents = () => {
                 supabase.removeChannel(channel);
             };
         }
+
+        
     }, [])
 
     const truncate = (text, max = 50) =>
         text.length > max ? text.slice(0, max) + '...' : text;
+
+    const handleImages = (e) => {
+        setCurrent((prev) => ({ ...prev, body: { ...prev.body, image: e } }))
+    }
 
 
     return (
@@ -876,21 +882,21 @@ export const SideEvents = () => {
 
                                     {
                                         ((plan === 'pro' && sideEvent.length <= 2) || (plan === "lite" && sideEvent.length === 0)) ?
-                                        <Button icon={<LuPlus size={44} />} onClick={insertSideEvent} className='side_event_item side_event_btn' style={{ width: '100%', height: '100%' }}>
-                                            
-                                        </Button>
+                                            <Button icon={<LuPlus size={44} />} onClick={insertSideEvent} className='side_event_item side_event_btn' style={{ width: '100%', height: '100%' }}>
 
-                                        : <div className='new_side_event'>
-                                            <span style={{color:'#00000080'}}>Haz llegado al límite de tus Side events</span>
-                                            <img 
-                                            style={{width:'100%'}}
-                                            src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt=''/>
-                                            <Button 
-                                            onClick={() => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
-                                            style={{
-                                                fontSize:'16px', minHeight:'44px',fontWeight:400
-                                            }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
-                                        </div>
+                                            </Button>
+
+                                            : <div className='new_side_event'>
+                                                <span style={{ color: '#00000080' }}>Haz llegado al límite de tus Side events</span>
+                                                <img
+                                                    style={{ width: '100%' }}
+                                                    src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt='' />
+                                                <Button
+                                                    onClick={() => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
+                                                    style={{
+                                                        fontSize: '16px', minHeight: '44px', fontWeight: 400
+                                                    }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
+                                            </div>
                                     }
                                 </div>
                                 : <div className='side_events_spin'>
@@ -1005,44 +1011,7 @@ export const SideEvents = () => {
 
 
 
-                                            <Dropdown
-                                                trigger={['click']}
-                                                placement='topRight'
-                                                popupRender={() => (
-                                                    <div className="side_images_cont scroll-invitation">
-                                                        <div onClick={() => setCurrent((prev) => ({ ...prev, body: { ...prev.body, image: null } }))} className='clear_image_sidee'>
-                                                            <LuImageOff size={24} />
-                                                        </div>
-                                                        {
-                                                            images?.map((im, index) => (
-                                                                <div onClick={() => setCurrent((prev) => ({ ...prev, body: { ...prev.body, image: im.url } }))} key={index} className='img_cont_sidevents'>
-                                                                    <img src={im.url} alt={im.path} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                                </div>
-                                                            ))
-                                                        }
-
-                                                        <Upload
-                                                            accept="image/*"
-                                                            showUploadList={false}
-                                                            customRequest={customUpload}
-                                                        >
-                                                            <Button icon={<LuPlus size={24} />} className='primarybutton'
-                                                                style={{
-                                                                    width: '120px', height: '120px',
-                                                                    borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'
-                                                                }}>Subir imagen</Button>
-                                                        </Upload>
-                                                    </div>
-
-
-                                                )}>
-
-                                                <Button style={{
-                                                    backdropFilter: 'blur(10px)', backgroundColor: `${current?.body?.color ?? "#000000"}40`,
-                                                    border: 'none',
-                                                    color: '#FFFFFF', borderRadius: '99px'
-                                                }} >{current?.body?.image ? "Cambiar fondo" : "Agregar fondo"}</Button>
-                                            </Dropdown>
+                                            <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'}/>
                                         </div>
 
                                         <div className='side_info_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, transform: 'scale(0.9)' }}>
@@ -1235,7 +1204,7 @@ export const SideEvents = () => {
 
                                                     <Select
 
-                                                        value={current?.body?.title?.font }
+                                                        value={current?.body?.title?.font}
                                                         onChange={(e) => setCurrent((prev) => ({
                                                             ...prev, body: {
                                                                 ...prev.body, title: {
@@ -1467,7 +1436,7 @@ export const SideEvents = () => {
                                 onClick={() => setActiveTickets(true)}
                                 // onClick={() => setOnBubble(true)}
                                 onMouseEnter={() => setOnTickets(true)} onMouseLeave={() => setOnTickets(false)}
-                                style={{ bottom: '2%', right: '1.4%', maxHeight: '210px',  borderRadius: activeTickets && '16px', }}
+                                style={{ bottom: '2%', right: '1.4%', maxHeight: '210px', borderRadius: activeTickets && '16px', }}
                                 className={`tickets_button ${activeTickets ? 'tickets_button_active' : ''}`}>
                                 {!activeTickets && (
                                     <>
@@ -1491,11 +1460,11 @@ export const SideEvents = () => {
 
                                 {
                                     activeTickets && (
-                                        <div onClick={(e) => e.stopPropagation()} className='active_tickets_cont' style={{position:'relative'}}>
-                                            
+                                        <div onClick={(e) => e.stopPropagation()} className='active_tickets_cont' style={{ position: 'relative' }}>
 
-                                            <CreditsComponent getType={getCredits} credits={credits} invitationID={id} isClosable={true} setOnClose={setActiveTickets}/>
-                                            
+
+                                            <CreditsComponent getType={getCredits} credits={credits} invitationID={id} isClosable={true} setOnClose={setActiveTickets} />
+
                                         </div>
                                     )
                                 }

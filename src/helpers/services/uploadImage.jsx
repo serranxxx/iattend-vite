@@ -91,7 +91,6 @@ export const getImagesFromSupabase = async (invitationID, setImages) => {
     });
 
     setImages(images)
-    console.log('alo')
 };
 
 const containsString = (obj, target) => {
@@ -175,6 +174,76 @@ export const deleteImageFromSupabase = async (path, invitationID, setImages) => 
         message.error("Error inesperado al eliminar la imagen.");
     }
 };
+
+export const getCoversFromSubapase = async (setImages) => {
+    const { data, error } = await supabase.storage
+        .from('assets')
+        .list('Covers');
+
+    if (error) return console.error(error);
+
+    const images = data.map(file => {
+        const { data } = supabase.storage
+            .from('assets')
+            .getPublicUrl(`Covers/${file.name}`);
+
+        return data.publicUrl;
+    });
+
+    setImages(images)
+}
+
+export const getQuotesFromSubapase = async (setImages) => {
+    const { data, error } = await supabase.storage
+        .from('assets')
+        .list('Quote');
+
+    if (error) return console.error(error);
+
+    const images = data.map(file => {
+        const { data } = supabase.storage
+            .from('assets')
+            .getPublicUrl(`Quote/${file.name}`);
+
+        return data.publicUrl;
+    });
+
+    setImages(images)
+}
+
+export const getDresscodesFromSupabase = async (setImages) => {
+    const { data, error } = await supabase.storage
+        .from('assets')
+        .list('Dresscode');
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    const blackTie = [];
+    const cocktail = [];
+    const formal = [];
+
+    data.forEach(file => {
+        const { data: urlData } = supabase.storage
+            .from('assets')
+            .getPublicUrl(`Dresscode/${file.name}`);
+
+        const url = urlData.publicUrl;
+
+        if (file.name.startsWith('black_tie')) {
+            blackTie.push(url);
+        } else if (file.name.startsWith('cocktail')) {
+            cocktail.push(url);
+        } else if (file.name.startsWith('formal')) {
+            formal.push(url);
+        }
+    });
+
+    setImages([blackTie, cocktail, formal]);
+};
+
 
 
 
