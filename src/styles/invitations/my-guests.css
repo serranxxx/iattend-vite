@@ -1159,6 +1159,18 @@
 }
 
 
+.dispatch_message_tag {
+    width: 120px;
+    height: 32px;
+    border: 1px solid;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
 
 
 

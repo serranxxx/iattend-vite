@@ -28,6 +28,7 @@ import { HeaderDashboard } from '../Header/Header';
 import { HiLockClosed, HiLockOpen } from 'react-icons/hi2';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
+import { Check, CheckCheck, MailWarning, Send } from 'lucide-react';
 
 const { useBreakpoint } = Grid;
 
@@ -79,6 +80,7 @@ export default function GuestsPage() {
     const [searchParams] = useSearchParams();
     const [name, setName] = useState(null)
     const id = searchParams.get("id");
+    const [messagesDispatch, setMessagesDispatch] = useState([])
 
 
     const openColumns = useMemo(() => ([
@@ -483,7 +485,7 @@ export default function GuestsPage() {
                         }}
                     >
                         <span >
-                           www.iattend...
+                            www.iattend...
                         </span>
                         <Tooltip title="Copiar link mágico">
                             <Button
@@ -551,7 +553,7 @@ export default function GuestsPage() {
         {
             title: "Acciones",
             key: "send",
-            width: 140,
+            width: 160,
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
                 const { state, table, phone_number } = record;
@@ -574,7 +576,7 @@ export default function GuestsPage() {
                                     disabled={
                                         !/^\+52\d+/.test(phone_number) || credits <= 0
                                     }
-                                    onClick={() => onSedingInvitation(record)}
+                                    onClick={() => onSedingInvitation(record, false)}
                                     className="primarybutton--active"
                                     icon={<FaPaperPlane size={12} />}
                                     style={{ flex: 1, maxHeight: 30 }}
@@ -597,14 +599,7 @@ export default function GuestsPage() {
 
                 if (state === "esperando") {
                     return (
-                        <Button
-                            className="primarybutton"
-                            disabled
-                            icon={<FaRegClock size={14} style={{ marginTop: 2 }} />}
-                            style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
-                        >
-                            Esperando
-                        </Button>
+                        handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')
                     );
                 }
 
@@ -705,7 +700,7 @@ export default function GuestsPage() {
                 return null;
             },
         },
-    ]), [rowData, onGroupTable, expandedRowKeys, name]);
+    ]), [rowData, onGroupTable, expandedRowKeys, name, messagesDispatch]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
@@ -778,6 +773,79 @@ export default function GuestsPage() {
         isLoading,
         screens
     ]);
+
+    const handleMessageStatus = (record, status) => {
+        switch (status) {
+            case 'processing':
+
+                return (
+                    <div className='dispatch_message_tag'>
+                        Procesando
+                    </div>
+                )
+
+            case 'sent':
+
+                return (
+                    <div className={`new-table-tag state-confirmado dispatch_message_tag`}>
+                        <Send size={16}/>
+                        Enviado
+                    </div>
+                )
+
+            case 'delivered':
+
+                return (
+                    <div className={`new-table-tag state-creado dispatch_message_tag`}>
+                        <Check size={16} />
+                        Entregado
+                    </div>
+                )
+
+
+            case 'read':
+
+                return (
+                    <div  className={`new-table-tag state-esperando dispatch_message_tag`}>
+                        <CheckCheck size={16} />
+                        Visto
+                    </div>
+                )
+
+            case 'failed':
+
+                return (
+
+                    <Tooltip placement='topRight'
+
+                        title={'Un reintento no consume créditos'} color="var(--brand-color-500)">
+                        <Button
+                            disabled={
+                                !/^\+52\d+/.test(record.phone_number) || credits <= 0
+                            }
+                            onClick={() => onSedingInvitation(record, true)}
+                            className="primarybutton--active"
+                            icon={<MailWarning size={16}/>}
+                            style={{ flex: 1, maxHeight: 30 }}
+                        >
+                            Reintentar
+                        </Button>
+                    </Tooltip>
+                    // <div className='dispatch_message_tag'>
+
+                    //     <MailWarning size={16}/>
+                    //     Reintentar
+                    // </div>
+                )
+
+            default:
+                return (
+                    <div className={`new-table-tag state-rechazado dispatch_message_tag`}>
+                        Esperando
+                    </div>
+                )
+        }
+    }
 
     const handleExpand = (record) => {
         setExpandedRowKeys(prev => {
@@ -1116,10 +1184,15 @@ export default function GuestsPage() {
 
     }
 
-    const onSedingInvitation = async (guest) => {
+    const onSedingInvitation = async (guest, retry) => {
         setOnSending(true)
         try {
             const payload = {
+                invitationId: id,
+                guestId: guest.id,
+                guestName: guest.name,
+                guestPhone: guest.phone_number.replace(/^\+/, ""),
+
                 messaging_product: "whatsapp",
                 to: guest.phone_number.replace(/^\+/, ""),
                 type: "template",
@@ -1170,10 +1243,13 @@ export default function GuestsPage() {
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats`,
+                // "http://localhost:4000/api/whats",
                 payload
             );
             if (response.data.ok) {
-                onUpdateCredits()
+                if (!retry) {
+                    onUpdateCredits()
+                }
                 setOnSending(false)
                 setOnBubble(true)
                 onSendInvitation(guest)
@@ -1291,39 +1367,91 @@ export default function GuestsPage() {
         }
     }
 
+    const getMessagesUpdates = async () => {
+
+        try {
+            const { data, error } = await supabase
+                .rpc('get_latest_invitation_dispatches', {
+                    p_invitation_id: id
+                });
+
+            if (error) return
+
+            console.log('messages updates: ', data)
+            setMessagesDispatch(data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const dispatchMap = useMemo(() => {
+
+        console.log('hey: ', messagesDispatch)
+        const map = {};
+
+        messagesDispatch.forEach(m => {
+            map[m.guest_id] = m;
+        });
+
+        return map;
+    }, [messagesDispatch]);
+
 
     useEffect(() => {
-        if (supabase) {
-            const channel = supabase
-                .channel('upload_dynamic_table')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'guests'
-                    },
-                    (payload) => {
+        if (!supabase || !id) return;
 
+        const channel = supabase
+            .channel(`upload_dynamic_table_${id}`)
 
-                        if (payload.new.invitation_id === id) {
-                            if (!payload.new.last_action_by) {
-                                refreshPage()
-                                handleNotification(payload.new)
-                            }
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'guests'
+                },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+
+                    if (row.invitation_id === id) {
+                        if (!row.last_action_by) {
+                            refreshPage();
+                            handleNotification(row);
                         }
-
                     }
-                )
-                .subscribe((status) => {
-                    console.log('sub status: ', status)
-                })
+                }
+            )
 
-            return () => {
-                supabase.removeChannel(channel);
-            };
-        }
-    }, [])
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'invitation_message_dispatches'
+                },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+
+                    if (row.invitation_id === id) {
+                        console.log('message status update:', row);
+                        getMessagesUpdates()
+                        refreshPage();
+                        // refreshPage();
+                    }
+
+                }
+            )
+
+            .subscribe((status) => {
+                console.log('sub status:', status);
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [supabase, id]);
 
     useEffect(() => {
         if (onBubble) {
@@ -1352,6 +1480,7 @@ export default function GuestsPage() {
             getNotifications()
             getType()
             getTables()
+            getMessagesUpdates()
         }
     }, [id])
 
@@ -1721,7 +1850,7 @@ export default function GuestsPage() {
 
                                         <div className='edit-tickets-buttons-container'>
 
-                                            <CreditsComponent getType={getType} credits={credits} invitationID={id}/>
+                                            <CreditsComponent getType={getType} credits={credits} invitationID={id} />
 
                                         </div>
                                     </div>
