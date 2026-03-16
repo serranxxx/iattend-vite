@@ -337,6 +337,11 @@ export const SideEvents = () => {
             setOnSending(true)
             try {
                 const payload = {
+                    invitationId: id,
+                    guestId: guest?.id,
+                    guestName: guest?.name,
+                    guestPhone: guest.phone_number.replace(/^\+/, ""),
+
                     messaging_product: "whatsapp",
                     to: guest?.phone_number?.replace(/^\+/, ""),
                     type: "template",
