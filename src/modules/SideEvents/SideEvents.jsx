@@ -337,9 +337,10 @@ export const SideEvents = () => {
             setOnSending(true)
             try {
                 const payload = {
+
                     invitationId: id,
-                    guestId: guest?.id,
-                    guestName: guest?.name,
+                    guestId: guest.id,
+                    guestName: guest.name,
                     guestPhone: guest.phone_number.replace(/^\+/, ""),
 
                     messaging_product: "whatsapp",
@@ -367,7 +368,7 @@ export const SideEvents = () => {
                                 parameters: [
                                     {
                                         type: "text",
-                                        text: `${data?.name}`,
+                                        text: `${data?.name}`.replace(/[\n\r]/g, " "),
                                     },
                                     {
                                         type: "text",
@@ -394,7 +395,8 @@ export const SideEvents = () => {
                 console.log(payload)
 
                 const response = await axios.post(
-                    `${import.meta.env.VITE_API_URL}/api/whats`,
+                    // `${import.meta.env.VITE_API_URL}/api/whats`,
+                    "http://localhost:4000/api/whats",
                     payload
                 );
                 if (response.data.ok) {
