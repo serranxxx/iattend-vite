@@ -395,8 +395,8 @@ export const SideEvents = () => {
                 console.log(payload)
 
                 const response = await axios.post(
-                    // `${import.meta.env.VITE_API_URL}/api/whats`,
-                    "http://localhost:4000/api/whats",
+                    `${import.meta.env.VITE_API_URL}/api/whats`,
+                    // "http://localhost:4000/api/whats",
                     payload
                 );
                 if (response.data.ok) {
