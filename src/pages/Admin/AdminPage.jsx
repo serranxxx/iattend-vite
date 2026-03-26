@@ -1,4 +1,4 @@
-import { Button, Dropdown, Input, InputNumber, Layout, Modal, Space, Table, Tabs, message } from 'antd'
+import { Button, Divider, Dropdown, Input, InputNumber, Layout, Modal, Select, Space, Table, Tabs, message } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import './AdminPanel.css'
 import { supabase } from '../../lib/supabase'
@@ -9,6 +9,8 @@ import { LuArrowUpFromLine, LuArrowUpRight, LuChevronDown, LuCopy, LuLink, LuPlu
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import UserPopUp from '../../components/UserPopUp/UserPopUp'
+import { ArrowUpRight, ChevronDown, Copy, Link2, Plus, SquareChevronDown } from 'lucide-react'
+import { IoMdAdd } from 'react-icons/io'
 
 
 export const AdminPage = () => {
@@ -25,6 +27,7 @@ export const AdminPage = () => {
     const [actualCredits, setActualCredits] = useState(null)
     const [activeKey, setActiveKey] = useState('esperando');
     const [nextEvents, setNextEvents] = useState([])
+    const [ownerInputs, setOwnerInputs] = useState({});
 
     const copyToClipboard = async (textToCopy) => {
         try {
@@ -93,7 +96,7 @@ export const AdminPage = () => {
 
     const getInvitationsByDate = async () => {
         const { data, error } = await supabase
-            .rpc('get_upcoming_with_user');
+            .rpc('get_upcoming_with_userv2');
 
         if (error) console.error(error);
         else {
@@ -128,23 +131,6 @@ export const AdminPage = () => {
     };
 
 
-    // const updateInvitationActive = async (inv) => {
-
-    //     try {
-    //         await axios.patch(
-    //             `${import.meta.env.VITE_API_URL}/api/invitation/update-active`,
-    //             // 'http://localhost:4000/api/invitation/update-active',
-    //             { id: inv.id, active: !inv.active }
-    //         );
-
-    //         messageApi.success('Editado con éxito')
-    //         refreshData()
-
-    //     } catch (error) {
-    //         console.error('Error updating active:', error.response?.data || error.message);
-    //         throw error;
-    //     }
-    // };
 
     const refreshData = () => {
         getNewInvitations()
@@ -157,37 +143,38 @@ export const AdminPage = () => {
         setOnNewInvitation(true)
     }
 
-    const nextEventsCols = [
+    const nextEventsCols = useMemo(() => ([
+
         {
             title: 'Nombre',
             dataIndex: 'full_name',
             key: 'name',
+            // with: 180,
+            // minWidth: 180,
+            fixed: "left",
             //   render: text => <a>{text}</a>,
         },
         {
             title: 'Usuario',
             dataIndex: 'user_email',
             key: 'email',
+            with: 240,
+            // minWidth: 180
 
-        },
-        {
-            title: 'ID',
-            dataIndex: 'invitation_id',
-            key: 'address',
-            // render: (_, record) => (
-            //     <a target='_blank' href={`www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>www.iattend.events/{record?.data?.generals?.event?.label}/{record?.data?.generals?.event?.name}</a>
-            // )
         },
         {
             title: 'Plan',
             dataIndex: 'plan',
             key: 'address',
+            // with: 100,
+            // minWidth: 100,
             render: text => <img src={`/images/plan_${text}.png`} style={{ height: '30px', borderRadius: '8px' }} alt='' />,
         },
         {
             title: 'Créditos',
             dataIndex: 'credits',
             key: 'address',
+            // with: 200,
             render: (text, record) => (
                 <div className='admin-table-content-subt' style={{ maxWidth: '160px' }}>
 
@@ -198,34 +185,104 @@ export const AdminPage = () => {
             )
         },
         {
-            title: 'Fecha del evento',
+            title: 'Dueños',
+            dataIndex: 'owners',
+            key: 'owners',
+            // with: 200,
+            render: (text, record) => (
+
+                <Dropdown
+                    arrow
+                    trigger={['click']}
+                    popupRender={() => (
+                        <div className='buttons_admin_cont' style={{
+                            padding: "12px"
+                        }}>
+                            {
+                                text.length > 0 &&
+                                <>
+                                    {
+                                        text.map((t, index) => (
+                                            <div className='owner_item' key={t}>
+                                                <span>{t}</span>
+                                                <Button onClick={() => removeOwner(record.invitation_id, index)} className='primarybutton' style={{ maxWidth: '32px' }} >-</Button>
+                                            </div>
+                                        ))
+                                    }
+
+                                    <Divider style={{ margin: '8px 0', }} />
+                                </>
+                            }
+
+                            <Space style={{ boxSizing: 'border-box' }}>
+                                <Input
+                                    style={{ minWidth: '100px', borderRadius: '99px' }}
+                                    placeholder="Nuevo participante"
+                                    value={ownerInputs[record.invitation_id] || ''}
+                                    onChange={(e) =>
+                                        setOwnerInputs((prev) => ({
+                                            ...prev,
+                                            [record.invitation_id]: e.target.value,
+                                        }))
+                                    }
+                                />
+                                <Button onClick={() => AddNewOwner(record.invitation_id, ownerInputs[record.invitation_id] || '')} className='primarybutton' icon={<IoMdAdd />} >
+
+                                </Button>
+                            </Space>
+
+                        </div>
+                    )}
+                >
+                    <Button style={{
+                        width: '100%', textTransform: 'capitalize'
+                    }}>{text[0] ? text[0] + " " + `(${text.length})` : 'Sin asignar'}</Button>
+                </Dropdown>
+
+
+            )
+        },
+        {
+            title: 'Fecha',
             dataIndex: 'cover_date',
             key: 'address',
+            // with: 80,
+            // minWidth: 80,
             render: text => <span>{text.slice(0, 10)}</span>,
         },
         {
             title: 'Acciones',
             dataIndex: '',
             key: 'address',
+            // with: 500,
+            // fixed: "right",
             render: (_, record) => (
 
-                // <Link target='_blank' to={`https://www.iattend.site/dashboard?id=${record.invitation_id}`}>
-                //     <Button icon={<LuArrowUpRight />} />
-                // </Link>
+                <Dropdown
+                    arrow
+                    trigger={['click']}
+                    popupRender={() => (
+                        <div className='buttons_admin_cont'>
+                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
+                                <Button icon={<Link2 size={14} />} className='primarybutton' style={{ width: '100%' }} >Ver invitación</Button>
+                            </Link>
+                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.site/dashboard?id=${record?.invitation_id}`}>
+                                <Button icon={<ArrowUpRight size={14} />} className='primarybutton' style={{ width: '100%' }}  >Acceder evento</Button>
+                            </Link>
+                            <Button icon={<Copy size={14} />} className='primarybutton' style={{ width: '100%' }} onClick={() => copyToClipboard(record.invitation_id)} >Copiar ID</Button>
+                            <Button onClick={() => insertSideEvent(record?.invitation_id)} icon={<Plus size={14} />} className='primarybutton' style={{ width: '100%' }} >Side event</Button>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <Link target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
-                        <Button icon={<LuLink />} >Link</Button>
-                    </Link>
-                    <Link target='_blank' to={`https://www.iattend.site/dashboard?id=${record?.invitation_id}`}>
-                        <Button icon={<LuArrowUpRight />} >Abrir</Button>
-                    </Link>
-
-                </div>
+                        </div>
+                    )}
+                >
+                    <Button icon={<ChevronDown size={14} />}>Opciones</Button>
+                </Dropdown>
             )
         },
 
-    ];
+
+    ]), [ownerInputs]);
+
 
     const allUsersCols = [
 
@@ -241,11 +298,7 @@ export const AdminPage = () => {
             key: 'email',
 
         },
-        {
-            title: 'ID',
-            dataIndex: 'id',
-            key: 'address',
-        },
+
         {
             title: 'Plan',
             dataIndex: 'plan',
@@ -266,6 +319,64 @@ export const AdminPage = () => {
             )
         },
         {
+            title: 'Dueños',
+            dataIndex: 'owners',
+            key: 'owners',
+            // with: 200,
+            render: (text, record) => (
+
+                <Dropdown
+                    arrow
+                    trigger={['click']}
+                    popupRender={() => (
+                        <div className='buttons_admin_cont' style={{
+                            padding: "12px"
+                        }}>
+                            {
+                                text.length > 0 &&
+                                <>
+                                    {
+                                        text.map((t, index) => (
+                                            <div className='owner_item' key={t}>
+                                                <span>{t}</span>
+                                                <Button onClick={() => removeOwner(record.id, index)} className='primarybutton' style={{ maxWidth: '32px' }} >-</Button>
+                                            </div>
+                                        ))
+                                    }
+
+                                    <Divider style={{ margin: '8px 0', }} />
+                                </>
+                            }
+
+                            <Space style={{ boxSizing: 'border-box' }}>
+                                <Input
+                                    style={{ minWidth: '100px', borderRadius: '99px' }}
+                                    placeholder="Nuevo participante"
+                                    value={ownerInputs[record.id] || ''}
+                                    onChange={(e) =>
+                                        setOwnerInputs((prev) => ({
+                                            ...prev,
+                                            [record.id]: e.target.value,
+                                        }))
+                                    }
+                                />
+                                <Button onClick={() => AddNewOwner(record.id, ownerInputs[record.id] || '')} className='primarybutton' icon={<IoMdAdd />} >
+
+                                </Button>
+                            </Space>
+
+                        </div>
+                    )}
+                >
+                    <Button style={{
+                        width: '100%', textTransform: 'capitalize'
+                    }}>{text[0] ? text[0] + " " + `(${text.length})` : 'Sin asignar'}</Button>
+                </Dropdown>
+
+
+            )
+        },
+        {
             title: 'Fecha',
             dataIndex: 'cover_date',
             key: 'address',
@@ -275,18 +386,47 @@ export const AdminPage = () => {
             title: 'Acciones',
             dataIndex: '',
             key: 'address',
+            // with: 500,
+            // fixed: "right",
             render: (_, record) => (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <Link target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
-                        <Button icon={<LuLink />} >Link</Button>
-                    </Link>
-                    <Link target='_blank' to={`https://iattend.site/dashboard?id=${record?.id}`}>
-                        <Button icon={<LuArrowUpRight />} >Abrir</Button>
-                    </Link>
 
-                </div>
+                <Dropdown
+                    arrow
+                    trigger={['click']}
+                    popupRender={() => (
+                        <div className='buttons_admin_cont'>
+                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
+                                <Button icon={<Link2 size={14} />} className='primarybutton' style={{ width: '100%' }} >Ver invitación</Button>
+                            </Link>
+                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.site/dashboard?id=${record?.id}`}>
+                                <Button icon={<ArrowUpRight size={14} />} className='primarybutton' style={{ width: '100%' }}  >Acceder evento</Button>
+                            </Link>
+                            <Button icon={<Copy size={14} />} className='primarybutton' style={{ width: '100%' }} onClick={() => copyToClipboard(record.id)} >Copiar ID</Button>
+                            <Button onClick={() => insertSideEvent(record?.id)} icon={<Plus size={14} />} className='primarybutton' style={{ width: '100%' }} >Side event</Button>
+
+                        </div>
+                    )}
+                >
+                    <Button icon={<ChevronDown size={14} />}>Opciones</Button>
+                </Dropdown>
             )
         },
+        // {
+        //     title: 'Acciones',
+        //     dataIndex: '',
+        //     key: 'address',
+        //     render: (_, record) => (
+        //         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        //             <Link target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
+        //                 <Button icon={<LuLink />} >Link</Button>
+        //             </Link>
+        //             <Link target='_blank' to={`https://iattend.site/dashboard?id=${record?.id}`}>
+        //                 <Button icon={<LuArrowUpRight />} >Abrir</Button>
+        //             </Link>
+
+        //         </div>
+        //     )
+        // },
 
     ];
 
@@ -328,21 +468,23 @@ export const AdminPage = () => {
     ];
 
 
-
     const items = useMemo(() => ([
         {
             label: `Eventos activos (${nextEvents.length})`,
             key: "esperando",
             children: (
-                <Table columns={nextEventsCols} dataSource={
-                    nextEvents.filter(i => {
-                        if (filterName) {
-                            return (
-                                i?.full_name?.toLowerCase().includes(filterName?.toLowerCase())
-                            )
-                        }
-                        else return true
-                    })} pagination={false} />
+                <Table
+                    columns={nextEventsCols}
+                    dataSource={
+                        nextEvents.filter(i => {
+                            if (filterName) {
+                                return (
+                                    i?.full_name?.toLowerCase().includes(filterName?.toLowerCase())
+                                )
+                            }
+                            else return true
+                        })}
+                    pagination={false} />
             ),
         },
         {
@@ -369,187 +511,6 @@ export const AdminPage = () => {
                     pagination={false}
                 />
 
-                // <div className='admin-table-background'>
-                //     <div className='admin-table-header-container'>
-                //         <div className='admin-table-header-item' style={{ maxWidth: '40px' }}>
-
-                //         </div>
-                //         <div className='admin-table-header-item' >
-                //             <span >Nombre</span>
-                //         </div>
-                //         <div className='admin-table-header-item' style={{ flex: 2 }}>
-                //             <span >Email</span>
-                //         </div>
-                //         <div className='admin-table-header-item' style={{ flex: 2 }}>
-                //             <span >User ID</span>
-                //         </div>
-                //         <div className='admin-table-header-item' style={{ maxWidth: '40px' }}>
-
-                //         </div>
-                //     </div>
-                //     <div className='admin-table-content-container'>
-                //         {
-                //             newProfiles?.filter(i => {
-                //                 if (filterName) {
-                //                     return (
-                //                         i?.full_name?.toLowerCase().includes(filterName?.toLowerCase())
-                //                     )
-                //                 }
-
-                //                 else return true
-
-                //             }).map((user, index) => (
-                //                 <div key={index} className={`admin-subtable-cont ${currentUser === user.user_email && 'admin-table-active'}`} style={{
-                //                 }}>
-                //                     <div className={`admin-table-content-row`} style={{
-                //                     }}>
-                //                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, maxWidth: '60px' }}>
-                //                             <Button
-                //                                 className='primarybutton'
-                //                                 onClick={() => handleNewInvitation(user)}
-                //                                 icon={<LuPlus />}
-                //                             >
-
-                //                             </Button>
-                //                         </div>
-
-                //                         <div className='admin-table-content'  >
-                //                             <span >{user.full_name}</span>
-
-                //                         </div>
-                //                         <div className='admin-table-content' style={{ flex: 2 }} >
-                //                             <Button
-
-                //                                 style={{
-                //                                     marginRight: '6px'
-                //                                 }}
-                //                                 icon={<LuCopy size={16} />} onClick={() => copyToClipboard(user.user_email)} />
-                //                             <span >{user.user_email}</span>
-
-
-                //                         </div>
-                //                         <div className='admin-table-content' style={{ flex: 2 }}>
-                //                             <Button
-
-                //                                 style={{
-                //                                     marginRight: '6px'
-                //                                 }}
-                //                                 icon={<LuCopy size={16} />} onClick={() => copyToClipboard(user.user_id)} />
-                //                             <span >{user.user_id}</span>
-                //                         </div>
-                //                         <div className='admin-table-content' style={{ maxWidth: '60px' }}>
-                //                             <Button
-                //                                 className={currentUser === user.user_email ? 'primarybutton--active' : 'primarybutton'}
-                //                                 style={{
-                //                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                //                                     borderRadius: '50%'
-                //                                 }}
-                //                                 icon={<LuChevronDown size={16} style={{
-                //                                     transform: currentUser === user.user_email ? 'rotate(180deg)' : 'rotate(0deg)',
-                //                                     transition: 'all 0.3s ease',
-                //                                 }} />}
-                //                                 onClick={() => setCurrentUser(currentUser === user.user_email ? null : user.user_email)} />
-                //                         </div>
-
-
-                //                     </div>
-                //                     {
-                //                         currentUser === user.user_email &&
-                //                         <>
-                //                             <div className='admin-table-header-container' style={{ opacity: 0.7 }}>
-                //                                 <div className='admin-table-sub-header-item' style={{ flex: 2 }}>
-                //                                     Invitation Id
-                //                                 </div>
-                //                                 <div className='admin-table-sub-header-item' style={{ flex: 2 }}>
-                //                                     URL
-                //                                 </div>
-
-                //                                 <div className='admin-table-sub-header-item' style={{ maxWidth: '120px' }}>
-                //                                     Plan
-                //                                 </div>
-                //                                 <div className='admin-table-sub-header-item' style={{ maxWidth: '120px' }}>
-                //                                     Estado
-                //                                 </div>
-                //                                 <div className='admin-table-sub-header-item' style={{ maxWidth: '160px' }}>
-                //                                     Creditos
-                //                                 </div>
-                //                                 <div className='admin-table-sub-header-item' style={{ maxWidth: '60px' }}>
-
-                //                                 </div>
-                //                             </div>
-                //                             <div className='admin-table-content-current'>
-
-
-                //                                 {
-                //                                     newInvitations
-                //                                         .filter(inv => inv.user_id === user.user_id)
-                //                                         .sort((a, b) => a.name.localeCompare(b.name)) // <-- ordena por nombre
-                //                                         .map((inv, index_) => (
-                //                                             <div key={index_} className={`admin-subtable-cont`}>
-                //                                                 <div className={`admin-table-content-row`} >
-                //                                                     <div className='admin-table-content-subt' style={{ flex: 2 }}>
-                //                                                         <Button
-                //                                                             style={{ marginRight: '8px' }}
-                //                                                             icon={<LuCopy size={16} />} onClick={() => copyToClipboard(inv.id)} />
-                //                                                         <span>{inv.id}</span>
-
-                //                                                     </div>
-                //                                                     <div className='admin-table-content-subt' style={{ flex: 2 }}>
-                //                                                         <Link to={`https://www.iattend.events/${inv.label}/${inv.name}`} target='_blank'>
-                //                                                             <Button
-                //                                                                 style={{ marginRight: '8px' }}
-                //                                                                 icon={<LuArrowUpRight size={16} />} />
-                //                                                         </Link>
-                //                                                         <span>{`/${inv.label}/${inv.name}`}</span>
-                //                                                     </div>
-                //                                                     <div className='admin-table-content-subt' style={{ maxWidth: '120px' }}>
-                //                                                         <img src={`/images/plan_${inv.plan}.png`} alt='' style={{ height: '30px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)', borderRadius: '6px' }} />
-                //                                                     </div>
-
-                //                                                     <div className='admin-table-content-subt' style={{ maxWidth: '120px' }}>
-
-                //                                                         <Button
-                //                                                             onClick={() => updateInvitationActive(inv)}
-                //                                                             icon={inv.active ? <LuPower size={14} /> : <LuPowerOff size={14} />} style={{
-                //                                                                 backgroundColor: inv.active ? '#ECF7EF' : '#F1F1F1',
-                //                                                                 color: inv.active ? '#61AD8C' : '#C1C1C1',
-                //                                                                 border: 'none',
-                //                                                             }}>{inv.active ? 'Activa' : 'Inactiva'}</Button>
-
-                //                                                     </div>
-
-                //                                                     <div className='admin-table-content-subt' style={{ maxWidth: '160px' }}>
-
-
-                //                                                         <InputNumber value={inv.credits} onChange={(e) => setActualCredits(e)} />
-                //                                                         <Button style={{ marginLeft: '6px' }} onClick={() => updateInvitationCredits(inv.id)} icon={<LuArrowUpFromLine />} />
-
-                //                                                     </div>
-                //                                                     <div className='admin-table-content-subt' style={{ maxWidth: '60px' }}>
-                //                                                         <Link to={`https://www.iattend.site/dashboard?id=${inv.id}`} target='_blank'>
-                //                                                             <Button className='primarybutton' icon={<LuArrowUpRight />}></Button>
-                //                                                         </Link>
-
-                //                                                     </div>
-
-
-                //                                                 </div>
-                //                                             </div>
-                //                                         ))
-                //                                 }
-
-                //                             </div>
-                //                         </>
-                //                     }
-                //                 </div>
-
-                //             ))
-                //         }
-
-
-                //     </div>
-
-                // </div>
             ),
         },
         {
@@ -594,10 +555,89 @@ export const AdminPage = () => {
         },
 
 
-    ]), [filterName, nextEvents, actualCredits, newInvitations]);
+    ]), [filterName, nextEvents, actualCredits, newInvitations, ownerInputs]);
 
 
+    const insertSideEvent = async (id) => {
+        const { error } = await supabase
+            .from('side_events')
+            .insert({
+                invitation_id: id, // uuid
+                date: new Date().toISOString(), // timestamp
+                name: null,
+                body: {
+                    address: {
+                        street: null,
+                        number: null,
+                        neighborhood: null,
+                        zipcode: null,
+                        country: null,
+                        state: null,
+                        city: null,
+                        url: null,
+                    },
+                    hour: null,
+                    image: null,
+                    title: {
+                        font: 'Poppins',
+                        size: 36,
+                        weight: 600,
+                        opacity: 1,
+                        line_height: 1.4
+                    },
+                    font: 'Poppins',
+                    color: "#000000",
+                    extras: null
+                }
+            })
 
+        if (error) {
+            console.error(error)
+            return
+        }
+
+        messageApi.success('Side event agregado con éxito')
+
+
+    }
+
+    const AddNewOwner = async (id, name) => {
+        try {
+            await axios.patch(
+                // `${import.meta.env.VITE_API_URL}/api/invitation/add-owner`,
+                'http://localhost:4000/api/invitation/add-owner',
+                { id: id, name: name }
+            );
+
+            messageApi.success('Editado con éxito')
+            refreshData()
+            setOwnerInputs((prev) => ({
+                ...prev,
+                [id]: null,
+            }))
+
+        } catch (error) {
+            console.error('Error updating credits:', error.response?.data || error.message);
+            throw error;
+        }
+    };
+
+    const removeOwner = async (id, index) => {
+        try {
+            await axios.patch(
+                // `${import.meta.env.VITE_API_URL}/api/invitation/remove-owner`,
+                'http://localhost:4000/api/invitation/remove-owner',
+                { id: id, index: index }
+            );
+
+            messageApi.success('Editado con éxito')
+            refreshData()
+
+        } catch (error) {
+            console.error('Error updating credits:', error.response?.data || error.message);
+            throw error;
+        }
+    };
 
 
 
@@ -609,7 +649,7 @@ export const AdminPage = () => {
                 alignItems: 'flex-start', justifyContent: 'flex-start',
                 backgroundColor: 'var(--ft-color)',
                 maxWidth: '1480px',
-                gap:'24px'
+                gap: '24px'
             }}>
                 <HeaderBuild position={'admin'} />
 

@@ -12,6 +12,32 @@
     gap: 24px;
 }
 
+.buttons_admin_cont {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    background-color: #FFF;
+    border-radius: 24px;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    padding: 12px;
+}
+
+.owner_item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px;
+    box-sizing: border-box;
+    border-radius: 99px;
+    background-color: #f5f3f280;
+    text-transform: capitalize;
+    padding-right: 4px;
+}
+
 .title-new-user-container {
     display: flex;
     align-items: center;

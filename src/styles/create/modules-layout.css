@@ -466,12 +466,15 @@
 .primarybutton:hover svg,
 .primarybutton--active:hover svg {
     color: var(--ft-color) !important;
+   
 }
 
 .primarybutton--active:hover {
     background: var(--gradient) !important;
     color: var(--ft-color) !important;
     background-position: right center !important;
+    border: none !important;
+    outline: none !important;
 }
 
 .primarybutton--black:hover {

@@ -6,29 +6,26 @@ import { NewGuestDrawer } from '../../components/Create/NewGuestDrawer';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoMdAdd, } from 'react-icons/io';
 import { FooterApp } from '../Footer/FooterApp';
 import { supabase } from '../../lib/supabase';
-import { FaChair, FaCheck, FaCoins, FaPaperPlane, FaPlus, FaRegClock, FaRegCopy, } from 'react-icons/fa';
+import { FaCheck, FaPaperPlane, FaPlus, FaRegCopy, } from 'react-icons/fa';
 import { AiOutlineClockCircle, } from 'react-icons/ai';
 import { FiArrowUpRight, FiMinus } from 'react-icons/fi';
 import { NotificationCard } from '../../components/NotificationCard/NotificationCard';
-import { IoChevronDownSharp, IoNotifications, IoTicket, } from 'react-icons/io5';
-import { MdFileDownload, } from 'react-icons/md';
+import { IoChevronDownSharp, IoTicket, } from 'react-icons/io5';
 import { RiArrowRightDoubleLine } from 'react-icons/ri';
 import axios from 'axios';
 import { TbLocationFilled } from 'react-icons/tb';
 import { GoChevronDown } from 'react-icons/go';
 import { BsArrowReturnRight } from 'react-icons/bs';
-import { LuRefreshCcw, LuSettings2, LuShoppingCart } from 'react-icons/lu';
+import { LuSettings2 } from 'react-icons/lu';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { type } from '@testing-library/user-event/dist/type';
-
 import { Grid } from "antd";
 import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
-import { HiLockClosed, HiLockOpen } from 'react-icons/hi2';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
-import { Check, CheckCheck, MailWarning, Send } from 'lucide-react';
+import { AArrowUp, Check, CheckCheck, CircleUserRound, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, Search, Send, Tag, TextAlignJustify } from 'lucide-react';
 
 const { useBreakpoint } = Grid;
 
@@ -58,7 +55,6 @@ export default function GuestsPage() {
 
     const [openCard, setOpenCard] = useState(null)
     const [onShare, setOnShare] = useState(false)
-    const [onNewGuest, setOnNewGuest] = useState(false)
     const [copyTickets, setCopyTickets] = useState(null)
     const [handleTables, sethandleTables] = useState(false)
     const [onGroupTable, setOnGroupTable] = useState(false)
@@ -81,6 +77,15 @@ export default function GuestsPage() {
     const [name, setName] = useState(null)
     const id = searchParams.get("id");
     const [messagesDispatch, setMessagesDispatch] = useState([])
+    const [searchUser, setSearchUser] = useState(null)
+    const [activeSearcher, setActiveSearcher] = useState(false)
+    const [localTags, setLocalTags] = useState([])
+    const [filterTag, setFilterTag] = useState(null)
+    const [filterTable, setFilterTable] = useState(null)
+    const [filterTier, setFilterTier] = useState(null)
+    const [filterType, setFilterType] = useState(null)
+    const [filterSide, setfilterSide] = useState(null)
+    const [owners, setOwners] = useState(null)
 
 
     const openColumns = useMemo(() => ([
@@ -358,7 +363,7 @@ export default function GuestsPage() {
             dataIndex: "name",
             key: "name",
             fixed: "left",
-            width: screens.xs ? 140 : undefined,
+            width: screens.xs ? 140 : 200,
             render: (value, record) => {
                 const isChild = record.companion_id !== null;
                 const hasChildren = record.children?.length > 0;
@@ -531,22 +536,40 @@ export default function GuestsPage() {
         },
 
         {
+            title: "Categoría",
+            dataIndex: "type",
+            key: "type",
+            width: 120,
+            render: (value) => (
+                <div className="tag-container">
+                    <span className="new-table-tag">
+                        {value ? handleTypes(value) : "-"}
+                    </span>
+                </div>
+            ),
+        },
+
+        {
             title: "Prioridad",
             dataIndex: "tier",
             key: "tier",
-            width: 100,
+            width: 140,
             fixed: screens.xs ? undefined : "right",
             render: (value) => (
-                <Tooltip title={handlePriority(value)}>
-                    <div className="tag-container">
-                        <span
-                            style={{ width: "100%", justifyContent: "center" }}
-                            className={`new-table-tag tier-${value}`}
-                        >
-                            {value}
-                        </span>
-                    </div>
-                </Tooltip>
+                <div style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <Tooltip title={handlePriority(value)}>
+                        <div className="tag-container" style={{ width: '80%' }}>
+                            <span
+                                style={{ width: "100%", justifyContent: "center" }}
+                                className={`new-table-tag tier-${value}`}
+                            >
+                                {value ?? "-"}
+                            </span>
+                        </div>
+                    </Tooltip>
+                </div>
             ),
         },
 
@@ -554,6 +577,7 @@ export default function GuestsPage() {
             title: "Acciones",
             key: "send",
             width: 160,
+            minWidth: 160,
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
                 const { state, table, phone_number } = record;
@@ -716,63 +740,125 @@ export default function GuestsPage() {
         },
     }), [columns, openColumns, openCard, expandedRowKeys]);
 
+    const filteredGuests = (data = []) => {
+        return data.filter((guest) => {
+            const name = guest.name?.toLowerCase() || "";
+            const phone = guest.phone_number?.toString() || "";
+            const search = searchUser?.toLowerCase() || "";
+
+            const matchesSearch =
+                !search ||
+                name.includes(search) ||
+                phone.includes(searchUser);
+
+            const matchesTag =
+                !filterTag ||
+                guest.tag === filterTag;
+
+            const matchesTable =
+                filterTable === null
+                    ? true
+                    : filterTable === 'no-table'
+                        ? guest.table === null
+                        : guest.table === filterTable;
+
+            const matchesSide =
+                !filterSide ||
+                guest.side === filterSide;
+
+            const matchesTier =
+                !filterTier ||
+                guest.tier === filterTier;
+
+            const matchesType =
+                !filterType ||
+                guest.type === filterType;
+
+
+
+
+            return matchesSearch && matchesTag && matchesTable && matchesTier && matchesType && matchesSide;
+        });
+    };
+
     const items = useMemo(() => ([
         {
-            label: `${screens.xs ? 'Espera' : 'Lista de espera'} `,
+            label: `${screens.xs ? 'Espera' : 'Lista de espera'} (${filteredGuests(createdData).length})`,
             key: "creado",
             children: (
                 <Table
+                    className='table_container'
                     size='small'
                     {...tableProps}
                     loading={isLoading}
-                    dataSource={createdData}
+                    dataSource={filteredGuests(createdData)}
                 />
             ),
         },
         {
-            label: `${screens.xs ? 'Enviada' : 'Invitación enviada'} `,
+            label: `${screens.xs ? 'Enviada' : 'Invitación enviada'} (${filteredGuests(waitingData).length})`,
             key: "esperando",
             children: (
                 <Table
                     size='small'
                     {...tableProps}
                     loading={isLoading}
-                    dataSource={waitingData}
+                    dataSource={filteredGuests(waitingData)}
                 />
             ),
         },
         {
-            label: `${screens.xs ? 'Confirmados' : 'Asistencia confirmada'} `,
+            label: `${screens.xs ? 'Confirmados' : 'Asistencia confirmada'} (${filteredGuests(confirmedData).length})`,
             key: "confirmado",
             children: (
                 <Table
                     size='small'
                     {...tableProps}
-                    dataSource={confirmedData}
+                    loading={isLoading}
+                    dataSource={filteredGuests(confirmedData)}
                 />
             ),
         },
         {
-            label: `${screens.xs ? 'Cancelados' : 'No asistirán '} `,
+            label: `${screens.xs ? 'Cancelados' : 'No asistirán '} (${filteredGuests(callededData).length})`,
             key: "rechazado",
             children: (
                 <Table
                     size='small'
                     {...tableProps}
                     loading={isLoading}
-                    dataSource={callededData}
+                    dataSource={filteredGuests(callededData)}
                 />
             ),
         },
     ]), [
         createdData,
         waitingData,
-        tableProps,
         confirmedData,
         callededData,
+        tableProps,
         isLoading,
-        screens
+        screens,
+        searchUser,
+        filterTag,
+        filterTable,
+        filterTier,
+        filterType,
+        filterSide
     ]);
+
+    const handleTypes = (type) => {
+        switch (type) {
+            case 'female': return 'Mujer'
+            case 'male': return 'Hombre'
+            case 'child': return 'Niño/a'
+            case 'undefined': return 'Indefinido'
+
+            default:
+                break;
+        }
+    }
+
 
     const handleMessageStatus = (record, status) => {
         switch (status) {
@@ -788,7 +874,7 @@ export default function GuestsPage() {
 
                 return (
                     <div className={`new-table-tag state-confirmado dispatch_message_tag`}>
-                        <Send size={16}/>
+                        <Send size={16} />
                         Enviado
                     </div>
                 )
@@ -806,7 +892,7 @@ export default function GuestsPage() {
             case 'read':
 
                 return (
-                    <div  className={`new-table-tag state-esperando dispatch_message_tag`}>
+                    <div className={`new-table-tag state-esperando dispatch_message_tag`}>
                         <CheckCheck size={16} />
                         Visto
                     </div>
@@ -825,7 +911,7 @@ export default function GuestsPage() {
                             }
                             onClick={() => onSedingInvitation(record, true)}
                             className="primarybutton--active"
-                            icon={<MailWarning size={16}/>}
+                            icon={<MailWarning size={16} />}
                             style={{ flex: 1, maxHeight: 30 }}
                         >
                             Reintentar
@@ -1073,7 +1159,7 @@ export default function GuestsPage() {
     const getType = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('type, credits, name')
+            .select('type, credits, name, tags, owners')
             .eq('id', id)
             .maybeSingle()
 
@@ -1087,6 +1173,8 @@ export default function GuestsPage() {
         setName(data.name)
         setOpenCard(data.type === 'open' ? true : false)
         getGuests()
+        setLocalTags(data.tags)
+        setOwners(data.owners)
     }
 
     const getTables = async () => {
@@ -1511,6 +1599,25 @@ export default function GuestsPage() {
     }, [onShare])
 
 
+    useEffect(() => {
+        if (!filterTable && !filterTag && !filterTier && !searchUser && !filterType && !filterSide) {
+            setActiveSearcher(false)
+        } else {
+            setActiveSearcher(true)
+        }
+    }, [filterTable, filterTag, filterTier, searchUser, filterType, filterSide])
+
+
+    useEffect(() => {
+        console.log('filter side: ', filterSide)
+    }, [filterSide])
+
+    useEffect(() => {
+        console.log('confirmed: ', confirmedData)
+    }, [confirmedData])
+
+
+
 
 
     return (
@@ -1540,7 +1647,165 @@ export default function GuestsPage() {
 
                         <div className='title-buttons-container'  >
 
-                            <span className='guests-title-page'>Invitados</span>
+                            <div />
+
+                            <div className='col_main_search'>
+                                <div className='search_main_row'>
+                                    <div onClick={() => setActiveSearcher((searchUser || filterTable || filterTag || filterTier) ? true : !activeSearcher)} className={`guests_filters_cont ${activeSearcher ? 'active_filter active_cont' : ''}`}>
+                                        <div className='icon_cont'>
+                                            <Search size={14} />
+                                        </div>
+                                        <Input onChange={(e) => setSearchUser(e.target.value)} value={searchUser} className='guests_searcher' placeholder='Buscar por nombre o número' />
+                                    </div>
+
+                                    <div className={`dots_container ${activeSearcher ? 'dots_cont_active' : ''}`}>
+                                        <Dropdown
+                                            arrow
+                                            popupRender={() => (
+                                                <div className="items_list_guests" >
+                                                    {
+                                                        localTags.map(i => {
+                                                            if (i === "" || i === null)
+                                                                return null
+
+                                                            return (
+                                                                <div onClick={() => setFilterTag((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTag === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
+                                                            )
+                                                        })
+                                                    }
+                                                </div>
+                                            )}
+                                        >
+                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTag ? 'acitve_filter_tag' : ''}`}>
+
+                                                <div className="single_row" style={{ opacity: filterTag ? 1 : 0.3, fontSize: '12px' }}>
+                                                    <Tag size={14} />
+                                                    {
+                                                        activeSearcher &&
+                                                        <span>{filterTag ?? 'Etiqueta'}</span>
+                                                    }
+                                                </div>
+
+                                            </div>
+                                        </Dropdown>
+
+
+                                        <Dropdown
+                                            arrow
+                                            popupRender={() => (
+                                                <div className="items_list_guests">
+                                                    <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >Sin mesa</div>
+                                                    {
+                                                        tables.map(i => (
+                                                            <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name}</div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            )}
+                                        >
+                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTable ? 'acitve_filter_tag' : ''}`}>
+
+                                                <div className="single_row" style={{ opacity: filterTable ? 1 : 0.3, fontSize: '12px' }}>
+                                                    <Pin size={14} />
+                                                    {
+                                                        activeSearcher &&
+                                                        <span>{tables?.find(t => t.id === filterTable)?.name ?? 'Mesa'}</span>
+                                                    }
+                                                </div>
+
+                                            </div>
+                                        </Dropdown>
+
+                                        <Dropdown
+                                            arrow
+                                            popupRender={() => (
+                                                <div className="items_list_guests">
+                                                    {
+                                                        ['A', 'B', 'C', 'D'].map(i => (
+                                                            <div onClick={() => setFilterTier((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTier === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            )}
+                                        >
+                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} tier-${filterTier}`}
+                                                style={{ minWidth: '80px' }}>
+                                                <div className="single_row" style={{ opacity: filterTier ? 1 : 0.3, fontSize: '12px' }}>
+                                                    <AArrowUp size={16} />
+                                                    {
+                                                        activeSearcher &&
+                                                        <span>{filterTier ?? 'Prioridad'}</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </Dropdown>
+
+                                        <Dropdown
+                                            arrow
+                                            popupRender={() => (
+                                                <div className="items_list_guests">
+                                                    {
+                                                        ['female', 'male', 'child', 'undefined'].map(i => (
+                                                            <div onClick={() => setFilterType((prev) => prev === i ? null : i)} className={`dot_list_item ${filterType === i ? 'dot_list_item_active' : ''}`} key={i}>{handleTypes(i)}</div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            )}
+                                        >
+                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterType ? 'acitve_filter_tag' : ''}`}
+                                                style={{ minWidth: '80px' }}>
+                                                <div className="single_row" style={{ opacity: filterType ? 1 : 0.3, fontSize: '12px' }}>
+                                                    <CircleUserRound size={14} />
+                                                    {
+                                                        activeSearcher &&
+                                                        <span>{handleTypes(filterType) ?? 'Categoría'}</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </Dropdown>
+
+                                        {
+                                            owners?.length > 1 &&
+                                            <Dropdown
+                                                arrow
+                                                popupRender={() => (
+                                                    <div className="items_list_guests">
+                                                        {
+                                                            owners?.map(i => (
+                                                                <div onClick={() => setfilterSide((prev) => prev === i ? null : i)} className={`dot_list_item ${filterSide === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                )}
+                                            >
+                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterSide ? 'acitve_filter_tag' : ''}`}
+                                                    style={{ minWidth: '80px' }}>
+                                                    <div className="single_row" style={{ opacity: filterSide ? 1 : 0.3, fontSize: '12px' }}>
+                                                        <CircleUserRound size={14} />
+                                                        {
+                                                            activeSearcher &&
+                                                            <span>{filterSide ?? 'Lado'}</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </Dropdown>
+                                        }
+
+                                    </div>
+
+
+                                </div>
+
+                                <div className='guests_all_list_cont'>
+
+                                </div>
+                            </div>
+
+
+
+
+
+
 
 
                             <div onClick={() => setOnSending(false)} className={`edit-tickets-container`} style={{
@@ -1548,6 +1813,9 @@ export default function GuestsPage() {
                                 borderRadius: '99px',
                                 height: '40px',
                             }}>
+
+
+
 
                                 {
                                     onSending &&
@@ -1569,154 +1837,169 @@ export default function GuestsPage() {
 
                             <div className='gst-buttons-container' >
 
+
+
+
                                 {/* <Button onClick={() => handleGuests(guestsList)}>Handle Guests</Button> */}
 
-                                {
-                                    !screens.xs &&
-                                    <Tooltip title="Descargables">
-                                        <Dropdown
-                                            trigger={["click"]}
-                                            placement='topRight'
-                                            popupRender={() => (
-                                                <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
-                                                    <span className="on-transfer-label">Descargar lista</span>
-
-                                                    <div className="transfer-mesas-cont">
-                                                        <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                            <span>
-                                                                Lista de espera
-                                                            </span>
-
-                                                            <Button
-                                                                onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<MdFileDownload size={16} style={{ marginTop: '4px' }} />} className="primarybutton">
-                                                            </Button>
-
-                                                        </div>
-
-                                                        <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                            <span>
-                                                                Esperando respuesta
-                                                            </span>
-
-                                                            <Button
-                                                                onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<MdFileDownload size={16} style={{ marginTop: '4px' }} />} className="primarybutton">
-                                                            </Button>
-
-                                                        </div>
-
-                                                        <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                            <span>
-                                                                Confirmados
-                                                            </span>
-
-                                                            <Button
-                                                                onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado"), "Confirmados.xlsx")}
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<MdFileDownload size={16} style={{ marginTop: '4px' }} />} className="primarybutton">
-                                                            </Button>
-
-                                                        </div>
-
-                                                        <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                            <span>
-                                                                No asistirán
-                                                            </span>
-
-                                                            <Button
-                                                                onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<MdFileDownload size={16} style={{ marginTop: '4px' }} />} className="primarybutton">
-                                                            </Button>
-
-                                                        </div>
-                                                    </div>
-
-                                                </div>
-                                            )}
-                                        >
-                                            <Button
-                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                icon={<MdFileDownload size={14} style={{ marginTop: '4px' }} />} className="primarybutton">
-                                            </Button>
-                                        </Dropdown>
-                                    </Tooltip>
-                                }
-
-
-
-                                <Popconfirm
-                                    title={openCard ? 'Invitación Púbica' : 'Invitación Privada'}
-                                    description={openCard ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
-                                    onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
-                                    placement="bottomLeft"
-                                    okText="Continuar"
-                                    cancelText="Cancelar"
-                                    style={{ width: '400px' }}
-                                    id="popup-confirm"
-                                >
-                                    {
-                                        openCard ?
-                                            <Button
-                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                icon={<HiLockOpen />} className="primarybutton">
-                                                Pública
-                                            </Button>
-                                            : <Button
-                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                icon={<HiLockClosed />} className="primarybutton">
-                                                Privada
-                                            </Button>
-                                    }
-
-                                </Popconfirm>
-
-
-                                {
-                                    !screens.xs &&
-                                    <Tooltip title="Mapa de mesas">
-                                        <Button
-                                            onClick={() => sethandleTables(true)}
-                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                            icon={<FaChair size={12} />} className="primarybutton">
-                                        </Button>
-                                    </Tooltip>
-                                }
 
 
 
 
-                                {
+
+
+
+                                {/* {
                                     !screens.xs &&
                                     <Tooltip title="Novedades">
                                         <Button className='primarybutton' onClick={() => setOnNotificationCenter(true)} icon={<IoNotifications size={12} />} ></Button>
                                     </Tooltip>
 
-                                }
-
+                                } */}
 
                                 {
                                     !screens.xs &&
 
+                                    <Dropdown
+                                        popupRender={() => (
+                                            <div className="items_list_guests">
+
+
+                                                <Dropdown
+                                                    trigger={["click"]}
+                                                    placement='topRight'
+                                                    popupRender={() => (
+                                                        <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
+                                                            <span className="on-transfer-label">Descargar lista</span>
+
+                                                            <div className="transfer-mesas-cont">
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        Lista de espera
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        Esperando respuesta
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        Confirmados
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado"), "Confirmados.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        No asistirán
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    )}
+                                                >
+                                                    <Button
+                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                        icon={<Download size={14} />} className="primarybutton_transparent">
+                                                        Descargables
+                                                    </Button>
+                                                </Dropdown>
+
+
+                                                <Button
+                                                    onClick={() => sethandleTables(true)}
+                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                    icon={<Pin size={14} />} className="primarybutton_transparent">
+                                                    Mapa de mesas
+                                                </Button>
+
+
+                                                <Popconfirm
+                                                    title={openCard ? 'Invitación Púbica' : 'Invitación Privada'}
+                                                    description={openCard ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
+                                                    onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
+                                                    placement="bottomLeft"
+                                                    okText="Continuar"
+                                                    cancelText="Cancelar"
+                                                    style={{ width: '400px' }}
+                                                    id="popup-confirm"
+                                                >
+                                                    {
+                                                        openCard ?
+                                                            <Button
+                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                icon={<LockKeyholeOpen />} className="primarybutton_transparent">
+                                                                Evento público
+                                                            </Button>
+                                                            : <Button
+                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
+                                                                Evento privado
+                                                            </Button>
+                                                    }
+
+                                                </Popconfirm>
+                                            </div>
+                                        )}
+                                    >
+                                        <Button className='primarybutton' icon={<TextAlignJustify size={12} />}>
+
+                                        </Button>
+                                    </Dropdown>
+
+                                }
+
+                                {
+                                    !screens.xs &&
 
                                     <Button
-                                        onMouseEnter={() => setOnNewGuest(true)} onMouseLeave={() => setOnNewGuest(false)}
-                                        icon={<FaPlus size={12} />}
-                                        style={{ borderRadius: '99px', width: onNewGuest ? '161px' : '32px', transition: 'all 0.55s ease' }}
+                                        icon={<Plus size={14} />}
                                         className='primarybutton--active' onClick={() => setDrawerState({
                                             currentGuest: null,
                                             onEditGuest: false,
                                             companions: [],
                                             visible: true
                                         })}>
-                                        {
-                                            onNewGuest ? "Nuevo invitado" : ""
-                                        }
+                                        Nuevo invitado
                                     </Button>
+
                                 }
+
+
+
+
+
 
 
 
@@ -1728,7 +2011,7 @@ export default function GuestsPage() {
                         </div>
 
                         <Tabs
-                            style={{ width: '100%', marginTop: '24px' }}
+                            style={{ width: '100%', marginTop: '24px', }}
                             type="card"
                             activeKey={activeKey}
                             onChange={setActiveKey}

@@ -20,6 +20,7 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
     const inputRef = useRef(null);
     const [newTag, setNewTag] = useState(null)
     const [localTags, setLocalTags] = useState([])
+    const [owners, setOwners] = useState([])
     const [guestData, setGuestData] = useState(null)
     const [companionsData, setCompanionsData] = useState([])
     const [priorityCalc, setPriorityCalc] = useState({
@@ -62,6 +63,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                 tier: guestData.tier,
                 tag: guestData.tag,
                 state: guestData.state,
+                type: guestData.type,
+                side: guestData.side,
                 notes: guestData.notes,
                 last_action: drawerState.currentGuest?.state,
                 has_companion: companionsData?.length > 0 ? true : false,
@@ -107,6 +110,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                         name: (edit.name ?? '').trim(),
                         tier: edit.tier,
                         tag: edit.tag,
+                        type: edit.type,
+                        side: edit.side,
                         state: edit.state,         // si también editas state desde UI, usa edit.state
                         notes: edit.notes,
                         last_action: dbComps[i].state,
@@ -135,6 +140,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                         tier: edit.tier ?? guestData.tier ?? null,
                         tag: edit.tag ?? guestData.tag ?? null,
                         table: null,
+                        type: edit.type ?? guestData.type ?? null,
+                        side: edit.side ?? guestData.side ?? null,
                         state: 'creado',
                         notes: edit.notes ?? null,
                         meal: null,
@@ -181,6 +188,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                 name: guestData.name || '',
                 tier: guestData.tier || null,
                 tag: guestData.tag || null,
+                side: guestData.side || null,
+                type: guestData.type || null,
                 table: null,
                 state: 'creado',
                 last_action: 'creado',
@@ -222,6 +231,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                         name: c.name ?? `Acompañante de ${guestName}`,
                         tier: c.tier ?? guestData.tier ?? null,
                         tag: c.tag ?? guestData.tag ?? null,
+                        side: c.side ?? guestData.side ?? null,
+                        type: c.type ?? guestData.type ?? null,
                         table: null,
                         state: 'creado',
                         last_action: 'creado',
@@ -254,6 +265,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                 name: null,
                 tier: null,
                 tag: null,
+                side: null,
+                type: null,
                 notes: null,
             })
             setCompanionsData([])
@@ -289,6 +302,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                 name: "",
                 tier: null,
                 tag: null,
+                side: null,
+                type: null,
                 notes: "",
                 state: "creado",
             });
@@ -361,6 +376,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                     name: "",
                     tier: guestData.tier,
                     tag: guestData.tag,
+                    side: guestData.side,
+                    type: null,
                     notes: "",
                     state: null,
                 }
@@ -397,7 +414,7 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
     const getTags = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('tags')     // nuevo valor
+            .select('tags, owners')     // nuevo valor
             .eq('id', invitationID)
             .maybeSingle()         // o usa .eq('mongo_id', '...') si prefieres
 
@@ -405,8 +422,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
         if (error) {
             console.error(error)
         } else {
-            console.log('tags: ', data.tags)
             setLocalTags(data.tags)
+            setOwners(data.owners)
         }
     }
 
@@ -473,6 +490,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                     name: guest.name,
                     tier: guest.tier,
                     tag: guest.tag,
+                    side: guest.side,
+                    type: guest.type,
                     notes: guest.notes,
                     state: guest.state
                 })
@@ -485,6 +504,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                             name: guest.name || "",
                             tier: guest.tier || "",
                             tag: guest.tag || "",
+                            side: guest.side || "",
+                            type: guest.type || "",
                             notes: guest.notes || "",
                             state: guest.state || null
                         };
@@ -497,6 +518,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                     name: null,
                     tier: null,
                     tag: null,
+                    side: null,
+                    type: null,
                     notes: null,
                     state: null,
                 })
@@ -713,7 +736,7 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                                             </Space>
                                         </>
                                     )}
-                                    options={localTags.map((item) => ({ label: item, value: item }))}
+                                    options={localTags.filter(i => i !== null).map((item) => ({ label: item, value: item }))}
                                 />
                             </div>
 
@@ -854,6 +877,61 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
 
                         </div>
 
+                        <div style={{
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+                            gap: '12px'
+                        }}>
+                            <div style={{
+                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                flex: 1, gap: '4px'
+                            }}>
+                                <span className='gc-content-label'>Categoría</span>
+                                <Select
+                                    value={guestData.type}
+                                    placeholder="Categoría de invitado"
+                                    onChange={(e) => setGuestData((prev) => ({
+                                        ...prev,
+                                        type: e
+                                    }))}
+                                    style={{ width: '100%' }}
+                                >
+                                    <Option value="female">Mujer</Option>
+                                    <Option value="male">Hombre</Option>
+                                    <Option value="child">Niño</Option>
+                                    <Option value="undefined">Indefinido</Option>
+                                </Select>
+                            </div>
+
+
+                            <div style={{
+                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                flex: 1, gap: '4px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <span className='gc-content-label'>Lado</span>
+                                </div>
+
+                                <Select
+                                    value={guestData.side}
+                                    placeholder="Lado de invitado"
+                                    onChange={(e) => setGuestData((prev) => ({
+                                        ...prev,
+                                        side: e
+                                    }))}
+                                    style={{ width: '100%' }}
+                                >
+                                    {
+                                        owners?.map((o) => (
+                                            <Option key={o} value={o}>{o}</Option>
+                                        ))
+                                    }
+
+
+                                </Select>
+                            </div>
+
+                        </div>
+
                         {
                             drawerState.onEditGuest &&
                             <div style={{
@@ -937,8 +1015,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                             < div className='new-guest-form-container'>
                                 <div style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-                                    position:'sticky',top:'-12px', backgroundColor:'#FFF',zIndex:10, 
-                                    padding:'12px 0px'
+                                    position: 'sticky', top: '-12px', backgroundColor: '#FFF', zIndex: 10,
+                                    padding: '12px 0px'
                                 }}>
                                     <span style={{ fontSize: '16px' }} className='gc-content-label'><b>Acomañantes ({companionsData?.length})</b></span>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -1071,7 +1149,7 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                                                                     </Space>
                                                                 </>
                                                             )}
-                                                            options={localTags.map((item) => ({ label: item, value: item }))}
+                                                            options={localTags.filter(i => i !== null).map((item) => ({ label: item, value: item }))}
                                                         />
                                                     </div>
 
@@ -1098,6 +1176,65 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                                                             <Option value="B">B</Option>
                                                             <Option value="C">C</Option>
                                                             <Option value="D">D</Option>
+                                                        </Select>
+                                                    </div>
+
+                                                </div>
+
+                                                <div style={{
+                                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+                                                    gap: '12px'
+                                                }}>
+                                                    <div style={{
+                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                        flex: 1, gap: '4px'
+                                                    }}>
+                                                        <span className='gc-content-label'>Categoría</span>
+                                                        <Select
+                                                            value={companion.type}
+                                                            placeholder="Categoría de invitado"
+                                                            onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                                prevCompanionData.map((obj, i) =>
+                                                                    index === i
+                                                                        ? { ...obj, type: e }
+                                                                        : obj
+                                                                )
+                                                            )}
+                                                            style={{ width: '100%' }}
+                                                        >
+                                                            <Option value="female">Mujer</Option>
+                                                            <Option value="male">Hombre</Option>
+                                                            <Option value="child">Niño</Option>
+                                                            <Option value="undefined">Indefinido</Option>
+                                                        </Select>
+                                                    </div>
+
+
+                                                    <div style={{
+                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                        flex: 1, gap: '4px'
+                                                    }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                                            <span className='gc-content-label'>Lado</span>
+                                                        </div>
+
+                                                        <Select
+                                                            value={companion.side}
+                                                            placeholder="Lado de invitado"
+                                                            onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                                prevCompanionData.map((obj, i) =>
+                                                                    index === i
+                                                                        ? { ...obj, side: e }
+                                                                        : obj
+                                                                )
+                                                            )}
+                                                            style={{ width: '100%' }}
+                                                        >
+                                                            {
+                                                                owners?.map((o) => (
+                                                                    <Option key={o} value={o}>{o}</Option>
+                                                                ))
+                                                            }
                                                         </Select>
                                                     </div>
 
