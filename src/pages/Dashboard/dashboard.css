@@ -260,6 +260,7 @@
     overflow: hidden;
     position: relative;
     padding: 24px;
+
 }
 
 
@@ -304,13 +305,25 @@
 
 .loop_1 {
     width: 100%;
-    transform: rotate(180deg);
-    bottom: 0%;
-    left: -20%;
-    width: 140%;
+    transform: rotate(0deg);
+    top: 10%;
+    left: -10%;
+    width: 110%;
     position: absolute;
     opacity: 0.9;
     z-index: 1;
+}
+
+.loop_1_1 {
+    width: 100%;
+    transform: rotate(180deg);
+    bottom: 0%;
+    left: -10%;
+    width: 100%;
+    position: absolute;
+    opacity: 0.9;
+    z-index: 1;
+    display: none;
 }
 
 .invitation_header_dash {

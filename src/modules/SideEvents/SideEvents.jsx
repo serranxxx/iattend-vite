@@ -15,6 +15,7 @@ import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import { handleCheckout } from '../../components/Payment/functions'
 import { useSearchParams } from 'react-router-dom'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
+import { Check, CheckCheck, MailWarning, Send } from 'lucide-react'
 
 
 const { Option } = Select;
@@ -35,6 +36,7 @@ export const SideEvents = () => {
     const [onCreate, setOnCreate] = useState(false)
     const [onSending, setOnSending] = useState(false)
     const [onTickets, setOnTickets] = useState(false)
+    const [messagesDispatch, setMessagesDispatch] = useState([])
     const [activeTickets, setActiveTickets] = useState(false)
     const [onBubble, setOnBubble] = useState(false)
     const [credits, setCredits] = useState(0)
@@ -49,28 +51,16 @@ export const SideEvents = () => {
             dataIndex: "name",
             key: "name",
             fixed: "left",
-            minWidth: 140,
-            // render: (value, record) => {
-            //     return (
-            //         <div
-            //             className="tag-container"
-            //             style={{ gap: 8, justifyContent: "flex-start", width: "100%" }}
-            //         >
-
-
-
-            //             <span style={{ textAlign: "left" }}>{value}</span>
-            //         </div>
-            //     );
-            // },
-
+            width: 160,
         },
 
         {
             title: "Contacto",
             dataIndex: "phone_number",
             key: "phone_number",
-            minWidth: 160,
+            width:140,
+
+    
             //   render: (value) => phoneFormatter(value),
         },
 
@@ -78,7 +68,7 @@ export const SideEvents = () => {
             title: "Estado",
             dataIndex: "state",
             key: "state",
-            minWidth: 120,
+            width:100,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -93,7 +83,7 @@ export const SideEvents = () => {
             title: "Accesos",
             dataIndex: "password",
             key: "password",
-            minWidth: 120,
+            width:140,
             render: (value,) => (
                 <div className="tag-container">
                     <Dropdown popupRender={() => (
@@ -109,26 +99,6 @@ export const SideEvents = () => {
                         <Button style={{ borderRadius: '99px', maxHeight: '24px' }} icon={<LuLock />}>••••••••</Button>
                     </Dropdown>
                 </div>
-                // <div
-                //     style={{
-                //         display: "flex",
-                //         alignItems: "center",
-                //         justifyContent: "center",
-                //         width: "100%",
-                //         gap: '2px'
-                //     }}
-                // >
-                //     <span>{value}</span>
-                //     <Tooltip title="Copiar contraseña">
-                //         <Button
-                //             onClick={() => copyToClipboard(value)}
-                //             type='text'
-                //             // className="primarybutton"
-                //             // style={{ maxHeight: 26 }}
-                //             icon={<FaRegCopy size={14} />}
-                //         />
-                //     </Tooltip>
-                // </div>
             ),
         },
 
@@ -136,7 +106,8 @@ export const SideEvents = () => {
             title: "Etiqueta",
             dataIndex: "tag",
             key: "tag",
-            width: 140,
+            width:100,
+           
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -149,7 +120,7 @@ export const SideEvents = () => {
         {
             title: "Acciones",
             key: "send",
-            minWidth: 200,
+            width: 200,
             fixed: "right",
             render: (_, record) => {
                 const { state, phone_number } = record;
@@ -196,28 +167,7 @@ export const SideEvents = () => {
 
                 if (state === "esperando") {
                     return (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "flex-start",
-                                gap: 6,
-                                width: "100%",
-                                paddingRight: '12px', boxSizing: 'border-box'
-                            }}
-                        >
-                            <Button
-                                className="primarybutton"
-                                disabled
-                                icon={<LuClock size={14} style={{ marginTop: 2 }} />}
-                                style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
-                            >
-                                Esperando
-                            </Button>
-
-                            <Tooltip title="Eliminar"> <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}></Button></Tooltip>
-                        </div>
-
+                        handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')
                     );
                 }
 
@@ -230,7 +180,7 @@ export const SideEvents = () => {
                                 justifyContent: "flex-start",
                                 gap: 6,
                                 width: "100%",
-                                paddingRight: '12px', boxSizing: 'border-box'
+                                paddingLeft: '12px', boxSizing: 'border-box'
                             }}
                         >
 
@@ -262,7 +212,7 @@ export const SideEvents = () => {
         rowKey: "id",
         columns: columns,
         pagination: false,
-        scroll: { y: '80vh' },
+        scroll: { y: '80vh', x:1000},
 
     }), [columns]);
 
@@ -305,6 +255,106 @@ export const SideEvents = () => {
         tableProps,
         rawData,
     ]);
+
+    const dispatchMap = useMemo(() => {
+        const map = {};
+
+        messagesDispatch.forEach(m => {
+            map[m.guest_id] = m;
+        });
+
+        return map;
+    }, [messagesDispatch]);
+
+    const getMessagesUpdates = async () => {
+
+        try {
+            const { data, error } = await supabase
+                .rpc('get_latest_invitation_dispatches', {
+                    p_invitation_id: id
+                });
+
+            if (error) return
+
+            console.log('messages updates: ', data)
+            setMessagesDispatch(data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleMessageStatus = (record, status) => {
+        switch (status) {
+            case 'processing':
+
+                return (
+                    <div className='dispatch_message_tag' style={{maxHeight:'16px'}}>
+                        Procesando
+                    </div>
+                )
+
+            case 'sent':
+
+                return (
+                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                        <Send size={16} />
+                        Enviado
+                    </div>
+                )
+
+            case 'delivered':
+
+                return (
+                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                        <Check size={16} />
+                        Entregado
+                    </div>
+                )
+
+
+            case 'read':
+
+                return (
+                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                        <CheckCheck size={16} />
+                        Visto
+                    </div>
+                )
+
+            case 'failed':
+
+                return (
+
+                    <Tooltip placement='topRight'
+
+                        title={'Un reintento no consume créditos'} color="var(--brand-color-500)">
+                        <Button
+                            disabled={
+                                !/^\+52\d+/.test(record.phone_number) || credits <= 0
+                            }
+                            onClick={() => onSedingInvitation(current, record)}
+                            className="primarybutton--active"
+                            icon={<MailWarning size={16} />}
+                            style={{ flex: 1, maxHeight: 30, width:'136px' }}
+                        >
+                            Reintentar
+                        </Button>
+                    </Tooltip>
+                    // <div className='dispatch_message_tag'>
+
+                    //     <MailWarning size={16}/>
+                    //     Reintentar
+                    // </div>
+                )
+
+            default:
+                return (
+                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                        Esperando
+                    </div>
+                )
+        }
+    }
 
     const onSendInvitation = async (guest) => {
 
@@ -694,6 +744,7 @@ export const SideEvents = () => {
         // getInvitationImages(id);
         getCredits()
         getSideEvents()
+        getMessagesUpdates()
     }, [id])
 
 
@@ -742,6 +793,28 @@ export const SideEvents = () => {
 
                     }
                 )
+
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'invitation_message_dispatches'
+                    },
+                    (payload) => {
+                        const row = payload.new || payload.old;
+                        if (!row) return;
+    
+                        if (row.invitation_id === id) {
+                            console.log('message status update:', row);
+                            getMessagesUpdates()
+                            getGuests();
+                            // refreshPage();
+                        }
+    
+                    }
+                )
+
                 .subscribe((status) => {
                     console.log('sub status: ', status)
                 })
@@ -752,7 +825,7 @@ export const SideEvents = () => {
         }
 
         
-    }, [])
+    }, [supabase, id])
 
     const truncate = (text, max = 50) =>
         text.length > max ? text.slice(0, max) + '...' : text;
@@ -831,7 +904,7 @@ export const SideEvents = () => {
                         footer={false}
                         onCancel={() => setOpen(false)}
                         onOk={() => setOpen(false)}
-                        style={{ top: 20 }}
+                        style={{ top: 20, maxWidth:'1320px'}}
                         width="90%"
                         closeIcon={false}
                         styles={{
@@ -845,7 +918,8 @@ export const SideEvents = () => {
                             body: {
                                 display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
                                 width: '100%',
-                                position: 'relative'
+                                position: 'relative',
+                                
 
                             }
                         }}
@@ -1269,11 +1343,11 @@ export const SideEvents = () => {
 
                             <div className='side-evennts_table_container'>
                                 <Tabs
-                                    style={{ width: '100%', }}
+                                    // style={{ width: '90%', }}
                                     type="card"
                                     items={items}
                                     tabBarExtraContent={
-                                        <div className='single_row' style={{ marginRight: '16px', marginBottom: '16px', gap: '4px' }}>
+                                        <div className='single_row' style={{ marginBottom:'12px' }}>
                                             <Dropdown
                                                 key={0}
                                                 trigger={['click']}

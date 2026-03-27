@@ -1,20 +1,23 @@
 
-import { Breadcrumb, Button, Popconfirm, Row, Tooltip, message } from "antd"
+import { Breadcrumb, Button, Grid, Popconfirm, Row, Tooltip, message } from "antd"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
-import {  LuArrowLeft, LuBadgeHelp,  LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
+import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 
 const baseProd = "https://www.iattend.events"
 
+const { useBreakpoint } = Grid;
+
 export const HeaderBuild = ({ position, isVisible }) => {
 
-    
+
     const [setIsScrollTop] = useState(false);
     const [openMenu, setOpenMenu] = useState(false)
     const session = JSON.parse(localStorage.getItem("session"));
+
 
     // const getFirstLetterUpperCase = (str) => {
     //     if (!str) return '';
@@ -70,14 +73,14 @@ export const HeaderBuild = ({ position, isVisible }) => {
     return (
 
         <>
-            <div className="header-main-container web-opt" style={{borderBottom:'1px solid #ebebeb80'}}>
+            <div className="header-main-container web-opt" style={{ borderBottom: '1px solid #ebebeb80' }}>
                 <Row className="header-container" >
                     <div style={{
                         width: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
-                       
+
                     }}>
                         <img alt='' src="/images/icon_pp.png" style={{
-                            height:'32px', width:'32px', borderRadius:'99px'
+                            height: '32px', width: '32px', borderRadius: '99px'
                         }} />
 
                     </div>
@@ -115,9 +118,9 @@ export const HeaderBuild = ({ position, isVisible }) => {
                     <div style={{
                         height: '60px', display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
-                        position:'relative', width:'120px',zIndex:999
+                        position: 'relative', width: '120px', zIndex: 999
                     }}>
-{/* 
+                        {/* 
                         {
                             session?.logged &&
                             <UserPopUp session={session} logout={logout} />
@@ -217,6 +220,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
     const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
+    const screens = useBreakpoint();
 
     const [name, setName] = useState(null)
 
@@ -405,7 +409,12 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             Copiar link
                         </Button>
 
-                        <Breadcrumb style={{ marginLeft: 8 }} items={breadcrumbItems} />
+                        {
+                            !screens.xs &&
+                            <Breadcrumb style={{ marginLeft: 8 }} items={breadcrumbItems} />
+                        }
+
+
                     </div>
 
                     {/* RIGHT SIDE */}
@@ -413,11 +422,16 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />
 
-                        <Link to="https://wa.me/6145338500" target="_blank">
-                            <Button icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
-                                ¿Necesitas ayuda?
-                            </Button>
-                        </Link>
+                        {
+                            !screens.xs &&
+                            <Link to="https://wa.me/6145338500" target="_blank">
+                                <Button icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
+                                    ¿Necesitas ayuda?
+                                </Button>
+                            </Link>
+                        }
+
+
 
                         {isEditing && (
                             <Tooltip title="Publicar cambios" placement="bottomLeft">

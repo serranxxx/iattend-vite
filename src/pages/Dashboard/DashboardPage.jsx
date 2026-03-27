@@ -107,11 +107,12 @@ export const DashboardPage = () => {
     return (
 
         invitation && plan ?
-            <div className='dashboard-page-container'>
+            <div className='dashboard-page-container' style={{ overflow: 'hidden' }}>
 
                 <HeaderDashboard mode={'dashboard'} invitation={invitation} />
 
                 <img src='/images/loop2.svg' alt='' className='loop_1' />
+                <img src='/images/loop2.svg' alt='' className='loop_1_1' />
                 <div className='dashboard_body'>
 
 
@@ -195,14 +196,15 @@ export const DashboardPage = () => {
 
 
                                 <div className='side_events_dash' style={{
+                                    maxWidth: '460px',
                                     // maxHeight: screens.xs ? '180px' : undefined
                                 }}>
                                     <div className='invitation_header_dash'>
                                         <span style={{ fontWeight: 600 }}>Side events</span>
                                         <Button onClick={() => handleMoode('side')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
-                                    <div className="guests_dash_cont" style={{ minHeight: '80px' }}>
-                                        {/* <img alt='/images/loop2.svg' style={{ objectFit: 'cover', width: '100%', height: '100%'}} /> */}
+                                    <div className="guests_dash_cont" style={{ minHeight: '80px', display:'flex',alignItems:'center',justifyContent:'center', padding:'0'}}>
+                                        <img src='/images/icons_side_events.png' style={{ width: '90%', }} />
                                     </div>
                                 </div>
 
@@ -219,102 +221,6 @@ export const DashboardPage = () => {
 
 
                 </div>
-
-
-                {/* <div className='dash-main-cont'>
-                    <div className='dashboard-page-content'>
-                        <div className='dsh-grid-1'>
-                            <div className='dash-item dash-invitation'>
-                                <div className='das-header-sect'>
-                                    <span >Invitación digital</span>
-                                    <Button
-                                        style={{ minWidth: '30px' }}
-                                        icon={<MdArrowForwardIos size={18} />}
-                                        onClick={() => setMode('on-edit')} className='primarybutton--active'>
-
-                                    </Button>
-                                </div>
-                                <img alt='' src={invitation.cover.image.prod} />
-
-                            </div>
-
-                        </div>
-                        <div className='dsh-grid-2'>
-
-                            <div className='g--dash-item' style={{backgroundColor:'#F5F3F2'}} >
-                                <div className='small-row--g'>
-                                    <IoPeople size={24} style={{
-                                        color: 'var(--brand-color-500)'
-                                    }} />
-                                    <span className='g--card-label'>Respuesta de invitados</span>
-                                </div>
-
-                                <span className='g--subtitle'>Gestiona y administra pases e invitados de manera eficiente</span>
-
-                                <div className='g--item-row'>
-                                    <span className='g--subtitle-bold'>Análisis de las respuestas</span>
-                                    <span className='g--subtitle-regular'>22 Abril, 2025</span>
-                                </div>
-
-                                <div className='g--responses-cont'>
-                                    <div className='g--item-col' style={{
-                                        gap: '24px'
-                                    }}>
-                                        <div className='g--item-row' style={{
-                                            padding: '0px', border: 'none', justifyContent: 'flex-start', gap: '24px'
-                                        }}>
-                                            <div className='g--item-col'>
-                                                <span className='g--subtitle'>Confirmados</span>
-                                                <div className='small-row--g'>
-                                                    <span className='g--card-label' style={{
-                                                        fontSize: '42px', lineHeight: '1', fontWeight: 600
-                                                    }}>{20}</span>
-                                                    <LuCalendarCheck2 size={28} style={{
-                                                        color: '#BFBFBF'
-                                                    }} />
-                                                </div>
-                                            </div>
-
-                                            <div className='g--item-col'>
-                                                <span className='g--subtitle'>Esperando</span>
-                                                <div className='small-row--g'>
-                                                    <span className='g--card-label' style={{
-                                                        fontSize: '42px', lineHeight: '1', fontWeight: 600
-                                                    }}>{30}</span>
-                                                    <LuCalendarClock size={28} style={{
-                                                        color: '#BFBFBF'
-                                                    }} />
-                                                </div>
-                                            </div>
-
-                                        </div>
-
-                                        <div className='g--item-col'>
-                                            <span className='g--subtitle'>Rechazados</span>
-                                            <div className='small-row--g'>
-                                                <span className='g--card-label' style={{
-                                                    fontSize: '42px', lineHeight: '1', fontWeight: 600
-                                                }}>{10}</span>
-                                                <LuCalendarX2 size={28} style={{
-                                                    color: '#BFBFBF'
-                                                }} />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className='pie-chart-dash'>
-                                        <Pie data={chartData} options={options} />
-                                    </div>
-
-                                </div>
-
-                                <Button icon={<FaArrowRight />} className='button-mobile primarybutton--active'>Lista de invitados</Button>
-
-                            </div>
-
-                        </div>
-                    </div>
-                </div> */}
 
                 <FooterApp ></FooterApp>
             </div>

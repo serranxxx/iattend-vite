@@ -1473,8 +1473,6 @@ export default function GuestsPage() {
     }
 
     const dispatchMap = useMemo(() => {
-
-        console.log('hey: ', messagesDispatch)
         const map = {};
 
         messagesDispatch.forEach(m => {
@@ -1649,157 +1647,160 @@ export default function GuestsPage() {
 
                             <div />
 
-                            <div className='col_main_search'>
-                                <div className='search_main_row'>
-                                    <div onClick={() => setActiveSearcher((searchUser || filterTable || filterTag || filterTier) ? true : !activeSearcher)} className={`guests_filters_cont ${activeSearcher ? 'active_filter active_cont' : ''}`}>
-                                        <div className='icon_cont'>
-                                            <Search size={14} />
+                            {
+                                !screens.xs &&
+                                <div className='col_main_search'>
+                                    <div className='search_main_row'>
+                                        <div onClick={() => setActiveSearcher((searchUser || filterTable || filterTag || filterTier) ? true : !activeSearcher)} className={`guests_filters_cont ${activeSearcher ? 'active_filter active_cont' : ''}`}>
+                                            <div className='icon_cont'>
+                                                <Search size={14} />
+                                            </div>
+                                            <Input onChange={(e) => setSearchUser(e.target.value)} value={searchUser} className='guests_searcher' placeholder='Buscar por nombre o número' />
                                         </div>
-                                        <Input onChange={(e) => setSearchUser(e.target.value)} value={searchUser} className='guests_searcher' placeholder='Buscar por nombre o número' />
-                                    </div>
 
-                                    <div className={`dots_container ${activeSearcher ? 'dots_cont_active' : ''}`}>
-                                        <Dropdown
-                                            arrow
-                                            popupRender={() => (
-                                                <div className="items_list_guests" >
-                                                    {
-                                                        localTags.map(i => {
-                                                            if (i === "" || i === null)
-                                                                return null
+                                        <div className={`dots_container ${activeSearcher ? 'dots_cont_active' : ''}`}>
+                                            <Dropdown
+                                                arrow
+                                                popupRender={() => (
+                                                    <div className="items_list_guests" >
+                                                        {
+                                                            localTags.map(i => {
+                                                                if (i === "" || i === null)
+                                                                    return null
 
-                                                            return (
-                                                                <div onClick={() => setFilterTag((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTag === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
-                                                            )
-                                                        })
-                                                    }
+                                                                return (
+                                                                    <div onClick={() => setFilterTag((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTag === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
+                                                                )
+                                                            })
+                                                        }
+                                                    </div>
+                                                )}
+                                            >
+                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTag ? 'acitve_filter_tag' : ''}`}>
+
+                                                    <div className="single_row" style={{ opacity: filterTag ? 1 : 0.3, fontSize: '12px' }}>
+                                                        <Tag size={14} />
+                                                        {
+                                                            activeSearcher &&
+                                                            <span>{filterTag ?? 'Etiqueta'}</span>
+                                                        }
+                                                    </div>
+
                                                 </div>
-                                            )}
-                                        >
-                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTag ? 'acitve_filter_tag' : ''}`}>
-
-                                                <div className="single_row" style={{ opacity: filterTag ? 1 : 0.3, fontSize: '12px' }}>
-                                                    <Tag size={14} />
-                                                    {
-                                                        activeSearcher &&
-                                                        <span>{filterTag ?? 'Etiqueta'}</span>
-                                                    }
-                                                </div>
-
-                                            </div>
-                                        </Dropdown>
+                                            </Dropdown>
 
 
-                                        <Dropdown
-                                            arrow
-                                            popupRender={() => (
-                                                <div className="items_list_guests">
-                                                    <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >Sin mesa</div>
-                                                    {
-                                                        tables.map(i => (
-                                                            <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name}</div>
-                                                        ))
-                                                    }
-                                                </div>
-                                            )}
-                                        >
-                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTable ? 'acitve_filter_tag' : ''}`}>
-
-                                                <div className="single_row" style={{ opacity: filterTable ? 1 : 0.3, fontSize: '12px' }}>
-                                                    <Pin size={14} />
-                                                    {
-                                                        activeSearcher &&
-                                                        <span>{tables?.find(t => t.id === filterTable)?.name ?? 'Mesa'}</span>
-                                                    }
-                                                </div>
-
-                                            </div>
-                                        </Dropdown>
-
-                                        <Dropdown
-                                            arrow
-                                            popupRender={() => (
-                                                <div className="items_list_guests">
-                                                    {
-                                                        ['A', 'B', 'C', 'D'].map(i => (
-                                                            <div onClick={() => setFilterTier((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTier === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
-                                                        ))
-                                                    }
-                                                </div>
-                                            )}
-                                        >
-                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} tier-${filterTier}`}
-                                                style={{ minWidth: '80px' }}>
-                                                <div className="single_row" style={{ opacity: filterTier ? 1 : 0.3, fontSize: '12px' }}>
-                                                    <AArrowUp size={16} />
-                                                    {
-                                                        activeSearcher &&
-                                                        <span>{filterTier ?? 'Prioridad'}</span>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </Dropdown>
-
-                                        <Dropdown
-                                            arrow
-                                            popupRender={() => (
-                                                <div className="items_list_guests">
-                                                    {
-                                                        ['female', 'male', 'child', 'undefined'].map(i => (
-                                                            <div onClick={() => setFilterType((prev) => prev === i ? null : i)} className={`dot_list_item ${filterType === i ? 'dot_list_item_active' : ''}`} key={i}>{handleTypes(i)}</div>
-                                                        ))
-                                                    }
-                                                </div>
-                                            )}
-                                        >
-                                            <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterType ? 'acitve_filter_tag' : ''}`}
-                                                style={{ minWidth: '80px' }}>
-                                                <div className="single_row" style={{ opacity: filterType ? 1 : 0.3, fontSize: '12px' }}>
-                                                    <CircleUserRound size={14} />
-                                                    {
-                                                        activeSearcher &&
-                                                        <span>{handleTypes(filterType) ?? 'Categoría'}</span>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </Dropdown>
-
-                                        {
-                                            owners?.length > 1 &&
                                             <Dropdown
                                                 arrow
                                                 popupRender={() => (
                                                     <div className="items_list_guests">
+                                                        <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >Sin mesa</div>
                                                         {
-                                                            owners?.map(i => (
-                                                                <div onClick={() => setfilterSide((prev) => prev === i ? null : i)} className={`dot_list_item ${filterSide === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
+                                                            tables.map(i => (
+                                                                <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name}</div>
                                                             ))
                                                         }
                                                     </div>
                                                 )}
                                             >
-                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterSide ? 'acitve_filter_tag' : ''}`}
-                                                    style={{ minWidth: '80px' }}>
-                                                    <div className="single_row" style={{ opacity: filterSide ? 1 : 0.3, fontSize: '12px' }}>
-                                                        <CircleUserRound size={14} />
+                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTable ? 'acitve_filter_tag' : ''}`}>
+
+                                                    <div className="single_row" style={{ opacity: filterTable ? 1 : 0.3, fontSize: '12px' }}>
+                                                        <Pin size={14} />
                                                         {
                                                             activeSearcher &&
-                                                            <span>{filterSide ?? 'Lado'}</span>
+                                                            <span>{tables?.find(t => t.id === filterTable)?.name ?? 'Mesa'}</span>
+                                                        }
+                                                    </div>
+
+                                                </div>
+                                            </Dropdown>
+
+                                            <Dropdown
+                                                arrow
+                                                popupRender={() => (
+                                                    <div className="items_list_guests">
+                                                        {
+                                                            ['A', 'B', 'C', 'D'].map(i => (
+                                                                <div onClick={() => setFilterTier((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTier === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                )}
+                                            >
+                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} tier-${filterTier}`}
+                                                    style={{ minWidth: '80px' }}>
+                                                    <div className="single_row" style={{ opacity: filterTier ? 1 : 0.3, fontSize: '12px' }}>
+                                                        <AArrowUp size={16} />
+                                                        {
+                                                            activeSearcher &&
+                                                            <span>{filterTier ?? 'Prioridad'}</span>
                                                         }
                                                     </div>
                                                 </div>
                                             </Dropdown>
-                                        }
+
+                                            <Dropdown
+                                                arrow
+                                                popupRender={() => (
+                                                    <div className="items_list_guests">
+                                                        {
+                                                            ['female', 'male', 'child', 'undefined'].map(i => (
+                                                                <div onClick={() => setFilterType((prev) => prev === i ? null : i)} className={`dot_list_item ${filterType === i ? 'dot_list_item_active' : ''}`} key={i}>{handleTypes(i)}</div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                )}
+                                            >
+                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterType ? 'acitve_filter_tag' : ''}`}
+                                                    style={{ minWidth: '80px' }}>
+                                                    <div className="single_row" style={{ opacity: filterType ? 1 : 0.3, fontSize: '12px' }}>
+                                                        <CircleUserRound size={14} />
+                                                        {
+                                                            activeSearcher &&
+                                                            <span>{handleTypes(filterType) ?? 'Categoría'}</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </Dropdown>
+
+                                            {
+                                                owners?.length > 1 &&
+                                                <Dropdown
+                                                    arrow
+                                                    popupRender={() => (
+                                                        <div className="items_list_guests">
+                                                            {
+                                                                owners?.map(i => (
+                                                                    <div onClick={() => setfilterSide((prev) => prev === i ? null : i)} className={`dot_list_item ${filterSide === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
+                                                                ))
+                                                            }
+                                                        </div>
+                                                    )}
+                                                >
+                                                    <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterSide ? 'acitve_filter_tag' : ''}`}
+                                                        style={{ minWidth: '80px' }}>
+                                                        <div className="single_row" style={{ opacity: filterSide ? 1 : 0.3, fontSize: '12px' }}>
+                                                            <CircleUserRound size={14} />
+                                                            {
+                                                                activeSearcher &&
+                                                                <span>{filterSide ?? 'Lado'}</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </Dropdown>
+                                            }
+
+                                        </div>
+
 
                                     </div>
 
+                                    <div className='guests_all_list_cont'>
 
+                                    </div>
                                 </div>
-
-                                <div className='guests_all_list_cont'>
-
-                                </div>
-                            </div>
+                            }
 
 
 
