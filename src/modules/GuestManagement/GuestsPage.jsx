@@ -789,7 +789,7 @@ export default function GuestsPage() {
                     size='small'
                     {...tableProps}
                     loading={isLoading}
-                    dataSource={filteredGuests(createdData).filter(i => i.name)}
+                    dataSource={filteredGuests(createdData)}
                 />
             ),
         },
