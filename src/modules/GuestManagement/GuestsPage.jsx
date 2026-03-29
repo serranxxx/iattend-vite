@@ -775,8 +775,6 @@ export default function GuestsPage() {
                 guest.type === filterType;
 
 
-
-
             return matchesSearch && matchesTag && matchesTable && matchesTier && matchesType && matchesSide;
         });
     };
@@ -791,7 +789,7 @@ export default function GuestsPage() {
                     size='small'
                     {...tableProps}
                     loading={isLoading}
-                    dataSource={filteredGuests(createdData)}
+                    dataSource={filteredGuests(createdData).filter(i => i.name)}
                 />
             ),
         },

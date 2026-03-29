@@ -604,8 +604,8 @@ export const AdminPage = () => {
     const AddNewOwner = async (id, name) => {
         try {
             await axios.patch(
-                // `${import.meta.env.VITE_API_URL}/api/invitation/add-owner`,
-                'http://localhost:4000/api/invitation/add-owner',
+                `${import.meta.env.VITE_API_URL}/api/invitation/add-owner`,
+                // 'http://localhost:4000/api/invitation/add-owner',
                 { id: id, name: name }
             );
 
@@ -625,8 +625,8 @@ export const AdminPage = () => {
     const removeOwner = async (id, index) => {
         try {
             await axios.patch(
-                // `${import.meta.env.VITE_API_URL}/api/invitation/remove-owner`,
-                'http://localhost:4000/api/invitation/remove-owner',
+                `${import.meta.env.VITE_API_URL}/api/invitation/remove-owner`,
+                // 'http://localhost:4000/api/invitation/remove-owner',
                 { id: id, index: index }
             );
 
