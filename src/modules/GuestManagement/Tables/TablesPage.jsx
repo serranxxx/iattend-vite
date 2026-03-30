@@ -12,6 +12,7 @@ import { IoMdAdd, IoMdHelp } from 'react-icons/io'
 import { LuShuffle } from 'react-icons/lu'
 import { RiDeleteBack2Line } from 'react-icons/ri'
 import { formatDate } from '../../../helpers/assets/functions'
+import { ChevronDown, MoveHorizontal, MoveVertical, X } from 'lucide-react'
 
 
 
@@ -30,7 +31,8 @@ export const TablesPage = ({ invitationID }) => {
     const [mapPosition, setMapPosition] = useState({ x: -1300, y: -600 });
     const [isDragging, setIsDragging] = useState(false);
     const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
-
+    const [newShape, setNewShape] = useState('round')
+    const [newVertical, setNewVertical] = useState(false)
     const [totalChairs, setTotalChairs] = useState(10)
     const [ocuppiedChairs, setOcuppiedChairs] = useState([])
     const [tablesName, setTablesName] = useState(null)
@@ -139,6 +141,8 @@ export const TablesPage = ({ invitationID }) => {
                 created_at: new Date(),
                 last_update_at: new Date(),
                 invitation_id: invitationID,
+                shape: newShape,
+                vertical: newVertical,
                 name: tablesName,
                 number: latestTable ? Number(latestTable.number) + 1 : 1,
                 size: totalChairs,
@@ -406,6 +410,8 @@ export const TablesPage = ({ invitationID }) => {
             last_update_at: new Date(),
             name: tablesName,
             size: totalChairs,
+            shape: selectedTable.shape,
+            vertical: selectedTable.vertical
         };
 
         try {
@@ -751,6 +757,24 @@ export const TablesPage = ({ invitationID }) => {
         return [...result, ...solos];
     }, [filteredGuests, currentFilter]);
 
+    useEffect(() => {
+
+        console.log(selectedTable)
+    }, [selectedTable])
+
+    const handleShapes = (shape) => {
+        switch (shape) {
+            case 'round': return 'Redonda'
+            case 'square': return 'Cuadrada'
+            case 'rectangle': return 'Rectangular'
+
+
+            default:
+                break;
+        }
+    }
+
+
     return (
         <div className="table-organization-main-container">
             <div className='table-org-general-container'>
@@ -860,6 +884,32 @@ export const TablesPage = ({ invitationID }) => {
                                                     </div>
                                                 </div>
 
+                                                <div className='modal-content-sect'>
+                                                    <Dropdown
+                                                        arrow
+                                                        popupRender={() => (
+                                                            <div className='shapes_cont'>
+                                                                <Button onClick={() => setNewShape('round')} style={{ width: '100%' }} className='primarybutton'>Redonda</Button>
+                                                                <Button onClick={() => setNewShape('square')} style={{ width: '100%' }} className='primarybutton'>Cuadrada</Button>
+                                                                <Button onClick={() => setNewShape('rectangle')} style={{ width: '100%' }} className='primarybutton'>Rectangular</Button>
+                                                            </div>
+                                                        )}
+                                                    >
+                                                        <Button icon={<ChevronDown size={14} />} className='primarybutton'>Mesa {handleShapes(newShape)}</Button>
+                                                    </Dropdown>
+
+                                                    {
+                                                        newShape === 'rectangle' &&
+                                                        <Button icon={newVertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />} className='primarybutton' onClick={() => setNewVertical(!newVertical)}   >{newVertical ? 'Vertical' : 'Horizontal'}</Button>
+
+                                                    }
+
+
+
+                                                </div>
+
+
+
                                                 <div className='org-tab-card-row'>
 
                                                     {
@@ -963,6 +1013,8 @@ export const TablesPage = ({ invitationID }) => {
                                     tables_?.map((table, index) => (
 
                                         <DynamicTable
+                                            shape={table?.shape}
+                                            vertical={table?.vertical}
                                             key={index} table={table} occupiedChairs={confirmedGuests_?.filter(g => g.table === table.id).length}
                                             onEditPosition={onEditPosition} setSelectedTable={setSelectedTable}
                                             setOnSelectedTable={setOnSelectedTable} onSelectedTable={onSelectedTable} setOnViewTable={setOnViewTable}
@@ -1084,12 +1136,36 @@ export const TablesPage = ({ invitationID }) => {
                                                         className={`button-web primarybutton${!onEditingTable ? '--black' : ''}--active`} onClick={onEditingTable ? updateTable : editTable}>
                                                         {onEditingTable ? 'Terminar' : 'Editar'}
                                                     </Button>
+                                                    {
+                                                        onEditingTable &&
+                                                        <Dropdown
+                                                            arrow
+                                                            popupRender={() => (
+                                                                <div className='shapes_cont'>
+                                                                    <Button onClick={() => setSelectedTable((prev) => ({ ...prev, shape: 'round' }))} style={{ width: '100%' }} className='primarybutton'>Redonda</Button>
+                                                                    <Button onClick={() => setSelectedTable((prev) => ({ ...prev, shape: 'square' }))} style={{ width: '100%' }} className='primarybutton'>Cuadrada</Button>
+                                                                    <Button onClick={() => setSelectedTable((prev) => ({ ...prev, shape: 'rectangle' }))} style={{ width: '100%' }} className='primarybutton'>Rectangular</Button>
+                                                                </div>
+                                                            )}
+                                                        >
+                                                            <Button icon={<ChevronDown size={14} />} className='primarybutton'>{handleShapes(selectedTable?.shape)}</Button>
+                                                        </Dropdown>
+
+                                                    }
+
+                                                    {
+                                                        onEditingTable && selectedTable.shape === 'rectangle' &&
+                                                        <Tooltip title={selectedTable.vertical ? 'Mesa vertical' : 'Mesa horizontal'}>
+                                                            <Button className='primarybutton' onClick={() => setSelectedTable((prev) => ({ ...prev, vertical: !prev.vertical }))} style={{ width: '100%' }}  >{selectedTable.vertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />}</Button>
+                                                        </Tooltip>
+                                                    }
                                                     <Button
-                                                        style={{ borderRadius: '99px' }}
+                                                        style={{ borderRadius: '99px', minWidth: '32px' }}
                                                         className='secondarybutton'
-                                                        onClick={onClosingModal} icon={<IoClose size={18} style={{
-                                                            marginTop: '2px', color: 'var(--text-color)',
-                                                        }} />} />
+                                                        onClick={onClosingModal} icon={<X size={14} />} />
+
+
+
                                                 </div>
 
                                             </div>
