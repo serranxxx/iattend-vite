@@ -1,20 +1,28 @@
-import { Button, Divider, Drawer, Dropdown, Input, Popconfirm, Rate, Row, Select, Space, Tooltip, message } from 'antd'
-import { useEffect, useRef, useState } from 'react'
-import '../QRHandler/QR-handler.css'
-import { FiMinus } from 'react-icons/fi'
-import { supabase } from '../../lib/supabase'
-import { FaCheck, FaStar } from 'react-icons/fa'
-import { IoClose } from 'react-icons/io5'
-import { Grid } from "antd";
-import { generateSimpleId } from '../../helpers/assets/functions'
-import { IoMdAdd, IoMdRefresh } from 'react-icons/io'
+
+import { Button, Divider, Drawer, Dropdown, Grid, Input, message, Rate, Row, Select, Space } from 'antd';
+import './add-guest.css'
+import { useEffect, useRef, useState } from 'react';
+import { generateSimpleId } from '../../../helpers/assets/functions';
+import { supabase } from '../../../lib/supabase';
+import { FaCheck, FaStar } from 'react-icons/fa';
+import { IoMdAdd, IoMdRefresh } from 'react-icons/io';
+import { IoClose } from 'react-icons/io5';
+import { FiMinus } from 'react-icons/fi';
 
 const { useBreakpoint } = Grid;
 
 
 const { Option } = Select;
 
-export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshPage, drawerState }) => {
+const PHONE_CODES = [
+    { label: '🇺🇸 +1', value: '+1' },
+    { label: '🇬🇧 +44', value: '+44' },
+    { label: '🇫🇷 +33', value: '+33' },
+    { label: '🇲🇽 +52', value: '+52' },
+    { label: '🇪🇸 +34', value: '+34' },
+];
+
+export const AddGuest = ({ invitationID, setDrawerState, refreshPage, drawerState }) => {
 
     const screens = useBreakpoint();
     const inputRef = useRef(null);
@@ -275,48 +283,48 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
         }
     };
 
-    async function deleteGuestWithCompanions(guestId) {
-        try {
-            // 1) Borra primero los companions del guest
-            const { error: compErr } = await supabase
-                .from('guests')
-                .delete()
-                .eq('companion_id', String(guestId)); // si companion_id es TEXT en tu tabla
+    // async function deleteGuestWithCompanions(guestId) {
+    //     try {
+    //         // 1) Borra primero los companions del guest
+    //         const { error: compErr } = await supabase
+    //             .from('guests')
+    //             .delete()
+    //             .eq('companion_id', String(guestId)); // si companion_id es TEXT en tu tabla
 
-            if (compErr) throw compErr;
+    //         if (compErr) throw compErr;
 
-            // 2) Borra el guest principal
-            const { error: guestErr } = await supabase
-                .from('guests')
-                .delete()
-                .eq('id', guestId);
+    //         // 2) Borra el guest principal
+    //         const { error: guestErr } = await supabase
+    //             .from('guests')
+    //             .delete()
+    //             .eq('id', guestId);
 
-            if (guestErr) throw guestErr;
+    //         if (guestErr) throw guestErr;
 
-            // 3) Limpia estados locales relacionados (drawer, listas, etc.)
-            // - Limpia el drawer actual
-            setCompanionsData([]);               // limpia UI de companions
-            setGuestData({
-                phone_code: "+52",
-                phone_number: "",
-                name: "",
-                tier: null,
-                tag: null,
-                side: null,
-                type: null,
-                notes: "",
-                state: "creado",
-            });
-            // - Si mantienes una lista global, quita el guest borrado:
-            // setGuests(prev => prev.filter(g => g.id !== guestId));
+    //         // 3) Limpia estados locales relacionados (drawer, listas, etc.)
+    //         // - Limpia el drawer actual
+    //         setCompanionsData([]);               // limpia UI de companions
+    //         setGuestData({
+    //             phone_code: "+52",
+    //             phone_number: "",
+    //             name: "",
+    //             tier: null,
+    //             tag: null,
+    //             side: null,
+    //             type: null,
+    //             notes: "",
+    //             state: "creado",
+    //         });
+    //         // - Si mantienes una lista global, quita el guest borrado:
+    //         // setGuests(prev => prev.filter(g => g.id !== guestId));
 
-            message.success('Guest y sus companions eliminados');
-            refreshPage()
-        } catch (err) {
-            console.error('Error al eliminar guest con companions:', err);
-            message.error('No se pudo eliminar el guest');
-        }
-    }
+    //         message.success('Guest y sus companions eliminados');
+    //         refreshPage()
+    //     } catch (err) {
+    //         console.error('Error al eliminar guest con companions:', err);
+    //         message.error('No se pudo eliminar el guest');
+    //     }
+    // }
 
     function removeCompanionLocally(index) {
         setCompanionsData(prev => prev.filter((_, i) => i !== index));
@@ -531,10 +539,10 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
     }, [drawerState])
 
 
-    const handleCompanions = (id) => {
-        const comps = rowData?.filter((row) => row.companion_id === id.toString())
-        return comps
-    }
+    // const handleCompanions = (id) => {
+    //     const comps = rowData?.filter((row) => row.companion_id === id.toString())
+    //     return comps
+    // }
 
     const handleGrade = () => {
         const necesity = Number(priorityCalc.necesity) || 0;
@@ -587,6 +595,13 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
         });
     };
 
+    const updateGuestField = (field, value) => {
+        setGuestData((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
 
 
     return (
@@ -630,48 +645,37 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
 
                     <div className='new-guest-form-container' style={{ alignItems: 'center' }}>
 
-                        <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', }}>
-                            <span style={{ fontSize: '16px' }} className='gc-content-label'><b>Datos de invitado</b></span>
+                        <div className='add_guest_title_cont'>
+                            <span className='gc-content-label'><b>Datos de invitade</b></span>
                         </div>
-                        <div style={{
-                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                            gap: '12px'
-                        }}>
-                            <div style={{
-                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                flex: 1, gap: '4px'
-                            }}>
+
+
+                        <div className='guest_form_row'>
+                            <div className='guest_form_col'>
                                 <span className='gc-content-label'>Nombre</span>
                                 <Input
                                     placeholder={'Nombre'}
                                     value={guestData.name}
-                                    onChange={(e) => setGuestData((prev) => ({
-                                        ...prev,
-                                        name: e.target.value
-                                    }))}
+                                    onChange={(e) => updateGuestField('name', e.target.value)}
                                     className='gc-input-text' />
                             </div>
 
 
-                            <div style={{
-                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                flex: 1, gap: '4px'
-                            }}>
+                            <div className='guest_form_col'>
                                 <span className='gc-content-label'>Contacto</span>
                                 <Space.Compact style={{ width: '100%' }}>
                                     <Select
                                         value={guestData.phone_code}
-                                        onChange={(e) => setGuestData((prev) => ({
-                                            ...prev,
-                                            phone_code: e
-                                        }))}
+                                        onChange={(e) => updateGuestField('phone_code', e)}
                                         style={{ width: '100px' }}
                                     >
-                                        <Option value="+1">🇺🇸 +1</Option>
-                                        <Option value="+44">🇬🇧 +44</Option>
-                                        <Option value="+33">🇫🇷 +33</Option>
-                                        <Option value="+52">🇲🇽 +52</Option>
-                                        <Option value="+34">🇪🇸 +34</Option>
+
+                                        {
+                                            PHONE_CODES.map((code, index) => (
+                                                <Option key={index} value={code.value}>{code.label}</Option>
+                                            ))
+                                        }
+
                                     </Select>
                                     <Input
                                         type="tel"
@@ -684,11 +688,8 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                                         }}
                                         value={guestData.phone_number}
                                         onChange={(e) => {
-                                            const onlyNumbers = e.target.value.replace(/\D/g, ''); // elimina todo lo que no sea número
-                                            setGuestData((prev) => ({
-                                                ...prev,
-                                                phone_number: onlyNumbers,
-                                            }));
+                                            const onlyNumbers = e.target.value.replace(/\D/g, '');
+                                            updateGuestField('phone_number', onlyNumbers);
                                         }}
                                         maxLength={10}
                                     />
@@ -699,24 +700,15 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
 
                         </div>
 
-                        <div style={{
-                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                            gap: '12px'
-                        }}>
-                            <div style={{
-                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                flex: 1, gap: '4px'
-                            }}>
+                        <div className='guest_form_row'>
+                            <div className='guest_form_col'>
                                 <span className='gc-content-label'>Etiqueta</span>
                                 <Select
                                     style={{ width: '100%' }}
                                     placeholder="Seleccionar etiqueta"
                                     value={guestData.tag}
-                                    onChange={(e) => setGuestData((prev) => ({
-                                        ...prev,
-                                        tag: e
-                                    }))}
-                                    dropdownRender={(menu) => (
+                                    onChange={(e) => updateGuestField('tag', e)}
+                                    popupRender={(menu) => (
                                         <>
                                             {menu}
                                             <Divider style={{ margin: '8px 0', }} />
@@ -739,10 +731,7 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                             </div>
 
 
-                            <div style={{
-                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                flex: 1, gap: '4px'
-                            }}>
+                            <div className='guest_form_col'>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <span className='gc-content-label'>Prioridad</span>
                                     <Dropdown
@@ -760,7 +749,6 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                                         popupRender={() => (
                                             <span className='priority_container'>
                                                 <div className='priority_container_col' style={{ gap: '0px', width: '100%' }}>
-                                                    {/* <FaStar size={16}  /> */}
                                                     <div className='priority_container_row' style={{ width: '100%', justifyContent: 'space-between' }}>
                                                         <span className='priority_container_title' style={{ fontWeight: 400 }}>Define la prioridad</span>
                                                         <div className='priority_container_row'>
@@ -843,13 +831,6 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                                                         </div>
                                                 }
 
-
-
-
-
-
-
-
                                             </span>
                                         )}
                                     >
@@ -930,35 +911,6 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
 
                         </div>
 
-                        {
-                            drawerState.onEditGuest &&
-                            <div style={{
-                                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                                gap: '12px'
-                            }}>
-                                <div style={{
-                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                    flex: 1, gap: '4px'
-                                }}>
-                                    <span className='gc-content-label'>Estado</span>
-                                    <Select
-                                        placeholder="Estado actual"
-                                        value={guestData.state}
-                                        onChange={(e) => setGuestData((prev) => ({
-                                            ...prev,
-                                            state: e
-                                        }))}
-                                        style={{ width: '100%' }}
-                                    >
-                                        <Option value="creado">Creado</Option>
-                                        <Option value="esperando">Esperando</Option>
-                                        <Option value="confirmado">Confirmado</Option>
-                                        <Option value="rechazado">Rechazado</Option>
-                                    </Select>
-                                </div>
-
-                            </div>
-                        }
 
                         <div style={{
                             display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
@@ -978,345 +930,314 @@ export const NewGuestDrawer = ({ rowData, invitationID, setDrawerState, refreshP
                                 }} />
                         </div>
 
-                        {
-                            drawerState.onEditGuest &&
-                            <Tooltip title={`Eliminar ${guestData.name}`}>
-                                <Popconfirm
-                                    style={{ maxWidth: '200px !important' }}
-                                    title="Eliminar invitado"
-                                    description={companionsData?.length > 0 ? `Al eliminar a ${guestData.name} eliminarás a sus acompañantes. ¿Deseas continuar?` : `Estas seguro de eliminar a ${guestData?.name}`}
-                                    onConfirm={() => deleteGuestWithCompanions(drawerState.currentGuest.id)}
-                                    // onCancel={cancel}
-                                    okText="Eliminar"
-                                    cancelText="Cancelar"
-                                >
-                                    <Button className='primarybutton'>Eliminar</Button>
-                                </Popconfirm>
-
-                            </Tooltip>
-                        }
 
                     </div>
 
-                    {
-                        (drawerState.onEditGuest && !drawerState.currentGuest.has_companion && drawerState.currentGuest.companion_id) ?
+                    < div className='new-guest-form-container'>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
+                            position: 'sticky', top: '-12px', backgroundColor: '#FFF', zIndex: 10,
+                            padding: '12px 0px'
+                        }}>
+                            <span style={{ fontSize: '16px' }} className='gc-content-label'><b>Acomañantes ({companionsData?.length})</b></span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                {
+                                    companionsData?.length > 0 && !drawerState.onEditGuest && <Button onClick={() => updateTicketCount('remove')} icon={<FiMinus style={{ marginTop: '2px' }} />} className='primarybutton'></Button>
+                                }
+                                <Button onClick={() => updateTicketCount('add')} icon={<IoMdAdd style={{ marginTop: '2px' }} />} className='primarybutton'></Button>
+                            </div>
 
-                            <span style={{
-                                fontSize: '16px'
-                            }}><b>{drawerState.currentGuest.name} </b>es acompañante de <b onClick={() => setDrawerState({
-                                currentGuest: rowData.find(c => c.id === Number(drawerState.currentGuest.companion_id)),
-                                onEditGuest: true,
-                                companions: handleCompanions(rowData.find(c => c.id === Number(drawerState.currentGuest.companion_id))?.id),
-                                visible: true
-                            })} style={{ textDecoration: 'underline', cursor: 'pointer', color: '#6D3CFA' }}>{rowData.find(c => c.id === Number(drawerState.currentGuest.companion_id))?.name}</b> </span>
-                            :
-                            < div className='new-guest-form-container'>
-                                <div style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-                                    position: 'sticky', top: '-12px', backgroundColor: '#FFF', zIndex: 10,
-                                    padding: '12px 0px'
-                                }}>
-                                    <span style={{ fontSize: '16px' }} className='gc-content-label'><b>Acomañantes ({companionsData?.length})</b></span>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                        {
-                                            companionsData?.length > 0 && !drawerState.onEditGuest && <Button onClick={() => updateTicketCount('remove')} icon={<FiMinus style={{ marginTop: '2px' }} />} className='primarybutton'></Button>
-                                        }
-                                        <Button onClick={() => updateTicketCount('add')} icon={<IoMdAdd style={{ marginTop: '2px' }} />} className='primarybutton'></Button>
-                                    </div>
+                        </div>
 
-                                </div>
+                        <span style={{ marginTop: '-12px', fontStyle: 'italic', opacity: '0.5' }} className='gc-content-label'>*Los datos de los acompañantes son opcionales</span>
+                        <div className='companions-name-container'>
 
-                                <span style={{ marginTop: '-12px', fontStyle: 'italic', opacity: '0.5' }} className='gc-content-label'>*Los datos de los acompañantes son opcionales</span>
-                                <div className='companions-name-container'>
-
-                                    {
-                                        companionsData &&
-                                        companionsData?.map((companion, index) => (
-                                            <div key={index} className='companions_cont'>
-                                                <div style={{
-                                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                                                    gap: '12px'
-                                                }}>
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                        flex: 1, gap: '4px'
-                                                    }}>
-                                                        <span className='gc-content-label'>Nombre</span>
-                                                        <Input
-                                                            placeholder={'Nombre'}
-                                                            value={companion.name}
-                                                            onChange={(e) => setCompanionsData((prevCompanionData) =>
-                                                                prevCompanionData.map((obj, i) =>
-                                                                    index === i
-                                                                        ? { ...obj, name: e.target.value }
-                                                                        : obj
-                                                                )
-                                                            )}
-                                                            className='gc-input-text' />
-                                                    </div>
+                            {
+                                companionsData &&
+                                companionsData?.map((companion, index) => (
+                                    <div key={index} className='companions_cont'>
+                                        <div style={{
+                                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+                                            gap: '12px'
+                                        }}>
+                                            <div style={{
+                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                flex: 1, gap: '4px'
+                                            }}>
+                                                <span className='gc-content-label'>Nombre</span>
+                                                <Input
+                                                    placeholder={'Nombre'}
+                                                    value={companion.name}
+                                                    onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                        prevCompanionData.map((obj, i) =>
+                                                            index === i
+                                                                ? { ...obj, name: e.target.value }
+                                                                : obj
+                                                        )
+                                                    )}
+                                                    className='gc-input-text' />
+                                            </div>
 
 
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                        flex: 1, gap: '4px'
-                                                    }}>
-                                                        <span className='gc-content-label'>Contacto</span>
-                                                        <Space.Compact style={{ width: '100%' }}>
-                                                            <Select
-                                                                value={companion.phone_code}
-                                                                onChange={(e) => setCompanionsData((prevCompanionData) =>
-                                                                    prevCompanionData.map((obj, i) =>
-                                                                        index === i
-                                                                            ? { ...obj, phone_code: e }
-                                                                            : obj
-                                                                    )
-                                                                )}
-                                                                style={{ width: '100px' }}
-                                                            >
-                                                                <Option value="+1">🇺🇸 +1</Option>
-                                                                <Option value="+44">🇬🇧 +44</Option>
-                                                                <Option value="+33">🇫🇷 +33</Option>
-                                                                <Option value="+52">🇲🇽 +52</Option>
-                                                                <Option value="+34">🇪🇸 +34</Option>
-                                                            </Select>
-                                                            <Input
-                                                                type="tel"
-                                                                placeholder="Número de teléfono"
-                                                                className='gc-input-text'
-                                                                style={{
-                                                                    borderRadius: '0px 99px 99px 0px',
-                                                                    color: companion.phone_number.length > 0 && companion.phone_number.length < 10 && 'red',
-                                                                    border: companion.phone_number.length > 0 && companion.phone_number.length < 10 && '1px solid red'
-                                                                }}
-                                                                value={companion.phone_number}
-                                                                onChange={(e) => {
-                                                                    const onlyNumbers = e.target.value.replace(/\D/g, '').slice(0, 10); // 👈 solo dígitos, máx 10
-                                                                    setCompanionsData((prevCompanionData) =>
-                                                                        prevCompanionData.map((obj, i) =>
-                                                                            index === i
-                                                                                ? { ...obj, phone_number: onlyNumbers } // 👈 guarda solo números
-                                                                                : obj
-                                                                        )
-                                                                    );
-                                                                }}
-                                                                maxLength={10}
-                                                            />
-                                                        </Space.Compact>
-
-                                                    </div>
-
-
-
-                                                </div>
-
-                                                <div style={{
-                                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                                                    gap: '12px'
-                                                }}>
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                        flex: 1, gap: '4px'
-                                                    }}>
-                                                        <span className='gc-content-label'>Etiqueta</span>
-                                                        <Select
-                                                            value={companion.tag}
-                                                            onChange={(e) => setCompanionsData((prevCompanionData) =>
-                                                                prevCompanionData.map((obj, i) =>
-                                                                    index === i
-                                                                        ? { ...obj, tag: e }
-                                                                        : obj
-                                                                )
-                                                            )}
-                                                            style={{ width: '100%' }}
-                                                            placeholder="Seleccionar etiqueta"
-                                                            dropdownRender={(menu) => (
-                                                                <>
-                                                                    {menu}
-                                                                    <Divider style={{ margin: '8px 0', }} />
-                                                                    <Space style={{ padding: '0 8px 4px' }}>
-                                                                        <Input
-                                                                            placeholder="Nueva etiqueta"
-                                                                            ref={inputRef}
-                                                                            value={newTag}
-                                                                            onChange={(e) => setNewTag(e.target.value)}
-                                                                            onKeyDown={(e) => e.stopPropagation()}
-                                                                        />
-                                                                        <Button icon={<IoMdAdd />} onClick={() => addTagsToInvitation()}>
-                                                                            Agregar
-                                                                        </Button>
-                                                                    </Space>
-                                                                </>
-                                                            )}
-                                                            options={localTags.filter(i => i !== null).map((item) => ({ label: item, value: item }))}
-                                                        />
-                                                    </div>
-
-
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                        flex: 1, gap: '4px'
-                                                    }}>
-                                                        <span className='gc-content-label'>Prioridad</span>
-
-                                                        <Select
-                                                            value={companion.tier}
-                                                            placeholder="Prioridad de invitado"
-                                                            onChange={(e) => setCompanionsData((prevCompanionData) =>
-                                                                prevCompanionData.map((obj, i) =>
-                                                                    index === i
-                                                                        ? { ...obj, tier: e }
-                                                                        : obj
-                                                                )
-                                                            )}
-                                                            style={{ width: '100%' }}
-                                                        >
-                                                            <Option value="A">A</Option>
-                                                            <Option value="B">B</Option>
-                                                            <Option value="C">C</Option>
-                                                            <Option value="D">D</Option>
-                                                        </Select>
-                                                    </div>
-
-                                                </div>
-
-                                                <div style={{
-                                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                                                    gap: '12px'
-                                                }}>
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                        flex: 1, gap: '4px'
-                                                    }}>
-                                                        <span className='gc-content-label'>Categoría</span>
-                                                        <Select
-                                                            value={companion.type}
-                                                            placeholder="Categoría de invitado"
-                                                            onChange={(e) => setCompanionsData((prevCompanionData) =>
-                                                                prevCompanionData.map((obj, i) =>
-                                                                    index === i
-                                                                        ? { ...obj, type: e }
-                                                                        : obj
-                                                                )
-                                                            )}
-                                                            style={{ width: '100%' }}
-                                                        >
-                                                            <Option value="female">Mujer</Option>
-                                                            <Option value="male">Hombre</Option>
-                                                            <Option value="child">Niño</Option>
-                                                            <Option value="undefined">Indefinido</Option>
-                                                        </Select>
-                                                    </div>
-
-
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                        flex: 1, gap: '4px'
-                                                    }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                                            <span className='gc-content-label'>Lado</span>
-                                                        </div>
-
-                                                        <Select
-                                                            value={companion.side}
-                                                            placeholder="Lado de invitado"
-                                                            onChange={(e) => setCompanionsData((prevCompanionData) =>
-                                                                prevCompanionData.map((obj, i) =>
-                                                                    index === i
-                                                                        ? { ...obj, side: e }
-                                                                        : obj
-                                                                )
-                                                            )}
-                                                            style={{ width: '100%' }}
-                                                        >
-                                                            {
-                                                                owners?.map((o) => (
-                                                                    <Option key={o} value={o}>{o}</Option>
-                                                                ))
-                                                            }
-                                                        </Select>
-                                                    </div>
-
-                                                </div>
-
-                                                {
-                                                    drawerState.onEditGuest &&
-                                                    <div style={{
-                                                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                                                        gap: '12px'
-                                                    }}>
-                                                        <div style={{
-                                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                            flex: 1, gap: '4px'
-                                                        }}>
-                                                            <span className='gc-content-label'>Estado</span>
-                                                            <Select
-                                                                placeholder="Estado actual"
-                                                                value={companion.state}
-                                                                onChange={(e) => setCompanionsData((prevCompanionData) =>
-                                                                    prevCompanionData.map((obj, i) =>
-                                                                        index === i
-                                                                            ? { ...obj, state: e }
-                                                                            : obj
-                                                                    )
-                                                                )}
-                                                                style={{ width: '100%' }}
-                                                            >
-                                                                <Option value="creado">Creado</Option>
-                                                                <Option value="esperando">Esperando</Option>
-                                                                <Option value="confirmado">Confirmado</Option>
-                                                                <Option value="rechazado">Rechazado</Option>
-                                                            </Select>
-                                                        </div>
-
-                                                    </div>
-                                                }
-
-                                                <div style={{
-                                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                    flex: 1, gap: '4px', width: '100%'
-                                                }}>
-                                                    <span className='gc-content-label'>Notas</span>
-                                                    <Input.TextArea
-                                                        placeholder='Información extra sobre el invitado'
-                                                        value={companion.notes}
+                                            <div style={{
+                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                flex: 1, gap: '4px'
+                                            }}>
+                                                <span className='gc-content-label'>Contacto</span>
+                                                <Space.Compact style={{ width: '100%' }}>
+                                                    <Select
+                                                        value={companion.phone_code}
                                                         onChange={(e) => setCompanionsData((prevCompanionData) =>
                                                             prevCompanionData.map((obj, i) =>
                                                                 index === i
-                                                                    ? { ...obj, notes: e.target.value }
+                                                                    ? { ...obj, phone_code: e }
                                                                     : obj
                                                             )
                                                         )}
-                                                        autoSize={{ minRows: 2, maxRows: 3 }}
+                                                        style={{ width: '100px' }}
+                                                    >
+                                                        <Option value="+1">🇺🇸 +1</Option>
+                                                        <Option value="+44">🇬🇧 +44</Option>
+                                                        <Option value="+33">🇫🇷 +33</Option>
+                                                        <Option value="+52">🇲🇽 +52</Option>
+                                                        <Option value="+34">🇪🇸 +34</Option>
+                                                    </Select>
+                                                    <Input
+                                                        type="tel"
+                                                        placeholder="Número de teléfono"
+                                                        className='gc-input-text'
                                                         style={{
-                                                            borderRadius: '8px'
-                                                        }} />
-                                                </div>
-
-                                                {
-                                                    drawerState.onEditGuest &&
-                                                    <Tooltip title={`Eliminar ${companion.name}`}>
-                                                        <Popconfirm
-                                                            style={{ maxWidth: '200px !important' }}
-                                                            title="Eliminar invitado"
-                                                            description={`Estas seguro de eliminar a ${companion.name}`}
-                                                            onConfirm={() => deleteCompanionAtIndex(index)}
-                                                            // onCancel={cancel}
-                                                            okText="Eliminar"
-                                                            cancelText="Cancelar"
-                                                        >
-                                                            <Button className='primarybutton'>Eliminar</Button>
-                                                        </Popconfirm>
-
-                                                    </Tooltip>
-                                                }
+                                                            borderRadius: '0px 99px 99px 0px',
+                                                            color: companion.phone_number.length > 0 && companion.phone_number.length < 10 && 'red',
+                                                            border: companion.phone_number.length > 0 && companion.phone_number.length < 10 && '1px solid red'
+                                                        }}
+                                                        value={companion.phone_number}
+                                                        onChange={(e) => {
+                                                            const onlyNumbers = e.target.value.replace(/\D/g, '').slice(0, 10); // 👈 solo dígitos, máx 10
+                                                            setCompanionsData((prevCompanionData) =>
+                                                                prevCompanionData.map((obj, i) =>
+                                                                    index === i
+                                                                        ? { ...obj, phone_number: onlyNumbers } // 👈 guarda solo números
+                                                                        : obj
+                                                                )
+                                                            );
+                                                        }}
+                                                        maxLength={10}
+                                                    />
+                                                </Space.Compact>
 
                                             </div>
-                                        ))
-                                    }
-                                </div>
-                            </div>
 
-                    }
+
+
+                                        </div>
+
+                                        <div style={{
+                                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+                                            gap: '12px'
+                                        }}>
+                                            <div style={{
+                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                flex: 1, gap: '4px'
+                                            }}>
+                                                <span className='gc-content-label'>Etiqueta</span>
+                                                <Select
+                                                    value={companion.tag}
+                                                    onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                        prevCompanionData.map((obj, i) =>
+                                                            index === i
+                                                                ? { ...obj, tag: e }
+                                                                : obj
+                                                        )
+                                                    )}
+                                                    style={{ width: '100%' }}
+                                                    placeholder="Seleccionar etiqueta"
+                                                    dropdownRender={(menu) => (
+                                                        <>
+                                                            {menu}
+                                                            <Divider style={{ margin: '8px 0', }} />
+                                                            <Space style={{ padding: '0 8px 4px' }}>
+                                                                <Input
+                                                                    placeholder="Nueva etiqueta"
+                                                                    ref={inputRef}
+                                                                    value={newTag}
+                                                                    onChange={(e) => setNewTag(e.target.value)}
+                                                                    onKeyDown={(e) => e.stopPropagation()}
+                                                                />
+                                                                <Button icon={<IoMdAdd />} onClick={() => addTagsToInvitation()}>
+                                                                    Agregar
+                                                                </Button>
+                                                            </Space>
+                                                        </>
+                                                    )}
+                                                    options={localTags.filter(i => i !== null).map((item) => ({ label: item, value: item }))}
+                                                />
+                                            </div>
+
+
+                                            <div style={{
+                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                flex: 1, gap: '4px'
+                                            }}>
+                                                <span className='gc-content-label'>Prioridad</span>
+
+                                                <Select
+                                                    value={companion.tier}
+                                                    placeholder="Prioridad de invitado"
+                                                    onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                        prevCompanionData.map((obj, i) =>
+                                                            index === i
+                                                                ? { ...obj, tier: e }
+                                                                : obj
+                                                        )
+                                                    )}
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    <Option value="A">A</Option>
+                                                    <Option value="B">B</Option>
+                                                    <Option value="C">C</Option>
+                                                    <Option value="D">D</Option>
+                                                </Select>
+                                            </div>
+
+                                        </div>
+
+                                        <div style={{
+                                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+                                            gap: '12px'
+                                        }}>
+                                            <div style={{
+                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                flex: 1, gap: '4px'
+                                            }}>
+                                                <span className='gc-content-label'>Categoría</span>
+                                                <Select
+                                                    value={companion.type}
+                                                    placeholder="Categoría de invitado"
+                                                    onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                        prevCompanionData.map((obj, i) =>
+                                                            index === i
+                                                                ? { ...obj, type: e }
+                                                                : obj
+                                                        )
+                                                    )}
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    <Option value="female">Mujer</Option>
+                                                    <Option value="male">Hombre</Option>
+                                                    <Option value="child">Niño</Option>
+                                                    <Option value="undefined">Indefinido</Option>
+                                                </Select>
+                                            </div>
+
+
+                                            <div style={{
+                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                flex: 1, gap: '4px'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                                    <span className='gc-content-label'>Lado</span>
+                                                </div>
+
+                                                <Select
+                                                    value={companion.side}
+                                                    placeholder="Lado de invitado"
+                                                    onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                        prevCompanionData.map((obj, i) =>
+                                                            index === i
+                                                                ? { ...obj, side: e }
+                                                                : obj
+                                                        )
+                                                    )}
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    {
+                                                        owners?.map((o) => (
+                                                            <Option key={o} value={o}>{o}</Option>
+                                                        ))
+                                                    }
+                                                </Select>
+                                            </div>
+
+                                        </div>
+
+                                        {
+                                            drawerState.onEditGuest &&
+                                            <div style={{
+                                                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+                                                gap: '12px'
+                                            }}>
+                                                <div style={{
+                                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                    flex: 1, gap: '4px'
+                                                }}>
+                                                    <span className='gc-content-label'>Estado</span>
+                                                    <Select
+                                                        placeholder="Estado actual"
+                                                        value={companion.state}
+                                                        onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                            prevCompanionData.map((obj, i) =>
+                                                                index === i
+                                                                    ? { ...obj, state: e }
+                                                                    : obj
+                                                            )
+                                                        )}
+                                                        style={{ width: '100%' }}
+                                                    >
+                                                        <Option value="creado">Creado</Option>
+                                                        <Option value="esperando">Esperando</Option>
+                                                        <Option value="confirmado">Confirmado</Option>
+                                                        <Option value="rechazado">Rechazado</Option>
+                                                    </Select>
+                                                </div>
+
+                                            </div>
+                                        }
+
+                                        <div style={{
+                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                            flex: 1, gap: '4px', width: '100%'
+                                        }}>
+                                            <span className='gc-content-label'>Notas</span>
+                                            <Input.TextArea
+                                                placeholder='Información extra sobre el invitado'
+                                                value={companion.notes}
+                                                onChange={(e) => setCompanionsData((prevCompanionData) =>
+                                                    prevCompanionData.map((obj, i) =>
+                                                        index === i
+                                                            ? { ...obj, notes: e.target.value }
+                                                            : obj
+                                                    )
+                                                )}
+                                                autoSize={{ minRows: 2, maxRows: 3 }}
+                                                style={{
+                                                    borderRadius: '8px'
+                                                }} />
+                                        </div>
+
+                                        {
+                                            drawerState.onEditGuest &&
+                                            <Tooltip title={`Eliminar ${companion.name}`}>
+                                                <Popconfirm
+                                                    style={{ maxWidth: '200px !important' }}
+                                                    title="Eliminar invitado"
+                                                    description={`Estas seguro de eliminar a ${companion.name}`}
+                                                    onConfirm={() => deleteCompanionAtIndex(index)}
+                                                    // onCancel={cancel}
+                                                    okText="Eliminar"
+                                                    cancelText="Cancelar"
+                                                >
+                                                    <Button className='primarybutton'>Eliminar</Button>
+                                                </Popconfirm>
+
+                                            </Tooltip>
+                                        }
+
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
 
                 </div>
             }

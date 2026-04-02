@@ -26,6 +26,7 @@ import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
 import { AArrowUp, Check, CheckCheck, CircleUserRound, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, Search, Send, Tag, TextAlignJustify } from 'lucide-react';
+import { AddGuest } from '../../components/Create/AddGuest/AddGuest';
 
 const { useBreakpoint } = Grid;
 
@@ -2205,7 +2206,9 @@ export default function GuestsPage() {
                 <TablesPage invitationID={id} />
             </Drawer>
 
-            <NewGuestDrawer rowData={rowData} invitationID={id} ticketsFree={tickets} setDrawerState={setDrawerState} available={tickets - (confirmed + waiting)} refreshPage={refreshPage} drawerState={drawerState} />
+            <AddGuest rowData={rowData} invitationID={id} ticketsFree={tickets} setDrawerState={setDrawerState} available={tickets - (confirmed + waiting)} refreshPage={refreshPage} drawerState={drawerState} />
+
+            {/* <NewGuestDrawer rowData={rowData} invitationID={id} ticketsFree={tickets} setDrawerState={setDrawerState} available={tickets - (confirmed + waiting)} refreshPage={refreshPage} drawerState={drawerState} /> */}
         </>
     )
 }

@@ -1,0 +1,26 @@
+.add_guest_title_cont {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    align-self: stretch;
+}
+
+.add_guest_title_cont .gc-content-label {
+    font-size: 16px;
+}
+
+.guest_form_row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+    gap: 12px;
+}
+
+.guest_form_col {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
