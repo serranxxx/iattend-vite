@@ -541,35 +541,6 @@ export const CreateGuest = ({ invitationID, onCreate, setOnCreate, sideID, getGu
 
                     </div>
 
-                    {/* {
-        drawerState.onEditGuest &&
-        <div style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-            gap: '12px'
-        }}>
-            <div style={{
-                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                flex: 1, gap: '4px'
-            }}>
-                <span className='gc-content-label'>Estado</span>
-                <Select
-                    placeholder="Estado actual"
-                    value={guestData.state}
-                    onChange={(e) => setGuestData((prev) => ({
-                        ...prev,
-                        state: e
-                    }))}
-                    style={{ width: '100%' }}
-                >
-                    <Option value="creado">Creado</Option>
-                    <Option value="esperando">Esperando</Option>
-                    <Option value="confirmado">Confirmado</Option>
-                    <Option value="rechazado">Rechazado</Option>
-                </Select>
-            </div>
-
-        </div>
-    } */}
 
                     <div style={{
                         display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
@@ -589,41 +560,9 @@ export const CreateGuest = ({ invitationID, onCreate, setOnCreate, sideID, getGu
                             }} />
                     </div>
 
-                    {/* {
-        drawerState.onEditGuest &&
-        <Tooltip title={`Eliminar ${guestData.name}`}>
-            <Popconfirm
-                style={{ maxWidth: '200px !important' }}
-                title="Eliminar invitado"
-                description={companionsData?.length > 0 ? `Al eliminar a ${guestData.name} eliminarás a sus acompañantes. ¿Deseas continuar?` : `Estas seguro de eliminar a ${guestData?.name}`}
-                onConfirm={() => deleteGuestWithCompanions(drawerState.currentGuest.id)}
-                // onCancel={cancel}
-                okText="Eliminar"
-                cancelText="Cancelar"
-            >
-                <Button className='primarybutton'>Eliminar</Button>
-            </Popconfirm>
-
-        </Tooltip>
-    } */}
 
                 </div>
 
-                {/* {
-    (drawerState.onEditGuest && !drawerState.currentGuest.has_companion && drawerState.currentGuest.companion_id) ?
-
-        <span style={{
-            fontSize: '16px'
-        }}><b>{drawerState.currentGuest.name} </b>es acompañante de <b onClick={() => setDrawerState({
-            currentGuest: rowData.find(c => c.id === Number(drawerState.currentGuest.companion_id)),
-            onEditGuest: true,
-            companions: handleCompanions(rowData.find(c => c.id === Number(drawerState.currentGuest.companion_id))?.id),
-            visible: true
-        })} style={{ textDecoration: 'underline', cursor: 'pointer', color: '#6D3CFA' }}>{rowData.find(c => c.id === Number(drawerState.currentGuest.companion_id))?.name}</b> </span>
-        :
-       
-
-} */}
 
                 < div className='new-guest-form-container'>
                     <div style={{

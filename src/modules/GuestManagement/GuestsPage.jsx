@@ -178,9 +178,11 @@ export default function GuestsPage() {
             width: 160,
             render: (value) => (
                 <div className="tag-container">
-                    <span className={`new-table-tag state-${value}`}>
-                        {renderTag(value)}
-                    </span>
+                    <Tooltip>
+                        <span className={`new-table-tag`}>
+                            {renderTag(value)}
+                        </span>
+                    </Tooltip>
                 </div>
             ),
         },
@@ -514,9 +516,12 @@ export default function GuestsPage() {
             width: 160,
             render: (value) => (
                 <div className="tag-container">
-                    <span className={`new-table-tag state-${value}`}>
-                        {renderTag(value)}
-                    </span>
+                    <Tooltip title={isTagLong(value) ? renderTagFull(value) : ''}>
+                        <span className={`new-table-tag`}>
+                            {renderTag(value)}
+                        </span>
+                    </Tooltip>
+
                 </div>
             ),
         },
@@ -1187,7 +1192,7 @@ export default function GuestsPage() {
                 return
             }
 
-            console.log('mesas: ', data)
+            // console.log('mesas: ', data)
             setTables(data)
         }
     }
@@ -1231,9 +1236,34 @@ export default function GuestsPage() {
 
     const renderTag = (value) => {
         if (value == null) return "-";
-        if (typeof value === "object") return "-"; // o JSON.stringify(value)
-        return String(value);
+        if (typeof value === "object") return "-";
+
+        const str = String(value);
+
+        return str.length > 14
+            ? str.slice(0, 14) + "..."
+            : str;
     };
+
+    const isTagLong = (value) => {
+        if (value == null) return "-";
+        if (typeof value === "object") return "-";
+
+        const str = String(value);
+
+        return str.length > 14
+            ? true
+            : false;
+    };
+
+    const renderTagFull = (value) => {
+        if (value == null) return "-";
+        if (typeof value === "object") return "-";
+
+        const str = String(value);
+
+        return str
+    }
 
     const formatAbsoluteDate = (isoString) => {
         const d = new Date(isoString);
@@ -1604,17 +1634,6 @@ export default function GuestsPage() {
     }, [filterTable, filterTag, filterTier, searchUser, filterType, filterSide])
 
 
-    useEffect(() => {
-        console.log('filter side: ', filterSide)
-    }, [filterSide])
-
-    useEffect(() => {
-        console.log('confirmed: ', confirmedData)
-    }, [confirmedData])
-
-
-
-
 
     return (
         <>
@@ -1660,7 +1679,7 @@ export default function GuestsPage() {
                                             <Dropdown
                                                 arrow
                                                 popupRender={() => (
-                                                    <div className="items_list_guests" >
+                                                    <div className="items_list_guests_tables" >
                                                         {
                                                             localTags.map(i => {
                                                                 if (i === "" || i === null)
@@ -1691,11 +1710,11 @@ export default function GuestsPage() {
                                             <Dropdown
                                                 arrow
                                                 popupRender={() => (
-                                                    <div className="items_list_guests">
+                                                    <div className="items_list_guests_tables">
                                                         <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >Sin mesa</div>
                                                         {
                                                             tables.map(i => (
-                                                                <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name}</div>
+                                                                <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name ?? "Sin nombre"}</div>
                                                             ))
                                                         }
                                                     </div>
@@ -1856,6 +1875,7 @@ export default function GuestsPage() {
 
                                 } */}
 
+
                                 {
                                     !screens.xs &&
 
@@ -1978,6 +1998,7 @@ export default function GuestsPage() {
                                     </Dropdown>
 
                                 }
+
 
                                 {
                                     !screens.xs &&

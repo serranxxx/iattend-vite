@@ -1047,3 +1047,109 @@
 .magic-effect {
     animation: glow 2.5s infinite ease-in-out;
 }
+
+.color_palette_container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    background-color: #FFF;
+    border-radius: 24px;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    min-width: 662px;
+
+}
+
+.collection_grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+
+    max-height: 45vh;
+    overflow: auto;
+    padding: 16px;
+    padding-top: 4px;
+    box-sizing: border-box;
+}
+
+
+.color_collection_cont {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    /* border: 1px solid #ebebeb; */
+    /* padding: 12px; */
+    box-sizing: border-box;
+    
+    /* box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2); */
+}
+
+.collection_header_search {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+    padding: 12px 16px;
+    padding-top: 16px;
+}
+
+.collection_title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.name_collection {
+    width: 100%;
+    font-size: 12px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    /* background-color: #f5f5f5; */
+}
+
+.collection_cont {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 200px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #ebebeb80;
+}
+
+.collection_item {
+    /* min-width: 50px; */
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    font-weight: 600;
+    font-size: 10px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    /* border-radius: 99px;
+    margin-left: -12px; */
+}
+
+.collection_search::placeholder {
+    font-style: italic;
+    opacity: 0.5;
+}
+
+.collection_item span {
+    transition: all 0.4s ease; 
+}
+
+.collection_item:first-of-type {
+    margin: 0;
+}
+
+/* .collection_cont:hover {
+    transform: scale(1.05);
+} */
