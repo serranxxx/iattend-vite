@@ -880,17 +880,19 @@ export const SideEvents = () => {
 
                                             </Button>
 
-                                            : <div className='new_side_event'>
-                                                <span style={{ color: '#00000080' }}>Haz llegado al límite de tus Side events</span>
-                                                <img
-                                                    style={{ width: '100%' }}
-                                                    src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt='' />
-                                                <Button
-                                                    onClick={() => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
-                                                    style={{
-                                                        fontSize: '16px', minHeight: '44px', fontWeight: 400
-                                                    }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
-                                            </div>
+                                            : <></>
+
+                                            // <div className='new_side_event'>
+                                            //     <span style={{ color: '#00000080' }}>Haz llegado al límite de tus Side events</span>
+                                            //     <img
+                                            //         style={{ width: '100%' }}
+                                            //         src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt='' />
+                                            //     <Button
+                                            //         onClick={() => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
+                                            //         style={{
+                                            //             fontSize: '16px', minHeight: '44px', fontWeight: 400
+                                            //         }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
+                                            // </div>
                                     }
                                 </div>
                                 : <div className='side_events_spin'>
