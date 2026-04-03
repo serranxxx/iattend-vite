@@ -22,7 +22,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
             });
 
             onSuccess();
-            console.log('Imagen subida correctamente');
+            // console.log('Imagen subida correctamente');
         } catch (err) {
             console.error(err);
             console.log('Error al subir imagen');

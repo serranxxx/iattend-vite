@@ -45,7 +45,7 @@ export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
 
             if (data.ok) {
                 messageApi.success('Usuario creado correctamente')
-                console.log(data)
+                // console.log(data)
 
                 refreshData()
                 setVisible(true)

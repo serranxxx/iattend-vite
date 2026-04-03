@@ -12,7 +12,7 @@ import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
-import { handleCheckout } from '../../components/Payment/functions'
+// import { handleCheckout } from '../../components/Payment/functions'
 import { useSearchParams } from 'react-router-dom'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { Check, CheckCheck, MailWarning, Send } from 'lucide-react'
@@ -276,7 +276,7 @@ export const SideEvents = () => {
 
             if (error) return
 
-            console.log('messages updates: ', data)
+            // console.log('messages updates: ', data)
             setMessagesDispatch(data)
         } catch (error) {
             console.log(error)
@@ -366,7 +366,7 @@ export const SideEvents = () => {
             last_update_date: new Date()
         };
 
-        const { data: guestRow, error: guestError } = await supabase
+        const { error: guestError } = await supabase
             .from('side_events_guests')
             .update(guestPatch)
             .eq('id', guest.id)
@@ -374,7 +374,7 @@ export const SideEvents = () => {
             .maybeSingle();
 
         if (guestError) throw guestError;
-        console.log('Guest actualizado:', guestRow);
+        // console.log('Guest actualizado:', guestRow);
         // setOnBubble(true)
         getGuests()
 
@@ -442,7 +442,7 @@ export const SideEvents = () => {
                 };
 
 
-                console.log(payload)
+                // console.log(payload)
 
                 const response = await axios.post(
                     `${import.meta.env.VITE_API_URL}/api/whats`,
@@ -463,8 +463,8 @@ export const SideEvents = () => {
             }
         } else {
             message.warning('Termina de hacer tu invitación antes de enviarla')
-            console.log(data?.body?.image)
-            console.log(data?.name)
+            // console.log(data?.body?.image)
+            // console.log(data?.name)
         }
 
     };
@@ -553,7 +553,7 @@ export const SideEvents = () => {
             return
         }
 
-        console.log('side event: ', data)
+        // console.log('side event: ', data)
 
         setsideEvent((prev) => [...prev, data])
     }
@@ -574,7 +574,7 @@ export const SideEvents = () => {
             return;
         }
 
-        console.log('Cambios guardados correctamente');
+        // console.log('Cambios guardados correctamente');
         message.success('Guardado')
     };
 
@@ -658,7 +658,7 @@ export const SideEvents = () => {
             last_action_by: true,
         }))
 
-        console.log(list)
+        // console.log(list)
 
         const { error: guestError } = await supabase
             .from('side_events_guests')
@@ -715,11 +715,11 @@ export const SideEvents = () => {
             return
         }
 
-        console.log('update credits: ', updateCredits)
+        // console.log('update credits: ', updateCredits)
 
         setCredits(updateCredits[0].credits ?? credits)
 
-        console.log('Créditos actualizados correctamente:', newCredits)
+        // console.log('Créditos actualizados correctamente:', newCredits)
     }
 
     const removeGuest = async (guestId) => {
@@ -806,7 +806,7 @@ export const SideEvents = () => {
                         if (!row) return;
     
                         if (row.invitation_id === id) {
-                            console.log('message status update:', row);
+                            // console.log('message status update:', row);
                             getMessagesUpdates()
                             getGuests();
                             // refreshPage();

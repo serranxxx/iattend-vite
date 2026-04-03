@@ -73,15 +73,15 @@ export const CreateGuest = ({ invitationID, onCreate, setOnCreate, sideID, getGu
         }))
 
         // (opcional) log para debug
-        console.log({
-            necesity,
-            probability,
-            her,
-            him,
-            perception,
-            score,
-            category,
-        });
+        // console.log({
+        //     necesity,
+        //     probability,
+        //     her,
+        //     him,
+        //     perception,
+        //     score,
+        //     category,
+        // });
     };
 
     const addTagsToInvitation = async () => {
@@ -112,7 +112,7 @@ export const CreateGuest = ({ invitationID, onCreate, setOnCreate, sideID, getGu
         if (updateError) {
             console.error('Error al actualizar tags:', updateError)
         } else {
-            console.log('Tags actualizados correctamente:', updatedData[0].tags)
+            // console.log('Tags actualizados correctamente:', updatedData[0].tags)
             setLocalTags(updatedData[0].tags)
             setNewTag(null)
         }
@@ -168,7 +168,7 @@ export const CreateGuest = ({ invitationID, onCreate, setOnCreate, sideID, getGu
         if (error) {
             console.error(error)
         } else {
-            console.log('tags: ', data.tags)
+            // console.log('tags: ', data.tags)
             setLocalTags(data.tags)
         }
     }

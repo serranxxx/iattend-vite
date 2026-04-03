@@ -131,7 +131,7 @@ export const TablesPage = ({ invitationID }) => {
 
 
             if (tableError) {
-                console.log(tableError)
+                // console.log(tableError)
                 return
             }
 
@@ -172,7 +172,7 @@ export const TablesPage = ({ invitationID }) => {
                 console.error("Error al insertar:", error.message);
                 return null;
             }
-            console.log(data.id)
+            // console.log(data.id)
 
             if (ocuppiedChairs && ocuppiedChairs.length > 0) {
                 // OJO: asumimos que `ocuppiedChairs` es un arreglo de IDs de guests
@@ -188,7 +188,7 @@ export const TablesPage = ({ invitationID }) => {
                     console.error("Error al actualizar guests:", guestsError.message);
                     // aquí decides si regresas null o solo avisas
                 } else {
-                    console.log("Guests actualizados con la mesa:", data.id);
+                    // console.log("Guests actualizados con la mesa:", data.id);
 
                     setOpenNewTable(false)
                     getTables()
@@ -232,7 +232,7 @@ export const TablesPage = ({ invitationID }) => {
 
     const getTables = async () => {
 
-        console.log('tables id: ', invitationID)
+        // console.log('tables id: ', invitationID)
         if (invitationID) {
             const { data, error } = await supabase
                 .from('tables')
@@ -244,7 +244,7 @@ export const TablesPage = ({ invitationID }) => {
                 return
             }
 
-            console.log('mesas: ', data)
+            // console.log('mesas: ', data)
             setTables_(data)
         }
     }
@@ -261,7 +261,7 @@ export const TablesPage = ({ invitationID }) => {
             console.error("Error al obtener invitaciones:", error);
         } else {
 
-            console.log('guests: ', data)
+            // console.log('guests: ', data)
             setconfirmedGuests_(data.filter(c => c.state === 'confirmado'))
         }
     }
@@ -335,12 +335,12 @@ export const TablesPage = ({ invitationID }) => {
 
         if (selectedTable) {
             // setAvailableSeats(selectedTable.totalChairs - countOccupied(ocuppiedChairs))
-            console.log('A ->')
+            // console.log('A ->')
             setAvailableSeats(tables_.find(t => t.id === selectedTable.id)?.size - ocuppiedChairs.length)
         } else {
-            console.log('B ->')
-            console.log('total charis', totalChairs)
-            console.log('occupied chairs size', ocuppiedChairs.length)
+            // console.log('B ->')
+            // console.log('total charis', totalChairs)
+            // console.log('occupied chairs size', ocuppiedChairs.length)
             setAvailableSeats(totalChairs - ocuppiedChairs.length)
         }
 
@@ -381,7 +381,7 @@ export const TablesPage = ({ invitationID }) => {
 
     useEffect(() => {
         if (totalChairs >= ocuppiedChairs.length) {
-            console.log('-')
+            // console.log('-')
         }
         else {
             setTotalChairs(totalChairs + 1)
@@ -422,7 +422,7 @@ export const TablesPage = ({ invitationID }) => {
                 return null;
             }
 
-            console.log("Mesa editada ✅", tableData.id);
+            // console.log("Mesa editada ✅", tableData.id);
 
             // 2) Guests actuales en esta mesa
             const { data: currentGuests, error: currentError } = await supabase
@@ -466,7 +466,7 @@ export const TablesPage = ({ invitationID }) => {
                 }
             }
 
-            console.log("Guests sincronizados ✅", { toAdd, toRemove });
+            // console.log("Guests sincronizados ✅", { toAdd, toRemove });
             getTables()
             getGuests()
             setOnAddingGuests(false)
@@ -539,7 +539,7 @@ export const TablesPage = ({ invitationID }) => {
     const transferGuest = async (table, guest) => {
 
         try {
-            const { data, error } = await supabase
+            const {  error } = await supabase
                 .from("guests")
                 .update({
                     table: table.id,
@@ -554,7 +554,7 @@ export const TablesPage = ({ invitationID }) => {
                 return null;
             }
 
-            console.log("Guest transferido ✅", data);
+            // console.log("Guest transferido ✅", data);
             getTables()
             getGuests()
             setOcuppiedChairs(prev =>
@@ -607,7 +607,7 @@ export const TablesPage = ({ invitationID }) => {
                 return null;
             }
 
-            console.log("Mesa eliminada ✅ y guests liberados ✅");
+            // console.log("Mesa eliminada ✅ y guests liberados ✅");
             getTables()
             getGuests()
             onClosingModal()

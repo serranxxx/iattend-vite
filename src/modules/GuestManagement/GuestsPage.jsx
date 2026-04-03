@@ -1187,7 +1187,7 @@ export default function GuestsPage() {
                 return
             }
 
-            console.log('mesas: ', data)
+            // console.log('mesas: ', data)
             setTables(data)
         }
     }
@@ -1256,7 +1256,7 @@ export default function GuestsPage() {
             last_update_date: new Date()
         };
 
-        const { data: guestRow, error: guestError } = await supabase
+        const { error: guestError } = await supabase
             .from('guests')
             .update(guestPatch)
             .eq('id', guest.id)
@@ -1264,7 +1264,7 @@ export default function GuestsPage() {
             .maybeSingle();
 
         if (guestError) throw guestError;
-        console.log('Guest actualizado:', guestRow);
+        // console.log('Guest actualizado:', guestRow);
         // setOnBubble(true)
         refreshPage()
 
@@ -1389,17 +1389,17 @@ export default function GuestsPage() {
             return
         }
 
-        console.log('update credits: ', updateCredits)
+        // console.log('update credits: ', updateCredits)
 
         setCredits(updateCredits[0].credits ?? credits)
 
-        console.log('Créditos actualizados correctamente:', newCredits)
+        // console.log('Créditos actualizados correctamente:', newCredits)
     }
 
     const addGuestToTable = async (table, guest) => {
 
         try {
-            const { data, error } = await supabase
+            const {  error } = await supabase
                 .from("guests")
                 .update({
                     table: table.id,
@@ -1414,7 +1414,7 @@ export default function GuestsPage() {
                 return null;
             }
 
-            console.log("Guest transferido ✅", data);
+            // console.log("Guest transferido ✅", data);
             getTables()
             getGuests()
 
@@ -1463,7 +1463,7 @@ export default function GuestsPage() {
 
             if (error) return
 
-            console.log('messages updates: ', data)
+            // console.log('messages updates: ', data)
             setMessagesDispatch(data)
         } catch (error) {
             console.log(error)
@@ -1519,7 +1519,7 @@ export default function GuestsPage() {
                     if (!row) return;
 
                     if (row.invitation_id === id) {
-                        console.log('message status update:', row);
+                        // console.log('message status update:', row);
                         getMessagesUpdates()
                         refreshPage();
                         // refreshPage();
@@ -1602,15 +1602,6 @@ export default function GuestsPage() {
             setActiveSearcher(true)
         }
     }, [filterTable, filterTag, filterTier, searchUser, filterType, filterSide])
-
-
-    useEffect(() => {
-        console.log('filter side: ', filterSide)
-    }, [filterSide])
-
-    useEffect(() => {
-        console.log('confirmed: ', confirmedData)
-    }, [confirmedData])
 
 
 

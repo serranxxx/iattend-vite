@@ -100,7 +100,7 @@ export const AdminPage = () => {
 
         if (error) console.error(error);
         else {
-            console.log('by date: ', data)
+            // console.log('by date: ', data)
             setNextEvents(data.filter(i => i.user_email !== 'albserrano8@gmail.com' && i.user_email !== 'pa.perez98@gmail.com' && i.user_email !== 'pau@iattend.mx'))
         }
 
@@ -114,6 +114,7 @@ export const AdminPage = () => {
 
 
     const updateInvitationCredits = async (id) => {
+
         try {
             await axios.patch(
                 `${import.meta.env.VITE_API_URL}/api/invitation/update-credits`,
@@ -281,7 +282,7 @@ export const AdminPage = () => {
         },
 
 
-    ]), [ownerInputs]);
+    ]), [ownerInputs, actualCredits]);
 
 
     const allUsersCols = [

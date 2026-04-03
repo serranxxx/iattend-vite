@@ -64,7 +64,7 @@ export const ShareGuests = ({ invitation_id, admin }) => {
         if (error) {
             console.error("Error al obtener invitaciones:", error);
         } else {
-            console.log('data / sharegues invitation: ', data)
+            // console.log('data / sharegues invitation: ', data)
             setSupaInv(data?.data)
             setInvitationID(data.id)
         }

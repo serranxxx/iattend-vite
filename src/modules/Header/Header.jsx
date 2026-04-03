@@ -336,7 +336,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     useEffect(() => {
         if (sessionId) {
             messageApi.success("Tu compra se realizó con éxito 🎉");
-            console.log("Tu compra se realizó con éxito 🎉")
+            // console.log("Tu compra se realizó con éxito 🎉")
 
             searchParams.delete("session_id");
             setSearchParams(searchParams, { replace: true });
@@ -344,7 +344,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
         if (canceled === "true") {
             messageApi.warning("El pago fue cancelado");
-            console.log("El pago fue cancelado");
+            // console.log("El pago fue cancelado");
 
             searchParams.delete("canceled");
             setSearchParams(searchParams, { replace: true });
