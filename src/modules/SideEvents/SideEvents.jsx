@@ -5,7 +5,6 @@ import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuF
 import { supabase } from '../../lib/supabase'
 import dayjs from 'dayjs'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
-import { CreateGuest } from '../../components/Create/CreateGuest'
 import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
@@ -16,6 +15,8 @@ import { handleCheckout } from '../../components/Payment/functions'
 import { useSearchParams } from 'react-router-dom'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { Check, CheckCheck, MailWarning, Send } from 'lucide-react'
+import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
+import { FiArrowUpRight } from 'react-icons/fi'
 
 
 const { Option } = Select;
@@ -33,7 +34,7 @@ export const SideEvents = () => {
     const [mainGuests, setMainGuests] = useState(null)
     const [readyToAdd, setReadyToAdd] = useState([])
     const [searchMain, setSearchMain] = useState("")
-    const [onCreate, setOnCreate] = useState(false)
+    // const [onCreate, setOnCreate] = useState(false)
     const [onSending, setOnSending] = useState(false)
     const [onTickets, setOnTickets] = useState(false)
     const [messagesDispatch, setMessagesDispatch] = useState([])
@@ -43,6 +44,12 @@ export const SideEvents = () => {
     const [plan, setPlan] = useState(null)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
+    const [drawerState, setDrawerState] = useState({
+        currentGuest: null,
+        onEditGuest: false,
+        companions: [],
+        visible: false
+    });
     const { TextArea } = Input;
 
     const columns = useMemo(() => ([
@@ -52,15 +59,39 @@ export const SideEvents = () => {
             key: "name",
             fixed: "left",
             width: 160,
+            render: (value, record) => {
+                return (
+                    <div style={{
+                        display:'flex',alignItems:'center',justifyContent:'flex-start', gap:'6px'
+                    }}>
+                        <Tooltip title="Abrir">
+                            <Button
+                                onClick={() =>
+                                    setDrawerState({
+                                        currentGuest: record,
+                                        onEditGuest: true,
+                                        companions: handleCompanions(record.id),
+                                        visible: true,
+                                    })
+                                }
+                                className="primarybutton"
+                                icon={<FiArrowUpRight size={14} style={{ marginTop: 2 }} />}
+                                style={{ maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
+                            />
+                        </Tooltip>
+                        <span>{value}</span>
+                    </div>
+                )
+            }
         },
 
         {
             title: "Contacto",
             dataIndex: "phone_number",
             key: "phone_number",
-            width:140,
+            width: 140,
 
-    
+
             //   render: (value) => phoneFormatter(value),
         },
 
@@ -68,7 +99,7 @@ export const SideEvents = () => {
             title: "Estado",
             dataIndex: "state",
             key: "state",
-            width:100,
+            width: 100,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -83,7 +114,7 @@ export const SideEvents = () => {
             title: "Accesos",
             dataIndex: "password",
             key: "password",
-            width:140,
+            width: 140,
             render: (value,) => (
                 <div className="tag-container">
                     <Dropdown popupRender={() => (
@@ -106,8 +137,8 @@ export const SideEvents = () => {
             title: "Etiqueta",
             dataIndex: "tag",
             key: "tag",
-            width:100,
-           
+            width: 100,
+
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -120,7 +151,7 @@ export const SideEvents = () => {
         {
             title: "Acciones",
             key: "send",
-            width: 200,
+            width: 120,
             fixed: "right",
             render: (_, record) => {
                 const { state, phone_number } = record;
@@ -160,7 +191,7 @@ export const SideEvents = () => {
                                 />
                             </Tooltip>
 
-                            <Tooltip title="Eliminar"> <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}></Button></Tooltip>
+                            {/* <Tooltip title="Eliminar"> <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}></Button></Tooltip> */}
                         </div>
                     );
                 }
@@ -173,46 +204,21 @@ export const SideEvents = () => {
 
                 if (state === "confirmado" || state === 'rechazado') {
                     return (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "flex-start",
-                                gap: 6,
-                                width: "100%",
-                                paddingLeft: '12px', boxSizing: 'border-box'
-                            }}
-                        >
-
-
-                            <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}>Eliminar</Button>
-                        </div>
+                        <></>
 
                     );
                 }
 
-                // if (state === "rechazado") {
-                //     return (
-                //         <Button
-                //             className="primarybutton"
-                //             icon={<MdDelete style={{ marginTop: 2 }} />}
-                //             style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
-                //         >
-                //             Eliminar
-                //         </Button>
-                //     );
-                // }
-
                 return null;
             },
         },
-    ]), [current]);
+    ]), [current, rawData]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
         columns: columns,
         pagination: false,
-        scroll: { y: '80vh', x:1000},
+        scroll: { y: '80vh', x: 1000 },
 
     }), [columns]);
 
@@ -256,6 +262,11 @@ export const SideEvents = () => {
         rawData,
     ]);
 
+    const handleCompanions = (id) => {
+        const comps = rawData?.filter((row) => row.companion_id === id.toString())
+        return comps
+    }
+
     const dispatchMap = useMemo(() => {
         const map = {};
 
@@ -288,7 +299,7 @@ export const SideEvents = () => {
             case 'processing':
 
                 return (
-                    <div className='dispatch_message_tag' style={{maxHeight:'16px'}}>
+                    <div className='dispatch_message_tag' style={{ maxHeight: '16px' }}>
                         Procesando
                     </div>
                 )
@@ -296,7 +307,7 @@ export const SideEvents = () => {
             case 'sent':
 
                 return (
-                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <Send size={16} />
                         Enviado
                     </div>
@@ -305,7 +316,7 @@ export const SideEvents = () => {
             case 'delivered':
 
                 return (
-                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <Check size={16} />
                         Entregado
                     </div>
@@ -315,7 +326,7 @@ export const SideEvents = () => {
             case 'read':
 
                 return (
-                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <CheckCheck size={16} />
                         Visto
                     </div>
@@ -335,7 +346,7 @@ export const SideEvents = () => {
                             onClick={() => onSedingInvitation(current, record)}
                             className="primarybutton--active"
                             icon={<MailWarning size={16} />}
-                            style={{ flex: 1, maxHeight: 30, width:'136px' }}
+                            style={{ flex: 1, maxHeight: 30, width: '136px' }}
                         >
                             Reintentar
                         </Button>
@@ -349,7 +360,7 @@ export const SideEvents = () => {
 
             default:
                 return (
-                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         Esperando
                     </div>
                 )
@@ -504,7 +515,7 @@ export const SideEvents = () => {
         return String(value);
     };
 
-    
+
     dayjs.locale('es');
 
     const formatInvitationDate = (date) => {
@@ -722,22 +733,20 @@ export const SideEvents = () => {
         console.log('Créditos actualizados correctamente:', newCredits)
     }
 
-    const removeGuest = async (guestId) => {
-        try {
-            const { error: guestErr } = await supabase
-                .from('side_events_guests')
-                .delete()
-                .eq('id', guestId);
+    // const removeGuest = async (guestId) => {
+    //     try {
+    //         const { error: guestErr } = await supabase
+    //             .from('side_events_guests')
+    //             .delete()
+    //             .eq('id', guestId);
 
-            if (guestErr) throw guestErr;
+    //         if (guestErr) throw guestErr;
 
-            getGuests()
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
-
+    //         getGuests()
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
 
 
     useEffect(() => {
@@ -804,14 +813,14 @@ export const SideEvents = () => {
                     (payload) => {
                         const row = payload.new || payload.old;
                         if (!row) return;
-    
+
                         if (row.invitation_id === id) {
                             console.log('message status update:', row);
                             getMessagesUpdates()
                             getGuests();
                             // refreshPage();
                         }
-    
+
                     }
                 )
 
@@ -824,7 +833,7 @@ export const SideEvents = () => {
             };
         }
 
-        
+
     }, [supabase, id])
 
     const truncate = (text, max = 50) =>
@@ -904,7 +913,7 @@ export const SideEvents = () => {
                         footer={false}
                         onCancel={() => setOpen(false)}
                         onOk={() => setOpen(false)}
-                        style={{ top: 20, maxWidth:'1320px'}}
+                        style={{ top: 20, maxWidth: '1320px' }}
                         width="90%"
                         closeIcon={false}
                         styles={{
@@ -919,7 +928,7 @@ export const SideEvents = () => {
                                 display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
                                 width: '100%',
                                 position: 'relative',
-                                
+
 
                             }
                         }}
@@ -1006,7 +1015,7 @@ export const SideEvents = () => {
 
 
 
-                                            <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'}/>
+                                            <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'} />
                                         </div>
 
                                         <div className='side_info_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, transform: 'scale(0.9)' }}>
@@ -1347,7 +1356,7 @@ export const SideEvents = () => {
                                     type="card"
                                     items={items}
                                     tabBarExtraContent={
-                                        <div className='single_row' style={{ marginBottom:'12px' }}>
+                                        <div className='single_row' style={{ marginBottom: '12px' }}>
                                             <Dropdown
                                                 key={0}
                                                 trigger={['click']}
@@ -1412,7 +1421,12 @@ export const SideEvents = () => {
                                                             <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<LuCopy />}>Copiar de otra lista</Button>
 
                                                         </Dropdown>
-                                                        <Button onClick={() => setOnCreate(true)} style={{ width: '100%' }} icon={<LuPlus />}>Crear invitado</Button>
+                                                        <Button onClick={() => setDrawerState({
+                                                            currentGuest: null,
+                                                            onEditGuest: false,
+                                                            companions: [],
+                                                            visible: true
+                                                        })} style={{ width: '100%' }} icon={<LuPlus />}>Crear invitado</Button>
                                                     </div>
                                                 )}
                                             >
@@ -1471,7 +1485,7 @@ export const SideEvents = () => {
 
                 </Layout >
 
-                <CreateGuest sideID={current?.id} setOnCreate={setOnCreate} onCreate={onCreate} invitationID={id} getGuests={getGuests} />
+                <GuestsCRUD rowData={rawData} invitationID={id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id}/>
             </Layout >
         </>
     )

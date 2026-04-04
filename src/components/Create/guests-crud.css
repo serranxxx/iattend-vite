@@ -5,7 +5,8 @@
     align-self: stretch;
 }
 
-.add_guest_title_cont .gc-content-label {
+.add_guest_title_cont .gc-content-label,
+.add_companions_container .gc-content-label {
     font-size: 16px;
 }
 
@@ -23,4 +24,16 @@
     flex-direction: column;
     gap: 4px;
     flex: 1;
+}
+
+.add_companions_container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    position: sticky;
+    top: -12px;
+    background-color: #FFF;
+    z-index: 10;
+    padding: 12px 0px;
 }
