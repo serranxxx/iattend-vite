@@ -17,6 +17,7 @@ import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { Check, CheckCheck, ChevronLeft, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { FiArrowUpRight } from 'react-icons/fi'
+import { CustomLink } from '../../components/CustomLink/CustomLink'
 
 
 const { Option } = Select;
@@ -535,7 +536,7 @@ export const SideEvents = () => {
                 invitation_id: id, // uuid
                 date: new Date().toISOString(), // timestamp
                 name: null,
-                url_image: "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/assets/Covers/cover_12.jpg",
+                url_image: null,
                 body: {
                     address: {
                         street: null,
@@ -548,7 +549,7 @@ export const SideEvents = () => {
                         url: null,
                     },
                     hour: null,
-                    image: "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/assets/Covers/cover_12.jpg",
+                    image: null,
                     title: {
                         font: 'Poppins',
                         size: 36,
@@ -581,6 +582,7 @@ export const SideEvents = () => {
             .from('side_events')
             .update({
                 name: current.name,
+                url_image: current.url_image === null ? current.body.image : current.url_image,
                 body: current.body,
             })
             .eq('id', current.id);
@@ -964,7 +966,8 @@ export const SideEvents = () => {
                                 padding: '0px',
                                 height: '90vh',
                                 overflow: 'hidden',
-                                position: 'relative'
+                                position: 'relative',
+                                border:'4px solid #F5F3F2'
                             },
                             body: {
                                 display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
@@ -1399,65 +1402,7 @@ export const SideEvents = () => {
                                 tabBarExtraContent={
                                     <div className='single_row' style={{ marginBottom: '12px' }}>
 
-                                        <Dropdown
-                                            arrow
-                                            placement='bottomRight'
-                                            trigger={['click']}
-                                            popupRender={() => (
-                                                <div className='custom_link_cont'>
-                                                    <div className='custom_link'>
-                                                        <div className='custom_title'>
-                                                            <span>Personaliza tu link</span>
-                                                        </div>
-                                                        <div className='custom_image_cont'>
-
-                                                            <img src='/images/whats_1.png' alt='' />
-
-                                                            <div className='custom_header'>
-                                                                <ChevronLeft size={14} />
-                                                                <div className='custom_logo'>
-                                                                    <img src='/images/icon_pp.png' alt='' />
-                                                                </div>
-                                                                <span>I attend</span>
-                                                            </div>
-
-
-                                                            <div className='message_cont'>
-                                                                <div className='message_image_cont'>
-                                                                    <img className='message_image' src={current?.url_image} alt='' />
-                                                                    <StorageImages invitationID={id} handleImage={updateURLimage} type={'side-events'} absolute={true} small={true}/>
-                                                                </div>
-
-                                                                <div className='message_info_cont'>
-                                                                    <span>¡Estamos muy felices de invitarte!</span>
-                                                                    <span><b>{current?.name}</b></span>
-                                                                    <span className='green_text'>Leer más</span>
-                                                                    <small>I attend - Plan with ease</small>
-                                                                    <div className='cta_container'>
-                                                                        <span className='green_text_cta'><SquareArrowUpRight size={10}/>Ver invitación</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        style={{ width: '100%' }}
-                                                        onClick={() => copyToClipboard(`www.iattend.events/side-event/${current?.id}`)}
-                                                        icon={<Link2 size={14} />} className="primarybutton--active">
-                                                        Copiar link
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        >
-                                            <Button
-                                                icon={<Link2 size={14} />} className="primarybutton">
-                                                Link del evento
-                                            </Button>
-                                        </Dropdown>
-
-
+                                        <CustomLink urlImage={current?.url_image} url={`www.iattend.events/side-event/${current?.id}`} id={id} handleImage={updateURLimage} name={current?.name}/>
                                         <Popconfirm
                                             title={current?.type === 'open' ? 'Invitación Púbica' : 'Invitación Privada'}
                                             description={current?.type === 'open' ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}

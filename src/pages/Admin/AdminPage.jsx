@@ -565,7 +565,7 @@ export const AdminPage = () => {
                 invitation_id: id, // uuid
                 date: new Date().toISOString(), // timestamp
                 name: null,
-                url_image: "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/assets/Covers/cover_12.jpg",
+                url_image: null,
                 body: {
                     address: {
                         street: null,
@@ -578,7 +578,7 @@ export const AdminPage = () => {
                         url: null,
                     },
                     hour: null,
-                    image: "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/assets/Covers/cover_12.jpg",
+                    image: null,
                     title: {
                         font: 'Poppins',
                         size: 36,
