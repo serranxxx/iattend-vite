@@ -33,6 +33,17 @@
     border-radius: 24px;
 }
 
+.items_list_guests_tables {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 8px;
+    box-sizing: border-box;
+    background-color: #FFF;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 24px;
+}
+
 .guests_filters_cont {
     flex: 1;
     display: flex;

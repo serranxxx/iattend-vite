@@ -1,4 +1,4 @@
-import { Button, Col, ColorPicker, Dropdown, Row, Select, Slider, } from 'antd'
+import { Button, Col, ColorPicker, Dropdown, Input, Row, Select, Slider, } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { Separador } from '../../../../components/Invitation/Logos';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
@@ -7,6 +7,8 @@ import { RxValueNone } from 'react-icons/rx';
 import { LuArrowBigDownDash, LuArrowBigUpDash, LuRedo2, LuRotateCcw, LuSettings2 } from 'react-icons/lu';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
+import { ArrowUpRight, Maximize2, Paintbrush, Palette } from 'lucide-react';
+import { colorCollection } from '../../../../helpers/services/colorPalette';
 
 
 const { Option } = Select;
@@ -20,6 +22,11 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
     const [visible, setVisible] = useState(false)
     const [type, setType] = useState(null)
     const [presets, setPresets] = useState(null)
+    const [showPrim, setShowPrim] = useState(null)
+    const [showSec, setShowSec] = useState(null)
+    const [showAccent, setShowAccent] = useState(null)
+    const [showAction, setShowAction] = useState(null)
+    const [searchCollection, setSearchCollection] = useState("")
 
     useEffect(() => {
         const presetColors = [
@@ -176,6 +183,32 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
         setSaved(false);
     };
 
+    const changeByCollection = (e) => {
+
+        setInvitation(prevInvitation => ({
+            ...prevInvitation,
+            generals: {
+                ...prevInvitation.generals,
+                colors: {
+                    ...prevInvitation.generals.colors,
+                    primary: e.primary,
+                    secondary: e.secondary,
+                    accent: e.accent,
+                    actions: e.actions
+                },
+                fonts: {
+                    ...prevInvitation.generals.fonts,
+                    titles: {
+                        ...prevInvitation.generals.fonts.titles,
+                        color: e.accent
+                    }
+                }
+            },
+        }));
+
+        setSaved(false);
+    };
+
     const handleFont = (e) => {
         setInvitation(prevInvitation => ({
             ...prevInvitation,
@@ -326,6 +359,20 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
         setSaved(false)
     };
 
+
+    const filteredCollection = colorCollection.filter((item) => {
+        const query = searchCollection.trim().toLowerCase()
+    
+        if (!query) return true
+    
+        return (
+            item.name.toLowerCase().includes(query) ||
+            item.keywords.some((keyword) =>
+                keyword.toLowerCase().includes(query)
+            )
+        )
+    })
+
     return (
         <>
             {
@@ -336,7 +383,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                         <div className='build-component-elements'>
                             <span className={'module--title'}
-                            style={{textAlign:'left'}}
+                                style={{ textAlign: 'left' }}
                             >Ajustes Generales</span>
 
                             <div className='single_row'>
@@ -660,6 +707,95 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                 marginTop: '10px',
                             }}>
                                 <span className='gc-content-label'>Paleta de colores</span>
+
+                                <Dropdown
+                                    arrow
+                                    placement='bottomLeft'
+                                    trigger={['click']}
+                                    popupRender={() => (
+                                        <div className="color_palette_container ">
+                                            <div className='collection_header_search'>
+                                                <span className='collection_title'>Colección de colores</span>
+                                                <Input
+                                                value={searchCollection}
+                                                onChange={(e) => setSearchCollection(e.target.value)}
+                                                className='collection_search'
+                                                placeholder='Buscar color'
+                                                style={{
+                                                    maxWidth: '300px', borderRadius: '99px'
+                                                }} />
+                                            </div>
+                                            <div className='collection_grid scroll-invitation'>
+                                                {
+                                                    filteredCollection?.map((c, index) => (
+                                                        <div key={index} className='color_collection_cont'>
+
+
+                                                            <div className='collection_cont'>
+                                                                <div
+                                                                    style={{
+                                                                        backgroundColor: c.primary,
+                                                                        width: showPrim === c.name ? '96px' : (showAction === c.name || showSec === c.name || showAccent === c.name) ? '36.6px' : '50px'
+                                                                    }}
+                                                                    onMouseLeave={() => setShowPrim(null)} onMouseEnter={() => setShowPrim(c.name)} className='collection_item'>
+                                                                    <span style={{
+                                                                        opacity: showPrim === c.name ? 1 : 0,
+                                                                        color: c.accent
+                                                                    }}>{c.primary}</span>
+
+                                                                </div>
+                                                                <div
+                                                                    style={{
+                                                                        backgroundColor: c.secondary,
+                                                                        width: showSec === c.name ? '96px' : (showAction === c.name || showPrim === c.name || showAccent === c.name) ? '36.6px' : '50px'
+                                                                    }}
+                                                                    onMouseLeave={() => setShowSec(null)} onMouseEnter={() => setShowSec(c.name)} className='collection_item'>
+                                                                    <span style={{
+                                                                        opacity: showSec === c.name ? 1 : 0,
+                                                                        color: c.primary
+                                                                    }}>{c.secondary}</span>
+
+                                                                </div>
+                                                                <div
+                                                                    style={{
+                                                                        backgroundColor: c.accent,
+                                                                        width: showAccent === c.name ? '96px' : (showAction === c.name || showPrim === c.name || showSec === c.name) ? '36.6px' : '50px'
+                                                                    }}
+                                                                    onMouseLeave={() => setShowAccent(null)} onMouseEnter={() => setShowAccent(c.name)} className='collection_item'>
+                                                                    <span style={{
+                                                                        opacity: showAccent === c.name ? 1 : 0,
+                                                                        color: c.primary
+                                                                    }}>{c.accent}</span>
+
+                                                                </div>
+                                                                <div
+                                                                    style={{
+                                                                        backgroundColor: c.actions,
+                                                                        width: showAction === c.name ? '96px' : (showAccent === c.name || showPrim === c.name || showSec === c.name) ? '36.6px' : '50px'
+                                                                    }}
+                                                                    onMouseLeave={() => setShowAction(null)} onMouseEnter={() => setShowAction(c.name)} className='collection_item'>
+                                                                    <span style={{
+                                                                        opacity: showAction === c.name ? 1 : 0,
+                                                                        color: c.primary
+                                                                    }}>{c.actions}</span>
+
+                                                                </div>
+                                                            </div>
+
+                                                            <div className='name_collection'>
+                                                                <span >{c.name}</span>
+
+                                                                <Button onClick={() => changeByCollection(c)}  type='text' icon={<Paintbrush size={14} />}></Button>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                }
+                                            </div>
+                                        </div>
+                                    )}
+                                >
+                                    <Button className='primarybutton' icon={<Palette size={12} />}>Colección</Button>
+                                </Dropdown>
 
                             </Row>
 
