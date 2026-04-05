@@ -1958,7 +1958,7 @@ export default function GuestsPage() {
                                                         openCard ?
                                                             <Button
                                                                 style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<LockKeyholeOpen />} className="primarybutton_transparent">
+                                                                icon={<LockKeyholeOpen size={14}/>} className="primarybutton_transparent">
                                                                 Evento público
                                                             </Button>
                                                             : <Button

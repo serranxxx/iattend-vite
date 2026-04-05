@@ -670,7 +670,7 @@ export const GuestsCRUD = ({
                                     }}
                                 >
                                     <span className="gc-content-label">Prioridad</span>
-                                    <CalculateTier updateGuestField={updateGuestField} owners={owners} />
+                                    <CalculateTier drawerState={drawerState} updateGuestField={updateGuestField} owners={owners} />
                                 </div>
 
                                 {renderSelectField(

@@ -1,5 +1,5 @@
 import { Button, Dropdown, Rate } from 'antd'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import './calculate_tier.css'
 import { FaStar } from 'react-icons/fa'
 import { IoClose } from 'react-icons/io5'
@@ -49,8 +49,11 @@ const QuestionBlock = ({ title, description, value, onChange }) => {
     )
 }
 
-export const CalculateTier = ({ updateGuestField, owners = [] }) => {
+export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) => {
     const [priorityCalc, setPriorityCalc] = useState(INITIAL_STATE)
+
+    
+    
 
     const updateField = (field, value) => {
         setPriorityCalc((prev) => ({
@@ -122,6 +125,12 @@ export const CalculateTier = ({ updateGuestField, owners = [] }) => {
     const categoryDescription = useMemo(() => {
         return CATEGORY_DESCRIPTIONS[priorityCalc.category] || ''
     }, [priorityCalc.category])
+
+    useEffect(() => {
+        if (!drawerState.visible) {
+          updateField('open', false)
+        }
+      }, [drawerState])
 
     return (
         <Dropdown

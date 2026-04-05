@@ -6,7 +6,7 @@ import { deleteImageFromSupabase, getCoversFromSubapase, getDresscodesFromSupaba
 import { Sparkles } from 'lucide-react'
 
 
-export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id }) => {
+export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small }) => {
 
     const [images, setImages] = useState([])
     const [selectedKey, setSelectedKey] = useState(0)
@@ -193,7 +193,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                 style={{ position: absolute && 'absolute', top: absolute && 10, right: absolute && 10 }}
                 onClick={() => getImagesFromSupabase(invitationID, setImages)}
                 className='full-screen-button'
-                id="expandedbutton" icon={<LuImagePlus size={16} style={{ marginTop: '2px' }} />} />
+                id="expandedbutton" icon={<LuImagePlus size={small ? 12 : 16} style={{ marginTop: '2px' }} />} />
 
         </Dropdown>
     )
