@@ -86,6 +86,7 @@ export default function GuestsPage() {
     const [filterType, setFilterType] = useState(null)
     const [filterSide, setfilterSide] = useState(null)
     const [owners, setOwners] = useState(null)
+    const [url_image, setUrl_image] = useState(null)
 
 
     const openColumns = useMemo(() => ([
@@ -1157,7 +1158,7 @@ export default function GuestsPage() {
     const getType = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('type, credits, name, tags, owners')
+            .select('type, credits, name, tags, owners, url_image')
             .eq('id', id)
             .maybeSingle()
 
@@ -1173,6 +1174,7 @@ export default function GuestsPage() {
         getGuests()
         setLocalTags(data.tags)
         setOwners(data.owners)
+        setUrl_image(data.url_image)
     }
 
     const getTables = async () => {
@@ -1294,7 +1296,7 @@ export default function GuestsPage() {
                                 {
                                     type: "image",
                                     image: {
-                                        link: invitation.cover.image.prod,
+                                        link: url_image ?? invitation.cover.image.prod,
                                     },
                                 },
                             ],

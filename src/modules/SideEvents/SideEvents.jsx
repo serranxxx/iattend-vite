@@ -424,7 +424,7 @@ export const SideEvents = () => {
                                     {
                                         type: "image",
                                         image: {
-                                            link: data?.url_image,
+                                            link: current?.url_image ?? data?.body.image,
                                         },
                                     },
                                 ],
@@ -765,22 +765,22 @@ export const SideEvents = () => {
     };
 
 
-    const onSaveNewTickets = async (newType) => {
+    // const onSaveNewTickets = async (newType) => {
 
-        const { error } = await supabase
-            .from('side_events')
-            .update({ type: newType })
-            .eq("id", current.id)
+    //     const { error } = await supabase
+    //         .from('side_events')
+    //         .update({ type: newType })
+    //         .eq("id", current.id)
 
 
-        if (error) {
-            console.error('Error actualizando:', error)
-        } else {
-            setCurrent((prev) => ({ ...prev, type: newType }))
-            message.success('Privacidad actualizada')
+    //     if (error) {
+    //         console.error('Error actualizando:', error)
+    //     } else {
+    //         setCurrent((prev) => ({ ...prev, type: newType }))
+    //         message.success('Privacidad actualizada')
 
-        }
-    };
+    //     }
+    // };
 
     // const removeGuest = async (guestId) => {
     //     try {
@@ -1402,8 +1402,8 @@ export const SideEvents = () => {
                                 tabBarExtraContent={
                                     <div className='single_row' style={{ marginBottom: '12px' }}>
 
-                                        <CustomLink urlImage={current?.url_image} url={`www.iattend.events/side-event/${current?.id}`} id={id} handleImage={updateURLimage} name={current?.name}/>
-                                        <Popconfirm
+                                        <CustomLink backuImage={current?.body?.image} urlImage={current?.url_image} url={`https://www.iattend.events/side-event/${current?.id}`} id={id} handleImage={updateURLimage} name={current?.name}/>
+                                        {/* <Popconfirm
                                             title={current?.type === 'open' ? 'Invitación Púbica' : 'Invitación Privada'}
                                             description={current?.type === 'open' ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
                                             onConfirm={current?.type === 'open' ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
@@ -1427,7 +1427,7 @@ export const SideEvents = () => {
                                                     </Tooltip>
                                             }
 
-                                        </Popconfirm>
+                                        </Popconfirm> */}
 
                                         <Dropdown
                                             key={0}

@@ -4,7 +4,7 @@ import { Button, Dropdown, message } from 'antd'
 import { ChevronLeft, Link2, SquareArrowUpRight } from 'lucide-react'
 import { StorageImages } from '../ImagesStorage/StorageImages'
 
-export const CustomLink = ({ isHeader, urlImage, url, id, handleImage, name }) => {
+export const CustomLink = ({ backuImage, isHeader, urlImage, url, id, handleImage, name }) => {
 
     const copyToClipboard = async (textToCopy) => {
         try {
@@ -41,7 +41,7 @@ export const CustomLink = ({ isHeader, urlImage, url, id, handleImage, name }) =
 
                             <div className='message_cont'>
                                 <div className='message_image_cont'>
-                                    <img className='message_image' src={urlImage} alt='' />
+                                    <img className='message_image' src={urlImage ?? backuImage} alt='' />
                                     <StorageImages invitationID={id} handleImage={handleImage} type={'side-events'} absolute={true} small={true} />
                                 </div>
 
