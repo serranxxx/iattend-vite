@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
+import { CustomLink } from "../../components/CustomLink/CustomLink";
 
 const baseProd = "https://www.iattend.events"
 
@@ -221,6 +222,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
     const screens = useBreakpoint();
+    const [urlImage, setUrlImage] = useState(null)
 
     const [name, setName] = useState(null)
 
@@ -228,7 +230,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
         const { data, error } = await supabase
             .from("invitations")
-            .select("data, plan, name")
+            .select("data, plan, name, url_image")
             .eq("id", id)
             .maybeSingle();
 
@@ -238,6 +240,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             setInvitation(data.data)
             setPlan(data.plan)
             setName(data.name)
+            setUrlImage(data.url_image)
         }
     }
 
@@ -245,14 +248,6 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
        HELPERS
     ======================== */
 
-    const copyToClipboard = useCallback(async (text) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            message.success("Link copiado");
-        } catch (err) {
-            console.error("Error al copiar:", err);
-        }
-    }, []);
 
     const handleBack = useCallback(() => {
         if (mode === 'dashboard') {
@@ -270,6 +265,23 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const goToInvitations = useCallback(() => {
         navigate("/invitations");
     }, [navigate]);
+
+    const updateURLimage = async (e) => {
+
+        const { error } = await supabase
+            .from('invitations')
+            .update({ url_image: e })
+            .eq("id", id)
+
+
+        if (error) {
+            console.error('Error actualizando:', error)
+        } else {
+            message.success('Imagen actualizada')
+            setUrlImage(e)
+
+        }
+    };
 
     /* ========================
        BREADCRUMB ITEMS
@@ -395,19 +407,8 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             />
                         )}
 
-                        <Button
-                            onClick={() =>
-                                copyToClipboard(
-                                    `${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`
-                                )
-                            }
-                            type="text"
-                            className="primarybutton--active"
-                            style={{ maxHeight: 25, padding: "0px 12px", marginLeft: 4 }}
-                            icon={<LuLink size={12} />}
-                        >
-                            Copiar link
-                        </Button>
+                        <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} />
+
 
                         {
                             !screens.xs &&

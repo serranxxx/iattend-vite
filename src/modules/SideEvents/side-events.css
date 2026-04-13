@@ -38,7 +38,8 @@
 }
 
 .side_invitation_cont {
-    width: 370px;
+    flex: 1;
+    max-width: 370px;
     min-width: 370px;
     height: 94vh;
     background-image: linear-gradient(to top, #EEE, #CCC);
@@ -55,26 +56,41 @@
 
 .side_table_cont {
     flex: 1;
-    /* height: 90vh;
-    max-height: 94vh; */
+    min-width: 0;
+    width: 0;
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
     flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     gap: 12px;
-    width: 100%;
     padding: 12px;
     padding-top: 36px;
     box-sizing: border-box;
-
+    overflow: hidden;
 }
 
-.side-evennts_table_container {
-    /* width: 100%; */
-    width: 91%;
-    box-sizing: border-box;
-    padding: 0px;
+.side-tabs {
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
+
+.side-tabs .ant-tabs-content-holder,
+.side-tabs .ant-tabs-content,
+.side-tabs .ant-tabs-tabpane {
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.side-tabs .ant-table-wrapper {
+    width: 100%;
+    min-width: 0;
+}
+
 
 .side_eventes_header {
     display: flex;
@@ -385,22 +401,9 @@
 }
 
 
-/* body: {
-    address: {
-        street: null,
-        number: null,
-        neighborhood: null,
-        zipcode: null,
-        country: null,
-        state: null,
-        city: null
-    },
-    hour: null,
-    image: null,
-    title: {
-        font: 'Poppins',
-        size: '24px',
-        weight: 600,
-        opacity: 1
-    },
-    font: 'Poppins' */
+
+
+
+
+
+

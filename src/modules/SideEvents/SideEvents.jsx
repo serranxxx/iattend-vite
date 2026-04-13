@@ -1,11 +1,10 @@
-import { Button, Checkbox, Col, ColorPicker, DatePicker, Dropdown, Input, Layout, message, Modal, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
+import { Button, Checkbox, Col, ColorPicker, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import './side-events.css'
 import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
 import dayjs from 'dayjs'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
-import { CreateGuest } from '../../components/Create/CreateGuest'
 import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
@@ -15,11 +14,13 @@ import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 // import { handleCheckout } from '../../components/Payment/functions'
 import { useSearchParams } from 'react-router-dom'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { Check, CheckCheck, MailWarning, Send } from 'lucide-react'
+import { Check, CheckCheck, ChevronLeft, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
+import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
+import { FiArrowUpRight } from 'react-icons/fi'
+import { CustomLink } from '../../components/CustomLink/CustomLink'
 
 
 const { Option } = Select;
-
 
 
 
@@ -33,7 +34,7 @@ export const SideEvents = () => {
     const [mainGuests, setMainGuests] = useState(null)
     const [readyToAdd, setReadyToAdd] = useState([])
     const [searchMain, setSearchMain] = useState("")
-    const [onCreate, setOnCreate] = useState(false)
+    // const [onCreate, setOnCreate] = useState(false)
     const [onSending, setOnSending] = useState(false)
     const [onTickets, setOnTickets] = useState(false)
     const [messagesDispatch, setMessagesDispatch] = useState([])
@@ -43,6 +44,12 @@ export const SideEvents = () => {
     const [plan, setPlan] = useState(null)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
+    const [drawerState, setDrawerState] = useState({
+        currentGuest: null,
+        onEditGuest: false,
+        companions: [],
+        visible: false
+    });
     const { TextArea } = Input;
 
     const columns = useMemo(() => ([
@@ -52,15 +59,39 @@ export const SideEvents = () => {
             key: "name",
             fixed: "left",
             width: 160,
+            render: (value, record) => {
+                return (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px'
+                    }}>
+                        <Tooltip title="Abrir">
+                            <Button
+                                onClick={() =>
+                                    setDrawerState({
+                                        currentGuest: record,
+                                        onEditGuest: true,
+                                        companions: handleCompanions(record.id),
+                                        visible: true,
+                                    })
+                                }
+                                className="primarybutton"
+                                icon={<FiArrowUpRight size={14} style={{ marginTop: 2 }} />}
+                                style={{ maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
+                            />
+                        </Tooltip>
+                        <span>{value}</span>
+                    </div>
+                )
+            }
         },
 
         {
             title: "Contacto",
             dataIndex: "phone_number",
             key: "phone_number",
-            width:140,
+            width: 140,
 
-    
+
             //   render: (value) => phoneFormatter(value),
         },
 
@@ -68,7 +99,7 @@ export const SideEvents = () => {
             title: "Estado",
             dataIndex: "state",
             key: "state",
-            width:100,
+            width: 100,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -83,7 +114,7 @@ export const SideEvents = () => {
             title: "Accesos",
             dataIndex: "password",
             key: "password",
-            width:140,
+            width: 140,
             render: (value,) => (
                 <div className="tag-container">
                     <Dropdown popupRender={() => (
@@ -106,8 +137,8 @@ export const SideEvents = () => {
             title: "Etiqueta",
             dataIndex: "tag",
             key: "tag",
-            width:100,
-           
+            width: 100,
+
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -120,7 +151,7 @@ export const SideEvents = () => {
         {
             title: "Acciones",
             key: "send",
-            width: 200,
+            width: 120,
             fixed: "right",
             render: (_, record) => {
                 const { state, phone_number } = record;
@@ -160,7 +191,7 @@ export const SideEvents = () => {
                                 />
                             </Tooltip>
 
-                            <Tooltip title="Eliminar"> <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}></Button></Tooltip>
+                            {/* <Tooltip title="Eliminar"> <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}></Button></Tooltip> */}
                         </div>
                     );
                 }
@@ -173,55 +204,35 @@ export const SideEvents = () => {
 
                 if (state === "confirmado" || state === 'rechazado') {
                     return (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "flex-start",
-                                gap: 6,
-                                width: "100%",
-                                paddingLeft: '12px', boxSizing: 'border-box'
-                            }}
-                        >
-
-
-                            <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}>Eliminar</Button>
-                        </div>
+                        <></>
 
                     );
                 }
 
-                // if (state === "rechazado") {
-                //     return (
-                //         <Button
-                //             className="primarybutton"
-                //             icon={<MdDelete style={{ marginTop: 2 }} />}
-                //             style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
-                //         >
-                //             Eliminar
-                //         </Button>
-                //     );
-                // }
-
                 return null;
             },
         },
-    ]), [current]);
+    ]), [current, rawData]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
-        columns: columns,
+        columns,
         pagination: false,
-        scroll: { y: '80vh', x:1000},
-
+        scroll: {
+            x: 'max-content',
+            y: 'calc(90vh - 180px)',
+        },
     }), [columns]);
 
     const items = useMemo(() => ([
         {
-            label: `Lista de espera`,
+            label: `Creados`,
             key: "creado",
             children: (
                 <Table
+                    style={{
+                        maxWidth: '100%'
+                    }}
                     size='small'
                     {...tableProps}
                     dataSource={rawData.filter((i) => i.state === 'creado')}
@@ -229,7 +240,7 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: `Invitación enviada`,
+            label: `Enviadas`,
             key: "esperando",
             children: (
                 <Table
@@ -240,7 +251,7 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: `Respuesta recibida`,
+            label: `Confirmados`,
             key: "confirmado",
             children: (
                 <Table
@@ -255,6 +266,11 @@ export const SideEvents = () => {
         tableProps,
         rawData,
     ]);
+
+    const handleCompanions = (id) => {
+        const comps = rawData?.filter((row) => row.companion_id === id.toString())
+        return comps
+    }
 
     const dispatchMap = useMemo(() => {
         const map = {};
@@ -288,7 +304,7 @@ export const SideEvents = () => {
             case 'processing':
 
                 return (
-                    <div className='dispatch_message_tag' style={{maxHeight:'16px'}}>
+                    <div className='dispatch_message_tag' style={{ maxHeight: '16px' }}>
                         Procesando
                     </div>
                 )
@@ -296,7 +312,7 @@ export const SideEvents = () => {
             case 'sent':
 
                 return (
-                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <Send size={16} />
                         Enviado
                     </div>
@@ -305,7 +321,7 @@ export const SideEvents = () => {
             case 'delivered':
 
                 return (
-                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <Check size={16} />
                         Entregado
                     </div>
@@ -315,7 +331,7 @@ export const SideEvents = () => {
             case 'read':
 
                 return (
-                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <CheckCheck size={16} />
                         Visto
                     </div>
@@ -335,7 +351,7 @@ export const SideEvents = () => {
                             onClick={() => onSedingInvitation(current, record)}
                             className="primarybutton--active"
                             icon={<MailWarning size={16} />}
-                            style={{ flex: 1, maxHeight: 30, width:'136px' }}
+                            style={{ flex: 1, maxHeight: 30, width: '136px' }}
                         >
                             Reintentar
                         </Button>
@@ -349,7 +365,7 @@ export const SideEvents = () => {
 
             default:
                 return (
-                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{maxHeight:'16px'}}>
+                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         Esperando
                     </div>
                 )
@@ -408,7 +424,7 @@ export const SideEvents = () => {
                                     {
                                         type: "image",
                                         image: {
-                                            link: data?.body?.image,
+                                            link: current?.url_image ?? data?.body.image,
                                         },
                                     },
                                 ],
@@ -504,7 +520,7 @@ export const SideEvents = () => {
         return String(value);
     };
 
-    
+
     dayjs.locale('es');
 
     const formatInvitationDate = (date) => {
@@ -520,6 +536,7 @@ export const SideEvents = () => {
                 invitation_id: id, // uuid
                 date: new Date().toISOString(), // timestamp
                 name: null,
+                url_image: null,
                 body: {
                     address: {
                         street: null,
@@ -565,6 +582,7 @@ export const SideEvents = () => {
             .from('side_events')
             .update({
                 name: current.name,
+                url_image: current.url_image === null ? current.body.image : current.url_image,
                 body: current.body,
             })
             .eq('id', current.id);
@@ -722,22 +740,62 @@ export const SideEvents = () => {
         // console.log('Créditos actualizados correctamente:', newCredits)
     }
 
-    const removeGuest = async (guestId) => {
-        try {
-            const { error: guestErr } = await supabase
-                .from('side_events_guests')
-                .delete()
-                .eq('id', guestId);
+    const truncate = (text, max = 50) =>
+        text.length > max ? text.slice(0, max) + '...' : text;
 
-            if (guestErr) throw guestErr;
-
-            getGuests()
-        } catch (error) {
-            console.log(error)
-        }
+    const handleImages = (e) => {
+        setCurrent((prev) => ({ ...prev, body: { ...prev.body, image: e } }))
     }
 
+    const updateURLimage = async (e) => {
 
+        const { error } = await supabase
+            .from('side_events')
+            .update({ url_image: e })
+            .eq("id", current.id)
+
+
+        if (error) {
+            console.error('Error actualizando:', error)
+        } else {
+            setCurrent((prev) => ({ ...prev, url_image: e }))
+            message.success('Imagen actualizada')
+
+        }
+    };
+
+
+    // const onSaveNewTickets = async (newType) => {
+
+    //     const { error } = await supabase
+    //         .from('side_events')
+    //         .update({ type: newType })
+    //         .eq("id", current.id)
+
+
+    //     if (error) {
+    //         console.error('Error actualizando:', error)
+    //     } else {
+    //         setCurrent((prev) => ({ ...prev, type: newType }))
+    //         message.success('Privacidad actualizada')
+
+    //     }
+    // };
+
+    // const removeGuest = async (guestId) => {
+    //     try {
+    //         const { error: guestErr } = await supabase
+    //             .from('side_events_guests')
+    //             .delete()
+    //             .eq('id', guestId);
+
+    //         if (guestErr) throw guestErr;
+
+    //         getGuests()
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
 
 
     useEffect(() => {
@@ -804,14 +862,14 @@ export const SideEvents = () => {
                     (payload) => {
                         const row = payload.new || payload.old;
                         if (!row) return;
-    
+
                         if (row.invitation_id === id) {
                             // console.log('message status update:', row);
                             getMessagesUpdates()
                             getGuests();
                             // refreshPage();
                         }
-    
+
                     }
                 )
 
@@ -824,15 +882,10 @@ export const SideEvents = () => {
             };
         }
 
-        
+
     }, [supabase, id])
 
-    const truncate = (text, max = 50) =>
-        text.length > max ? text.slice(0, max) + '...' : text;
 
-    const handleImages = (e) => {
-        setCurrent((prev) => ({ ...prev, body: { ...prev.body, image: e } }))
-    }
 
 
     return (
@@ -906,7 +959,7 @@ export const SideEvents = () => {
                         footer={false}
                         onCancel={() => setOpen(false)}
                         onOk={() => setOpen(false)}
-                        style={{ top: 20, maxWidth:'1320px'}}
+                        style={{ top: 20, maxWidth: '1320px' }}
                         width="90%"
                         closeIcon={false}
                         styles={{
@@ -915,13 +968,14 @@ export const SideEvents = () => {
                                 padding: '0px',
                                 height: '90vh',
                                 overflow: 'hidden',
-                                position: 'relative'
+                                position: 'relative',
+                                border:'4px solid #F5F3F2'
                             },
                             body: {
                                 display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
                                 width: '100%',
                                 position: 'relative',
-                                
+
 
                             }
                         }}
@@ -1008,7 +1062,7 @@ export const SideEvents = () => {
 
 
 
-                                            <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'}/>
+                                            <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'} />
                                         </div>
 
                                         <div className='side_info_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, transform: 'scale(0.9)' }}>
@@ -1341,91 +1395,126 @@ export const SideEvents = () => {
 
                         </div>
 
-                        <div className='side_table_cont'>
+                        <div className='side_table_cont' >
 
-                            <div className='side-evennts_table_container'>
-                                <Tabs
-                                    // style={{ width: '90%', }}
-                                    type="card"
-                                    items={items}
-                                    tabBarExtraContent={
-                                        <div className='single_row' style={{ marginBottom:'12px' }}>
-                                            <Dropdown
-                                                key={0}
-                                                trigger={['click']}
-                                                placement='bottomRight'
-                                                popupRender={() => (
-                                                    <div key={2} className='single_col' style={{
-                                                        boxSizing: 'border-box', backgroundColor: '#FFF', padding: '12px',
-                                                        boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '16px', gap: '12px',
-                                                        marginTop: '8px'
-                                                    }}>
-                                                        <Dropdown
-                                                            key={1}
-                                                            trigger={['click']}
-                                                            placement='bottomLeft'
-                                                            popupRender={() => (
-                                                                <div key={3} className='side_guest_list'>
-                                                                    <div className='single_row' style={{
-                                                                        alignSelf: 'stretch', justifyContent: 'space-between',
-                                                                        alignItems: 'flex-end'
-                                                                    }}>
-                                                                        <span><b>Lista principal</b></span>
-                                                                        <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>Agregar</Button>
-                                                                    </div>
-                                                                    <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder='Búscar invitado' style={{ borderRadius: '99px' }} />
-                                                                    <div className='single_col scroll-invitation' style={{
-                                                                        alignSelf: 'stretch', gap: '2px',
-                                                                        maxHeight: '100%', overflowY: 'auto'
-                                                                    }}>
-                                                                        {
-                                                                            mainGuests ? mainGuests?.filter(i =>
-                                                                                i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
-                                                                                    <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
-                                                                                        alignSelf: 'stretch',
-                                                                                        padding: '8px'
-                                                                                    }}>
-                                                                                        {
-                                                                                            rawData.find(n => n.password === i.password)
-                                                                                                ? <Checkbox disabled checked />
-                                                                                                : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
-                                                                                        }
+                            <Tabs
+                                className="side-tabs"
+                                type="card"
+                                items={items}
+                                tabBarExtraContent={
+                                    <div className='single_row' style={{ marginBottom: '12px' }}>
 
-                                                                                        <span style={{ minWidth: '130px', }}>{truncate(i.name, 16)}</span>
+                                        <CustomLink backuImage={current?.body?.image} urlImage={current?.url_image} url={`https://www.iattend.events/side-event/${current?.id}`} id={id} handleImage={updateURLimage} name={current?.name}/>
+                                        {/* <Popconfirm
+                                            title={current?.type === 'open' ? 'Invitación Púbica' : 'Invitación Privada'}
+                                            description={current?.type === 'open' ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
+                                            onConfirm={current?.type === 'open' ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
+                                            placement="bottomLeft"
+                                            okText="Continuar"
+                                            cancelText="Cancelar"
+                                            style={{ width: '400px' }}
+                                            id="popup-confirm"
+                                        >
+                                            {
+                                                current?.type === 'open' ?
+                                                    <Tooltip title="Evento público">
+                                                        <Button
+                                                            icon={<LockKeyholeOpen size={14} />} className="primarybutton">
+                                                        </Button>
+                                                    </Tooltip>
+                                                    : <Tooltip title="Evento privado">
+                                                        <Button
+                                                            icon={<LockKeyhole size={14} />} className="primarybutton">
+                                                        </Button>
+                                                    </Tooltip>
+                                            }
 
-                                                                                        <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px' }}>
-                                                                                            <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
-                                                                                        </div>
+                                        </Popconfirm> */}
 
-                                                                                        <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', opacity: '0.7' }}>
-                                                                                            <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
-                                                                                        </div>
-
-                                                                                    </div>
-                                                                                ))
-
-                                                                                : <Spin />
-                                                                        }
-
-                                                                    </div>
+                                        <Dropdown
+                                            key={0}
+                                            trigger={['click']}
+                                            placement='bottomRight'
+                                            popupRender={() => (
+                                                <div key={2} className='single_col' style={{
+                                                    boxSizing: 'border-box', backgroundColor: '#FFF', padding: '12px',
+                                                    boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '16px', gap: '12px',
+                                                    marginTop: '8px'
+                                                }}>
+                                                    <Dropdown
+                                                        key={1}
+                                                        trigger={['click']}
+                                                        placement='bottomLeft'
+                                                        popupRender={() => (
+                                                            <div key={3} className='side_guest_list'>
+                                                                <div className='single_row' style={{
+                                                                    alignSelf: 'stretch', justifyContent: 'space-between',
+                                                                    alignItems: 'flex-end'
+                                                                }}>
+                                                                    <span><b>Lista principal</b></span>
+                                                                    <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>Agregar</Button>
                                                                 </div>
-                                                            )}
-                                                        >
-                                                            <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<LuCopy />}>Copiar de otra lista</Button>
+                                                                <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder='Búscar invitado' style={{ borderRadius: '99px' }} />
+                                                                <div className='single_col scroll-invitation' style={{
+                                                                    alignSelf: 'stretch', gap: '2px',
+                                                                    maxHeight: '100%', overflowY: 'auto'
+                                                                }}>
+                                                                    {
+                                                                        mainGuests ? mainGuests?.filter(i =>
+                                                                            i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
+                                                                                <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
+                                                                                    alignSelf: 'stretch',
+                                                                                    padding: '8px'
+                                                                                }}>
+                                                                                    {
+                                                                                        rawData.find(n => n.password === i.password)
+                                                                                            ? <Checkbox disabled checked />
+                                                                                            : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
+                                                                                    }
 
-                                                        </Dropdown>
-                                                        <Button onClick={() => setOnCreate(true)} style={{ width: '100%' }} icon={<LuPlus />}>Crear invitado</Button>
-                                                    </div>
-                                                )}
-                                            >
-                                                <Button className='primarybutton' icon={<LuPlus />} >Agregar invitados</Button>
-                                            </Dropdown>
-                                            <Button onClick={() => setOpen(false)} className='primarybutton' icon={<LuX />}></Button>
-                                        </div>
-                                    }
+                                                                                    <span style={{ minWidth: '130px', }}>{truncate(i.name, 16)}</span>
 
-                                />
-                            </div>
+                                                                                    <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px' }}>
+                                                                                        <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
+                                                                                    </div>
+
+                                                                                    <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', opacity: '0.7' }}>
+                                                                                        <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
+                                                                                    </div>
+
+                                                                                </div>
+                                                                            ))
+
+                                                                            : <Spin />
+                                                                    }
+
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    >
+                                                        <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<Copy size={14} />}>Copiar de otra lista</Button>
+
+                                                    </Dropdown>
+                                                    <Button
+
+                                                        onClick={() => setDrawerState({
+                                                            currentGuest: null,
+                                                            onEditGuest: false,
+                                                            companions: [],
+                                                            visible: true
+                                                        })} style={{ width: '100%' }} icon={<Plus size={14} />}>Nuevo invitado</Button>
+                                                </div>
+                                            )}
+                                        >
+                                            <Button className='primarybutton--active' icon={<Plus size={14} />} >Agregar</Button>
+                                        </Dropdown>
+
+
+                                        {/* <Button onClick={() => setOpen(false)} className='primarybutton' icon={<LuX />}></Button> */}
+                                    </div>
+                                }
+
+                            />
                         </div>
 
                         <Tooltip color="#6D3CFA">
@@ -1473,7 +1562,7 @@ export const SideEvents = () => {
 
                 </Layout >
 
-                <CreateGuest sideID={current?.id} setOnCreate={setOnCreate} onCreate={onCreate} invitationID={id} getGuests={getGuests} />
+                <GuestsCRUD rowData={rawData} invitationID={id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} />
             </Layout >
         </>
     )

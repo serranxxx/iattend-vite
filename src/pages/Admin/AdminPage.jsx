@@ -566,6 +566,7 @@ export const AdminPage = () => {
                 invitation_id: id, // uuid
                 date: new Date().toISOString(), // timestamp
                 name: null,
+                url_image: null,
                 body: {
                     address: {
                         street: null,

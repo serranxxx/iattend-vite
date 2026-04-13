@@ -99,7 +99,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
             tickets: 300,
             active: true,
             phone_number: currentPhone,
-
+            url_imnage:null,
             data: {
                 cover: {
                     date: {

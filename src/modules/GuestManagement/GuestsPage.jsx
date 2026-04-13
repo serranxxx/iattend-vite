@@ -2,7 +2,6 @@ import { Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Pr
 import React, { useEffect, useMemo, useState } from 'react'
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Legend, } from 'chart.js';
-import { NewGuestDrawer } from '../../components/Create/NewGuestDrawer';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoMdAdd, } from 'react-icons/io';
 import { FooterApp } from '../Footer/FooterApp';
 import { supabase } from '../../lib/supabase';
@@ -26,6 +25,7 @@ import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
 import { AArrowUp, Check, CheckCheck, CircleUserRound, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, Search, Send, Tag, TextAlignJustify } from 'lucide-react';
+import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 
 const { useBreakpoint } = Grid;
 
@@ -86,6 +86,7 @@ export default function GuestsPage() {
     const [filterType, setFilterType] = useState(null)
     const [filterSide, setfilterSide] = useState(null)
     const [owners, setOwners] = useState(null)
+    const [url_image, setUrl_image] = useState(null)
 
 
     const openColumns = useMemo(() => ([
@@ -1162,7 +1163,7 @@ export default function GuestsPage() {
     const getType = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('type, credits, name, tags, owners')
+            .select('type, credits, name, tags, owners, url_image')
             .eq('id', id)
             .maybeSingle()
 
@@ -1178,6 +1179,7 @@ export default function GuestsPage() {
         getGuests()
         setLocalTags(data.tags)
         setOwners(data.owners)
+        setUrl_image(data.url_image)
     }
 
     const getTables = async () => {
@@ -1325,7 +1327,7 @@ export default function GuestsPage() {
                                 {
                                     type: "image",
                                     image: {
-                                        link: invitation.cover.image.prod,
+                                        link: url_image ?? invitation.cover.image.prod,
                                     },
                                 },
                             ],
@@ -1981,7 +1983,7 @@ export default function GuestsPage() {
                                                         openCard ?
                                                             <Button
                                                                 style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<LockKeyholeOpen />} className="primarybutton_transparent">
+                                                                icon={<LockKeyholeOpen size={14}/>} className="primarybutton_transparent">
                                                                 Evento público
                                                             </Button>
                                                             : <Button
@@ -2228,8 +2230,7 @@ export default function GuestsPage() {
             >
                 <TablesPage invitationID={id} />
             </Drawer>
-
-            <NewGuestDrawer rowData={rowData} invitationID={id} ticketsFree={tickets} setDrawerState={setDrawerState} available={tickets - (confirmed + waiting)} refreshPage={refreshPage} drawerState={drawerState} />
+            <GuestsCRUD rowData={rowData} invitationID={id} setDrawerState={setDrawerState} refreshPage={refreshPage} drawerState={drawerState} />
         </>
     )
 }
