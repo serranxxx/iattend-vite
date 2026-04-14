@@ -482,7 +482,7 @@ export default function GuestsPage() {
             key: "link",
             width: 160,
             render: (_, record) => {
-                const url = `www.iattend.events/${invitation?.generals?.event?.label}/${name}?password=${record.password}`;
+                const url = `https://www.iattend.events/${invitation?.generals?.event?.label}/${name}?password=${record.password}`;
                 return (
                     <div
                         style={{

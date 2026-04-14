@@ -122,7 +122,7 @@ export const SideEvents = () => {
                             <Button style={{ width: '100%' }} icon={<LuCopy size={14} />} onClick={() => copyToClipboard(value)} >{value}</Button>
                             <Button
                                 style={{ width: '100%' }}
-                                onClick={() => copyToClipboard(`www.iattend.events/side-event/${current?.id}?password=${value}`)}
+                                onClick={() => copyToClipboard(`https://www.iattend.events/side-event/${current?.id}?password=${value}`)}
                                 icon={<LuCopy size={14} />}
                             >Link mágico</Button>
                         </div>
