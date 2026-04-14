@@ -757,6 +757,7 @@
     flex-direction: column;
     position: relative;
     min-height: 100vh;
+    padding: 0;
 }
 
 .new-inv-mob-btn {

@@ -106,8 +106,10 @@ export const InvitationsPage = () => {
 
 
 
+
+
     return (
-        <div className='invitations-page-main-container'>
+        <div className='invitations-page-main-container' >
 
             <Layout
                 style={{
@@ -120,7 +122,8 @@ export const InvitationsPage = () => {
                 <HeaderBuild position={'invitations'} isVisible={true} />
                 <UserPopUp logout={logout} />
                 <Layout className='scroll-invitation build-invitation-layout main-dash-layout' style={{
-                    marginTop: '80px', maxWidth: '100vw'
+                    marginTop: '80px', maxWidth: '100vw', padding:0, 
+                    backgroundColor: 'transparent',
                 }} >
                     {
                         loader ?
@@ -135,7 +138,7 @@ export const InvitationsPage = () => {
                             </div>
 
 
-                            : <Content className='invitations-main-content'>
+                            : <Content className='invitations-main-content' >
 
 
                                 {
@@ -296,8 +299,10 @@ export const InvitationsPage = () => {
                                             style={{
                                                 position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
-                                                minHeight: 'auto', height: '100vh',
-                                                backgroundImage: 'radial-gradient(circle, #FFFFFF 50%, var(--brand-color-500-40) 100%)'
+                                                minHeight: 'auto', flex:1,
+                                                height:'90vh',
+                                                // backgroundImage: 'radial-gradient(circle, #FFFFFF 50%, var(--brand-color-500-40) 100%)',
+                                                background:'transparent'
                                                 // height: '100vh'
                                             }}>
                                             <Login />
