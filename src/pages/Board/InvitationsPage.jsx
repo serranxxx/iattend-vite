@@ -4,14 +4,13 @@ import { Login } from '../../components/Auth/Login';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { LuLink2, LuPlus, } from 'react-icons/lu';
+import { LuLink2, } from 'react-icons/lu';
 import { FooterApp } from '../../modules/Footer/FooterApp'
 import { appContext } from '../../context';
 import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
 import { darker } from '../../helpers/assets/functions';
 import { RiArrowRightSLine } from 'react-icons/ri';
-import { LoginPage } from '../LoginPage';
 import UserPopUp from '../../components/UserPopUp/UserPopUp';
 
 const { Content } = Layout;
@@ -21,12 +20,11 @@ const baseProd = "https://www.iattend.events"
 
 export const InvitationsPage = () => {
 
-    // const [openLogin, setOpenLogin] = useState(false)
     const [invitationsCopy, setInvitationsCopy] = useState(null)
     const [loader, setLoader] = useState(false)
     const { pathname } = useLocation();
     const [invitationsNI, setInvitationsNI] = useState(null)
-    const { logout } = useContext(appContext)
+    const { logout, logged } = useContext(appContext)
     const sessions = JSON.parse(localStorage.getItem("session"));
 
     const navigate = useNavigate();
@@ -99,6 +97,13 @@ export const InvitationsPage = () => {
         window.scrollTo(0, 0);
     }, [pathname]);
 
+    useEffect(() => {
+      if (!logged) {
+        getNewInvitations()
+      }
+    }, [logged])
+    
+
 
     useEffect(() => {
         setInvitationsCopy(invitationsNI)
@@ -142,7 +147,7 @@ export const InvitationsPage = () => {
 
 
                                 {
-                                    sessions?.logged ?
+                                    sessions?.logged &&
                                         <div style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: 'column',
                                             position: 'relative', padding: '16px', gap: '24px', width: '100%',
@@ -242,10 +247,10 @@ export const InvitationsPage = () => {
                                                                             padding: '4px 12px', fontSize: '12px',
                                                                             boxShadow: '0px 0px 8px rgba(0,0,0,0.2)'
                                                                         }}
-                                                                        disabled={!invitation.active}
+                                                                        disabled={invitation.active ? false : true}
                                                                         onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
                                                                         // onClick={() => handleQRO(invitation.mongo_id)}
-                                                                        i
+                                                                        
                                                                     ><LuLink2 size={14} /> Copiar link</button>
 
                                                                     <div
@@ -295,19 +300,9 @@ export const InvitationsPage = () => {
 
                                         </div>
 
-                                        : <Layout
-                                            style={{
-                                                position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
-                                                alignItems: 'center', justifyContent: 'center',
-                                                minHeight: 'auto', flex:1,
-                                                height:'90vh',
-                                                // backgroundImage: 'radial-gradient(circle, #FFFFFF 50%, var(--brand-color-500-40) 100%)',
-                                                background:'transparent'
-                                                // height: '100vh'
-                                            }}>
-                                            <Login />
-                                        </Layout>
-                                    // <LoginPage />
+                                        
+
+                                        
                                 }
 
 

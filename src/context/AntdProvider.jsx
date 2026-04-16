@@ -66,15 +66,14 @@ export const AntdProvider = ({ children }) => {
               // borderColorDisabled: 'transparent' },
             },
             Input: {
-              // borderRadius: 999,
               colorBorder: "var(--borders)",
               colorPrimary: "#6D3CFA",
               colorPrimaryBgHover: "#6D3CFA",
               activeBorderColor: '#6D3CFA',
               colorPrimaryActive: "#6D3CFA",
               colorPrimaryHover: "#6D3CFA",
-              // activeShadow: "none", fontSize: 12,
-              // fontFamily: "var(--font-family)"
+
+
             },
             // InputNumber: { borderRadius: 999, colorBorder: "var(--border-color)", colorPrimary: "var(--brand-color)", colorPrimaryActive: "var(--brand-color-600)", colorPrimaryHover: "var(--brand-color-400)", activeShadow: "none", fontSize: 12, fontFamily: "var(--font-family)" },
             // DatePicker: { borderRadius: 999, colorBorder: "var(--border-color)", colorPrimary: "var(--brand-color)", colorPrimaryActive: "var(--brand-color-600)", colorPrimaryHover: "var(--brand-color-400)", activeShadow: "none", inputFontSize: 12 },

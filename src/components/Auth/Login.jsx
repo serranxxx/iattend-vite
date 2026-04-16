@@ -1,27 +1,87 @@
-import { Button, Input, message } from 'antd'
-import React, { useContext, useState } from 'react'
-import { onNewUser } from '../../services/apiLogin'
-import { useInvitation } from '../../hooks/customHook'
+import { Button, Grid, Input, message } from 'antd'
+import React, { useContext, useEffect, useState } from 'react'
 import { appContext } from '../../context'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { images } from '../../helpers/assets/images'
-import { RiEye2Line, RiEyeCloseLine } from 'react-icons/ri'
+
+import { Eye, EyeOff } from 'lucide-react'
+import axios from 'axios'
+
+const { useBreakpoint } = Grid
 
 export const Login = () => {
 
-    const { operation } = useInvitation()
+    const leftStickers = [
+        { src: 'calendar.png', size: 155, top: '12%', left: '33%', rot: -14 },
+        { src: 'envelope.png', size: 130, top: '32%', left: '7%', rot: 12 },
+        { src: 'puzle.png', size: 90, top: '28%', left: '57%', rot: 5 },
+        { src: 'headphones.png', size: 165, top: '40%', left: '27%', rot: -9 },
+        { src: 'coffee.png', size: 120, top: '30%', left: '73%', rot: -6 },
+        { src: 'light.png', size: 145, top: '58%', left: '7%', rot: 11 },
+        { src: 'star_mini.png', size: 85, top: '57%', left: '57%', rot: 0 },
+        { src: 'plane.png', size: 130, top: '68%', left: '37%', rot: -20 },
+        { src: 'notes.png', size: 135, top: '68%', left: '67%', rot: 8 },
+        { src: 'star.png', size: 165, top: '78%', left: '7%', rot: 7 },
+    ];
+
+    const rightStickers = [
+        { src: 'laptop.png', size: 155, top: '12%', right: '34%', rot: 14 },
+        { src: 'notebook.png', size: 130, top: '30%', right: '7%', rot: -12 },
+        { src: 'pen.png', size: 135, top: '33%', right: '55%', rot: 55 },
+        { src: 'phone.png', size: 105, top: '48%', right: '33%', rot: 9 },
+        { src: 'heart.png', size: 100, top: '26%', right: '73%', rot: 6 },
+        { src: 'rule.png', size: 125, top: '58%', right: '7%', rot: -11 },
+        { src: 'tape.png', size: 115, top: '55%', right: '65%', rot: 0 },
+        { src: 'camera.png', size: 130, top: '70%', right: '45%', rot: 20 },
+        { src: 'clip.png', size: 80, top: '72%', right: '75%', rot: -8 },
+        { src: 'glasses.png', size: 165, top: '84%', right: '30%', rot: -7 },
+    ];
+
+    const allStickers = [
+        // ARRIBA — 10 stickers, más esparcidos
+        { src: 'calendar.png', size: 95, top: '8%', left: '8%', rot: -12 },
+        { src: 'laptop.png', size: 100, top: '0%', left: '28%', rot: 12 },
+        { src: 'puzle.png', size: 60, top: '10%', left: '48%', rot: 5 },
+        { src: 'coffee.png', size: 85, top: '2%', left: '65%', rot: -5 },
+        { src: 'notebook.png', size: 90, top: '8%', left: '82%', rot: -10 },
+        { src: 'envelope.png', size: 85, top: '18%', left: '3%', rot: -40 },
+        { src: 'heart.png', size: 65, top: '12%', left: '28%', rot: 6 },
+        { src: 'clip.png', size: 50, top: '18%', left: '58%', rot: -6 },
+        { src: 'tape.png', size: 80, top: '14%', left: '66%', rot: 8 },
+        { src: 'glasses.png', size: 100, top: '18%', left: '28%', rot: -8 },
+
+        // ABAJO — 10 stickers, igual de esparcidos
+        { src: 'light.png', size: 100, top: '74%', left: '4%', rot: 10 },
+        { src: 'headphones.png', size: 90, top: '84%', left: '28%', rot: -8 },
+        { src: 'star.png', size: 110, top: '84%', left: '6%', rot: 6 },
+        { src: 'plane.png', size: 85, top: '75%', left: '28%', rot: -18 },
+        { src: 'star_mini.png', size: 55, top: '85%', left: '48%', rot: 0 },
+        { src: 'notes.png', size: 95, top: '76%', left: '50%', rot: 6 },
+        { src: 'pen.png', size: 95, top: '72%', left: '74%', rot: 55 },
+        { src: 'phone.png', size: 75, top: '85%', left: '60%', rot: 8 },
+        { src: 'rule.png', size: 90, top: '58%', left: '86%', rot: -10 },
+        { src: 'camera.png', size: 95, top: '86%', left: '76%', rot: 18 },
+    ];
+
     const navigate = useNavigate();
     const { login, logged } = useContext(appContext)
-    const [createAccount, setCreateAccount] = useState(false)
     const [username, setUsername] = useState(null)
     const [password, setPassword] = useState(null)
+    const [name, setName] = useState(null)
 
-    const [newName, setNewName] = useState(null)
-    const [newUsername, setNewUsername] = useState(null)
-    const [newPassword, setNewPassword] = useState(null)
+    const [messageApi, contextHolder] = message.useMessage();
 
-    const [seePasswrod, setSeePasswrod] = useState(false)
+    // const [onCreateAccount, setOnCreateAccount] = useState(false)
+    const [onShowComponentes, setOnShowComponentes] = useState(false)
+
+    const [searchParams, setSearchParams] = useSearchParams()
+    const onCreateAccount = searchParams.get('mode') === 'register'
+
+    const setOnCreateAccount = (val) => {
+        setSearchParams(val ? { mode: 'register' } : {})
+    }
+
+    const screens = useBreakpoint()
 
     const sbLogin = async () => {
         const email = username
@@ -64,7 +124,6 @@ export const Login = () => {
 
     }
 
-
     const handleLogin = () => {
         if (username && password) {
             localStorage.clear();
@@ -81,133 +140,217 @@ export const Login = () => {
 
     }
 
-    const handleCreate = () => {
-        if (newName && newUsername && newPassword) {
-            onNewUser(operation, newName, newUsername, newPassword)
+    const handleCreate = async () => {
 
-        } else {
-            if (!newName) {
-                message.error('Por favor escribe un nombre');
-            } else if (!newUsername) {
-                message.error('Por favor escribe un correo electrónico');
-            } else {
-                message.error('Por favor escribe una contraseña');
+        try {
+
+            // 1️⃣ Validaciones básicas
+            if (!name || !username || !password) {
+                return messageApi.error('Todos los campos son obligatorios')
             }
+
+            // Validación simple de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!emailRegex.test(username)) {
+                return messageApi.error('Email inválido')
+            }
+
+            // Validar password mínima
+            if (password.length < 6) {
+                return messageApi.error('La contraseña debe tener mínimo 6 caracteres')
+            }
+
+            // 2️⃣ Petición al backend
+            const { data } = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/auth/create-user`,
+                // 'http://localhost:4000/api/auth/create-user', // ajusta la ruta si es diferente
+                {
+                    Name: name,
+                    Email: username,
+                    Password: password,
+                }
+            )
+
+            if (data.ok) {
+                messageApi.success('Usuario creado correctamente')
+                setOnCreateAccount(false)
+
+            }
+
+        } catch (error) {
+
+            console.log(error);
+
+            if (error.response) {
+                // Error que viene del backend
+                const backendMessage = error.response.data.msg;
+
+                messageApi.warning(backendMessage || 'Error al crear el usuario');
+            } else {
+                // Error de red o servidor caído
+                messageApi.error('Error de conexión con el servidor');
+            }
+
         }
     }
 
-    // useEffect(() => {
-    //     if (response) {
-    //         if (response.data.ok) {
-    //             switch (response.data.msg) {
-    //                 case "User uploaded":
-    //                     message.success('¡Nuevo usuario creado!');
-    //                     // setUsername(newUsername);
-    //                     // setPassword(newPassword);
-    //                     // setNewName(null);
-    //                     // setNewUsername(null);
-    //                     // setNewPassword(null);
-    //                     // setCreateAccount(false)
-    //                     break;
 
-    //                 case "Valid user":
-    //                     localStorage.setItem("user-email", username)
-    //                     setUsername(null)
-    //                     setPassword(null)
+    useEffect(() => {
+        setTimeout(() => {
+            setOnShowComponentes(onCreateAccount)
+        }, 200);
 
-    //                     const token = response.data.data.token
-    //                     localStorage.setItem("token", token)
-    //                     localStorage.setItem("token-expires", tokenExpires())
-    //                     navigate("/invitations")
-
-    //                     const user = {
-    //                         name: response.data.data.username,
-    //                         uid: response.data.data.uid,
-    //                         role: response.data.data.role,
-    //                         enterprise: response.data.data.enterprise,
-    //                         email: username
-    //                     }
-    //                     message.success("Sesión iniciada")
-    //                     login(user)
-    //                     break
-
-    //                 default:
-    //                     break;
-    //             }
+        if (onCreateAccount) {
+            setName(null)
+            setPassword(null)
+            setUsername(null)
+        }
 
 
-    //         } else {
-    //             message.error(response.data.msg)
-    //         }
-
-    //     }
-    // }, [response])
+    }, [onCreateAccount])
 
 
     return (
 
+
         !logged ?
-            // !mini ?
-            <div className='login-container'>
 
-                {
+            <>
+                {contextHolder}
+                <div className='login-container'>
 
-                    !createAccount ?
+                    {/* <img src='/images/paper.jpg' alt='' style={{
+                    position:'absolute', width:'100%', objectFit:'cover',
+                    opacity:0.5, mixBlendMode:'multiply'
+                }}/> */}
 
-                        <>
-                            <div className='login-image-container'>
-                                <img alt='' src="/images/negro-morado.png" />
-                            </div>
+                    <div className='left_side_stickers stickers-enter'>
+                        <div className='stickers_cont'>
+
+                            {
+                                screens.xs ?
+                                    allStickers.map((s, i) => (
+                                        <img
+                                            key={i}
+                                            src={`/images/stickers/${s.src}`}
+                                            alt=''
+                                            style={{
+                                                position: 'absolute',
+                                                width: s.size,
+                                                top: s.top,
+                                                left: s.left,
+                                                transform: `rotate(${s.rot}deg)`,
+                                            }}
+                                        />
+                                    ))
+                                    :
+                                    leftStickers.map((s, i) => (
+                                        <img
+                                            key={i}
+                                            src={`/images/stickers/${s.src}`}
+                                            alt=''
+                                            style={{
+                                                position: 'absolute',
+                                                width: s.size,
+                                                top: s.top,
+                                                left: s.left,
+                                                transform: `rotate(${s.rot}deg)`,
+                                            }}
+                                        />
+                                    ))
+
+                            }
+                        </div>
+
+                    </div>
+
+                    <div className='login-form-container' style={{
+                        height: onShowComponentes ? '623px' : '462px',
+                        // display: 'none'
+                    }}>
+
+                        <div style={{
+                            opacity: onCreateAccount ? 0 : 1,
+                            display: onShowComponentes ? 'none' : 'flex'
+                        }} className='login-image-container'>
+                            <img alt='' src="/images/negro-morado.png" />
+                        </div>
+
+                        <div className='texts_container' style={{
+                            opacity: onCreateAccount ? 1 : 0,
+                            display: onShowComponentes ? 'flex' : 'none'
+                        }}>
+                            <span className='page_title'>Empieza a crear la <span className='underline'>invitación</span> de tu boda.</span>
+                            <span className='page_subtitle'>Crea tu cuenta <span className='circle'>gratis</span> y elige tu plan cuando estés listo. </span>
+                        </div>
+
+                        <div className='col' style={{
+                            opacity: onCreateAccount ? 1 : 0,
+                            display: onShowComponentes ? 'flex' : 'none'
+                        }}>
+                            <small>Nombre</small>
+                            <Input
+                                className="login_input"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)} placeholder='Juan Perez' />
+                        </div>
+
+                        <div className='col'>
+                            <small>Usuario/Email</small>
+                            <Input
+                                className="login_input"
+                                onChange={(e) => setUsername(e.target.value)}
+                                value={username} placeholder='juan_perez@gmail.com' />
+                        </div>
+
+                        <div className='col'>
+                            <small>Contraseña</small>
+                            <Input.Password
+                                className="login_input"
+                                onChange={(e) => setPassword(e.target.value)}
+                                value={password}
+                                placeholder="******"
+                                iconRender={(visible) => (visible ? <Eye size={14} /> : <EyeOff size={14} />)}
+                            />
+                        </div>
 
 
-                            <div className='login-form-container'>
-                                <Input onChange={(e) => setUsername(e.target.value)} value={username} placeholder='Email' className='gc-input-text login-input' style={{ backgroundColor:'#FFFFFF60', backdropFilter:'blur(10px)'}}/>
-                                <div className='password-button-container'>
-                                    <Input type={!seePasswrod ? 'password' : ''} onChange={(e) => setPassword(e.target.value)} value={password} placeholder='Contraseña' style={{
-                                        backgroundColor:'#FFFFFF60', backdropFilter:'blur(10px)'
-                                    }} className='gc-input-text login-input' />
-                                    <Button
-                                        onClick={() => setSeePasswrod(!seePasswrod)} type='text' className='see-password-button'
-                                        icon={!seePasswrod ? <RiEyeCloseLine size={18} /> : <RiEye2Line size={18} />} />
-                                </div>
+                        <Button className='login_btn' onClick={onCreateAccount ? handleCreate : handleLogin} >{onShowComponentes ? 'Crear cuenta' : 'Iniciar Sesión'}</Button>
 
-                                <Button style={{
-                                    marginTop: '16px'
-                                }} onClick={handleLogin} className='primarybutton--active'>Iniciar Sesión</Button>
+                        <span className='login-label'>{onShowComponentes ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'} <a onClick={() => setOnCreateAccount(!onCreateAccount)} className='label-forgot-password'>{onShowComponentes ? 'Iniciar sesión' : 'Crear cuenta'}</a></span>
 
 
-                            </div>
-                        </>
+                    </div>
 
-                        : <>
-                            <>
-                                <div className='login-image-container'>
-                                    <img src={images.login} alt='' />
-                                </div>
-
-                                <div className='login-form-container'>
-                                    <Input onChange={(e) => setNewName(e.target.value)} value={newName} placeholder='Nombre' className='gc-input-text login-input' />
-                                    <Input onChange={(e) => setNewUsername(e.target.value)} value={newUsername} placeholder='Email' className='gc-input-text login-input' />
-                                    <div className='password-button-container'>
-                                        <Input type={!seePasswrod ? 'password' : ''} onChange={(e) => setNewPassword(e.target.value)} value={newPassword} placeholder='Contraseña' className='gc-input-text login-input' />
-                                        <Button
-                                            onClick={() => setSeePasswrod(!seePasswrod)} type='text' className='see-password-button'
-                                            icon={!seePasswrod ? <RiEyeCloseLine size={18} /> : <RiEye2Line size={18} />} />
-                                    </div>
-                                    <Button onClick={handleCreate} className='primarybutton mt'>Crear cuenta</Button>
-                                    <span className={'login-label'}>¿Ya tienes una cuenta? <span onClick={() => setCreateAccount(false)} className={'label-forgot-password'}>Inicia sesión</span></span>
-
-                                </div>
-                            </>
-                        </>
-
-                }
+                    <div className='right_side_stickers stickers-enter'>
+                        <div className='stickers_cont'>
+                            {rightStickers.map((s, i) => (
+                                <img
+                                    key={i}
+                                    src={`/images/stickers/${s.src}`}
+                                    alt=''
+                                    style={{
+                                        position: 'absolute',
+                                        width: s.size,
+                                        top: s.top,
+                                        right: s.right,
+                                        transform: `rotate(${s.rot}deg)`,
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
 
 
-            </div>
+                    <img className='texture_img_top' src="/images/texture_bg.png" alt='' />
+
+                    <img className='texture_img_right' src="/images/texture_bg.png" alt='' />
+
+
+                </div>
+            </>
 
             : <></>
-
 
     )
 }

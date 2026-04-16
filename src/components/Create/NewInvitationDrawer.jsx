@@ -626,7 +626,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                 closable={false}
                 onClose={handleClose}
                 open={visible}
-                width={'50%'}
+                size={'50%'}
                 title={'Configura tu evento'}
                 extra={<Button disabled={!(currentPlan && currentPhone && currentTemplate && dominio)} icon={<FaPlus />} className='primarybutton--active' style={{ fontWeight: 800 }} onClick={handleNew}>Crear evento</Button>}
 
