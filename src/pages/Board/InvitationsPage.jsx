@@ -1,22 +1,43 @@
-import React, { useContext, useEffect, useState, } from 'react'
-import { Empty, Input, Layout, Row, message, Modal, Button } from 'antd';
-import { Login } from '../../components/Auth/Login';
-import { useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react'
+import { Input, Layout, Row, message, Button } from 'antd';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { LuLink2, } from 'react-icons/lu';
-import { FooterApp } from '../../modules/Footer/FooterApp'
 import { appContext } from '../../context';
 import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
 import { darker } from '../../helpers/assets/functions';
-import { RiArrowRightSLine } from 'react-icons/ri';
 import UserPopUp from '../../components/UserPopUp/UserPopUp';
+import { Calendar1, Gift, Link2, Play, Plus } from 'lucide-react';
+import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
 
 const { Content } = Layout;
 
 const baseProd = "https://www.iattend.events"
 
+const getGreeting = (name) => {
+    const hour = new Date().getHours();
+    const morning = [
+        `¡Buenos días, ${name}!`,
+        `¡Hola, ${name}!`,
+        `¿Listo para comenzar, ${name}?`,
+    ];
+    const afternoon = [
+        `¡Buenas tardes, ${name}!`,
+        `¡Hola, ${name}!`,
+        `¿Cómo va todo, ${name}?`,
+    ];
+    const night = [
+        `¡Buenas noches, ${name}!`,
+        `¡Hola, ${name}!`,
+        `¿Cómo va todo, ${name}?`,
+    ];
+
+    const pool = hour >= 6 && hour < 13 ? morning
+        : hour >= 13 && hour < 20 ? afternoon
+            : night;
+
+    return pool[Math.floor(Math.random() * pool.length)];
+};
 
 export const InvitationsPage = () => {
 
@@ -26,8 +47,10 @@ export const InvitationsPage = () => {
     const [invitationsNI, setInvitationsNI] = useState(null)
     const { logout, logged } = useContext(appContext)
     const sessions = JSON.parse(localStorage.getItem("session"));
+    const [visible, setVisible] = useState(false)
 
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const handleFilter = (value) => {
         setInvitationsCopy(
@@ -98,16 +121,27 @@ export const InvitationsPage = () => {
     }, [pathname]);
 
     useEffect(() => {
-      if (!logged) {
-        getNewInvitations()
-      }
+        if (!logged) {
+            getNewInvitations()
+        }
     }, [logged])
-    
+
+    useEffect(() => {
+        if (searchParams.get("success") === "true") {
+            getNewInvitations();
+            setVisible(false);
+            setSearchParams({});
+        }
+    }, [])
+
 
 
     useEffect(() => {
         setInvitationsCopy(invitationsNI)
     }, [invitationsNI])
+
+    const name = sessions?.user?.name?.split(' ')[0] || 'Usuario';
+    const [greeting] = useState(() => getGreeting(name));
 
 
 
@@ -127,7 +161,7 @@ export const InvitationsPage = () => {
                 <HeaderBuild position={'invitations'} isVisible={true} />
                 <UserPopUp logout={logout} />
                 <Layout className='scroll-invitation build-invitation-layout main-dash-layout' style={{
-                    marginTop: '80px', maxWidth: '100vw', padding:0, 
+                    marginTop: '80px', maxWidth: '100vw', padding: 0,
                     backgroundColor: 'transparent',
                 }} >
                     {
@@ -148,135 +182,143 @@ export const InvitationsPage = () => {
 
                                 {
                                     sessions?.logged &&
-                                        <div style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: 'column',
-                                            position: 'relative', padding: '16px', gap: '24px', width: '100%',
-                                        }}>
-                                            <div className='inv-title-cta-filter'>
+                                    <div style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: 'column',
+                                        position: 'relative', padding: '0px', gap: '36px', width: '100%',
+                                        paddingTop: '24px'
+                                    }}>
+                                        <div className='inv-title-cta-filter'>
 
-                                                <Row className='invs-header-ctas'>
+                                            <Row className='invs-header-ctas'>
 
-                                                    <span className='guests-title-page'>Mis eventos ({invitationsCopy?.length})</span>
-                                                    <Input
-                                                        placeholder={'Búscar evento'}
-                                                        onChange={(e) => handleFilter(e.target.value)}
-                                                        className='invs-searcher' />
-                                                    {/* <Button style={{ borderRadius: '99px' }} icon={<LuPlus />} type='primary'>Nuevo evento</Button> */}
-
-
-                                                </Row>
+                                                <span className='invitations_title'>{greeting}</span>
+                                                <Input
+                                                    placeholder={'Búscar evento'}
+                                                    onChange={(e) => handleFilter(e.target.value)}
+                                                    className='invs-searcher' />
+                                                {/* <Button style={{ borderRadius: '99px' }} icon={<LuPlus />} type='primary'>Nuevo evento</Button> */}
 
 
-                                            </div>
-
-                                            <div className={`inv-invitations-container`} >
-                                                {
-                                                    load ? (
-                                                        invitationsCopy?.length > 0 ? (
-                                                            invitationsCopy.map((invitation) => (
-                                                                <div
-                                                                    style={{ boxShadow: !invitation.started && '0px 0px 12px rgba(0,0,0,0.2)' }}
-                                                                    key={invitation.id}
-                                                                    className={`invitation-container`}
-                                                                >
-                                                                    <div className={`invitation-image-container`}>
-                                                                        {
-                                                                            invitation?.data?.cover?.image?.prod && (
-                                                                                <img src={invitation.data.cover.image.prod} alt="Featured product" />
-                                                                            )}
-                                                                        <div style={{
-                                                                            position: 'absolute', width: '100%', height: '100%', top: '0px', left: '0px',
-                                                                            background: `linear-gradient(to top, ${darker(invitation.data.generals.colors.primary, 0.2)}, rgba(0,0,0,0))`,
-                                                                            mixBlendMode: 'multiply'
-                                                                        }}></div>
-
-                                                                        <div className='background-cover-invitations-page'
-                                                                            style={{
-                                                                                flexDirection: invitation.data.cover.title.position.column_reverse,
-                                                                                pointerEvents: 'none',
-                                                                                zIndex: 0
-                                                                            }}>
+                                            </Row>
 
 
-                                                                            <div style={{
-                                                                                alignItems: invitation.data.cover.title.position.align_y,
-                                                                                padding: invitation.data.cover.date.active ? 0 : '10px',
+                                        </div>
 
-                                                                            }}>
-                                                                                <span style={{
-                                                                                    color: invitation.data.cover.title.text.color ?? "#FFFFFF", width: '100%',
-                                                                                    textAlign: invitation.data.cover.title.position.align_x, fontSize: '38px', wordBreak: 'break-word',
-                                                                                    opacity: invitation.data.cover.title.text.opacity, fontFamily: invitation.data.cover.title.text.typeFace, fontWeight: invitation.data.cover.title.text.weight,
-                                                                                    lineHeight: '1.2'
-                                                                                }}>{invitation.data.cover.title.text.value}</span>
-                                                                            </div>
+                                        <div className={`inv-invitations-container`} >
+
+                                            {
+                                                invitationsCopy?.length > 1 ?
+
+                                                    <div onClick={() => setVisible(true)} className={`invitation-container`} >
 
 
-                                                                        </div>
+                                                        <div className='new_inv_cont'>
+                                                            <div className='add_button_circle'>
+                                                                <Plus size={32} color='var(--brand-color-500)' />
+                                                            </div>
+
+                                                            <span className='cta_title'>¿Nuevo evento en puerta?</span>
+                                                            <span className='cta_text'>Nueva invitación</span>
+                                                        </div>
 
 
+                                                    </div>
 
+                                                    :
+                                                    <div  onClick={() => setVisible(true)} className={`invitation-container`} >
+
+
+                                                        <div className='new_inv_cont'>
+                                                            <div className='add_button_circle'>
+                                                                <Calendar1 size={32} color='var(--brand-color-500)' />
+                                                            </div>
+
+                                                            <span className='cta_title'>Tu invitación te esta esperando</span>
+                                                            <span className='cta_text'>Elige un plan y empieza a diseñar la invitación
+                                                                de tu boda hoy mismo.</span>
+
+                                                            <Button className='cta_plans'>Crea tu invitación</Button>
+
+                                                            <small className='cta_support'>¿Tienes dudas? <a>Contactanos</a></small>
+                                                        </div>
+
+
+                                                    </div>
+
+                                            }
+
+                                            {
+                                                load ? (
+                                                    invitationsCopy?.map((invitation) => (
+                                                        <div
+                                                            key={invitation.id}
+                                                            className={`invitation-container`}
+                                                        >
+                                                            <div className={`invitation-image-container`}>
+                                                                {
+                                                                    invitation?.data?.cover?.image?.prod && (
+                                                                        <img src={invitation.data.cover.image.prod} alt="Featured product" />
+                                                                    )}
+                                                                <div style={{
+                                                                    position: 'absolute', width: '100%', height: '100%', top: '0px', left: '0px',
+                                                                    background: `linear-gradient(to top, ${darker(invitation?.data?.generals?.colors?.primary, 0.2)}, rgba(0,0,0,0))`,
+                                                                    mixBlendMode: 'multiply', opacity: 0.5,
+                                                                }}></div>
+                                                            </div>
+
+                                                            {
+
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    boxSizing: 'border-box', display: 'flex',
+                                                                    alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
+                                                                    gap: '4px', padding: '12px',
+                                                                }}>
+
+                                                                    <span className='invitation_name'>
+                                                                        {invitation?.data?.cover?.title?.text?.value}
+                                                                    </span>
+
+                                                                    <span className='invitation_path'>
+                                                                        {invitation?.name}
+                                                                    </span>
+                                                                    <div className='invitation_btns_cont'>
+                                                                        <Button
+                                                                            icon={<Play size={16} />}
+                                                                            className='invitation_start_button'
+                                                                            onClick={() => handleMoode(invitation.id)}
+                                                                        >
+                                                                            Comenzar
+                                                                        </Button>
+
+                                                                        <Button
+                                                                            icon={<Link2 size={16} />}
+                                                                            className='invitation_url_button'
+                                                                            onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
+                                                                        >
+                                                                            Copiar link
+                                                                        </Button>
                                                                     </div>
 
-                                                                    {
-
-                                                                        <div style={{
-                                                                            position: 'absolute', bottom: 0, left: 0, width: '100%',
-                                                                            boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
-                                                                            gap: '12px', padding: '16px', paddingBottom: '24px'
-                                                                        }}>
-
-                                                                            <span style={{ color: "#FFFFFF80" }}>
-                                                                                {invitation.name}
-                                                                            </span>
-                                                                            <button
-                                                                                onClick={() => handleMoode(invitation.id)}
-                                                                                className='liquid-btn'
-                                                                            >
-                                                                                Comenzar
-                                                                                <RiArrowRightSLine size={25} />
-                                                                            </button>
-                                                                        </div>
-                                                                    }
-
-                                                                    <button
-                                                                        className='liquid-btn'
-                                                                        style={{
-
-                                                                            position: 'absolute', top: '12px', right: '12px',
-                                                                            padding: '4px 12px', fontSize: '12px',
-                                                                            boxShadow: '0px 0px 8px rgba(0,0,0,0.2)'
-                                                                        }}
-                                                                        disabled={invitation.active ? false : true}
-                                                                        onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
-                                                                        // onClick={() => handleQRO(invitation.mongo_id)}
-                                                                        
-                                                                    ><LuLink2 size={14} /> Copiar link</button>
-
-                                                                    <div
-                                                                        className='state-dot--active'
-                                                                        style={{
-                                                                            position: 'absolute', top: '16px', left: '16px',
-                                                                        }}
-                                                                    ></div>
-
-
                                                                 </div>
-                                                            ))
-                                                        ) : (
+                                                            }
+
                                                             <div
+                                                                className='invitation_status'
                                                                 style={{
-                                                                    width: '95vw',
-                                                                    marginTop: '100px',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
+                                                                    position: 'absolute', top: '16px', right: '16px',
                                                                 }}
                                                             >
-                                                                <Empty style={{ marginTop: '50px' }} description={false} />
+                                                                <div className='status_indicator' style={{ backgroundColor: invitation.active ? '#4ADE80' : '#FBBF24' }}></div>
+                                                                <span>{invitation.active ? 'Activa' : 'En pausa'}</span>
+
                                                             </div>
-                                                        )
-                                                    ) : (
+
+
+                                                        </div>
+                                                    ))
+                                                )
+                                                    : (
                                                         <div
                                                             style={{
                                                                 width: '100%',
@@ -295,14 +337,29 @@ export const InvitationsPage = () => {
                                                             />
                                                         </div>
                                                     )
-                                                }
-                                            </div>
-
+                                            }
                                         </div>
 
-                                        
+                                        <div className='banner_cont'>
+                                            <div className="gift-banner">
+                                                <div className="gift-left">
+                                                    <div className="gift-icon">
+                                                        <Gift size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="gift-title">Regala la invitación perfecta</div>
+                                                        <div className="gift-sub">Alguien que conoces está planeando su boda. Dales I attend y que ellos diseñen cada detalle.</div>
+                                                    </div>
+                                                </div>
+                                                <button className="gift-cta">Regalar I attend</button>
+                                            </div>
+                                        </div>
 
-                                        
+                                    </div>
+
+
+
+
                                 }
 
 
@@ -314,7 +371,8 @@ export const InvitationsPage = () => {
                 </Layout>
 
             </Layout >
-            <FooterApp></FooterApp>
+            <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: sessions?.user?.uid, user_email: sessions?.user?.email }} refreshInvitations={getNewInvitations} />
+            {/* <FooterApp></FooterApp> */}
 
         </div>
     )

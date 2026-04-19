@@ -1,22 +1,23 @@
-import { Button, Drawer, Input, message, Modal, Space, Steps } from 'antd'
+import { Button, Drawer, Grid, Steps } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
-import { TbSquareRoundedArrowLeft, TbSquareRoundedArrowRight } from 'react-icons/tb'
-import { images } from '../../helpers/assets/images'
 import { supabase } from '../../lib/supabase'
-import Plans from '../Plans/Plans'
-import { LuArrowUpRight, LuCheck, LuPlus, LuX } from 'react-icons/lu'
-import { CustomButton } from '../CustomButton/CustomButton'
+import { LuCheck, LuX } from 'react-icons/lu'
 import { FaPlus } from 'react-icons/fa6'
-import { fetchPrices, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
+import { fetchPrices, handleCheckoutInvitation, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
+import { ChevronsLeft, ChevronsRight, Star } from 'lucide-react'
 
 
 
-export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitations }) => {
+export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
+
+    const screens = Grid.useBreakpoint()
+    const isMobile = !screens.md
 
     const [currentTemplate, setCurrentTemplate] = useState(null)
     const [currentPlan, setCurrentPlan] = useState(null)
+    const [currentPriceId, setCurrentPriceId] = useState(null)
     const [load, setLoad] = useState(false)
     const [dominios, setDominios] = useState(null)
     const [availableNext, setAvailableNext] = useState(false)
@@ -24,9 +25,6 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
     const [current, setCurrent] = useState(0);
     const [dominio, setDominio] = useState(null);
     const [currentPhone, setCurrentPhone] = useState(null)
-    const [messageApi, contextHolder] = message.useMessage();
-
-
 
     const steps = [
         {
@@ -40,7 +38,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
 
         {
             title: 'Plan',
-            content: <Pago currentPlan={currentPlan} setCurrentPlan={setCurrentPlan} setReady={setReady} />,
+            content: <Pago currentPlan={currentPlan} setCurrentPlan={setCurrentPlan} setCurrentPriceId={setCurrentPriceId} setReady={setReady} isMobile={isMobile} />,
         },
 
     ];
@@ -59,7 +57,6 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
         setAvailableNext(false)
         setLoad(true)
         getDominios()
-        // getAllDominios(operation, currentTemplate)
 
     };
 
@@ -88,537 +85,19 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
     }
 
     const handleNew = async () => {
-        const newEvent = {
-            user_id: user.user_id,
-            credits: currentPlan === 'pro' ? 300 : 0,
-            user_email: user.user_email,
-            type: "closed",
-            plan: currentPlan,
-            label: currentTemplate,
+        await handleCheckoutInvitation({
+            userId: user.user_id,
+            userEmail: user.user_email,
             name: dominio,
-            tickets: 300,
-            active: true,
-            phone_number: currentPhone,
-            url_imnage:null,
-            data: {
-                cover: {
-                    date: {
-                        type: null,
-                        color: "#FFFFFF",
-                        value: "2026-05-20T00:00:00.000Z",
-                        active: true,
-                    },
-                    image: {
-                        dev: null,
-                        blur: false,
-                        prod: "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/14376896-4930-4429-b427-96e047695396/1769460961115-couple.jpeg",
-                        zoom: 1,
-                        position: { x: 0, y: 0 },
-                        background: true,
-                    },
-                    title: {
-                        text: {
-                            size: 54,
-                            color: "#ffffff",
-                            value: "Andrés & Julieta",
-                            weight: 1000,
-                            opacity: 0.95,
-                            typeFace: "WindSong",
-                        },
-                        position: {
-                            align_x: "center",
-                            align_y: "flex-end",
-                            column_reverse: "column",
-                        },
-                    },
-                },
-
-                gifts: {
-                    cards: [
-                        {
-                            url: "https://www.amazon.com.mx/",
-                            bank: null,
-                            kind: "store",
-                            name: null,
-                            brand: "Palacio de hierro",
-                            number: null,
-                        },
-                        {
-                            url: "https://www.amazon.com.mx/",
-                            bank: null,
-                            kind: "store",
-                            name: null,
-                            brand: "Sears",
-                            number: null,
-                        },
-                        {
-                            url: null,
-                            bank: "BBVA",
-                            kind: "bank",
-                            name: "Luis Serrano",
-                            brand: null,
-                            number: "4242424242424242",
-                        },
-                    ],
-                    title: "MESA DE REGALOS",
-                    active: true,
-                    inverted: true,
-                    separator: false,
-                    background: false,
-                    description:
-                        "¡Tu presencia es el mejor regalo, pero tus buenos deseos se hacen aún más especiales con un toque personal!",
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: false,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                quote: {
-                    text: {
-                        font: {
-                            size: 18,
-                            color: "#ffffff",
-                            value:
-                                "Nuestro amor es el comienzo de un ‘para siempre’ que no tiene final.",
-                            weight: 500,
-                            opacity: 0.87,
-                            typeFace: "Noto Sans",
-                        },
-                        align: "flex-start",
-                        width: 90,
-                        shadow: false,
-                        justify: "center",
-                    },
-                    image: {
-                        dev: null,
-                        prod: "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fquote%2FLyPl6vhxCk?alt=media&token=17b6cda0-8146-4100-8f19-2f86f306883a",
-                        active: true,
-                    },
-                    active: true,
-                    inverted: false,
-                    separator: false,
-                    background: false,
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: false,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                people: {
-                    title: "Nuestros padres",
-                    active: true,
-                    inverted: true,
-                    personas: [
-                        { title: "Padre del novio", description: "Manuel Velázquez " },
-                        { title: "Madre del novio", description: "María Lourdes " },
-                        { title: "Padre de la novia", description: "Edgar González " },
-                        { title: "Madre de la novia", description: "Ericka Gutiérrez " },
-                    ],
-                    separator: false,
-                    background: false,
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: true,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                gallery: {
-                    dev: null,
-                    prod: [
-                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fgallery%2FeFLO43QYMc?alt=media&token=b7898198-6597-4d73-9f02-099a3bd29144",
-                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fgallery%2F1IFd1jvgfo?alt=media&token=71bf153e-7a96-43d3-afa0-f9698f3b7a88",
-                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fgallery%2FToBhZMReXW?alt=media&token=61079e78-25a0-4cf8-92de-1fb1e84ff945",
-                    ],
-                    title: "GALERÍA",
-                    active: true,
-                    inverted: false,
-                    separator: false,
-                    background: false,
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: false,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                notices: {
-                    title: "AVISOS",
-                    active: false,
-                    notices: [],
-                    inverted: false,
-                    separator: false,
-                    background: false,
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: false,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                generals: {
-                    event: {
-                        name: "test",
-                        label: "wedding",
-                    },
-                    fonts: {
-                        body: {
-                            size: 0,
-                            color: "#000000",
-                            value: "Noto Sans",
-                            weight: 0,
-                            opacity: 1,
-                            typeFace: "Noto Sans",
-                        },
-                        titles: {
-                            size: 0,
-                            color: "#000000",
-                            value: "Noto Sans",
-                            weight: 0,
-                            opacity: 1,
-                            typeFace: "Noto Sans",
-                        },
-                    },
-                    colors: {
-                        accent: "#252525",
-                        actions: "#87bee9",
-                        primary: "#ffffff",
-                        secondary: "#939faf",
-                    },
-                    texture: 9,
-                    positions: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-                    separator: 5,
-                },
-
-                greeting: {
-                    title: "¡Nos casamos!",
-                    active: true,
-                    inverted: false,
-                    separator: true,
-                    background: false,
-                    description:
-                        "Con mucha ilusión y amor, les invitamos a compartir con nosotros uno de los días más importantes de nuestras vidas.",
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: false,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                dresscode: {
-                    dev: null,
-                    prod: [
-                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdresscode%2FeaEBaR4QgL?alt=media&token=eba80adb-0251-45b9-b225-3e96d965d49b",
-                        "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdresscode%2FdSRYh8q9dX?alt=media&token=2ebda00a-25a8-4d35-aa78-59588fe8f5ff",
-                    ],
-                    links: [],
-                    title: "Dress code",
-                    active: true,
-                    colors: ["#e9e9e9", "#79abd1"],
-                    inverted: true,
-                    separator: false,
-                    background: false,
-                    description:
-                        "Sigue el código de vestimenta formal con tu propio toque. Encuentra opciones que se ajusten a tu estilo en nuestra galería de Pinterest.",
-                    links_active: false,
-                    images_active: true,
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: true,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                itinerary: {
-                    type: "cards",
-                    title: "ITINERARIO",
-                    active: true,
-                    inverted: true,
-                    separator: false,
-                    background: false,
-                    object: [
-                        {
-                            id: null,
-                            icon: 55,
-                            name: "Ceremonia",
-                            time: "5:00 pm",
-                            image: null,
-                            music: null,
-                            subtext: "San Antonio de Padua",
-                        },
-                        {
-                            id: null,
-                            icon: 16,
-                            name: "Recepción",
-                            time: "8:00 pm",
-                            image: null,
-                            music: null,
-                            subtext: "Los Aduanales",
-                        },
-                    ],
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: false,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-
-                destinations: {
-                    cards: [
-                        {
-                            url: "sadcdacc",
-                            name: "Sheraton",
-                            type: "hotel",
-                            image:
-                                "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdestinations%2FcRvWs5A1fe?alt=media&token=92798d5a-e561-46c4-9607-3029db188f5f",
-                            description: null,
-                        },
-                        {
-                            url: "sodded",
-                            name: "Hotel One",
-                            type: "hotel",
-                            image:
-                                "https://firebasestorage.googleapis.com/v0/b/iattend-df79a.appspot.com/o/invitations%2F66a31dc63d724e3f40549b95%2Fdestinations%2FzrYoKKvOVx?alt=media&token=4dc56c12-b329-4c97-ab1a-0bdc4f8ef5b4",
-                            description: null,
-                        },
-                    ],
-                    title: "DESTINOS",
-                    active: true,
-                    inverted: false,
-                    separator: false,
-                    background: false,
-                    description:
-                        "Sabemos que este viaje es especial y queremos que lo disfrutes al máximo. Aquí encontrarás una selección de lugares para hospedarte",
-                    dynamic_separator: {
-                        type: "single",
-                        image: {
-                            zoom: 1,
-                            value: null,
-                            width: 100,
-                            height: 300,
-                            position: {
-                                x: 0,
-                                y: 0
-                            }
-                        },
-                        active: false,
-                        single: {
-                            color: "#252525",
-                            value: 5
-                        }
-                    },
-                    dynamic_background: {
-                        color: "#939faf",
-                        shape: "square",
-                        width: 90,
-                        active: false,
-                        shadow: true,
-                        texture: null,
-                        border_radius: 0
-                    }
-                },
-            },
-        };
-
-        const { error } = await supabase
-            .from("invitations")
-            .insert([newEvent])
-
-        if (error) {
-            console.error("Error al insertar invitacion:", error);
-        } else {
-            messageApi.success('Invitación creada')
-            setCurrentPhone(null)
-            setCurrentPlan(null)
-            setCurrentTemplate(null)
-            setDominio(null)
-            setVisible(false)
-            refreshInvitations()
-        }
-
+            phoneNumber: currentPhone,
+            label: currentTemplate,
+            plan: currentPlan,
+        }, currentPriceId);
     };
+
 
     return (
         <>
-            {contextHolder}
             <Drawer
                 // title="Basic Drawer"
                 placement="right"
@@ -626,15 +105,20 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                 closable={false}
                 onClose={handleClose}
                 open={visible}
-                size={'50%'}
+                width={isMobile ? '95%' : '50%'}
                 title={'Configura tu evento'}
+                style={{
+                    borderRadius:'24px 0px 0px 24px'
+                }}
                 extra={<Button disabled={!(currentPlan && currentPhone && currentTemplate && dominio)} icon={<FaPlus />} className='primarybutton--active' style={{ fontWeight: 800 }} onClick={handleNew}>Crear evento</Button>}
 
             >
 
                 <div className='steps-content-container'>
                     <Steps current={current} items={items} />
-                    {steps[current].content}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                        {steps[current].content}
+                    </div>
                     <div className={`steps-buttons-container${current === 0 ? '-start' : ''}`}
                     >
                         {current > 0 && (
@@ -643,7 +127,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
 
                                 type='ghost' onClick={() => prev()}
                             >
-                                <TbSquareRoundedArrowLeft size={25} style={{ marginRight: '5px' }} /> Anterior
+                                <ChevronsLeft size={25} style={{ marginRight: '5px' }} /> Anterior
                             </Button>
                         )}
 
@@ -652,7 +136,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                                 id="prev-next-button"
                                 disabled={availableNext ? false : true}
                                 type="ghost" onClick={current === 0 ? () => nextAndGet() : () => next()}>
-                                Siguiente <TbSquareRoundedArrowRight size={25} style={{ marginLeft: '5px' }} />
+                                Siguiente <ChevronsRight size={25} style={{ marginLeft: '5px' }} />
                             </Button>
                         )}
 
@@ -721,54 +205,86 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
 
 
     return (
-
         !load ?
             <div className='new-invitation-dominio-container'>
-                <span className='new-invitation-label'>Ruta de la invitación</span>
-                <span className='route-info'>La ruta de la invitación es el enlace web donde tus invitados podrán acceder a la invitación. Debe de ser única y especial. Es fundamental evitar el uso de puntos u otros caracteres especiales para garantizar que el enlace sea claro y fácil de compartir.</span>
+                <span className='new-invitation-label'>¿Cómo quieren que los encuentren?</span>
+                <span className='route-info'>
+                    El link que compartirán con sus invitados y el número al que podrán escribirles.
+                </span>
 
-                <div className='dominio-new-invitation-container' style={{ marginTop: '12px', gap: '12px' }}>
-
-                    <Input
-
-                        style={{ borderRadius: '99px', height: '34px', paddingLeft: '16px' }}
-                        value={dominio}
-                        onChange={(e) => compareDominios(e.target.value)}
-                        status={isMatch ? "" : "error"} placeholder={isMatch ? "" : "Dominio ocupado"} />
-
-                    <div className='dominio_status' style={{
-                        backgroundColor: isMatch ? 'var(--brand-color-500)' : '#D32F2F'
-                    }}>
-                        {
-                            isMatch ? <LuCheck /> : <LuX />
-                        }
+                <div className='dominio-form-card'>
+                    <div className='dominio-form-row'>
+                        <div className='dominio-prefix'>
+                            <span className='dominio-prefix-text'>iattend.events/</span>
+                        </div>
+                        <input
+                            className='dominio-input'
+                            placeholder='paulina-y-luis'
+                            value={dominio || ''}
+                            onChange={(e) => compareDominios(e.target.value)}
+                        />
+                        {dominio && (
+                            <div className='dominio-suffix' style={{ color: isMatch ? 'var(--brand-color-500)' : '#ff4d4f' }}>
+                                {isMatch ? <LuCheck size={16} /> : <LuX size={16} />}
+                            </div>
+                        )}
                     </div>
 
-                    {
-                        !isMatch &&
-                        <span style={{
-                            fontWeight: 600, color: isMatch ? 'var(--brand-color-500)' : '#D32F2F',
-                            marginLeft: '-8px', fontSize: '16px', textAlign: 'left'
-                        }}>{errorMessage}</span>
-                    }
+                    {isMatch === false && errorMessage && (
+                        <span className='dominio-field-error'>{errorMessage}</span>
+                    )}
+                    {isMatch === true && dominio && (
+                        <span className='dominio-field-success'>✓ Disponible</span>
+                    )}
 
+                    <div className='dominio-divider' />
+
+                    <div className='dominio-form-row'>
+                        <div className='dominio-flag-prefix'>
+                            <span className='dominio-flag'>🇲🇽</span>
+                            <input
+                                className='dominio-code-input'
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                            />
+                        </div>
+                        <input
+                            className='dominio-input'
+                            placeholder='Número de WhatsApp'
+                            value={phone || ''}
+                            onChange={(e) => setPhone(e.target.value)}
+                            maxLength={10}
+                        />
+                        <div className='dominio-suffix' style={{ color: currentPhone ? '#25D366' : '#d9d9d9' }}>
+                            <LuCheck size={16} />
+                        </div>
+                    </div>
+
+                    {currentPhone && (
+                        <span className='dominio-field-success dominio-whatsapp-success'>
+                            <LuCheck size={12} /> {currentPhone}
+                        </span>
+                    )}
                 </div>
 
-                <img src={images.route} alt='' style={{ width: '100%', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '24px', margin: '24px 0px' }} />
+                <div className='preview_col'>
+                    <div className="preview-label">Así verán su invitación sus invitados:</div>
 
-
-                <span className='new-invitation-label'>Whatsapp</span>
-                <span className='route-info'>Comparte una cuenta de whatsapp a la cual estará asociada tu evento</span>
-
-                <Space.Compact>
-                    <Input status={!currentPhone ? "error" : 'success'} style={{ borderRadius: '99px 0px 0px 99px', width: '20%' }} value={code} onChange={(e) => setCode(e.target.value)} />
-                    <Input status={!currentPhone ? "error" : 'success'} style={{ borderRadius: '0px 99px 99px 0px', width: '80%' }} value={phone} onChange={(e) => setPhone(e.target.value)} />
-                </Space.Compact>
-
+                    <div className="browser-mockup">
+                        <div className="browser-bar">
+                            <div className="browser-dots">
+                                <div className="dot red" />
+                                <div className="dot yellow" />
+                                <div className="dot green" />
+                            </div>
+                            <div className="browser-url">
+                                iattend.events/<span className="url-highlight">{dominio}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             : <></>
-
-
     )
 }
 
@@ -782,129 +298,144 @@ const Plantillas = ({ currentTemplate, setCurrentTemplate, setAvailableNext }) =
 
     return (
         <div className='new-invitation-dominio-container'>
-            <span className='new-invitation-label'>Elige un tipo de invitación</span>
+            <span className='new-invitation-label'>¿Qué están celebrando?</span>
+            <span className='route-info'>Elige el tipo de evento para personalizar su invitación.</span>
             <div className='new-inv-templates-container'>
-                {
-                    invitationsTypes.map((template) => (
+                {invitationsTypes.map((template) => {
+                    const isSelected = template.type === currentTemplate
+                    return (
                         <div
                             onClick={() => setCurrentTemplate(template.type)}
-                            key={template.id} className={`template-item${template.type === currentTemplate ? '-selected' : ''}`}>
-                            <template.icon style={{ fontSize: '50px', color: '#1B1B1B' }} />
-                            <span className="template-name-label" >{template.name}</span>
+                            key={template.id}
+                            className={`template-item${isSelected ? '-selected' : ''} template-item-${template.type}`}
+                        >
+                            {isSelected && (
+                                <div className='template-check'>
+                                    <LuCheck size={13} />
+                                </div>
+                            )}
+                            <template.icon className='template-icon' size={68} />
+                            <span className='template-name-label'>{template.name}</span>
                         </div>
-                    ))
-                }
+                    )
+                })}
             </div>
-
-
         </div>
     )
 }
 
 
-const Pago = ({ setCurrentPlan, currentPlan }) => {
+const PLAN_FEATURES = {
+    pro: plan_pro,
+    lite: plan_lite,
+    paperless: plan_paperless,
+}
+
+const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
 
     const [prices, setPrices] = useState([])
-    const [openInfo, setOpenInfo] = useState(null)
-
-    const handleFeatures = (plan) => {
-        switch (plan) {
-            case 'pro': return plan_pro
-            case 'lite': return plan_lite
-            case 'paperless': return plan_paperless
-            default:
-                break;
-        }
-    }
-
-    const handleTheme = (plan) => {
-        switch (plan) {
-            case 'pro': return { background: '#20212B', color: '#FFF', accent: 'var(--brand-color-500)' }
-            case 'lite': return { background: 'var(--brand-color-500)', color: '#FFF', accent: '#20212B' }
-            case 'paperless': return { background: '#F5F5F5', color: '#20212B', accent: 'var(--brand-color-500)' }
-
-            default:
-                break;
-        }
-    }
 
     useEffect(() => {
         fetchPrices(setPrices)
+        setCurrentPlan('pro')
     }, [])
 
+    useEffect(() => {
+      console.log(prices)
+    }, [prices])
 
+   
+    
+    
+
+    const planPrices = prices.filter(p => PRODUCTS[p.priceId]?.type === 'plan')
+
+ useEffect(() => {
+      console.log(planPrices)
+    }, [planPrices])
 
     return (
         <div className='new-invitation-dominio-container'>
-            {/* <span className='new-invitation-label'>Comprobante de pago</span> */}
-            <div style={{
-                width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexDirection: 'column', gap: '16px'
-            }}>
-                <span className='new-invitation-fnl-label'>Elige el plan que más te funcione</span>
+            <span className='new-invitation-label'>Elige tu plan</span>
+            <span className='route-info'>Una sola compra. Tu invitación activa para siempre.</span>
 
-                <div className='plans_cont' style={{ flexDirection: 'column' }}>
-                    {
-                        prices.map((p, index) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', flex: 1, maxHeight: '80%', }}>
+                {planPrices.map((p, index) => {
+                    const product = PRODUCTS[p.priceId]
+                    const isPro = product.value === 'pro'
+                    const isSelected = currentPlan === product.value
+                    const features = PLAN_FEATURES[product.value] || []
+                    const price = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p.amount)
 
-                            const product = PRODUCTS[p.priceId];
+                    return (
+                        <div
+                            key={index}
+                            onClick={() => { setCurrentPlan(product.value); setCurrentPriceId(p.priceId); }}
+                            className={isPro ? 'plan-pro-card' : ''}
+                            style={{
+                                position: 'relative', flex: 1,
+                                display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch',
+                                borderRadius: '18px', cursor: 'pointer',
+                                background: isPro ? undefined : '#fff',
+                                border: isSelected ? '2px solid #A99FC7' : '1.5px solid #e8e8e8',
+                                boxShadow: isSelected
+                                    ? '0 0 0 5px rgba(169,159,199,0.25), 0 8px 32px rgba(169,159,199,0.2)'
+                                    : '0 2px 8px rgba(0,0,0,0.06)',
+                                transition: 'box-shadow 0.2s ease, border 0.2s ease',
+                                marginTop: isPro ? '16px' : '0',
+                            }}
+                        >
+                            {isPro && (
+                                <div style={{
+                                    position: 'absolute', top: '-15px', left: '24px',
+                                    background: 'linear-gradient(135deg, #A99FC7, #7B6FAF)',
+                                    color: '#fff', fontSize: '11px', fontWeight: 700,
+                                    padding: '4px 16px', borderRadius: '99px', whiteSpace: 'nowrap', letterSpacing: '0.8px',
+                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                }}>
+                                    <Star size={12} /> Más popular
+                                </div>
+                            )}
 
-                            if (product?.type === 'plan')
-                                return (
-                                    <div key={index} onClick={() => setCurrentPlan(product.value)} className={`plan_card plan_${product.value}`} style={{ outline: currentPlan === product.value && '6px solid #A99FC7' }}>
-                                        <img src={`/images/plan_${product.value}.png`} alt='' style={{ width: '180px' }} />
-                                        <div className='price_col'>
-                                            <span className={`price_label label_${product.value}`}>  {new Intl.NumberFormat('es-MX', {
-                                                style: 'currency',
-                                                currency: 'MXN',
-                                            }).format(p.amount)} MXN</span>
-                                            <a onClick={(e) => { e.stopPropagation(); setOpenInfo(product.value) }} className={`price_label label_${product.value}`} style={{ fontSize: '16px' }}><LuArrowUpRight /> Ver más</a>
-                                        </div>
-                                    </div>
-                                )
-                        })
-                    }
-
-                </div>
-
-            </div>
-
-            <Modal
-                open={!!openInfo}
-                onCancel={() => setOpenInfo(null)}
-                footer={null}
-                width={'250px'}
-                title={<span className={`price_label label_${openInfo}`} style={{ fontSize: '24px' }}>Plan <b style={{ textTransform: 'uppercase', color: handleTheme(openInfo)?.accent }}>{openInfo}</b></span>}
-                styles={{
-                    container: {
-                        borderRadius: '24px',
-                        padding: '24px',
-                        // height: '90vh',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        background: handleTheme(openInfo)?.background
-                    },
-                    body: {
-                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
-                        color: handleTheme(openInfo)?.color,
-                        position: 'relative',
-
-
-                    }
-                }}
-            >
-
-                <div className='featrues_grid'>
-                    {
-                        handleFeatures(openInfo)?.map((i) => (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px' }}>
-                                {<i.icon style={{ color: handleTheme(openInfo)?.accent }} />} <span style={{ lineHeight: '1.1' }}>{i.text}</span>
+                            {/* Left: name + price */}
+                            <div style={{
+                                display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                                padding: isMobile ? '16px 20px 12px' : '28px 32px',
+                                minWidth: isMobile ? 'auto' : '160px',
+                                background: isPro ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                                borderRight: isMobile ? 'none' : (isPro ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0'),
+                                borderBottom: isMobile ? (isPro ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0') : 'none',
+                                gap: '4px',
+                            }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: isPro ? '#A99FC7' : 'var(--brand-color-500)' }}>
+                                    Plan
+                                </span>
+                                <div style={{ fontSize: isMobile ? '32px' : '46px', fontWeight: 900, color: isPro ? '#fff' : '#1C1B26', textTransform: 'capitalize', lineHeight: 1 }}>
+                                    {product.value}
+                                </div>
+                                <div style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: isPro ? '#A99FC7' : 'var(--brand-color-500)', letterSpacing: '-0.5px', marginTop: '6px' }}>
+                                    {price}
+                                </div>
+                                <div style={{ fontSize: '12px', color: isPro ? 'rgba(255,255,255,0.35)' : '#bbb', letterSpacing: '0.5px' }}>
+                                    MXN · pago único
+                                </div>
                             </div>
-                        ))
-                    }
-                </div>
 
-            </Modal>
+                            {/* Right: features grid */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 24px', flex: 1, padding: isMobile ? '12px 20px 20px' : '28px', alignContent: 'center' }}>
+                                {features.map((feat, i) => (
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <feat.icon size={15} style={{ color: isPro ? '#A99FC7' : 'var(--brand-color-500)', flexShrink: 0 }} />
+                                        <span style={{ fontSize: '14px', color: isPro ? 'rgba(255,255,255,0.85)' : '#444', lineHeight: 1.4 }}>
+                                            {feat.text}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
         </div>
     )
 }

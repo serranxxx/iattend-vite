@@ -44,6 +44,7 @@
     max-width: 1450px;
     overflow: auto;
     padding: 0px;
+    overflow-y: hidden;
 
 }
 
@@ -60,9 +61,3 @@
     width: 0px;
     height: 0px;
 }
-
-/* @media (max-width: 750px) {
-    .build-invitation-layout {
-        margin-top: 70px !important;
-    }
-} */

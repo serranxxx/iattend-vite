@@ -19,12 +19,6 @@ export const HeaderBuild = ({ position, isVisible }) => {
     const [openMenu, setOpenMenu] = useState(false)
     const session = JSON.parse(localStorage.getItem("session"));
 
-
-    // const getFirstLetterUpperCase = (str) => {
-    //     if (!str) return '';
-    //     return str.charAt(0).toUpperCase();
-    // }
-
     useEffect(() => {
         if (position === 'land-page') {
             const handleScroll = () => {
@@ -77,18 +71,19 @@ export const HeaderBuild = ({ position, isVisible }) => {
             <div className="header-main-container web-opt" style={{ borderBottom: '1px solid #ebebeb80' }}>
                 <Row className="header-container" >
                     <div style={{
-                        width: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
+                        height:'40px', width:'40px', display:'flex', alignItems:'center', justifyContent:'center',
+                        boxShadow:'4px 4px 12px rgba(0,0,0,0.2)', borderRadius:'99px',
+                        
 
                     }}>
                         <img alt='' src="/images/icon_pp.png" style={{
-                            height: '32px', width: '32px', borderRadius: '99px'
+                            height: '40px', width: '40px', borderRadius: '99px',
+                            outline:'2px solid #FfF'
                         }} />
 
                     </div>
-                    <Row style={{
-                        width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-                        flexDirection: 'row', gap: '0px'
-                    }}>
+                    <Row 
+                    className="nav_cont">
                         {
                             navItems.map((item) => {
                                 // Condiciones para ocultar el elemento 'Admin'
@@ -119,14 +114,8 @@ export const HeaderBuild = ({ position, isVisible }) => {
                     <div style={{
                         height: '60px', display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
-                        position: 'relative', width: '120px', zIndex: 999
+                        position: 'relative', width: '120px', zIndex: 999,
                     }}>
-                        {/* 
-                        {
-                            session?.logged &&
-                            <UserPopUp session={session} logout={logout} />
-
-                        } */}
                     </div>
 
 

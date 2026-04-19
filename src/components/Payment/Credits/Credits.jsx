@@ -75,8 +75,6 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                                                             <span style={{ minWidth: '100px', fontSize: '16px', fontWeight: 600 }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
                                                         </div>
 
-
-                                                        {/* <Button icon={<LuShoppingCart />} type='primary' onClick={() => handleCheckout(p.priceId)} > Comprar</Button> */}
                                                     </div>
                                                 )
                                             }

@@ -2183,12 +2183,6 @@ export default function GuestsPage() {
                     {
                         onNotificationCenter &&
                         <div className='notification_container'>
-                            {/* <Row style={{ gap: '8px', padding: '12px' }} align={'middle'} justify={'center'} gutter={'8px'}>
-                                                <IoMdNotifications style={{ color: '#6D3CFA' }} size={20} />
-                                                <span style={{
-                                                    fontSize: '18px', fontWeight: 500
-                                                }}>Novedades</span>
-                                            </Row> */}
 
                             <div style={{
                                 maxHeight: '100%', overflowY: 'auto', padding: '6px', boxSizing: 'border-box',

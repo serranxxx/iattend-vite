@@ -88,7 +88,7 @@ export default function UserPopUp() {
                                         <img src='/images/user_icon.png' alt='' style={{ width: '80px', height: '80px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)', borderRadius: '99px' }} />
                                         <Button onClick={logout} icon={<LuLogOut />} style={{
                                             borderRadius: '99px', backgroundColor: '#FFFFFF10'
-                                        }} />
+                                        }}>Cerrar sesión</Button>
                                     </div>
 
                                     <div className='user_col'>
@@ -125,7 +125,7 @@ export default function UserPopUp() {
                                 </>
                                 :
                                 <>
-                                    <LuCircleUser />
+                                    <div className='user_letter'>A</div>
                                     {session?.user?.name?.split(' ')[0]}
                                 </>
                         }

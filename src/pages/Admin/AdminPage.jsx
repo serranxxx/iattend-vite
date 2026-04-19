@@ -681,7 +681,7 @@ export const AdminPage = () => {
                                         </div>
                                     )}
                                 >
-                                    <Button type='primary' style={{ borderRadius: '99px' }} icon={<LuUserPlus size={16} />}>Nuevo usuario</Button>
+                                    <Button className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<LuUserPlus size={16} />}>Nuevo usuario</Button>
                                 </Dropdown>
 
                             </div>
