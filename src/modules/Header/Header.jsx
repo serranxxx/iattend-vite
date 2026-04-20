@@ -12,22 +12,7 @@ const baseProd = "https://www.iattend.events"
 
 const { useBreakpoint } = Grid;
 
-// const stickers = [
-//     // Left of nav
-//     { src: 'star_mini.png', size: 40, top: '-25%', left: '6%',  rot: -35 },
-//     { src: 'heart.png',    size: 40, top: '28%',  left: '19%', rot: 12  },
-//     // { src: 'puzle.png',    size: 40, top: '8%',   left: '32%', rot: -5  },
-//     { src: 'plane.png',    size: 39, top: '42%',  left: '12%',  rot: -20 },
-//     { src: 'star_mini.png',size: 29, top: '14%',  left: '25%', rot: 28  },
-//     { src: 'heart.png',    size: 25, top: '-12%', left: '29%', rot: 8   },
-//     // Right of nav
-//     // { src: 'clip.png',     size: 30, top: '32%',  left: '62%', rot: 8   },
-//     { src: 'plane.png',    size: 60, top: '5%',   left: '73%', rot: -18 },
-//     { src: 'star_mini.png',size: 30, top: '20%',  left: '88%', rot: 15  },
-//     { src: 'heart.png',    size: 25, top: '38%',  left: '80%', rot: -12 },
-//     { src: 'star_mini.png',size: 27, top: '8%',   left: '65%', rot: -8  },
-//     { src: 'heart.png',    size: 27, top: '-15%', left: '92%', rot: 20  },
-// ];
+//  
 
 export const HeaderBuild = ({ position, isVisible }) => {
 
