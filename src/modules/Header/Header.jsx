@@ -12,6 +12,23 @@ const baseProd = "https://www.iattend.events"
 
 const { useBreakpoint } = Grid;
 
+// const stickers = [
+//     // Left of nav
+//     { src: 'star_mini.png', size: 40, top: '-25%', left: '6%',  rot: -35 },
+//     { src: 'heart.png',    size: 40, top: '28%',  left: '19%', rot: 12  },
+//     // { src: 'puzle.png',    size: 40, top: '8%',   left: '32%', rot: -5  },
+//     { src: 'plane.png',    size: 39, top: '42%',  left: '12%',  rot: -20 },
+//     { src: 'star_mini.png',size: 29, top: '14%',  left: '25%', rot: 28  },
+//     { src: 'heart.png',    size: 25, top: '-12%', left: '29%', rot: 8   },
+//     // Right of nav
+//     // { src: 'clip.png',     size: 30, top: '32%',  left: '62%', rot: 8   },
+//     { src: 'plane.png',    size: 60, top: '5%',   left: '73%', rot: -18 },
+//     { src: 'star_mini.png',size: 30, top: '20%',  left: '88%', rot: 15  },
+//     { src: 'heart.png',    size: 25, top: '38%',  left: '80%', rot: -12 },
+//     { src: 'star_mini.png',size: 27, top: '8%',   left: '65%', rot: -8  },
+//     { src: 'heart.png',    size: 27, top: '-15%', left: '92%', rot: 20  },
+// ];
+
 export const HeaderBuild = ({ position, isVisible }) => {
 
 
@@ -69,21 +86,39 @@ export const HeaderBuild = ({ position, isVisible }) => {
 
         <>
             <div className="header-main-container web-opt" style={{ borderBottom: '1px solid #ebebeb80' }}>
-                <Row className="header-container" >
+                <Row className="header-container" style={{ position: 'relative' }}>
+
+                    {/* {
+                        stickers.map((s, i) => (
+                            <img
+                                key={i}
+                                src={`/images/stickers/${s.src}`}
+                                alt=''
+                                style={{
+                                    position: 'absolute',
+                                    width: s.size,
+                                    top: s.top,
+                                    left: s.left,
+                                    transform: `rotate(${s.rot}deg)`,
+                                    zIndex:-1
+                                }}
+                            />
+                        ))
+                    } */}
                     <div style={{
-                        height:'40px', width:'40px', display:'flex', alignItems:'center', justifyContent:'center',
-                        boxShadow:'4px 4px 12px rgba(0,0,0,0.2)', borderRadius:'99px',
-                        
+                        height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '4px 4px 12px rgba(0,0,0,0.2)', borderRadius: '99px',
+
 
                     }}>
                         <img alt='' src="/images/icon_pp.png" style={{
                             height: '40px', width: '40px', borderRadius: '99px',
-                            outline:'2px solid #FfF'
+                            outline: '2px solid #FfF'
                         }} />
 
                     </div>
-                    <Row 
-                    className="nav_cont">
+                    <Row
+                        className="nav_cont">
                         {
                             navItems.map((item) => {
                                 // Condiciones para ocultar el elemento 'Admin'
@@ -117,10 +152,6 @@ export const HeaderBuild = ({ position, isVisible }) => {
                         position: 'relative', width: '120px', zIndex: 999,
                     }}>
                     </div>
-
-
-
-
                 </Row>
 
             </div >

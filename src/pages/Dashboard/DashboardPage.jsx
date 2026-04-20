@@ -111,8 +111,8 @@ export const DashboardPage = () => {
 
                 <HeaderDashboard mode={'dashboard'} invitation={invitation} />
 
-                <img src='/images/loop2.svg' alt='' className='loop_1' />
-                <img src='/images/loop2.svg' alt='' className='loop_1_1' />
+                {/* <img src='/images/loop2.svg' alt='' className='loop_1' /> */}
+                {/* <img src='/images/loop2.svg' alt='' className='loop_1_1' /> */}
                 <div className='dashboard_body'>
 
 

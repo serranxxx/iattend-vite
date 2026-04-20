@@ -74,10 +74,10 @@ export const PRODUCTS = {
     price_1Sx8RWAAdNlITNVbj7c85GlG: { type: "credits", value: 200 },
     // price_1T1H17AAdNlITNVbrTS94Xdr: { type: "credits", value: 1 },
   
-    price_1SkRvtAAdNlITNVbj8BA6F2Q: { type: "plan", value: "paperless" },
-    // price_1SkRwZAAdNlITNVbEsPlYN0F: { type: "plan", value: "lite" },
-    // price_1SkRxCAAdNlITNVbB0AB16LN: { type: "plan", value: "pro" },
-    price_1TO1kjAAdNlITNVbmfuaY1nm: { type: "plan", value: "pro" }, // test
+    // price_1SkRvtAAdNlITNVbj8BA6F2Q: { type: "plan", value: "paperless" },
+    price_1SkRwZAAdNlITNVbEsPlYN0F: { type: "plan", value: "lite" },
+    price_1SkRxCAAdNlITNVbB0AB16LN: { type: "plan", value: "pro" },
+    // price_1TO1kjAAdNlITNVbmfuaY1nm: { type: "plan", value: "pro" }, // test
   
     price_1T1VeXAAdNlITNVbXeWLTh3Y: { type: "side", value: "side_event" },
     price_1T1WY5AAdNlITNVbGrRJx77i: {type: "side", value: "side_event"}

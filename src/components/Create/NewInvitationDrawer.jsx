@@ -343,16 +343,11 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
     useEffect(() => {
       console.log(prices)
     }, [prices])
+    
 
-   
-    
-    
 
     const planPrices = prices.filter(p => PRODUCTS[p.priceId]?.type === 'plan')
 
- useEffect(() => {
-      console.log(planPrices)
-    }, [planPrices])
 
     return (
         <div className='new-invitation-dominio-container'>

@@ -9,6 +9,7 @@ import { darker } from '../../helpers/assets/functions';
 import UserPopUp from '../../components/UserPopUp/UserPopUp';
 import { Calendar1, Gift, Link2, Play, Plus } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
+import { FooterApp } from '../../modules/Footer/FooterApp';
 
 const { Content } = Layout;
 
@@ -185,7 +186,7 @@ export const InvitationsPage = () => {
                                     <div style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: 'column',
                                         position: 'relative', padding: '0px', gap: '36px', width: '100%',
-                                        paddingTop: '24px'
+                                        paddingTop: '36px'
                                     }}>
                                         <div className='inv-title-cta-filter'>
 
@@ -340,7 +341,7 @@ export const InvitationsPage = () => {
                                             }
                                         </div>
 
-                                        <div className='banner_cont'>
+                                        {/* <div className='banner_cont'>
                                             <div className="gift-banner">
                                                 <div className="gift-left">
                                                     <div className="gift-icon">
@@ -353,7 +354,7 @@ export const InvitationsPage = () => {
                                                 </div>
                                                 <button className="gift-cta">Regalar I attend</button>
                                             </div>
-                                        </div>
+                                        </div> */}
 
                                     </div>
 
@@ -372,7 +373,7 @@ export const InvitationsPage = () => {
 
             </Layout >
             <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: sessions?.user?.uid, user_email: sessions?.user?.email }} refreshInvitations={getNewInvitations} />
-            {/* <FooterApp></FooterApp> */}
+            <FooterApp></FooterApp>
 
         </div>
     )

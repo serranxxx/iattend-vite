@@ -650,14 +650,14 @@ export const AdminPage = () => {
                 position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
                 alignItems: 'flex-start', justifyContent: 'flex-start',
                 backgroundColor: 'var(--ft-color)',
-                maxWidth: '1480px',
-                gap: '24px'
+                // maxWidth: '1480px',
+                gap: '24px',
             }}>
                 <HeaderBuild position={'admin'} />
 
 
                 <UserPopUp />
-                <div className='user-table-container'>
+                <div className='user-table-container' style={{marginTop:'24px'}}>
                     <Tabs
                         style={{ width: '100%', }}
                         type="card"

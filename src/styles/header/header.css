@@ -11,9 +11,10 @@
     background-image:
         linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
-        radial-gradient(ellipse at center, #d6cfe6, #d6cfe6);
+        radial-gradient(ellipse at center, #d6cfe6, #d6cfe699);
     background-size: 50px 50px, 50px 50px, 100% 100%;
     z-index: 999;
+    backdrop-filter: blur(10px);
 }
 
 .header-main-container::after {
