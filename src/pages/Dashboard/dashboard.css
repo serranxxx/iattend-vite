@@ -249,31 +249,53 @@
 } */
 
 
+/* ── Layout ─────────────────────────────────────────── */
+
 .dashboard_body {
     width: 100%;
     height: 100vh;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    /* flex-direction: column; */
-    gap: 24px;
     overflow: hidden;
     position: relative;
     padding: 24px;
-
+    padding-top: 74px;
+    box-sizing: border-box;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
+        radial-gradient(ellipse at center, #e9e9e9, #FFFFFF);
+    background-size: 50px 50px, 50px 50px, 100% 100%;
 }
 
+.single_row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    gap: 24px;
+}
+
+.single_col {
+    width: 460px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+    /* height: 600px; */
+}
+
+/* ── Cards ──────────────────────────────────────────── */
 
 .dashboard_invitation,
-.dashboard_guests {
-    width: 320px;
-    /* height: 350px; */
-    min-width: 280px;
+.dashboard_guests,
+.side_events_dash {
     border-radius: 24px;
     z-index: 2;
-    /* background-color: #FFFFFF80; */
-    /* backdrop-filter: blur(10px); */
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    border: 4px solid #FFFFFF80;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
@@ -282,49 +304,16 @@
 }
 
 .dashboard_invitation {
-    height: 408px;
+    width: 260px;
+    flex-shrink: 0;
 }
 
-.dashboard_guests {
-    width: 460px;
-}
-
+.dashboard_guests,
 .side_events_dash {
-    align-self: stretch;
-    border-radius: 24px;
-    z-index: 2;
-    /* background-color: #FFFFFF80; */
-    /* backdrop-filter: blur(10px); */
-    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    flex-direction: column;
-    overflow: hidden;
+    width: 100%;
 }
 
-.loop_1 {
-    width: 100%;
-    transform: rotate(0deg);
-    top: 10%;
-    left: -10%;
-    width: 110%;
-    position: absolute;
-    opacity: 0.9;
-    z-index: 1;
-}
-
-.loop_1_1 {
-    width: 100%;
-    transform: rotate(180deg);
-    bottom: 0%;
-    left: -10%;
-    width: 100%;
-    position: absolute;
-    opacity: 0.9;
-    z-index: 1;
-    display: none;
-}
+/* ── Card internals ─────────────────────────────────── */
 
 .invitation_header_dash {
     align-self: stretch;
@@ -347,7 +336,6 @@
 
 .guests_dash_cont {
     width: 100%;
-    /* flex: 1; */
     background-color: #FFFFFF80;
     backdrop-filter: blur(10px);
     display: flex;
@@ -390,5 +378,76 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
-    /* ajusta el espacio */
+}
+
+/* ── Mobile ─────────────────────────────────────────── */
+
+@media (max-width: 750px) {
+
+    .side_table_cont {
+        display: none;
+    }
+    .dashboard-page-container {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    .dashboard_body {
+        height: auto;
+        overflow: visible;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 24px;
+        box-sizing: border-box;
+        padding-top: 84px;
+        padding-bottom: 48px;
+    }
+
+    .single_row {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .single_col {
+        width: 100%;
+        gap: 24px;
+    }
+
+    .dashboard_invitation {
+        width: 100%;
+        flex-shrink: 1;
+        height: 55vh;
+    }
+
+    .dashboard_guests,
+    .side_events_dash {
+        flex: none;
+        width: 100%;
+    }
+
+    .guests_dash_cont {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .two_col_grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .dash_col span:first-child {
+        font-size: 12px;
+    }
+
+    .dash_col .dash_row span {
+        font-size: 28px !important;
+    }
+
+    .dashboard_invitation,
+    .dashboard_guests,
+    .side_events_dash {
+        box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
+        
+    }
+
 }

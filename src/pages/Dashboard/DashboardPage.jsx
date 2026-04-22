@@ -116,19 +116,13 @@ export const DashboardPage = () => {
                 <div className='dashboard_body'>
 
 
-                    <div className='single_row' style={{
-                        flexDirection: screens.xs ? 'column' : 'row',
-                        justifyContent: 'center', gap: '24px',
-                        // maxWidth: '50%', alignItems:'flex-start'
-                    }}>
+                    <div className='single_row' style={{gap:'24px'}}>
 
 
-                        <div className='dashboard_invitation' style={{
-                            maxHeight: screens.xs ? '180px' : undefined
-                        }}>
+                        <div className='dashboard_invitation'>
                             <div className='invitation_header_dash'>
-                                <span style={{ fontWeight: 600 }}>Paperless</span>
-                                <Button onClick={() => handleMoode('build')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                <span style={{ fontWeight: 600 }}>Invitación Paperless</span>
+                                <Button onClick={() => handleMoode('build')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                             </div>
 
                             <div className="dash_inv_cont">
@@ -138,17 +132,12 @@ export const DashboardPage = () => {
 
                         {
                             plan !== 'paperless' &&
-                            <div className='single_col' style={{
-                                gap: '24px', alignSelf: 'auto'
-                            }}>
+                            <div className='single_col'>
 
-                                <div className='dashboard_guests' style={{
-                                    maxHeight: screens.xs ? '300px' : undefined,
-                                    width: screens.xs ? '320px' : undefined,
-                                }}>
+                                <div className='dashboard_guests'>
                                     <div className='invitation_header_dash'>
-                                        <span style={{ fontWeight: 600 }}>Guest management</span>
-                                        <Button onClick={() => handleMoode('guests')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        <span style={{ fontWeight: 600 }}>Gestión de invitados</span>
+                                        <Button onClick={() => handleMoode('guests')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
 
                                     <div className='guests_dash_cont'>
@@ -195,13 +184,10 @@ export const DashboardPage = () => {
                                 </div>
 
 
-                                <div className='side_events_dash' style={{
-                                    maxWidth: '460px',
-                                    // maxHeight: screens.xs ? '180px' : undefined
-                                }}>
+                                <div className='side_events_dash'>
                                     <div className='invitation_header_dash'>
                                         <span style={{ fontWeight: 600 }}>Side events</span>
-                                        <Button onClick={() => handleMoode('side')} type='primary' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        <Button onClick={() => handleMoode('side')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
                                     <div className="guests_dash_cont" style={{ minHeight: '80px', display:'flex',alignItems:'center',justifyContent:'center', padding:'0'}}>
                                         <img src='/images/icons_side_events.png' style={{ width: '90%', }} />

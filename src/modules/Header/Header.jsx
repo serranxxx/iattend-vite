@@ -7,6 +7,7 @@ import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart,
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
+import { Menu } from "lucide-react";
 
 const baseProd = "https://www.iattend.events"
 
@@ -73,23 +74,6 @@ export const HeaderBuild = ({ position, isVisible }) => {
             <div className="header-main-container web-opt" style={{ borderBottom: '1px solid #ebebeb80' }}>
                 <Row className="header-container" style={{ position: 'relative' }}>
 
-                    {/* {
-                        stickers.map((s, i) => (
-                            <img
-                                key={i}
-                                src={`/images/stickers/${s.src}`}
-                                alt=''
-                                style={{
-                                    position: 'absolute',
-                                    width: s.size,
-                                    top: s.top,
-                                    left: s.left,
-                                    transform: `rotate(${s.rot}deg)`,
-                                    zIndex:-1
-                                }}
-                            />
-                        ))
-                    } */}
                     <div style={{
                         height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         boxShadow: '4px 4px 12px rgba(0,0,0,0.2)', borderRadius: '99px',
@@ -148,21 +132,13 @@ export const HeaderBuild = ({ position, isVisible }) => {
             >
                 <div
                     style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row',
+                        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexDirection: 'row',
                         width: '90%', position: 'relative',
                     }}>
 
-                    <div style={{
-                        width: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden',
-                        marginTop: '24px'
-                    }}>
-                        <img alt='' src="/images/negro-morado.png" style={{
-                            width: '100%', objectFit: 'cover'
-                        }} />
+                    
 
-                    </div>
-
-                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<LuMenu size={36} />} />
+                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<Menu style={{color:'#000'}}/>} />
 
                 </div>
 
@@ -224,7 +200,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const [invitation, setInvitation] = useState(null)
     const [plan, setPlan] = useState(null)
 
-    const isEditing = mode === "edit" || mode === "on-edit";
+  const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
     const screens = useBreakpoint();
     const [urlImage, setUrlImage] = useState(null)
@@ -383,7 +359,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     return (
         <>
             {contextHolder}
-            <div className="header-dashboard-main-container" style={{ justifyContent: "flex-start" }}>
+            <div className="header-dashboard-main-container" style={{ justifyContent: "flex-start", borderBottom: '1px solid #e8e8e8' }}>
                 <div className="header-dashboard-container">
 
                     {/* LEFT SIDE */}
@@ -412,21 +388,24 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             />
                         )}
 
-                        <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} />
+                        {!screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} />}
 
+                        {screens.xs && (
+                            <span style={{ fontFamily: 'Poppins', fontSize: '16px', fontWeight: 500, marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+                                {invitation?.cover?.title?.text?.value}
+                            </span>
+                        )}
 
-                        {
-                            !screens.xs &&
-                            <Breadcrumb style={{ marginLeft: 8 }} items={breadcrumbItems} />
-                        }
-
+                        {!screens.xs && <Breadcrumb style={{ marginLeft: 8 }} items={breadcrumbItems} />}
 
                     </div>
 
                     {/* RIGHT SIDE */}
                     <div className="header-dashboard-single-row" style={{ gap: 8 }}>
 
-                        <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />
+                        {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />}
+
+                        {screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} />}
 
                         {
                             !screens.xs &&
@@ -439,7 +418,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
 
 
-                        {isEditing && (
+                        {isEditing && !screens.xs && (
                             <Tooltip title="Publicar cambios" placement="bottomLeft">
                                 <Button
                                     icon={<LuUpload size={14} />}
@@ -467,7 +446,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
 
                         {
-                            session?.user?.role === "Administration" &&
+                            session?.user?.role === "Administration" && !screens.xs &&
                             <Button
                                 icon={<LuSendHorizontal size={14} />}
                                 type="primary"

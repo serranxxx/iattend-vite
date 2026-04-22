@@ -7,6 +7,23 @@
     gap: 16px;
 }
 
+.steps-scroll-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.steps-scroll-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.steps-scroll-content::-webkit-scrollbar-thumb {
+    background: #d8d0ee;
+    border-radius: 50px;
+}
+
+.steps-scroll-content::-webkit-scrollbar-thumb:hover {
+    background: #A99FC7;
+}
+
 .steps-content-container .ant-steps .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
     color: var(--brand-color-500);
 }
@@ -96,10 +113,11 @@
     align-items: center;
     justify-content: flex-start;
     flex-direction: column;
-    width: 100%;
+    max-width: 100%;
     gap: 16px;
     margin-top: 24px;
     flex: 1;
+    box-sizing: border-box;
 }
 
 .new-invitation-label {
@@ -181,11 +199,16 @@
 
 /* Icon */
 .template-icon {
-    color: #555;
+    color: #FFFFFF80;
     transition: color 0.25s ease, transform 0.25s ease;
 }
 
-.template-item-selected .template-icon {
+.template-item-selected.template-item-wedding .template-icon {
+    color: #c05878;
+    animation: iconFloat 2.8s ease-in-out infinite;
+}
+
+.template-item-selected.template-item-xv .template-icon {
     color: #7B6FAF;
     animation: iconFloat 2.8s ease-in-out infinite;
 }
@@ -200,12 +223,16 @@
     font-size: 18px;
     font-weight: 700;
     font-family: 'Poppins';
-    color: #333;
+    color: #FFFFFF80;
     letter-spacing: -0.3px;
     transition: color 0.25s ease;
 }
 
-.template-item-selected .template-name-label {
+.template-item-selected.template-item-wedding .template-name-label {
+    color: #c05878;
+}
+
+.template-item-selected.template-item-xv .template-name-label {
     color: #7B6FAF;
 }
 
@@ -241,6 +268,13 @@
     right: 0;
     height: 3px;
     background: linear-gradient(to right, transparent, #A99FC7, transparent);
+}
+
+.dominio-owners-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
 }
 
 /* ---- Dominio (Ruta) unified form ---- */
@@ -496,9 +530,13 @@
         font-size: 13px;
     }
 
+    .new-inv-templates-container {
+        grid-template-columns: 1fr;
+    }
+
     .template-item,
     .template-item-selected {
-        padding: 24px 14px;
+        padding: 20px 16px;
         gap: 12px;
         border-radius: 16px;
     }

@@ -25,6 +25,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
     const [current, setCurrent] = useState(0);
     const [dominio, setDominio] = useState(null);
     const [currentPhone, setCurrentPhone] = useState(null)
+    const [owners, setOwners] = useState([null, null])
 
     const steps = [
         {
@@ -33,7 +34,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
         },
         {
             title: 'Ruta',
-            content: <Dominio dominio={dominio} setDominio={setDominio} load={load} dominios={dominios} setAvailableNext={setAvailableNext} setCurrentPhone={setCurrentPhone} currentPhone={currentPhone} />,
+            content: <Dominio dominio={dominio} setDominio={setDominio} load={load} dominios={dominios} setAvailableNext={setAvailableNext} setCurrentPhone={setCurrentPhone} currentPhone={currentPhone} currentTemplate={currentTemplate} owners={owners} setOwners={setOwners} />,
         },
 
         {
@@ -62,11 +63,21 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
     const items = steps.map((item) => ({
         key: item.title,
-        title: item.title,
+        title: isMobile ? undefined : item.title,
     }));
 
     const handleClose = () => {
         setVisible(false)
+        setCurrent(0)
+        setCurrentTemplate(null)
+        setCurrentPlan(null)
+        setCurrentPriceId(null)
+        setDominio(null)
+        setCurrentPhone(null)
+        setOwners([null, null])
+        setDominios(null)
+        setLoad(false)
+        setAvailableNext(false)
     }
 
     const getDominios = async () => {
@@ -92,6 +103,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
             phoneNumber: currentPhone,
             label: currentTemplate,
             plan: currentPlan,
+            owners: currentTemplate === 'wedding' ? owners : undefined,
         }, currentPriceId);
     };
 
@@ -115,8 +127,8 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
             >
 
                 <div className='steps-content-container'>
-                    <Steps current={current} items={items} />
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Steps current={current} items={items} responsive={false} />
+                    <div className='steps-scroll-content' style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
                         {steps[current].content}
                     </div>
                     <div className={`steps-buttons-container${current === 0 ? '-start' : ''}`}
@@ -151,7 +163,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
 
 
-const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCurrentPhone, currentPhone }) => {
+const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCurrentPhone, currentPhone, currentTemplate, owners, setOwners }) => {
 
     const [isMatch, setIsMatch] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
@@ -189,12 +201,13 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
 
 
     useEffect(() => {
-        if (dominio && currentPhone) {
+        const ownersReady = currentTemplate !== 'wedding' || (owners[0]?.trim() && owners[1]?.trim())
+        if (dominio && currentPhone && ownersReady) {
             setAvailableNext(true)
         } else {
             setAvailableNext(false)
         }
-    }, [dominio, currentPhone])
+    }, [dominio, currentPhone, owners, currentTemplate])
 
     useEffect(() => {
         if (code && phone?.length === 10) {
@@ -267,7 +280,35 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                     )}
                 </div>
 
-                <div className='preview_col'>
+                    {currentTemplate === 'wedding' && (
+                        <div className='dominio-owners-section'>
+                            <span className='new-invitation-label' style={{ fontSize: '16px' }}>Sus nombres</span>
+                            <span className='route-info' style={{ marginTop: 0 }}>
+                                Los usaremos a lo largo de toda la invitación — en portada, mensajes y detalles del evento.
+                            </span>
+                            <div className='dominio-form-card'>
+                                <div className='dominio-form-row'>
+                                    <input
+                                        className='dominio-input'
+                                        placeholder='Nombre del novio o la novia'
+                                        value={owners[0] || ''}
+                                        onChange={(e) => setOwners([e.target.value, owners[1]])}
+                                    />
+                                </div>
+                                <div className='dominio-divider' />
+                                <div className='dominio-form-row'>
+                                    <input
+                                        className='dominio-input'
+                                        placeholder='Nombre del novio o la novia'
+                                        value={owners[1] || ''}
+                                        onChange={(e) => setOwners([owners[0], e.target.value])}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                {/* <div className='preview_col'>
                     <div className="preview-label">Así verán su invitación sus invitados:</div>
 
                     <div className="browser-mockup">
@@ -282,7 +323,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div>
             : <></>
     )
@@ -334,33 +375,39 @@ const PLAN_FEATURES = {
 const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
 
     const [prices, setPrices] = useState([])
+    const [expanded, setExpanded] = useState({})
 
     useEffect(() => {
         fetchPrices(setPrices)
-        setCurrentPlan('pro')
     }, [])
-
-    useEffect(() => {
-      console.log(prices)
-    }, [prices])
-    
-
 
     const planPrices = prices.filter(p => PRODUCTS[p.priceId]?.type === 'plan')
 
+    const toggleExpand = (e, key) => {
+        e.stopPropagation()
+        setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
+    }
+
+    const PLAN_STYLE = {
+        paperless: { accent: '#bbb',    name: '#1C1B26', feat: '#555',                    subtext: '#bbb',                dark: false },
+        lite:      { accent: '#9B8DC4', name: '#9B8DC4', feat: '#444',                    subtext: '#bbb',                dark: false },
+        pro:       { accent: '#A99FC7', name: '#fff',    feat: 'rgba(255,255,255,0.85)',  subtext: 'rgba(255,255,255,0.35)', dark: true  },
+    }
 
     return (
         <div className='new-invitation-dominio-container'>
             <span className='new-invitation-label'>Elige tu plan</span>
             <span className='route-info'>Una sola compra. Tu invitación activa para siempre.</span>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', flex: 1, maxHeight: '80%', }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
                 {planPrices.map((p, index) => {
                     const product = PRODUCTS[p.priceId]
                     const isPro = product.value === 'pro'
+                    const ps = PLAN_STYLE[product.value] || PLAN_STYLE.lite
                     const isSelected = currentPlan === product.value
                     const features = PLAN_FEATURES[product.value] || []
                     const price = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p.amount)
+                    const isExpanded = expanded[product.value]
 
                     return (
                         <div
@@ -368,16 +415,15 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                             onClick={() => { setCurrentPlan(product.value); setCurrentPriceId(p.priceId); }}
                             className={isPro ? 'plan-pro-card' : ''}
                             style={{
-                                position: 'relative', flex: 1,
+                                position: 'relative',
+                                maxWidth: '100%',
                                 display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch',
                                 borderRadius: '18px', cursor: 'pointer',
-                                background: isPro ? undefined : '#fff',
-                                border: isSelected ? '2px solid #A99FC7' : '1.5px solid #e8e8e8',
-                                boxShadow: isSelected
-                                    ? '0 0 0 5px rgba(169,159,199,0.25), 0 8px 32px rgba(169,159,199,0.2)'
-                                    : '0 2px 8px rgba(0,0,0,0.06)',
-                                transition: 'box-shadow 0.2s ease, border 0.2s ease',
+                                background: isPro ? undefined : (isSelected ? `${ps.accent}08` : '#fff'),
+                                border: isSelected ? `2.5px solid ${ps.accent}` : '1.5px solid #e8e8e8',
+                                transition: 'border 0.25s ease, background 0.25s ease',
                                 marginTop: isPro ? '16px' : '0',
+                                flex: 1,
                             }}
                         >
                             {isPro && (
@@ -392,41 +438,85 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                 </div>
                             )}
 
-                            {/* Left: name + price */}
+                            {/* Name + price */}
                             <div style={{
-                                display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                                padding: isMobile ? '16px 20px 12px' : '28px 32px',
+                                display: 'flex', flexDirection: isMobile ? 'row' : 'column',
+                                alignItems: isMobile ? 'flex-start' : undefined,
+                                justifyContent: isMobile ? 'space-between' : 'center',
+                                padding: isMobile ? '18px 16px' : '28px 32px',
                                 minWidth: isMobile ? 'auto' : '160px',
-                                background: isPro ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                                borderRight: isMobile ? 'none' : (isPro ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0'),
-                                borderBottom: isMobile ? (isPro ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0') : 'none',
-                                gap: '4px',
+                                background: ps.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                                borderRight: isMobile ? 'none' : (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0'),
+                                borderBottom: isMobile ? (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0') : 'none',
+                                gap: isMobile ? '0' : '4px',
+                                 flex:2
                             }}>
-                                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: isPro ? '#A99FC7' : 'var(--brand-color-500)' }}>
-                                    Plan
-                                </span>
-                                <div style={{ fontSize: isMobile ? '32px' : '46px', fontWeight: 900, color: isPro ? '#fff' : '#1C1B26', textTransform: 'capitalize', lineHeight: 1 }}>
-                                    {product.value}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                                    <span style={{ fontSize: isMobile ? '14px' : '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: ps.accent }}>
+                                        Plan
+                                    </span>
+                                    <div style={{ fontSize: isMobile ? '26px' : '46px', fontWeight: 900, color: ps.name, textTransform: 'capitalize', lineHeight: 1 }}>
+                                        {product.value}
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: isPro ? '#A99FC7' : 'var(--brand-color-500)', letterSpacing: '-0.5px', marginTop: '6px' }}>
-                                    {price}
-                                </div>
-                                <div style={{ fontSize: '12px', color: isPro ? 'rgba(255,255,255,0.35)' : '#bbb', letterSpacing: '0.5px' }}>
-                                    MXN · pago único
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'flex-end' : undefined, gap: '2px' }}>
+                                    <div style={{ fontSize: isMobile ? '24px' : '24px', fontWeight: 800, color: ps.accent, letterSpacing: '-0.5px', marginTop: isMobile ? '0' : '6px', lineHeight:1 }}>
+                                        {price}
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: ps.subtext, letterSpacing: '0.5px', lineHeight:1 }}>
+                                        MXN · pago único
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Right: features grid */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 24px', flex: 1, padding: isMobile ? '12px 20px 20px' : '28px', alignContent: 'center' }}>
-                                {features.map((feat, i) => (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <feat.icon size={15} style={{ color: isPro ? '#A99FC7' : 'var(--brand-color-500)', flexShrink: 0 }} />
-                                        <span style={{ fontSize: '14px', color: isPro ? 'rgba(255,255,255,0.85)' : '#444', lineHeight: 1.4 }}>
-                                            {feat.text}
-                                        </span>
+                            {/* Features — always visible on desktop, collapsible on mobile */}
+                            {!isMobile && (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 24px', flex: 1, padding: '28px', alignContent: 'center' }}>
+                                    {features.map((feat, i) => (
+                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <feat.icon size={15} style={{ color: ps.accent, flexShrink: 0 }} />
+                                            <span style={{ fontSize: '14px', color: ps.feat, lineHeight: 1.4 }}>
+                                                {feat.text}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {isMobile && (
+                                <div style={{
+                                    overflow: 'hidden',
+                                    maxHeight: isExpanded ? '400px' : '0px',
+                                    opacity: isExpanded ? 1 : 0,
+                                    transition: 'max-height 0.35s ease, opacity 0.25s ease',
+                                }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '4px 16px 12px' }}>
+                                        {features.map((feat, i) => (
+                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <feat.icon size={14} style={{ color: ps.accent, flexShrink: 0 }} />
+                                                <span style={{ fontSize: '13px', color: ps.feat, lineHeight: 1.4 }}>
+                                                    {feat.text}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            )}
+
+                            {isMobile && (
+                                <button
+                                    onClick={(e) => toggleExpand(e, product.value)}
+                                    style={{
+                                        background: 'none', border: 'none', cursor: 'pointer',
+                                        fontSize: '12x', fontWeight: 600, fontFamily: 'Poppins',
+                                        color: ps.subtext,
+                                        padding: '8px 16px',
+                                        textAlign: 'left',
+                                    }}
+                                >
+                                    {isExpanded ? 'Ocultar' : 'Ver detalles'}
+                                </button>
+                            )}
                         </div>
                     )
                 })}

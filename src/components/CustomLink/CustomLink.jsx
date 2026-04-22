@@ -4,7 +4,7 @@ import { Button, Dropdown, message } from 'antd'
 import { ChevronLeft, Link2, SquareArrowUpRight } from 'lucide-react'
 import { StorageImages } from '../ImagesStorage/StorageImages'
 
-export const CustomLink = ({ backuImage, isHeader, urlImage, url, id, handleImage, name }) => {
+export const CustomLink = ({ backuImage, isHeader, urlImage, url, id, handleImage, name, label }) => {
 
     const copyToClipboard = async (textToCopy) => {
         try {
@@ -69,9 +69,9 @@ export const CustomLink = ({ backuImage, isHeader, urlImage, url, id, handleImag
             )}
         >
             <Button
-                style={{ maxHeight: isHeader ? 25 : undefined, marginLeft: isHeader ? 4 : undefined }}
+                style={{ maxHeight: isHeader ? 25 : undefined, borderRadius: isHeader ? '12px' : '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
                 icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
-                Link del evento
+                {label ?? (isHeader ? 'Copiar link' : 'Link del evento')}
             </Button>
         </Dropdown>
     )

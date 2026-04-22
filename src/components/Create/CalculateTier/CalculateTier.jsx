@@ -137,6 +137,8 @@ export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) =>
             arrow
             open={priorityCalc.open}
             trigger={['click']}
+            placement="bottomRight"
+            getPopupContainer={(trigger) => trigger.closest('.ant-drawer-body') ?? document.body}
             onOpenChange={(open) => {
                 if (open) openCalculator()
             }}

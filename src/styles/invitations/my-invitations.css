@@ -30,18 +30,17 @@
 
 .invitation_btns_cont {
     display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    align-items: stretch;
     align-self: stretch;
     gap: 8px;
     margin-top: 12px;
-    border-top: 1px solid var(--borders);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     padding-top: 12px;
 }
 
 .invitation_start_button {
     padding: 6px 16px;
-    flex: 1;
+    width: 100%;
     background-color: #212225;
     color: #FFF;
     font-size: 14px;
@@ -52,6 +51,7 @@
 
 .invitation_url_button {
     min-height: 40px;
+    width: 100%;
 }
 
 .invitation_status {
@@ -264,29 +264,64 @@
 
 @media (max-width: 750px) {
 
+    .invitations-page-main-container {
+        margin-top: 0;
+        gap: 0;
+    }
+
+    .main-dash-layout {
+        margin-top: 50px !important;
+    }
+
+    .invitations-content-wrapper {
+        padding-top: 16px !important;
+        gap: 20px !important;
+    }
+
     .inv-title-cta-filter {
         width: 100%;
-        padding: 0px 16px;
+        padding: 10px 16px;
         gap: 0px;
+        margin-top: 24px;
+    }
+
+    .invitations_title {
+        font-weight: 600;
     }
 
     .invs-header-ctas {
-        gap: 6px;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .invs-searcher {
+        max-width: 100%;
+        width: 100%;
     }
 
     .inv-invitations-container {
-        padding: 12px 16px;
-        padding-left: 16px;
-    }
-
-    .invitations-page-main-container {
-        gap: 40px;
+        flex-direction: column;
+        overflow-x: unset;
+        padding: 12px 26px;
+        align-items: center;
+        box-sizing: border-box;
     }
 
     .invitation-container {
-        min-width: 280px;
-        max-width: 280px;
-        width: 280px;
+        width: 100%;
+        min-width: unset;
+        max-width: 100%;
+    }
+
+    .invitation-image-container {
+        height: 180px;
+        min-height: 180px;
+    }
+
+    .new_inv_cont {
+        min-height: 200px;
     }
 }
 

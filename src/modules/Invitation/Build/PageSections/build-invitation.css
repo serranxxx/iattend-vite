@@ -4,10 +4,11 @@
     justify-content: flex-start;
     flex-direction: column;
     background-color: var(--ft-color);
-    background-image:
-        linear-gradient(to right, rgba(245, 243, 242, 1) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(245, 243, 242, 1) 1px, transparent 1px);
-    background-size: 80px 80px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
+        radial-gradient(ellipse at center, #e9e9e9, #FFFFFF);
+    background-size: 50px 50px, 50px 50px, 100% 100%;
     /* Tamaño de la cuadrícula */
 
 }
@@ -654,6 +655,10 @@
 
 @media (max-width: 750px) {
 
+    .main-build-layout {
+        overflow: visible !important;
+    }
+
     #onhidebutton,
     .build-content-modules-main-container {
         display: none;
@@ -664,6 +669,13 @@
         height: auto !important;
         margin: 0px !important;
         padding: 0px !important;
+        gap: 0;
+        margin-top: 0px !important;
+    }
+
+    .tools-settings-menu-container {
+        right: 8px;
+        top: 60px;
     }
 
     .inv-device-main-container-ios,

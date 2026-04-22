@@ -1153,3 +1153,8 @@
 /* .collection_cont:hover {
     transform: scale(1.05);
 } */
+
+.pac-container {
+    z-index: 1200 !important;
+    border-radius: 8px;
+}

@@ -48,19 +48,26 @@
 }
 
 @media (max-width: 750px) {
-    .footer-app-container img {
-        max-width: 200px;
-    }
-
     .footer-app-container {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 36px;
+        padding: 32px 24px;
+        gap: 24px;
+    }
+
+    .footer-app-container img {
+        max-width: 120px;
     }
 
     .footer-links-cont {
-        grid-template-columns: repeat(1, 1fr);
-        font-size: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        font-size: 13px;
+        gap: 12px;
+    }
+
+    .footer-link {
+        margin-right: 0;
     }
 }

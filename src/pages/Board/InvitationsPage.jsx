@@ -183,7 +183,7 @@ export const InvitationsPage = () => {
 
                                 {
                                     sessions?.logged &&
-                                    <div style={{
+                                    <div className='invitations-content-wrapper' style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: 'column',
                                         position: 'relative', padding: '0px', gap: '36px', width: '100%',
                                         paddingTop: '36px'

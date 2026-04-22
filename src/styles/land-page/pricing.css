@@ -85,32 +85,42 @@
 
 @media (max-width: 750px) {
 
-    .pricing-features-conainer {
-        padding: 0px 20px;
-    }
-
-    .pricing-title-subtext-container {
-        padding: 0px 20px;
+    .pricing-main-container {
+        margin-top: 60px;
+        padding-top: 16px;
+        padding-bottom: 48px;
         gap: 16px;
     }
 
-
-    .pricing-sub-text {
-        font-size: 14px;
-        font-weight: 400;
-        margin-top: 10px;
-
+    .pricing-title-subtext-container {
+        padding: 0px 16px;
+        gap: 10px;
     }
 
     .pricing-title-page {
-        font-size: 36px;
-        line-height: 1;
-        text-align: left;
+        font-size: 28px;
+        line-height: 1.1;
         width: 100%;
     }
 
-    .features-title {
-        margin: 50px 0;
+    .pricing-sub-text {
+        font-size: 13px;
+        line-height: 1.5;
+        width: 100%;
+        margin-top: 0;
+    }
+
+    .pricing-features-conainer {
+        padding: 0px 16px;
+        gap: 16px;
+    }
+
+    .prcing-feature-row {
+        padding: 8px 0px;
+    }
+
+    .pricing-feature-text {
+        font-size: 13px;
     }
 
     .pricing-hidde-item {

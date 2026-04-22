@@ -12,7 +12,8 @@ import { FaRegTrashAlt } from 'react-icons/fa';
 import { convert12HrTo24Hr, formatTimeTo12Hours } from '../../../../helpers/assets/functions';
 import { RiDeleteBack2Line } from 'react-icons/ri';
 import { TbEyeClosed } from 'react-icons/tb';
-import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
+import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu'
+import { AddressAutocomplete } from '../../../SideEvents/AddressAutocomplete';
 
 export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSaved, }) => {
 
@@ -279,6 +280,35 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                 })
             }
         }));
+        setSaved(false)
+    }
+
+    const onAddressAutoFill = (objectId, addr) => {
+        setInvitation(prevInvitation => ({
+            ...prevInvitation,
+            itinerary: {
+                ...prevInvitation.itinerary,
+                object: prevInvitation.itinerary.object.map(obj => {
+                    if (obj.id === objectId) {
+                        return {
+                            ...obj,
+                            address: {
+                                ...obj.address,
+                                street: addr.street,
+                                number: addr.number,
+                                neighborhood: addr.neighborhood,
+                                zip: addr.zipcode,
+                                city: addr.city,
+                                state: addr.state,
+                                country: addr.country,
+                                url: addr.url,
+                            }
+                        }
+                    }
+                    return obj
+                })
+            }
+        }))
         setSaved(false)
     }
 
@@ -915,8 +945,11 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                         item.address &&
                                                                                         <>
 
-
-
+                                                                                            <AddressAutocomplete
+                                                                                                className='gc-input-text'
+                                                                                                placeholder='Buscar dirección...'
+                                                                                                onSelect={(addr) => onAddressAutoFill(item.id, addr)}
+                                                                                            />
 
                                                                                             <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
 

@@ -1,29 +1,40 @@
 
-import { Tooltip } from 'antd';
-// import { storage } from '../../firebase';
-// import { ref,deleteObject } from 'firebase/storage';
+import { Grid, Tooltip } from 'antd';
+
+const { useBreakpoint } = Grid;
 
 export const ButtonsMenu = ({
-     buttons, currentSection, handleClick, 
-     setOnHide, invitation
+     buttons, currentSection, handleClick,
+     setOnHide, menuTimerRef, invitation
 }) => {
 
+    const screens = useBreakpoint();
+
     const handleActions = (item) => {
-        setOnHide(false)
         handleClick(item);
+        if (screens.xs) {
+            if (menuTimerRef.current) clearTimeout(menuTimerRef.current);
+            setOnHide(true);
+            menuTimerRef.current = setTimeout(() => {
+                setOnHide(false);
+                menuTimerRef.current = null;
+            }, 350);
+        } else {
+            setOnHide(false);
+        }
     }
 
     const sortButtons = (buttons, order) => {
         const fixed = buttons.filter(btn => btn.index === 0);
         const sortable = buttons.filter(btn => btn.index !== 0);
-      
+
         sortable.sort(
           (a, b) => order.indexOf(a.index) - order.indexOf(b.index)
         );
-      
+
         return [...fixed, ...sortable];
       };
-      
+
 
 
     return (
@@ -32,18 +43,22 @@ export const ButtonsMenu = ({
             <div className={'tools-container'}>
 
                 {
-                    sortButtons(buttons, invitation.generals.positions).map((item, index) => (
-                        <Tooltip key={index} color={'var(--text-color)'} placement="bottomRight" title={item.name}>
+                    sortButtons(buttons, invitation.generals.positions).map((item, index) => {
+                        const btn = (
                             <div
-                                className={`single-button${currentSection === item.value ? '--selected' : ''} tag-button-tools`}
                                 key={index}
+                                className={`single-button${currentSection === item.value ? '--selected' : ''} tag-button-tools`}
                                 onClick={() => handleActions(item)} >
                                 {item.icon}
-                                {/* {item.index} */}
                             </div>
-                        </Tooltip>
+                        );
 
-                    ))
+                        return screens.xs ? btn : (
+                            <Tooltip key={index} color={'var(--text-color)'} placement="bottomRight" title={item.name}>
+                                {btn}
+                            </Tooltip>
+                        );
+                    })
                 }
 
             </div>

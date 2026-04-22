@@ -11,13 +11,15 @@ import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
-// import { handleCheckout } from '../../components/Payment/functions'
+import { handleCheckout } from '../../components/Payment/functions'
 import { useSearchParams } from 'react-router-dom'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { Check, CheckCheck, ChevronLeft, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
+import { Check, CheckCheck, ChevronLeft, ChevronRight, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
+import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
 import { CustomLink } from '../../components/CustomLink/CustomLink'
+import { FooterApp } from '../Footer/FooterApp'
 
 
 const { Option } = Select;
@@ -42,6 +44,8 @@ export const SideEvents = () => {
     const [onBubble, setOnBubble] = useState(false)
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
+    const [addressOpen, setAddressOpen] = useState(false)
+    const [mobilePanel, setMobilePanel] = useState(0)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
     const [drawerState, setDrawerState] = useState({
@@ -51,6 +55,7 @@ export const SideEvents = () => {
         visible: false
     });
     const { TextArea } = Input;
+    const screens = Grid.useBreakpoint();
 
     const columns = useMemo(() => ([
         {
@@ -152,7 +157,7 @@ export const SideEvents = () => {
             title: "Acciones",
             key: "send",
             width: 120,
-            fixed: "right",
+            fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
                 const { state, phone_number } = record;
 
@@ -212,7 +217,7 @@ export const SideEvents = () => {
                 return null;
             },
         },
-    ]), [current, rawData]);
+    ]), [current, rawData, screens.xs]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
@@ -220,13 +225,13 @@ export const SideEvents = () => {
         pagination: false,
         scroll: {
             x: 'max-content',
-            y: 'calc(90vh - 180px)',
+            y: screens.xs ? undefined : 'calc(90vh - 180px)',
         },
-    }), [columns]);
+    }), [columns, screens.xs]);
 
     const items = useMemo(() => ([
         {
-            label: `Creados`,
+            label: screens.xs ? <Plus size={14} /> : `Creados`,
             key: "creado",
             children: (
                 <Table
@@ -240,7 +245,7 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: `Enviadas`,
+            label: screens.xs ? <Send size={14} /> : `Enviadas`,
             key: "esperando",
             children: (
                 <Table
@@ -251,7 +256,7 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: `Confirmados`,
+            label: screens.xs ? <CheckCheck size={14} /> : `Confirmados`,
             key: "confirmado",
             children: (
                 <Table
@@ -265,6 +270,7 @@ export const SideEvents = () => {
     ]), [
         tableProps,
         rawData,
+        screens.xs,
     ]);
 
     const handleCompanions = (id) => {
@@ -899,17 +905,45 @@ export const SideEvents = () => {
                 }}>
                 <HeaderDashboard mode={'side'} />
                 <Layout className='build-invitation-layout' style={{
-                    padding: '24px', paddingTop: '0px',
-                    marginTop: '65px', paddingBottom: '24px', position: 'relative',
+                    paddingTop: '0px',
+                    position: 'relative',
                 }} >
 
-                    <div className='guests-info-container' >
+                    <div className='guests-info-container' style={{ padding: '24px', marginTop: '65px', paddingBottom: '24px', }}>
 
-                        <span className='guests-title-page'>Mis eventos</span>
+                        <span className='guests-title-page'>Mis side events</span>
 
                         {
                             sideEvent ?
                                 <div className='side_events_container'>
+
+                                    {(() => {
+                                        const canCreate = (plan === 'pro' && sideEvent.length < 3) || (plan === 'lite' && sideEvent.length < 1);
+                                        return (
+                                            <div
+                                                onClick={canCreate ? insertSideEvent : () => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
+                                                className='side_event_item'
+                                                style={{ backgroundColor: '#F5F3F2' }}
+                                            >
+                                                <div className='new_inv_cont' style={{ minHeight: 'unset', flex: 1, width: '100%' }}>
+                                                    <div className='add_button_circle'>
+                                                        {canCreate
+                                                            ? <Plus size={32} color='var(--brand-color-500)' />
+                                                            : <LuShoppingCart size={32} color='var(--brand-color-500)' />
+                                                        }
+                                                    </div>
+                                                    <span className='cta_title'>
+                                                        {canCreate ? '¿Nuevo side event?' : '¿Más side events?'}
+                                                    </span>
+                                                    <span className='cta_text'>
+                                                        {canCreate ? 'Agregar un evento' : 'Compra adicionales'}
+                                                    </span>
+                                                    {!canCreate && <Button className='cta_plans'>Comprar</Button>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
                                     {
                                         sideEvent?.map((item, index) => (
                                             <div key={index} onClick={() => { setCurrent(item) }} className='side_event_item'>
@@ -926,27 +960,6 @@ export const SideEvents = () => {
                                             </div>
                                         ))
                                     }
-
-                                    {
-                                        ((plan === 'pro' && sideEvent.length <= 2) || (plan === "lite" && sideEvent.length === 0)) ?
-                                            <Button icon={<LuPlus size={44} />} onClick={insertSideEvent} className='side_event_item side_event_btn' style={{ width: '100%', height: '100%' }}>
-
-                                            </Button>
-
-                                            : <></>
-
-                                            // <div className='new_side_event'>
-                                            //     <span style={{ color: '#00000080' }}>Haz llegado al límite de tus Side events</span>
-                                            //     <img
-                                            //         style={{ width: '100%' }}
-                                            //         src='https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/land_page/empty.png' alt='' />
-                                            //     <Button
-                                            //         onClick={() => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
-                                            //         style={{
-                                            //             fontSize: '16px', minHeight: '44px', fontWeight: 400
-                                            //         }} type='primary' icon={<LuPlus />}>Comprar adicional</Button>
-                                            // </div>
-                                    }
                                 </div>
                                 : <div className='side_events_spin'>
                                     <Spin />
@@ -957,26 +970,30 @@ export const SideEvents = () => {
 
                     <Modal
                         footer={false}
-                        onCancel={() => setOpen(false)}
-                        onOk={() => setOpen(false)}
-                        style={{ top: 20, maxWidth: '1320px' }}
-                        width="90%"
+                        onCancel={() => { setOpen(false); setMobilePanel(0); }}
+                        onOk={() => { setOpen(false); setMobilePanel(0); }}
+                        style={{ top: screens.xs ? 0 : 20, maxWidth: '1320px', margin: screens.xs ? 0 : undefined, padding: screens.xs ? 0 : undefined }}
+                        width={screens.xs ? '100%' : '90%'}
                         closeIcon={false}
                         styles={{
                             container: {
-                                borderRadius: '24px',
+                                borderRadius: screens.xs ? '0px' : '24px',
                                 padding: '0px',
-                                height: '90vh',
+                                height: screens.xs ? '100vh' : '90vh',
                                 overflow: 'hidden',
                                 position: 'relative',
-                                border:'4px solid #F5F3F2'
+                                border: '4px solid #F5F3F2'
                             },
                             body: {
-                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                justifyContent: 'flex-start',
+                                flexDirection: 'row',
                                 width: '100%',
+                                height: screens.xs ? '100vh' : undefined,
+                                padding: screens.xs ? '0' : undefined,
+                                overflow: screens.xs ? 'hidden' : undefined,
                                 position: 'relative',
-
-
                             }
                         }}
                         open={open}
@@ -1006,556 +1023,494 @@ export const SideEvents = () => {
 
                         <div className={onBubble ? 'ticket_bubble' : 'hide_bubble'}>-1 crédito</div>
 
-                        <div className='side_invitation_cont' style={{ background: handlePreview ? '#FFFFFF' : undefined, }}>
-                            {
-                                handlePreview ?
+                        {/* Slider wrapper: relative container on mobile, transparent on desktop */}
+                        <div style={screens.xs ? { position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', flexShrink: 0 } : { display: 'contents' }}>
 
-                                    <>
-                                        <div className={`inv-device-main-container-ios`} style={{ transform: 'scale(0.8)', marginLeft: '0px' }}>
-                                            <div className={`device-buttons-container-ios`}>
-                                                <div className={`device-button-ios`} />
-                                                <div className={`device-button-ios`} />
-                                                <div className={`device-button-ios`} />
-                                            </div>
-                                            <div className={`device-power-button-ios`} />
-                                            <div className={`inv-device-container-ios scroll-invitation`}>
+                            {/* Slide track: 200% wide flex row on mobile, transparent on desktop */}
+                            <div style={screens.xs ? {
+                                display: 'flex', flexDirection: 'row',
+                                width: '200%', height: '100%',
+                                transform: `translateX(${mobilePanel === 0 ? '0%' : '-50%'})`,
+                                transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                                willChange: 'transform',
+                            } : { display: 'contents' }}>
 
-                                                <div className={`inv-black-space-ios`}>
-                                                    <span>5:15</span>
-                                                    <div className={`camera-ios`} />
-                                                    <div>
-                                                        {/* <img alt='' src={ios_settings} style={{
+                                {/* Panel 0 — design */}
+                                <div style={screens.xs ? { width: '50%', flexShrink: 0, height: '100%', overflow: 'hidden' } : { display: 'contents' }}>
+                                    <div className='side_invitation_cont' style={{ background: handlePreview ? '#FFFFFF' : undefined, ...(screens.xs ? { width: '100%', maxWidth: '100%', minWidth: 'unset', height: '100%' } : {}) }}>
+                                        {
+                                            handlePreview ?
+
+                                                <>
+                                                    <div className={`inv-device-main-container-ios`} style={{ transform: 'scale(0.8)', marginLeft: '0px' }}>
+                                                        <div className={`device-buttons-container-ios`}>
+                                                            <div className={`device-button-ios`} />
+                                                            <div className={`device-button-ios`} />
+                                                            <div className={`device-button-ios`} />
+                                                        </div>
+                                                        <div className={`device-power-button-ios`} />
+                                                        <div className={`inv-device-container-ios scroll-invitation`}>
+
+                                                            <div className={`inv-black-space-ios`}>
+                                                                <span>5:15</span>
+                                                                <div className={`camera-ios`} />
+                                                                <div>
+                                                                    {/* <img alt='' src={ios_settings} style={{
                                                         height: '100%', objectFit: 'cover'
                                                     }} /> */}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className={`scroll-invitation ios-invitation `}>
+                                                                <SideEventHost config={current} />
+                                                                {/* <InvitationTest setCurrentOffsetTop={setCurrentOffsetTop} positionY={positionY} invitation={invitation} size={size} /> */}
+                                                            </div>
+                                                            <div className={`inv-light-space-ios`} />
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </>
 
-                                                <div className={`scroll-invitation ios-invitation `}>
-                                                    <SideEventHost config={current} />
-                                                    {/* <InvitationTest setCurrentOffsetTop={setCurrentOffsetTop} positionY={positionY} invitation={invitation} size={size} /> */}
-                                                </div>
-                                                <div className={`inv-light-space-ios`} />
-                                            </div>
-                                        </div>
-                                    </>
-
-                                    :
-                                    <>
-                                        {
-                                            current?.body?.image &&
-                                            <img src={current?.body.image} alt=''
-                                                style={{
-                                                    position: 'absolute', width: '100%', height: '100%', objectFit: 'cover',
-                                                    top: 0, zIndex: 0
-                                                }} />
-                                        }
+                                                :
+                                                <>
+                                                    {
+                                                        current?.body?.image &&
+                                                        <img src={current?.body.image} alt=''
+                                                            style={{
+                                                                position: 'absolute', width: '100%', height: '100%', objectFit: 'cover',
+                                                                top: 0, zIndex: 0
+                                                            }} />
+                                                    }
 
 
 
-                                        <div className='single_col' style={{ alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                                            {
-                                                !current?.body?.image &&
-                                                <div className='add_image_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }}>
-                                                    <LuImage style={{ color: '#FFF' }} />
-                                                </div>
-                                            }
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', width: '100%' }}>
+                                                        {
+                                                            !current?.body?.image &&
+                                                            <div className='add_image_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }}>
+                                                                <LuImage style={{ color: '#FFF' }} />
+                                                            </div>
+                                                        }
 
+                                                        <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'} />
+                                                    </div>
 
-
-                                            <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'} />
-                                        </div>
-
-                                        <div className='side_info_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, transform: 'scale(0.9)' }}>
-                                            <TextArea
-                                                key={`
+                                                    <div className='side_info_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, overflow: addressOpen ? 'visible' : 'hidden' }}>
+                                                        <TextArea
+                                                            key={`
                                             ${current?.body?.title?.size}-
                                             ${current?.body?.title?.line_height}-
                                             ${current?.body?.title?.font}-
                                             ${current?.body?.title?.weight}
                                         `}
-                                                className="side_title_input"
-                                                placeholder="Título del evento"
-                                                autoSize={{ minRows: 2, maxRows: 6 }}
-                                                value={current?.name}
-                                                onChange={(e) =>
-                                                    setCurrent(prev => ({ ...prev, name: e.target.value }))
-                                                }
-                                                style={{
-                                                    fontSize: current?.body?.title?.size ?? 24,
-                                                    lineHeight: current?.body?.title?.line_height ?? 1.4,
-                                                    fontFamily: current?.body?.title?.font ?? 'Poppins',
-                                                    fontWeight: current?.body?.title?.weight ?? 500,
-                                                    opacity: current?.body?.title?.opacity ?? 1,
-                                                    padding: '24px',
-                                                    color: '#FFFFFF',
-                                                }}
-                                            />
+                                                            className="side_title_input"
+                                                            placeholder="Título del evento"
+                                                            autoSize={{ minRows: 2, maxRows: 6 }}
+                                                            value={current?.name}
+                                                            onChange={(e) =>
+                                                                setCurrent(prev => ({ ...prev, name: e.target.value }))
+                                                            }
+                                                            style={{
+                                                                fontSize: current?.body?.title?.size ?? 24,
+                                                                lineHeight: current?.body?.title?.line_height ?? 1.4,
+                                                                fontFamily: current?.body?.title?.font ?? 'Poppins',
+                                                                fontWeight: current?.body?.title?.weight ?? 500,
+                                                                opacity: current?.body?.title?.opacity ?? 1,
+                                                                padding: '24px',
+                                                                color: '#FFFFFF',
+                                                            }}
+                                                        />
 
 
-                                            <Dropdown
-                                                trigger={['click']}
-                                                placement='right'
+                                                        <Dropdown
+                                                            trigger={['click']}
+                                                            placement='right'
 
-                                                popupRender={() => (
-                                                    <DatePicker onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: e } }))} className='date_pciker_sidee' showTime />
-                                                )}
-                                            >
-                                                <div className='side_date_time'>
-                                                    <LuCalendarClock size={20} style={{ color: '#FFF' }} />
-                                                    {
-                                                        current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span>
-                                                            : <span>Fecha y hora</span>
-                                                    }
+                                                            popupRender={() => (
+                                                                <DatePicker onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: e } }))} className='date_pciker_sidee' showTime />
+                                                            )}
+                                                        >
+                                                            <div className='side_date_time'>
+                                                                <LuCalendarClock size={20} style={{ color: '#FFF' }} />
+                                                                {
+                                                                    current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span>
+                                                                        : <span>Fecha y hora</span>
+                                                                }
 
-                                                </div>
-                                            </Dropdown>
+                                                            </div>
+                                                        </Dropdown>
 
-                                            <Dropdown
-                                                placement='right'
-                                                trigger={['click']}
-                                                popupRender={() => (
-                                                    <div className='address_form_sidee'>
-                                                        <div className='single_col'>
-                                                            <span>Calle</span>
-                                                            <Input
-                                                                value={current?.body?.address?.street}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, street: e.target.value } } }))}
+                                                        {addressOpen ? (
+                                                            <div className='address_inline_form'>
+                                                                <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                                    <span style={{ color: '#FFFFFF80', fontSize: '12px' }}>Ubicación</span>
+                                                                    <Button
+                                                                        type='text'
+                                                                        icon={<LuX size={14} style={{ color: '#FFF' }} />}
+                                                                        style={{ minWidth: 24, maxWidth: 24, maxHeight: 24 }}
+                                                                        onClick={() => setAddressOpen(false)}
+                                                                    />
+                                                                </div>
 
-                                                                className='sidee_input' />
-                                                        </div>
-                                                        <div className='single_col'>
-                                                            <span>Colonia</span>
-                                                            <Input
-                                                                value={current?.body?.address?.neighborhood}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, neighborhood: e.target.value } } }))}
-                                                                className='sidee_input' />
-                                                        </div>
-                                                        <div className='single_col'>
-                                                            <span>Número</span>
-                                                            <Input value={current?.body?.address?.number}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, number: e.target.value } } }))}
-                                                                className='sidee_input' style={{ width: '100%', color: '#FFFFFF' }} />
-                                                        </div>
-                                                        <div className='single_col'>
-                                                            <span>Ciudad</span>
-                                                            <Input
-                                                                value={current?.body?.address?.city}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, city: e.target.value } } }))}
-                                                                className='sidee_input' />
-                                                        </div>
-                                                        <div className='single_col'>
-                                                            <span>Estado</span>
-                                                            <Input
-                                                                value={current?.body?.address?.state}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, state: e.target.value } } }))}
-                                                                className='sidee_input' />
-                                                        </div>
-                                                        <div className='single_col'>
-                                                            <span>País</span>
-                                                            <Input value={current?.body?.address?.country}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, country: e.target.value } } }))}
-                                                                className='sidee_input' />
-                                                        </div>
+                                                                <AddressAutocomplete
+                                                                    onSelect={(addr) => setCurrent((prev) => ({
+                                                                        ...prev,
+                                                                        body: { ...prev.body, address: { ...prev.body.address, ...addr } }
+                                                                    }))}
+                                                                />
 
-                                                        <div className='single_col'>
-                                                            <span>Código postal</span>
-                                                            <Input
-                                                                value={current?.body?.address?.zipcode}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, zipcode: e.target.value } } }))}
-                                                                className='sidee_input' />
-                                                        </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <span>Código postal</span>
+                                                                    <Input value={current?.body?.address?.zipcode} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, zipcode: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <span>Calle</span>
+                                                                    <Input value={current?.body?.address?.street} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, street: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <span>Número</span>
+                                                                    <Input value={current?.body?.address?.number} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, number: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <span>Colonia</span>
+                                                                    <Input value={current?.body?.address?.neighborhood} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, neighborhood: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <span>Ciudad</span>
+                                                                    <Input value={current?.body?.address?.city} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, city: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <span>Estado</span>
+                                                                    <Input value={current?.body?.address?.state} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, state: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <span>País</span>
+                                                                    <Input value={current?.body?.address?.country} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, country: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+                                                                    <span>URL Google Maps</span>
+                                                                    <Input value={current?.body?.address?.url} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, url: e.target.value } } }))} className='sidee_input' />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className='side_date_time' onClick={() => setAddressOpen(true)}>
+                                                                <LuMapPin size={20} style={{ color: '#FFF' }} />
+                                                                {current?.body?.address?.zipcode
+                                                                    ? <span style={{ textAlign: 'center' }}>{current.body.address.street} {current.body.address.number} {current.body.address.neighborhood}, {current.body.address.zipcode}, {current.body.address.city}, {current.body.address.state}, {current.body.address.country}</span>
+                                                                    : <span>Ubicación</span>
+                                                                }
+                                                            </div>
+                                                        )}
 
-                                                        <div className='single_col'>
-                                                            <span>URL Google Maps</span>
-                                                            <Input
-                                                                value={current?.body?.address?.url}
-                                                                onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, url: e.target.value } } }))}
-                                                                className='sidee_input' />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            >
-                                                <div className='side_date_time'>
-
-                                                    <LuMapPin size={20} style={{ color: '#FFF' }} />
-                                                    {
-                                                        current?.body?.address.zipcode ? <span style={{ textAlign: 'center' }}>{current.body.address.street} {current.body.address.number} {current.body.address.neighborhood}, {current.body.address.zipcode}, {current.body.address.city}, {current.body.address.state}, {current.body.address.country}</span>
-                                                            : <span>Ubicación</span>
-                                                    }
-                                                </div>
-                                            </Dropdown>
-
-                                            <TextArea
-                                                key={`
+                                                        <TextArea
+                                                            key={`
                                                      ${current?.body?.title?.line_height}-
                                                     ${current?.body?.title?.weight}-
                                                     ${current?.body?.title?.size}-
                                                      ${current?.body?.title?.font}`}
-                                                className="side_title_input"
-                                                placeholder="Extras"
-                                                autoSize={{ minRows: 0, maxRows: 4 }}
-                                                value={current?.body?.extras}
-                                                onChange={(e) =>
-                                                    setCurrent(prev => ({ ...prev, body: { ...prev.body, extras: e.target.value } }))
-                                                }
-                                                style={{
-                                                    fontSize: '16px',
-                                                    padding: '12px',
-                                                    color: '#FFFFFF',
-                                                }}
-                                            />
-
-
-                                        </div>
-
-                                    </>
-
-                            }
-
-                            <div className='single_row' style={{ justifyContent: 'space-between', width: 'calc(100% - 32px)', position: 'absolute', top: '16px', right: '16px', gap: '12px' }}>
-                                {
-                                    !handlePreview ? <Button onClick={saveSideEvent} icon={<LuUpload />} className='save_button_sidee'>Guardar</Button>
-                                        : <Button icon={handlePreview ? <LuCornerUpLeft /> : <LuPlay />} onClick={() => setHandlePreview(!handlePreview)} style={{ backgroundColor: handlePreview ? "#00000080" : `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee'>{!handlePreview ? "" : 'Regresar'}</Button>
-                                }
-
-
-
-
-                                {
-                                    !handlePreview &&
-                                    <div className='single_row' style={{ width: 'auto', gap: '12px' }}>
-                                        <Tooltip title="Previsualizar">
-                                            <Button icon={handlePreview ? <LuCornerUpLeft /> : <LuPlay />} onClick={() => setHandlePreview(!handlePreview)} style={{ backgroundColor: handlePreview ? "#00000080" : `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee'>{!handlePreview ? "" : 'Regresar'}</Button>
-                                        </Tooltip>
-
-                                        <Dropdown
-                                            placement='bottomLeft'
-                                            trigger={['click']}
-                                            popupRender={() => (
-                                                <div className='generals-settings-popup' style={{ width: 'auto', background: '#00000040', backdropFilter: 'blur(10px)' }}>
-                                                    <ColorPicker value={current?.body?.color ?? "#000000"} onChange={(e) => setCurrent((prev) =>
-                                                    ({
-                                                        ...prev, body: { ...prev?.body, color: colorFactoryToHex(e) }
-                                                    })
-                                                    )} />
-                                                </div>
-                                            )}
-                                        >
-                                            <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuPalette />}></Button>
-                                        </Dropdown>
-
-
-                                        <Dropdown
-                                            trigger={['click']}
-                                            placement='bottomLeft'
-                                            popupRender={() => (
-                                                <div className='generals-settings-popup' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, backdropFilter: 'blur(10px)' }}>
-
-                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>Tipo de letra</span>
-
-                                                    <Select
-
-                                                        value={current?.body?.title?.font}
-                                                        onChange={(e) => setCurrent((prev) => ({
-                                                            ...prev, body: {
-                                                                ...prev.body, title: {
-                                                                    ...prev.body.title, font: e
-                                                                }
+                                                            className="side_title_input scroll-invitation"
+                                                            placeholder="Extras"
+                                                            autoSize={{ minRows: 0, maxRows: 4 }}
+                                                            value={current?.body?.extras}
+                                                            onChange={(e) =>
+                                                                setCurrent(prev => ({ ...prev, body: { ...prev.body, extras: e.target.value } }))
                                                             }
-                                                        }))}
-                                                        style={{ width: '100%' }}>
-                                                        {fonts.map((font, index) => (
-                                                            <Option key={`${index}-${font}`} value={font}><span style={{ fontFamily: font }} >{font}</span></Option>
-                                                        ))}
-
-                                                    </Select>
-
-                                                    <Col style={{
-                                                        width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
-                                                        marginTop: '10px'
-                                                    }}>
-                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>Tamaño</span>
-
-                                                        <Slider
-                                                            style={{ width: '95%', }}
-                                                            min={36}
-                                                            max={64}
-                                                            step={2}
-                                                            onChange={(e) => setCurrent(prev => ({
-                                                                ...prev,
-                                                                body: {
-                                                                    ...prev.body,
-                                                                    title: {
-                                                                        ...prev.body.title,
-                                                                        size: e
-
-                                                                    }
-                                                                },
-                                                            }))}
-                                                            // onChange={onChange}
-                                                            value={current.body.title?.size ?? 36}
+                                                            style={{
+                                                                fontSize: '16px',
+                                                                padding: '12px',
+                                                                color: '#FFFFFF',
+                                                            }}
                                                         />
 
-                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>Interlineado</span>
 
-                                                        <Slider
-                                                            style={{ width: '95%', }}
-                                                            min={0.8}
-                                                            max={2}
-                                                            step={0.1}
-                                                            onChange={(e) => setCurrent(prev => ({
-                                                                ...prev,
-                                                                body: {
-                                                                    ...prev.body,
-                                                                    title: {
-                                                                        ...prev.body.title,
-                                                                        line_height: e
+                                                    </div>
 
-                                                                    }
-                                                                },
-                                                            }))}
-                                                            // onChange={onChange}
-                                                            value={current.body.title?.line_height ?? 1.4}
-                                                        />
+                                                </>
 
-                                                        <Row style={{
-                                                            width: '100%', display: 'flex', alignItems: 'center',
-                                                            justifyContent: 'space-between', flexDirection: 'row'
-                                                        }}>
-                                                            <Col style={{
-                                                                width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
-                                                            }}>
+                                        }
 
-                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Opacidad</span>
+                                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', position: 'absolute', top: '16px', left: '16px', right: '16px', gap: '12px' }}>
 
-
-                                                                <Slider
-                                                                    style={{ width: '95%' }}
-                                                                    min={0.1}
-                                                                    max={1}
-                                                                    step={0.01}
-                                                                    onChange={(e) => setCurrent(prev => ({
-                                                                        ...prev,
-                                                                        body: {
-                                                                            ...prev.body,
-                                                                            title: {
-                                                                                ...prev.body.title,
-                                                                                opacity: e
-                                                                            }
-                                                                        },
-                                                                    }))}
-                                                                    // onChange={onChange}
-                                                                    value={current.body.title?.opacity ?? 1}
-                                                                />
-
-                                                            </Col>
-
-                                                            <Col style={{
-                                                                width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
-                                                            }}>
-                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Grosor</span>
-
-
-
-                                                                <Slider
-                                                                    style={{ width: '95%' }}
-                                                                    min={100}
-                                                                    max={1000}
-                                                                    step={100}
-
-                                                                    onChange={(e) => setCurrent(prev => ({
-                                                                        ...prev,
-                                                                        body: {
-                                                                            ...prev.body,
-                                                                            title: {
-                                                                                ...prev.body.title,
-                                                                                weight: e
-
-                                                                            }
-                                                                        },
-                                                                    }))}
-
-                                                                    value={current.body.title?.weight ?? 500}
-                                                                />
-
-                                                            </Col>
-                                                        </Row>
-                                                    </Col>
-
-                                                </div>
-                                            )}
-                                        >
-                                            <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuType />}></Button>
-                                        </Dropdown>
-
-                                    </div>
-                                }
-
-                            </div>
-
-                        </div>
-
-                        <div className='side_table_cont' >
-
-                            <Tabs
-                                className="side-tabs"
-                                type="card"
-                                items={items}
-                                tabBarExtraContent={
-                                    <div className='single_row' style={{ marginBottom: '12px' }}>
-
-                                        <CustomLink backuImage={current?.body?.image} urlImage={current?.url_image} url={`https://www.iattend.events/side-event/${current?.id}`} id={id} handleImage={updateURLimage} name={current?.name}/>
-                                        {/* <Popconfirm
-                                            title={current?.type === 'open' ? 'Invitación Púbica' : 'Invitación Privada'}
-                                            description={current?.type === 'open' ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
-                                            onConfirm={current?.type === 'open' ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
-                                            placement="bottomLeft"
-                                            okText="Continuar"
-                                            cancelText="Cancelar"
-                                            style={{ width: '400px' }}
-                                            id="popup-confirm"
-                                        >
-                                            {
-                                                current?.type === 'open' ?
-                                                    <Tooltip title="Evento público">
-                                                        <Button
-                                                            icon={<LockKeyholeOpen size={14} />} className="primarybutton">
-                                                        </Button>
-                                                    </Tooltip>
-                                                    : <Tooltip title="Evento privado">
-                                                        <Button
-                                                            icon={<LockKeyhole size={14} />} className="primarybutton">
-                                                        </Button>
-                                                    </Tooltip>
+                                            {!handlePreview
+                                                ? <Button onClick={saveSideEvent} icon={<LuUpload />} className={'save_button_sidee'}>Guardar</Button>
+                                                : <Button icon={<LuCornerUpLeft />} onClick={() => setHandlePreview(false)}>Regresar</Button>
                                             }
 
-                                        </Popconfirm> */}
+                                            {!handlePreview && (
+                                                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px' }}>
+                                                    <Tooltip title="Previsualizar">
+                                                        <Button icon={<LuPlay />} onClick={() => setHandlePreview(true)} style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' />
+                                                    </Tooltip>
 
-                                        <Dropdown
-                                            key={0}
-                                            trigger={['click']}
-                                            placement='bottomRight'
-                                            popupRender={() => (
-                                                <div key={2} className='single_col' style={{
-                                                    boxSizing: 'border-box', backgroundColor: '#FFF', padding: '12px',
-                                                    boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '16px', gap: '12px',
-                                                    marginTop: '8px'
-                                                }}>
                                                     <Dropdown
-                                                        key={1}
-                                                        trigger={['click']}
                                                         placement='bottomLeft'
+                                                        trigger={['click']}
                                                         popupRender={() => (
-                                                            <div key={3} className='side_guest_list'>
-                                                                <div className='single_row' style={{
-                                                                    alignSelf: 'stretch', justifyContent: 'space-between',
-                                                                    alignItems: 'flex-end'
-                                                                }}>
-                                                                    <span><b>Lista principal</b></span>
-                                                                    <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>Agregar</Button>
-                                                                </div>
-                                                                <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder='Búscar invitado' style={{ borderRadius: '99px' }} />
-                                                                <div className='single_col scroll-invitation' style={{
-                                                                    alignSelf: 'stretch', gap: '2px',
-                                                                    maxHeight: '100%', overflowY: 'auto'
-                                                                }}>
-                                                                    {
-                                                                        mainGuests ? mainGuests?.filter(i =>
-                                                                            i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
-                                                                                <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
-                                                                                    alignSelf: 'stretch',
-                                                                                    padding: '8px'
-                                                                                }}>
-                                                                                    {
-                                                                                        rawData.find(n => n.password === i.password)
-                                                                                            ? <Checkbox disabled checked />
-                                                                                            : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
-                                                                                    }
-
-                                                                                    <span style={{ minWidth: '130px', }}>{truncate(i.name, 16)}</span>
-
-                                                                                    <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px' }}>
-                                                                                        <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
-                                                                                    </div>
-
-                                                                                    <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', opacity: '0.7' }}>
-                                                                                        <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
-                                                                                    </div>
-
-                                                                                </div>
-                                                                            ))
-
-                                                                            : <Spin />
-                                                                    }
-
-                                                                </div>
+                                                            <div className='generals-settings-popup' style={{ width: 'auto', background: '#00000040', backdropFilter: 'blur(10px)' }}>
+                                                                <ColorPicker value={current?.body?.color ?? "#000000"} onChange={(e) => setCurrent((prev) =>
+                                                                ({
+                                                                    ...prev, body: { ...prev?.body, color: colorFactoryToHex(e) }
+                                                                })
+                                                                )} />
                                                             </div>
                                                         )}
                                                     >
-                                                        <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<Copy size={14} />}>Copiar de otra lista</Button>
-
+                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuPalette />} />
                                                     </Dropdown>
-                                                    <Button
 
-                                                        onClick={() => setDrawerState({
-                                                            currentGuest: null,
-                                                            onEditGuest: false,
-                                                            companions: [],
-                                                            visible: true
-                                                        })} style={{ width: '100%' }} icon={<Plus size={14} />}>Nuevo invitado</Button>
+                                                    <Dropdown
+                                                        trigger={['click']}
+                                                        placement='bottomLeft'
+                                                        popupRender={() => (
+                                                            <div className='generals-settings-popup' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, backdropFilter: 'blur(10px)' }}>
+
+                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Tipo de letra</span>
+
+                                                                <Select
+                                                                    value={current?.body?.title?.font}
+                                                                    onChange={(e) => setCurrent((prev) => ({
+                                                                        ...prev, body: {
+                                                                            ...prev.body, title: {
+                                                                                ...prev.body.title, font: e
+                                                                            }
+                                                                        }
+                                                                    }))}
+                                                                    style={{ width: '100%' }}>
+                                                                    {fonts.map((font, index) => (
+                                                                        <Option key={`${index}-${font}`} value={font}><span style={{ fontFamily: font }} >{font}</span></Option>
+                                                                    ))}
+                                                                </Select>
+
+                                                                <Col style={{
+                                                                    width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
+                                                                    marginTop: '10px'
+                                                                }}>
+                                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>Tamaño</span>
+                                                                    <Slider
+                                                                        style={{ width: '95%' }}
+                                                                        min={36} max={64} step={2}
+                                                                        onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, size: e } } }))}
+                                                                        value={current.body.title?.size ?? 36}
+                                                                    />
+
+                                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>Interlineado</span>
+                                                                    <Slider
+                                                                        style={{ width: '95%' }}
+                                                                        min={0.8} max={2} step={0.1}
+                                                                        onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, line_height: e } } }))}
+                                                                        value={current.body.title?.line_height ?? 1.4}
+                                                                    />
+
+                                                                    <Row style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                        <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
+                                                                            <span style={{ color: '#FFF' }} className='gc-content-label'>Opacidad</span>
+                                                                            <Slider
+                                                                                style={{ width: '95%' }}
+                                                                                min={0.1} max={1} step={0.01}
+                                                                                onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))}
+                                                                                value={current.body.title?.opacity ?? 1}
+                                                                            />
+                                                                        </Col>
+                                                                        <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
+                                                                            <span style={{ color: '#FFF' }} className='gc-content-label'>Grosor</span>
+                                                                            <Slider
+                                                                                style={{ width: '95%' }}
+                                                                                min={100} max={1000} step={100}
+                                                                                onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, weight: e } } }))}
+                                                                                value={current.body.title?.weight ?? 500}
+                                                                            />
+                                                                        </Col>
+                                                                    </Row>
+                                                                </Col>
+
+                                                            </div>
+                                                        )}
+                                                    >
+                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuType />} />
+                                                    </Dropdown>
                                                 </div>
                                             )}
-                                        >
-                                            <Button className='primarybutton--active' icon={<Plus size={14} />} >Agregar</Button>
-                                        </Dropdown>
-
-
-                                        {/* <Button onClick={() => setOpen(false)} className='primarybutton' icon={<LuX />}></Button> */}
-                                    </div>
-                                }
-
-                            />
-                        </div>
-
-                        <Tooltip color="#6D3CFA">
-                            <div
-                                onClick={() => setActiveTickets(true)}
-                                // onClick={() => setOnBubble(true)}
-                                onMouseEnter={() => setOnTickets(true)} onMouseLeave={() => setOnTickets(false)}
-                                style={{ bottom: '2%', right: '1.4%', maxHeight: '210px', borderRadius: activeTickets && '16px', }}
-                                className={`tickets_button ${activeTickets ? 'tickets_button_active' : ''}`}>
-                                {!activeTickets && (
-                                    <>
-                                        <Progress
-                                            showInfo={false}
-                                            status="active"
-                                            type="circle"
-                                            percent={(credits * 100) / 300}
-                                            size={80}
-                                            strokeWidth={12}
-                                            strokeColor={"#6D3CFA"}
-                                        />
-
-                                        {!onTickets ? (
-                                            <LuCoins size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
-                                        ) : (
-                                            <LuPlus size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
-                                        )}
-                                    </>
-                                )}
-
-                                {
-                                    activeTickets && (
-                                        <div onClick={(e) => e.stopPropagation()} className='active_tickets_cont' style={{ position: 'relative' }}>
-
-
-                                            <CreditsComponent getType={getCredits} credits={credits} invitationID={id} isClosable={true} setOnClose={setActiveTickets} />
 
                                         </div>
-                                    )
-                                }
+
+                                    </div>
+                                </div>
+
+                                {/* Panel 1 — table */}
+                                <div style={screens.xs ? { width: '50%', flexShrink: 0, height: '100%', overflowY: 'auto', boxSizing: 'border-box', padding: '16px', paddingBottom: '88px' } : { display: 'contents' }}>
+                                    <div className='side_table_cont' style={screens.xs ? { width: '100%', minWidth: '100%', padding: '0px' } : {}}>
+
+                                        {screens.xs && (
+                                            <span style={{ fontFamily: 'Poppins', fontSize: '18px', fontWeight: 600, display: 'block', marginBottom: '12px' }}>Asistentes</span>
+                                        )}
+
+                                        <Tabs
+                                            className="side-tabs"
+                                            style={screens.xs ? { overflow: 'visible' } : undefined}
+                                            type="card"
+                                            items={items}
+                                            tabBarExtraContent={
+                                                <div className='single_row' style={{ marginBottom: '12px', }}>
+
+                                                    {
+                                                        !screens.xs &&
+
+                                                        <CustomLink backuImage={current?.body?.image} urlImage={current?.url_image} url={`https://www.iattend.events/side-event/${current?.id}`} id={id} handleImage={updateURLimage} name={current?.name} />
+                                                    }
+                                                    <Dropdown
+                                                        key={0}
+                                                        trigger={['click']}
+                                                        placement='bottomRight'
+                                                        popupRender={() => (
+                                                            <div key={2} className='single_col' style={{
+                                                                boxSizing: 'border-box', backgroundColor: '#FFF', padding: '12px',
+                                                                boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '16px', gap: '12px',
+                                                                marginTop: '8px'
+                                                            }}>
+                                                                <Dropdown
+                                                                    key={1}
+                                                                    trigger={['click']}
+                                                                    placement='bottomLeft'
+                                                                    popupRender={() => (
+                                                                        <div key={3} className='side_guest_list'>
+                                                                            <div className='single_row' style={{
+                                                                                alignSelf: 'stretch', justifyContent: 'space-between',
+                                                                                alignItems: 'flex-end'
+                                                                            }}>
+                                                                                <span><b>Lista principal</b></span>
+                                                                                <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>Agregar</Button>
+                                                                            </div>
+                                                                            <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder='Búscar invitado' style={{ borderRadius: '99px' }} />
+                                                                            <div className='single_col scroll-invitation' style={{
+                                                                                alignSelf: 'stretch', gap: '2px',
+                                                                                maxHeight: '100%', overflowY: 'auto'
+                                                                            }}>
+                                                                                {
+                                                                                    mainGuests ? mainGuests?.filter(i =>
+                                                                                        i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
+                                                                                            <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
+                                                                                                alignSelf: 'stretch',
+                                                                                                padding: '8px'
+                                                                                            }}>
+                                                                                                {
+                                                                                                    rawData.find(n => n.password === i.password)
+                                                                                                        ? <Checkbox disabled checked />
+                                                                                                        : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
+                                                                                                }
+
+                                                                                                <span style={{ minWidth: '130px', }}>{truncate(i.name, 16)}</span>
+
+                                                                                                <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px' }}>
+                                                                                                    <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
+                                                                                                </div>
+
+                                                                                                <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', opacity: '0.7' }}>
+                                                                                                    <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
+                                                                                                </div>
+
+                                                                                            </div>
+                                                                                        ))
+
+                                                                                        : <Spin />
+                                                                                }
+
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                >
+                                                                    <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<Copy size={14} />}>Copiar de otra lista</Button>
+
+                                                                </Dropdown>
+                                                                <Button
+
+                                                                    onClick={() => setDrawerState({
+                                                                        currentGuest: null,
+                                                                        onEditGuest: false,
+                                                                        companions: [],
+                                                                        visible: true
+                                                                    })} style={{ width: '100%' }} icon={<Plus size={14} />}>Nuevo invitado</Button>
+                                                            </div>
+                                                        )}
+                                                    >
+                                                        <Button className='primarybutton--active' icon={<Plus size={14} />} >Agregar</Button>
+                                                    </Dropdown>
+
+
+                                                    {/* <Button onClick={() => setOpen(false)} className='primarybutton' icon={<LuX />}></Button> */}
+                                                </div>
+                                            }
+
+                                        />
+                                    </div>
+                                </div>
+
                             </div>
-                        </Tooltip>
+
+                            {screens.xs && (
+                                <div style={{
+                                    position: 'absolute', bottom: '16px', left: 0, right: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    gap: '8px', zIndex: 20, padding: '0 16px', boxSizing: 'border-box',
+                                }}>
+                                    <Button
+                                        icon={<ChevronLeft size={16} />}
+                                        onClick={() => setMobilePanel(0)}
+                                        style={{ minWidth: '44px', minHeight: '44px', borderRadius: '99px', background: '#00000080', backdropFilter: 'blur(10px)', border: 'none', color: '#FFF', opacity: mobilePanel === 0 ? 0.3 : 1, transition: 'opacity 0.3s ease', pointerEvents: mobilePanel === 0 ? 'none' : 'auto' }}
+                                    />
+                                    <Button
+                                        onClick={() => { setOpen(false); setMobilePanel(0); }}
+                                        style={{ flex: 1, borderRadius: '99px', minHeight: '44px', background: '#00000080', backdropFilter: 'blur(10px)', border: 'none', color: '#FFF', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }}
+                                    >Cerrar</Button>
+                                    <CustomLink
+                                        backuImage={current?.body?.image}
+                                        urlImage={current?.url_image}
+                                        url={`https://www.iattend.events/side-event/${current?.id}`}
+                                        id={id}
+                                        handleImage={updateURLimage}
+                                        name={current?.name}
+                                        label="Compartir"
+                                    />
+                                    <Button
+                                        icon={<ChevronRight size={16} />}
+                                        onClick={() => setMobilePanel(1)}
+                                        style={{ minWidth: '44px', minHeight: '44px', borderRadius: '99px', background: '#00000080', backdropFilter: 'blur(10px)', border: 'none', color: '#FFF', opacity: mobilePanel === 1 ? 0.3 : 1, transition: 'opacity 0.3s ease', pointerEvents: mobilePanel === 1 ? 'none' : 'auto' }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {!screens.xs && (
+                            <Tooltip color="#6D3CFA">
+                                <div
+                                    onClick={() => setActiveTickets(true)}
+                                    onMouseEnter={() => setOnTickets(true)} onMouseLeave={() => setOnTickets(false)}
+                                    style={{ bottom: '2%', right: '1.4%', maxHeight: '210px', borderRadius: activeTickets && '16px', }}
+                                    className={`tickets_button ${activeTickets ? 'tickets_button_active' : ''}`}>
+                                    {!activeTickets && (
+                                        <>
+                                            <Progress
+                                                showInfo={false}
+                                                status="active"
+                                                type="circle"
+                                                percent={(credits * 100) / 300}
+                                                size={80}
+                                                strokeWidth={12}
+                                                strokeColor={"#6D3CFA"}
+                                            />
+                                            {!onTickets ? (
+                                                <LuCoins size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
+                                            ) : (
+                                                <LuPlus size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
+                                            )}
+                                        </>
+                                    )}
+                                    {activeTickets && (
+                                        <div onClick={(e) => e.stopPropagation()} className='active_tickets_cont' style={{ position: 'relative' }}>
+                                            <CreditsComponent getType={getCredits} credits={credits} invitationID={id} isClosable={true} setOnClose={setActiveTickets} />
+                                        </div>
+                                    )}
+                                </div>
+                            </Tooltip>
+                        )}
 
                     </Modal>
 
@@ -1563,6 +1518,7 @@ export const SideEvents = () => {
                 </Layout >
 
                 <GuestsCRUD rowData={rawData} invitationID={id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} />
+                <FooterApp></FooterApp>
             </Layout >
         </>
     )

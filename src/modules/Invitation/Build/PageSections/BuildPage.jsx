@@ -1,5 +1,5 @@
 import { Layout, message } from 'antd'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import './build-invitation.css'
 import { supabase } from '../../../../lib/supabase'
 import { FooterApp } from '../../../Footer/FooterApp'
@@ -123,7 +123,7 @@ export const BuildPage = () => {
     const [copy, setCopy] = useState(null)
     const [currentSection, setCurrentSection] = useState(1)
     const [messageApi, contextHolder] = message.useMessage();
-    const [onHide, setOnHide] = useState(false)
+    const [onHide, setOnHide] = useState(true)
     const [device, setDevice] = useState('ios')
     const [settingsModal, setSettingsModal] = useState(false)
     const [invitation, setInvitation] = useState(null)
@@ -132,9 +132,15 @@ export const BuildPage = () => {
     const id = searchParams.get("id");
 
     const session = JSON.parse(localStorage.getItem("session"));
+    const menuTimerRef = useRef(null);
 
-    // const [saved, setSaved] = useState(true)
-
+    const hideMenu = useCallback(() => {
+        if (menuTimerRef.current) {
+            clearTimeout(menuTimerRef.current);
+            menuTimerRef.current = null;
+        }
+        setOnHide(true);
+    }, []);
 
     const handleClick = (item) => {
         setCurrentSection(item.value)
@@ -354,7 +360,7 @@ export const BuildPage = () => {
 
             {
                 copy ?
-                    <Layout className='main-build-layout' style={{ minHeight: '100vh', overflow: 'hidden' }}>
+                    <Layout className='main-build-layout' style={{ minHeight: '100vh', overflow: 'clip' }}>
 
                         <HeaderDashboard saved={saved} mode={'edit'} onSaveChanges={onSaveChanges} session={session} onWriteChanges={onWriteChanges} />
 
@@ -362,23 +368,22 @@ export const BuildPage = () => {
                         <div className='build-componentes-container' style={{ margin: '0px', position: 'relative', justifyContent: 'flex-start' }}>
 
 
-                            <div className='buld-interacting-tools-cont'>
+                            <div className='buld-interacting-tools-cont' style={{zIndex:999}}>
 
-                                <ButtonsMenu invitation={copy} setOnHide={setOnHide} buttons={buttons} currentSection={currentSection} handleClick={handleClick} />
+                                <ButtonsMenu invitation={copy} setOnHide={setOnHide} menuTimerRef={menuTimerRef} buttons={buttons} currentSection={currentSection} handleClick={handleClick} />
 
                                 <BuildMenu
                                     invitationID={id}
-                                    setSettingsModal={setSettingsModal} settingsModal={settingsModal} setSaved={setSaved} saved={saved} onHide={onHide} setOnHide={setOnHide}
+                                    setSettingsModal={setSettingsModal} settingsModal={settingsModal} setSaved={setSaved} saved={saved} onHide={onHide} setOnHide={setOnHide} hideMenu={hideMenu}
                                     buttons={buttons} currentSection={currentSection} setPositionY={setPositionY} positionY={positionY} invitation={copy} setInvitation={setCopy} />
 
                             </div>
 
-                            <BuildContent invitationID={id}
+                            <BuildContent invitationID={id} onHide={onHide} setOnHide={setOnHide}
                                 setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={copy} />
 
                         </div>
 
-                        <FooterApp ></FooterApp>
 
                     </Layout >
                     : <div className='build-loading-container'>

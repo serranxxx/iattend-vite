@@ -663,9 +663,12 @@
 @media (max-width: 750px) {
     .web-devices {
         display: none !important;
+        padding: 10px 8px !important;
+        padding-bottom: 56px !important;
     }
 
     .mobile-devices {
         display: flex !important;
+        height: calc(100vh - 56px) !important;
     }
 }

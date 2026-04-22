@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, } from 'react'
-import { Button, Dropdown, Slider } from 'antd';
+import { Button, Dropdown, Grid, Slider } from 'antd';
 import 'react-resizable/css/styles.css';
+
+const { useBreakpoint } = Grid;
 import ios_settings from '../../../../assets/images/iphone-settings.svg'
 import android_settings from '../../../../assets/images/android-settings.png'
 import ReactHost from '../../../../components/Host/ReactHost';
@@ -24,7 +26,7 @@ const devices = [
 
 
 export const BuildContent = ({
-    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID
+    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -32,7 +34,8 @@ export const BuildContent = ({
     const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
     const [zoomLevel, setZoomLevel] = useState(0.8);
     const mapContainerRef = useRef(null);
-    const scrollableContentRef = useRef(null)
+    const scrollableContentRef = useRef(null);
+    const screens = useBreakpoint();
 
     const zoomStep = 0.01;
     const minZoom = 0.5;
@@ -72,17 +75,22 @@ export const BuildContent = ({
         invitation && positionY && !coverUpdated ?
             <>
 
-                <div className='web-devices device-container'
+                <div onClick={() => !onHide ? setOnHide(true) : () => {}} className='web-devices device-container'
                     style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         flexDirection: 'column',
                         width: `auto`,
                         padding: '10px 30px',
                         position: 'relative',
-                        // minHeight:'100vh',
+                        zIndex: 0,
                         flex: 1,
+                        minHeight: screens.xs ? 'calc(100vh - 120px)' : undefined,
                     }}
                 >
+
+                    {
+                        !screens.xs &&
+                    
                     <div className='tools-settings-menu-container'>
 
                         <Dropdown
@@ -123,6 +131,8 @@ export const BuildContent = ({
 
                     </div>
 
+                    }
+
 
                     <div
                         onMouseDown={startDrag}
@@ -130,15 +140,20 @@ export const BuildContent = ({
                         onMouseUp={stopDrag}
                         onMouseLeave={stopDrag}
                         ref={mapContainerRef}
-                        style={{
+                        style={screens.xs ? {
+                            position: 'absolute',
+                            top: '55%',
+                            left: '52%',
+                            transform: `translate(-50%, -50%) scale(.85)`,
+                            zIndex: '0'
+                        } : {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             flexDirection: 'column',
-                            width: `auto`,
+                            width: 'auto',
                             position: 'relative',
                             transform: `scale(${zoomLevel})`,
                             top: `${mapPosition.y}px`,
                             left: `${mapPosition.x}px`,
-
                         }}>
                         <div className={`inv-device-main-container-${currentDevice}`} >
                             <div className={`device-buttons-container-${currentDevice}`}>
@@ -160,7 +175,7 @@ export const BuildContent = ({
                                 </div>
 
                                 <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
-                                    <ReactHost config={invitation} />
+                                    <ReactHost config={invitation} onHide={onHide} />
     
                                 </div>
                                 <div className={`inv-light-space-${currentDevice}`} />
@@ -170,36 +185,8 @@ export const BuildContent = ({
 
                 </div >
 
-                <div
-                    style={{ transform: `scale(${zoomLevel})`, }}
-                    className={`mobile-devices inv-device-main-container-${currentDevice}`}>
-                    <div className={`device-buttons-container-${currentDevice}`}>
-                        <div className={`device-button-${currentDevice}`} />
-                        <div className={`device-button-${currentDevice}`} />
-                        <div className={`device-button-${currentDevice}`} />
-                    </div>
-                    <div className={`device-power-button-${currentDevice}`} />
-                    <div className={`inv-device-container-${currentDevice}`}>
-
-                        <div className={`inv-black-space-${currentDevice}`}>
-                            <span>5:15</span>
-                            <div className={`camera-${currentDevice}`} />
-                            <div>
-                                <img alt='' src={currentDevice === 'ios' ? ios_settings : android_settings} style={{
-                                    height: '100%', objectFit: 'cover'
-                                }} />
-                            </div>
-                        </div>
-
-                        <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation`} >
-                            <ReactHost config={invitation} />
-                        </div>
-                        <div className={`inv-light-space-${currentDevice}`} />
-                    </div>
-                </div>
-
-                <div className='advertasing-container-mobile button-mobile'>
-                    Edita desde una tablet o computadora
+                <div className='mobile-devices' onClick={() => setOnHide(true)} style={{ width: '100%', height: '100vh', overflowY: 'auto', paddingBottom: '0px', boxSizing: 'border-box' }}>
+                    <ReactHost config={invitation} onHide={onHide} />
                 </div>
             </>
             : <></>

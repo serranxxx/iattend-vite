@@ -24,7 +24,7 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
-import { AArrowUp, Check, CheckCheck, CircleUserRound, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, Search, Send, Tag, TextAlignJustify } from 'lucide-react';
+import { AArrowUp, Check, CheckCheck, CircleUserRound, Clock, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, PlusCircle, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 
 const { useBreakpoint } = Grid;
@@ -366,7 +366,7 @@ export default function GuestsPage() {
             dataIndex: "name",
             key: "name",
             fixed: "left",
-            width: screens.xs ? 140 : 200,
+            width: screens.xs ? 170 : 200,
             render: (value, record) => {
                 const isChild = record.companion_id !== null;
                 const hasChildren = record.children?.length > 0;
@@ -431,7 +431,7 @@ export default function GuestsPage() {
             dataIndex: "phone_number",
             key: "phone_number",
             width: 160,
-            //   render: (value) => phoneFormatter(value),
+            render: (value) => phoneFormatter(value),
         },
 
         {
@@ -787,7 +787,7 @@ export default function GuestsPage() {
 
     const items = useMemo(() => ([
         {
-            label: `${screens.xs ? 'Espera' : 'Lista de espera'} (${filteredGuests(createdData).length})`,
+            label: screens.xs ? <Clock size={14} /> : `Lista de espera (${filteredGuests(createdData).length})`,
             key: "creado",
             children: (
                 <Table
@@ -800,7 +800,7 @@ export default function GuestsPage() {
             ),
         },
         {
-            label: `${screens.xs ? 'Enviada' : 'Invitación enviada'} (${filteredGuests(waitingData).length})`,
+            label: screens.xs ? <Send size={14} /> : `Invitación enviada (${filteredGuests(waitingData).length})`,
             key: "esperando",
             children: (
                 <Table
@@ -812,7 +812,7 @@ export default function GuestsPage() {
             ),
         },
         {
-            label: `${screens.xs ? 'Confirmados' : 'Asistencia confirmada'} (${filteredGuests(confirmedData).length})`,
+            label: screens.xs ? <CheckCheck size={14} /> : `Asistencia confirmada (${filteredGuests(confirmedData).length})`,
             key: "confirmado",
             children: (
                 <Table
@@ -824,7 +824,7 @@ export default function GuestsPage() {
             ),
         },
         {
-            label: `${screens.xs ? 'Cancelados' : 'No asistirán '} (${filteredGuests(callededData).length})`,
+            label: screens.xs ? <X size={14} /> : `No asistirán (${filteredGuests(callededData).length})`,
             key: "rechazado",
             children: (
                 <Table
@@ -981,25 +981,30 @@ export default function GuestsPage() {
     }
 
     const phoneFormatter = (params) => {
-        const val = params.value;
+        const val = typeof params === 'object' && params !== null ? params.value : params;
         if (!val) return "";
 
-        // limpia todo menos dígitos
         const digits = String(val).replace(/\D/g, "");
 
-        // Si tiene 12 dígitos (por ejemplo +52 + 10 dígitos)
+        // +52 México (12 dígitos)
         if (digits.length === 12) {
-            const country = digits.slice(0, 2); // 👈 código de país
-            const phone = digits.slice(2);      // 👈 los 10 dígitos del número
+            const country = digits.slice(0, 2);
+            const phone = digits.slice(2);
             return `+${country} (${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
         }
 
-        // Si tiene 10 dígitos (número local sin código)
+        // +1 US/Canadá (11 dígitos)
+        if (digits.length === 11) {
+            const country = digits.slice(0, 1);
+            const phone = digits.slice(1);
+            return `+${country} (${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
+        }
+
+        // Local sin código (10 dígitos)
         if (digits.length === 10) {
             return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
         }
 
-        // Cualquier otro formato → lo deja igual
         return val;
     };
 
@@ -1432,7 +1437,7 @@ export default function GuestsPage() {
     const addGuestToTable = async (table, guest) => {
 
         try {
-            const {  error } = await supabase
+            const { error } = await supabase
                 .from("guests")
                 .update({
                     table: table.id,
@@ -1644,6 +1649,7 @@ export default function GuestsPage() {
         <>
             {contextHolder}
             <Layout
+                className='guests_main'
                 style={{
                     position: 'relative',
                     alignItems: 'center', justifyContent: 'center',
@@ -1652,7 +1658,8 @@ export default function GuestsPage() {
                 <HeaderDashboard mode={'guests'} />
 
                 <Layout className='build-invitation-layout' style={{
-                    marginTop: '65px', paddingBottom: '24px', position: 'relative'
+                    paddingTop: screens.xs ? '50px' : '65px', paddingBottom: '24px', position: 'relative',
+                    boxSizing:'border-box'
                 }} >
                     <div onClick={() => { setOnNotificationCenter(false); setActiveTickets(false) }} style={{
                         width: '100%', height: '100vh',
@@ -1983,7 +1990,7 @@ export default function GuestsPage() {
                                                         openCard ?
                                                             <Button
                                                                 style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<LockKeyholeOpen size={14}/>} className="primarybutton_transparent">
+                                                                icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
                                                                 Evento público
                                                             </Button>
                                                             : <Button
@@ -2035,14 +2042,40 @@ export default function GuestsPage() {
                             </div>
                         </div>
 
+                        {screens.xs && (
+                            <div style={{ padding: '12px', boxSizing: 'border-box', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <span style={{ fontFamily: 'Poppins', fontSize: '20px', fontWeight: 600 }}>Mis invitados</span>
+                                    {/* <Button
+                                        icon={<Plus size={14} />}
+                                        className='primarybutton--black--active'
+                                        style={{ borderRadius: '99px' }}
+                                        onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
+                                    >Nuevo</Button> */}
+                                </div>
+                                <Input
+                                    prefix={<Search size={14} style={{ opacity: 0.4 }} />}
+                                    onChange={(e) => setSearchUser(e.target.value)}
+                                    value={searchUser}
+                                    placeholder='Buscar por nombre o número'
+                                    style={{ width: '100%', borderRadius: '99px', height: '40px' }}
+                                />
+                            </div>
+                        )}
+
                         <Tabs
-                            style={{ width: '100%', marginTop: '24px', }}
+                            style={{ width: '100%', marginTop: '16px', }}
                             type="card"
                             activeKey={activeKey}
                             onChange={setActiveKey}
                             items={items}
                             tabBarExtraContent={
-                                openCard || screens.xs ? <></> :
+                                openCard || screens.xs ? <Button
+                                    icon={<Plus size={14} />}
+                                    className='primarybutton--black'
+                                    style={{ borderRadius: '12px', marginBottom:'12px', height:'40px' }}
+                                    onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
+                                >Nuevo</Button> :
                                     <Segmented
                                         options={['Individual', 'Grupo']}
                                         onChange={(e) => setOnGroupTable(e === 'Grupo' ? true : false)}
@@ -2069,14 +2102,14 @@ export default function GuestsPage() {
                                         type="circle"
                                         percent={((waiting + confirmed) * 100) / tickets}
                                         size={80}
-                                        strokeWidth={12}
+                                        strokeWidth={8}
                                         strokeColor={"#6D3CFA"}
                                     />
 
                                     {!onTickets ? (
                                         <IoTicket size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
                                     ) : (
-                                        <FaPlus size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
+                                        <PlusCircle size={36} style={{ position: "absolute", color: "#6D3CFA" }} />
                                     )}
                                 </>
                             )}

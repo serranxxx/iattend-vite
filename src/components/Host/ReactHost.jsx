@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = new Set([
 
 
 export default function ReactHost({
-  config
+  config, onHide
 }) {
   const iframeRef = useRef(null);
   const lastSentHashRef = useRef("");
@@ -82,7 +82,7 @@ export default function ReactHost({
       src={url}
       title="I attend Remote Component"
       className="iframe_class"
-      style={{ width: "100%", height: '100%'}}
+      style={{ width: "100%", height: '100%', pointerEvents:onHide ? 'auto' : 'none', border:'none'}}
       allow="clipboard-write; clipboard-read"
     />
   );
