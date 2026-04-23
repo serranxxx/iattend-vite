@@ -116,7 +116,7 @@ export const DashboardPage = () => {
                 <div className='dashboard_body'>
 
 
-                    <div className='single_row' style={{gap:'24px'}}>
+                    <div className='single_row_dashboard' style={{gap:'24px'}}>
 
 
                         <div className='dashboard_invitation'>

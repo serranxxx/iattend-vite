@@ -75,7 +75,7 @@ export const BuildContent = ({
         invitation && positionY && !coverUpdated ?
             <>
 
-                <div onClick={() => !onHide ? setOnHide(true) : () => {}} className='web-devices device-container'
+                <div onClick={screens.xs ? () => !onHide ? setOnHide(true) : () => {} : () => {}} className='web-devices device-container'
                     style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         flexDirection: 'column',
@@ -84,7 +84,7 @@ export const BuildContent = ({
                         position: 'relative',
                         zIndex: 0,
                         flex: 1,
-                        minHeight: screens.xs ? 'calc(100vh - 120px)' : undefined,
+                        // minHeight: screens.xs ? 'calc(100vh - 120px)' : undefined,
                     }}
                 >
 
@@ -186,7 +186,7 @@ export const BuildContent = ({
                 </div >
 
                 <div className='mobile-devices' onClick={() => setOnHide(true)} style={{ width: '100%', height: '100vh', overflowY: 'auto', paddingBottom: '0px', boxSizing: 'border-box' }}>
-                    <ReactHost config={invitation} onHide={onHide} />
+                    <ReactHost config={invitation} onHide={onHide} screens={screens.xs}/>
                 </div>
             </>
             : <></>

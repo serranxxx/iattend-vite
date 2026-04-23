@@ -1659,7 +1659,7 @@ export default function GuestsPage() {
 
                 <Layout className='build-invitation-layout' style={{
                     paddingTop: screens.xs ? '50px' : '65px', paddingBottom: '24px', position: 'relative',
-                    boxSizing:'border-box'
+                    boxSizing: 'border-box'
                 }} >
                     <div onClick={() => { setOnNotificationCenter(false); setActiveTickets(false) }} style={{
                         width: '100%', height: '100vh',
@@ -2046,12 +2046,115 @@ export default function GuestsPage() {
                             <div style={{ padding: '12px', boxSizing: 'border-box', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <span style={{ fontFamily: 'Poppins', fontSize: '20px', fontWeight: 600 }}>Mis invitados</span>
-                                    {/* <Button
-                                        icon={<Plus size={14} />}
-                                        className='primarybutton--black--active'
-                                        style={{ borderRadius: '99px' }}
-                                        onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
-                                    >Nuevo</Button> */}
+                                    <Dropdown
+                                        popupRender={() => (
+                                            <div className="items_list_guests">
+
+
+                                                <Dropdown
+                                                    trigger={["click"]}
+                                                    placement='topRight'
+                                                    popupRender={() => (
+                                                        <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
+                                                            <span className="on-transfer-label">Descargar lista</span>
+
+                                                            <div className="transfer-mesas-cont">
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        Lista de espera
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        Esperando respuesta
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        Confirmados
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado"), "Confirmados.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+
+                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                    <span>
+                                                                        No asistirán
+                                                                    </span>
+
+                                                                    <Button
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
+                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                        icon={<Download size={14} />} className="primarybutton">
+                                                                    </Button>
+
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    )}
+                                                >
+                                                    <Button
+                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                        icon={<Download size={14} />} className="primarybutton_transparent">
+                                                        Descargables
+                                                    </Button>
+                                                </Dropdown>
+
+
+                                                <Popconfirm
+                                                    title={openCard ? 'Invitación Púbica' : 'Invitación Privada'}
+                                                    description={openCard ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
+                                                    onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
+                                                    placement="bottomLeft"
+                                                    okText="Continuar"
+                                                    cancelText="Cancelar"
+                                                    style={{ width: '400px' }}
+                                                    id="popup-confirm"
+                                                >
+                                                    {
+                                                        openCard ?
+                                                            <Button
+                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
+                                                                Evento público
+                                                            </Button>
+                                                            : <Button
+                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
+                                                                Evento privado
+                                                            </Button>
+                                                    }
+
+                                                </Popconfirm>
+                                            </div>
+                                        )}
+                                    >
+                                        <Button className='primarybutton' icon={<TextAlignJustify size={12} />}>
+
+                                        </Button>
+                                    </Dropdown>
                                 </div>
                                 <Input
                                     prefix={<Search size={14} style={{ opacity: 0.4 }} />}
@@ -2073,7 +2176,7 @@ export default function GuestsPage() {
                                 openCard || screens.xs ? <Button
                                     icon={<Plus size={14} />}
                                     className='primarybutton--black'
-                                    style={{ borderRadius: '12px', marginBottom:'12px', height:'40px' }}
+                                    style={{ borderRadius: '12px', marginBottom: '12px', height: '40px' }}
                                     onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                                 >Nuevo</Button> :
                                     <Segmented

@@ -93,3 +93,29 @@
     width: 100%;
     line-height: 1;
 }
+
+@media (max-width: 750px) {
+    .menu_cont {
+        width: calc(100vw - 48px);
+        background-color: #FFF;
+        backdrop-filter: none;
+        border-radius: 20px;
+        padding: 8px;
+        gap: 4px;
+    }
+
+    .menu_item {
+        padding: 18px 16px;
+        border-radius: 14px;
+        font-size: 15px;
+        gap: 12px;
+    }
+
+    .menu_item:hover {
+        background-color: #F5F5F5;
+    }
+
+    .menu_active {
+        background-color: var(--brand-color-500-40);
+    }
+}

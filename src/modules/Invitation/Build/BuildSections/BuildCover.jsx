@@ -1,4 +1,4 @@
-import { Button, Col, ColorPicker, DatePicker, Dropdown, Input, Modal, Row, Select, Slider, Tooltip } from 'antd'
+import { Button, Col, ColorPicker, DatePicker, Dropdown, Grid, Input, Modal, Row, Select, Slider, Tooltip } from 'antd'
 import React, { useEffect, useState } from 'react'
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -9,7 +9,7 @@ import { colorFactoryToHex, darker, formatDateToISO, lighter } from '../../../..
 import { fonts } from '../../../../helpers/assets/fonts';
 import { LuSettings2 } from 'react-icons/lu';
 import { BiHide, BiShow } from 'react-icons/bi';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Ratio, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, Ratio, ZoomIn, ZoomOut } from 'lucide-react';
 
 
 
@@ -17,6 +17,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const { Option } = Select;
+const { useBreakpoint } = Grid;
 
 
 
@@ -88,6 +89,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
     const [itemJustify, setitemJustify] = useState('')
     const [zoom] = useState(1);
     const [onSettings, setOnSettings] = useState(false)
+    const screens = useBreakpoint()
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
     // const [isDragging, setIsDragging] = useState(false);
     // const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
@@ -414,168 +416,143 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                             >Portada</span>
                             <span className='gc-content-label'>Título</span>
 
-                            <div className='general-cards-single-row' style={{ width: '100%', gap: '4px' }}>
-                                <Input
-                                    placeholder={'Título'}
-                                    value={invitation.cover.title.text?.value}
-                                    onChange={onChangeTitle}
-                                    className='gc-input-text' />
-                                <Tooltip color='var(--text-color)' title="Ajustes de título">
-                                    <Dropdown
-                                        trigger={['click']}
-                                        placement='bottomLeft'
-                                        popupRender={() => (
-                                            <div className='generals-settings-popup'>
+                            {(() => {
+                                const tituloContent = (
+                                    <div className='generals-settings-popup' style={{ maxWidth: '100%' }}>
+                                        <span className='gc-content-label'>Tipo de letra</span>
+                                        <Select
+                                            value={invitation.cover.title.text?.typeFace}
+                                            onChange={(e) => handleFont(e)}
+                                            style={{ width: '100%', fontFamily: invitation.cover.title.text?.typeFace }}>
+                                            {fonts.map((font, index) => (
+                                                <Option style={{ fontFamily: `${font}` }} key={index} value={font}>{font}</Option>
+                                            ))}
+                                        </Select>
 
-                                                <span className='gc-content-label'>Tipo de letra</span>
-
-                                                <Select
-
-                                                    value={invitation.cover.title.text?.typeFace}
-                                                    onChange={(e) => handleFont(e)}
-                                                    style={{ width: '100%', fontFamily: invitation.cover.title.text?.typeFace }}>
-                                                    {fonts.map((font, index) => (
-                                                        <Option style={{ fontFamily: `${font}` }} key={index} value={font}>{font}</Option>
-                                                    ))}
-
-                                                </Select>
-
-                                                <Col style={{
-                                                    width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
-                                                    marginTop: '10px'
-                                                }}>
-                                                    <span className='gc-content-label'>Tamaño</span>
-
+                                        <Col style={{
+                                            width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
+                                            marginTop: '10px'
+                                        }}>
+                                            <span className='gc-content-label'>Tamaño</span>
+                                            <Slider
+                                                style={{ width: '95%' }}
+                                                min={8}
+                                                max={96}
+                                                step={2}
+                                                onChange={(e) => setInvitation(prevInvitation => ({
+                                                    ...prevInvitation,
+                                                    cover: {
+                                                        ...prevInvitation.cover,
+                                                        title: {
+                                                            ...prevInvitation.cover.title,
+                                                            text: { ...prevInvitation.cover.title.text, size: e }
+                                                        }
+                                                    },
+                                                }))}
+                                                value={invitation.cover.title.text?.size}
+                                            />
+                                            <Row style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
+                                                    <span className='gc-content-label'>Opacidad</span>
                                                     <Slider
-                                                        style={{ width: '95%', }}
-                                                        min={8}
-                                                        max={96}
-                                                        step={2}
+                                                        style={{ width: '95%' }}
+                                                        min={0.1} max={1} step={0.01}
                                                         onChange={(e) => setInvitation(prevInvitation => ({
                                                             ...prevInvitation,
                                                             cover: {
                                                                 ...prevInvitation.cover,
                                                                 title: {
                                                                     ...prevInvitation.cover.title,
-                                                                    text: {
-                                                                        ...prevInvitation.cover.title.text,
-                                                                        size: e
-                                                                    }
-
+                                                                    text: { ...prevInvitation.cover.title.text, opacity: e }
                                                                 }
                                                             },
                                                         }))}
-                                                        // onChange={onChange}
-                                                        value={invitation.cover.title.text?.size}
+                                                        value={invitation.cover.title.text?.opacity}
                                                     />
-
-                                                    <Row style={{
-                                                        width: '100%', display: 'flex', alignItems: 'center',
-                                                        justifyContent: 'space-between', flexDirection: 'row'
-                                                    }}>
-                                                        <Col style={{
-                                                            width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
-                                                        }}>
-
-                                                            <span className='gc-content-label'>Opacidad</span>
-
-
-                                                            <Slider
-                                                                style={{ width: '95%' }}
-                                                                min={0.1}
-                                                                max={1}
-                                                                step={0.01}
-                                                                onChange={(e) => setInvitation(prevInvitation => ({
-                                                                    ...prevInvitation,
-                                                                    cover: {
-                                                                        ...prevInvitation.cover,
-                                                                        title: {
-                                                                            ...prevInvitation.cover.title,
-                                                                            text: {
-                                                                                ...prevInvitation.cover.title.text,
-                                                                                opacity: e
-                                                                            }
-
-                                                                        }
-                                                                    },
-                                                                }))}
-                                                                // onChange={onChange}
-                                                                value={invitation.cover.title.text?.opacity}
-                                                            />
-
-                                                        </Col>
-
-                                                        <Col style={{
-                                                            width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
-                                                        }}>
-                                                            <span className='gc-content-label'>Grosor</span>
-
-
-
-                                                            <Slider
-                                                                style={{ width: '95%' }}
-                                                                min={100}
-                                                                max={1000}
-                                                                step={100}
-
-                                                                onChange={(e) => setInvitation(prevInvitation => ({
-                                                                    ...prevInvitation,
-                                                                    cover: {
-                                                                        ...prevInvitation.cover,
-                                                                        title: {
-                                                                            ...prevInvitation.cover.title,
-                                                                            text: {
-                                                                                ...prevInvitation.cover.title.text,
-                                                                                weight: e
-                                                                            }
-
-                                                                        }
-                                                                    },
-                                                                }))}
-
-                                                                value={invitation.cover.title.text?.weight}
-                                                            />
-
-                                                        </Col>
-                                                    </Row>
                                                 </Col>
+                                                <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
+                                                    <span className='gc-content-label'>Grosor</span>
+                                                    <Slider
+                                                        style={{ width: '95%' }}
+                                                        min={100} max={1000} step={100}
+                                                        onChange={(e) => setInvitation(prevInvitation => ({
+                                                            ...prevInvitation,
+                                                            cover: {
+                                                                ...prevInvitation.cover,
+                                                                title: {
+                                                                    ...prevInvitation.cover.title,
+                                                                    text: { ...prevInvitation.cover.title.text, weight: e }
+                                                                }
+                                                            },
+                                                        }))}
+                                                        value={invitation.cover.title.text?.weight}
+                                                    />
+                                                </Col>
+                                            </Row>
+                                        </Col>
 
-                                                <Row style={{
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                                    flexDirection: 'row', width: '100%'
-                                                }}>
-                                                    <span className='gc-content-label'>Color</span>
+                                        <Row style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', width: '100%' }}>
+                                            <span className='gc-content-label'>Color</span>
+                                        </Row>
+                                        <div className='generl-card-color-item'>
+                                            <span>{invitation.cover.title.text?.color}</span>
+                                            <div className='general-cards-single-row'>
+                                                <ColorPicker
+                                                    presets={presets}
+                                                    disabledAlpha={false}
+                                                    value={invitation.cover.title.text?.color}
+                                                    style={{ width: '80px' }}
+                                                    onChangeComplete={(e) => onChnageTitleColor(e)} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
 
-
-                                                </Row>
-
-                                                <div className='generl-card-color-item'>
-                                                    <span>{invitation.cover.title.text?.color}</span>
-                                                    <div className='general-cards-single-row'>
-                                                        <ColorPicker
-                                                            presets={presets}
-                                                            disabledAlpha={false}
-                                                            value={invitation.cover.title.text?.color}
-                                                            style={{ width: '80px' }}
-                                                            onChangeComplete={(e) => onChnageTitleColor(e)}>
-                                                        </ColorPicker>
-                                                    </div>
-
-                                                </div>
-
+                                return (
+                                    <>
+                                        <div className='general-cards-single-row' style={{ width: '100%', gap: '4px' }}>
+                                            <Input
+                                                placeholder={'Título'}
+                                                value={invitation.cover.title.text?.value}
+                                                onChange={onChangeTitle}
+                                                className='gc-input-text' />
+                                            {screens.xs ? (
+                                                <Button
+                                                    type='text'
+                                                    style={{ minWidth: '32px', maxWidth: '32px' }}
+                                                    onClick={() => setOnSettings(v => !v)}
+                                                    className={`primarybutton${onSettings ? '--active' : ''}`}
+                                                    icon={onSettings ? <ChevronUp size={16} /> : <ChevronDown size={16} />} />
+                                            ) : (
+                                                <Tooltip color='var(--text-color)' title="Ajustes de título">
+                                                    <Dropdown
+                                                        trigger={['click']}
+                                                        placement='bottomLeft'
+                                                        popupRender={() => tituloContent}
+                                                    >
+                                                        <Button
+                                                            type='text'
+                                                            style={{ minWidth: '32px', maxWidth: '32px' }}
+                                                            onClick={() => setOnSettings(v => !v)}
+                                                            className={`primarybutton${onSettings ? '--active' : ''}`}
+                                                            icon={<LuSettings2 size={16} />} />
+                                                    </Dropdown>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                        {screens.xs && (
+                                            <div style={{
+                                                maxHeight: onSettings ? '700px' : '0',
+                                                overflow: 'hidden',
+                                                transition: 'max-height 0.35s ease',
+                                                width: '100%',
+                                            }}>
+                                                {tituloContent}
                                             </div>
                                         )}
-                                    >
-                                        <Button
-                                            type='text'
-                                            style={{ minWidth: '32px', maxWidth: '32px' }}
-                                            onClick={() => setOnSettings(!onSettings)}
-                                            className={`primarybutton${onSettings ? '--active' : ''}`}
-                                            icon={<LuSettings2 size={16} />} />
-                                    </Dropdown>
-
-                                </Tooltip>
-                            </div>
+                                    </>
+                                );
+                            })()}
 
 
 

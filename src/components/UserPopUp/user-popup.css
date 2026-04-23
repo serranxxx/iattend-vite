@@ -157,9 +157,9 @@
 
 @media (max-width: 750px) {
     .user_modal {
-        top: 12px;
+        top: 8px;
         right: unset;
-        left: 16px;
+        left: 12px;
     }
 
     .user_open {

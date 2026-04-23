@@ -269,10 +269,10 @@
     background-size: 50px 50px, 50px 50px, 100% 100%;
 }
 
-.single_row {
+.single_row_dashboard  {
     display: flex;
     flex-direction: row;
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
     gap: 24px;
 }
@@ -403,7 +403,7 @@
         padding-bottom: 48px;
     }
 
-    .single_row {
+    .single_row_dashboard {
         flex-direction: column;
         gap: 16px;
     }

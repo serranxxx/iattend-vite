@@ -5,19 +5,12 @@ import { TfiWorld } from "react-icons/tfi";
 import { FaHeadset } from 'react-icons/fa'
 import { Grid } from "antd";
 
-const { useBreakpoint } = Grid;
-
 
 export const FooterApp = ({ shared_user }) => {
-
-    const screens = useBreakpoint();
-
 
     return (
         <div style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            // position:'fixed', bottom: '0px'
-            // backgroundColor: 'var(--sc-color)'
         }}>
 
             <div className='footer-app-container' style={{ justifyContent: 'center' }}>
@@ -37,7 +30,7 @@ export const FooterApp = ({ shared_user }) => {
                             :
 
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                                <img src="images/negro-morado.png" alt='' style={{ width: '100px' }} />
+                                <img src="images/morado.png" alt='' style={{ width: '100px' }} />
                             </div>
 
                     }

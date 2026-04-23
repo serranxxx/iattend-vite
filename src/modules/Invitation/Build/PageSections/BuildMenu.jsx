@@ -8,6 +8,7 @@ import './build-invitation.css'
 import { useState } from 'react';
 import { Button, Grid } from 'antd';
 import { LuChevronsLeft, LuChevronDown, LuChevronUp } from 'react-icons/lu';
+import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 
 const { useBreakpoint } = Grid;
 
@@ -50,7 +51,7 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
         transition: 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         backgroundColor: '#FFFFFF',
         boxShadow: '0px -6px 12px rgba(0,0,0,0.2)',
-        borderRadius: '36px 36px 0px 0px',
+        borderRadius: '24px 24px 0px 0px',
         overflow: 'hidden',
     } : {};
 
@@ -65,18 +66,17 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
                 <div
                     style={{
                         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        paddingTop: '12px', paddingBottom: '8px', paddingLeft: '16px', paddingRight: '8px',
-                        flexShrink: 0, boxSizing: 'border-box',
+                        padding:'18px', boxSizing:'border-box'
                     }}
                 >
                     <div onClick={hideMenu} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <div style={{ width: '80px', height: '4px', borderRadius: '99px', backgroundColor: '#D0D0D0' }} />
+                        <div style={{ width: '120px', height: '6px', borderRadius: '99px', backgroundColor: '#ebebeb' }} />
                     </div>
                     <Button
-                        type='text'
-                        icon={expanded ? <LuChevronDown size={18} /> : <LuChevronUp size={18} />}
+                        className={expanded ? 'primarybutton--active' : 'primarybutton'}
+                        icon={expanded ? <ArrowDownToLine size={12} /> : <ArrowUpFromLine color='#00000060' size={12}/>}
                         onClick={() => setExpanded(v => !v)}
-                        style={{ borderRadius: '99px', flexShrink: 0 }}
+                        style={{ width:'32px', height:'32px', position:'absolute', right:'8px', top:'8px'}}
                     />
                 </div>
             )}

@@ -123,7 +123,7 @@ export const BuildPage = () => {
     const [copy, setCopy] = useState(null)
     const [currentSection, setCurrentSection] = useState(1)
     const [messageApi, contextHolder] = message.useMessage();
-    const [onHide, setOnHide] = useState(true)
+    const [onHide, setOnHide] = useState(() => window.innerWidth <= 750)
     const [device, setDevice] = useState('ios')
     const [settingsModal, setSettingsModal] = useState(false)
     const [invitation, setInvitation] = useState(null)

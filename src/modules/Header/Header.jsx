@@ -405,7 +405,35 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />}
 
-                        {screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} />}
+                        {screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={isEditing} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} buttonText="Compartir" />}
+
+                        {isEditing && screens.xs && session?.user?.role !== "Administration" && (
+                            <Button
+                                icon={<LuUpload size={14} />}
+                                type="primary"
+                                style={{ position: "relative", height:'32px', borderRadius:'99px' }}
+                                onClick={onSaveChanges}
+                            >
+                                Publicar
+                                {!saved && (
+                                    <div style={{ position: "absolute", top: 0, right: 0, height: 10, width: 10, borderRadius: 50, backgroundColor: "#A88AFF" }} />
+                                )}
+                            </Button>
+                        )}
+
+                        {isEditing && screens.xs && session?.user?.role === "Administration" && (
+                            <Button
+                                icon={<LuSendHorizontal size={14} />}
+                                type="primary"
+                                style={{ position: "relative", backgroundColor: "#20212B", height:'32px', borderRadius:'99px' }}
+                                onClick={onWriteChanges}
+                            >
+                                Escribir
+                                {!saved && (
+                                    <div style={{ position: "absolute", top: 0, right: 0, height: 10, width: 10, borderRadius: 50, backgroundColor: "#A88AFF" }} />
+                                )}
+                            </Button>
+                        )}
 
                         {
                             !screens.xs &&

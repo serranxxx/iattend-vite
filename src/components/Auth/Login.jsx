@@ -265,7 +265,7 @@ export const Login = () => {
                     </div>
 
                     <div className='login-form-container' style={{
-                        height: onShowComponentes ? '623px' : '462px',
+                        height: onShowComponentes ? screens.xs ? '523px' : '623px' : screens.xs ? '432px' : '462px',
                         // display: 'none'
                     }}>
 

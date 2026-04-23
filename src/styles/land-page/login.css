@@ -317,6 +317,13 @@ input:-webkit-autofill:focus {
 
 @media (max-width: 750px) {
 
+    .login-image-container {
+        transition: all 0.2s ease;
+        width: 70%;
+        /* margin-bottom: 36px; */
+
+    }
+
     .texture_img_top,
     .texture_img_right {
         display: none;

@@ -220,6 +220,16 @@
 }
 
 @media (max-width: 750px) {
+
+    .single-button--selected {
+        background-color: var(--brand-color-500);
+        color: #FFF !important;
+        box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.05);
+        /* border: 0.5px solid #d9d9d9; */
+    }
+
+
+
     .tools-main-container {
         position: fixed;
         bottom: 0;

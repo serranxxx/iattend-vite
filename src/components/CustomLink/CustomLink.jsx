@@ -1,19 +1,39 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import './custom_link.css'
 import { Button, Dropdown, message } from 'antd'
 import { ChevronLeft, Link2, SquareArrowUpRight } from 'lucide-react'
 import { StorageImages } from '../ImagesStorage/StorageImages'
 
-export const CustomLink = ({ backuImage, isHeader, urlImage, url, id, handleImage, name, label }) => {
+export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, handleImage, name, label, buttonText, maxHeight = 25, }) => {
+
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth <= 750)
+        check()
+        window.addEventListener('resize', check)
+        return () => window.removeEventListener('resize', check)
+    }, [])
 
     const copyToClipboard = async (textToCopy) => {
         try {
             await navigator.clipboard.writeText(textToCopy);
-            message.success('Copiado')
+            message.success('Link copiado')
         } catch (err) {
             console.error('Error al copiar el texto: ', err);
         }
     };
+
+    if (isMobile) {
+        return (
+            <Button
+                onClick={() => copyToClipboard(url)}
+                style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
+                icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
+                {isSmall ? '' : label ?? buttonText ?? (isHeader ? 'Copiar link' : 'Link del evento')}
+            </Button>
+        )
+    }
 
     return (
         <Dropdown
@@ -69,9 +89,9 @@ export const CustomLink = ({ backuImage, isHeader, urlImage, url, id, handleImag
             )}
         >
             <Button
-                style={{ maxHeight: isHeader ? 25 : undefined, borderRadius: isHeader ? '12px' : '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
+                style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: isHeader ? '99px' : '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
                 icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
-                {label ?? (isHeader ? 'Copiar link' : 'Link del evento')}
+                {isSmall ? '' : label ?? buttonText ?? (isHeader ? 'Copiar link' : 'Link del evento')}
             </Button>
         </Dropdown>
     )

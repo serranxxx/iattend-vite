@@ -10,11 +10,18 @@ import { FaPlus } from 'react-icons/fa6';
 export default function UserPopUp() {
 
     const [open, setOpen] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
     const session = JSON.parse(localStorage.getItem("session"));
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth <= 750)
+        check()
+        window.addEventListener('resize', check)
+        return () => window.removeEventListener('resize', check)
+    }, [])
 
     const [totalEvents, setTotalEvents] = useState(null)
     const [totalConfirmed, setTotalConfirmed] = useState(null)
-    const [visible, setVisible] = useState(false)
     const { logout, } = useContext(appContext)
 
     const getEvents = async () => {
@@ -125,7 +132,12 @@ export default function UserPopUp() {
                                 </>
                                 :
                                 <>
-                                    <div className='user_letter'>A</div>
+                                    <div className='user_letter' style={{overflow:'hidden'}}>
+                                        {isMobile
+                                            ? <img src='/images/icon_pp.png' alt='' style={{ width:'100%', height:'100%' }} />
+                                            : <span>{(session?.user?.name?.[0] ?? 'A').toUpperCase()}</span>
+                                        }
+                                    </div>
                                     {session?.user?.name?.split(' ')[0]}
                                 </>
                         }
@@ -133,7 +145,6 @@ export default function UserPopUp() {
                     : <></>
             }
 
-            <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: session?.user?.uid, user_email: session?.user?.email }} refreshInvitations={() => { }} />
         </>
     )
 }

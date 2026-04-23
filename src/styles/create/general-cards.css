@@ -96,9 +96,6 @@
 }
 
 .generals-settings-popup {
-    /* position: absolute;
-    top: 130px;
-    right: 19px; */
     width: 300px;
     padding: 12px;
     gap: 6px;
@@ -1021,6 +1018,9 @@
 
 
 
+
+
+
 @keyframes glow {
     0% {
         border-color: var(--borders);
@@ -1081,7 +1081,7 @@
     /* border: 1px solid #ebebeb; */
     /* padding: 12px; */
     box-sizing: border-box;
-    
+
     /* box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2); */
 }
 
@@ -1143,7 +1143,7 @@
 }
 
 .collection_item span {
-    transition: all 0.4s ease; 
+    transition: all 0.4s ease;
 }
 
 .collection_item:first-of-type {
@@ -1157,4 +1157,86 @@
 .pac-container {
     z-index: 1200 !important;
     border-radius: 8px;
+}
+
+@media (max-width: 750px) {
+    .generals-settings-popup {
+        max-width: 100%;
+        width: 100%;
+        padding: 12px;
+        gap: 6px;
+        border-radius: 12px;
+        box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
+        background-color: var(--ft-color);
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        flex-direction: column;
+        z-index: 10;
+        background-color: #F5f3f2;
+    }
+
+    .color_palette_container {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        flex-direction: column;
+        background-color: #FFF;
+        border-radius: 24px;
+        box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
+        min-width: 0px;
+        width: 100%;
+        max-width: 100%;
+
+    }
+
+    .collection_grid {
+        grid-template-columns: repeat(1, 1fr);
+        width: 100%;
+        padding: 0px 0px;
+        gap: 8px;
+    }
+
+    .collection_cont {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .collection_item {
+        flex: 1;
+        width: auto;
+        height: 60px;
+    }
+
+    .dest-input-form {
+        position: sticky;
+        top: 0px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0px;
+        gap: 18px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        flex-direction: column;
+        border-radius: 0px;
+        box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
+        background-color: #FFF;
+        z-index: 3;
+    }
+
+    .gc-icons-modal-container {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        align-items: center;
+        justify-items: center;
+        gap: 16px;
+        padding: 12px;
+        box-sizing: border-box;
+        background-color: #FFFFFF;
+        border-radius: 16px;
+        box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+    }
 }
