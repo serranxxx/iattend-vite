@@ -1,4 +1,4 @@
-import { Button, Checkbox, Col, ColorPicker, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
+import { Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import './side-events.css'
 import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
@@ -45,6 +45,9 @@ export const SideEvents = () => {
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
     const [addressOpen, setAddressOpen] = useState(false)
+    const [datePickerOpen, setDatePickerOpen] = useState(false)
+    const [colorDrawerOpen, setColorDrawerOpen] = useState(false)
+    const [fontDrawerOpen, setFontDrawerOpen] = useState(false)
     const [mobilePanel, setMobilePanel] = useState(0)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
@@ -1121,23 +1124,46 @@ export const SideEvents = () => {
                                                         />
 
 
-                                                        <Dropdown
-                                                            trigger={['click']}
-                                                            placement='right'
-
-                                                            popupRender={() => (
-                                                                <DatePicker onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: e } }))} className='date_pciker_sidee' showTime />
-                                                            )}
-                                                        >
-                                                            <div className='side_date_time'>
-                                                                <LuCalendarClock size={20} style={{ color: '#FFF' }} />
-                                                                {
-                                                                    current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span>
-                                                                        : <span>Fecha y hora</span>
-                                                                }
-
-                                                            </div>
-                                                        </Dropdown>
+                                                        {screens.xs ? (
+                                                            datePickerOpen ? (
+                                                                <div className='date_inline_cont'>
+                                                                    <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                                        <span style={{ color: '#FFFFFF80', fontSize: '12px' }}>Fecha y hora</span>
+                                                                        <Button
+                                                                            type='text'
+                                                                            icon={<LuX size={14} style={{ color: '#FFF' }} />}
+                                                                            style={{ minWidth: 24, maxWidth: 24, maxHeight: 24 }}
+                                                                            onClick={() => setDatePickerOpen(false)}
+                                                                        />
+                                                                    </div>
+                                                                    <DatePicker
+                                                                        onChange={(e) => { setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: e } })); setDatePickerOpen(false); }}
+                                                                        className='date_pciker_sidee'
+                                                                        showTime
+                                                                        style={{ width: '100%' }}
+                                                                        getPopupContainer={() => document.body}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className='side_date_time' onClick={() => setDatePickerOpen(true)}>
+                                                                    <LuCalendarClock size={20} style={{ color: '#FFF' }} />
+                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>Fecha y hora</span>}
+                                                                </div>
+                                                            )
+                                                        ) : (
+                                                            <Dropdown
+                                                                trigger={['click']}
+                                                                placement='right'
+                                                                popupRender={() => (
+                                                                    <DatePicker onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: e } }))} className='date_pciker_sidee' showTime getPopupContainer={() => document.body} />
+                                                                )}
+                                                            >
+                                                                <div className='side_date_time'>
+                                                                    <LuCalendarClock size={20} style={{ color: '#FFF' }} />
+                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>Fecha y hora</span>}
+                                                                </div>
+                                                            </Dropdown>
+                                                        )}
 
                                                         {addressOpen ? (
                                                             <div className='address_inline_form'>
@@ -1241,92 +1267,58 @@ export const SideEvents = () => {
                                                         <Button icon={<LuPlay />} onClick={() => setHandlePreview(true)} style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' />
                                                     </Tooltip>
 
-                                                    <Dropdown
-                                                        placement='bottomLeft'
-                                                        trigger={['click']}
-                                                        popupRender={() => (
-                                                            <div className='generals-settings-popup' style={{ width: 'auto', background: '#00000040', backdropFilter: 'blur(10px)' }}>
-                                                                <ColorPicker value={current?.body?.color ?? "#000000"} onChange={(e) => setCurrent((prev) =>
-                                                                ({
-                                                                    ...prev, body: { ...prev?.body, color: colorFactoryToHex(e) }
-                                                                })
-                                                                )} />
-                                                            </div>
-                                                        )}
-                                                    >
-                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuPalette />} />
-                                                    </Dropdown>
+                                                    {screens.xs ? (
+                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuPalette />} onClick={() => setColorDrawerOpen(true)} />
+                                                    ) : (
+                                                        <Dropdown
+                                                            placement='bottomLeft'
+                                                            trigger={['click']}
+                                                            popupRender={() => (
+                                                                <div className='generals-settings-popup' style={{ width: 'auto', background: '#00000040', backdropFilter: 'blur(10px)' }}>
+                                                                    <ColorPicker value={current?.body?.color ?? "#000000"} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev?.body, color: colorFactoryToHex(e) } }))} />
+                                                                </div>
+                                                            )}
+                                                        >
+                                                            <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuPalette />} />
+                                                        </Dropdown>
+                                                    )}
 
-                                                    <Dropdown
-                                                        trigger={['click']}
-                                                        placement='bottomLeft'
-                                                        popupRender={() => (
-                                                            <div className='generals-settings-popup' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, backdropFilter: 'blur(10px)' }}>
-
-                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Tipo de letra</span>
-
-                                                                <Select
-                                                                    value={current?.body?.title?.font}
-                                                                    onChange={(e) => setCurrent((prev) => ({
-                                                                        ...prev, body: {
-                                                                            ...prev.body, title: {
-                                                                                ...prev.body.title, font: e
-                                                                            }
-                                                                        }
-                                                                    }))}
-                                                                    style={{ width: '100%' }}>
-                                                                    {fonts.map((font, index) => (
-                                                                        <Option key={`${index}-${font}`} value={font}><span style={{ fontFamily: font }} >{font}</span></Option>
-                                                                    ))}
-                                                                </Select>
-
-                                                                <Col style={{
-                                                                    width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
-                                                                    marginTop: '10px'
-                                                                }}>
-                                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>Tamaño</span>
-                                                                    <Slider
-                                                                        style={{ width: '95%' }}
-                                                                        min={36} max={64} step={2}
-                                                                        onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, size: e } } }))}
-                                                                        value={current.body.title?.size ?? 36}
-                                                                    />
-
-                                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>Interlineado</span>
-                                                                    <Slider
-                                                                        style={{ width: '95%' }}
-                                                                        min={0.8} max={2} step={0.1}
-                                                                        onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, line_height: e } } }))}
-                                                                        value={current.body.title?.line_height ?? 1.4}
-                                                                    />
-
-                                                                    <Row style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                        <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
-                                                                            <span style={{ color: '#FFF' }} className='gc-content-label'>Opacidad</span>
-                                                                            <Slider
-                                                                                style={{ width: '95%' }}
-                                                                                min={0.1} max={1} step={0.01}
-                                                                                onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))}
-                                                                                value={current.body.title?.opacity ?? 1}
-                                                                            />
-                                                                        </Col>
-                                                                        <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
-                                                                            <span style={{ color: '#FFF' }} className='gc-content-label'>Grosor</span>
-                                                                            <Slider
-                                                                                style={{ width: '95%' }}
-                                                                                min={100} max={1000} step={100}
-                                                                                onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, weight: e } } }))}
-                                                                                value={current.body.title?.weight ?? 500}
-                                                                            />
-                                                                        </Col>
-                                                                    </Row>
-                                                                </Col>
-
-                                                            </div>
-                                                        )}
-                                                    >
-                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuType />} />
-                                                    </Dropdown>
+                                                    {screens.xs ? (
+                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuType />} onClick={() => setFontDrawerOpen(true)} />
+                                                    ) : (
+                                                        <Dropdown
+                                                            trigger={['click']}
+                                                            placement='bottomRight'
+                                                            popupRender={() => (
+                                                                <div className='generals-settings-popup' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, backdropFilter: 'blur(10px)' }}>
+                                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>Tipo de letra</span>
+                                                                    <Select value={current?.body?.title?.font} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, font: e } } }))} style={{ width: '100%' }}>
+                                                                        {fonts.map((font, index) => (
+                                                                            <Option key={`${index}-${font}`} value={font}><span style={{ fontFamily: font }}>{font}</span></Option>
+                                                                        ))}
+                                                                    </Select>
+                                                                    <Col style={{ width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column', marginTop: '10px' }}>
+                                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>Tamaño</span>
+                                                                        <Slider style={{ width: '95%' }} min={36} max={64} step={2} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, size: e } } }))} value={current.body.title?.size ?? 36} />
+                                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>Interlineado</span>
+                                                                        <Slider style={{ width: '95%' }} min={0.8} max={2} step={0.1} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, line_height: e } } }))} value={current.body.title?.line_height ?? 1.4} />
+                                                                        <Row style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                            <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
+                                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Opacidad</span>
+                                                                                <Slider style={{ width: '95%' }} min={0.1} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current.body.title?.opacity ?? 1} />
+                                                                            </Col>
+                                                                            <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
+                                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Grosor</span>
+                                                                                <Slider style={{ width: '95%' }} min={100} max={1000} step={100} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, weight: e } } }))} value={current.body.title?.weight ?? 500} />
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </div>
+                                                            )}
+                                                        >
+                                                            <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuType />} />
+                                                        </Dropdown>
+                                                    )}
                                                 </div>
                                             )}
 
@@ -1513,6 +1505,60 @@ export const SideEvents = () => {
                         )}
 
                     </Modal>
+
+                    <Drawer
+                        open={colorDrawerOpen}
+                        onClose={() => setColorDrawerOpen(false)}
+                        placement="top"
+                        height="40%"
+                        style={{borderRadius:'0px 0px 24px 24px'}}
+                        closeIcon={false}
+                        title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontFamily: 'Poppins', fontWeight: 500 }}>Color</span>
+                            <Button type="text" icon={<LuX size={16} />} onClick={() => setColorDrawerOpen(false)} />
+                        </div>}
+                        styles={{ body: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } }}
+                    >
+                        <ColorPicker
+                            value={current?.body?.color ?? "#000000"}
+                            onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev?.body, color: colorFactoryToHex(e) } }))}
+                        />
+                    </Drawer>
+
+                    <Drawer
+                        open={fontDrawerOpen}
+                        onClose={() => setFontDrawerOpen(false)}
+                        placement="top"
+                        height="40%"
+                        closeIcon={false}
+                        title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontFamily: 'Poppins', fontWeight: 500, color: '#FFF' }}>Texto</span>
+                            <Button type="text" icon={<LuX size={16} style={{ color: '#FFF' }} />} onClick={() => setFontDrawerOpen(false)} />
+                        </div>}
+                        style={{ borderRadius: '0px 0px 24px 24px', backgroundColor: `${current?.body?.color ?? "#000000"}80`, backdropFilter: 'blur(10px)' }}
+                        styles={{ header: { backgroundColor: 'transparent', borderBottom: '1px solid #FFFFFF20' }, body: { padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: 'transparent' } }}
+                    >
+                        <span style={{color:'#FFF'}} className='gc-content-label'>Tipo de letra</span>
+                        <Select value={current?.body?.title?.font} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, font: e } } }))} style={{ width: '100%' }}>
+                            {fonts.map((font, index) => (
+                                <Option key={`${index}-${font}`} value={font}><span style={{ fontFamily: font }}>{font}</span></Option>
+                            ))}
+                        </Select>
+                        <span style={{color:'#FFF'}}  className='gc-content-label'>Tamaño</span>
+                        <Slider min={36} max={64} step={2} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, size: e } } }))} value={current?.body?.title?.size ?? 36} />
+                        <span style={{color:'#FFF'}}  className='gc-content-label'>Interlineado</span>
+                        <Slider min={0.8} max={2} step={0.1} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, line_height: e } } }))} value={current?.body?.title?.line_height ?? 1.4} />
+                        <Row style={{ width: '100%', gap: '16px' }}>
+                            <Col flex={1}>
+                                <span style={{color:'#FFF'}}  className='gc-content-label'>Opacidad</span>
+                                <Slider min={0.1} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current?.body?.title?.opacity ?? 1} />
+                            </Col>
+                            <Col flex={1}>
+                                <span style={{color:'#FFF'}}  className='gc-content-label'>Grosor</span>
+                                <Slider min={100} max={1000} step={100} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, weight: e } } }))} value={current?.body?.title?.weight ?? 500} />
+                            </Col>
+                        </Row>
+                    </Drawer>
 
 
                 </Layout >

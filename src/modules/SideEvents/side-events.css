@@ -255,6 +255,17 @@
     border: none;
 }
 
+.date_inline_cont {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    box-sizing: border-box;
+    border-top: 1px solid #FFFFFF20;
+    animation: addressSlideDown 0.25s ease;
+}
+
 .address_inline_form {
     align-self: stretch;
     display: grid;
@@ -271,6 +282,7 @@
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -357,10 +369,19 @@
 }
 
 .side_invitation_cont {
-        gap: 24px;
-    }
+    gap: 24px;
+}
 
 @media (max-width: 750px) {
+
+    .ant-picker-dropdown {
+        transform: scale(0.8);
+        position: absolute;
+        top: 0 !important;
+        left: -26px !important;
+    }
+
+    
     .side_events_container {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -460,7 +481,7 @@
     z-index: 1;
     width: 100%;
     height: 100%;
-    mask: linear-gradient(transparent, transparent,transparent,transparent, black, black);
+    mask: linear-gradient(transparent, transparent, transparent, transparent, black, black);
     backdrop-filter: blur(6px);
 }
 
@@ -480,6 +501,7 @@
     border-radius: 16px;
     color: #00000020;
 }
+
 .content_modal_side {
     border-radius: 24px;
     padding: 0px;
@@ -489,10 +511,20 @@
     position: relative;
 }
 
+@media (max-width: 750px) {
 
+    .date_pciker_sidee,
+    .date_pciker_sidee:hover,
+    .date_pciker_sidee:active,
+    .date_pciker_sidee:focus {
+        border-radius: 6px;
+        box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
+        background-color: #00000040;
+        backdrop-filter: blur(10px);
+        border: none;
+        color: #FFFFFF;
+        /* height: auto; */
+        padding: 18px;
+    }
 
-
-
-
-
-
+}

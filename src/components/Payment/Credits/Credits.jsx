@@ -10,7 +10,6 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
     const [prices, setPrices] = useState([])
     const [selectedItem, setSelectedItem] = useState('price_1Sx8RWAAdNlITNVbj7c85GlG')
 
-
     useEffect(() => {
         fetchPrices(setPrices)
     }, [])
@@ -22,11 +21,8 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                 <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Creditos</span>
                 <div className='credits_row'>
                     <Button onClick={getType} icon={<LuRefreshCcw />}>Actualizar</Button>
-                    {
-                        isClosable && <Button onClick={() => setOnClose(false)} icon={<LuChevronDown />}></Button>
-                    }
+                    {isClosable && <Button onClick={() => setOnClose(false)} icon={<LuChevronDown />}></Button>}
                 </div>
-
             </div>
 
             <div className='credits-row-pie'>
@@ -54,43 +50,32 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                         trigger={['click']}
                         placement='topRight'
                         arrow
+                        overlayClassName='credits_dropdown'
                         popupRender={() => (
                             <div className='credits_main'>
                                 <div className='credits_checkout_cont'>
-                                    {
-                                        prices.map((p, index) => {
-
-                                            const product = PRODUCTS[p.priceId];
-
-                                            if (product?.type === 'credits') {
-
-                                                return (
-                                                    <div key={index} className={`price_card ${selectedItem === p.priceId && 'selected_card'}`} onClick={() => setSelectedItem(p.priceId)}>
-                                                        <div className='image_price'>
-                                                            <img src={`/images/c_${p.amount}.png`} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        </div>
-
-                                                        <div className='card_col'>
-                                                            <span style={{ minWidth: '120px', fontSize: '14px', fontWeight: 400 }}>{p.productName}</span>
-                                                            <span style={{ minWidth: '100px', fontSize: '16px', fontWeight: 600 }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
-                                                        </div>
-
+                                    {prices.map((p, index) => {
+                                        const product = PRODUCTS[p.priceId];
+                                        if (product?.type === 'credits') {
+                                            return (
+                                                <div key={index} className={`price_card ${selectedItem === p.priceId && 'selected_card'}`} onClick={() => setSelectedItem(p.priceId)}>
+                                                    <div className='image_price'>
+                                                        <img src={`/images/c_${p.amount}.png`} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     </div>
-                                                )
-                                            }
+                                                    <div className='card_col'>
+                                                        <span style={{ minWidth: '120px', fontSize: '14px', fontWeight: 400 }}>{p.productName}</span>
+                                                        <span style={{ minWidth: '100px', fontSize: '16px', fontWeight: 600 }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
+                                                    </div>
+                                                </div>
+                                            )
                                         }
-
-
-                                        )
-                                    }
-
+                                    })}
                                 </div>
                                 <Button style={{ width: '100%', fontSize: '16px', minHeight: '44px' }} icon={<LuShoppingCart />} onClick={() => handleCheckout(invitationID, selectedItem)} type='primary'>Comprar</Button>
-
                             </div>
                         )}
                     >
-                        <Button icon={<LuCoins size={16} />} className='primarybutton' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar credtios</Button>
+                        <Button icon={<LuCoins size={16} />} className='primarybutton' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar créditos</Button>
                     </Dropdown>
                 </div>
 

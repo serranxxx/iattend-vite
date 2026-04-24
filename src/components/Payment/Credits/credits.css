@@ -87,3 +87,26 @@
     background-color: var(--brand-color-500-80);
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
 }
+
+@media (max-width: 750px) {
+    .credits_dropdown {
+        width: 100vw !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 0 16px;
+        box-sizing: border-box;
+    }
+
+    .credits_dropdown .credits_main {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .credits_dropdown .credits_checkout_cont {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .credits_dropdown .price_card {
+        max-width: unset;
+    }
+}
