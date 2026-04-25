@@ -194,3 +194,12 @@
 body {
   top: 0px !important;
 }
+
+@media (max-width: 750px) {
+  input, textarea, select,
+  .ant-input, .ant-input-affix-wrapper,
+  .ant-select-selection-search-input,
+  .ant-picker-input input {
+    font-size: 16px !important;
+  }
+}
