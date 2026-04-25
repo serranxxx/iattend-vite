@@ -9,6 +9,7 @@ import { darker } from '../../helpers/assets/functions';
 import UserPopUp from '../../components/UserPopUp/UserPopUp';
 import { Calendar1, Gift, Link2, Play, Plus } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
+import { GiftDrawer } from '../../components/Gift/GiftDrawer';
 import { FooterApp } from '../../modules/Footer/FooterApp';
 
 const { Content } = Layout;
@@ -49,6 +50,7 @@ export const InvitationsPage = () => {
     const { logout, logged } = useContext(appContext)
     const sessions = JSON.parse(localStorage.getItem("session"));
     const [visible, setVisible] = useState(false)
+    const [giftVisible, setGiftVisible] = useState(false)
 
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -352,7 +354,7 @@ export const InvitationsPage = () => {
                                                         <div className="gift-sub">Alguien que conoces está planeando su boda. Dales I attend y que ellos diseñen cada detalle.</div>
                                                     </div>
                                                 </div>
-                                                <button className="gift-cta">Regalar I attend</button>
+                                                <button className="gift-cta" onClick={() => setGiftVisible(true)}>Regalar I attend</button>
                                             </div>
                                         </div> */}
 
@@ -373,6 +375,7 @@ export const InvitationsPage = () => {
 
             </Layout >
             <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: sessions?.user?.uid, user_email: sessions?.user?.email }} refreshInvitations={getNewInvitations} />
+            <GiftDrawer visible={giftVisible} setVisible={setGiftVisible} />
             <FooterApp></FooterApp>
 
         </div>

@@ -399,7 +399,7 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
             <span className='new-invitation-label'>Elige tu plan</span>
             <span className='route-info'>Una sola compra. Tu invitación activa para siempre.</span>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
                 {planPrices.map((p, index) => {
                     const product = PRODUCTS[p.priceId]
                     const isPro = product.value === 'pro'
@@ -445,17 +445,20 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                 justifyContent: isMobile ? 'space-between' : 'center',
                                 padding: isMobile ? '18px 16px' : '28px 32px',
                                 minWidth: isMobile ? 'auto' : '160px',
+                                maxWidth: isMobile ? 'auto' : '160px',
+                                minHeight:'160px',
+                                maxHeight:'165px',
                                 background: ps.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                                 borderRight: isMobile ? 'none' : (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0'),
                                 borderBottom: isMobile ? (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0') : 'none',
-                                gap: isMobile ? '0' : '4px',
+                                gap: isMobile ? '0' : '4px', 
                                  flex:2
                             }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                                     <span style={{ fontSize: isMobile ? '14px' : '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: ps.accent }}>
                                         Plan
                                     </span>
-                                    <div style={{ fontSize: isMobile ? '26px' : '46px', fontWeight: 900, color: ps.name, textTransform: 'capitalize', lineHeight: 1 }}>
+                                    <div style={{ fontSize: product.value === "paperless" ? '32px' : isMobile ? '26px' : '46px', fontWeight: 900, color: ps.name, textTransform: 'capitalize', lineHeight: 1 }}>
                                         {product.value}
                                     </div>
                                 </div>
