@@ -1,0 +1,219 @@
+/* ── Setup screen ── */
+.scanner_page {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f4f6;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.scanner_card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 36px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+
+.scanner_title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  text-align: center;
+}
+
+.scanner_hint {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.4;
+}
+
+.scanner_error {
+  font-size: 13px;
+  color: #ef4444;
+  margin: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.scanner_form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scanner_label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+}
+
+/* ── Table screen ── */
+.scanner_table_page {
+  min-height: 100dvh;
+  width: 100%;
+  background: #f4f4f6;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.scanner_table_header {
+  width: 100%;
+  background: #fff;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 0 1px 0 #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 12px;
+}
+
+.scanner_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.scanner_filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 12px;
+}
+
+.scanner_table_title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.scanner_table_sub {
+  font-size: 12px;
+  color: #888;
+  margin: 2px 0 0;
+}
+
+.scanner_table_wrap {
+  flex: 1;
+  padding: 12px 8px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+/* ── Scanner overlay ── */
+.scanner_overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scanner_overlay_header {
+  width: 100%;
+  padding: 20px 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.scanner_overlay_title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.scanner_overlay_viewport {
+  flex: 1;
+  width: 100%;
+}
+
+/* html5-qrcode overrides */
+#qr-scanner-viewport {
+  width: 100% !important;
+  border: none !important;
+}
+#qr-scanner-viewport video {
+  width: 100% !important;
+  object-fit: cover;
+}
+#qr-scanner-viewport__scan_region {
+  background: transparent !important;
+}
+#qr-scanner-viewport__dashboard {
+  display: none !important;
+}
+
+/* ── State tags (mirrors global app styles) ── */
+.scanner_table_wrap .tag-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.scanner_table_wrap .new-table-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: #f0f0f0;
+  color: #555;
+}
+
+.scanner_table_wrap .state-confirmado { background: #ede9fe; color: #6D3CFA; }
+.scanner_table_wrap .state-esperando  { background: #fef3c7; color: #d97706; }
+.scanner_table_wrap .state-creado     { background: #dbeafe; color: #2563eb; }
+.scanner_table_wrap .state-rechazado  { background: #fee2e2; color: #dc2626; }
+.scanner_table_wrap .state-asistente  { background: #dcfce7; color: #16a34a; }
+
+/* ── Tablet / iPad ── */
+@media (min-width: 768px) {
+  .scanner_card {
+    padding: 48px 40px 56px;
+  }
+
+  .scanner_table_header {
+    padding: 20px 32px 16px;
+  }
+
+  .scanner_table_wrap {
+    padding: 16px 24px;
+  }
+
+  .scanner_overlay_header {
+    padding: 24px 32px 16px;
+  }
+}

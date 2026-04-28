@@ -82,7 +82,7 @@ export const DashboardPage = () => {
             return;
         }
         // 3️⃣ Filtrar estados
-        const conf = guests.filter(g => g.state === "confirmado").length;
+        const conf = guests.filter(g => g.state === "confirmado" || g.state === 'asistente').length;
         const wait = guests.filter(g => g.state === "esperando").length;
 
         setAvailable(invitation.tickets - (conf + wait))

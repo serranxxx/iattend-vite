@@ -13,6 +13,7 @@ import { BuildPage } from '../modules/Invitation/Build/PageSections/BuildPage'
 import GuestsPage from '../modules/GuestManagement/GuestsPage'
 import { SideEvents } from '../modules/SideEvents/SideEvents'
 import { Login } from '../components/Auth/Login'
+import { ScannerPage } from '../pages/Scanner/ScannerPage'
 
 
 
@@ -22,6 +23,7 @@ export const AppRouter = () => {
   return (
     <Routes>
       <Route path="/" element={<InvitationsPage />} />
+      <Route path="/scanner" element={<ScannerPage />} />
       <Route path="/invitations" element={<InvitationsPage />} />
       <Route path="/dashboard" element={<DashboardPage />} /> 
       <Route path="/dashboard/build" element={<BuildPage />} /> 

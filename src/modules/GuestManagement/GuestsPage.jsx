@@ -1134,7 +1134,7 @@ export default function GuestsPage() {
 
     const handleGroupTables = () => {
         setWaitingData(hierarchyData?.filter((row) => row.state === 'esperando'))
-        setConfirmedData(hierarchyData?.filter((row) => row.state === 'confirmado'))
+        setConfirmedData(hierarchyData?.filter((row) => row.state === 'confirmado' || row.state === 'asistente'))
         setCallededData(hierarchyData?.filter((row) => row.state === 'rechazado'))
         setCreatedData(hierarchyData.filter((c) => c.state === 'creado'))
     }
@@ -1142,7 +1142,7 @@ export default function GuestsPage() {
     const handleFullTable = () => {
 
         setWaitingData(rowData?.filter((row) => row.state === 'esperando'))
-        setConfirmedData(rowData?.filter((row) => row.state === 'confirmado'))
+        setConfirmedData(rowData?.filter((row) => row.state === 'confirmado' || row.state === 'asistente'))
         setCallededData(rowData?.filter((row) => row.state === 'rechazado'))
         setCreatedData(rowData.filter((c) => c.state === 'creado'))
         setIsLoading(false)
