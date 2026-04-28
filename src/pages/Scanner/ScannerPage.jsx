@@ -118,17 +118,27 @@ export const ScannerPage = () => {
       scannerRef.current = qr
       try {
         await qr.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 240, height: 240 } },
+          { facingMode: { exact: 'environment' } },
+          { fps: 15 },
           handleScan,
           () => { }
         )
-      } catch (err) {
-        console.error(err)
-        messageApi.error('No se pudo acceder a la cámara')
-        setScannerOpen(false)
+      } catch {
+        // Fallback: some devices don't support exact constraint
+        try {
+          await qr.start(
+            { facingMode: 'environment' },
+            { fps: 15 },
+            handleScan,
+            () => { }
+          )
+        } catch (err2) {
+          console.error(err2)
+          messageApi.error('No se pudo acceder a la cámara')
+          setScannerOpen(false)
+        }
       }
-    }, 100)
+    }, 300)
   }
 
   const closeScanner = async () => {
@@ -346,7 +356,7 @@ export const ScannerPage = () => {
               Escanear
             </Button>
             <Tooltip title='Cerrar sesión'>
-              <Button icon={<LogOut size={16} />} onClick={handleLogout} style={{ borderRadius: 99 }} />
+              <Button icon={<LogOut style={{marginTop:'4x'}} size={16} />} onClick={handleLogout} style={{ borderRadius: 99 }} />
             </Tooltip>
           </div>
         </div>

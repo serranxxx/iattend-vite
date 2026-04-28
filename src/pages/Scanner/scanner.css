@@ -134,16 +134,21 @@
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 .scanner_overlay_header {
+  flex-shrink: 0;
   width: 100%;
-  padding: 20px 16px 12px;
+  padding: env(safe-area-inset-top, 20px) 16px 12px;
+  padding-top: max(env(safe-area-inset-top), 20px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-sizing: border-box;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+  position: absolute;
+  top: 0;
+  z-index: 2;
 }
 
 .scanner_overlay_title {
@@ -153,21 +158,37 @@
 }
 
 .scanner_overlay_viewport {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* html5-qrcode overrides */
+/* html5-qrcode overrides — force video to fill the viewport */
 #qr-scanner-viewport {
   width: 100% !important;
+  height: 100% !important;
   border: none !important;
-}
-#qr-scanner-viewport video {
-  width: 100% !important;
-  object-fit: cover;
+  overflow: hidden !important;
 }
 #qr-scanner-viewport__scan_region {
+  width: 100% !important;
+  height: 100% !important;
   background: transparent !important;
+  border: none !important;
+  min-height: 0 !important;
+}
+#qr-scanner-viewport__scan_region video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+#qr-scanner-viewport__scan_region img {
+  display: none !important;
 }
 #qr-scanner-viewport__dashboard {
   display: none !important;
