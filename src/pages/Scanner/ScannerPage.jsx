@@ -3,7 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { supabase } from '../../lib/supabase'
 import { Button, Input, Select, Table, Tooltip, message } from 'antd'
 import { useSearchParams } from 'react-router-dom'
-import { ScanLine, X, CheckCircle2, Clock, UserCheck, XCircle, LogOut, Minus, Check } from 'lucide-react'
+import { ScanLine, X, CheckCircle2, Clock, UserCheck, XCircle, LogOut, Minus, Check, RotateCcw } from 'lucide-react'
 import { IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoIosAddCircleOutline } from 'react-icons/io'
 import { AiOutlineClockCircle } from 'react-icons/ai'
 import './scanner.css'
@@ -34,8 +34,10 @@ export const ScannerPage = () => {
 
   // ── scanner ────────────────────────────────────────────
   const [scannerOpen, setScannerOpen] = useState(false)
+  const [scanResult, setScanResult] = useState(null)
   const scannerRef = useRef(null)
   const cooldownRef = useRef(false)
+  const tablesRef = useRef(null)
 
   const [messageApi, contextHolder] = message.useMessage()
 
@@ -144,6 +146,8 @@ export const ScannerPage = () => {
   const closeScanner = async () => {
     await stopScanner()
     setScannerOpen(false)
+    setScanResult(null)
+    cooldownRef.current = false
   }
 
   const handleScan = async (decodedText) => {
@@ -151,13 +155,12 @@ export const ScannerPage = () => {
     cooldownRef.current = true
 
     const raw = decodedText.trim()
-    // Support both numeric ID and UUID in URL
     const uuidMatch = raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
     const guestId = uuidMatch ? uuidMatch[0] : (isNaN(Number(raw)) ? raw : Number(raw))
 
     const { data: guest, error: fetchErr } = await supabase
       .from('guests')
-      .select('id, name, state')
+      .select('id, name, state, table')
       .eq('id', guestId)
       .maybeSingle()
 
@@ -174,18 +177,17 @@ export const ScannerPage = () => {
 
     if (updateErr) {
       messageApi.error({ content: 'Error al registrar asistencia', key: 'scan' })
+      setTimeout(() => { cooldownRef.current = false }, 2000)
     } else {
-      messageApi.success({
-        content: (
-          <span><b>{guest.name}</b> — Asistencia registrada</span>
-        ),
-        key: 'scan',
-        duration: 3,
-      })
+      const tableRecord = tablesRef.current?.find(t => t.id === guest.table)
       setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, state: 'asistente' } : g))
+      setScanResult({
+        name: guest.name,
+        tableNumber: tableRecord?.number ?? null,
+        tableName: tableRecord?.name ?? null,
+      })
+      // cooldown resets when user dismisses the result screen
     }
-
-    setTimeout(() => { cooldownRef.current = false }, 2000)
   }
 
   const getTables = async () => {
@@ -195,15 +197,19 @@ export const ScannerPage = () => {
         .select('*')
         .eq('invitation_id', savedId)
 
-      if (error) {
-        console.error('Error al obtener mesas:', error)
-        return
-      }
-
-      // console.log('mesas: ', data)
-      console.log('mesas: ', data)
+      if (error) { console.error('Error al obtener mesas:', error); return }
       setTables(data)
+      tablesRef.current = data
     }
+  }
+
+  const fetchEventName = async (id) => {
+    const { data } = await supabase
+      .from('invitations')
+      .select('name')
+      .eq('id', id)
+      .maybeSingle()
+    if (data?.name) setEventName(data.name)
   }
   // ───────────────────────────────────────────────────────
   // Filtered guests
@@ -241,7 +247,7 @@ export const ScannerPage = () => {
       key: 'state',
       width: 60,
       render: (val) => (
-        val === 'confirmado' ? <Minus size={16} /> : <Check size={16} />
+        val === 'confirmado' ? <div className='check_idle'><Minus size={16} /></div> : <div className='check_col'><Check size={16} /></div>
       ),
     },
   ], [guests])
@@ -260,6 +266,7 @@ export const ScannerPage = () => {
     if (savedId) {
       fetchGuests(savedId)
       getTables()
+      fetchEventName(savedId)
       setScreen('table')
     }
   }, [savedId])
@@ -295,8 +302,12 @@ export const ScannerPage = () => {
                 setSelectedEvent(events.find(e => e?.id === val) ?? null)
                 setLoginError('')
               }}
-              options={events.map(e => ({ value: e?.id, label: e?.name ?? String(e?.name) }))}
+              options={events.map(e => ({ value: e?.id, label: e?.name ?? String(e?.id) }))}
               size='large'
+              showSearch
+              filterOption={(input, option) =>
+                option?.label?.toLowerCase().includes(input.toLowerCase())
+              }
             />
 
             <label className='scanner_label' style={{ marginTop: 8 }}>Clave de acceso</label>
@@ -356,27 +367,36 @@ export const ScannerPage = () => {
               Escanear
             </Button>
             <Tooltip title='Cerrar sesión'>
-              <Button icon={<LogOut style={{marginTop:'4x'}} size={16} />} onClick={handleLogout} style={{ borderRadius: 99 }} />
+              <Button className='primarybutton' icon={<LogOut size={12} />} onClick={handleLogout} style={{ borderRadius: 99 }} />
             </Tooltip>
           </div>
         </div>
 
         <div className='scanner_filters'>
+
+          <Button
+              className='primarybutton'
+              icon={<RotateCcw size={12} />}
+              onClick={() => { setSearchName(''); setFilterTable(null) }}
+              style={{ borderRadius: 99, flexShrink: 0 }}
+            />
+
           <Input
             placeholder='Buscar por nombre…'
             allowClear
             value={searchName}
             onChange={e => setSearchName(e.target.value)}
-            style={{ flex: 1, borderRadius: 99,fontSize:'16px' }}
+            style={{ flex: 1, borderRadius: 99, fontSize: '16px' }}
           />
           <Select
             placeholder='Mesa'
             allowClear
             value={filterTable}
             onChange={val => setFilterTable(val ?? null)}
-            style={{ width: 150, fontSize:'16px' }}
+            style={{ width: 150, fontSize: '16px' }}
             options={[...(tables ?? [])].sort((a, b) => a.number - b.number).map(t => ({ value: t.id, label: `Mesa ${t.number}` }))}
           />
+          
         </div>
       </div>
 
@@ -407,11 +427,43 @@ export const ScannerPage = () => {
               onClick={closeScanner}
               style={{ borderRadius: 99, background: '#ffffff20', border: '1px solid #ffffff30', color: '#fff' }}
             >
-              Cerrar escáner
+              Cerrar
             </Button>
           </div>
 
           <div id='qr-scanner-viewport' className='scanner_overlay_viewport' />
+
+          {scanResult && (
+            <div className='scanner_result'>
+              <CheckCircle2 size={72} color='#4ade80' strokeWidth={1.5} />
+              <p className='scanner_result_name'>{scanResult.name}</p>
+              {scanResult.tableNumber != null && (
+                <div className='scanner_result_table'>
+                  <span className='scanner_result_table_number'>Mesa {scanResult.tableNumber}</span>
+                  {scanResult.tableName && (
+                    <span className='scanner_result_table_name'>{scanResult.tableName}</span>
+                  )}
+                </div>
+              )}
+              <div className='scanner_result_actions'>
+                <Button
+                  size='large'
+                  type='primary'
+                  style={{ borderRadius: 99, background: '#6D3CFA', border: 'none', fontWeight: 600 }}
+                  onClick={() => { setScanResult(null); cooldownRef.current = false }}
+                >
+                  Escanear otro
+                </Button>
+                <Button
+                  size='large'
+                  style={{ borderRadius: 99, background: '#ffffff20', border: '1px solid #ffffff40', color: '#fff', fontWeight: 500 }}
+                  onClick={closeScanner}
+                >
+                  Dejar de escanear
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
