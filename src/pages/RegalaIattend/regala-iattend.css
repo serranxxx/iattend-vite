@@ -1,0 +1,18 @@
+.regala_cont {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 24px;
+    background: linear-gradient(270deg, #f5f5f5, #f1f1f1);
+    height: 100vh;
+
+}
+
+@media (max-width: 750px) {
+    .regala_cont {
+        padding: 12px;
+
+    }
+}

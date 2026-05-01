@@ -343,7 +343,7 @@ export const InvitationsPage = () => {
                                             }
                                         </div>
 
-                                        {/* <div className='banner_cont'>
+                                        <div className='banner_cont'>
                                             <div className="gift-banner">
                                                 <div className="gift-left">
                                                     <div className="gift-icon">
@@ -356,7 +356,7 @@ export const InvitationsPage = () => {
                                                 </div>
                                                 <button className="gift-cta" onClick={() => setGiftVisible(true)}>Regalar I attend</button>
                                             </div>
-                                        </div> */}
+                                        </div>
 
                                     </div>
 

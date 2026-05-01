@@ -14,6 +14,8 @@ import GuestsPage from '../modules/GuestManagement/GuestsPage'
 import { SideEvents } from '../modules/SideEvents/SideEvents'
 import { Login } from '../components/Auth/Login'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
+import { GiveIattend } from '../components/Gift/GiveIattend/GiveIattend'
+import { RegalaIattend } from '../pages/RegalaIattend/RegalaIattend'
 
 
 
@@ -30,6 +32,7 @@ export const AppRouter = () => {
       <Route path="/dashboard/guests" element={<GuestsPage />} />
       <Route path="/dashboard/side" element={<SideEvents />} />
       <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/regala-iattend" element={<RegalaIattend />} />
       <Route path="/login" element={<Login />} />
       <Route path="/linktree" element={<LinkTree />} />
       <Route path="/legal" element={<LegalPage />} />
