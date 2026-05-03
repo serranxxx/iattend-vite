@@ -100,9 +100,14 @@
 .scanner_filters {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   align-self: stretch;
+  flex-direction: column;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.scanner_filters .ant-select {
+  min-width: 110px;
 }
 
 .scanner_table_title {
@@ -114,7 +119,7 @@
 }
 
 .scanner_table_sub {
-  font-size: 12px;
+  font-size: 14px;
   color: #888;
   margin: 2px 0 0;
 }

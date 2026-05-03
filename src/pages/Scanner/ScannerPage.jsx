@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { supabase } from '../../lib/supabase'
-import { Button, Input, Select, Table, Tooltip, message } from 'antd'
+import { Button, Dropdown, Input, Select, Table, Tooltip, message } from 'antd'
 import { useSearchParams } from 'react-router-dom'
-import { ScanLine, X, CheckCircle2, Clock, UserCheck, XCircle, LogOut, Minus, Check, RotateCcw } from 'lucide-react'
+import { ScanLine, X, CheckCircle2, Clock, UserCheck, XCircle, LogOut, Minus, Check, RotateCcw, QrCode, Share2, Copy, ExternalLink } from 'lucide-react'
 import { IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoIosAddCircleOutline } from 'react-icons/io'
 import { AiOutlineClockCircle } from 'react-icons/ai'
 import './scanner.css'
@@ -31,6 +31,7 @@ export const ScannerPage = () => {
   const [tables, setTables] = useState(null)
   const [searchName, setSearchName] = useState('')
   const [filterTable, setFilterTable] = useState(null)
+  const [filterState, setFilterState] = useState(null)
 
   // ── scanner ────────────────────────────────────────────
   const [scannerOpen, setScannerOpen] = useState(false)
@@ -218,9 +219,10 @@ export const ScannerPage = () => {
     return guests.filter(g => {
       const matchesName = g.name?.toLowerCase().includes(searchName.toLowerCase())
       const matchesTable = filterTable === null || g.table === filterTable
-      return matchesName && matchesTable
+      const matchesState = filterState === null || g.state === filterState
+      return matchesName && matchesTable && matchesState
     })
-  }, [guests, searchName, filterTable])
+  }, [guests, searchName, filterTable, filterState])
 
   // ───────────────────────────────────────────────────────
   // Table columns (simplified for mobile)
@@ -359,13 +361,7 @@ export const ScannerPage = () => {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button
-              icon={<ScanLine size={16} />}
-              onClick={openScanner}
-              style={{ borderRadius: 99, background: '#6D3CFA', color: '#fff', border: 'none', fontWeight: 600 }}
-            >
-              Escanear
-            </Button>
+
             <Tooltip title='Cerrar sesión'>
               <Button className='primarybutton' icon={<LogOut size={12} />} onClick={handleLogout} style={{ borderRadius: 99 }} />
             </Tooltip>
@@ -374,12 +370,12 @@ export const ScannerPage = () => {
 
         <div className='scanner_filters'>
 
-          <Button
-              className='primarybutton'
-              icon={<RotateCcw size={12} />}
-              onClick={() => { setSearchName(''); setFilterTable(null) }}
-              style={{ borderRadius: 99, flexShrink: 0 }}
-            />
+          {/* <Button
+            className='primarybutton'
+            icon={<RotateCcw size={12} />}
+            onClick={() => { setSearchName(''); setFilterTable(null) }}
+            style={{ borderRadius: 99, flexShrink: 0 }}
+          /> */}
 
           <Input
             placeholder='Buscar por nombre…'
@@ -388,15 +384,33 @@ export const ScannerPage = () => {
             onChange={e => setSearchName(e.target.value)}
             style={{ flex: 1, borderRadius: 99, fontSize: '16px' }}
           />
-          <Select
-            placeholder='Mesa'
-            allowClear
-            value={filterTable}
-            onChange={val => setFilterTable(val ?? null)}
-            style={{ width: 150, fontSize: '16px' }}
-            options={[...(tables ?? [])].sort((a, b) => a.number - b.number).map(t => ({ value: t.id, label: `Mesa ${t.number}` }))}
-          />
-          
+          <div style={{
+            display:'flex',alignItems:'center',justifyContent:'center',alignSelf:'stretch',
+            gap:'12px'
+          }}>
+            <Select
+              value={filterTable ?? null}
+              placeholder="Mesas"
+              onChange={val => setFilterTable(val === 'all' ? null : val)}
+              style={{ flex:1, fontSize: '16px' }}
+              options={[
+                { value: 'all', label: 'Todas' },
+                ...[...(tables ?? [])].sort((a, b) => a.number - b.number).map(t => ({ value: t.id, label: `Mesa ${t.number}` })),
+              ]}
+            />
+            <Select
+              value={filterState ?? null}
+              placeholder="Estado"
+              onChange={val => setFilterState(val === 'all' ? null : val)}
+              style={{ flex:1, fontSize: '16px' }}
+              options={[
+                { value: 'all', label: 'Todos' },
+                { value: 'confirmado', label: 'Esperando' },
+                { value: 'asistente', label: 'Asistentes' },
+              ]}
+            />
+          </div>
+
         </div>
       </div>
 
@@ -404,7 +418,7 @@ export const ScannerPage = () => {
 
 
       {/* ── Guests table ── */}
-      <div className='scanner_table_wrap'>
+      <div className='scanner_table_wrap' style={{ position: 'relative' }}>
         <Table
           size='small'
           rowKey='id'
@@ -415,6 +429,18 @@ export const ScannerPage = () => {
           scroll={{ x: 340 }}
           className='table_container'
         />
+
+        <Button
+          icon={<QrCode size={18} />}
+          onClick={openScanner}
+          style={{
+            borderRadius: 99, background: '#6D3CFA99', backdropFilter: 'blur(10px)', color: '#fff', fontWeight: 500,
+            position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: '2%', fontSize: '20px',
+            height: 50, width: 180, boxShadow: '0px 0px 8px rgba(0,0,0,0.2)', border: '2px solid #FFF',
+          }}
+        >
+          Escanear
+        </Button>
       </div>
 
       {/* ── Scanner overlay ── */}

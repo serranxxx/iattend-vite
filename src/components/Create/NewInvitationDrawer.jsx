@@ -1,15 +1,15 @@
-import { Button, Drawer, Grid, Steps } from 'antd'
+import { Button, Drawer, Grid, Steps, message } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
 import { supabase } from '../../lib/supabase'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { FaPlus } from 'react-icons/fa6'
-import { fetchPrices, handleCheckoutInvitation, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
+import { fetchPrices, handleCheckoutInvitation, handleCreateFree, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
 import { ChevronsLeft, ChevronsRight, Star } from 'lucide-react'
 
 
 
-export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
+export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitations }) => {
 
 
     const screens = Grid.useBreakpoint()
@@ -26,6 +26,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
     const [dominio, setDominio] = useState(null);
     const [currentPhone, setCurrentPhone] = useState(null)
     const [owners, setOwners] = useState([null, null])
+    const [isAdm, setIsAdm] = useState(false)
 
     const steps = [
         {
@@ -43,6 +44,19 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
         },
 
     ];
+
+    const isAdmin = async (userId) => {
+        const { data, error } = await supabase.rpc('is_admin', {
+            user_id_input: userId,
+        });
+
+        if (error) {
+            console.error(error);
+            return false;
+        }
+
+        return data; // true o false
+    };
 
     const next = () => {
         setCurrent(current + 1);
@@ -107,6 +121,37 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
         }, currentPriceId);
     };
 
+    const [freeLoading, setFreeLoading] = useState(false)
+
+    const handleFree = async () => {
+        setFreeLoading(true)
+        try {
+            await handleCreateFree({
+                userId: user.user_id,
+                userEmail: user.user_email,
+                name: dominio,
+                phoneNumber: currentPhone,
+                label: currentTemplate,
+                plan: currentPlan || 'pro',
+                owners: currentTemplate === 'wedding' ? owners : [],
+            })
+            message.success('Invitación creada')
+            handleClose()
+            if (refreshInvitations) refreshInvitations()
+        } catch (err) {
+            message.error('Error al crear la invitación', err)
+        } finally {
+            setFreeLoading(false)
+        }
+    }
+
+
+
+    useEffect(() => {
+        setIsAdm(isAdmin(user.user_id))
+    }, [user])
+
+
 
     return (
         <>
@@ -120,9 +165,32 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                 width={isMobile ? '95%' : '50%'}
                 title={'Configura tu evento'}
                 style={{
-                    borderRadius:'24px 0px 0px 24px'
+                    borderRadius: '24px 0px 0px 24px'
                 }}
-                extra={<Button disabled={!(currentPlan && currentPhone && currentTemplate && dominio)} icon={<FaPlus />} className='primarybutton--active' style={{ fontWeight: 800 }} onClick={handleNew}>Crear evento</Button>}
+                extra={
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {
+                            isAdm && <Button
+                            type='primary'
+                            disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
+                            loading={freeLoading}
+                            onClick={handleFree}
+                            style={{ fontWeight: 700, borderRadius:'99px' }}
+                        >
+                            Crear gratis
+                        </Button>
+                        }
+                        <Button
+                            disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
+                            icon={<FaPlus />}
+                            className='primarybutton--active'
+                            style={{ fontWeight: 800 }}
+                            onClick={handleNew}
+                        >
+                            Crear evento
+                        </Button>
+                    </div>
+                }
 
             >
 
@@ -280,33 +348,33 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                     )}
                 </div>
 
-                    {currentTemplate === 'wedding' && (
-                        <div className='dominio-owners-section'>
-                            <span className='new-invitation-label' style={{ fontSize: '16px' }}>Sus nombres</span>
-                            <span className='route-info' style={{ marginTop: 0 }}>
-                                Los usaremos a lo largo de toda la invitación — en portada, mensajes y detalles del evento.
-                            </span>
-                            <div className='dominio-form-card'>
-                                <div className='dominio-form-row'>
-                                    <input
-                                        className='dominio-input'
-                                        placeholder='Nombre del novio o la novia'
-                                        value={owners[0] || ''}
-                                        onChange={(e) => setOwners([e.target.value, owners[1]])}
-                                    />
-                                </div>
-                                <div className='dominio-divider' />
-                                <div className='dominio-form-row'>
-                                    <input
-                                        className='dominio-input'
-                                        placeholder='Nombre del novio o la novia'
-                                        value={owners[1] || ''}
-                                        onChange={(e) => setOwners([owners[0], e.target.value])}
-                                    />
-                                </div>
+                {currentTemplate === 'wedding' && (
+                    <div className='dominio-owners-section'>
+                        <span className='new-invitation-label' style={{ fontSize: '16px' }}>Sus nombres</span>
+                        <span className='route-info' style={{ marginTop: 0 }}>
+                            Los usaremos a lo largo de toda la invitación — en portada, mensajes y detalles del evento.
+                        </span>
+                        <div className='dominio-form-card'>
+                            <div className='dominio-form-row'>
+                                <input
+                                    className='dominio-input'
+                                    placeholder='Nombre del novio o la novia'
+                                    value={owners[0] || ''}
+                                    onChange={(e) => setOwners([e.target.value, owners[1]])}
+                                />
+                            </div>
+                            <div className='dominio-divider' />
+                            <div className='dominio-form-row'>
+                                <input
+                                    className='dominio-input'
+                                    placeholder='Nombre del novio o la novia'
+                                    value={owners[1] || ''}
+                                    onChange={(e) => setOwners([owners[0], e.target.value])}
+                                />
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
                 {/* <div className='preview_col'>
                     <div className="preview-label">Así verán su invitación sus invitados:</div>
@@ -389,9 +457,9 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
     }
 
     const PLAN_STYLE = {
-        paperless: { accent: '#bbb',    name: '#1C1B26', feat: '#555',                    subtext: '#bbb',                dark: false },
-        lite:      { accent: '#9B8DC4', name: '#9B8DC4', feat: '#444',                    subtext: '#bbb',                dark: false },
-        pro:       { accent: '#A99FC7', name: '#fff',    feat: 'rgba(255,255,255,0.85)',  subtext: 'rgba(255,255,255,0.35)', dark: true  },
+        paperless: { accent: '#bbb', name: '#1C1B26', feat: '#555', subtext: '#bbb', dark: false },
+        lite: { accent: '#9B8DC4', name: '#9B8DC4', feat: '#444', subtext: '#bbb', dark: false },
+        pro: { accent: '#A99FC7', name: '#fff', feat: 'rgba(255,255,255,0.85)', subtext: 'rgba(255,255,255,0.35)', dark: true },
     }
 
     return (
@@ -446,13 +514,13 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                 padding: isMobile ? '18px 16px' : '28px 32px',
                                 minWidth: isMobile ? 'auto' : '160px',
                                 maxWidth: isMobile ? 'auto' : '160px',
-                                minHeight:'160px',
-                                maxHeight:'165px',
+                                minHeight: isMobile ? 'auto' : '160px',
+                                maxHeight: '165px',
                                 background: ps.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                                 borderRight: isMobile ? 'none' : (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0'),
                                 borderBottom: isMobile ? (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0') : 'none',
-                                gap: isMobile ? '0' : '4px', 
-                                 flex:2
+                                gap: isMobile ? '0' : '4px',
+                                flex: 2
                             }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                                     <span style={{ fontSize: isMobile ? '14px' : '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: ps.accent }}>
@@ -463,10 +531,10 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'flex-end' : undefined, gap: '2px' }}>
-                                    <div style={{ fontSize: isMobile ? '24px' : '24px', fontWeight: 800, color: ps.accent, letterSpacing: '-0.5px', marginTop: isMobile ? '0' : '6px', lineHeight:1 }}>
+                                    <div style={{ fontSize: isMobile ? '24px' : '24px', fontWeight: 800, color: ps.accent, letterSpacing: '-0.5px', marginTop: isMobile ? '0' : '6px', lineHeight: 1 }}>
                                         {price}
                                     </div>
-                                    <div style={{ fontSize: '10px', color: ps.subtext, letterSpacing: '0.5px', lineHeight:1 }}>
+                                    <div style={{ fontSize: '10px', color: ps.subtext, letterSpacing: '0.5px', lineHeight: 1 }}>
                                         MXN · pago único
                                     </div>
                                 </div>

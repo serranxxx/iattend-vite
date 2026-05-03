@@ -167,7 +167,7 @@
     border: 1px solid var(--borders);
 }
 
-.tier-A {
+/* .tier-A {
     background-color: #E1FAE8;
     color: #37C25C;
     border-color: #37C25C99;
@@ -183,7 +183,7 @@
     background-color: #FCF4DB;
     color: #E6961F;
     border-color: #E6961F99;
-}
+} */
 
 .tab-org-filter-cont {
     align-self: stretch;

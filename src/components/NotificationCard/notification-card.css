@@ -74,7 +74,7 @@
     min-width: 96px;
 }
 
-.state-confirmado {
+/* .state-confirmado {
     background-color: #EFEAFF;
     color: #6D3CFA;
     border-color: #6D3CFA99;
@@ -97,7 +97,7 @@
     background-color: #F1F1F1;
     color: #787878;
     border-color: #78787899;
-}
+} */
 
 .card-confirmado {
     background-color: #EFEAFF60;

@@ -24,7 +24,7 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
-import { AArrowUp, Check, CheckCheck, CircleUserRound, Clock, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, PlusCircle, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
+import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 
 const { useBreakpoint } = Grid;
@@ -87,6 +87,7 @@ export default function GuestsPage() {
     const [filterSide, setfilterSide] = useState(null)
     const [owners, setOwners] = useState(null)
     const [url_image, setUrl_image] = useState(null)
+    const [plan, setPlan] = useState(null)
 
 
     const openColumns = useMemo(() => ([
@@ -166,7 +167,7 @@ export default function GuestsPage() {
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`}>
-                        {handleIcon(value)} {value}
+                        {value}
                     </span>
                 </div>
             ),
@@ -273,7 +274,7 @@ export default function GuestsPage() {
                 //     );
                 // }
 
-                if (state === "confirmado" && !table) {
+                if ((state === "confirmado" || state === "asistente") && !table) {
                     return (
                         <Dropdown
                             trigger={["click"]}
@@ -442,7 +443,8 @@ export default function GuestsPage() {
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`}>
-                        {handleIcon(value)} {value}
+                        {/* {handleIcon(value)}  */}
+                        {value}
                     </span>
                 </div>
             ),
@@ -560,7 +562,7 @@ export default function GuestsPage() {
             dataIndex: "tier",
             key: "tier",
             width: 140,
-            fixed: screens.xs ? undefined : "right",
+            // fixed: screens.xs ? undefined : "right",
             render: (value) => (
                 <div style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -582,8 +584,8 @@ export default function GuestsPage() {
         {
             title: "Acciones",
             key: "send",
-            width: 160,
-            minWidth: 160,
+            width: plan !== 'pro' ? 190 : 160,
+            minWidth: plan !== 'pro' ? 190 : 160,
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
                 const { state, table, phone_number } = record;
@@ -594,24 +596,24 @@ export default function GuestsPage() {
                             style={{
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "flex-start",
+                                justifyContent: "center",
                                 gap: 6,
                                 width: "100%",
                             }}
                         >
                             <Tooltip placement='topRight'
 
-                                title={!/^\+52\d+/.test(phone_number) ? "Solo puedes hacer envíos nacionales" : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaPaperPlane size={12} /><span>Enviar invitación</span></div>} color="var(--brand-color-500)">
+                                title={plan !== 'pro' ? '' : !/^\+52\d+/.test(phone_number) ? "Solo puedes hacer envíos nacionales" : ""} color="var(--brand-color-500)">
                                 <Button
                                     disabled={
-                                        !/^\+52\d+/.test(phone_number) || credits <= 0
+                                        !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
                                     }
                                     onClick={() => onSedingInvitation(record, false)}
-                                    className="primarybutton--active"
-                                    icon={<FaPaperPlane size={12} />}
-                                    style={{ flex: 1, maxHeight: 30 }}
+                                    className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active'}`}
+                                    icon={<Send size={14} />}
+                                    style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
                                 >
-                                    Invitar
+                                    Enviar
                                 </Button>
                             </Tooltip>
 
@@ -619,7 +621,7 @@ export default function GuestsPage() {
                                 <Button
                                     onClick={() => onSendInvitation(record)}
                                     className="primarybutton--active"
-                                    icon={<FaCheck size={12} />}
+                                    icon={<Check size={14} style={{ marginTop: '2px' }} />}
                                     style={{ minWidth: 30, maxWidth: 30, maxHeight: 30 }}
                                 />
                             </Tooltip>
@@ -629,89 +631,112 @@ export default function GuestsPage() {
 
                 if (state === "esperando") {
                     return (
-                        handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 6,
+                                width: "100%",
+                            }}
+                        >
+                            {handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')}
+                        </div>
+
                     );
                 }
 
-                if (state === "confirmado" && !table) {
+                if ((state === "confirmado" || state === 'asistente') && !table) {
                     return (
-                        <Dropdown
-                            trigger={["click"]}
-                            placement="topRight"
-                            popupRender={() => (
-                                <div style={{ position: "static" }} className="on-transfer-container">
-                                    <span className="on-transfer-label">Selecciona mesa</span>
-
-                                    <div className="transfer-mesas-cont">
-                                        {tables.map((tb, index) => (
-                                            <div
-                                                onClick={() => addGuestToTable(tb, record)}
-                                                key={index}
-                                                className="table-transfer-item"
-                                            >
-                                                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
-                                                    <span>
-                                                        {tb.name ? `#${tb.number} - ${tb.name}` : `Mesa #${tb.number}`}
-                                                    </span>
-                                                </div>
-
-                                                <div
-                                                    style={{
-                                                        alignSelf: "stretch",
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "flex-start",
-                                                        gap: 12,
-                                                    }}
-                                                >
-                                                    <Progress
-                                                        style={{ flex: 1 }}
-                                                        size={[undefined, 12]}
-                                                        className="progress-tables"
-                                                        strokeColor={"var(--brand-color-500)"}
-                                                        status="active"
-                                                        showInfo={false}
-                                                        percent={
-                                                            (confirmedData?.filter((g) => g.table === tb.id).length * 100) /
-                                                            tb.size
-                                                        }
-                                                    />
-                                                    <span className="occupied-places-tab-mob">
-                                                        {`${confirmedData?.filter((g) => g.table === tb.id).length} / ${tb.size}`}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            width: "100%",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            height: 65,
-                                        }}
-                                    >
-                                        <Button
-                                            onClick={() => sethandleTables(true)}
-                                            style={{ borderRadius: 99 }}
-                                            icon={<TbLocationFilled />}
-                                        >
-                                            Ver mapa
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 6,
+                                width: "100%",
+                            }}
                         >
-                            <Button
-                                className="primarybutton--active"
-                                icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
-                                style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
+                            <Dropdown
+                                trigger={["click"]}
+                                placement="topRight"
+                                popupRender={() => (
+                                    <div style={{ position: "static" }} className="on-transfer-container">
+                                        <span className="on-transfer-label">Selecciona mesa</span>
+
+                                        <div className="transfer-mesas-cont scroll-invitation" style={{maxHeight:'360px'}}>
+                                            {tables.map((tb, index) => (
+                                                <div
+                                                    onClick={() => addGuestToTable(tb, record)}
+                                                    key={index}
+                                                    className="table-transfer-item"
+                                                    
+                                                >
+                                                    <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+                                                        <span>
+                                                            {tb.name ? `#${tb.number} - ${tb.name}` : `Mesa #${tb.number}`}
+                                                        </span>
+                                                    </div>
+
+                                                    <div
+                                                        style={{
+                                                            alignSelf: "stretch",
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "flex-start",
+                                                            gap: 12,
+                                                        }}
+                                                    >
+                                                        <Progress
+                                                            style={{ flex: 1 }}
+                                                            size={[undefined, 12]}
+                                                            className="progress-tables"
+                                                            strokeColor={"var(--brand-color-500)"}
+                                                            status="active"
+                                                            showInfo={false}
+                                                            percent={
+                                                                (confirmedData?.filter((g) => g.table === tb.id).length * 100) /
+                                                                tb.size
+                                                            }
+                                                        />
+                                                        <span className="occupied-places-tab-mob">
+                                                            {`${confirmedData?.filter((g) => g.table === tb.id).length} / ${tb.size}`}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div
+                                            style={{
+                                                width: "100%",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                height: 65,
+                                            }}
+                                        >
+                                            <Button
+                                                onClick={() => sethandleTables(true)}
+                                                style={{ borderRadius: 99 }}
+                                                icon={<TbLocationFilled />}
+                                            >
+                                                Ver mapa
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             >
-                                Asignar
-                            </Button>
-                        </Dropdown>
+                                <Button
+                                    className="primarybutton--active"
+                                    icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
+                                    style={{ flex:1, maxWidth:'120px', maxHeight: 30, borderRadius: 99 }}
+                                >
+                                    Asignar
+                                </Button>
+                            </Dropdown>
+                        </div>
+
                     );
                 }
 
@@ -950,6 +975,7 @@ export default function GuestsPage() {
             case 'creado': return '#008DFF'
             case 'esperando': return '#E6961F'
             case 'confirmado': return '#6D3CFA'
+            case 'asistente': return '#6D3CFA'
             case 'rechazado': return '#000000'
 
             default:
@@ -969,16 +995,17 @@ export default function GuestsPage() {
         }
     }
 
-    const handleIcon = (value) => {
-        switch (value) {
-            case 'esperando': return <div className='icon_cont'><AiOutlineClockCircle size={16} /></div>
-            case 'confirmado': return <div className='icon_cont'><IoIosCheckmarkCircleOutline size={16} /></div>
-            case 'rechazado': return <div className='icon_cont'><IoIosCloseCircleOutline size={16} /></div>
-            case 'creado': return <div className='icon_cont'><IoIosAddCircleOutline size={16} /></div>
-            default:
-                break;
-        }
-    }
+    // const handleIcon = (value) => {
+    //     switch (value) {
+    //         case 'esperando': return <div className='icon_cont'>AAA</div>
+    //         case 'confirmado': return <div className='icon_cont'><IoIosCheckmarkCircleOutline size={16} /></div>
+    //         case 'asistente': return <div className='icon_cont'><IoIosCheckmarkCircleOutline size={16} /></div>
+    //         case 'rechazado': return <div className='icon_cont'><IoIosCloseCircleOutline size={16} /></div>
+    //         case 'creado': return <div className='icon_cont'><IoIosAddCircleOutline size={16} /></div>
+    //         default:
+    //             break;
+    //     }
+    // }
 
     const phoneFormatter = (params) => {
         const val = typeof params === 'object' && params !== null ? params.value : params;
@@ -1168,7 +1195,7 @@ export default function GuestsPage() {
     const getType = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('type, credits, name, tags, owners, url_image')
+            .select('type, credits, name, tags, owners, url_image, plan')
             .eq('id', id)
             .maybeSingle()
 
@@ -1185,6 +1212,7 @@ export default function GuestsPage() {
         setLocalTags(data.tags)
         setOwners(data.owners)
         setUrl_image(data.url_image)
+        setPlan(data.plan)
     }
 
     const getTables = async () => {
@@ -1888,12 +1916,16 @@ export default function GuestsPage() {
                                 } */}
 
 
+
+
+
                                 {
                                     !screens.xs &&
 
                                     <Dropdown
+                                        placement='bottomRight'
                                         popupRender={() => (
-                                            <div className="items_list_guests">
+                                            <div className="items_list_guests" style={{ minWidth: '220px' }}>
 
 
                                                 <Dropdown
@@ -1936,7 +1968,7 @@ export default function GuestsPage() {
                                                                     </span>
 
                                                                     <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado"), "Confirmados.xlsx")}
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
                                                                         style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                                                         icon={<Download size={14} />} className="primarybutton">
                                                                     </Button>
@@ -1961,7 +1993,7 @@ export default function GuestsPage() {
                                                     )}
                                                 >
                                                     <Button
-                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                         icon={<Download size={14} />} className="primarybutton_transparent">
                                                         Descargables
                                                     </Button>
@@ -1970,7 +2002,7 @@ export default function GuestsPage() {
 
                                                 <Button
                                                     onClick={() => sethandleTables(true)}
-                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                     icon={<Pin size={14} />} className="primarybutton_transparent">
                                                     Mapa de mesas
                                                 </Button>
@@ -1989,22 +2021,109 @@ export default function GuestsPage() {
                                                     {
                                                         openCard ?
                                                             <Button
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                                 icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
                                                                 Evento público
                                                             </Button>
                                                             : <Button
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                                 icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
                                                                 Evento privado
                                                             </Button>
                                                     }
 
                                                 </Popconfirm>
+
+                                                <Dropdown
+                                                    trigger={['click']}
+                                                    popupRender={() => (
+                                                        <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
+                                                            <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >Lector de pases</span>
+                                                            <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >Compartir información</span>
+
+                                                            <div style={{
+                                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
+
+                                                            }}>
+                                                                <div style={{
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start', alignSelf: 'stretch',
+                                                                    gap: '24px'
+
+                                                                }}>
+                                                                    <div style={{
+                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                    }}>
+                                                                        <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Usuario</span>
+                                                                        <Button
+                                                                            onClick={() => copyToClipboard(String(id).slice(0, 4))}
+                                                                            type='text'
+                                                                            icon={<Copy size={14} />}
+                                                                            style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                        >
+                                                                            {invitation?.generals?.event?.name}
+                                                                        </Button>
+                                                                    </div>
+
+                                                                    <div style={{
+                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                    }}>
+
+                                                                        <div style={{
+                                                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                        }}>
+                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Contraseña</span>
+                                                                            <Button
+                                                                                onClick={() => copyToClipboard(String(id).slice(0, 4))}
+                                                                                type='text'
+                                                                                icon={<Copy size={14} />}
+                                                                                style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                            >
+                                                                                {String(id).slice(0, 4)}
+                                                                            </Button>
+                                                                        </div>
+
+                                                                    </div>
+                                                                </div>
+
+                                                                <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Link de acceso</span>
+                                                                <Button
+                                                                    onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
+                                                                    type='text'
+                                                                    icon={<Copy size={16} />}
+                                                                    style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                >
+                                                                    https://www.iattend.site/scanner
+                                                                </Button>
+                                                            </div>
+
+
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', borderTop: '1px solid #ebebeb', paddingTop: '12px', boxSizing: 'border-box' }} />
+
+                                                            <Button
+                                                                icon={<ArrowUpRight size={16} />}
+                                                                onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
+                                                                type='primary'
+                                                            >Acceder al lector</Button>
+                                                        </div>
+                                                    )}
+                                                >
+                                                    <Button
+
+                                                        disabled={plan !== 'pro' ? true : false}
+                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                                                        icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
+                                                        Lector de pases
+                                                    </Button>
+                                                </Dropdown>
+
+
                                             </div>
                                         )}
                                     >
-                                        <Button className='primarybutton' icon={<TextAlignJustify size={12} />}>
+                                        <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<TextAlignJustify size={12} />}>
 
                                         </Button>
                                     </Dropdown>
@@ -2091,7 +2210,7 @@ export default function GuestsPage() {
                                                                     </span>
 
                                                                     <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado"), "Confirmados.xlsx")}
+                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
                                                                         style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                                                         icon={<Download size={14} />} className="primarybutton">
                                                                     </Button>

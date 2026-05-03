@@ -67,6 +67,27 @@ export const handleCheckoutPlan = async (userId, priceId, name, phoneNumber, lab
     }
 };
 
+export const handleCreateFree = async (invitation) => {
+    const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/invitation/create-free`,
+        // `http://localhost:4000/api/payment/create-free`,
+        invitation
+    );
+    return res.data;
+};
+
+export const handleCheckoutGift = async (senderName, recipientName, email, giftMessage, priceId) => {
+    try {
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_URL}/api/payment/create-checkout-gift`,
+            { senderName, recipientName, email, giftMessage, priceId }
+        );
+        window.location.href = response.data.url;
+    } catch (error) {
+        console.error("Error al iniciar regalo:", error.response?.data || error.message);
+    }
+};
+
 export const PRODUCTS = {
     price_1T1DRoAAdNlITNVbLwiUVWAj: { type: "credits", value: 3 },
     price_1Sx8PvAAdNlITNVbchl6tJBW: { type: "credits", value: 50 },

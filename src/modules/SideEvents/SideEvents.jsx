@@ -1356,7 +1356,7 @@ export const SideEvents = () => {
                                                             <div key={2} className='single_col' style={{
                                                                 boxSizing: 'border-box', backgroundColor: '#FFF', padding: '12px',
                                                                 boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '16px', gap: '12px',
-                                                                marginTop: '8px'
+                                                                marginTop: '8px', maxWidth:'260px'
                                                             }}>
                                                                 <Dropdown
                                                                     key={1}
@@ -1374,7 +1374,7 @@ export const SideEvents = () => {
                                                                             <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder='Búscar invitado' style={{ borderRadius: '99px' }} />
                                                                             <div className='single_col scroll-invitation' style={{
                                                                                 alignSelf: 'stretch', gap: '2px',
-                                                                                maxHeight: '100%', overflowY: 'auto'
+                                                                                maxHeight: '480px', overflowY: 'auto', display:'flex',alignItems:'flex-start', justifyContent:'flex-start', flexDirection:'column'
                                                                             }}>
                                                                                 {
                                                                                     mainGuests ? mainGuests?.filter(i =>
@@ -1389,13 +1389,13 @@ export const SideEvents = () => {
                                                                                                         : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
                                                                                                 }
 
-                                                                                                <span style={{ minWidth: '130px', }}>{truncate(i.name, 16)}</span>
+                                                                                                <span style={{ minWidth: '130px', flex:1, }}>{truncate(i.name, 20)}</span>
 
-                                                                                                <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px' }}>
+                                                                                                <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px', maxWidth:'60px' }}>
                                                                                                     <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
                                                                                                 </div>
 
-                                                                                                <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', opacity: '0.7' }}>
+                                                                                                <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', maxWidth:'80px' }}>
                                                                                                     <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
                                                                                                 </div>
 

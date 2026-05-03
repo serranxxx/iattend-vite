@@ -57,6 +57,21 @@
 
 }
 
+.pro_badge {
+    position: relative;
+}
+
+.pro_badge::after {
+    content: "PRO";
+    position: absolute;
+    right: 5%;
+    padding: 2px 12px;
+    background-color: goldenrod;
+    color: #000;
+    border-radius: 99px;
+    z-index: 999;
+}
+
 .active_cont {
     width: 20vw;
 }
@@ -1114,12 +1129,13 @@
     align-items: center;
     justify-content: center;
     height: 40px;
+    width: 100%;
 }
 
 .new-table-tag {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 4px;
     /* width: 100%; */
     border: 1px solid var(--borders);
@@ -1128,6 +1144,7 @@
     max-height: 30px;
     text-transform: capitalize;
     padding: 4px 8px;
+    width: 100%;
 }
 
 .icon_cont {
@@ -1138,54 +1155,60 @@
 }
 
 .tier-A {
-    background-color: #E1FAE8;
-    color: #37C25C;
-    border-color: #37C25C20;
+    background-color: #E1FAE860 !important;
+    color: #37C25C !important;
+    border-color: #37C25C40 !important;
 }
 
 .tier-B {
-    background-color: #E5F3FE;
-    color: #008DFF;
-    border-color: #008DFF20;
+    background-color: #E5F3FE60 !important;
+    color: #008DFF !important;
+    border-color: #008DFF40 !important;
 }
 
 .tier-C {
-    background-color: #FCF4DB;
-    color: #E6961F;
-    border-color: #E6961F20;
+    background-color: #FCF4DB60 !important;
+    color: #E6961F !important;
+    border-color: #E6961F40 !important;
 }
 
 .tier-D {
-    background-color: #FDEFEE;
-    color: #EC6A5B;
-    border-color: #EC6A5B20;
+    background-color: #FDEFEE60 !important;
+    color: #EC6A5B !important;
+    border-color: #EC6A5B40 !important;
 }
 
 
 
 .state-confirmado {
-    background-color: #EFEAFF;
-    color: #6D3CFA;
-    border-color: #6D3CFA99;
+    background-color: #EFEAFF60 !important;
+    color: #6D3CFA !important;
+    border-color: #6D3CFA40 !important;
 }
 
 .state-creado {
-    background-color: #E5F3FE;
-    color: #008DFF;
-    border-color: #008DFF;
+    background-color: #E5F3FE60 !important;
+    color: #008DFF !important;
+    border-color: #008DFF40 !important;
 }
 
 
 .state-esperando {
-    background-color: #FCF4DB;
-    color: #E6961F;
-    border-color: #E6961F99;
+    background-color: #FCF4DB60 !important;
+    color: #E6961F !important;
+    border-color: #E6961F40 !important;
 }
 
 .state-rechazado {
-    background-color: #F1F1F1;
-    color: #787878;
-    border-color: #78787899;
+    background-color: #F1F1F160 !important;
+    color: #787878 !important;
+    border-color: #78787840 !important;
+}
+
+.state-asistente {
+    background-color: #EFEAFF20 !important;
+    color: #6D3CFA !important;
+    border-color: #6D3CFA40 !important;
 }
 
 .edit-tickets-buttons-container {
