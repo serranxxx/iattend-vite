@@ -148,7 +148,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
 
 
     useEffect(() => {
-        setIsAdm(isAdmin(user.user_id))
+        setIsAdm(isAdmin(user?.user_id))
     }, [user])
 
 
