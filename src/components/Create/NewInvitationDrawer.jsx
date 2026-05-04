@@ -1,15 +1,15 @@
-import { Button, Drawer, Grid, Steps, message } from 'antd'
+import { Button, Drawer, Grid, Steps } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
 import { supabase } from '../../lib/supabase'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { FaPlus } from 'react-icons/fa6'
-import { fetchPrices, handleCheckoutInvitation, handleCreateFree, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
+import { fetchPrices, handleCheckoutInvitation, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
 import { ChevronsLeft, ChevronsRight, Star } from 'lucide-react'
 
 
 
-export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitations }) => {
+export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
 
     const screens = Grid.useBreakpoint()
@@ -26,7 +26,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
     const [dominio, setDominio] = useState(null);
     const [currentPhone, setCurrentPhone] = useState(null)
     const [owners, setOwners] = useState([null, null])
-    const [isAdm, setIsAdm] = useState(false)
+    // const [isAdm, setIsAdm] = useState(false)
 
     const steps = [
         {
@@ -45,18 +45,18 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
 
     ];
 
-    const isAdmin = async (userId) => {
-        const { data, error } = await supabase.rpc('is_admin', {
-            user_id_input: userId,
-        });
+    // const isAdmin = async (userId) => {
+    //     const { data, error } = await supabase.rpc('is_admin', {
+    //         user_id_input: userId,
+    //     });
 
-        if (error) {
-            console.error(error);
-            return false;
-        }
+    //     if (error) {
+    //         console.error(error);
+    //         return false;
+    //     }
 
-        return data; // true o false
-    };
+    //     return data; // true o false
+    // };
 
     const next = () => {
         setCurrent(current + 1);
@@ -121,35 +121,35 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
         }, currentPriceId);
     };
 
-    const [freeLoading, setFreeLoading] = useState(false)
+    // const [freeLoading, setFreeLoading] = useState(false)
 
-    const handleFree = async () => {
-        setFreeLoading(true)
-        try {
-            await handleCreateFree({
-                userId: user.user_id,
-                userEmail: user.user_email,
-                name: dominio,
-                phoneNumber: currentPhone,
-                label: currentTemplate,
-                plan: currentPlan || 'pro',
-                owners: currentTemplate === 'wedding' ? owners : [],
-            })
-            message.success('Invitación creada')
-            handleClose()
-            if (refreshInvitations) refreshInvitations()
-        } catch (err) {
-            message.error('Error al crear la invitación', err)
-        } finally {
-            setFreeLoading(false)
-        }
-    }
+    // const handleFree = async () => {
+    //     setFreeLoading(true)
+    //     try {
+    //         await handleCreateFree({
+    //             userId: user.user_id,
+    //             userEmail: user.user_email,
+    //             name: dominio,
+    //             phoneNumber: currentPhone,
+    //             label: currentTemplate,
+    //             plan: currentPlan || 'pro',
+    //             owners: currentTemplate === 'wedding' ? owners : [],
+    //         })
+    //         message.success('Invitación creada')
+    //         handleClose()
+    //         if (refreshInvitations) refreshInvitations()
+    //     } catch (err) {
+    //         message.error('Error al crear la invitación', err)
+    //     } finally {
+    //         setFreeLoading(false)
+    //     }
+    // }
 
 
 
-    useEffect(() => {
-        setIsAdm(isAdmin(user?.user_id))
-    }, [user])
+    // useEffect(() => {
+    //     setIsAdm(isAdmin(user?.user_id))
+    // }, [user])
 
 
 
@@ -169,7 +169,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                 }}
                 extra={
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        {
+                        {/* {
                             isAdm && <Button
                             type='primary'
                             disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
@@ -179,7 +179,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user, refreshInvitati
                         >
                             Crear gratis
                         </Button>
-                        }
+                        } */}
                         <Button
                             disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
                             icon={<FaPlus />}
