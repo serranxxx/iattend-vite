@@ -11,37 +11,23 @@ import { Calendar1, Gift, Link2, Play, Plus } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
 import { GiftDrawer } from '../../components/Gift/GiftDrawer';
 import { FooterApp } from '../../modules/Footer/FooterApp';
+import { useTranslation } from 'react-i18next';
 
 const { Content } = Layout;
 
 const baseProd = "https://www.iattend.events"
 
-const getGreeting = (name) => {
-    const hour = new Date().getHours();
-    const morning = [
-        `¡Buenos días, ${name}!`,
-        `¡Hola, ${name}!`,
-        `¿Listo para comenzar, ${name}?`,
-    ];
-    const afternoon = [
-        `¡Buenas tardes, ${name}!`,
-        `¡Hola, ${name}!`,
-        `¿Cómo va todo, ${name}?`,
-    ];
-    const night = [
-        `¡Buenas noches, ${name}!`,
-        `¡Hola, ${name}!`,
-        `¿Cómo va todo, ${name}?`,
-    ];
-
-    const pool = hour >= 6 && hour < 13 ? morning
-        : hour >= 13 && hour < 20 ? afternoon
-            : night;
-
-    return pool[Math.floor(Math.random() * pool.length)];
-};
-
 export const InvitationsPage = () => {
+    const { t } = useTranslation();
+
+    const getGreeting = (name) => {
+        const hour = new Date().getHours();
+        const key = hour >= 6 && hour < 13 ? 'greet_morning'
+            : hour >= 13 && hour < 20 ? 'greet_afternoon'
+            : 'greet_night';
+        const pool = t(`invitations.${key}`, { returnObjects: true, name });
+        return pool[Math.floor(Math.random() * pool.length)];
+    };
 
     const [invitationsCopy, setInvitationsCopy] = useState(null)
     const [loader, setLoader] = useState(false)
@@ -196,7 +182,7 @@ export const InvitationsPage = () => {
 
                                                 <span className='invitations_title'>{greeting}</span>
                                                 <Input
-                                                    placeholder={'Búscar evento'}
+                                                    placeholder={t('invitations.search_placeholder')}
                                                     onChange={(e) => handleFilter(e.target.value)}
                                                     className='invs-searcher' />
                                                 {/* <Button style={{ borderRadius: '99px' }} icon={<LuPlus />} type='primary'>Nuevo evento</Button> */}
@@ -220,8 +206,8 @@ export const InvitationsPage = () => {
                                                                 <Plus size={32} color='var(--brand-color-500)' />
                                                             </div>
 
-                                                            <span className='cta_title'>¿Nuevo evento en puerta?</span>
-                                                            <span className='cta_text'>Nueva invitación</span>
+                                                            <span className='cta_title'>{t('invitations.new_event_title')}</span>
+                                                            <span className='cta_text'>{t('invitations.new_event_cta')}</span>
                                                         </div>
 
 
@@ -236,13 +222,12 @@ export const InvitationsPage = () => {
                                                                 <Calendar1 size={32} color='var(--brand-color-500)' />
                                                             </div>
 
-                                                            <span className='cta_title'>Tu invitación te esta esperando</span>
-                                                            <span className='cta_text'>Elige un plan y empieza a diseñar la invitación
-                                                                de tu boda hoy mismo.</span>
+                                                            <span className='cta_title'>{t('invitations.empty_title')}</span>
+                                                            <span className='cta_text'>{t('invitations.empty_text')}</span>
 
-                                                            <Button className='cta_plans'>Crea tu invitación</Button>
+                                                            <Button className='cta_plans'>{t('invitations.empty_cta')}</Button>
 
-                                                            <small className='cta_support'>¿Tienes dudas? <a>Contactanos</a></small>
+                                                            <small className='cta_support'>{t('invitations.empty_support')} <a>{t('invitations.empty_support_link')}</a></small>
                                                         </div>
 
 
@@ -291,7 +276,7 @@ export const InvitationsPage = () => {
                                                                             className='invitation_start_button'
                                                                             onClick={() => handleMoode(invitation.id)}
                                                                         >
-                                                                            Comenzar
+                                                                            {t('invitations.btn_start')}
                                                                         </Button>
 
                                                                         <Button
@@ -299,7 +284,7 @@ export const InvitationsPage = () => {
                                                                             className='invitation_url_button'
                                                                             onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
                                                                         >
-                                                                            Copiar link
+                                                                            {t('invitations.btn_copy_link')}
                                                                         </Button>
                                                                     </div>
 
@@ -313,7 +298,7 @@ export const InvitationsPage = () => {
                                                                 }}
                                                             >
                                                                 <div className='status_indicator' style={{ backgroundColor: invitation.active ? '#4ADE80' : '#FBBF24' }}></div>
-                                                                <span>{invitation.active ? 'Activa' : 'En pausa'}</span>
+                                                                <span>{invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}</span>
 
                                                             </div>
 

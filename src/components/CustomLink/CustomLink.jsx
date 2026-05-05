@@ -3,9 +3,11 @@ import './custom_link.css'
 import { Button, Dropdown, message } from 'antd'
 import { ChevronLeft, Link2, SquareArrowUpRight } from 'lucide-react'
 import { StorageImages } from '../ImagesStorage/StorageImages'
+import { useTranslation } from 'react-i18next'
 
 export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, handleImage, name, label, buttonText, maxHeight = 25, }) => {
 
+    const { t } = useTranslation()
     const [isMobile, setIsMobile] = useState(false)
 
     useEffect(() => {
@@ -18,7 +20,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
     const copyToClipboard = async (textToCopy) => {
         try {
             await navigator.clipboard.writeText(textToCopy);
-            message.success('Link copiado')
+            message.success(t('custom_link.copied'))
         } catch (err) {
             console.error('Error al copiar el texto: ', err);
         }
@@ -30,7 +32,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
                 onClick={() => copyToClipboard(url)}
                 style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
                 icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
-                {isSmall ? '' : label ?? buttonText ?? (isHeader ? 'Copiar link' : 'Link del evento')}
+                {isSmall ? '' : label ?? buttonText ?? (isHeader ? t('custom_link.copy_btn') : t('custom_link.link_btn'))}
             </Button>
         )
     }
@@ -44,7 +46,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
                 <div className='custom_link_cont'>
                     <div className='custom_link'>
                         <div className='custom_title'>
-                            <span>Personaliza tu link</span>
+                            <span>{t('custom_link.personalize')}</span>
                         </div>
                         <div className='custom_image_cont'>
 
@@ -66,12 +68,12 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
                                 </div>
 
                                 <div className='message_info_cont'>
-                                    <span>¡Estamos muy felices de invitarte!</span>
+                                    <span>{t('custom_link.invite_message')}</span>
                                     <span><b>{name}</b></span>
-                                    <span className='green_text'>Leer más</span>
+                                    <span className='green_text'>{t('custom_link.read_more')}</span>
                                     <small>I attend - Plan with ease</small>
                                     <div className='cta_container'>
-                                        <span className='green_text_cta'><SquareArrowUpRight size={10} />Ver invitación</span>
+                                        <span className='green_text_cta'><SquareArrowUpRight size={10} />{t('custom_link.view_invitation')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -83,7 +85,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
                         style={{ width: '100%' }}
                         onClick={() => copyToClipboard(`${url}`)}
                         icon={<Link2 size={14} />} className="primarybutton--active">
-                        Copiar link
+                        {t('custom_link.copy_btn')}
                     </Button>
                 </div>
             )}
@@ -91,7 +93,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
             <Button
                 style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: isHeader ? '99px' : '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
                 icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
-                {isSmall ? '' : label ?? buttonText ?? (isHeader ? 'Copiar link' : 'Link del evento')}
+                {isSmall ? '' : label ?? buttonText ?? (isHeader ? t('custom_link.copy_btn') : t('custom_link.link_btn'))}
             </Button>
         </Dropdown>
     )

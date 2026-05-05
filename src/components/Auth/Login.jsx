@@ -3,9 +3,10 @@ import React, { useContext, useEffect, useState } from 'react'
 import { appContext } from '../../context'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-
 import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
 
 const { useBreakpoint } = Grid
 
@@ -62,6 +63,14 @@ export const Login = () => {
         { src: 'rule.png', size: 90, top: '58%', left: '86%', rot: -10 },
         { src: 'camera.png', size: 95, top: '86%', left: '76%', rot: 18 },
     ];
+
+    const { t } = useTranslation()
+
+    const toggleLanguage = () => {
+        const next = i18n.language === 'es' ? 'en' : 'es'
+        localStorage.setItem('lang', next)
+        window.location.reload()
+    }
 
     const navigate = useNavigate();
     const { login, logged } = useContext(appContext)
@@ -131,10 +140,10 @@ export const Login = () => {
 
         } else {
             if (!username) {
-                message.error('Por favor escribe un correo electrónico')
+                message.error(t('login.err_email_required'))
             }
             else {
-                message.error('Por favor escribe una constraseña')
+                message.error(t('login.err_password_required'))
             }
         }
 
@@ -146,18 +155,18 @@ export const Login = () => {
 
             // 1️⃣ Validaciones básicas
             if (!name || !username || !password) {
-                return messageApi.error('Todos los campos son obligatorios')
+                return messageApi.error(t('login.err_fields_required'))
             }
 
             // Validación simple de email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
             if (!emailRegex.test(username)) {
-                return messageApi.error('Email inválido')
+                return messageApi.error(t('login.err_email_invalid'))
             }
 
             // Validar password mínima
             if (password.length < 6) {
-                return messageApi.error('La contraseña debe tener mínimo 6 caracteres')
+                return messageApi.error(t('login.err_password_length'))
             }
 
             // 2️⃣ Petición al backend
@@ -172,7 +181,7 @@ export const Login = () => {
             )
 
             if (data.ok) {
-                messageApi.success('Usuario creado correctamente')
+                messageApi.success(t('login.success_created'))
                 setOnCreateAccount(false)
 
             }
@@ -185,10 +194,10 @@ export const Login = () => {
                 // Error que viene del backend
                 const backendMessage = error.response.data.msg;
 
-                messageApi.warning(backendMessage || 'Error al crear el usuario');
+                messageApi.warning(backendMessage || t('login.err_create_user'));
             } else {
                 // Error de red o servidor caído
-                messageApi.error('Error de conexión con el servidor');
+                messageApi.error(t('login.err_connection'));
             }
 
         }
@@ -218,6 +227,10 @@ export const Login = () => {
             <>
                 {contextHolder}
                 <div className='login-container'>
+
+                    <button className='login-lang-toggle' onClick={toggleLanguage}>
+                        {t('footer.lang_toggle')}
+                    </button>
 
                     {/* <img src='/images/paper.jpg' alt='' style={{
                     position:'absolute', width:'100%', objectFit:'cover',
@@ -280,23 +293,23 @@ export const Login = () => {
                             opacity: onCreateAccount ? 1 : 0,
                             display: onShowComponentes ? 'flex' : 'none'
                         }}>
-                            <span className='page_title'>Empieza a crear la <span className='underline'>invitación</span> de tu boda.</span>
-                            <span className='page_subtitle'>Crea tu cuenta <span className='circle'>gratis</span> y elige tu plan cuando estés listo. </span>
+                            <span className='page_title'>{t('login.register_title_part1')} <span className='underline'>{t('login.register_title_keyword')}</span> {t('login.register_title_part2')}</span>
+                            <span className='page_subtitle'>{t('login.register_subtitle_part1')} <span className='circle'>{t('login.register_subtitle_keyword')}</span> {t('login.register_subtitle_part2')}</span>
                         </div>
 
                         <div className='col' style={{
                             opacity: onCreateAccount ? 1 : 0,
                             display: onShowComponentes ? 'flex' : 'none'
                         }}>
-                            <small>Nombre</small>
+                            <small>{t('login.name_label')}</small>
                             <Input
                                 className="login_input"
                                 value={name}
-                                onChange={(e) => setName(e.target.value)} placeholder='Juan Perez' />
+                                onChange={(e) => setName(e.target.value)} placeholder={t('login.name_placeholder')} />
                         </div>
 
                         <div className='col'>
-                            <small>Usuario/Email</small>
+                            <small>{t('login.email_label')}</small>
                             <Input
                                 className="login_input"
                                 onChange={(e) => setUsername(e.target.value)}
@@ -304,7 +317,7 @@ export const Login = () => {
                         </div>
 
                         <div className='col'>
-                            <small>Contraseña</small>
+                            <small>{t('login.password_label')}</small>
                             <Input.Password
                                 className="login_input"
                                 onChange={(e) => setPassword(e.target.value)}
@@ -315,9 +328,9 @@ export const Login = () => {
                         </div>
 
 
-                        <Button className='login_btn' onClick={onCreateAccount ? handleCreate : handleLogin} >{onShowComponentes ? 'Crear cuenta' : 'Iniciar Sesión'}</Button>
+                        <Button className='login_btn' onClick={onCreateAccount ? handleCreate : handleLogin}>{onShowComponentes ? t('login.btn_register') : t('login.btn_login')}</Button>
 
-                        <span className='login-label'>{onShowComponentes ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'} <a onClick={() => setOnCreateAccount(!onCreateAccount)} className='label-forgot-password'>{onShowComponentes ? 'Iniciar sesión' : 'Crear cuenta'}</a></span>
+                        <span className='login-label'>{onShowComponentes ? t('login.have_account') : t('login.no_account')} <a onClick={() => setOnCreateAccount(!onCreateAccount)} className='label-forgot-password'>{onShowComponentes ? t('login.switch_to_login') : t('login.switch_to_register')}</a></span>
 
 
                     </div>

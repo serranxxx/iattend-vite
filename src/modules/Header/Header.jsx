@@ -8,6 +8,7 @@ import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
 import { Menu } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 const baseProd = "https://www.iattend.events"
 
@@ -16,7 +17,7 @@ const { useBreakpoint } = Grid;
 //  
 
 export const HeaderBuild = ({ position, isVisible }) => {
-
+    const { t } = useTranslation();
 
     const [setIsScrollTop] = useState(false);
     const [openMenu, setOpenMenu] = useState(false)
@@ -44,28 +45,26 @@ export const HeaderBuild = ({ position, isVisible }) => {
 
     const navItems = [
         {
-            name: 'Tablero',
+            name: t('header.board'),
             icon: LuClipboard,
             selected: LuClipboardCheck,
             path: "/invitations",
             position: "invitations"
         },
         {
-            name: 'Conoce',
+            name: t('header.explore'),
             icon: LuFolderOpen,
             selected: LuFolderHeart,
             path: "/features",
             position: "pricing"
         },
-
         {
-            name: 'Admin',
+            name: t('header.admin'),
             icon: LuShield,
             selected: LuShieldCheck,
             path: "/admin",
             position: "admin"
         },
-
     ]
 
     return (
@@ -91,7 +90,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
                         {
                             navItems.map((item) => {
                                 // Condiciones para ocultar el elemento 'Admin'
-                                if (item.name === 'Admin' && (!session?.logged || session?.user?.role !== "Administration")) {
+                                if (item.position === 'admin' && (!session?.logged || session?.user?.role !== "Administration")) {
                                     return null;  // No renderiza nada
                                 }
 
@@ -160,7 +159,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
                         {
                             navItems.map((item) => {
                                 // Condiciones para ocultar el elemento 'Admin'
-                                if (item.name === 'Admin' && (!session?.logged || session?.user?.role !== "Administration")) {
+                                if (item.position === 'admin' && (!session?.logged || session?.user?.role !== "Administration")) {
                                     return null;  // No renderiza nada
                                 }
 
@@ -177,7 +176,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
                         }
 
                         <Link target='_blank' style={{ textDecoration: 'none' }} to="https://wa.me/6145338500">
-                            <span className="mobile-nav-item">Contacto</span>
+                            <span className="mobile-nav-item">{t('header.contact')}</span>
                         </Link>
 
                     </div>
@@ -189,7 +188,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
     )
 }
 export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges }) => {
-
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const id = searchParams.get("id");
@@ -274,11 +273,11 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         const confirmWrapper = (node, action) =>
             hasUnsavedChanges ? (
                 <Popconfirm
-                    title="Salir sin guardar"
-                    description="Tienes cambios sin guardar. Si sales ahora, se perderán."
+                    title={t('dashboard_header.unsaved_title')}
+                    description={t('dashboard_header.unsaved_desc')}
                     onConfirm={action}
-                    okText="Salir"
-                    cancelText="Cancelar"
+                    okText={t('dashboard_header.exit')}
+                    cancelText={t('dashboard_header.cancel')}
                 >
                     {node}
                 </Popconfirm>
@@ -290,7 +289,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             {
                 title: confirmWrapper(
                     <span style={{ cursor: "pointer" }} onClick={goToInvitations}>
-                        Mis invitaciones
+                        {t('dashboard_header.my_invitations')}
                     </span>,
                     goToInvitations
                 )
@@ -367,11 +366,11 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {hasUnsavedChanges ? (
                             <Popconfirm
-                                title="Salir sin guardar"
-                                description="Tienes cambios sin guardar. ¿Deseas salir?"
+                                title={t('dashboard_header.unsaved_title')}
+                                description={t('dashboard_header.unsaved_desc_short')}
                                 onConfirm={handleBack}
-                                okText="Salir"
-                                cancelText="Cancelar"
+                                okText={t('dashboard_header.exit')}
+                                cancelText={t('dashboard_header.cancel')}
                             >
                                 <Button
                                     type="text"
@@ -414,7 +413,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 style={{ position: "relative", height:'32px', borderRadius:'99px' }}
                                 onClick={onSaveChanges}
                             >
-                                Publicar
+                                {t('dashboard_header.publish')}
                                 {!saved && (
                                     <div style={{ position: "absolute", top: 0, right: 0, height: 10, width: 10, borderRadius: 50, backgroundColor: "#A88AFF" }} />
                                 )}
@@ -428,7 +427,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 style={{ position: "relative", backgroundColor: "#20212B", height:'32px', borderRadius:'99px' }}
                                 onClick={onWriteChanges}
                             >
-                                Escribir
+                                {t('dashboard_header.write')}
                                 {!saved && (
                                     <div style={{ position: "absolute", top: 0, right: 0, height: 10, width: 10, borderRadius: 50, backgroundColor: "#A88AFF" }} />
                                 )}
@@ -439,7 +438,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             !screens.xs &&
                             <Link to="https://wa.me/6145338500" target="_blank">
                                 <Button icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
-                                    ¿Necesitas ayuda?
+                                    {t('dashboard_header.help')}
                                 </Button>
                             </Link>
                         }
@@ -447,14 +446,14 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
 
                         {isEditing && !screens.xs && (
-                            <Tooltip title="Publicar cambios" placement="bottomLeft">
+                            <Tooltip title={t('dashboard_header.publish_tooltip')} placement="bottomLeft">
                                 <Button
                                     icon={<LuUpload size={14} />}
                                     type="primary"
                                     style={{ position: "relative" }}
                                     onClick={onSaveChanges}
                                 >
-                                    Publicar
+                                    {t('dashboard_header.publish')}
                                     {!saved && (
                                         <div
                                             style={{
@@ -481,7 +480,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 style={{ position: "relative", backgroundColor: "#20212B" }}
                                 onClick={onWriteChanges}
                             >
-                                Escribir
+                                {t('dashboard_header.write')}
                                 {!saved && (
                                     <div
                                         style={{

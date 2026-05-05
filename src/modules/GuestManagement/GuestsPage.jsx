@@ -26,6 +26,7 @@ import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
 import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
+import { useTranslation } from 'react-i18next';
 
 const { useBreakpoint } = Grid;
 
@@ -35,6 +36,16 @@ const { useBreakpoint } = Grid;
 ChartJS.register(ArcElement, Legend);
 
 export default function GuestsPage() {
+
+    const { t } = useTranslation()
+
+    const translateState = (value) => ({
+        creado: t('guests.state_creado'),
+        esperando: t('guests.state_esperando'),
+        confirmado: t('guests.state_confirmado'),
+        asistente: t('guests.state_asistente'),
+        rechazado: t('guests.state_rechazado'),
+    })[value] ?? value
 
     const screens = useBreakpoint();
     const [confirmed, setConfirmed] = useState(0)
@@ -92,7 +103,7 @@ export default function GuestsPage() {
 
     const openColumns = useMemo(() => ([
         {
-            title: "Nombre",
+            title: t('guests.col_name'),
             dataIndex: "name",
             key: "name",
             fixed: "left",
@@ -128,7 +139,7 @@ export default function GuestsPage() {
                             />
                         )}
 
-                        <Tooltip title="Abrir">
+                        <Tooltip title={t('guests.tooltip_open')}>
                             <Button
                                 onClick={() =>
                                     setDrawerState({
@@ -153,7 +164,7 @@ export default function GuestsPage() {
 
 
         {
-            title: "Contacto",
+            title: t('guests.col_contact'),
             dataIndex: "phone_number",
             key: "phone_number",
             width: 160,
@@ -161,20 +172,20 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Estado",
+            title: t('guests.col_state'),
             dataIndex: "state",
             key: "state",
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`}>
-                        {value}
+                        {translateState(value)}
                     </span>
                 </div>
             ),
         },
 
         {
-            title: "Etiqueta",
+            title: t('guests.col_tag'),
             dataIndex: "tag",
             key: "tag",
             width: 160,
@@ -190,7 +201,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Mesa",
+            title: t('guests.col_table'),
             dataIndex: "table",
             key: "table",
             width: 180,
@@ -202,7 +213,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Prioridad",
+            title: t('guests.col_priority'),
             dataIndex: "tier",
             key: "tier",
             width: 140,
@@ -220,7 +231,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Acciones",
+            title: t('guests.col_actions'),
             key: "send",
             // width: 140,
             fixed: "right",
@@ -281,7 +292,7 @@ export default function GuestsPage() {
                             placement="topRight"
                             popupRender={() => (
                                 <div style={{ position: "static" }} className="on-transfer-container">
-                                    <span className="on-transfer-label">Selecciona mesa</span>
+                                    <span className="on-transfer-label">{t('guests.select_table')}</span>
 
                                     <div className="transfer-mesas-cont">
                                         {tables.map((tb, index) => (
@@ -292,7 +303,7 @@ export default function GuestsPage() {
                                             >
                                                 <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
                                                     <span>
-                                                        {tb.name ? `#${tb.number} - ${tb.name}` : `Mesa #${tb.number}`}
+                                                        {tb.name ? `#${tb.number} - ${tb.name}` : `${t('guests.table_prefix')} #${tb.number}`}
                                                     </span>
                                                 </div>
 
@@ -339,7 +350,7 @@ export default function GuestsPage() {
                                             style={{ borderRadius: 99 }}
                                             icon={<TbLocationFilled />}
                                         >
-                                            Ver mapa
+                                            {t('guests.view_map')}
                                         </Button>
                                     </div>
                                 </div>
@@ -350,7 +361,7 @@ export default function GuestsPage() {
                                 icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
                                 style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
                             >
-                                Asignar
+                                {t('guests.btn_assign')}
                             </Button>
                         </Dropdown>
                     );
@@ -363,7 +374,7 @@ export default function GuestsPage() {
 
     const columns = useMemo(() => ([
         {
-            title: "Nombre",
+            title: t('guests.col_name'),
             dataIndex: "name",
             key: "name",
             fixed: "left",
@@ -404,7 +415,7 @@ export default function GuestsPage() {
                         }
 
 
-                        <Tooltip title="Abrir">
+                        <Tooltip title={t('guests.tooltip_open')}>
                             <Button
                                 onClick={() =>
                                     setDrawerState({
@@ -428,7 +439,7 @@ export default function GuestsPage() {
 
 
         {
-            title: "Contacto",
+            title: t('guests.col_contact'),
             dataIndex: "phone_number",
             key: "phone_number",
             width: 160,
@@ -436,7 +447,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Estado",
+            title: t('guests.col_state'),
             dataIndex: "state",
             key: "state",
             width: 160,
@@ -444,14 +455,14 @@ export default function GuestsPage() {
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`}>
                         {/* {handleIcon(value)}  */}
-                        {value}
+                        {translateState(value)}
                     </span>
                 </div>
             ),
         },
 
         {
-            title: "Contraseña",
+            title: t('guests.col_password'),
             dataIndex: "password",
             key: "password",
             width: 140,
@@ -466,7 +477,7 @@ export default function GuestsPage() {
                     }}
                 >
                     <span>{value}</span>
-                    <Tooltip title="Copiar contraseña">
+                    <Tooltip title={t('guests.tooltip_copy_password')}>
                         <Button
                             onClick={() => copyToClipboard(value)}
                             type='text'
@@ -480,7 +491,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Link mágico",
+            title: t('guests.col_magic_link'),
             key: "link",
             width: 160,
             render: (_, record) => {
@@ -497,7 +508,7 @@ export default function GuestsPage() {
                         <span >
                             www.iattend...
                         </span>
-                        <Tooltip title="Copiar link mágico">
+                        <Tooltip title={t('guests.tooltip_copy_magic_link')}>
                             <Button
                                 onClick={() => copyToClipboard(url)}
                                 type='text'
@@ -513,7 +524,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Etiqueta",
+            title: t('guests.col_tag'),
             dataIndex: "tag",
             key: "tag",
             width: 160,
@@ -530,21 +541,21 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Mesa",
+            title: t('guests.col_table'),
             dataIndex: "table",
             key: "table",
             width: 180,
             render: (value) => (
                 <div className="tag-container">
                     <span className="new-table-tag">
-                        {value ? tables?.find((t) => t.id === value)?.name ?? "-" : "-"}
+                        {value ? tables?.find((tb) => tb.id === value)?.name ?? "-" : "-"}
                     </span>
                 </div>
             ),
         },
 
         {
-            title: "Categoría",
+            title: t('guests.col_category'),
             dataIndex: "type",
             key: "type",
             width: 120,
@@ -558,7 +569,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Prioridad",
+            title: t('guests.col_priority'),
             dataIndex: "tier",
             key: "tier",
             width: 140,
@@ -582,7 +593,7 @@ export default function GuestsPage() {
         },
 
         {
-            title: "Acciones",
+            title: t('guests.col_actions'),
             key: "send",
             width: plan !== 'pro' ? 190 : 160,
             minWidth: plan !== 'pro' ? 190 : 160,
@@ -603,7 +614,7 @@ export default function GuestsPage() {
                         >
                             <Tooltip placement='topRight'
 
-                                title={plan !== 'pro' ? '' : !/^\+52\d+/.test(phone_number) ? "Solo puedes hacer envíos nacionales" : ""} color="var(--brand-color-500)">
+                                title={plan !== 'pro' ? '' : !/^\+52\d+/.test(phone_number) ? t('guests.tooltip_national_only') : ""} color="var(--brand-color-500)">
                                 <Button
                                     disabled={
                                         !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
@@ -613,11 +624,11 @@ export default function GuestsPage() {
                                     icon={<Send size={14} />}
                                     style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
                                 >
-                                    Enviar
+                                    {t('guests.btn_send')}
                                 </Button>
                             </Tooltip>
 
-                            <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>Marcar como invitado</span></div>} color="var(--brand-color-500)">
+                            <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('guests.tooltip_mark_invited')}</span></div>} color="var(--brand-color-500)">
                                 <Button
                                     onClick={() => onSendInvitation(record)}
                                     className="primarybutton--active"
@@ -662,19 +673,19 @@ export default function GuestsPage() {
                                 placement="topRight"
                                 popupRender={() => (
                                     <div style={{ position: "static" }} className="on-transfer-container">
-                                        <span className="on-transfer-label">Selecciona mesa</span>
+                                        <span className="on-transfer-label">{t('guests.select_table')}</span>
 
-                                        <div className="transfer-mesas-cont scroll-invitation" style={{maxHeight:'360px'}}>
+                                        <div className="transfer-mesas-cont scroll-invitation" style={{ maxHeight: '360px' }}>
                                             {tables.map((tb, index) => (
                                                 <div
                                                     onClick={() => addGuestToTable(tb, record)}
                                                     key={index}
                                                     className="table-transfer-item"
-                                                    
+
                                                 >
                                                     <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
                                                         <span>
-                                                            {tb.name ? `#${tb.number} - ${tb.name}` : `Mesa #${tb.number}`}
+                                                            {tb.name ? `#${tb.number} - ${tb.name}` : `${t('guests.table_prefix')} #${tb.number}`}
                                                         </span>
                                                     </div>
 
@@ -721,7 +732,7 @@ export default function GuestsPage() {
                                                 style={{ borderRadius: 99 }}
                                                 icon={<TbLocationFilled />}
                                             >
-                                                Ver mapa
+                                                {t('guests.view_map')}
                                             </Button>
                                         </div>
                                     </div>
@@ -730,9 +741,9 @@ export default function GuestsPage() {
                                 <Button
                                     className="primarybutton--active"
                                     icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
-                                    style={{ flex:1, maxWidth:'120px', maxHeight: 30, borderRadius: 99 }}
+                                    style={{ flex: 1, maxWidth: '120px', maxHeight: 30, borderRadius: 99 }}
                                 >
-                                    Asignar
+                                    {t('guests.btn_assign')}
                                 </Button>
                             </Dropdown>
                         </div>
@@ -812,7 +823,7 @@ export default function GuestsPage() {
 
     const items = useMemo(() => ([
         {
-            label: screens.xs ? <Clock size={14} /> : `Lista de espera (${filteredGuests(createdData).length})`,
+            label: screens.xs ? <Clock size={14} /> : `${t('guests.tab_waiting')} (${filteredGuests(createdData).length})`,
             key: "creado",
             children: (
                 <Table
@@ -825,7 +836,7 @@ export default function GuestsPage() {
             ),
         },
         {
-            label: screens.xs ? <Send size={14} /> : `Invitación enviada (${filteredGuests(waitingData).length})`,
+            label: screens.xs ? <Send size={14} /> : `${t('guests.tab_sent')} (${filteredGuests(waitingData).length})`,
             key: "esperando",
             children: (
                 <Table
@@ -837,7 +848,7 @@ export default function GuestsPage() {
             ),
         },
         {
-            label: screens.xs ? <CheckCheck size={14} /> : `Asistencia confirmada (${filteredGuests(confirmedData).length})`,
+            label: screens.xs ? <CheckCheck size={14} /> : `${t('guests.tab_confirmed')} (${filteredGuests(confirmedData).length})`,
             key: "confirmado",
             children: (
                 <Table
@@ -849,7 +860,7 @@ export default function GuestsPage() {
             ),
         },
         {
-            label: screens.xs ? <X size={14} /> : `No asistirán (${filteredGuests(callededData).length})`,
+            label: screens.xs ? <X size={14} /> : `${t('guests.tab_rejected')} (${filteredGuests(callededData).length})`,
             key: "rechazado",
             children: (
                 <Table
@@ -878,13 +889,11 @@ export default function GuestsPage() {
 
     const handleTypes = (type) => {
         switch (type) {
-            case 'female': return 'Mujer'
-            case 'male': return 'Hombre'
-            case 'child': return 'Niño/a'
-            case 'undefined': return 'Indefinido'
-
-            default:
-                break;
+            case 'female': return t('guests.type_female')
+            case 'male': return t('guests.type_male')
+            case 'child': return t('guests.type_child')
+            case 'undefined': return t('guests.type_undefined')
+            default: break;
         }
     }
 
@@ -895,7 +904,7 @@ export default function GuestsPage() {
 
                 return (
                     <div className='dispatch_message_tag'>
-                        Procesando
+                        {t('guests.msg_processing')}
                     </div>
                 )
 
@@ -904,7 +913,7 @@ export default function GuestsPage() {
                 return (
                     <div className={`new-table-tag state-confirmado dispatch_message_tag`}>
                         <Send size={16} />
-                        Enviado
+                        {t('guests.msg_sent')}
                     </div>
                 )
 
@@ -913,7 +922,7 @@ export default function GuestsPage() {
                 return (
                     <div className={`new-table-tag state-creado dispatch_message_tag`}>
                         <Check size={16} />
-                        Entregado
+                        {t('guests.msg_delivered')}
                     </div>
                 )
 
@@ -923,7 +932,7 @@ export default function GuestsPage() {
                 return (
                     <div className={`new-table-tag state-esperando dispatch_message_tag`}>
                         <CheckCheck size={16} />
-                        Visto
+                        {t('guests.msg_read')}
                     </div>
                 )
 
@@ -933,7 +942,7 @@ export default function GuestsPage() {
 
                     <Tooltip placement='topRight'
 
-                        title={'Un reintento no consume créditos'} color="var(--brand-color-500)">
+                        title={t('guests.msg_retry_tooltip')} color="var(--brand-color-500)">
                         <Button
                             disabled={
                                 !/^\+52\d+/.test(record.phone_number) || credits <= 0
@@ -943,7 +952,7 @@ export default function GuestsPage() {
                             icon={<MailWarning size={16} />}
                             style={{ flex: 1, maxHeight: 30 }}
                         >
-                            Reintentar
+                            {t('guests.msg_retry')}
                         </Button>
                     </Tooltip>
                     // <div className='dispatch_message_tag'>
@@ -956,7 +965,7 @@ export default function GuestsPage() {
             default:
                 return (
                     <div className={`new-table-tag state-rechazado dispatch_message_tag`}>
-                        Esperando
+                        {t('guests.msg_waiting')}
                     </div>
                 )
         }
@@ -985,13 +994,11 @@ export default function GuestsPage() {
 
     const handlePriority = (tier) => {
         switch (tier) {
-            case 'A': return 'Tiene que estar sí o sí.'
-            case 'B': return 'Muy importante'
-            case 'C': return 'Deseable'
-            case 'D': return 'Opcional'
-
-            default:
-                break;
+            case 'A': return t('guests.priority_a')
+            case 'B': return t('guests.priority_b')
+            case 'C': return t('guests.priority_c')
+            case 'D': return t('guests.priority_d')
+            default: break;
         }
     }
 
@@ -1038,7 +1045,7 @@ export default function GuestsPage() {
     const copyToClipboard = async (textToCopy) => {
         try {
             await navigator.clipboard.writeText(textToCopy);
-            message.success('Copiado')
+            message.success(t('guests.copied'))
         } catch (err) {
             console.error('Error al copiar el texto: ', err);
         }
@@ -1062,7 +1069,7 @@ export default function GuestsPage() {
             console.error('Error actualizando:', error)
         } else {
             setOpenCard(newType === 'open' ? true : false)
-            message.success('Estado actualizado')
+            message.success(t('guests.state_updated'))
 
         }
     };
@@ -1109,7 +1116,7 @@ export default function GuestsPage() {
             console.error(error)
         } else {
             setTickets(data.tickets)
-            message.success('Pases actualizados')
+            message.success(t('guests.passes_updated'))
         }
     }
 
@@ -1492,14 +1499,14 @@ export default function GuestsPage() {
     };
 
     const handleNotification = (payload) => {
-        const title = <strong>Has recibido una respuesta</strong>
+        const title = <strong>{t('guests.notification_title')}</strong>
 
         if (payload.state === 'confirmado') {
             api.success({
                 message: title,
                 description: (
                     <>
-                        <strong>{payload.name}</strong> acaba de confirmar su asistencia.
+                        <strong>{payload.name}</strong> {t('guests.notification_confirmed_suffix')}
                     </>
                 ),
                 showProgress: true,
@@ -1510,7 +1517,7 @@ export default function GuestsPage() {
                 message: title,
                 description: (
                     <>
-                        Desafortunadamente <strong>{payload.name}</strong> no podrá asistir.
+                        {t('guests.notification_rejected_prefix')} <strong>{payload.name}</strong> {t('guests.notification_rejected_suffix')}
                     </>
                 ),
                 showProgress: true,
@@ -1712,11 +1719,12 @@ export default function GuestsPage() {
                                             <div className='icon_cont'>
                                                 <Search size={14} />
                                             </div>
-                                            <Input onChange={(e) => setSearchUser(e.target.value)} value={searchUser} className='guests_searcher' placeholder='Buscar por nombre o número' />
+                                            <Input onChange={(e) => setSearchUser(e.target.value)} value={searchUser} className='guests_searcher' placeholder={t('guests.search_placeholder')} />
                                         </div>
 
                                         <div className={`dots_container ${activeSearcher ? 'dots_cont_active' : ''}`}>
                                             <Dropdown
+                                                disabled={!activeSearcher}
                                                 arrow
                                                 popupRender={() => (
                                                     <div className="items_list_guests_tables" >
@@ -1739,7 +1747,7 @@ export default function GuestsPage() {
                                                         <Tag size={14} />
                                                         {
                                                             activeSearcher &&
-                                                            <span>{filterTag ?? 'Etiqueta'}</span>
+                                                            <span>{filterTag ?? t('guests.filter_tag')}</span>
                                                         }
                                                     </div>
 
@@ -1748,13 +1756,14 @@ export default function GuestsPage() {
 
 
                                             <Dropdown
+                                                disabled={!activeSearcher}
                                                 arrow
                                                 popupRender={() => (
                                                     <div className="items_list_guests_tables">
-                                                        <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >Sin mesa</div>
+                                                        <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >{t('guests.no_table')}</div>
                                                         {
                                                             tables.map(i => (
-                                                                <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name ?? "Sin nombre"}</div>
+                                                                <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name ?? t('guests.no_name')}</div>
                                                             ))
                                                         }
                                                     </div>
@@ -1766,7 +1775,7 @@ export default function GuestsPage() {
                                                         <Pin size={14} />
                                                         {
                                                             activeSearcher &&
-                                                            <span>{tables?.find(t => t.id === filterTable)?.name ?? 'Mesa'}</span>
+                                                            <span>{tables?.find(tb => tb.id === filterTable)?.name ?? t('guests.filter_table')}</span>
                                                         }
                                                     </div>
 
@@ -1774,6 +1783,7 @@ export default function GuestsPage() {
                                             </Dropdown>
 
                                             <Dropdown
+                                                disabled={!activeSearcher}
                                                 arrow
                                                 popupRender={() => (
                                                     <div className="items_list_guests">
@@ -1791,13 +1801,14 @@ export default function GuestsPage() {
                                                         <AArrowUp size={16} />
                                                         {
                                                             activeSearcher &&
-                                                            <span>{filterTier ?? 'Prioridad'}</span>
+                                                            <span>{filterTier ?? t('guests.filter_priority')}</span>
                                                         }
                                                     </div>
                                                 </div>
                                             </Dropdown>
 
                                             <Dropdown
+                                                disabled={!activeSearcher}
                                                 arrow
                                                 popupRender={() => (
                                                     <div className="items_list_guests">
@@ -1815,7 +1826,7 @@ export default function GuestsPage() {
                                                         <CircleUserRound size={14} />
                                                         {
                                                             activeSearcher &&
-                                                            <span>{handleTypes(filterType) ?? 'Categoría'}</span>
+                                                            <span>{handleTypes(filterType) ?? t('guests.filter_category')}</span>
                                                         }
                                                     </div>
                                                 </div>
@@ -1824,6 +1835,7 @@ export default function GuestsPage() {
                                             {
                                                 owners?.length > 1 &&
                                                 <Dropdown
+                                                    disabled={!activeSearcher}
                                                     arrow
                                                     popupRender={() => (
                                                         <div className="items_list_guests">
@@ -1841,7 +1853,7 @@ export default function GuestsPage() {
                                                             <CircleUserRound size={14} />
                                                             {
                                                                 activeSearcher &&
-                                                                <span>{filterSide ?? 'Lado'}</span>
+                                                                <span>{filterSide ?? t('guests.filter_side')}</span>
                                                             }
                                                         </div>
                                                     </div>
@@ -1885,7 +1897,7 @@ export default function GuestsPage() {
                                             width: '100%'
                                         }}>
                                         <FaPaperPlane className='paper_flight' />
-                                        <span style={{ fontSize: '14px' }}>Enviado invitación </span>
+                                        <span style={{ fontSize: '14px' }}>{t('guests.invitation_sent')}</span>
                                     </div>
                                 }
 
@@ -1933,12 +1945,12 @@ export default function GuestsPage() {
                                                     placement='topRight'
                                                     popupRender={() => (
                                                         <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
-                                                            <span className="on-transfer-label">Descargar lista</span>
+                                                            <span className="on-transfer-label">{t('guests.download_title')}</span>
 
                                                             <div className="transfer-mesas-cont">
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        Lista de espera
+                                                                        {t('guests.tab_waiting')}
                                                                     </span>
 
                                                                     <Button
@@ -1951,7 +1963,7 @@ export default function GuestsPage() {
 
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        Esperando respuesta
+                                                                        {t('guests.download_waiting')}
                                                                     </span>
 
                                                                     <Button
@@ -1964,7 +1976,7 @@ export default function GuestsPage() {
 
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        Confirmados
+                                                                        {t('guests.download_confirmed')}
                                                                     </span>
 
                                                                     <Button
@@ -1977,7 +1989,7 @@ export default function GuestsPage() {
 
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        No asistirán
+                                                                        {t('guests.tab_rejected')}
                                                                     </span>
 
                                                                     <Button
@@ -1995,7 +2007,7 @@ export default function GuestsPage() {
                                                     <Button
                                                         style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                         icon={<Download size={14} />} className="primarybutton_transparent">
-                                                        Descargables
+                                                        {t('guests.btn_downloads')}
                                                     </Button>
                                                 </Dropdown>
 
@@ -2004,17 +2016,17 @@ export default function GuestsPage() {
                                                     onClick={() => sethandleTables(true)}
                                                     style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                     icon={<Pin size={14} />} className="primarybutton_transparent">
-                                                    Mapa de mesas
+                                                    {t('guests.table_map')}
                                                 </Button>
 
 
                                                 <Popconfirm
-                                                    title={openCard ? 'Invitación Púbica' : 'Invitación Privada'}
-                                                    description={openCard ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
+                                                    title={openCard ? t('guests.confirm_public_title') : t('guests.confirm_private_title')}
+                                                    description={openCard ? t('guests.confirm_public_desc') : t('guests.confirm_private_desc')}
                                                     onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
                                                     placement="bottomLeft"
-                                                    okText="Continuar"
-                                                    cancelText="Cancelar"
+                                                    okText={t('guests.btn_continue')}
+                                                    cancelText={t('guests.btn_cancel')}
                                                     style={{ width: '400px' }}
                                                     id="popup-confirm"
                                                 >
@@ -2023,12 +2035,12 @@ export default function GuestsPage() {
                                                             <Button
                                                                 style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                                 icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
-                                                                Evento público
+                                                                {t('guests.btn_public')}
                                                             </Button>
                                                             : <Button
                                                                 style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                                 icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
-                                                                Evento privado
+                                                                {t('guests.btn_private')}
                                                             </Button>
                                                     }
 
@@ -2038,8 +2050,8 @@ export default function GuestsPage() {
                                                     trigger={['click']}
                                                     popupRender={() => (
                                                         <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
-                                                            <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >Lector de pases</span>
-                                                            <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >Compartir información</span>
+                                                            <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >{t('guests.scanner_title')}</span>
+                                                            <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >{t('guests.scanner_subtitle')}</span>
 
                                                             <div style={{
                                                                 display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
@@ -2054,7 +2066,7 @@ export default function GuestsPage() {
                                                                         display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
 
                                                                     }}>
-                                                                        <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Usuario</span>
+                                                                        <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_user')}</span>
                                                                         <Button
                                                                             onClick={() => copyToClipboard(String(id).slice(0, 4))}
                                                                             type='text'
@@ -2074,7 +2086,7 @@ export default function GuestsPage() {
                                                                             display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
 
                                                                         }}>
-                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Contraseña</span>
+                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_password')}</span>
                                                                             <Button
                                                                                 onClick={() => copyToClipboard(String(id).slice(0, 4))}
                                                                                 type='text'
@@ -2088,7 +2100,7 @@ export default function GuestsPage() {
                                                                     </div>
                                                                 </div>
 
-                                                                <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Link de acceso</span>
+                                                                <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_link')}</span>
                                                                 <Button
                                                                     onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
                                                                     type='text'
@@ -2106,7 +2118,7 @@ export default function GuestsPage() {
                                                                 icon={<ArrowUpRight size={16} />}
                                                                 onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
                                                                 type='primary'
-                                                            >Acceder al lector</Button>
+                                                            >{t('guests.btn_access_scanner')}</Button>
                                                         </div>
                                                     )}
                                                 >
@@ -2115,7 +2127,7 @@ export default function GuestsPage() {
                                                         disabled={plan !== 'pro' ? true : false}
                                                         style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                         icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
-                                                        Lector de pases
+                                                        {t('guests.btn_scanner')}
                                                     </Button>
                                                 </Dropdown>
 
@@ -2142,7 +2154,7 @@ export default function GuestsPage() {
                                             companions: [],
                                             visible: true
                                         })}>
-                                        Nuevo invitado
+                                        {t('guests.btn_new_guest')}
                                     </Button>
 
                                 }
@@ -2164,7 +2176,7 @@ export default function GuestsPage() {
                         {screens.xs && (
                             <div style={{ padding: '12px', boxSizing: 'border-box', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                    <span style={{ fontFamily: 'Poppins', fontSize: '20px', fontWeight: 600 }}>Mis invitados</span>
+                                    <span style={{ fontFamily: 'Poppins', fontSize: '20px', fontWeight: 600 }}>{t('guests.my_guests')}</span>
                                     <Dropdown
                                         popupRender={() => (
                                             <div className="items_list_guests">
@@ -2175,12 +2187,12 @@ export default function GuestsPage() {
                                                     placement='topRight'
                                                     popupRender={() => (
                                                         <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
-                                                            <span className="on-transfer-label">Descargar lista</span>
+                                                            <span className="on-transfer-label">{t('guests.download_title')}</span>
 
                                                             <div className="transfer-mesas-cont">
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        Lista de espera
+                                                                        {t('guests.tab_waiting')}
                                                                     </span>
 
                                                                     <Button
@@ -2193,7 +2205,7 @@ export default function GuestsPage() {
 
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        Esperando respuesta
+                                                                        {t('guests.download_waiting')}
                                                                     </span>
 
                                                                     <Button
@@ -2206,7 +2218,7 @@ export default function GuestsPage() {
 
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        Confirmados
+                                                                        {t('guests.download_confirmed')}
                                                                     </span>
 
                                                                     <Button
@@ -2219,7 +2231,7 @@ export default function GuestsPage() {
 
                                                                 <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                     <span>
-                                                                        No asistirán
+                                                                        {t('guests.tab_rejected')}
                                                                     </span>
 
                                                                     <Button
@@ -2237,18 +2249,18 @@ export default function GuestsPage() {
                                                     <Button
                                                         style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                                         icon={<Download size={14} />} className="primarybutton_transparent">
-                                                        Descargables
+                                                        {t('guests.btn_downloads')}
                                                     </Button>
                                                 </Dropdown>
 
 
                                                 <Popconfirm
-                                                    title={openCard ? 'Invitación Púbica' : 'Invitación Privada'}
-                                                    description={openCard ? "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder." : "Al aceptar tu invitación será pública, por lo cualquier persona podrá acceder."}
+                                                    title={openCard ? t('guests.confirm_public_title') : t('guests.confirm_private_title')}
+                                                    description={openCard ? t('guests.confirm_public_desc') : t('guests.confirm_private_desc')}
                                                     onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
                                                     placement="bottomLeft"
-                                                    okText="Continuar"
-                                                    cancelText="Cancelar"
+                                                    okText={t('guests.btn_continue')}
+                                                    cancelText={t('guests.btn_cancel')}
                                                     style={{ width: '400px' }}
                                                     id="popup-confirm"
                                                 >
@@ -2257,12 +2269,12 @@ export default function GuestsPage() {
                                                             <Button
                                                                 style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                                                 icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
-                                                                Evento público
+                                                                {t('guests.btn_public')}
                                                             </Button>
                                                             : <Button
                                                                 style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                                                 icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
-                                                                Evento privado
+                                                                {t('guests.btn_private')}
                                                             </Button>
                                                     }
 
@@ -2279,7 +2291,7 @@ export default function GuestsPage() {
                                     prefix={<Search size={14} style={{ opacity: 0.4 }} />}
                                     onChange={(e) => setSearchUser(e.target.value)}
                                     value={searchUser}
-                                    placeholder='Buscar por nombre o número'
+                                    placeholder={t('guests.search_placeholder')}
                                     style={{ width: '100%', borderRadius: '99px', height: '40px' }}
                                 />
                             </div>
@@ -2297,10 +2309,13 @@ export default function GuestsPage() {
                                     className='primarybutton--black'
                                     style={{ borderRadius: '12px', marginBottom: '12px', height: '40px' }}
                                     onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
-                                >Nuevo</Button> :
+                                >{t('guests.btn_new')}</Button> :
                                     <Segmented
-                                        options={['Individual', 'Grupo']}
-                                        onChange={(e) => setOnGroupTable(e === 'Grupo' ? true : false)}
+                                        options={[
+                                            { label: t('guests.seg_individual'), value: 'individual' },
+                                            { label: t('guests.seg_group'), value: 'group' },
+                                        ]}
+                                        onChange={(e) => setOnGroupTable(e === 'group')}
                                     />
                             }
                         />
@@ -2309,7 +2324,7 @@ export default function GuestsPage() {
 
                     <div className={onBubble ? 'ticket_bubble' : 'hide_bubble'}>-1 crédito</div>
 
-                    <Tooltip title={!activeTickets && <span style={{ color: '#FFF' }}>{`${(waiting + confirmed)} / ${tickets} Pases`}</span>} color="#6D3CFA">
+                    <Tooltip title={!activeTickets && <span style={{ color: '#FFF' }}>{`${(waiting + confirmed)} / ${tickets} ${t('guests.control_total')}`}</span>} color="#6D3CFA">
                         <div
                             onClick={() => setActiveTickets(true)}
                             // onClick={() => setOnBubble(true)}
@@ -2342,7 +2357,7 @@ export default function GuestsPage() {
                                         <div className='active_t_row' style={{ justifyContent: 'space-between', }}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                                 <LuSettings2 size={18} />
-                                                <span className='active_t_title'>  Control</span>
+                                                <span className='active_t_title'>  {t('guests.control_title')}</span>
                                             </div>
                                             <Button icon={<GoChevronDown style={{ marginTop: '6px' }} size={18} />} type='text' onClick={() => setActiveTickets(false)}></Button>
                                         </div>
@@ -2352,7 +2367,7 @@ export default function GuestsPage() {
 
                                             <div className='edit-tickets-dash'>
                                                 <div className='active_t_row' style={{ justifyContent: 'space-between' }}>
-                                                    <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Total de pases</span>
+                                                    <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_total')}</span>
 
                                                 </div>
                                                 <div className='dash-row-pie' style={{ gap: '12px' }}>
@@ -2380,7 +2395,7 @@ export default function GuestsPage() {
                                             </div>
 
                                             <div className='edit-tickets-dash'>
-                                                <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Distribución</span>
+                                                <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_distribution')}</span>
                                                 <div className='dash-row-pie'>
                                                     <div className='pie_cont' >
                                                         <Pie data={chartData} options={options} />
@@ -2388,19 +2403,19 @@ export default function GuestsPage() {
                                                     <div className='pie_cols'>
                                                         <div className='pie_row'>
                                                             <div style={{ backgroundColor: '#6D3CFA' }} className='pie_dot'></div>
-                                                            <span>Confirmados ({confirmed})</span>
+                                                            <span>{t('guests.control_confirmed')} ({confirmed})</span>
                                                         </div>
 
                                                         <div className='pie_row'>
                                                             <div style={{ backgroundColor: '#6D3CFA50' }} className='pie_dot'></div>
-                                                            <span>Esperando ({waiting})</span>
+                                                            <span>{t('guests.control_waiting')} ({waiting})</span>
                                                         </div>
 
                                                         {
                                                             type === 'closed' &&
                                                             <div className='pie_row'>
                                                                 <div style={{ backgroundColor: '#6D3CFA20' }} className='pie_dot'></div>
-                                                                <span>Disponibles ({tickets - (waiting + confirmed)})</span>
+                                                                <span>{t('guests.control_available')} ({tickets - (waiting + confirmed)})</span>
                                                             </div>
                                                         }
 
