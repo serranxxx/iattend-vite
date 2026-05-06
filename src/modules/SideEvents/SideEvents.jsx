@@ -20,6 +20,7 @@ import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
 import { CustomLink } from '../../components/CustomLink/CustomLink'
 import { FooterApp } from '../Footer/FooterApp'
+import { useTranslation } from 'react-i18next'
 
 
 const { Option } = Select;
@@ -27,6 +28,17 @@ const { Option } = Select;
 
 
 export const SideEvents = () => {
+    const { t } = useTranslation()
+
+    const translateState = (value) => {
+        const map = {
+            creado: t('guests.state_creado'),
+            esperando: t('guests.state_esperando'),
+            confirmado: t('guests.state_confirmado'),
+            rechazado: t('guests.state_rechazado'),
+        }
+        return map[value] ?? value
+    }
     const [sideEvent, setsideEvent] = useState(null)
     const [open, setOpen] = useState(false)
     const [current, setCurrent] = useState(null)
@@ -62,7 +74,7 @@ export const SideEvents = () => {
 
     const columns = useMemo(() => ([
         {
-            title: "Nombre",
+            title: t('side_events.col_name'),
             dataIndex: "name",
             key: "name",
             fixed: "left",
@@ -72,7 +84,7 @@ export const SideEvents = () => {
                     <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px'
                     }}>
-                        <Tooltip title="Abrir">
+                        <Tooltip title={t('side_events.tooltip_open')}>
                             <Button
                                 onClick={() =>
                                     setDrawerState({
@@ -94,7 +106,7 @@ export const SideEvents = () => {
         },
 
         {
-            title: "Contacto",
+            title: t('side_events.col_contact'),
             dataIndex: "phone_number",
             key: "phone_number",
             width: 140,
@@ -104,22 +116,21 @@ export const SideEvents = () => {
         },
 
         {
-            title: "Estado",
+            title: t('side_events.col_state'),
             dataIndex: "state",
             key: "state",
             width: 100,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        {value}
-                        {/* {handleIcon(value)} {value} */}
+                        {translateState(value)}
                     </span>
                 </div>
             ),
         },
 
         {
-            title: "Accesos",
+            title: t('side_events.col_access'),
             dataIndex: "password",
             key: "password",
             width: 140,
@@ -132,7 +143,7 @@ export const SideEvents = () => {
                                 style={{ width: '100%' }}
                                 onClick={() => copyToClipboard(`https://www.iattend.events/side-event/${current?.id}?password=${value}`)}
                                 icon={<LuCopy size={14} />}
-                            >Link mágico</Button>
+                            >{t('side_events.magic_link')}</Button>
                         </div>
                     )}>
                         <Button style={{ borderRadius: '99px', maxHeight: '24px' }} icon={<LuLock />}>••••••••</Button>
@@ -142,7 +153,7 @@ export const SideEvents = () => {
         },
 
         {
-            title: "Etiqueta",
+            title: t('side_events.col_tag'),
             dataIndex: "tag",
             key: "tag",
             width: 100,
@@ -157,7 +168,7 @@ export const SideEvents = () => {
         },
 
         {
-            title: "Acciones",
+            title: t('side_events.col_actions'),
             key: "send",
             width: 120,
             fixed: screens.xs ? undefined : "right",
@@ -176,7 +187,7 @@ export const SideEvents = () => {
                                 paddingRight: '12px', boxSizing: 'border-box'
                             }}
                         >
-                            <Tooltip placement='topRight' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaPaperPlane size={12} /><span>Enviar invitación</span></div>} color="var(--brand-color-500)">
+                            <Tooltip placement='topRight' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaPaperPlane size={12} /><span>{t('side_events.tooltip_send')}</span></div>} color="var(--brand-color-500)">
                                 <Button
                                     disabled={!phone_number || !credits > 0}
                                     // disabled={t!phone_number}
@@ -186,11 +197,11 @@ export const SideEvents = () => {
                                     icon={<LuSend size={12} />}
                                     style={{ flex: 1, maxHeight: 30 }}
                                 >
-                                    Invitar
+                                    {t('side_events.btn_invite')}
                                 </Button>
                             </Tooltip>
 
-                            <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>Marcar como invitado</span></div>} color="var(--brand-color-500)">
+                            <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('side_events.tooltip_mark')}</span></div>} color="var(--brand-color-500)">
                                 <Button
                                     onClick={() => onSendInvitation(record)}
                                     className="primarybutton--active"
@@ -234,7 +245,7 @@ export const SideEvents = () => {
 
     const items = useMemo(() => ([
         {
-            label: screens.xs ? <Plus size={14} /> : `Creados`,
+            label: screens.xs ? <Plus size={14} /> : t('side_events.tab_created'),
             key: "creado",
             children: (
                 <Table
@@ -248,7 +259,7 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: screens.xs ? <Send size={14} /> : `Enviadas`,
+            label: screens.xs ? <Send size={14} /> : t('side_events.tab_sent'),
             key: "esperando",
             children: (
                 <Table
@@ -259,7 +270,7 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: screens.xs ? <CheckCheck size={14} /> : `Confirmados`,
+            label: screens.xs ? <CheckCheck size={14} /> : t('side_events.tab_confirmed'),
             key: "confirmado",
             children: (
                 <Table
@@ -314,7 +325,7 @@ export const SideEvents = () => {
 
                 return (
                     <div className='dispatch_message_tag' style={{ maxHeight: '16px' }}>
-                        Procesando
+                        {t('side_events.msg_processing')}
                     </div>
                 )
 
@@ -323,7 +334,7 @@ export const SideEvents = () => {
                 return (
                     <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <Send size={16} />
-                        Enviado
+                        {t('side_events.msg_sent')}
                     </div>
                 )
 
@@ -332,7 +343,7 @@ export const SideEvents = () => {
                 return (
                     <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <Check size={16} />
-                        Entregado
+                        {t('side_events.msg_delivered')}
                     </div>
                 )
 
@@ -342,7 +353,7 @@ export const SideEvents = () => {
                 return (
                     <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '16px' }}>
                         <CheckCheck size={16} />
-                        Visto
+                        {t('side_events.msg_read')}
                     </div>
                 )
 
@@ -352,7 +363,7 @@ export const SideEvents = () => {
 
                     <Tooltip placement='topRight'
 
-                        title={'Un reintento no consume créditos'} color="var(--brand-color-500)">
+                        title={t('side_events.msg_retry_hint')} color="var(--brand-color-500)">
                         <Button
                             disabled={
                                 !/^\+52\d+/.test(record.phone_number) || credits <= 0
@@ -362,7 +373,7 @@ export const SideEvents = () => {
                             icon={<MailWarning size={16} />}
                             style={{ flex: 1, maxHeight: 30, width: '136px' }}
                         >
-                            Reintentar
+                            {t('side_events.msg_retry')}
                         </Button>
                     </Tooltip>
                     // <div className='dispatch_message_tag'>
@@ -375,7 +386,7 @@ export const SideEvents = () => {
             default:
                 return (
                     <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
-                        Esperando
+                        {t('side_events.msg_waiting')}
                     </div>
                 )
         }
@@ -487,7 +498,7 @@ export const SideEvents = () => {
                 throw error;
             }
         } else {
-            message.warning('Termina de hacer tu invitación antes de enviarla')
+            message.warning(t('side_events.warning_complete'))
             // console.log(data?.body?.image)
             // console.log(data?.name)
         }
@@ -602,7 +613,7 @@ export const SideEvents = () => {
         }
 
         // console.log('Cambios guardados correctamente');
-        message.success('Guardado')
+        message.success(t('side_events.saved'))
     };
 
 
@@ -610,7 +621,7 @@ export const SideEvents = () => {
     const copyToClipboard = async (textToCopy) => {
         try {
             await navigator.clipboard.writeText(textToCopy);
-            message.success('Copiado')
+            message.success(t('side_events.copied'))
         } catch (err) {
             console.error('Error al copiar el texto: ', err);
         }
@@ -768,7 +779,7 @@ export const SideEvents = () => {
             console.error('Error actualizando:', error)
         } else {
             setCurrent((prev) => ({ ...prev, url_image: e }))
-            message.success('Imagen actualizada')
+            message.success(t('side_events.image_updated'))
 
         }
     };
@@ -914,7 +925,7 @@ export const SideEvents = () => {
 
                     <div className='guests-info-container' style={{ padding: '24px', marginTop: '65px', paddingBottom: '24px', }}>
 
-                        <span className='guests-title-page'>Mis side events</span>
+                        <span className='guests-title-page'>{t('side_events.page_title')}</span>
 
                         {
                             sideEvent ?
@@ -936,12 +947,12 @@ export const SideEvents = () => {
                                                         }
                                                     </div>
                                                     <span className='cta_title'>
-                                                        {canCreate ? '¿Nuevo side event?' : '¿Más side events?'}
+                                                        {canCreate ? t('side_events.cta_new_title') : t('side_events.cta_more_title')}
                                                     </span>
                                                     <span className='cta_text'>
-                                                        {canCreate ? 'Agregar un evento' : 'Compra adicionales'}
+                                                        {canCreate ? t('side_events.cta_new_text') : t('side_events.cta_more_text')}
                                                     </span>
-                                                    {!canCreate && <Button className='cta_plans'>Comprar</Button>}
+                                                    {!canCreate && <Button className='cta_plans'>{t('side_events.cta_buy')}</Button>}
                                                 </div>
                                             </div>
                                         );
@@ -959,7 +970,7 @@ export const SideEvents = () => {
                                                     position: 'absolute', bottom: '10%', left: '50%', transform: 'translate(-50%)', fontWeight: 600,
                                                     color: '#FFF', fontSize: '24px', textAlign: 'center', lineHeight: 1.2, width: '80%',
                                                     zIndex: 2, textShadow: '0px 0px 8px rgba(0,0,0,0.4)'
-                                                }}>{item?.name ?? "[Sin nombre]"}</span>
+                                                }}>{item?.name ?? t('side_events.no_name')}</span>
                                             </div>
                                         ))
                                     }
@@ -1018,7 +1029,7 @@ export const SideEvents = () => {
                                         width: '100%'
                                     }}>
                                     <FaPaperPlane className='paper_flight' />
-                                    <span style={{ fontSize: '14px' }}>Enviado invitación </span>
+                                    <span style={{ fontSize: '14px' }}>{t('side_events.sending_bubble')}</span>
                                 </div>
                             }
 
@@ -1106,7 +1117,7 @@ export const SideEvents = () => {
                                             ${current?.body?.title?.weight}
                                         `}
                                                             className="side_title_input"
-                                                            placeholder="Título del evento"
+                                                            placeholder={t('side_events.event_title_placeholder')}
                                                             autoSize={{ minRows: 2, maxRows: 6 }}
                                                             value={current?.name}
                                                             onChange={(e) =>
@@ -1128,7 +1139,7 @@ export const SideEvents = () => {
                                                             datePickerOpen ? (
                                                                 <div className='date_inline_cont'>
                                                                     <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                                        <span style={{ color: '#FFFFFF80', fontSize: '12px' }}>Fecha y hora</span>
+                                                                        <span style={{ color: '#FFFFFF80', fontSize: '12px' }}>{t('side_events.datetime_label')}</span>
                                                                         <Button
                                                                             type='text'
                                                                             icon={<LuX size={14} style={{ color: '#FFF' }} />}
@@ -1147,7 +1158,7 @@ export const SideEvents = () => {
                                                             ) : (
                                                                 <div className='side_date_time' onClick={() => setDatePickerOpen(true)}>
                                                                     <LuCalendarClock size={20} style={{ color: '#FFF' }} />
-                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>Fecha y hora</span>}
+                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>{t('side_events.datetime_label')}</span>}
                                                                 </div>
                                                             )
                                                         ) : (
@@ -1160,7 +1171,7 @@ export const SideEvents = () => {
                                                             >
                                                                 <div className='side_date_time'>
                                                                     <LuCalendarClock size={20} style={{ color: '#FFF' }} />
-                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>Fecha y hora</span>}
+                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>{t('side_events.datetime_label')}</span>}
                                                                 </div>
                                                             </Dropdown>
                                                         )}
@@ -1168,7 +1179,7 @@ export const SideEvents = () => {
                                                         {addressOpen ? (
                                                             <div className='address_inline_form'>
                                                                 <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                                    <span style={{ color: '#FFFFFF80', fontSize: '12px' }}>Ubicación</span>
+                                                                    <span style={{ color: '#FFFFFF80', fontSize: '12px' }}>{t('side_events.address_label')}</span>
                                                                     <Button
                                                                         type='text'
                                                                         icon={<LuX size={14} style={{ color: '#FFF' }} />}
@@ -1185,35 +1196,35 @@ export const SideEvents = () => {
                                                                 />
 
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <span>Código postal</span>
+                                                                    <span>{t('side_events.address_zipcode')}</span>
                                                                     <Input value={current?.body?.address?.zipcode} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, zipcode: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <span>Calle</span>
+                                                                    <span>{t('side_events.address_street')}</span>
                                                                     <Input value={current?.body?.address?.street} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, street: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <span>Número</span>
+                                                                    <span>{t('side_events.address_number')}</span>
                                                                     <Input value={current?.body?.address?.number} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, number: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <span>Colonia</span>
+                                                                    <span>{t('side_events.address_neighborhood')}</span>
                                                                     <Input value={current?.body?.address?.neighborhood} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, neighborhood: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <span>Ciudad</span>
+                                                                    <span>{t('side_events.address_city')}</span>
                                                                     <Input value={current?.body?.address?.city} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, city: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <span>Estado</span>
+                                                                    <span>{t('side_events.address_state')}</span>
                                                                     <Input value={current?.body?.address?.state} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, state: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <span>País</span>
+                                                                    <span>{t('side_events.address_country')}</span>
                                                                     <Input value={current?.body?.address?.country} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, country: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
-                                                                    <span>URL Google Maps</span>
+                                                                    <span>{t('side_events.address_url')}</span>
                                                                     <Input value={current?.body?.address?.url} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body.address, url: e.target.value } } }))} className='sidee_input' />
                                                                 </div>
                                                             </div>
@@ -1222,7 +1233,7 @@ export const SideEvents = () => {
                                                                 <LuMapPin size={20} style={{ color: '#FFF' }} />
                                                                 {current?.body?.address?.zipcode
                                                                     ? <span style={{ textAlign: 'center' }}>{current.body.address.street} {current.body.address.number} {current.body.address.neighborhood}, {current.body.address.zipcode}, {current.body.address.city}, {current.body.address.state}, {current.body.address.country}</span>
-                                                                    : <span>Ubicación</span>
+                                                                    : <span>{t('side_events.address_label')}</span>
                                                                 }
                                                             </div>
                                                         )}
@@ -1234,7 +1245,7 @@ export const SideEvents = () => {
                                                     ${current?.body?.title?.size}-
                                                      ${current?.body?.title?.font}`}
                                                             className="side_title_input scroll-invitation"
-                                                            placeholder="Extras"
+                                                            placeholder={t('side_events.extras_placeholder')}
                                                             autoSize={{ minRows: 0, maxRows: 4 }}
                                                             value={current?.body?.extras}
                                                             onChange={(e) =>
@@ -1257,13 +1268,13 @@ export const SideEvents = () => {
                                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', position: 'absolute', top: '16px', left: '16px', right: '16px', gap: '12px' }}>
 
                                             {!handlePreview
-                                                ? <Button onClick={saveSideEvent} icon={<LuUpload />} className={'save_button_sidee'}>Guardar</Button>
-                                                : <Button icon={<LuCornerUpLeft />} onClick={() => setHandlePreview(false)}>Regresar</Button>
+                                                ? <Button onClick={saveSideEvent} icon={<LuUpload />} className={'save_button_sidee'}>{t('side_events.btn_save')}</Button>
+                                                : <Button icon={<LuCornerUpLeft />} onClick={() => setHandlePreview(false)}>{t('side_events.btn_back')}</Button>
                                             }
 
                                             {!handlePreview && (
                                                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px' }}>
-                                                    <Tooltip title="Previsualizar">
+                                                    <Tooltip title={t('side_events.tooltip_preview')}>
                                                         <Button icon={<LuPlay />} onClick={() => setHandlePreview(true)} style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' />
                                                     </Tooltip>
 
@@ -1291,24 +1302,24 @@ export const SideEvents = () => {
                                                             placement='bottomRight'
                                                             popupRender={() => (
                                                                 <div className='generals-settings-popup' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, backdropFilter: 'blur(10px)' }}>
-                                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>Tipo de letra</span>
+                                                                    <span style={{ color: '#FFF' }} className='gc-content-label'>{t('side_events.font_type')}</span>
                                                                     <Select value={current?.body?.title?.font} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, font: e } } }))} style={{ width: '100%' }}>
                                                                         {fonts.map((font, index) => (
                                                                             <Option key={`${index}-${font}`} value={font}><span style={{ fontFamily: font }}>{font}</span></Option>
                                                                         ))}
                                                                     </Select>
                                                                     <Col style={{ width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column', marginTop: '10px' }}>
-                                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>Tamaño</span>
+                                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>{t('side_events.font_size')}</span>
                                                                         <Slider style={{ width: '95%' }} min={36} max={64} step={2} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, size: e } } }))} value={current.body.title?.size ?? 36} />
-                                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>Interlineado</span>
+                                                                        <span style={{ color: '#FFF' }} className='gc-content-label'>{t('side_events.font_line_height')}</span>
                                                                         <Slider style={{ width: '95%' }} min={0.8} max={2} step={0.1} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, line_height: e } } }))} value={current.body.title?.line_height ?? 1.4} />
                                                                         <Row style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                             <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
-                                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Opacidad</span>
+                                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>{t('side_events.font_opacity')}</span>
                                                                                 <Slider style={{ width: '95%' }} min={0.1} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current.body.title?.opacity ?? 1} />
                                                                             </Col>
                                                                             <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
-                                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>Grosor</span>
+                                                                                <span style={{ color: '#FFF' }} className='gc-content-label'>{t('side_events.font_weight')}</span>
                                                                                 <Slider style={{ width: '95%' }} min={100} max={1000} step={100} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, weight: e } } }))} value={current.body.title?.weight ?? 500} />
                                                                             </Col>
                                                                         </Row>
@@ -1332,7 +1343,7 @@ export const SideEvents = () => {
                                     <div className='side_table_cont' style={screens.xs ? { width: '100%', minWidth: '100%', padding: '0px' } : {}}>
 
                                         {screens.xs && (
-                                            <span style={{ fontFamily: 'Poppins', fontSize: '18px', fontWeight: 600, display: 'block', marginBottom: '12px' }}>Asistentes</span>
+                                            <span style={{ fontFamily: 'Poppins', fontSize: '18px', fontWeight: 600, display: 'block', marginBottom: '12px' }}>{t('side_events.mobile_guests')}</span>
                                         )}
 
                                         <Tabs
@@ -1368,10 +1379,10 @@ export const SideEvents = () => {
                                                                                 alignSelf: 'stretch', justifyContent: 'space-between',
                                                                                 alignItems: 'flex-end'
                                                                             }}>
-                                                                                <span><b>Lista principal</b></span>
-                                                                                <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>Agregar</Button>
+                                                                                <span><b>{t('side_events.import_title')}</b></span>
+                                                                                <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>{t('side_events.import_add')}</Button>
                                                                             </div>
-                                                                            <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder='Búscar invitado' style={{ borderRadius: '99px' }} />
+                                                                            <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder={t('side_events.import_search')} style={{ borderRadius: '99px' }} />
                                                                             <div className='single_col scroll-invitation' style={{
                                                                                 alignSelf: 'stretch', gap: '2px',
                                                                                 maxHeight: '480px', overflowY: 'auto', display:'flex',alignItems:'flex-start', justifyContent:'flex-start', flexDirection:'column'
@@ -1409,7 +1420,7 @@ export const SideEvents = () => {
                                                                         </div>
                                                                     )}
                                                                 >
-                                                                    <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<Copy size={14} />}>Copiar de otra lista</Button>
+                                                                    <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<Copy size={14} />}>{t('side_events.btn_copy_list')}</Button>
 
                                                                 </Dropdown>
                                                                 <Button
@@ -1419,11 +1430,11 @@ export const SideEvents = () => {
                                                                         onEditGuest: false,
                                                                         companions: [],
                                                                         visible: true
-                                                                    })} style={{ width: '100%' }} icon={<Plus size={14} />}>Nuevo invitado</Button>
+                                                                    })} style={{ width: '100%' }} icon={<Plus size={14} />}>{t('side_events.btn_new_guest')}</Button>
                                                             </div>
                                                         )}
                                                     >
-                                                        <Button className='primarybutton--active' icon={<Plus size={14} />} >Agregar</Button>
+                                                        <Button className='primarybutton--active' icon={<Plus size={14} />} >{t('side_events.btn_add')}</Button>
                                                     </Dropdown>
 
 
@@ -1451,7 +1462,7 @@ export const SideEvents = () => {
                                     <Button
                                         onClick={() => { setOpen(false); setMobilePanel(0); }}
                                         style={{ flex: 1, borderRadius: '99px', minHeight: '44px', background: '#00000080', backdropFilter: 'blur(10px)', border: 'none', color: '#FFF', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }}
-                                    >Cerrar</Button>
+                                    >{t('side_events.btn_close')}</Button>
                                     <CustomLink
                                         backuImage={current?.body?.image}
                                         urlImage={current?.url_image}
@@ -1514,7 +1525,7 @@ export const SideEvents = () => {
                         style={{borderRadius:'0px 0px 24px 24px'}}
                         closeIcon={false}
                         title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontFamily: 'Poppins', fontWeight: 500 }}>Color</span>
+                            <span style={{ fontFamily: 'Poppins', fontWeight: 500 }}>{t('side_events.color_drawer_title')}</span>
                             <Button type="text" icon={<LuX size={16} />} onClick={() => setColorDrawerOpen(false)} />
                         </div>}
                         styles={{ body: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } }}
@@ -1532,29 +1543,29 @@ export const SideEvents = () => {
                         height="40%"
                         closeIcon={false}
                         title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontFamily: 'Poppins', fontWeight: 500, color: '#FFF' }}>Texto</span>
+                            <span style={{ fontFamily: 'Poppins', fontWeight: 500, color: '#FFF' }}>{t('side_events.font_drawer_title')}</span>
                             <Button type="text" icon={<LuX size={16} style={{ color: '#FFF' }} />} onClick={() => setFontDrawerOpen(false)} />
                         </div>}
                         style={{ borderRadius: '0px 0px 24px 24px', backgroundColor: `${current?.body?.color ?? "#000000"}80`, backdropFilter: 'blur(10px)' }}
                         styles={{ header: { backgroundColor: 'transparent', borderBottom: '1px solid #FFFFFF20' }, body: { padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: 'transparent' } }}
                     >
-                        <span style={{color:'#FFF'}} className='gc-content-label'>Tipo de letra</span>
+                        <span style={{color:'#FFF'}} className='gc-content-label'>{t('side_events.font_type')}</span>
                         <Select value={current?.body?.title?.font} onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, font: e } } }))} style={{ width: '100%' }}>
                             {fonts.map((font, index) => (
                                 <Option key={`${index}-${font}`} value={font}><span style={{ fontFamily: font }}>{font}</span></Option>
                             ))}
                         </Select>
-                        <span style={{color:'#FFF'}}  className='gc-content-label'>Tamaño</span>
+                        <span style={{color:'#FFF'}}  className='gc-content-label'>{t('side_events.font_size')}</span>
                         <Slider min={36} max={64} step={2} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, size: e } } }))} value={current?.body?.title?.size ?? 36} />
-                        <span style={{color:'#FFF'}}  className='gc-content-label'>Interlineado</span>
+                        <span style={{color:'#FFF'}}  className='gc-content-label'>{t('side_events.font_line_height')}</span>
                         <Slider min={0.8} max={2} step={0.1} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, line_height: e } } }))} value={current?.body?.title?.line_height ?? 1.4} />
                         <Row style={{ width: '100%', gap: '16px' }}>
                             <Col flex={1}>
-                                <span style={{color:'#FFF'}}  className='gc-content-label'>Opacidad</span>
+                                <span style={{color:'#FFF'}}  className='gc-content-label'>{t('side_events.font_opacity')}</span>
                                 <Slider min={0.1} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current?.body?.title?.opacity ?? 1} />
                             </Col>
                             <Col flex={1}>
-                                <span style={{color:'#FFF'}}  className='gc-content-label'>Grosor</span>
+                                <span style={{color:'#FFF'}}  className='gc-content-label'>{t('side_events.font_weight')}</span>
                                 <Slider min={100} max={1000} step={100} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, weight: e } } }))} value={current?.body?.title?.weight ?? 500} />
                             </Col>
                         </Row>

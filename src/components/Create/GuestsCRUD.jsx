@@ -11,7 +11,8 @@ import {
     Tooltip,
     message,
 } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import './guests-crud.css'
 import { supabase } from '../../lib/supabase'
 import { FaCheck } from 'react-icons/fa'
@@ -37,19 +38,6 @@ const TIER_OPTIONS = [
     { label: 'D', value: 'D' },
 ]
 
-const CATEGORY_OPTIONS = [
-    { label: 'Mujer', value: 'female' },
-    { label: 'Hombre', value: 'male' },
-    { label: 'Niño', value: 'child' },
-    { label: 'Indefinido', value: 'undefined' },
-]
-
-const STATE_OPTIONS = [
-    { label: 'Creado', value: 'creado' },
-    { label: 'Esperando', value: 'esperando' },
-    { label: 'Confirmado', value: 'confirmado' },
-    { label: 'Rechazado', value: 'rechazado' },
-]
 
 const EMPTY_PERSON = {
     phone_code: '+52',
@@ -95,12 +83,28 @@ export const GuestsCRUD = ({
     sideID
 }) => {
 
+    const { t } = useTranslation()
+
     const TABLE_NAME = isSideEvent ? 'side_events_guests' : 'guests'
     const FOREIGN_KEY = isSideEvent ? 'side_events_id' : 'invitation_id'
     const PARENT_ID = isSideEvent ? sideID : invitationID
 
     const screens = useBreakpoint()
     const inputRef = useRef(null)
+
+    const CATEGORY_OPTIONS = useMemo(() => [
+        { label: t('guests.type_female'), value: 'female' },
+        { label: t('guests.type_male'), value: 'male' },
+        { label: t('guests.type_child'), value: 'child' },
+        { label: t('guests.type_undefined'), value: 'undefined' },
+    ], [t])
+
+    const STATE_OPTIONS = useMemo(() => [
+        { label: t('guests.state_creado'), value: 'creado' },
+        { label: t('guests.state_esperando'), value: 'esperando' },
+        { label: t('guests.state_confirmado'), value: 'confirmado' },
+        { label: t('guests.state_rechazado'), value: 'rechazado' },
+    ], [t])
 
     const [newTag, setNewTag] = useState(null)
     const [localTags, setLocalTags] = useState([])
@@ -249,7 +253,7 @@ export const GuestsCRUD = ({
                     [FOREIGN_KEY]: PARENT_ID,
                     password: generateSimpleId(),
                     phone_number: buildPhoneNumberSafe(c.phone_code, c.phone_number),
-                    name: c.name?.trim() || `Acompañante de ${guestName}`,
+                    name: c.name?.trim() || t('guests.crud_companion_of_name', { name: guestName }),
                     tier: c.tier ?? guestData.tier ?? null,
                     tag: c.tag ?? guestData.tag ?? null,
                     side: c.side ?? guestData.side ?? null,
@@ -275,7 +279,7 @@ export const GuestsCRUD = ({
                 }
             }
 
-            message.success('Agregado(s) a lista de espera')
+            message.success(t('guests.crud_msg_added'))
             refreshPage()
             setGuestData(createPerson())
             setCompanionsData([])
@@ -359,7 +363,7 @@ export const GuestsCRUD = ({
                         [FOREIGN_KEY]: PARENT_ID,
                         password: generateSimpleId(),
                         phone_number: cPhone || '',
-                        name: (edit.name ?? 'Acompañante').trim(),
+                        name: (edit.name ?? t('guests.crud_companion_default')).trim(),
                         tier: edit.tier ?? guestData.tier ?? null,
                         tag: edit.tag ?? guestData.tag ?? null,
                         table: null,
@@ -387,10 +391,10 @@ export const GuestsCRUD = ({
                 if (insErr) throw insErr
             }
 
-            message.success('Cambios guardados')
+            message.success(t('guests.crud_msg_saved'))
             refreshPage()
         } catch (err) {
-            message.error(err?.message ?? 'No se pudieron guardar los cambios')
+            message.error(err?.message ?? t('guests.crud_msg_save_error'))
         }
     }
 
@@ -417,11 +421,11 @@ export const GuestsCRUD = ({
                 })
             )
 
-            message.success('Guest y sus companions eliminados')
+            message.success(t('guests.crud_msg_deleted'))
             refreshPage()
         } catch (err) {
             console.error('Error al eliminar guest con companions:', err)
-            message.error('No se pudo eliminar el guest')
+            message.error(t('guests.crud_msg_delete_error'))
         }
     }
 
@@ -439,7 +443,7 @@ export const GuestsCRUD = ({
 
             if (!base?.id) {
                 removeCompanionLocally(index)
-                message.info('Acompañante eliminado localmente')
+                message.info(t('guests.crud_msg_companion_local'))
                 return
             }
 
@@ -455,11 +459,11 @@ export const GuestsCRUD = ({
                 throw error
             }
 
-            message.success('Acompañante eliminado')
+            message.success(t('guests.crud_msg_companion_deleted'))
             onSaveChanges()
         } catch (err) {
             console.error('Error al eliminar companion:', err)
-            message.error('No se pudo eliminar el acompañante')
+            message.error(t('guests.crud_msg_companion_error'))
         }
     }
 
@@ -528,7 +532,7 @@ export const GuestsCRUD = ({
                 />
                 <Input
                     type="tel"
-                    placeholder="Número de teléfono"
+                    placeholder={t('guests.crud_phone_placeholder')}
                     className="gc-input-text"
                     style={{
                         borderRadius: '0px 99px 99px 0px',
@@ -548,7 +552,7 @@ export const GuestsCRUD = ({
     const renderTagSelect = (value, onChange) => (
         <Select
             style={{ width: '100%' }}
-            placeholder="Seleccionar etiqueta"
+            placeholder={t('guests.crud_tag_select')}
             value={value}
             onChange={(val) => onChange('tag', val)}
             dropdownRender={(menu) => (
@@ -557,14 +561,14 @@ export const GuestsCRUD = ({
                     <Divider style={{ margin: '8px 0' }} />
                     <Space style={{ padding: '0 8px 4px' }}>
                         <Input
-                            placeholder="Nueva etiqueta"
+                            placeholder={t('guests.crud_tag_new')}
                             ref={inputRef}
                             value={newTag}
                             onChange={(e) => setNewTag(e.target.value)}
                             onKeyDown={(e) => e.stopPropagation()}
                         />
                         <Button icon={<IoMdAdd />} onClick={addTagsToInvitation}>
-                            Agregar
+                            {t('guests.crud_tag_add')}
                         </Button>
                     </Space>
                 </>
@@ -585,7 +589,7 @@ export const GuestsCRUD = ({
 
     const renderNotesField = (value, onChange, minRows = 2, maxRows = 3) => (
         <Input.TextArea
-            placeholder="Información extra sobre el invitado"
+            placeholder={t('guests.crud_notes_placeholder')}
             value={value}
             onChange={(e) => onChange('notes', e.target.value)}
             autoSize={{ minRows, maxRows }}
@@ -611,7 +615,7 @@ export const GuestsCRUD = ({
                             className="primarybutton--black--active"
                             style={{ borderRadius: '99px' }}
                         >
-                            Guardar
+                            {t('guests.crud_btn_save')}
                         </Button>
                     ) : (
                         <Button
@@ -620,12 +624,12 @@ export const GuestsCRUD = ({
                             className="primarybutton--black--active"
                             style={{ borderRadius: '99px' }}
                         >
-                            Agregar
+                            {t('guests.crud_btn_add')}
                         </Button>
                     )}
                 </Row>
             }
-            title={isEditing ? 'Editar invitado' : 'Nuevo invitado'}
+            title={isEditing ? t('guests.crud_title_edit') : t('guests.crud_title_new')}
             style={{ zIndex: 99 }}
         >
             {guestData && (
@@ -633,15 +637,15 @@ export const GuestsCRUD = ({
                     <div className="new-guest-form-container" style={{ alignItems: 'center' }}>
                         <div className="add_guest_title_cont">
                             <span className="gc-content-label">
-                                <b>Datos de invitado</b>
+                                <b>{t('guests.crud_section_data')}</b>
                             </span>
                         </div>
 
                         <div className="guest_form_row">
                             <div className="guest_form_col">
-                                <span className="gc-content-label">Nombre</span>
+                                <span className="gc-content-label">{t('guests.crud_label_name')}</span>
                                 <Input
-                                    placeholder="Nombre"
+                                    placeholder={t('guests.crud_label_name')}
                                     value={guestData.name}
                                     onChange={(e) => updateGuestField('name', e.target.value)}
                                     className="gc-input-text"
@@ -649,14 +653,14 @@ export const GuestsCRUD = ({
                             </div>
 
                             <div className="guest_form_col">
-                                <span className="gc-content-label">Contacto</span>
+                                <span className="gc-content-label">{t('guests.crud_label_contact')}</span>
                                 {renderPhoneField(guestData, updateGuestField)}
                             </div>
                         </div>
 
                         <div className="guest_form_row">
                             <div className="guest_form_col">
-                                <span className="gc-content-label">Etiqueta</span>
+                                <span className="gc-content-label">{t('guests.crud_label_tag')}</span>
                                 {renderTagSelect(guestData.tag, updateGuestField)}
                             </div>
 
@@ -669,7 +673,7 @@ export const GuestsCRUD = ({
                                         width: '100%',
                                     }}
                                 >
-                                    <span className="gc-content-label">Prioridad</span>
+                                    <span className="gc-content-label">{t('guests.crud_label_priority')}</span>
                                     <CalculateTier drawerState={drawerState} updateGuestField={updateGuestField} owners={owners} />
                                 </div>
 
@@ -677,29 +681,29 @@ export const GuestsCRUD = ({
                                     guestData.tier,
                                     (value) => updateGuestField('tier', value),
                                     TIER_OPTIONS,
-                                    'Prioridad de invitado'
+                                    t('guests.crud_priority_placeholder')
                                 )}
                             </div>
                         </div>
 
                         <div className="guest_form_row">
                             <div className="guest_form_col">
-                                <span className="gc-content-label">Categoría</span>
+                                <span className="gc-content-label">{t('guests.crud_label_category')}</span>
                                 {renderSelectField(
                                     guestData.type,
                                     (value) => updateGuestField('type', value),
                                     CATEGORY_OPTIONS,
-                                    'Categoría de invitado'
+                                    t('guests.crud_category_placeholder')
                                 )}
                             </div>
 
                             <div className="guest_form_col">
-                                <span className="gc-content-label">Lado</span>
+                                <span className="gc-content-label">{t('guests.crud_label_side')}</span>
                                 {renderSelectField(
                                     guestData.side,
                                     (value) => updateGuestField('side', value),
                                     sideOptions,
-                                    'Lado de invitado'
+                                    t('guests.crud_side_placeholder')
                                 )}
                             </div>
                         </div>
@@ -707,12 +711,12 @@ export const GuestsCRUD = ({
                         {isEditing && (
                             <div className="guest_form_row">
                                 <div className="guest_form_col">
-                                    <span className="gc-content-label">Estado</span>
+                                    <span className="gc-content-label">{t('guests.crud_label_state')}</span>
                                     {renderSelectField(
                                         guestData.state,
                                         (value) => updateGuestField('state', value),
                                         STATE_OPTIONS,
-                                        'Estado actual'
+                                        t('guests.crud_state_placeholder')
                                     )}
                                 </div>
                             </div>
@@ -726,17 +730,17 @@ export const GuestsCRUD = ({
                         {isEditing && (
                             <Tooltip title={`Eliminar ${guestData.name}`}>
                                 <Popconfirm
-                                    title="Eliminar invitado"
+                                    title={t('guests.crud_delete_title')}
                                     description={
                                         companionsData?.length > 0
-                                            ? `Al eliminar a ${guestData.name} eliminarás a sus acompañantes. ¿Deseas continuar?`
-                                            : `Estas seguro de eliminar a ${guestData?.name}`
+                                            ? t('guests.crud_delete_desc_companions', { name: guestData.name })
+                                            : t('guests.crud_delete_desc', { name: guestData?.name })
                                     }
                                     onConfirm={() => deleteGuestWithCompanions(drawerState.currentGuest.id)}
-                                    okText="Eliminar"
-                                    cancelText="Cancelar"
+                                    okText={t('guests.crud_btn_delete')}
+                                    cancelText={t('guests.btn_cancel')}
                                 >
-                                    <Button className="primarybutton">Eliminar</Button>
+                                    <Button className="primarybutton">{t('guests.crud_btn_delete')}</Button>
                                 </Popconfirm>
                             </Tooltip>
                         )}
@@ -747,7 +751,7 @@ export const GuestsCRUD = ({
                         drawerState.currentGuest.companion_id ? (
                         <span style={{ fontSize: '16px' }}>
                             <b>{drawerState.currentGuest.name} </b>
-                            es acompañante de{' '}
+                            {t('guests.crud_companion_of')}{' '}
                             <b
                                 onClick={() =>
                                     setDrawerState({
@@ -776,7 +780,7 @@ export const GuestsCRUD = ({
                         <div className="new-guest-form-container">
                             <div className="add_companions_container">
                                 <span className="gc-content-label">
-                                    <b>Acomañantes ({companionsData?.length})</b>
+                                    <b>{t('guests.crud_companions_title', { count: companionsData?.length })}</b>
                                 </span>
 
                                 <div
@@ -801,7 +805,7 @@ export const GuestsCRUD = ({
                                 style={{ marginTop: '-12px', fontStyle: 'italic', opacity: '0.5' }}
                                 className="gc-content-label"
                             >
-                                *Los datos de los acompañantes son opcionales
+                                {t('guests.crud_companions_optional')}
                             </span>
 
                             <div className="companions-name-container">
@@ -821,7 +825,7 @@ export const GuestsCRUD = ({
                                             </div>
 
                                             <div className="guest_form_col">
-                                                <span className="gc-content-label">Contacto</span>
+                                                <span className="gc-content-label">{t('guests.crud_label_contact')}</span>
                                                 {renderPhoneField(companion, (field, value) =>
                                                     updateCompanionField(index, field, value)
                                                 )}
@@ -830,41 +834,41 @@ export const GuestsCRUD = ({
 
                                         <div className="guest_form_row">
                                             <div className="guest_form_col">
-                                                <span className="gc-content-label">Etiqueta</span>
+                                                <span className="gc-content-label">{t('guests.crud_label_tag')}</span>
                                                 {renderTagSelect(companion.tag, (field, value) =>
                                                     updateCompanionField(index, field, value)
                                                 )}
                                             </div>
 
                                             <div className="guest_form_col">
-                                                <span className="gc-content-label">Prioridad</span>
+                                                <span className="gc-content-label">{t('guests.crud_label_priority')}</span>
                                                 {renderSelectField(
                                                     companion.tier,
                                                     (value) => updateCompanionField(index, 'tier', value),
                                                     TIER_OPTIONS,
-                                                    'Prioridad de invitado'
+                                                    t('guests.crud_priority_placeholder')
                                                 )}
                                             </div>
                                         </div>
 
                                         <div className="guest_form_row">
                                             <div className="guest_form_col">
-                                                <span className="gc-content-label">Categoría</span>
+                                                <span className="gc-content-label">{t('guests.crud_label_category')}</span>
                                                 {renderSelectField(
                                                     companion.type,
                                                     (value) => updateCompanionField(index, 'type', value),
                                                     CATEGORY_OPTIONS,
-                                                    'Categoría de invitado'
+                                                    t('guests.crud_category_placeholder')
                                                 )}
                                             </div>
 
                                             <div className="guest_form_col">
-                                                <span className="gc-content-label">Lado</span>
+                                                <span className="gc-content-label">{t('guests.crud_label_side')}</span>
                                                 {renderSelectField(
                                                     companion.side,
                                                     (value) => updateCompanionField(index, 'side', value),
                                                     sideOptions,
-                                                    'Lado de invitado'
+                                                    t('guests.crud_side_placeholder')
                                                 )}
                                             </div>
                                         </div>
@@ -872,19 +876,19 @@ export const GuestsCRUD = ({
                                         {isEditing && (
                                             <div className="guest_form_row">
                                                 <div className="guest_form_col">
-                                                    <span className="gc-content-label">Estado</span>
+                                                    <span className="gc-content-label">{t('guests.crud_label_state')}</span>
                                                     {renderSelectField(
                                                         companion.state,
                                                         (value) => updateCompanionField(index, 'state', value),
                                                         STATE_OPTIONS,
-                                                        'Estado actual'
+                                                        t('guests.crud_state_placeholder')
                                                     )}
                                                 </div>
                                             </div>
                                         )}
 
                                         <div className="guest_form_col" style={{ width: '100%' }}>
-                                            <span className="gc-content-label">Notas</span>
+                                            <span className="gc-content-label">{t('guests.crud_label_notes')}</span>
                                             {renderNotesField(companion.notes, (field, value) =>
                                                 updateCompanionField(index, field, value)
                                             )}
@@ -893,13 +897,13 @@ export const GuestsCRUD = ({
                                         {isEditing && (
                                             <Tooltip title={`Eliminar ${companion.name}`}>
                                                 <Popconfirm
-                                                    title="Eliminar invitado"
-                                                    description={`Estas seguro de eliminar a ${companion.name}`}
+                                                    title={t('guests.crud_delete_title')}
+                                                    description={t('guests.crud_delete_desc', { name: companion.name })}
                                                     onConfirm={() => deleteCompanionAtIndex(index)}
-                                                    okText="Eliminar"
-                                                    cancelText="Cancelar"
+                                                    okText={t('guests.crud_btn_delete')}
+                                                    cancelText={t('guests.btn_cancel')}
                                                 >
-                                                    <Button className="primarybutton">Eliminar</Button>
+                                                    <Button className="primarybutton">{t('guests.crud_btn_delete')}</Button>
                                                 </Popconfirm>
                                             </Tooltip>
                                         )}
