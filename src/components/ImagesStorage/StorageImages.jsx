@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import './storage-images.css'
 import { Button, Drawer, Dropdown, Empty, Tabs, Upload } from 'antd'
 import { LuImageOff, LuImagePlus, LuUpload, LuX } from 'react-icons/lu'
@@ -8,6 +9,7 @@ import { Sparkles } from 'lucide-react'
 
 export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small }) => {
 
+    const { t } = useTranslation()
     const [images, setImages] = useState([])
     const [selectedKey, setSelectedKey] = useState(0)
     const [ideas, setIdeas] = useState([])
@@ -33,12 +35,12 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
 
     const handleType = () => {
         switch (type) {
-            case 'side-events': return 'Portada'
-            case 'dresscode': return 'Dresscode'
-            case 'quote': return 'Cita'
-            case 'cover': return 'Portada'
-            case 'itinerary': return 'Lugares'
-            case 'destinations': return 'Lugares'
+            case 'side-events': return t('storage.type_cover')
+            case 'dresscode': return t('storage.type_dresscode')
+            case 'quote': return t('storage.type_quote')
+            case 'cover': return t('storage.type_cover')
+            case 'itinerary': return t('storage.type_places')
+            case 'destinations': return t('storage.type_places')
             default: break;
         }
     }
@@ -62,7 +64,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
 
     const items = [
         {
-            label: `Mis imagenes`,
+            label: t('storage.tab_my_images'),
             key: 0,
             children: <>{
                 images.length > 0 ?
@@ -75,15 +77,15 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         {[...images].reverse()?.map((i, index) => (
                             <div onClick={selectImage(handleImage ? () => handleImage(i.url, index, id) : null)} className='storage_img' key={index}>
                                 <img src={i.url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                <Button onClick={(e) => { e.stopPropagation(); deleteImageFromSupabase(i.path, invitationID, setImages) }} className='storage_delete'>Eliminar</Button>
+                                <Button onClick={(e) => { e.stopPropagation(); deleteImageFromSupabase(i.path, invitationID, setImages) }} className='storage_delete'>{t('storage.btn_delete')}</Button>
                             </div>
                         ))}
                     </div>
-                    : <div className='empty_cont'><Empty description="No tienes imágenes" /></div>
+                    : <div className='empty_cont'><Empty description={t('storage.empty')} /></div>
             }</>,
         },
         {
-            label: <span>✨ Ideas | <b>{handleType(type)}</b></span>,
+            label: <span>✨ {t('storage.tab_ideas')} | <b>{handleType(type)}</b></span>,
             key: 1,
             children: <>{
                 ideas.length > 0 ? type === 'dresscode' ?
@@ -109,7 +111,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                             </div>
                         ))}
                     </div>
-                    : <div className='empty_cont'><Empty description="No tienes imágenes" /></div>
+                    : <div className='empty_cont'><Empty description={t('storage.empty')} /></div>
             }</>,
         },
     ]
@@ -135,7 +137,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
             tabBarExtraContent={
                 selectedKey === 0 && !isMobile &&
                 <Upload accept="image/*" showUploadList={false} customRequest={customUpload}>
-                    <Button style={{ marginBottom: '12px' }} icon={<LuUpload />} className='primarybutton'>Subir imagen</Button>
+                    <Button style={{ marginBottom: '12px' }} icon={<LuUpload />} className='primarybutton'>{t('storage.btn_upload')}</Button>
                 </Upload>
             }
         />
@@ -171,7 +173,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Sparkles size={16} />
-                                    <span style={{ fontWeight: 600, fontSize: '16px' }}>Imágenes</span>
+                                    <span style={{ fontWeight: 600, fontSize: '16px' }}>{t('storage.drawer_title')}</span>
                                 </div>
 
                             </div>
@@ -187,7 +189,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                                 {
                                     isMobile &&
                                     <Upload accept="image/*" showUploadList={false} customRequest={customUpload}>
-                                        <Button icon={<LuUpload />} className='primarybutton--active'>Subir imagen</Button>
+                                        <Button icon={<LuUpload />} className='primarybutton--active'>{t('storage.btn_upload')}</Button>
                                     </Upload>
                                 }
 
@@ -212,7 +214,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         <div className='images_storage_cont'>
                             <div className='storage_row'>
                                 <Sparkles size={16} />
-                                <span style={{ fontSize: '16px' }}>Almacenamiento de imágenes</span>
+                                <span style={{ fontSize: '16px' }}>{t('storage.dropdown_title')}</span>
                             </div>
                             {tabsContent}
                         </div>

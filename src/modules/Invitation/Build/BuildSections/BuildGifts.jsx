@@ -1,5 +1,6 @@
 import { Button, Input, Select,} from 'antd'
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IoMdAdd } from 'react-icons/io';
 import { RiDeleteBack2Line } from 'react-icons/ri';
 import { TbEyeClosed } from 'react-icons/tb';
@@ -27,6 +28,7 @@ const stores = [
 
 export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
+    const { t } = useTranslation()
     const [onGeneration] = useState(false)
     const [descriptionValue, setDescriptionValue] = useState(null)
 
@@ -245,7 +247,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                         style={{
                                             width: 'auto', lineHeight: 1
                                         }}
-                                    >Regalos</span>
+                                    >{t('build_gifts.title')}</span>
                                 </div>
 
                                 <BuildMenu invitation={invitation} label={'gifts'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
@@ -255,12 +257,12 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                 invitation.gifts.active ?
 
                                     <>
-                                        <span className='gc-content-label'>Título</span>
+                                        <span className='gc-content-label'>{t('build_gifts.label_title')}</span>
                                         <Input className='gc-input-text'
                                             onChange={onChangeTitle}
                                             value={invitation.gifts.title} />
 
-                                        <span className='gc-content-label'>Descripción</span>
+                                        <span className='gc-content-label'>{t('build_gifts.label_description')}</span>
                                         <Input.TextArea className={`gc-input-text ${onGeneration ? 'magic-effect' : ''}`}
                                             style={{ borderRadius: '16px' }}
                                             value={descriptionValue}
@@ -285,7 +287,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                             style={{
                                                 width: 'auto',
                                             }}
-                                        >Mis tarjetas</span>
+                                        >{t('build_gifts.section_cards')}</span>
 
                                         {
                                             invitation.gifts.cards.length < 3 &&
@@ -303,7 +305,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                     onClick={() => addNewCard(false)}
                                                     icon={<IoMdAdd />}
                                                 >
-                                                    Cuenta bancaria
+                                                    {t('build_gifts.btn_bank')}
                                                 </Button>
 
                                                 <Button
@@ -314,7 +316,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                     onClick={() => addNewCard(true)}
                                                     icon={<IoMdAdd />}
                                                 >
-                                                    Tienda digital
+                                                    {t('build_gifts.btn_store')}
                                                 </Button>
 
                                             </div>
@@ -351,7 +353,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                                         <div style={{
                                                                             alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                                                                         }}>
-                                                                            <span className='gc-content-label'>Tienda digital</span>
+                                                                            <span className='gc-content-label'>{t('build_gifts.label_store')}</span>
                                                                             <Button
                                                                                 type='text'
                                                                                 style={{
@@ -361,7 +363,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                                                 className='primarybutton'
                                                                                 onClick={() => deleteCardByIndex(index)}
                                                                                 icon={<RiDeleteBack2Line size={16} />}
-                                                                            >Eliminar</Button>
+                                                                            >{t('build_gifts.btn_delete')}</Button>
                                                                         </div>
 
                                                                         <Select
@@ -396,7 +398,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                                         <div style={{
                                                                             alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                                                                         }}>
-                                                                            <span className='gc-content-label'>Cuenta bancaria</span>
+                                                                            <span className='gc-content-label'>{t('build_gifts.label_bank')}</span>
                                                                             <Button
                                                                                 style={{
                                                                                     backgroundColor: '#ECECEC',
@@ -405,7 +407,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                                                 className='primarybutton'
                                                                                 onClick={() => deleteCardByIndex(index)}
                                                                                 icon={<RiDeleteBack2Line size={16} />}
-                                                                            >Eliminar</Button>
+                                                                            >{t('build_gifts.btn_delete')}</Button>
                                                                         </div>
 
                                                                         <div className='general-cards-single-row' style={{
@@ -430,7 +432,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
 
                                                                                     //  marginBottom: '10px'
                                                                                 }}
-                                                                                placeholder='Nombre'
+                                                                                placeholder={t('build_gifts.placeholder_name')}
                                                                                 onChange={(e) => changeCardNameByIndex(index, e.target.value)}
                                                                                 value={card.name} />
 
@@ -440,7 +442,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                                             style={{
                                                                                 opacity: '0.6'
                                                                             }}
-                                                                            placeholder='Número'
+                                                                            placeholder={t('build_gifts.placeholder_number')}
                                                                             onChange={(e) => changeCardNumberByIndex(index, e.target.value)}
                                                                             value={card.number} />
 

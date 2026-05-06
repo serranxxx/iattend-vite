@@ -1,4 +1,5 @@
 import { Button, Drawer, Input, message, Select, Dropdown, } from 'antd'
+import { useTranslation } from 'react-i18next'
 
 import { useEffect, useState } from 'react';
 import { LuArrowUpRight, LuCheck, } from 'react-icons/lu';
@@ -10,12 +11,6 @@ import { LuX } from 'react-icons/lu';
 
 const { Option } = Select;
 
-const types = [
-    { label: 'Hospedaje', value: 'hotel' },
-    { label: 'Comida', value: 'food' },
-    { label: 'Actividades', value: 'activitie' }
-]
-
 const drawerStyles = {
     header: { borderBottom: '1px solid #F0F0F0', padding: '12px 16px' },
     body: { padding: '18px', overflow: 'auto' },
@@ -23,6 +18,14 @@ const drawerStyles = {
 
 
 export const BuildDestinations = ({ invitationID, invitation, setInvitation, setSaved }) => {
+
+    const { t } = useTranslation()
+
+    const types = [
+        { label: t('build_destinations.type_lodging'), value: 'hotel' },
+        { label: t('build_destinations.type_food'), value: 'food' },
+        { label: t('build_destinations.type_activity'), value: 'activitie' }
+    ]
 
     const [descriptionValue, setDescriptionValue] = useState(null)
     const [addingDest, setAddingDest] = useState(false)
@@ -89,7 +92,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
             setSaved(false)
             setAddDrawerOpen(false)
         } else {
-            message.error('Completa el formulario de manera correcta')
+            message.error(t('build_destinations.error_form'))
         }
     }
 
@@ -123,9 +126,9 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
 
     const handleTypes = (type) => {
         switch (type) {
-            case 'food': return { label: 'Comida', color: '#FDD00E' }
-            case 'hotel': return { label: 'Hotel', color: '#06AEFF' }
-            case 'activitie': return { label: 'Actividades', color: '#35AE40' }
+            case 'food': return { label: t('build_destinations.type_food'), color: '#FDD00E' }
+            case 'hotel': return { label: t('build_destinations.type_hotel'), color: '#06AEFF' }
+            case 'activitie': return { label: t('build_destinations.type_activity'), color: '#35AE40' }
             default: break;
         }
     }
@@ -190,8 +193,8 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
     const addFormContent = (
         <div className='dest-input-form' style={{ padding: isMobile ? 0 : '18px' }}>
             <div className='cta-container-des'>
-                <span style={{ fontWeight: 600, fontSize: '16px' }}>Nueva actividad</span>
-                <Button icon={<LuCheck />} onClick={addDestination} className='primarybutton--active'>Guardar</Button>
+                <span style={{ fontWeight: 600, fontSize: '16px' }}>{t('build_destinations.drawer_new')}</span>
+                <Button icon={<LuCheck />} onClick={addDestination} className='primarybutton--active'>{t('build_destinations.btn_save')}</Button>
             </div>
 
             <div className='des-image-container' style={{ position: 'relative' }}>
@@ -201,11 +204,11 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                    <span className='gc-content-label'>Nombre</span>
-                    <Input placeholder='Actividad' className='gc-input-text' onChange={(e) => setDestName(e.target.value)} value={destName} />
+                    <span className='gc-content-label'>{t('build_destinations.label_name')}</span>
+                    <Input placeholder={t('build_destinations.placeholder_activity')} className='gc-input-text' onChange={(e) => setDestName(e.target.value)} value={destName} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                    <span className='gc-content-label'>Tipo</span>
+                    <span className='gc-content-label'>{t('build_destinations.label_type')}</span>
                     <Select value={types.find((type) => type.value === destType)} onChange={(e) => setDestType(e)} style={{ width: '100%' }}>
                         {types.map((type, index) => <Option key={index} value={type.value}>{type.label}</Option>)}
                     </Select>
@@ -213,14 +216,14 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
             </div>
 
             <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', width: '100%', gap: '4px' }}>
-                <span className='gc-content-label'>Descripción</span>
+                <span className='gc-content-label'>{t('build_destinations.label_description')}</span>
                 <Input.TextArea className='gc-input-text' style={{ borderRadius: '8px' }} value={destDesc}
                     onChange={(e) => setDestDesc(e.target.value)} autoSize={{ minRows: 2, maxRows: 5 }} />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', width: '100%', gap: '4px' }}>
-                <span className='gc-content-label'>URL</span>
-                <Input placeholder='Pagina web / Ubicación' className='gc-input-text'
+                <span className='gc-content-label'>{t('build_destinations.label_url')}</span>
+                <Input placeholder={t('build_destinations.placeholder_url')} className='gc-input-text'
                     onChange={(e) => setDestUrl(e.target.value)} value={destUrl} />
             </div>
         </div>
@@ -234,7 +237,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                 {
                     !isMobile &&
                     <div className='cta-container-des'>
-                        <span style={{ fontWeight: 600, fontSize: '16px' }}>Editar actividad</span>
+                        <span style={{ fontWeight: 600, fontSize: '16px' }}>{t('build_destinations.drawer_edit')}</span>
                     </div>
                 }
 
@@ -245,12 +248,12 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', width: '100%' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                        <span className='gc-content-label'>Nombre</span>
-                        <Input placeholder='Actividad' className='gc-input-text'
+                        <span className='gc-content-label'>{t('build_destinations.label_name')}</span>
+                        <Input placeholder={t('build_destinations.placeholder_activity')} className='gc-input-text'
                             onChange={(e) => editDestinationName(index, e.target.value)} value={card.name} />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                        <span className='gc-content-label'>Tipo</span>
+                        <span className='gc-content-label'>{t('build_destinations.label_type')}</span>
                         <Select value={card.type} onChange={(e) => editDestinationType(index, e)} style={{ width: '100%' }}>
                             {types.map((type, i) => <Option key={i} value={type.value}>{type.label}</Option>)}
                         </Select>
@@ -258,19 +261,19 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', width: '100%', gap: '4px' }}>
-                    <span className='gc-content-label'>Descripción</span>
+                    <span className='gc-content-label'>{t('build_destinations.label_description')}</span>
                     <Input.TextArea className='gc-input-text' style={{ borderRadius: '8px' }}
                         value={card.description} onChange={(e) => editDestinationDescription(index, e.target.value)}
                         autoSize={{ minRows: 2, maxRows: 5 }} />
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', width: '100%', gap: '4px' }}>
-                    <span className='gc-content-label'>URL</span>
-                    <Input placeholder='Pagina web / Ubicación' className='gc-input-text'
+                    <span className='gc-content-label'>{t('build_destinations.label_url')}</span>
+                    <Input placeholder={t('build_destinations.placeholder_url')} className='gc-input-text'
                         onChange={(e) => editDestinationUrl(index, e.target.value)} value={card.url} />
                 </div>
 
-                <Button onClick={() => handleDelete(currentDest, index)} className='primarybutton' style={{ width: '100%' }}>Eliminar</Button>
+                <Button onClick={() => handleDelete(currentDest, index)} className='primarybutton' style={{ width: '100%' }}>{t('build_destinations.btn_delete')}</Button>
             </div>
         )
     }
@@ -289,16 +292,16 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                     <div className='build-component-elements'>
                         <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
                             <div className='general-cards-single-row'>
-                                <span className='module--title' style={{ width: 'auto', lineHeight: 1 }}>Destinos</span>
+                                <span className='module--title' style={{ width: 'auto', lineHeight: 1 }}>{t('build_destinations.title')}</span>
                             </div>
                             <BuildMenu invitation={invitation} label={'destinations'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
                         </div>
 
                         {invitation.destinations.active ?
                             <>
-                                <span className='gc-content-label'>Título</span>
+                                <span className='gc-content-label'>{t('build_destinations.label_title')}</span>
                                 <Input className='gc-input-text' onChange={onChangeTitle} value={invitation.destinations.title} />
-                                <span className='gc-content-label'>Descripción</span>
+                                <span className='gc-content-label'>{t('build_destinations.label_description')}</span>
                                 <Input.TextArea className='gc-input-text' style={{ borderRadius: '16px' }}
                                     value={descriptionValue} onChange={onChangeDescription} autoSize={{ minRows: 3, maxRows: 5 }} />
                             </>
@@ -314,7 +317,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                     <>
                                         <Button className='primarybutton--active' icon={<IoMdAdd size={18} />}
                                             onClick={() => setAddDrawerOpen(true)} style={{ width: '100%' }}>
-                                            Agregar destino
+                                            {t('build_destinations.btn_add')}
                                         </Button>
                                         <Drawer
                                             open={addDrawerOpen}
@@ -322,7 +325,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                             placement="bottom"
                                             height="60%"
                                             closeIcon={false}
-                                            title={drawerTitle('Nueva actividad', () => setAddDrawerOpen(false))}
+                                            title={drawerTitle(t('build_destinations.drawer_new'), () => setAddDrawerOpen(false))}
                                             styles={drawerStyles}
                                             style={{ borderRadius: '24px 24px 0 0' }}
                                         >
@@ -336,7 +339,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                         trigger={['click']}
                                         popupRender={() => addFormContent}
                                     >
-                                        <Button className='primarybutton--active' icon={<IoMdAdd size={18} />}>Agregar destino</Button>
+                                        <Button className='primarybutton--active' icon={<IoMdAdd size={18} />}>{t('build_destinations.btn_add')}</Button>
                                     </Dropdown>
                                 )}
 
@@ -370,7 +373,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                                         className='primarybutton'
                                                         style={{ alignSelf: 'stretch', minWidth: '100%', borderRadius: '8px' }}
                                                         onClick={() => { setCurrentDest(dest); setEditDrawerIndex(index); setEditDrawerOpen(true) }}>
-                                                        Abrir
+                                                        {t('build_destinations.btn_open')}
                                                     </Button>
                                                 ) : (
                                                     <Dropdown
@@ -381,7 +384,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                                     >
                                                         <Button onClick={() => setCurrentDest(dest)} icon={<LuArrowUpRight />}
                                                             className='primarybutton' style={{ alignSelf: 'stretch', minWidth: '100%', borderRadius: '8px' }}>
-                                                            Abrir
+                                                            {t('build_destinations.btn_open')}
                                                         </Button>
                                                     </Dropdown>
                                                 )}
@@ -397,7 +400,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                         placement="bottom"
                                         height="60%"
                                         closeIcon={false}
-                                        title={drawerTitle('Editar actividad', () => setEditDrawerOpen(false))}
+                                        title={drawerTitle(t('build_destinations.drawer_edit'), () => setEditDrawerOpen(false))}
                                         styles={drawerStyles}
                                         style={{ borderRadius: '24px 24px 0 0' }}
                                     >

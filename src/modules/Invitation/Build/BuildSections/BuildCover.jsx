@@ -1,5 +1,6 @@
 import { Button, Col, ColorPicker, DatePicker, Dropdown, Grid, Input, Modal, Row, Select, Slider, Tooltip } from 'antd'
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -25,6 +26,7 @@ const { useBreakpoint } = Grid;
 
 export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, }) => {
 
+    const { t } = useTranslation()
 
     const coordenadas = [
         {
@@ -335,7 +337,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
     useEffect(() => {
         const presetColors = [
             {
-                label: 'Fondo',
+                label: t('build_cover.preset_bg'),
                 colors: [
                     darker(invitation.generals.colors.primary, 0.3),
                     darker(invitation.generals.colors.primary, 0.5),
@@ -350,7 +352,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                 ]
             },
             {
-                label: 'Contrastes',
+                label: t('build_cover.preset_contrast'),
                 colors: [
                     darker(invitation.generals.colors.secondary, 0.3),
                     darker(invitation.generals.colors.secondary, 0.5),
@@ -365,7 +367,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                 ]
             },
             {
-                label: 'Textos',
+                label: t('build_cover.preset_texts'),
                 colors: [
                     darker(invitation.generals.colors.accent, 0.3),
                     darker(invitation.generals.colors.accent, 0.5),
@@ -380,7 +382,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                 ]
             },
             {
-                label: 'Botones',
+                label: t('build_cover.preset_buttons'),
                 colors: [
                     darker(invitation.generals.colors.actions, 0.3),
                     darker(invitation.generals.colors.actions, 0.5),
@@ -413,13 +415,13 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     width: '100%',
                                     textAlign: 'left'
                                 }}
-                            >Portada</span>
-                            <span className='gc-content-label'>Título</span>
+                            >{t('build_cover.title')}</span>
+                            <span className='gc-content-label'>{t('build_cover.label_title')}</span>
 
                             {(() => {
                                 const tituloContent = (
                                     <div className='generals-settings-popup' style={{ maxWidth: '100%' }}>
-                                        <span className='gc-content-label'>Tipo de letra</span>
+                                        <span className='gc-content-label'>{t('build_cover.label_typeface')}</span>
                                         <Select
                                             value={invitation.cover.title.text?.typeFace}
                                             onChange={(e) => handleFont(e)}
@@ -433,7 +435,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                             width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
                                             marginTop: '10px'
                                         }}>
-                                            <span className='gc-content-label'>Tamaño</span>
+                                            <span className='gc-content-label'>{t('build_cover.label_size')}</span>
                                             <Slider
                                                 style={{ width: '95%' }}
                                                 min={8}
@@ -453,7 +455,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                             />
                                             <Row style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row' }}>
                                                 <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
-                                                    <span className='gc-content-label'>Opacidad</span>
+                                                    <span className='gc-content-label'>{t('build_cover.label_opacity')}</span>
                                                     <Slider
                                                         style={{ width: '95%' }}
                                                         min={0.1} max={1} step={0.01}
@@ -471,7 +473,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                                     />
                                                 </Col>
                                                 <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
-                                                    <span className='gc-content-label'>Grosor</span>
+                                                    <span className='gc-content-label'>{t('build_cover.label_weight')}</span>
                                                     <Slider
                                                         style={{ width: '95%' }}
                                                         min={100} max={1000} step={100}
@@ -492,7 +494,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         </Col>
 
                                         <Row style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', width: '100%' }}>
-                                            <span className='gc-content-label'>Color</span>
+                                            <span className='gc-content-label'>{t('build_cover.label_color')}</span>
                                         </Row>
                                         <div className='generl-card-color-item'>
                                             <span>{invitation.cover.title.text?.color}</span>
@@ -512,7 +514,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     <>
                                         <div className='general-cards-single-row' style={{ width: '100%', gap: '4px' }}>
                                             <Input
-                                                placeholder={'Título'}
+                                                placeholder={t('build_cover.placeholder_title')}
                                                 value={invitation.cover.title.text?.value}
                                                 onChange={onChangeTitle}
                                                 className='gc-input-text' />
@@ -524,7 +526,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                                     className={`primarybutton${onSettings ? '--active' : ''}`}
                                                     icon={onSettings ? <ChevronUp size={16} /> : <ChevronDown size={16} />} />
                                             ) : (
-                                                <Tooltip color='var(--text-color)' title="Ajustes de título">
+                                                <Tooltip color='var(--text-color)' title={t('build_cover.tooltip_title_settings')}>
                                                     <Dropdown
                                                         trigger={['click']}
                                                         placement='bottomLeft'
@@ -556,7 +558,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
 
 
 
-                            <span className='gc-content-label'>Posición</span>
+                            <span className='gc-content-label'>{t('build_cover.label_position')}</span>
 
                             <div className='gc-position-container'>
 
@@ -623,7 +625,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
 
                                 <span className={'module--title'}
                                     style={{ textAlign: 'left' }}
-                                >Fecha</span>
+                                >{t('build_cover.section_date')}</span>
 
                                 <div className='general-cards-single-row' style={{ gap: '6px' }}>
 
@@ -631,11 +633,11 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         invitation.cover.date.active &&
                                         <Button
                                             onClick={() => handleFlexDirection(!datePosition)}
-                                            id={datePosition ? "build-cover-date-buttons" : "build-cover-date-buttons--active"}>Invertir</Button>
+                                            id={datePosition ? "build-cover-date-buttons" : "build-cover-date-buttons--active"}>{t('build_cover.btn_invert')}</Button>
                                     }
 
 
-                                    <Tooltip color='var(--brand-color-900)' title={invitation.cover.date.active ? 'Ocultar fecha' : 'Mostrar fecha'}>
+                                    <Tooltip color='var(--brand-color-900)' title={invitation.cover.date.active ? t('build_cover.tooltip_hide_date') : t('build_cover.tooltip_show_date')}>
                                         <Button
                                             onClick={() => onIsDate(!invitation.cover.date.active)}
                                             icon={!invitation.cover.date.active ? <BiHide /> : <BiShow />}
@@ -651,7 +653,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
 
 
 
-                            <span className='gc-content-label'>Fecha del evento</span>
+                            <span className='gc-content-label'>{t('build_cover.label_event_date')}</span>
 
                             <DatePicker
                                 className='gc-date-picker'
@@ -702,7 +704,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                             }}>
                                 <span className={'module--title'}
                                     style={{ textAlign: 'left' }}
-                                >Imagen</span>
+                                >{t('build_cover.section_image')}</span>
 {/* 
                                 <Dropdown
                                     arrow
@@ -773,7 +775,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         }
                                     },
                                 }))}>
-                                Activar sombra
+                                {t('build_cover.btn_shadow')}
                             </Button>
 
                             <Button
@@ -794,7 +796,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         }
                                     },
                                 }))}>
-                                Aplicar desenfoque
+                                {t('build_cover.btn_blur')}
                             </Button>
 
                             <Button
@@ -815,7 +817,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         }
                                     },
                                 }))}>
-                                Quitar efectos
+                                {t('build_cover.btn_no_effects')}
                             </Button>
 
 

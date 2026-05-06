@@ -1,5 +1,6 @@
 import { Button, Col, ColorPicker, Dropdown, Grid, Input, Row, Select, Slider, } from 'antd'
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Separador } from '../../../../components/Invitation/Logos';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
 import { textures } from '../../../../helpers/services/textures';
@@ -18,6 +19,7 @@ const { useBreakpoint } = Grid;
 
 export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
+    const { t } = useTranslation()
     const [currentPosition, setCurrentPosition] = useState(null)
     const [currentItem, setCurrentItem] = useState(null)
     const [visible, setVisible] = useState(false)
@@ -39,7 +41,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
     useEffect(() => {
         const presetColors = [
             {
-                label: 'Fondo',
+                label: t('build_generals.label_bg'),
                 colors: [
                     darker(invitation.generals.colors.primary, 0.3),
                     darker(invitation.generals.colors.primary, 0.5),
@@ -54,7 +56,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 ]
             },
             {
-                label: 'Contrastes',
+                label: t('build_generals.label_contrast'),
                 colors: [
                     darker(invitation.generals.colors.secondary, 0.3),
                     darker(invitation.generals.colors.secondary, 0.5),
@@ -69,7 +71,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 ]
             },
             {
-                label: 'Textos',
+                label: t('build_generals.label_texts'),
                 colors: [
                     darker(invitation.generals.colors.accent, 0.3),
                     darker(invitation.generals.colors.accent, 0.5),
@@ -84,7 +86,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 ]
             },
             {
-                label: 'Botones',
+                label: t('build_generals.preset_buttons'),
                 colors: [
                     darker(invitation.generals.colors.actions, 0.3),
                     darker(invitation.generals.colors.actions, 0.5),
@@ -249,15 +251,15 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
     const handleNamePosition = (position) => {
         switch (position) {
-            case 1: return 'Saludo'
-            case 2: return 'Personas'
-            case 3: return 'Cita'
-            case 4: return 'Itinerario'
-            case 5: return 'Dresscode'
-            case 6: return 'Regalos'
-            case 7: return 'Destinos'
-            case 8: return 'Avisos'
-            case 9: return 'Galería'
+            case 1: return t('build_generals.section_greeting')
+            case 2: return t('build_generals.section_people')
+            case 3: return t('build_generals.section_quote')
+            case 4: return t('build_generals.section_itinerary')
+            case 5: return t('build_generals.section_dresscode')
+            case 6: return t('build_generals.section_gifts')
+            case 7: return t('build_generals.section_destinations')
+            case 8: return t('build_generals.section_notices')
+            case 9: return t('build_generals.section_gallery')
             default:
                 break;
         }
@@ -374,7 +376,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
     const titulosContent = (
         <div className='generals-settings-popup' style={{ maxWidth: '100%' }}>
 
-            <span className='gc-content-label'>Tipo de letra</span>
+            <span className='gc-content-label'>{t('build_generals.label_typeface')}</span>
 
             <Select
                 value={invitation?.generals?.fonts?.titles?.typeFace ?? invitation?.generals?.fonts?.body?.typeFace}
@@ -389,7 +391,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
                 marginTop: '10px'
             }}>
-                <span className='gc-content-label'>Tamaño</span>
+                <span className='gc-content-label'>{t('build_generals.label_size')}</span>
 
                 <Slider
                     style={{ width: '95%', }}
@@ -419,7 +421,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                     <Col style={{
                         width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
                     }}>
-                        <span className='gc-content-label'>Opacidad</span>
+                        <span className='gc-content-label'>{t('build_generals.label_opacity')}</span>
                         <Slider
                             style={{ width: '95%' }}
                             min={0.1}
@@ -445,7 +447,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                     <Col style={{
                         width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
                     }}>
-                        <span className='gc-content-label'>Grosor</span>
+                        <span className='gc-content-label'>{t('build_generals.label_weight')}</span>
                         <Slider
                             style={{ width: '95%' }}
                             min={100}
@@ -474,7 +476,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 flexDirection: 'row', width: '100%'
             }}>
-                <span className='gc-content-label'>Color</span>
+                <span className='gc-content-label'>{t('build_generals.label_color')}</span>
             </Row>
 
             <div className='generl-card-color-item'>
@@ -496,7 +498,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
     const cuerpoContent = (
         <div className='generals-settings-popup' style={{ maxWidth: '100%' }}>
 
-            <span className='gc-content-label'>Tipo de letra</span>
+            <span className='gc-content-label'>{t('build_generals.label_typeface')}</span>
 
             <Select
                 value={invitation?.generals?.fonts.body?.typeFace}
@@ -518,7 +520,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                     <Col style={{
                         width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
                     }}>
-                        <span className='gc-content-label'>Opacidad</span>
+                        <span className='gc-content-label'>{t('build_generals.label_opacity')}</span>
                         <Slider
                             style={{ width: '95%' }}
                             min={0.1}
@@ -544,7 +546,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                     <Col style={{
                         width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
                     }}>
-                        <span className='gc-content-label'>Grosor</span>
+                        <span className='gc-content-label'>{t('build_generals.label_weight')}</span>
                         <Slider
                             style={{ width: '95%' }}
                             min={100}
@@ -578,12 +580,12 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 {
                     !screens.xs &&
                     <>
-                        <span className='collection_title'>Colección de colores</span>
+                        <span className='collection_title'>{t('build_generals.collection_title')}</span>
                         <Input
                             value={searchCollection}
                             onChange={(e) => setSearchCollection(e.target.value)}
                             className='collection_search'
-                            placeholder='Buscar color'
+                            placeholder={t('build_generals.collection_search')}
                             style={{
                                 maxWidth: '300px', borderRadius: '99px'
                             }} />
@@ -710,7 +712,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                         <div className='build-component-elements'>
                             <span className={'module--title'}
                                 style={{ textAlign: 'left' }}
-                            >Ajustes Generales</span>
+                            >{t('build_generals.title')}</span>
 
                             <div className='single_row' style={{ flexDirection: screens.xs ? 'column' : 'row', gap: '8px' }}>
                                 <div className='single_col' style={{ flex: 1, width: '100%' }}>
@@ -725,7 +727,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                                     fontWeight: invitation?.generals?.fonts.titles?.weight ?? 600,
                                                     opacity: invitation?.generals?.fonts.titles?.opacity ?? 1,
                                                     color: invitation?.generals?.fonts.titles?.color ?? invitation?.generals?.colors.accent
-                                                }}>Títulos</span>
+                                                }}>{t('build_generals.titles')}</span>
                                                 <Button
                                                     type='text'
                                                     style={{ minWidth: '24px', maxWidth: '24px', maxHeight: '24px' }}
@@ -748,7 +750,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                                     fontWeight: invitation?.generals?.fonts.titles?.weight ?? 600,
                                                     opacity: invitation?.generals?.fonts.titles?.opacity ?? 1,
                                                     color: invitation?.generals?.fonts.titles?.color ?? invitation?.generals?.colors.accent
-                                                }}>Títulos</span>
+                                                }}>{t('build_generals.titles')}</span>
                                                 <Button
                                                     type='text'
                                                     style={{ minWidth: '24px', maxWidth: '24px', maxHeight: '24px' }}
@@ -770,7 +772,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                                     fontFamily: invitation?.generals?.fonts.body?.typeFace,
                                                     fontWeight: invitation?.generals?.fonts.body?.weight,
                                                     opacity: invitation?.generals?.fonts.body?.opacity,
-                                                }}>Cuerpo</span>
+                                                }}>{t('build_generals.body')}</span>
                                                 <Button
                                                     type='text'
                                                     style={{ minWidth: '24px', maxWidth: '24px', maxHeight: '24px' }}
@@ -792,7 +794,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                                     fontFamily: invitation?.generals?.fonts.body?.typeFace,
                                                     fontWeight: invitation?.generals?.fonts.body?.weight,
                                                     opacity: invitation?.generals?.fonts.body?.opacity,
-                                                }}>Cuerpo</span>
+                                                }}>{t('build_generals.body')}</span>
                                                 <Button
                                                     type='text'
                                                     style={{ minWidth: '24px', maxWidth: '24px', maxHeight: '24px' }}
@@ -811,13 +813,13 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                 width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row',
                                 marginTop: '10px',
                             }}>
-                                <span className='gc-content-label'>Paleta de colores</span>
+                                <span className='gc-content-label'>{t('build_generals.label_palette')}</span>
 
                                 {screens.xs ? (
                                     <Button
                                         onClick={() => setOpenColeccion(v => !v)}
                                         className='primarybutton'
-                                        icon={<Palette size={12} />}>Colección</Button>
+                                        icon={<Palette size={12} />}>{t('build_generals.btn_collection')}</Button>
                                 ) : (
                                     <Dropdown
                                         arrow
@@ -825,7 +827,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                         trigger={['click']}
                                         popupRender={() => coleccionContent}
                                     >
-                                        <Button className='primarybutton' icon={<Palette size={12} />}>Colección</Button>
+                                        <Button className='primarybutton' icon={<Palette size={12} />}>{t('build_generals.btn_collection')}</Button>
                                     </Dropdown>
                                 )}
                             </Row>
@@ -839,7 +841,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                             <div className='single_row' style={{ gap: '0px' }}>
                                 <div className='generl-card-color-item' style={{ padding: '0', border: 'none' }}>
-                                    <span >Fondo</span>
+                                    <span >{t('build_generals.label_bg')}</span>
                                     <div className='general-cards-single-row' >
                                         <ColorPicker
                                             value={invitation.generals.colors.primary}
@@ -851,7 +853,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                                 </div>
                                 <div className='generl-card-color-item' style={{ padding: '0', border: 'none' }}>
-                                    <span >Contrastes</span>
+                                    <span >{t('build_generals.label_contrast')}</span>
                                     <div className='general-cards-single-row'>
                                         <ColorPicker
                                             disabledAlpha={false}
@@ -864,7 +866,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                                 </div>
                                 <div className='generl-card-color-item' style={{ padding: '0', border: 'none' }}>
-                                    <span >Textos</span>
+                                    <span >{t('build_generals.label_texts')}</span>
                                     <div className='general-cards-single-row'>
                                         <ColorPicker
                                             disabledAlpha={false}
@@ -876,7 +878,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                                 </div>
                                 <div className='generl-card-color-item' style={{ padding: '0', border: 'none' }}>
-                                    <span >Acentos</span>
+                                    <span >{t('build_generals.label_accents')}</span>
                                     <div className='general-cards-single-row'>
                                         <ColorPicker
                                             disabledAlpha={false}
@@ -904,7 +906,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                             }}>
 
                                 <span style={{ width: 'auto' }} className={'gc-content-label'}
-                                >Estructura</span>
+                                >{t('build_generals.label_structure')}</span>
 
                                 <div className='general-cards-single-row' style={{ width: 'auto' }}>
 
@@ -951,7 +953,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                         <div className='build-component-elements'>
                             <span className={'gc-content-label'}
-                            >Texturas</span>
+                            >{t('build_generals.label_textures')}</span>
                             <div
                                 style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%',
@@ -976,7 +978,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                             position: 'absolute', bottom: '8px', right: '8px', backgroundColor: '#FFFFFF40', color: '#000', backdropFilter: 'blur(10px)',
                                             border: '1px solid #FFF'
                                         }}>
-                                        Cambiar textura
+                                        {t('build_generals.btn_change_texture')}
                                     </Button>
                                 ) : (
                                     <Dropdown
@@ -990,7 +992,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                                 position: 'absolute', bottom: '8px', right: '8px', backgroundColor: '#FFFFFF40', color: '#000', backdropFilter: 'blur(10px)',
                                                 border: '1px solid #FFF'
                                             }}>
-                                            Cambiar textura
+                                            {t('build_generals.btn_change_texture')}
                                         </Button>
                                     </Dropdown>
                                 )}
@@ -1007,7 +1009,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                         <div className='build-component-elements'>
                             <span className={'gc-content-label'}
-                            >Menú de separadores</span>
+                            >{t('build_generals.label_separators')}</span>
 
                             <div className="build-separator-container" style={{ width: '100%', position: 'relative', height: '140px' }}>
                                 <Separador MainColor={'var(--text-color)'} build={true} dev={true} value={invitation.generals.separator}
@@ -1021,7 +1023,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                             position: 'absolute', bottom: '8px', right: '8px', backgroundColor: '#FFFFFF40', color: '#000', backdropFilter: 'blur(10px)',
                                             border: '1px solid #FFF'
                                         }}>
-                                        Cambiar separador
+                                        {t('build_generals.btn_change_separator')}
                                     </Button>
                                 ) : (
                                     <Dropdown
@@ -1035,7 +1037,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                                 position: 'absolute', bottom: '8px', right: '8px', backgroundColor: '#FFFFFF40', color: '#000', backdropFilter: 'blur(10px)',
                                                 border: '1px solid #FFF'
                                             }}>
-                                            Cambiar separador
+                                            {t('build_generals.btn_change_separator')}
                                         </Button>
                                     </Dropdown>
                                 )}

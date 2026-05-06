@@ -2,10 +2,12 @@ import { Input } from 'antd'
 import { useEffect, useState } from 'react';
 import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
+import { useTranslation } from 'react-i18next';
 
 
 export const BuildGreeting = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
+    const { t } = useTranslation()
     const [onGeneration] = useState(false)
     const [titleValue, setTitleValue] = useState(null)
     const [descriptionValue, setDescriptionValue] = useState(null)
@@ -105,7 +107,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved, invitationI
                                         style={{
                                             width: 'auto',
                                         }}
-                                    >Bienvenida</span>
+                                    >{t('build_greeting.title')}</span>
                                 </div>
 
                                 <BuildMenu invitation={invitation} label={'greeting'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
@@ -118,7 +120,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved, invitationI
 
                                     <>
                                         <div className='build-generals-simple-column'>
-                                            <span className='gc-content-label'>Título</span>
+                                            <span className='gc-content-label'>{t('build_greeting.label_title')}</span>
 
                                             <Input.TextArea
                                                 onChange={onChangeTitle}
@@ -131,7 +133,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved, invitationI
 
 
                                         <div className='build-generals-simple-column'>
-                                            <span className='gc-content-label'>Descripción</span>
+                                            <span className='gc-content-label'>{t('build_greeting.label_description')}</span>
                                             <Input.TextArea
                                                 value={descriptionValue}
                                                 onChange={onChangeDescription}

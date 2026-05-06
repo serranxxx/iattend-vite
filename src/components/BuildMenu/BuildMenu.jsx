@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import './build-menu.css'
 import { Button, Dropdown, Segmented, Slider } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, CirclePower, EllipsisVertical, Paintbrush, Pencil, PencilRuler, Plus, PowerOff, SeparatorHorizontal, Settings2, SquaresExclude } from 'lucide-react'
 import { Separador } from '../Invitation/Logos'
 import { StorageImages } from '../ImagesStorage/StorageImages'
@@ -10,7 +11,7 @@ const separadores = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 
 export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitationID }) => {
 
-
+    const { t } = useTranslation()
     const [separatorValue, setSeparatorValue] = useState('Regular')
 
     const active = invitation[label].active
@@ -155,13 +156,13 @@ export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitati
                 <div className='menu_cont'>
                     <div onClick={() => handleActive(!active)} className={`menu_item ${active ? 'menu_active' : ''}`}>
                         {active ? <CirclePower size={16} /> : <PowerOff size={16} />}
-                        <span>{active ? 'Módulo activo' : 'Módulo inactivo'}</span>
+                        <span>{active ? t('build_menu.module_active') : t('build_menu.module_inactive')}</span>
                     </div>
 
                     <div onClick={() => handleBackProps(!dynamic_background.active, 'active')} className={`menu_item ${!active && 'inactive_item'} ${dynamic_background.active && 'menu_active'} menu_father`}>
                         <div className='single_row'>
                             <Paintbrush size={16} />
-                            <span>Color de fondo</span>
+                            <span>{t('build_menu.bg_color')}</span>
                         </div>
 
                         <Dropdown
@@ -174,7 +175,7 @@ export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitati
                                 }}>
                                     <div className='single_row' style={{ fontWeight: 500 }}>
                                         <Settings2 size={16} />
-                                        <span>Ajustes</span>
+                                        <span>{t('build_menu.settings')}</span>
                                     </div>
 
                                     <div className='image_col'>
@@ -182,21 +183,21 @@ export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitati
                                         <div className='single_row' style={{ justifyContent: 'space-between' }}>
 
                                             <div className='slider_col'>
-                                                <span >Bordes</span>
+                                                <span>{t('build_menu.borders')}</span>
                                                 <Slider onChange={(e) => {handleBackProps(e, 'border_radius'); (e) => e.stopPropagation();}} style={{ width: '80px' }} step={2} min={0} max={99} value={dynamic_background.border_radius} />
                                             </div>
 
 
                                             <div className='slider_col'>
-                                                <span>Largo</span>
+                                                <span>{t('build_menu.width')}</span>
                                                 <Slider onChange={(e) => handleBackProps(e, 'width')} style={{ width: '80px' }} max={100} min={70} step={5} value={dynamic_background.width} />
                                             </div>
                                         </div>
 
 
                                         <div className='slider_col' style={{ gap: '6px' }}>
-                                            <span>Sombra</span>
-                                            <Button onClick={() => handleBackProps(!dynamic_background.shadow, 'shadow')} style={{width:'100%'}}>{dynamic_background.shadow ? 'Activa' : 'Inactiva'}</Button>
+                                            <span>{t('build_menu.shadow')}</span>
+                                            <Button onClick={() => handleBackProps(!dynamic_background.shadow, 'shadow')} style={{width:'100%'}}>{dynamic_background.shadow ? t('build_menu.shadow_active') : t('build_menu.shadow_inactive')}</Button>
                                         </div>
 
                                         {/* <div className='slider_col' style={{ gap: '6px' }}>
@@ -284,13 +285,13 @@ export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitati
 
                     <div onClick={() => handleInvert(!inverted)} className={`menu_item ${!active && 'inactive_item'} ${inverted && 'menu_active'}`}>
                         <SquaresExclude size={16} />
-                        <span>Invertir color</span>
+                        <span>{t('build_menu.invert_color')}</span>
                     </div>
                     {/* onClick={() => handleSeparator(!separator)}  */}
                     <div onClick={() => handleSeparator(!dynamic_separator.active)} className={`menu_item ${!active && 'inactive_item'} ${dynamic_separator.active && 'menu_active'} menu_father`}>
                         <div className='single_row'>
                             <SeparatorHorizontal size={16} />
-                            <span>Separador</span>
+                            <span>{t('build_menu.separator')}</span>
                         </div>
 
                         <Dropdown
@@ -303,7 +304,7 @@ export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitati
                                 }}>
                                     <div className='single_row' style={{ fontWeight: 500 }}>
                                         <Settings2 size={16} />
-                                        <span>Ajustes</span>
+                                        <span>{t('build_menu.settings')}</span>
                                     </div>
 
                                     <Segmented
@@ -367,13 +368,13 @@ export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitati
                                                 </div>
 
                                                 <div className='slider_col'>
-                                                    <span >Alto</span>
+                                                    <span>{t('build_menu.height')}</span>
                                                     <Slider onChange={(e) => handleSize(e, 'height')} style={{ width: '180px' }} step={10} min={50} max={500} value={dynamic_separator.image.height} />
                                                 </div>
 
 
                                                 <div className='slider_col'>
-                                                    <span>Largo</span>
+                                                    <span>{t('build_menu.width')}</span>
                                                     <Slider onChange={(e) => handleSize(e, 'width')} style={{ width: '180px' }} max={100} min={40} step={5} value={dynamic_separator.image.width} />
                                                 </div>
                                             </div>
