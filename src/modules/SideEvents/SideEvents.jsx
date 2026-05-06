@@ -1,5 +1,5 @@
 import { Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
@@ -59,6 +59,7 @@ export const SideEvents = () => {
     });
     const { TextArea } = Input;
     const screens = Grid.useBreakpoint();
+    const currentRef = useRef(null);
 
     const columns = useMemo(() => ([
         {
@@ -220,7 +221,7 @@ export const SideEvents = () => {
                 return null;
             },
         },
-    ]), [current, rawData, screens.xs]);
+    ]), [current, rawData, screens.xs, messagesDispatch]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
@@ -616,19 +617,18 @@ export const SideEvents = () => {
         }
     };
 
-    const getGuests = async () => {
+    const getGuests = async (sideEventId = current?.id) => {
 
         try {
-            if (current) {
+            if (sideEventId) {
                 const { data, error } = await supabase
                     .from("side_events_guests")
                     .select("*")
-                    .eq("side_events_id", current?.id)
+                    .eq("side_events_id", sideEventId)
 
                 if (error) {
                     console.error("Error al obtener invitaciones:", error);
                 } else {
-
                     setRawData(data)
                 }
             }
@@ -833,6 +833,10 @@ export const SideEvents = () => {
     }, [open])
 
     useEffect(() => {
+        currentRef.current = current;
+    }, [current])
+
+    useEffect(() => {
         if (onBubble) {
             setTimeout(() => {
                 setOnBubble(false)
@@ -841,58 +845,47 @@ export const SideEvents = () => {
     }, [onBubble])
 
     useEffect(() => {
-        if (supabase) {
-            const channel = supabase
-                .channel('upload_dynamic_table')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'side_events_guests'
-                    },
-                    (payload) => {
+        if (!supabase || !id) return;
 
-                        if (payload.new.side_events_id === current.id) {
-                            getGuests()
-                        }
-
-
+        const channel = supabase
+            .channel(`realtime_side_events_${id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'side_events_guests'
+                },
+                (payload) => {
+                    const sideEventId = payload.new?.side_events_id ?? payload.old?.side_events_id;
+                    if (sideEventId && String(sideEventId) === String(currentRef.current?.id)) {
+                        getGuests(currentRef.current.id)
                     }
-                )
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'invitation_message_dispatches'
+                },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
 
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'invitation_message_dispatches'
-                    },
-                    (payload) => {
-                        const row = payload.new || payload.old;
-                        if (!row) return;
-
-                        if (row.invitation_id === id) {
-                            // console.log('message status update:', row);
-                            getMessagesUpdates()
-                            getGuests();
-                            // refreshPage();
-                        }
-
+                    if (row.invitation_id === id) {
+                        getMessagesUpdates()
+                        getGuests(currentRef.current?.id)
                     }
-                )
+                }
+            )
+            .subscribe()
 
-                .subscribe((status) => {
-                    console.log('sub status: ', status)
-                })
-
-            return () => {
-                supabase.removeChannel(channel);
-            };
-        }
-
-
-    }, [supabase, id])
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [id])
 
 
 
