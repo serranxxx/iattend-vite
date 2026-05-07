@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './dynamic-table.css'
-import { Button, Tooltip } from 'antd'
+import { Button } from 'antd'
 import { supabase } from '../../../lib/supabase'
 
 export const DynamicTable = ({
@@ -387,14 +387,6 @@ export const DynamicTable = ({
     }
 
     return (
-        <Tooltip
-            color="var(--brand-color-500)"
-            placement="topRight"
-            title={
-                (!onMoving && !onGrab) &&
-                (table.name ? table.name : 'Sin nombre asignado')
-            }
-        >
             <div
                 onClick={handleClick}
                 onMouseDown={startDrag}
@@ -441,6 +433,5 @@ export const DynamicTable = ({
                     ))}
                 </div>
             </div>
-        </Tooltip>
     )
 }

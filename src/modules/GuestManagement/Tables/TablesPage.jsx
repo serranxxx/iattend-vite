@@ -76,6 +76,7 @@ export const TablesPage = ({ invitationID }) => {
 
     const startDrag = (event) => {
         if (onMoving) return
+        if (event.touches?.length === 2) return // pinch zoom, manejado por su propio listener
         const isTouch = !!event.touches
         if (!isTouch && !onGrab) return
         const pos = isTouch ? event.touches[0] : event
@@ -755,6 +756,50 @@ export const TablesPage = ({ invitationID }) => {
         window.addEventListener('keydown', handleZoomKeys)
         return () => window.removeEventListener('keydown', handleZoomKeys)
     }, [minZoom, maxZoom])
+
+    useEffect(() => {
+        const container = mapContainerRef.current
+        if (!container) return
+
+        const zoomRef = { current: zoomLevel }
+        const unsubZoom = () => { zoomRef.current = zoomLevel }
+        unsubZoom()
+
+        let startDist = null
+        let startZoom = null
+
+        const onTouchStart = (e) => {
+            if (e.touches.length !== 2) return
+            startDist = Math.hypot(
+                e.touches[1].clientX - e.touches[0].clientX,
+                e.touches[1].clientY - e.touches[0].clientY
+            )
+            startZoom = zoomRef.current
+        }
+
+        const onTouchMove = (e) => {
+            if (e.touches.length !== 2 || startDist === null) return
+            if (e.cancelable) e.preventDefault()
+            const dist = Math.hypot(
+                e.touches[1].clientX - e.touches[0].clientX,
+                e.touches[1].clientY - e.touches[0].clientY
+            )
+            const scale = dist / startDist
+            setZoomLevel(Math.min(Math.max(startZoom * scale, minZoom), maxZoom))
+        }
+
+        const onTouchEnd = () => { startDist = null; startZoom = null }
+
+        container.addEventListener('touchstart', onTouchStart, { passive: true })
+        container.addEventListener('touchmove', onTouchMove, { passive: false })
+        container.addEventListener('touchend', onTouchEnd)
+
+        return () => {
+            container.removeEventListener('touchstart', onTouchStart)
+            container.removeEventListener('touchmove', onTouchMove)
+            container.removeEventListener('touchend', onTouchEnd)
+        }
+    }, [minZoom, maxZoom, zoomLevel])
 
     const groupColorMap = useMemo(() => {
         const map = new Map();
