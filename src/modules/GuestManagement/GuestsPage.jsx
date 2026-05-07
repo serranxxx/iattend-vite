@@ -664,13 +664,13 @@ export default function GuestsPage() {
                                     <div style={{ position: "static" }} className="on-transfer-container">
                                         <span className="on-transfer-label">Selecciona mesa</span>
 
-                                        <div className="transfer-mesas-cont scroll-invitation" style={{maxHeight:'360px'}}>
+                                        <div className="transfer-mesas-cont scroll-invitation" style={{ maxHeight: '360px' }}>
                                             {tables.map((tb, index) => (
                                                 <div
                                                     onClick={() => addGuestToTable(tb, record)}
                                                     key={index}
                                                     className="table-transfer-item"
-                                                    
+
                                                 >
                                                     <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
                                                         <span>
@@ -730,7 +730,7 @@ export default function GuestsPage() {
                                 <Button
                                     className="primarybutton--active"
                                     icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
-                                    style={{ flex:1, maxWidth:'120px', maxHeight: 30, borderRadius: 99 }}
+                                    style={{ flex: 1, maxWidth: '120px', maxHeight: 30, borderRadius: 99 }}
                                 >
                                     Asignar
                                 </Button>
@@ -2267,6 +2267,91 @@ export default function GuestsPage() {
                                                     }
 
                                                 </Popconfirm>
+
+                                                <Dropdown
+                                                    trigger={['click']}
+                                                    popupRender={() => (
+                                                        <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
+                                                            <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >Lector de pases</span>
+                                                            <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >Compartir información</span>
+
+                                                            <div style={{
+                                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
+
+                                                            }}>
+                                                                <div style={{
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start', alignSelf: 'stretch',
+                                                                    gap: '24px'
+
+                                                                }}>
+                                                                    <div style={{
+                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                    }}>
+                                                                        <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Usuario</span>
+                                                                        <Button
+                                                                            onClick={() => copyToClipboard(String(id).slice(0, 4))}
+                                                                            type='text'
+                                                                            icon={<Copy size={14} />}
+                                                                            style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                        >
+                                                                            {invitation?.generals?.event?.name}
+                                                                        </Button>
+                                                                    </div>
+
+                                                                    <div style={{
+                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                    }}>
+
+                                                                        <div style={{
+                                                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                        }}>
+                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Contraseña</span>
+                                                                            <Button
+                                                                                onClick={() => copyToClipboard(String(id).slice(0, 4))}
+                                                                                type='text'
+                                                                                icon={<Copy size={14} />}
+                                                                                style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                            >
+                                                                                {String(id).slice(0, 4)}
+                                                                            </Button>
+                                                                        </div>
+
+                                                                    </div>
+                                                                </div>
+
+                                                                <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Link de acceso</span>
+                                                                <Button
+                                                                    onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
+                                                                    type='text'
+                                                                    icon={<Copy size={16} />}
+                                                                    style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                >
+                                                                    https://www.iattend.site/scanner
+                                                                </Button>
+                                                            </div>
+
+
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', borderTop: '1px solid #ebebeb', paddingTop: '12px', boxSizing: 'border-box' }} />
+
+                                                            <Button
+                                                                icon={<ArrowUpRight size={16} />}
+                                                                onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
+                                                                type='primary'
+                                                            >Acceder al lector</Button>
+                                                        </div>
+                                                    )}
+                                                >
+                                                    <Button
+
+                                                        disabled={plan !== 'pro' ? true : false}
+                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                                                        icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
+                                                        Lector de pases
+                                                    </Button>
+                                                </Dropdown>
                                             </div>
                                         )}
                                     >
