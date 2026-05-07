@@ -25,12 +25,12 @@ export const TablesPage = ({ invitationID }) => {
     const [onModal, setOnModal] = useState(false)
     const [aboutMyGuest, setAboutMyGuest] = useState(null)
     const [onExtendedWhos, setOnExtendedWhos] = useState(false)
-    const [onMoving, setOnMoving] = useState(false)
+    const [onMoving    ] = useState(false)
     const [onEditPosition, setOnEditPosition] = useState(false)
-    const [zoomLevel, setZoomLevel] = useState(0.9);
+    const [zoomLevel, setZoomLevel] = useState(0.7 );
     const [mapPosition, setMapPosition] = useState({ x: -1300, y: -600 });
     const [isDragging, setIsDragging] = useState(false);
-    const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
+    const lastCanvasMouseRef = useRef({ x: 0, y: 0 });
     const [newShape, setNewShape] = useState('round')
     const [newVertical, setNewVertical] = useState(false)
     const [totalChairs, setTotalChairs] = useState(10)
@@ -55,9 +55,10 @@ export const TablesPage = ({ invitationID }) => {
     const [confirmedGuests_, setconfirmedGuests_] = useState(null)
     const [filterByName, setFilterByName] = useState(null)
     const [openNewTable, setOpenNewTable] = useState(false);
+    const [newTableType, setNewTableType] = useState(null); // null | 'mesa'
     const zoomStep = 0.01;
-    const minZoom = 0.7;
-    const maxZoom = 1.5;
+    const minZoom = 0.2;
+    const maxZoom = 1.8;
     const mapContainerRef = useRef(null);
 
     const backgroundColors = [
@@ -74,42 +75,46 @@ export const TablesPage = ({ invitationID }) => {
     ];
 
     const startDrag = (event) => {
-        if (!onMoving && onGrab) {
-            setIsDragging(true);
-            setLastMousePosition({ x: event.clientX, y: event.clientY });
+        if (onMoving) return
+        const isTouch = !!event.touches
+        if (!isTouch && !onGrab) return
+        const pos = isTouch ? event.touches[0] : event
+        lastCanvasMouseRef.current = { x: pos.clientX, y: pos.clientY }
+        setIsDragging(true)
+    }
+
+    useEffect(() => {
+        if (!isDragging) return
+
+        const onMove = (event) => {
+            if (event.cancelable) event.preventDefault()
+            const pos = event.touches ? event.touches[0] : event
+            const deltaX = pos.clientX - lastCanvasMouseRef.current.x
+            const deltaY = pos.clientY - lastCanvasMouseRef.current.y
+            lastCanvasMouseRef.current = { x: pos.clientX, y: pos.clientY }
+            setMapPosition((prev) => {
+                const minX = -1550, maxX = 550, minY = -1500, maxY = 150
+                return {
+                    x: Math.min(Math.max(prev.x + deltaX, minX), maxX),
+                    y: Math.min(Math.max(prev.y + deltaY, minY), maxY),
+                }
+            })
         }
 
-    };
+        const onStop = () => setIsDragging(false)
 
-    const drag = (event) => {
-        if (isDragging && !onMoving) {
-            const deltaX = event.clientX - lastMousePosition.x;
-            const deltaY = event.clientY - lastMousePosition.y;
+        document.addEventListener('mousemove', onMove)
+        document.addEventListener('mouseup', onStop)
+        document.addEventListener('touchmove', onMove, { passive: false })
+        document.addEventListener('touchend', onStop)
 
-            setMapPosition((prevPosition) => {
-                // Definir límites
-                const minX = -1550;
-                const maxX = 550; // Ancho máximo del contenedor
-                const minY = -1500;
-                const maxY = 150; // Altura máxima del contenedor
-
-                // Calcular nueva posición con límites
-                const newX = Math.min(Math.max(prevPosition.x + deltaX, minX), maxX);
-                const newY = Math.min(Math.max(prevPosition.y + deltaY, minY), maxY);
-
-                return { x: newX, y: newY };
-            });
-
-            setLastMousePosition({ x: event.clientX, y: event.clientY });
+        return () => {
+            document.removeEventListener('mousemove', onMove)
+            document.removeEventListener('mouseup', onStop)
+            document.removeEventListener('touchmove', onMove)
+            document.removeEventListener('touchend', onStop)
         }
-    };
-
-    const stopDrag = () => {
-        if (!onMoving) {
-            setIsDragging(false);
-        }
-
-    };
+    }, [isDragging]);
 
     const addNewTable = async () => {
 
@@ -233,6 +238,48 @@ export const TablesPage = ({ invitationID }) => {
         //     return updatedChairs;
         // });
     };
+
+    const addDanceFloor = async () => {
+        const sortedTables = Array.isArray(tables_)
+            ? [...tables_].sort((a, b) => Number(a.number) - Number(b.number))
+            : []
+        const lastTable = sortedTables[sortedTables.length - 1]
+
+        let x = 1484, y = 546, number = 1
+
+        if (lastTable) {
+            const { data: latestTable, error } = await supabase
+                .from('tables')
+                .select('*')
+                .eq('invitation_id', invitationID)
+                .eq('id', lastTable.id)
+                .maybeSingle()
+            if (error) return
+            if (latestTable) {
+                x = latestTable.x + 300
+                y = latestTable.y
+                number = Number(latestTable.number) + 1
+            }
+        }
+
+        const { error: insertError } = await supabase.from('tables').insert([{
+            created_at: new Date(),
+            last_update_at: new Date(),
+            invitation_id: invitationID,
+            shape: 'dance',
+            name: 'Pista de Baile',
+            number,
+            size: 0,
+            x,
+            y,
+        }])
+
+        if (insertError) { console.error('Error al insertar pista:', insertError.message); return }
+
+        setOpenNewTable(false)
+        setNewTableType(null)
+        getTables()
+    }
 
     const getTables = async () => {
 
@@ -671,6 +718,44 @@ export const TablesPage = ({ invitationID }) => {
         };
     }, [onMoving, setOnGrab]);
 
+    useEffect(() => {
+        const container = mapContainerRef.current
+        if (!container) return
+
+        const handleWheel = (e) => {
+            if (!e.ctrlKey) return
+            e.preventDefault()
+            // deltaMode 0 = pixels (trackpad), 1 = lines (rueda de ratón)
+            const delta = e.deltaY * (e.deltaMode === 1 ? -0.1 : -0.003)
+            setZoomLevel(prev => Math.min(Math.max(prev + delta, minZoom), maxZoom))
+        }
+
+        container.addEventListener('wheel', handleWheel, { passive: false })
+        return () => container.removeEventListener('wheel', handleWheel)
+    }, [minZoom, maxZoom])
+
+    useEffect(() => {
+        const isTypingTarget = (target) => {
+            if (!target) return false
+            const tag = target.tagName
+            return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable
+        }
+
+        const handleZoomKeys = (e) => {
+            if ((!e.ctrlKey && !e.metaKey) || isTypingTarget(e.target)) return
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault()
+                setZoomLevel(prev => Math.min(prev + 0.1, maxZoom))
+            } else if (e.key === '-') {
+                e.preventDefault()
+                setZoomLevel(prev => Math.max(prev - 0.1, minZoom))
+            }
+        }
+
+        window.addEventListener('keydown', handleZoomKeys)
+        return () => window.removeEventListener('keydown', handleZoomKeys)
+    }, [minZoom, maxZoom])
+
     const groupColorMap = useMemo(() => {
         const map = new Map();
         let colorIndex = 0;
@@ -718,8 +803,8 @@ export const TablesPage = ({ invitationID }) => {
             ?.filter(c => {
                 if (!filterByName) return true;
 
-                const name = c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const search = filterByName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const name = c.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+                const search = filterByName.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
                 return name.includes(search);
             }) ?? [];
@@ -794,7 +879,7 @@ export const TablesPage = ({ invitationID }) => {
                                 onClick={() => setOnGuestList(!onGuestList)} className={`button-web primarybutton--${onGuestList ? 'black' : 'active'}`}>
                             </Button>
 
-                            <Button
+                            {/* <Button
                                 icon={<TbLocation style={{
                                     marginTop: '3px'
                                 }} />}
@@ -803,7 +888,7 @@ export const TablesPage = ({ invitationID }) => {
                                 {
                                     onEditPosition ? 'Dejar de mover' : 'Mover Mesas'
                                 }
-                            </Button>
+                            </Button> */}
 
                             <Button
                                 icon={<BsArrowsMove style={{
@@ -817,111 +902,104 @@ export const TablesPage = ({ invitationID }) => {
                                 trigger={['click']}
                                 placement='bottomRight'
                                 open={openNewTable}
+                                arrow
                                 onOpenChange={(nextOpen) => {
                                     if (nextOpen) setOpenNewTable(true);
-                                    // si nextOpen es false (click afuera / ESC), NO hacemos nada
                                 }}
                                 popupRender={() => (
-                                    <div className='modal-main-menu-container' onClick={(e) => e.stopPropagation()} >
-                                        <div className='modal-main-container'>
-                                            <div className='new-table-modal'>
-                                                <div className='modal-header-sect'>
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px'
-                                                    }}>
-                                                        <FaPlus style={{
-                                                            color: 'var(--brand-color-500)'
-                                                        }} />
-                                                        <span className='table-org-section-header'
-                                                            style={{ padding: '0px', pointerEvents: 'none' }}>
-                                                            Nueva Mesa</span>
-                                                    </div>
-
-
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px'
-                                                    }}>
-                                                        <Button
-                                                            style={{ borderRadius: '99px' }}
-                                                            className='secondarybutton'
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setOpenNewTable(false);   // ✅ CIERRA dropdown
-                                                                setOnAddingGuests(false);        // lo que tú ya hacías
-                                                            }}>
-                                                            Cancelar
-                                                        </Button>
-                                                        <Button style={{ borderRadius: '99px' }} className='primarybutton--black--active' onClick={addNewTable}>
-                                                            Crear
-                                                        </Button>
-                                                    </div>
-
-
+                                    <div style={{
+                                            width: newTableType === null ? 'auto' : undefined
+                                        }} className='modal-main-menu-container' onClick={(e) => e.stopPropagation()} >
+                                        <div  className='modal-main-container'>
+                                            {newTableType === null ? (
+                                                <div className='shapes_cont'>
+                                                    <Button
+                                                        icon={<IoMdAdd style={{ marginTop: '3px' }} />}
+                                                        style={{ width: '100%' }}
+                                                        className='primarybutton'
+                                                        onClick={() => setNewTableType('mesa')}>
+                                                        Mesa
+                                                    </Button>
+                                                    <Button
+                                                        style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: '1px solid #444' }}
+                                                        onClick={addDanceFloor}>
+                                                        Pista de baile
+                                                    </Button>
                                                 </div>
-
-                                                <div className='modal-content-sect'>
-                                                    <div className='org-small-col'>
-                                                        <span className='single-label'>Nombre</span>
-                                                        <Input
-                                                            style={{ minHeight: '30px', borderRadius: '99px', backgroundColor: 'var(--ft-color)' }}
-                                                            placeholder={'Nombre de la mesa'}
-                                                            value={tablesName}
-                                                            onChange={(e) => setTablesName(e.target.value)}
-                                                            // onChange={onFilterbyName}
-                                                            className='tab-org-input' />
+                                            ) : (
+                                                <div className='new-table-modal'>
+                                                    <div className='modal-header-sect'>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px' }}>
+                                                            <FaPlus style={{ color: 'var(--brand-color-500)' }} />
+                                                            <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none' }}>
+                                                                Nueva Mesa
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px' }}>
+                                                            <Button
+                                                                style={{ borderRadius: '99px' }}
+                                                                className='secondarybutton'
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setNewTableType(null);
+                                                                    setOpenNewTable(false);
+                                                                    setOnAddingGuests(false);
+                                                                }}>
+                                                                Cancelar
+                                                            </Button>
+                                                            <Button style={{ borderRadius: '99px' }} className='primarybutton--black--active' onClick={addNewTable}>
+                                                                Crear
+                                                            </Button>
+                                                        </div>
                                                     </div>
 
-                                                    <div className='org-small-col'>
-                                                        <span className='single-label'>Número de asientos</span>
-                                                        <InputNumber
-                                                            style={{
-                                                                minHeight: '30px', width: '100%',
-                                                                backgroundColor: 'var(--ft-color)', borderRadius: '99px'
-                                                            }}
-                                                            value={totalChairs}
-                                                            onChange={(e) => setTotalChairs(e)}
-                                                            className='tab-org-input' />
+                                                    <div className='modal-content-sect'>
+                                                        <div className='org-small-col'>
+                                                            <span className='single-label'>Nombre</span>
+                                                            <Input
+                                                                style={{ minHeight: '30px', borderRadius: '99px', backgroundColor: 'var(--ft-color)' }}
+                                                                placeholder={'Nombre de la mesa'}
+                                                                value={tablesName}
+                                                                onChange={(e) => setTablesName(e.target.value)}
+                                                                className='tab-org-input' />
+                                                        </div>
+                                                        <div className='org-small-col'>
+                                                            <span className='single-label'>Número de asientos</span>
+                                                            <InputNumber
+                                                                style={{ minHeight: '30px', width: '100%', backgroundColor: 'var(--ft-color)', borderRadius: '99px' }}
+                                                                value={totalChairs}
+                                                                onChange={(e) => setTotalChairs(e)}
+                                                                className='tab-org-input' />
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div className='modal-content-sect'>
-                                                    <Dropdown
-                                                        arrow
-                                                        popupRender={() => (
-                                                            <div className='shapes_cont'>
-                                                                <Button onClick={() => setNewShape('round')} style={{ width: '100%' }} className='primarybutton'>Redonda</Button>
-                                                                <Button onClick={() => setNewShape('square')} style={{ width: '100%' }} className='primarybutton'>Cuadrada</Button>
-                                                                <Button onClick={() => setNewShape('rectangle')} style={{ width: '100%' }} className='primarybutton'>Rectangular</Button>
-                                                            </div>
-                                                        )}
-                                                    >
-                                                        <Button icon={<ChevronDown size={14} />} className='primarybutton'>Mesa {handleShapes(newShape)}</Button>
-                                                    </Dropdown>
+                                                    <div className='modal-content-sect'>
+                                                        <Dropdown
+                                                            arrow
+                                                            popupRender={() => (
+                                                                <div className='shapes_cont'>
+                                                                    <Button onClick={() => setNewShape('round')} style={{ width: '100%' }} className='primarybutton'>Redonda</Button>
+                                                                    <Button onClick={() => setNewShape('square')} style={{ width: '100%' }} className='primarybutton'>Cuadrada</Button>
+                                                                    <Button onClick={() => setNewShape('rectangle')} style={{ width: '100%' }} className='primarybutton'>Rectangular</Button>
+                                                                </div>
+                                                            )}
+                                                        >
+                                                            <Button icon={<ChevronDown size={14} />} className='primarybutton'>Mesa {handleShapes(newShape)}</Button>
+                                                        </Dropdown>
+                                                        {newShape === 'rectangle' &&
+                                                            <Button icon={newVertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />} className='primarybutton' onClick={() => setNewVertical(!newVertical)}>
+                                                                {newVertical ? 'Vertical' : 'Horizontal'}
+                                                            </Button>
+                                                        }
+                                                    </div>
 
-                                                    {
-                                                        newShape === 'rectangle' &&
-                                                        <Button icon={newVertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />} className='primarybutton' onClick={() => setNewVertical(!newVertical)}   >{newVertical ? 'Vertical' : 'Horizontal'}</Button>
-
-                                                    }
-
-
-
-                                                </div>
-
-
-
-                                                <div className='org-tab-card-row'>
-
-                                                    {
-                                                        onAddingGuests ?
+                                                    <div className='org-tab-card-row'>
+                                                        {onAddingGuests ?
                                                             <div className='org-small-col' style={{ gap: '12px' }}>
                                                                 <span className='single-label'>
                                                                     Selecciona en la lista de la derecha los invitados que deseas agregar a tu mesa
                                                                 </span>
-
-                                                                <div className='modal-content-sect' style={{
-                                                                    padding: '0px'
-                                                                }}>
+                                                                <div className='modal-content-sect' style={{ padding: '0px' }}>
                                                                     <Progress
                                                                         size={[320, 20]}
                                                                         style={{ flex: 1 }}
@@ -934,50 +1012,34 @@ export const TablesPage = ({ invitationID }) => {
                                                                     </span>
                                                                 </div>
                                                             </div>
-
                                                             :
-                                                            <Button style={{ borderRadius: '99px', margin: '16px 0px' }} className={`primarybutton--active`} onClick={() => handleAddingGuests(!onAddingGuests)} >
+                                                            <Button style={{ borderRadius: '99px', margin: '16px 0px' }} className='primarybutton--active' onClick={() => handleAddingGuests(!onAddingGuests)}>
                                                                 Agregar Invitados
                                                             </Button>
+                                                        }
+                                                    </div>
 
-
-                                                    }
-
-
-
-
-                                                </div>
-
-
-
-
-
-
-                                                <div className='popup-available-spaces-list' style={{
-                                                    display: onAddingGuests ? 'flex' : 'none'
-                                                }}>
-                                                    {
-                                                        ocuppiedChairs.map((chair, index) => (
+                                                    <div className='popup-available-spaces-list' style={{ display: onAddingGuests ? 'flex' : 'none' }}>
+                                                        {ocuppiedChairs.map((chair, index) => (
                                                             <div key={index} className='popup-available-spaces-item'>
                                                                 <span className='single-label'>{index + 1}.</span>
                                                                 <span className='single-label'>{chair.name}</span>
                                                             </div>
-                                                        ))
-                                                    }
+                                                        ))}
+                                                    </div>
                                                 </div>
-
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
-
                                 )}
                             >
                                 <Button
                                     disabled={onEditPosition}
                                     icon={<IoMdAdd style={{ marginTop: '3px' }} />}
-                                    style={{ borderRadius: '99px', }}
-                                    onClick={handleNewTable} className={`button-web primarybutton${!onEditPosition ? '--active' : ''}`}>
-                                    Nueva Mesa
+                                    style={{ borderRadius: '99px' }}
+                                    onClick={handleNewTable}
+                                    className={`button-web primarybutton${!onEditPosition ? '--active' : ''}`}>
+                                    Nuevo
                                 </Button>
                             </Dropdown>
 
@@ -990,11 +1052,9 @@ export const TablesPage = ({ invitationID }) => {
                     </div>
                     <div
                         onMouseDown={startDrag}
-                        onMouseMove={drag}
-                        onMouseUp={stopDrag}
-                        onMouseLeave={stopDrag}
+                        onTouchStart={startDrag}
                         ref={mapContainerRef}
-                        style={{ cursor: onGrab && 'grab' }}
+                        style={{ cursor: isDragging ? 'grabbing' : onGrab ? 'grab' : undefined }}
                         className={`org-map-container ${onMoving ? 'org-map-rule' : ''}`}>
                         <div
                             className='org-map-work-container'
@@ -1018,7 +1078,7 @@ export const TablesPage = ({ invitationID }) => {
                                             key={index} table={table} occupiedChairs={confirmedGuests_?.filter(g => g.table === table.id).length}
                                             onEditPosition={onEditPosition} setSelectedTable={setSelectedTable}
                                             setOnSelectedTable={setOnSelectedTable} onSelectedTable={onSelectedTable} setOnViewTable={setOnViewTable}
-                                            setTables={setTables} tables={tables_} onMoving={onMoving} onGrab={onGrab} />
+                                            setTables={setTables} tables={tables_} onMoving={onMoving} onGrab={onGrab} zoomLevel={zoomLevel} onDelete={deleteTableAndAdjust} />
                                     ))
                                 }
 
@@ -1059,7 +1119,9 @@ export const TablesPage = ({ invitationID }) => {
 
                         <div className='selected-table-hover-container'
                             style={{
-                                bottom: '20px'
+                                bottom: '20px',padding:'6px', borderRadius:'99px',
+                                 backgroundColor:'#FFFFFF60',
+                                backdropFilter:'blur(10px)'
                             }}
                         >
                             <div className='org-single-row'>
@@ -1407,8 +1469,8 @@ export const TablesPage = ({ invitationID }) => {
                                             ?.filter(c => {
                                                 if (!filterByName) return true;
 
-                                                const name = c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                                const search = filterByName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                const name = c.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+                                                const search = filterByName.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
                                                 return name.includes(search);
                                             })

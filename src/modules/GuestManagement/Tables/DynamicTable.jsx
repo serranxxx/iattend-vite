@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './dynamic-table.css'
-import { Tooltip } from 'antd'
+import { Button, Tooltip } from 'antd'
 import { supabase } from '../../../lib/supabase'
 
 export const DynamicTable = ({
@@ -15,20 +15,27 @@ export const DynamicTable = ({
     occupiedChairs,
     onGrab,
     vertical = false,
-    shape = 'rectangle', // 'round' | 'square' | 'rectangle'
+    shape = 'rectangle', // 'round' | 'square' | 'rectangle' | 'dance'
+    zoomLevel = 1,
+    onDelete,
 }) => {
     const [chairs, setChairs] = useState([])
-    const [mapPosition, setMapPosition] = useState({
-        x: table.x,
-        y: table.y
-    })
+    const [mapPosition, setMapPosition] = useState({ x: table.x, y: table.y })
     const [isDragging, setIsDragging] = useState(false)
-    const [lastMousePosition, setLastMousePosition] = useState({
-        x: table.x,
-        y: table.y
-    })
+    const [showDanceMenu, setShowDanceMenu] = useState(false)
 
+    const positionRef = useRef({ x: table.x, y: table.y })
+    const lastMouseRef = useRef({ x: 0, y: 0 })
+    const startPosRef = useRef({ x: 0, y: 0 })
+    const hasDraggedRef = useRef(false)
+    const wasDragRef = useRef(false)
     const mapContainerRef = useRef(null)
+
+    const DRAG_THRESHOLD = 5
+
+    useEffect(() => {
+        positionRef.current = mapPosition
+    }, [mapPosition])
 
     useEffect(() => {
         const containerWidth =
@@ -206,39 +213,69 @@ export const DynamicTable = ({
             return chairs
         }
 
-        let newChairs = []
-
-        if (shape === 'square') {
-            newChairs = buildSquareChairs()
-        } else if (shape === 'rectangle') {
-            newChairs = buildRectangleChairs()
-        } else {
-            newChairs = buildRoundChairs()
-        }
-
-        setChairs(newChairs)
+        if (shape === 'dance') setChairs([])
+        else if (shape === 'square') setChairs(buildSquareChairs())
+        else if (shape === 'rectangle') setChairs(buildRectangleChairs())
+        else setChairs(buildRoundChairs())
     }, [table, occupiedChairs, shape])
 
     const startDrag = (event) => {
-        if (onMoving) {
-            setIsDragging(true)
-            setLastMousePosition({ x: event.clientX, y: event.clientY })
-        }
+        if (onGrab) return // cuando onGrab está activo, el evento sube al canvas para hacer pan
+        event.stopPropagation()
+        const pos = event.touches ? event.touches[0] : event
+        lastMouseRef.current = { x: pos.clientX, y: pos.clientY }
+        startPosRef.current = { x: pos.clientX, y: pos.clientY }
+        hasDraggedRef.current = false
+        setIsDragging(true)
     }
 
-    const drag = (event) => {
-        if (isDragging) {
-            const deltaX = event.clientX - lastMousePosition.x
-            const deltaY = event.clientY - lastMousePosition.y
+    useEffect(() => {
+        if (!isDragging) return
 
-            setMapPosition((prevPosition) => ({
-                x: prevPosition.x + deltaX,
-                y: prevPosition.y + deltaY,
-            }))
+        const onMove = (event) => {
+            const pos = event.touches ? event.touches[0] : event
+            const dx = pos.clientX - startPosRef.current.x
+            const dy = pos.clientY - startPosRef.current.y
 
-            setLastMousePosition({ x: event.clientX, y: event.clientY })
+            if (!hasDraggedRef.current && Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+                hasDraggedRef.current = true
+            }
+
+            if (hasDraggedRef.current) {
+                if (event.cancelable) event.preventDefault()
+                const deltaX = (pos.clientX - lastMouseRef.current.x) / zoomLevel
+                const deltaY = (pos.clientY - lastMouseRef.current.y) / zoomLevel
+                setMapPosition(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }))
+            }
+
+            lastMouseRef.current = { x: pos.clientX, y: pos.clientY }
         }
-    }
+
+        const onStop = async () => {
+            setIsDragging(false)
+            if (hasDraggedRef.current) {
+                wasDragRef.current = true
+                const pos = positionRef.current
+                const { error } = await supabase
+                    .from('tables')
+                    .update({ x: pos.x, y: pos.y })
+                    .eq('id', table.id)
+                if (error) console.error('Error moviendo mesa:', error.message)
+            }
+        }
+
+        document.addEventListener('mousemove', onMove)
+        document.addEventListener('mouseup', onStop)
+        document.addEventListener('touchmove', onMove, { passive: false })
+        document.addEventListener('touchend', onStop)
+
+        return () => {
+            document.removeEventListener('mousemove', onMove)
+            document.removeEventListener('mouseup', onStop)
+            document.removeEventListener('touchmove', onMove)
+            document.removeEventListener('touchend', onStop)
+        }
+    }, [isDragging, zoomLevel, table.id])
 
     const selectTable = () => {
         setSelectedTable(table)
@@ -246,21 +283,37 @@ export const DynamicTable = ({
         setOnSelectedTable(onSelectedTable === table.id ? null : table.id)
     }
 
-    const stopDrag = () => {
-        if (isDragging) updateChanges()
-        setIsDragging(false)
-    }
-
-    const updateChanges = async () => {
-        const { error: removeError } = await supabase
-            .from('tables')
-            .update({ x: mapPosition.x, y: mapPosition.y })
-            .eq('id', table.id)
-
-        if (removeError) {
-            console.error('Error moviendo mesa de lugar:', removeError.message)
+    const handleClick = () => {
+        if (wasDragRef.current) {
+            wasDragRef.current = false
+            return
+        }
+        if (onGrab) return
+        if (shape === 'dance') {
+            setShowDanceMenu(prev => !prev)
+            return
+        }
+        if (onEditPosition) {
+            setOnSelectedTable(onSelectedTable === table.id ? null : table.id)
+        } else {
+            selectTable()
         }
     }
+
+    useEffect(() => {
+        if (!showDanceMenu) return
+        const handleOutside = (e) => {
+            if (mapContainerRef.current && !mapContainerRef.current.contains(e.target)) {
+                setShowDanceMenu(false)
+            }
+        }
+        document.addEventListener('mousedown', handleOutside)
+        document.addEventListener('touchstart', handleOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleOutside)
+            document.removeEventListener('touchstart', handleOutside)
+        }
+    }, [showDanceMenu])
 
     useEffect(() => {
         setTables((prevTables) =>
@@ -296,6 +349,43 @@ export const DynamicTable = ({
                 ? 'rectangle-container'
                 : 'round-container'
 
+    if (shape === 'dance') {
+        return (
+            <div
+                onClick={handleClick}
+                onMouseDown={startDrag}
+                onTouchStart={startDrag}
+                ref={mapContainerRef}
+                style={{
+                    top: `${mapPosition.y}px`,
+                    left: `${mapPosition.x}px`,
+                    cursor: isDragging ? 'grabbing' : 'pointer',
+                    transform: 'scale(0.7)',
+                }}
+                className="dynamic-container"
+            >
+                <div className={`dance-container ${onMoving ? 'moving-container' : ''}`}>
+                    <span className="dance-label">Pista de Baile</span>
+                    {showDanceMenu && (
+                        <div className="dance-delete-overlay">
+                            <Button
+                                danger
+                                style={{ borderRadius: '99px' }}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDelete(table.id)
+                                    setShowDanceMenu(false)
+                                }}
+                            >
+                                Eliminar pista
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
     return (
         <Tooltip
             color="var(--brand-color-500)"
@@ -306,31 +396,14 @@ export const DynamicTable = ({
             }
         >
             <div
-                onClick={
-                    !onGrab
-                        ? (
-                            onEditPosition
-                                ? () =>
-                                    setOnSelectedTable(
-                                        !onMoving
-                                            ? onSelectedTable === table.id
-                                                ? null
-                                                : table.id
-                                            : null
-                                    )
-                                : selectTable
-                        )
-                        : () => { }
-                }
+                onClick={handleClick}
                 onMouseDown={startDrag}
-                onMouseMove={drag}
-                onMouseUp={stopDrag}
-                onMouseLeave={stopDrag}
+                onTouchStart={startDrag}
                 ref={mapContainerRef}
                 style={{
                     top: `${mapPosition.y}px`,
                     left: `${mapPosition.x}px`,
-                    cursor: onMoving ? 'grab' : 'pointer',
+                    cursor: isDragging ? 'grabbing' : 'pointer',
                     transform: `scale(0.7) ${vertical ? 'rotate(90deg)' : ''}`
                 }}
                 className="dynamic-container"
