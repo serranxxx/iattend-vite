@@ -2241,6 +2241,13 @@ export default function GuestsPage() {
                                                     </Button>
                                                 </Dropdown>
 
+                                                 {/* <Button
+                                                    onClick={() => sethandleTables(true)}
+                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                                                    icon={<Pin size={14} />} className="primarybutton_transparent">
+                                                    Mapa de mesas
+                                                </Button> */}
+
 
                                                 <Popconfirm
                                                     title={openCard ? 'Invitación Púbica' : 'Invitación Privada'}
