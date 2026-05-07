@@ -24,10 +24,27 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
         }
     };
 
+    const handleShare = async (textToCopy) => {
+        const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        if (isMobileDevice && navigator.share) {
+            try {
+                await navigator.share({
+                    title: name,
+                    text: '¡Te invitamos a un evento especial!',
+                    url: window.location.href,
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+        await copyToClipboard(textToCopy);
+    };
+
     if (isMobile) {
         return (
             <Button
-                onClick={() => copyToClipboard(url)}
+                onClick={() => handleShare(url)}
                 style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
                 icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
                 {isSmall ? '' : label ?? buttonText ?? (isHeader ? 'Copiar link' : 'Link del evento')}
@@ -81,7 +98,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
                     </div>
                     <Button
                         style={{ width: '100%' }}
-                        onClick={() => copyToClipboard(`${url}`)}
+                        onClick={() => handleShare(url)}
                         icon={<Link2 size={14} />} className="primarybutton--active">
                         Copiar link
                     </Button>

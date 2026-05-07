@@ -499,7 +499,7 @@ export default function GuestsPage() {
                         </span>
                         <Tooltip title="Copiar link mágico">
                             <Button
-                                onClick={() => copyToClipboard(url)}
+                                onClick={() => handleShare(url)}
                                 type='text'
                                 // className="primarybutton"
                                 // style={{ maxHeight: 26 }}
@@ -1042,6 +1042,23 @@ export default function GuestsPage() {
         } catch (err) {
             console.error('Error al copiar el texto: ', err);
         }
+    };
+
+    const handleShare = async (url) => {
+        const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        if (isMobileDevice && navigator.share) {
+            try {
+                await navigator.share({
+                    title: invitation?.cover?.title?.text?.value ?? 'Evento',
+                    text: '¡Te invitamos a un evento especial!',
+                    url,
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+        await copyToClipboard(url);
     };
 
     const refreshPage = () => {

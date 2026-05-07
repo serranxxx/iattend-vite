@@ -131,7 +131,7 @@ export const SideEvents = () => {
                             <Button style={{ width: '100%' }} icon={<LuCopy size={14} />} onClick={() => copyToClipboard(value)} >{value}</Button>
                             <Button
                                 style={{ width: '100%' }}
-                                onClick={() => copyToClipboard(`https://www.iattend.events/side-event/${current?.id}?password=${value}`)}
+                                onClick={() => handleShare(`https://www.iattend.events/side-event/${current?.id}?password=${value}`)}
                                 icon={<LuCopy size={14} />}
                             >Link mágico</Button>
                         </div>
@@ -615,6 +615,23 @@ export const SideEvents = () => {
         } catch (err) {
             console.error('Error al copiar el texto: ', err);
         }
+    };
+
+    const handleShare = async (url) => {
+        const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        if (isMobileDevice && navigator.share) {
+            try {
+                await navigator.share({
+                    title: current?.name ?? 'Evento',
+                    text: '¡Te invitamos a un evento especial!',
+                    url,
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+        await copyToClipboard(url);
     };
 
     const getGuests = async (sideEventId = current?.id) => {
