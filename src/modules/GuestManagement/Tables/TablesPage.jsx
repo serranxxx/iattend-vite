@@ -12,7 +12,7 @@ import { IoMdAdd, IoMdHelp } from 'react-icons/io'
 import { LuShuffle } from 'react-icons/lu'
 import { RiDeleteBack2Line } from 'react-icons/ri'
 import { formatDate } from '../../../helpers/assets/functions'
-import { ChevronDown, MoveHorizontal, MoveVertical, Plus, X } from 'lucide-react'
+import { ChevronDown, Circle, List, MoveHorizontal, MoveVertical, PartyPopper, Plus, RectangleHorizontal, Square, X } from 'lucide-react'
 
 
 
@@ -51,6 +51,7 @@ export const TablesPage = ({ invitationID }) => {
     const [tables, setTables] = useState()
     const [mobileList, setMobileList] = useState(false)
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 750)
+    const [transferSheet, setTransferSheet] = useState(null)
 
     const [tables_, setTables_] = useState(null)
     const [confirmedGuests_, setconfirmedGuests_] = useState(null)
@@ -915,6 +916,19 @@ export const TablesPage = ({ invitationID }) => {
                 <div className='table-map-container'>
                     <div className='tab-map-header-cont'>
                         <span className='table-org-section-header button-web' style={{ padding: '0px' }}>Organización por mesas</span>
+
+                        {/* Mobile: ocupados/disponibles inline en el header */}
+                        <div className='button-mobile' style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '99px', backgroundColor: 'var(--sc-color)', flexShrink: 0 }} />
+                                <span style={{ fontSize: '12px', color: 'var(--text-color)' }}>Ocupados: <b>{taken}</b></span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '99px', backgroundColor: 'var(--brand-color-500)', flexShrink: 0 }} />
+                                <span style={{ fontSize: '12px', color: 'var(--text-color)' }}>Disp: <b>{available}</b></span>
+                            </div>
+                        </div>
+
                         <div style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px'
                         }}>
@@ -928,22 +942,11 @@ export const TablesPage = ({ invitationID }) => {
                                 onClick={() => setOnGuestList(!onGuestList)} className={`button-web primarybutton--${onGuestList ? 'black' : 'active'}`}>
                             </Button>
 
-                            {/* <Button
-                                icon={<TbLocation style={{
-                                    marginTop: '3px'
-                                }} />}
-                                style={{ borderRadius: '99px' }}
-                                onClick={() => { setOnEditPosition(!onEditPosition); setOnMoving(!onMoving) }} className={`button-web primarybutton--black${onEditPosition ? '--active' : ''}`}>
-                                {
-                                    onEditPosition ? 'Dejar de mover' : 'Mover Mesas'
-                                }
-                            </Button> */}
-
                             <Button
-                                icon={<FaList size={14} />}
+                                icon={<List size={16} />}
                                 style={{ borderRadius: '99px' }}
                                 onClick={() => setMobileList(true)}
-                                className='button-mobile primarybutton--active'>
+                                className='button-mobile primarybutton'>
                             </Button>
 
                             <Dropdown
@@ -951,121 +954,62 @@ export const TablesPage = ({ invitationID }) => {
                                 placement='bottomRight'
                                 arrow
                                 popupRender={() => (
-                                    <div style={{
-                                            width: newTableType === null ? 'auto' : undefined
-                                        }} className='modal-main-menu-container' onClick={(e) => e.stopPropagation()} >
-                                        <div  className='modal-main-container'>
+                                    <div className='modal-main-menu-container' onClick={(e) => e.stopPropagation()}>
+                                        <div className='modal-main-container'>
                                             {newTableType === null ? (
                                                 <div className='shapes_cont'>
-                                                    <Button icon={<Plus size={16} />} style={{ width: '100%' }} className='primarybutton'
-                                                        onClick={() => { setNewShape('round'); setNewTableType('mesa') }}>
-                                                        Mesa redonda
-                                                    </Button>
-                                                    <Button icon={<Plus size={16} />} style={{ width: '100%' }} className='primarybutton'
-                                                        onClick={() => { setNewShape('rectangle'); setNewTableType('mesa') }}>
-                                                        Mesa rectangular
-                                                    </Button>
-                                                    <Button icon={<Plus size={16} />} style={{ width: '100%' }} className='primarybutton'
-                                                        onClick={() => { setNewShape('square'); setNewTableType('mesa') }}>
-                                                        Mesa cuadrada
-                                                    </Button>
-                                                    <Button icon={<Plus size={16} />} style={{ width: '100%' }} className='primarybutton'
-                                                        onClick={addDanceFloor}>
-                                                        Pista de baile
-                                                    </Button>
+                                                    <Button icon={<Circle size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={() => { setNewShape('round'); setNewTableType('mesa') }}>Mesa redonda</Button>
+                                                    <Button icon={<RectangleHorizontal size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={() => { setNewShape('rectangle'); setNewTableType('mesa') }}>Mesa rectangular</Button>
+                                                    <Button icon={<Square size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={() => { setNewShape('square'); setNewTableType('mesa') }}>Mesa cuadrada</Button>
+                                                    <Button icon={<PartyPopper size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={addDanceFloor}>Pista de baile</Button>
                                                 </div>
                                             ) : (
                                                 <div className='new-table-modal'>
                                                     <div className='modal-header-sect'>
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                             <FaPlus style={{ color: 'var(--brand-color-500)' }} />
-                                                            <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none' }}>
-                                                                Nueva Mesa
-                                                            </span>
+                                                            <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none' }}>Nueva Mesa</span>
                                                         </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px' }}>
-                                                            <Button
-                                                                style={{ borderRadius: '99px' }}
-                                                                className='secondarybutton'
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setNewTableType(null);
-                                                                    setOnAddingGuests(false);
-                                                                }}>
-                                                                Cancelar
-                                                            </Button>
-                                                            <Button style={{ borderRadius: '99px' }} className='primarybutton--black--active' onClick={addNewTable}>
-                                                                Crear
-                                                            </Button>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <Button style={{ borderRadius: '99px' }} className='secondarybutton' onClick={(e) => { e.stopPropagation(); setNewTableType(null); setOnAddingGuests(false); }}>Cancelar</Button>
+                                                            <Button style={{ borderRadius: '99px' }} className='primarybutton--black--active' onClick={addNewTable}>Crear</Button>
                                                         </div>
                                                     </div>
-
                                                     <div className='modal-content-sect'>
                                                         <div className='org-small-col'>
                                                             <span className='single-label'>Nombre</span>
-                                                            <Input
-                                                                style={{ minHeight: '30px', borderRadius: '99px', backgroundColor: 'var(--ft-color)' }}
-                                                                placeholder={'Nombre de la mesa'}
-                                                                value={tablesName}
-                                                                onChange={(e) => setTablesName(e.target.value)}
-                                                                className='tab-org-input' />
+                                                            <Input style={{ minHeight: '30px', borderRadius: '99px', backgroundColor: 'var(--ft-color)' }} placeholder='Nombre de la mesa' value={tablesName} onChange={(e) => setTablesName(e.target.value)} className='tab-org-input' />
                                                         </div>
                                                         <div className='org-small-col'>
                                                             <span className='single-label'>Número de asientos</span>
-                                                            <InputNumber
-                                                                style={{ minHeight: '30px', width: '100%', backgroundColor: 'var(--ft-color)', borderRadius: '99px' }}
-                                                                value={totalChairs}
-                                                                onChange={(e) => setTotalChairs(e)}
-                                                                className='tab-org-input' />
+                                                            <InputNumber style={{ minHeight: '30px', width: '100%', backgroundColor: 'var(--ft-color)', borderRadius: '99px' }} value={totalChairs} onChange={(e) => setTotalChairs(e)} className='tab-org-input' />
                                                         </div>
                                                     </div>
-
                                                     <div className='modal-content-sect'>
-                                                        <Dropdown
-                                                            arrow
-                                                            popupRender={() => (
-                                                                <div className='shapes_cont'>
-                                                                    <Button onClick={() => setNewShape('round')} style={{ width: '100%' }} className='primarybutton'>Redonda</Button>
-                                                                    <Button onClick={() => setNewShape('square')} style={{ width: '100%' }} className='primarybutton'>Cuadrada</Button>
-                                                                    <Button onClick={() => setNewShape('rectangle')} style={{ width: '100%' }} className='primarybutton'>Rectangular</Button>
-                                                                </div>
-                                                            )}
-                                                        >
+                                                        <Dropdown arrow popupRender={() => (
+                                                            <div className='shapes_cont'>
+                                                                <Button onClick={() => setNewShape('round')} style={{ width: '100%' }} className='primarybutton'>Redonda</Button>
+                                                                <Button onClick={() => setNewShape('square')} style={{ width: '100%' }} className='primarybutton'>Cuadrada</Button>
+                                                                <Button onClick={() => setNewShape('rectangle')} style={{ width: '100%' }} className='primarybutton'>Rectangular</Button>
+                                                            </div>
+                                                        )}>
                                                             <Button icon={<ChevronDown size={14} />} className='primarybutton'>Mesa {handleShapes(newShape)}</Button>
                                                         </Dropdown>
-                                                        {newShape === 'rectangle' &&
-                                                            <Button icon={newVertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />} className='primarybutton' onClick={() => setNewVertical(!newVertical)}>
-                                                                {newVertical ? 'Vertical' : 'Horizontal'}
-                                                            </Button>
-                                                        }
+                                                        {newShape === 'rectangle' && <Button icon={newVertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />} className='primarybutton' onClick={() => setNewVertical(!newVertical)}>{newVertical ? 'Vertical' : 'Horizontal'}</Button>}
                                                     </div>
-
                                                     <div className='org-tab-card-row'>
-                                                        {onAddingGuests ?
+                                                        {onAddingGuests ? (
                                                             <div className='org-small-col' style={{ gap: '12px' }}>
-                                                                <span className='single-label'>
-                                                                    Selecciona en la lista de la derecha los invitados que deseas agregar a tu mesa
-                                                                </span>
+                                                                <span className='single-label'>Selecciona en la lista los invitados a agregar</span>
                                                                 <div className='modal-content-sect' style={{ padding: '0px' }}>
-                                                                    <Progress
-                                                                        size={[320, 20]}
-                                                                        style={{ flex: 1 }}
-                                                                        strokeColor={"var(--brand-color-500)"}
-                                                                        showInfo={false}
-                                                                        status="active"
-                                                                        percent={((ocuppiedChairs.length ?? 0) * 100) / totalChairs} />
-                                                                    <span className='on-transfer-label'>
-                                                                        {(ocuppiedChairs.length ?? 0)} / {totalChairs}
-                                                                    </span>
+                                                                    <Progress size={[undefined, 20]} style={{ flex: 1, minWidth: 0 }} strokeColor={'var(--brand-color-500)'} showInfo={false} status="active" percent={((ocuppiedChairs.length ?? 0) * 100) / totalChairs} />
+                                                                    <span className='on-transfer-label'>{(ocuppiedChairs.length ?? 0)} / {totalChairs}</span>
                                                                 </div>
                                                             </div>
-                                                            :
-                                                            <Button style={{ borderRadius: '99px', margin: '16px 0px' }} className='primarybutton--active' onClick={() => handleAddingGuests(!onAddingGuests)}>
-                                                                Agregar Invitados
-                                                            </Button>
-                                                        }
+                                                        ) : (
+                                                            <Button style={{ borderRadius: '99px', margin: '16px 0px' }} className='primarybutton--active' onClick={() => handleAddingGuests(!onAddingGuests)}>Agregar Invitados</Button>
+                                                        )}
                                                     </div>
-
                                                     <div className='popup-available-spaces-list' style={{ display: onAddingGuests ? 'flex' : 'none' }}>
                                                         {ocuppiedChairs.map((chair, index) => (
                                                             <div key={index} className='popup-available-spaces-item'>
@@ -1080,22 +1024,12 @@ export const TablesPage = ({ invitationID }) => {
                                     </div>
                                 )}
                             >
-                                <Button
-                                    disabled={onEditPosition}
-                                    icon={<IoMdAdd style={{ marginTop: '3px' }} />}
-                                    style={{ borderRadius: '99px' }}
-                                    onClick={handleNewTable}
-                                    className={`primarybutton${!onEditPosition ? '--active' : ''}`}>
+                                <Button disabled={onEditPosition} icon={<IoMdAdd style={{ marginTop: '3px' }} />} style={{ borderRadius: '99px' }} onClick={handleNewTable} className={`primarybutton${!onEditPosition ? '--active' : ''}`}>
                                     Nuevo
                                 </Button>
                             </Dropdown>
 
-
-
-
                         </div>
-
-
                     </div>
                     <div
                         onMouseDown={startDrag}
@@ -1166,9 +1100,10 @@ export const TablesPage = ({ invitationID }) => {
 
                         <div className='selected-table-hover-container'
                             style={{
-                                bottom: '20px',padding:'6px', borderRadius:'99px',
-                                 backgroundColor:'#FFFFFF60',
-                                backdropFilter:'blur(10px)'
+                                bottom: '20px', padding: '6px', borderRadius: '99px',
+                                backgroundColor: '#FFFFFF60',
+                                backdropFilter: 'blur(10px)',
+                                display: isMobile ? 'none' : undefined,
                             }}
                         >
                             <div className='org-single-row'>
@@ -1196,7 +1131,7 @@ export const TablesPage = ({ invitationID }) => {
                         onModal &&
                         <div onClick={onClosingModal} style={{
                             width: '100%', height: '100%', position: 'absolute',
-                            display: 'flex', alignItems: isMobile ? 'flex-end' : 'flex-start', justifyContent: 'flex-start',
+                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
                             padding: isMobile ? '0px' : '36px', boxSizing: 'border-box',
                             top: 0, left: 0, backgroundColor: '#FFFFFF40', zIndex: 9999
                         }}>
@@ -1204,12 +1139,12 @@ export const TablesPage = ({ invitationID }) => {
                                 width: isMobile ? '90%' : undefined,
                                 borderRadius: isMobile ? '16px' : undefined,
                                 position: isMobile ? 'absolute' : undefined,
-                                bottom: isMobile ? '5%' : undefined,
+                                top: isMobile ? '2.5%' : undefined,
                                 left: isMobile ? '5%' : undefined,
                             }}>
 
                                 {
-                                    tables && selectedTable &&
+                                    tables && selectedTable && !isMobile &&
 
                                     <div className='modal-tables-container' style={{
                                         width: onEditingTable && '5px'
@@ -1248,11 +1183,11 @@ export const TablesPage = ({ invitationID }) => {
 
                                                     <Button
                                                         style={{ borderRadius: '99px' }}
-                                                        className={`button-web primarybutton${!onEditingTable ? '--black' : ''}--active`} onClick={onEditingTable ? updateTable : editTable}>
+                                                        className={`primarybutton${!onEditingTable ? '--black' : ''}--active`} onClick={onEditingTable ? updateTable : editTable}>
                                                         {onEditingTable ? 'Terminar' : 'Editar'}
                                                     </Button>
-                                                    {
-                                                        onEditingTable &&
+                                                    {/* Selector de forma — solo desktop */}
+                                                    {onEditingTable && !isMobile && (
                                                         <Dropdown
                                                             arrow
                                                             popupRender={() => (
@@ -1265,19 +1200,23 @@ export const TablesPage = ({ invitationID }) => {
                                                         >
                                                             <Button icon={<ChevronDown size={14} />} className='primarybutton'>{handleShapes(selectedTable?.shape)}</Button>
                                                         </Dropdown>
+                                                    )}
 
-                                                    }
-
-                                                    {
-                                                        onEditingTable && selectedTable.shape === 'rectangle' &&
+                                                    {onEditingTable && selectedTable.shape === 'rectangle' && !isMobile && (
                                                         <Tooltip title={selectedTable.vertical ? 'Mesa vertical' : 'Mesa horizontal'}>
-                                                            <Button className='primarybutton' onClick={() => setSelectedTable((prev) => ({ ...prev, vertical: !prev.vertical }))} style={{ width: '100%' }}  >{selectedTable.vertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />}</Button>
+                                                            <Button className='primarybutton' onClick={() => setSelectedTable((prev) => ({ ...prev, vertical: !prev.vertical }))} style={{ width: '100%' }}>{selectedTable.vertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />}</Button>
                                                         </Tooltip>
-                                                    }
-                                                    <Button
-                                                        style={{ borderRadius: '99px', minWidth: '32px' }}
-                                                        className='secondarybutton'
-                                                        onClick={onClosingModal} icon={<X size={14} />} />
+                                                    )}
+
+                                                    {/* Mobile: botón directo para agregar invitados */}
+                                                    {onEditingTable && isMobile && (
+                                                        <Button
+                                                            style={{ borderRadius: '99px' }}
+                                                            className='primarybutton--active'
+                                                            onClick={() => { handleAddingGuests(true); setMobileList(true); }}>
+                                                            Agregar
+                                                        </Button>
+                                                    )}
 
 
 
@@ -1337,8 +1276,8 @@ export const TablesPage = ({ invitationID }) => {
                                                         padding: '0px', paddingTop: !onEditingTable && '0px'
                                                     }}>
                                                         <Progress
-                                                            size={[320, 15]}
-                                                            style={{ flex: 1 }}
+                                                            size={[isMobile ? 240 : undefined, 15]}
+                                                            style={{ flex: isMobile ? '0 0 auto' : 1, minWidth: 0 }}
                                                             strokeColor={"var(--brand-color-500)"}
                                                             showInfo={false}
                                                             status="active"
@@ -1369,49 +1308,38 @@ export const TablesPage = ({ invitationID }) => {
                                                             {
                                                                 onEditingTable && chair.name &&
                                                                 <div className="org-single-row">
-                                                                    <Dropdown
-                                                                        placement='toRight'
-                                                                        trigger={['click']}
-                                                                        popupRender={() => (
-                                                                            <div className='on-transfer-container'>
-                                                                                <span className='on-transfer-label'>Selecciona mesa</span>
-                                                                                <div className='transfer-mesas-cont'>
-
-                                                                                    {
-                                                                                        tables_.map((table) => (
+                                                                    {isMobile ? (
+                                                                        <Button
+                                                                            icon={<LuShuffle size={16} style={{ marginTop: '3px' }} />}
+                                                                            style={{ borderRadius: '99px' }} className='primarybutton'
+                                                                            onClick={() => setTransferSheet(chair)}>Transferir</Button>
+                                                                    ) : (
+                                                                        <Dropdown
+                                                                            placement='toRight'
+                                                                            trigger={['click']}
+                                                                            popupRender={() => (
+                                                                                <div className='on-transfer-container'>
+                                                                                    <span className='on-transfer-label'>Selecciona mesa</span>
+                                                                                    <div className='transfer-mesas-cont'>
+                                                                                        {tables_.map((table) => (
                                                                                             (chair.table !== table.id) && (confirmedGuests_?.filter(g => g.table === table.id).length !== table.size) &&
-                                                                                            <div className='table-transfer-item' onClick={() => transferGuest(table, chair)}>
-                                                                                                <div style={{
-                                                                                                    alignSelf: 'stretch', display: 'flex', alignItems: 'center',
-                                                                                                }}>
+                                                                                            <div key={table.id} className='table-transfer-item' onClick={() => transferGuest(table, chair)}>
+                                                                                                <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center' }}>
                                                                                                     <span>{table.name ? `#${table.number} - ${table.name}` : `Mesa #${table.number}`}</span>
                                                                                                 </div>
-                                                                                                <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px' }}>
-                                                                                                    <Progress
-                                                                                                        style={{ flex: 1 }}
-                                                                                                        className='progress-tables'
-                                                                                                        strokeColor={"var(--brand-color-500)"}
-                                                                                                        status="active"
-                                                                                                        showInfo={false}
-                                                                                                        percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
+                                                                                                <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                                                    <Progress style={{ flex: 1, minWidth: 0 }} className='progress-tables' strokeColor={'var(--brand-color-500)'} status="active" showInfo={false} percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
                                                                                                     <span className='occupied-places-tab-mob'>{confirmedGuests_?.filter(g => g.table === table.id).length} / {table.size}</span>
                                                                                                 </div>
                                                                                             </div>
-
-                                                                                        ))
-                                                                                    }
+                                                                                        ))}
+                                                                                    </div>
                                                                                 </div>
-
-
-
-                                                                            </div>
-                                                                        )}
-                                                                    >
-                                                                        <Button
-                                                                            // onClick={() => hanldeTransfer(chair)}
-                                                                            icon={<LuShuffle size={16} style={{ marginTop: '3px' }} />}
-                                                                            style={{ borderRadius: '99px' }} className='primarybutton' >Transferir</Button>
-                                                                    </Dropdown>
+                                                                            )}
+                                                                        >
+                                                                            <Button icon={<LuShuffle size={16} style={{ marginTop: '3px' }} />} style={{ borderRadius: '99px' }} className='primarybutton'>Transferir</Button>
+                                                                        </Dropdown>
+                                                                    )}
                                                                     <Button
                                                                         style={{ borderRadius: '99px' }}
                                                                         className='primarybutton' icon={<RiDeleteBack2Line size={16} style={{ marginTop: '3px' }} />} onClick={() => updateChair(chair)} ></Button>
@@ -1446,6 +1374,37 @@ export const TablesPage = ({ invitationID }) => {
                             </div>
                         </div>
                     }
+
+                    {/* Overlay de transferir invitado (solo mobile) */}
+                    {isMobile && transferSheet && (
+                        <div
+                            onClick={() => setTransferSheet(null)}
+                            style={{ position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: '#00000030' }}
+                        >
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                className='on-transfer-container'
+                                style={{ position: 'fixed', bottom: '5%', left: '5%', width: '90%', borderRadius: '16px', maxHeight: '60vh' }}
+                            >
+                                <span className='on-transfer-label'>Selecciona mesa</span>
+                                <div className='transfer-mesas-cont'>
+                                    {tables_.map((table) => (
+                                        (transferSheet.table !== table.id) && (confirmedGuests_?.filter(g => g.table === table.id).length !== table.size) && (
+                                            <div key={table.id} className='table-transfer-item' onClick={() => { transferGuest(table, transferSheet); setTransferSheet(null); }}>
+                                                <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center' }}>
+                                                    <span>{table.name ? `#${table.number} - ${table.name}` : `Mesa #${table.number}`}</span>
+                                                </div>
+                                                <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <Progress style={{ flex: 1, minWidth: 0 }} className='progress-tables' strokeColor={'var(--brand-color-500)'} status="active" showInfo={false} percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
+                                                    <span className='occupied-places-tab-mob'>{confirmedGuests_?.filter(g => g.table === table.id).length} / {table.size}</span>
+                                                </div>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className={`table-list-container ${mobileList ? 'table-mobile-list-active' : ''}`} style={{
@@ -1844,20 +1803,13 @@ export const TablesPage = ({ invitationID }) => {
                 }}
                 height="85vh"
                 closable={false}
+                push={false}
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Button
-                            icon={<X size={14} />}
-                            onClick={() => { setMobileList(false); if (onAddingGuests) setOnAddingGuests(false) }}
-                            style={{ borderRadius: '99px', minWidth: 32, height: 32, padding: 0 }}
-                            className='secondarybutton'
-                        />
-                        <span style={{ fontSize: 15, fontWeight: 500 }}>
-                            {onAddingGuests
-                                ? `Agregar invitados (${ocuppiedChairs.length}/${totalChairs})`
-                                : `Confirmados (${confirmedGuests_?.length ?? 0})`}
-                        </span>
-                    </div>
+                    <span style={{ fontSize: 15, fontWeight: 500 }}>
+                        {onAddingGuests
+                            ? `Agregar invitados (${ocuppiedChairs.length}/${totalChairs})`
+                            : `Confirmados (${confirmedGuests_?.length ?? 0})`}
+                    </span>
                 }
                 styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
             >
@@ -1888,8 +1840,8 @@ export const TablesPage = ({ invitationID }) => {
                 </div>
 
                 {onAddingGuests && (
-                    <div style={{ padding: '0px 20px 12px' }}>
-                        <div className='tag-disclaimer'>
+                    <div style={{ padding: '0px 20px 12px', boxSizing: 'border-box', width: '100%' }}>
+                        <div className='tag-disclaimer' style={{ wordBreak: 'break-word', overflow: 'hidden', boxSizing: 'border-box' }}>
                             {availableSeats < 1
                                 ? 'Tu mesa se ha llenado. No hay espacios disponibles'
                                 : confirmedGuests_?.filter(g => g.table === null).length < 1
@@ -1900,9 +1852,10 @@ export const TablesPage = ({ invitationID }) => {
                 )}
 
                 {onAddingGuests && (
-                    <div className='modal-content-sect' style={{ padding: '0px 20px 12px' }}>
+                    <div className='modal-content-sect' style={{ padding: '0px 20px 12px', flexWrap: 'nowrap', overflow: 'hidden' }}>
                         <Progress
-                            style={{ flex: 1 }}
+                            size={[240, 15]}
+                            style={{ flex: '0 0 auto' }}
                             strokeColor={'var(--brand-color-500)'}
                             showInfo={false}
                             status="active"

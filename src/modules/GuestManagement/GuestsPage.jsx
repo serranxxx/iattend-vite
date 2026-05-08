@@ -57,6 +57,7 @@ export default function GuestsPage() {
     const [onShare, setOnShare] = useState(false)
     const [copyTickets, setCopyTickets] = useState(null)
     const [handleTables, sethandleTables] = useState(false)
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 750)
     const [onGroupTable, setOnGroupTable] = useState(false)
     const [rowData, setRowData] = useState([]);
     const [waitingData, setWaitingData] = useState([])
@@ -1641,6 +1642,12 @@ export default function GuestsPage() {
     }, [drawerState])
 
     useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 750)
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
+    useEffect(() => {
         if (id) {
             setIsLoading(false)
             getTickets()
@@ -2258,12 +2265,12 @@ export default function GuestsPage() {
                                                     </Button>
                                                 </Dropdown>
 
-                                                 {/* <Button
+                                                 <Button
                                                     onClick={() => sethandleTables(true)}
                                                     style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                     icon={<Pin size={14} />} className="primarybutton_transparent">
                                                     Mapa de mesas
-                                                </Button> */}
+                                                </Button>
 
 
                                                 <Popconfirm
@@ -2572,17 +2579,31 @@ export default function GuestsPage() {
                 onClose={() => sethandleTables(false)}
                 open={handleTables}
                 placement='left'
-                width="95%"
+                width={isMobile ? '100%' : '95%'}
                 height="100%"
-                title="Mapa de mesas"
-                style={{ borderRadius: '0px 24px 24px 0px', maxWidth: '1450px' }}
+                title={isMobile ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Button
+                            icon={<X size={14} />}
+                            onClick={() => sethandleTables(false)}
+                            style={{ borderRadius: '99px', minWidth: 32, height: 32, padding: 0 }}
+                            className='secondarybutton'
+                        />
+                        <span style={{ fontSize: 15, fontWeight: 500 }}>Mapa de mesas</span>
+                    </div>
+                ) : null}
+                closable={false}
+                push={false}
+                style={{ borderRadius: isMobile ? '0px' : '0px 24px 24px 0px', maxWidth: isMobile ? 'none' : '1450px' }}
                 styles={{
                     header: {
-                        backgroundColor: 'red',
-                        display: 'none'
+                        display: isMobile ? 'flex' : 'none',
+                        padding: '12px 16px',
                     },
                     body: {
                         padding: 0,
+                        height: '100%',
+                        overflow: 'hidden',
                     }
                 }}
             >
