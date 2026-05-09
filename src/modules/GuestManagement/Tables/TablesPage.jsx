@@ -194,7 +194,7 @@ export const TablesPage = ({ invitationID }) => {
 
                 const { error: guestsError } = await supabase
                     .from("guests")
-                    .update({ table: data.id })  // o table_id si así se llama tu columna
+                    .update({ table: data.id, last_action_by: true })  // o table_id si así se llama tu columna
                     .in("id", guestIds);
 
                 if (guestsError) {
@@ -500,7 +500,7 @@ export const TablesPage = ({ invitationID }) => {
             if (toRemove.length) {
                 const { error: removeError } = await supabase
                     .from("guests")
-                    .update({ table: null })
+                    .update({ table: null, last_action_by: true })
                     .in("id", toRemove);
 
                 if (removeError) {
@@ -512,7 +512,7 @@ export const TablesPage = ({ invitationID }) => {
             if (toAdd.length) {
                 const { error: addError } = await supabase
                     .from("guests")
-                    .update({ table: selectedTable.id })
+                    .update({ table: selectedTable.id, last_action_by: true  })
                     .in("id", toAdd);
 
                 if (addError) {
@@ -599,6 +599,7 @@ export const TablesPage = ({ invitationID }) => {
                 .update({
                     table: table.id,
                     last_update_date: new Date(), // si tienes este campo en guests
+                    last_action_by: true 
                 })
                 .eq("id", guest.id)
                 .select()
@@ -642,7 +643,7 @@ export const TablesPage = ({ invitationID }) => {
             if (guestIds.length) {
                 const { error: removeError } = await supabase
                     .from("guests")
-                    .update({ table: null })
+                    .update({ table: null, last_action_by: true  })
                     .in("id", guestIds);
 
                 if (removeError) {
@@ -1016,7 +1017,7 @@ export const TablesPage = ({ invitationID }) => {
                                                             <div className='org-small-col' style={{ gap: '12px' }}>
                                                                 <span className='single-label'>{t('tables.select_guests_hint')}</span>
                                                                 <div className='modal-content-sect' style={{ padding: '0px' }}>
-                                                                    <Progress size={[undefined, 20]} style={{ flex: 1, minWidth: 0 }} strokeColor={'var(--brand-color-500)'} showInfo={false} status="active" percent={((ocuppiedChairs.length ?? 0) * 100) / totalChairs} />
+                                                                    <Progress size={[undefined, 20]} style={{ flex: 1, minWidth: '70%' }} strokeColor={'var(--brand-color-500)'} showInfo={false} status="active" percent={((ocuppiedChairs.length ?? 0) * 100) / totalChairs} />
                                                                     <span className='on-transfer-label'>{(ocuppiedChairs.length ?? 0)} / {totalChairs}</span>
                                                                 </div>
                                                             </div>
@@ -1290,8 +1291,8 @@ export const TablesPage = ({ invitationID }) => {
                                                         padding: '0px', paddingTop: !onEditingTable && '0px'
                                                     }}>
                                                         <Progress
-                                                            size={[isMobile ? 240 : undefined, 15]}
-                                                            style={{ flex: isMobile ? '0 0 auto' : 1, minWidth: 0 }}
+                                                            size={[isMobile ? 240 : 240, 15]}
+                                                            style={{ flex: isMobile ? '0 0 auto' : 1, minWidth: '70%' }}
                                                             strokeColor={"var(--brand-color-500)"}
                                                             showInfo={false}
                                                             status="active"
@@ -1342,7 +1343,7 @@ export const TablesPage = ({ invitationID }) => {
                                                                                                     <span>{table.name ? `#${table.number} - ${table.name}` : `${t('tables.table_prefix')} #${table.number}`}</span>
                                                                                                 </div>
                                                                                                 <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                                                                    <Progress style={{ flex: 1, minWidth: 0 }} className='progress-tables' strokeColor={'var(--brand-color-500)'} status="active" showInfo={false} percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
+                                                                                                    <Progress style={{ flex: 1, minWidth: '70%' }} className='progress-tables' strokeColor={'var(--brand-color-500)'} status="active" showInfo={false} percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
                                                                                                     <span className='occupied-places-tab-mob'>{confirmedGuests_?.filter(g => g.table === table.id).length} / {table.size}</span>
                                                                                                 </div>
                                                                                             </div>
@@ -1409,7 +1410,7 @@ export const TablesPage = ({ invitationID }) => {
                                                     <span>{table.name ? `#${table.number} - ${table.name}` : `Mesa #${table.number}`}</span>
                                                 </div>
                                                 <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <Progress style={{ flex: 1, minWidth: 0 }} className='progress-tables' strokeColor={'var(--brand-color-500)'} status="active" showInfo={false} percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
+                                                    <Progress style={{ flex: 1, minWidth: '70%' }} className='progress-tables' strokeColor={'var(--brand-color-500)'} status="active" showInfo={false} percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
                                                     <span className='occupied-places-tab-mob'>{confirmedGuests_?.filter(g => g.table === table.id).length} / {table.size}</span>
                                                 </div>
                                             </div>

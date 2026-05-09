@@ -1590,8 +1590,8 @@ export default function GuestsPage() {
                     if (!row) return;
 
                     if (row.invitation_id === id) {
+                        refreshPage();
                         if (!row.last_action_by) {
-                            refreshPage();
                             handleNotification(row);
                         }
                     }
