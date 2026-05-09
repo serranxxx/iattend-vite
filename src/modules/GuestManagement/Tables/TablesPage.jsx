@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './organization-table.css'
 import { Button, Checkbox, Drawer, Dropdown, Input, InputNumber, Progress, Slider, Tooltip, message } from 'antd'
-import { BsSliders } from 'react-icons/bs'
+import { BsArrowsMove, BsSliders } from 'react-icons/bs'
 import { IoClose } from 'react-icons/io5'
 import { FaAngleDoubleRight, FaList, FaMinus, FaPlus } from 'react-icons/fa'
 import { DynamicTable } from './DynamicTable'
@@ -27,7 +27,7 @@ export const TablesPage = ({ invitationID }) => {
     const [onModal, setOnModal] = useState(false)
     const [aboutMyGuest, setAboutMyGuest] = useState(null)
     const [onExtendedWhos, setOnExtendedWhos] = useState(false)
-    const [onMoving    ] = useState(false)
+    const [onMoving] = useState(false)
     const [onEditPosition] = useState(false)
     const [zoomLevel, setZoomLevel] = useState(0.7 );
     const [mapPosition, setMapPosition] = useState({ x: -1300, y: -600 });
@@ -948,20 +948,20 @@ export const TablesPage = ({ invitationID }) => {
                                 className='button-mobile primarybutton'>
                             </Button>
 
-                            <Button
+                            {/* <Button
                                 icon={<BsArrowsMove style={{ marginTop: '3px' }} />}
                                 style={{ borderRadius: '99px' }}
                                 onClick={() => { setOnEditPosition(!onEditPosition); setOnMoving(!onMoving) }}
                                 className={`button-web primarybutton--black${onEditPosition ? '--active' : ''}`}>
                                 {onEditPosition ? t('tables.btn_stop_move') : t('tables.btn_move_tables')}
-                            </Button>
+                            </Button> */}
 
-                            <Button
+                            {/* <Button
                                 icon={<BsArrowsMove style={{ marginTop: '3px' }} />}
                                 style={{ borderRadius: '99px' }}
                                 onClick={() => setOnEditPosition(!onEditPosition)}
                                 className={`button-mobile primarybutton--black${onEditPosition ? '--active' : ''}`}>
-                            </Button>
+                            </Button> */}
 
                             <Dropdown
                                 trigger={['click']}
