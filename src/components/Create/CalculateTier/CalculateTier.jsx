@@ -4,6 +4,7 @@ import './calculate_tier.css'
 import { FaStar } from 'react-icons/fa'
 import { IoClose } from 'react-icons/io5'
 import { IoMdRefresh } from 'react-icons/io'
+import { useTranslation } from 'react-i18next'
 
 const INITIAL_STATE = {
     necesity: 0,
@@ -13,26 +14,6 @@ const INITIAL_STATE = {
     open: false,
     category: null,
 }
-
-const CATEGORY_DESCRIPTIONS = {
-    A: 'Tiene que estar sí o sí. El evento no se siente completo sin esta persona.',
-    B: 'Quiero que esté; haría el evento mucho mejor, pero si el cupo aprieta podría quedar fuera.',
-    C: 'Me gustaría invitarle si hay espacio y presupuesto; no pasa nada grave si no viene.',
-    D: 'Solo se invita si sobra cupo o por cortesía/compromiso leve.',
-}
-
-const QUESTIONS = [
-    {
-        key: 'necesity',
-        title: '1. ¿Quieren que esté en su boda sí o sí?',
-        description: 'Esa persona que no puede faltar',
-    },
-    {
-        key: 'probability',
-        title: '2. ¿Qué tan cercanos son hoy en día?',
-        description: 'No solo historia, también presente',
-    },
-]
 
 const QuestionBlock = ({ title, description, value, onChange }) => {
     return (
@@ -50,7 +31,13 @@ const QuestionBlock = ({ title, description, value, onChange }) => {
 }
 
 export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) => {
+    const { t } = useTranslation()
     const [priorityCalc, setPriorityCalc] = useState(INITIAL_STATE)
+
+    const QUESTIONS = useMemo(() => [
+        { key: 'necesity', title: t('calculate_tier.q1_title'), description: t('calculate_tier.q1_desc') },
+        { key: 'probability', title: t('calculate_tier.q2_title'), description: t('calculate_tier.q2_desc') },
+    ], [t])
 
     
     
@@ -123,8 +110,14 @@ export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) =>
     }
 
     const categoryDescription = useMemo(() => {
-        return CATEGORY_DESCRIPTIONS[priorityCalc.category] || ''
-    }, [priorityCalc.category])
+        const map = {
+            A: t('calculate_tier.cat_a'),
+            B: t('calculate_tier.cat_b'),
+            C: t('calculate_tier.cat_c'),
+            D: t('calculate_tier.cat_d'),
+        }
+        return map[priorityCalc.category] || ''
+    }, [priorityCalc.category, t])
 
     useEffect(() => {
         if (!drawerState.visible) {
@@ -153,7 +146,7 @@ export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) =>
                                 className='priority_container_title'
                                 style={{ fontWeight: 600 }}
                             >
-                                Conoce la prioridad del invitado
+                                {t('calculate_tier.title')}
                             </span>
 
                             <div className='priority_container_row'>
@@ -163,7 +156,7 @@ export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) =>
                                     style={{ borderRadius: '99px' }}
                                     type='primary'
                                 >
-                                    {priorityCalc.category ? 'Recalcular' : 'Calcular'}
+                                    {priorityCalc.category ? t('calculate_tier.btn_recalculate') : t('calculate_tier.btn_calculate')}
                                 </Button>
 
                                 <Button
@@ -201,7 +194,7 @@ export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) =>
                                 style={{ alignSelf: 'stretch', gap: '0px' }}
                             >
                                 <span style={{ fontWeight: 500, fontSize: '16px' }}>
-                                    3. ¿Están de acuerdo los dos?
+                                    {t('calculate_tier.q3_title')}
                                 </span>
 
                                 <div
@@ -234,7 +227,7 @@ export const CalculateTier = ({drawerState,  updateGuestField, owners = [] }) =>
                 style={{ maxHeight: 24, color: '#6D3CFA', fontSize: '13px', fontWeight: 600 }}
                 type='text'
             >
-                Calcular prioridad
+                {t('calculate_tier.btn_open')}
             </Button>
         </Dropdown>
     )

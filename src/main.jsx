@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles'
+import './i18n';
 import { BrowserRouter } from 'react-router-dom';
 import { IAttend } from './IAttend';
 

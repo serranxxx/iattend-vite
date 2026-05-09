@@ -1,4 +1,5 @@
 import { Button, Col, Empty, Input,} from 'antd'
+import { useTranslation } from 'react-i18next'
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { IoMdAdd } from 'react-icons/io';
 import { TbEyeClosed } from 'react-icons/tb';
@@ -6,6 +7,8 @@ import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 
 export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved }) => {
+
+    const { t } = useTranslation()
 
     const handleURL = (url, index, id) => {
         setInvitation(prevInvitation => {
@@ -55,7 +58,7 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
                                         style={{
                                             width: 'auto',
                                         }}
-                                    >Galería</span>
+                                    >{t('build_gallery.title')}</span>
                                 </div>
 
                                 <BuildMenu invitation={invitation} label={'gallery'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
@@ -66,7 +69,7 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
                                 invitation.gallery.active &&
                                 <>
                                     <div className='build-generals-simple-column'>
-                                        <span className='gc-content-label'>Título</span>
+                                        <span className='gc-content-label'>{t('build_gallery.label_title')}</span>
 
                                         <Input
                                             onChange={onChangeTitle}
@@ -88,7 +91,7 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
                                         style={{ margin: '12px 0px' }}
                                         // onClick={addNewLink}
                                         icon={<IoMdAdd size={14} />}>
-                                        Nueva fotografía
+                                        {t('build_gallery.btn_new_photo')}
                                     </Button>
 
 

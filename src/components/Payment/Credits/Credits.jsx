@@ -4,9 +4,11 @@ import './credits.css'
 import { Button, Dropdown, Progress } from 'antd';
 import { LuChevronDown, LuCoins, LuRefreshCcw, LuShoppingCart } from 'react-icons/lu';
 import { fetchPrices, handleCheckout, PRODUCTS } from '../functions';
+import { useTranslation } from 'react-i18next';
 
 export const CreditsComponent = ({ getType, credits, invitationID, isClosable, setOnClose }) => {
 
+    const { t } = useTranslation()
     const [prices, setPrices] = useState([])
     const [selectedItem, setSelectedItem] = useState('price_1Sx8RWAAdNlITNVbj7c85GlG')
 
@@ -18,9 +20,9 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
     return (
         <div className='credits-dash'>
             <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Creditos</span>
+                <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('credits.title')}</span>
                 <div className='credits_row'>
-                    <Button onClick={getType} icon={<LuRefreshCcw />}>Actualizar</Button>
+                    <Button onClick={getType} icon={<LuRefreshCcw />}>{t('credits.btn_refresh')}</Button>
                     {isClosable && <Button onClick={() => setOnClose(false)} icon={<LuChevronDown />}></Button>}
                 </div>
             </div>
@@ -38,13 +40,13 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                     />
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0px', position: 'absolute' }}>
                         <span style={{ fontWeight: 600, fontSize: '22px', lineHeight: 1 }}>{credits}</span>
-                        <span style={{ fontSize: '8px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>Disponibles</span>
+                        <span style={{ fontSize: '8px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('credits.available')}</span>
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', fontSize: '13px' }}>
-                    <span><b>¿Qué son los créditos?</b></span>
-                    <span>Cada invitación enviada usa 1 crédito y puedes recargar cuando lo necesites.</span>
+                    <span><b>{t('credits.what_title')}</b></span>
+                    <span>{t('credits.what_desc')}</span>
 
                     <Dropdown
                         trigger={['click']}
@@ -71,11 +73,11 @@ export const CreditsComponent = ({ getType, credits, invitationID, isClosable, s
                                         }
                                     })}
                                 </div>
-                                <Button style={{ width: '100%', fontSize: '16px', minHeight: '44px' }} icon={<LuShoppingCart />} onClick={() => handleCheckout(invitationID, selectedItem)} type='primary'>Comprar</Button>
+                                <Button style={{ width: '100%', fontSize: '16px', minHeight: '44px' }} icon={<LuShoppingCart />} onClick={() => handleCheckout(invitationID, selectedItem)} type='primary'>{t('credits.btn_buy')}</Button>
                             </div>
                         )}
                     >
-                        <Button icon={<LuCoins size={16} />} className='primarybutton' style={{ fontSize: '12px', marginTop: '12px' }}>Recargar créditos</Button>
+                        <Button icon={<LuCoins size={16} />} className='primarybutton' style={{ fontSize: '12px', marginTop: '12px' }}>{t('credits.btn_reload')}</Button>
                     </Dropdown>
                 </div>
 

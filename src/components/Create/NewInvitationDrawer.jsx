@@ -6,12 +6,13 @@ import { LuCheck, LuX } from 'react-icons/lu'
 import { FaPlus } from 'react-icons/fa6'
 import { fetchPrices, handleCheckoutInvitation, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
 import { ChevronsLeft, ChevronsRight, Star } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 
 
 export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
-
+    const { t } = useTranslation()
     const screens = Grid.useBreakpoint()
     const isMobile = !screens.md
 
@@ -30,19 +31,17 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
     const steps = [
         {
-            title: 'Tipo',
+            title: t('new_inv.step_type'),
             content: <Plantillas setAvailableNext={setAvailableNext} currentTemplate={currentTemplate} setCurrentTemplate={setCurrentTemplate} />,
         },
         {
-            title: 'Ruta',
+            title: t('new_inv.step_route'),
             content: <Dominio dominio={dominio} setDominio={setDominio} load={load} dominios={dominios} setAvailableNext={setAvailableNext} setCurrentPhone={setCurrentPhone} currentPhone={currentPhone} currentTemplate={currentTemplate} owners={owners} setOwners={setOwners} />,
         },
-
         {
-            title: 'Plan',
+            title: t('new_inv.step_plan'),
             content: <Pago currentPlan={currentPlan} setCurrentPlan={setCurrentPlan} setCurrentPriceId={setCurrentPriceId} setReady={setReady} isMobile={isMobile} />,
         },
-
     ];
 
     // const isAdmin = async (userId) => {
@@ -163,7 +162,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                 onClose={handleClose}
                 open={visible}
                 width={isMobile ? '95%' : '50%'}
-                title={'Configura tu evento'}
+                title={t('new_inv.drawer_title')}
                 style={{
                     borderRadius: '24px 0px 0px 24px'
                 }}
@@ -187,7 +186,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                             style={{ fontWeight: 800 }}
                             onClick={handleNew}
                         >
-                            Crear evento
+                            {t('new_inv.btn_create')}
                         </Button>
                     </div>
                 }
@@ -207,7 +206,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
                                 type='ghost' onClick={() => prev()}
                             >
-                                <ChevronsLeft size={25} style={{ marginRight: '5px' }} /> Anterior
+                                <ChevronsLeft size={25} style={{ marginRight: '5px' }} /> {t('new_inv.btn_prev')}
                             </Button>
                         )}
 
@@ -216,7 +215,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                                 id="prev-next-button"
                                 disabled={availableNext ? false : true}
                                 type="ghost" onClick={current === 0 ? () => nextAndGet() : () => next()}>
-                                Siguiente <ChevronsRight size={25} style={{ marginLeft: '5px' }} />
+                                {t('new_inv.btn_next')} <ChevronsRight size={25} style={{ marginLeft: '5px' }} />
                             </Button>
                         )}
 
@@ -233,6 +232,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
 
 const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCurrentPhone, currentPhone, currentTemplate, owners, setOwners }) => {
 
+    const { t } = useTranslation()
     const [isMatch, setIsMatch] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
     const [code, setCode] = useState("+52")
@@ -252,7 +252,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
             // If invalid characters are found, set an error message
             // setAvailableNext(false);
             setIsMatch(false);
-            setErrorMessage('Evita los caracteres especiales')
+            setErrorMessage(t('new_inv.err_special_chars'))
             return; // Exit the function
         }
 
@@ -260,7 +260,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
         if (lowerCaseDominios.includes(lowerCaseValue)) {
             // setAvailableNext(false);
             setIsMatch(false); // Set the state to false if there's a match
-            setErrorMessage('Ocupado')
+            setErrorMessage(t('new_inv.err_taken'))
         } else {
             // setAvailableNext(true);
             setIsMatch(true); // Set the state to true if there's no match
@@ -288,10 +288,8 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
     return (
         !load ?
             <div className='new-invitation-dominio-container'>
-                <span className='new-invitation-label'>¿Cómo quieren que los encuentren?</span>
-                <span className='route-info'>
-                    El link que compartirán con sus invitados y el número al que podrán escribirles.
-                </span>
+                <span className='new-invitation-label'>{t('new_inv.route_title')}</span>
+                <span className='route-info'>{t('new_inv.route_desc')}</span>
 
                 <div className='dominio-form-card'>
                     <div className='dominio-form-row'>
@@ -315,7 +313,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                         <span className='dominio-field-error'>{errorMessage}</span>
                     )}
                     {isMatch === true && dominio && (
-                        <span className='dominio-field-success'>✓ Disponible</span>
+                        <span className='dominio-field-success'>{t('new_inv.available')}</span>
                     )}
 
                     <div className='dominio-divider' />
@@ -331,7 +329,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                         </div>
                         <input
                             className='dominio-input'
-                            placeholder='Número de WhatsApp'
+                            placeholder={t('new_inv.phone_placeholder')}
                             value={phone || ''}
                             onChange={(e) => setPhone(e.target.value)}
                             maxLength={10}
@@ -350,15 +348,13 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
 
                 {currentTemplate === 'wedding' && (
                     <div className='dominio-owners-section'>
-                        <span className='new-invitation-label' style={{ fontSize: '16px' }}>Sus nombres</span>
-                        <span className='route-info' style={{ marginTop: 0 }}>
-                            Los usaremos a lo largo de toda la invitación — en portada, mensajes y detalles del evento.
-                        </span>
+                        <span className='new-invitation-label' style={{ fontSize: '16px' }}>{t('new_inv.owners_title')}</span>
+                        <span className='route-info' style={{ marginTop: 0 }}>{t('new_inv.owners_desc')}</span>
                         <div className='dominio-form-card'>
                             <div className='dominio-form-row'>
                                 <input
                                     className='dominio-input'
-                                    placeholder='Nombre del novio o la novia'
+                                    placeholder={t('new_inv.owner_placeholder')}
                                     value={owners[0] || ''}
                                     onChange={(e) => setOwners([e.target.value, owners[1]])}
                                 />
@@ -367,7 +363,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
                             <div className='dominio-form-row'>
                                 <input
                                     className='dominio-input'
-                                    placeholder='Nombre del novio o la novia'
+                                    placeholder={t('new_inv.owner_placeholder')}
                                     value={owners[1] || ''}
                                     onChange={(e) => setOwners([owners[0], e.target.value])}
                                 />
@@ -399,6 +395,7 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
 
 
 const Plantillas = ({ currentTemplate, setCurrentTemplate, setAvailableNext }) => {
+    const { t } = useTranslation()
     useEffect(() => {
         if (currentTemplate) {
             setAvailableNext(true)
@@ -407,8 +404,8 @@ const Plantillas = ({ currentTemplate, setCurrentTemplate, setAvailableNext }) =
 
     return (
         <div className='new-invitation-dominio-container'>
-            <span className='new-invitation-label'>¿Qué están celebrando?</span>
-            <span className='route-info'>Elige el tipo de evento para personalizar su invitación.</span>
+            <span className='new-invitation-label'>{t('new_inv.template_title')}</span>
+            <span className='route-info'>{t('new_inv.template_desc')}</span>
             <div className='new-inv-templates-container'>
                 {invitationsTypes.map((template) => {
                     const isSelected = template.type === currentTemplate
@@ -442,6 +439,7 @@ const PLAN_FEATURES = {
 
 const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
 
+    const { t } = useTranslation()
     const [prices, setPrices] = useState([])
     const [expanded, setExpanded] = useState({})
 
@@ -464,8 +462,8 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
 
     return (
         <div className='new-invitation-dominio-container'>
-            <span className='new-invitation-label'>Elige tu plan</span>
-            <span className='route-info'>Una sola compra. Tu invitación activa para siempre.</span>
+            <span className='new-invitation-label'>{t('new_inv.plan_title')}</span>
+            <span className='route-info'>{t('new_inv.plan_desc')}</span>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
                 {planPrices.map((p, index) => {
@@ -502,7 +500,7 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                     padding: '4px 16px', borderRadius: '99px', whiteSpace: 'nowrap', letterSpacing: '0.8px',
                                     display: 'flex', alignItems: 'center', gap: '8px',
                                 }}>
-                                    <Star size={12} /> Más popular
+                                    <Star size={12} /> {t('new_inv.plan_popular')}
                                 </div>
                             )}
 
@@ -535,7 +533,7 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                         {price}
                                     </div>
                                     <div style={{ fontSize: '10px', color: ps.subtext, letterSpacing: '0.5px', lineHeight: 1 }}>
-                                        MXN · pago único
+                                        {t('new_inv.plan_payment')}
                                     </div>
                                 </div>
                             </div>
@@ -547,7 +545,7 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                             <feat.icon size={15} style={{ color: ps.accent, flexShrink: 0 }} />
                                             <span style={{ fontSize: '14px', color: ps.feat, lineHeight: 1.4 }}>
-                                                {feat.text}
+                                                {t(feat.key)}
                                             </span>
                                         </div>
                                     ))}
@@ -566,7 +564,7 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                 <feat.icon size={14} style={{ color: ps.accent, flexShrink: 0 }} />
                                                 <span style={{ fontSize: '13px', color: ps.feat, lineHeight: 1.4 }}>
-                                                    {feat.text}
+                                                    {t(feat.key)}
                                                 </span>
                                             </div>
                                         ))}
@@ -585,7 +583,7 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                         textAlign: 'left',
                                     }}
                                 >
-                                    {isExpanded ? 'Ocultar' : 'Ver detalles'}
+                                    {isExpanded ? t('new_inv.collapse') : t('new_inv.expand')}
                                 </button>
                             )}
                         </div>

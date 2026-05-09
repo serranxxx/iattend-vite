@@ -2,10 +2,12 @@ import { Button, Col, Input, } from 'antd'
 import { IoMdAdd } from 'react-icons/io';
 import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
+import { useTranslation } from 'react-i18next';
 
 
 export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
+    const { t } = useTranslation()
 
     const onChangeTitle = (e) => {
 
@@ -99,7 +101,7 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                         style={{
                                             width: 'auto',
                                         }}
-                                    >Personas</span>
+                                    >{t('build_family.title')}</span>
 
                                 </div>
 
@@ -110,7 +112,7 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                             {
                                 invitation.people.active ?
                                     <>
-                                        <span className='simple-content-label'>Título</span>
+                                        <span className='simple-content-label'>{t('build_family.label_title')}</span>
 
                                         <Input
                                             onChange={onChangeTitle}
@@ -118,7 +120,7 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                             className='gc-input-text' />
 
                                         <Button style={{ margin: '16px 0px' }} icon={<IoMdAdd />} onClick={addNewPersona} className='primarybutton--active'>
-                                            Nueva persona
+                                            {t('build_family.btn_add')}
                                         </Button>
                                         <div style={{
                                             display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
@@ -138,23 +140,23 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                                                 paddingBottom: '16px',  width:'100%'
                                                             }}>
 
-                                                            <span className='simple-content-label'>Título</span>
+                                                            <span className='simple-content-label'>{t('build_family.label_title')}</span>
 
                                                             <Input
                                                                 onChange={(e) => changeTitlePersona(index, e.target.value)}
                                                                 value={persona.title}
-                                                                placeholder='Título de la persona'
+                                                                placeholder={t('build_family.placeholder_title')}
                                                                 style={{ borderRadius: '8px' }}
                                                                 className='gc-input-text' />
 
-                                                            <span style={{ marginTop: '8px' }} className='simple-content-label'>Nombre</span>
+                                                            <span style={{ marginTop: '8px' }} className='simple-content-label'>{t('build_family.label_name')}</span>
 
                                                             <Input
                                                                 // onChange={onChangeTitle}
                                                                 onChange={(e) => changeNamePersona(index, e.target.value)}
                                                                 value={persona.description}
                                                                 style={{ borderRadius: '8px' }}
-                                                                placeholder='Nombre de la persona'
+                                                                placeholder={t('build_family.placeholder_name')}
                                                                 className='gc-input-text' />
                                                         </Col>
 
@@ -168,7 +170,7 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                                                 style={{ width: '100%', borderRadius: '0px 0px 16px 16px', maxHeight: '24px', color: '#CCC' }}
                                                             // icon={<IoClose size={18} />}
                                                             // style={{ position: 'absolute', top: '5px', right: '5px' }}
-                                                            >Borrar</Button>
+                                                            >{t('build_family.btn_delete')}</Button>
                                                         </div>
                                                     </div>
                                                 ))

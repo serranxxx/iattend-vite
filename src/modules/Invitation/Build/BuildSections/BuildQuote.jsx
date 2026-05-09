@@ -1,5 +1,6 @@
 import { Button, Col, ColorPicker, Input, Row, Select, Slider, Switch, Tooltip, } from 'antd'
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
@@ -68,6 +69,7 @@ const { Option } = Select;
 
 export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
+    const { t } = useTranslation()
     const [onGeneration] = useState(false)
     const [quoteValue, setQuoteValue] = useState(null)
     // const [textAppear, setTextAppear] = useState(false)
@@ -204,7 +206,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
 
         const presetColors = [
             {
-                label: 'Fondo',
+                label: t('build_quote.preset_bg'),
                 colors: [
                     darker(invitation.generals.colors.primary, 0.3),
                     darker(invitation.generals.colors.primary, 0.5),
@@ -219,7 +221,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                 ]
             },
             {
-                label: 'Contrastes',
+                label: t('build_quote.preset_contrast'),
                 colors: [
                     darker(invitation.generals.colors.secondary, 0.3),
                     darker(invitation.generals.colors.secondary, 0.5),
@@ -234,7 +236,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                 ]
             },
             {
-                label: 'Textos',
+                label: t('build_quote.preset_texts'),
                 colors: [
                     darker(invitation.generals.colors.accent, 0.3),
                     darker(invitation.generals.colors.accent, 0.5),
@@ -249,7 +251,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                 ]
             },
             {
-                label: 'Botones',
+                label: t('build_quote.preset_buttons'),
                 colors: [
                     darker(invitation.generals.colors.actions, 0.3),
                     darker(invitation.generals.colors.actions, 0.5),
@@ -292,7 +294,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                         style={{
                                             width: 'auto',
                                         }}
-                                    >Cita</span>
+                                    >{t('build_quote.title')}</span>
                                 </div>
 
                                 <BuildMenu invitation={invitation} label={'quote'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
@@ -317,7 +319,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                         <div className='quote-row-btween'>
                                             <span className={'module--title'}
                                                 style={{ textAlign: 'left' }}
-                                            >Imagen de fondo</span>
+                                            >{t('build_quote.bg_image')}</span>
                                             <Switch
                                                 size='small'
                                                 value={invitation.quote.image.active}
@@ -355,9 +357,9 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                             },
                                                         },
                                                     }))}>
-                                                    {invitation.quote.text.shadow ? 'Quitar sombra' : 'Agregar sombra'}
+                                                    {invitation.quote.text.shadow ? t('build_quote.remove_shadow') : t('build_quote.add_shadow')}
                                                 </Button>
-                                                <span className='gc-content-label'>Posición del texto</span>
+                                                <span className='gc-content-label'>{t('build_quote.text_position')}</span>
                                                 <div className='gc-position-container'>
 
                                                     {
@@ -412,7 +414,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                 </div>
                                                 <div className='quote-font-settings'>
 
-                                                    <span className='gc-content-label'>Tipo de letra</span>
+                                                    <span className='gc-content-label'>{t('build_quote.label_typeface')}</span>
 
                                                     <Select
 
@@ -429,7 +431,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                         width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column',
                                                         marginTop: '10px'
                                                     }}>
-                                                        <span className='gc-content-label'>Tamaño</span>
+                                                        <span className='gc-content-label'>{t('build_quote.label_size')}</span>
 
                                                         <Slider
                                                             style={{ width: '95%', }}
@@ -452,7 +454,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                             value={invitation.quote.text.font.size || 16}
                                                         />
 
-                                                        <span className='gc-content-label'>Ancho del texto</span>
+                                                        <span className='gc-content-label'>{t('build_quote.label_text_width')}</span>
 
                                                         <Slider
                                                             style={{ width: '95%', }}
@@ -480,7 +482,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                                 width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
                                                             }}>
 
-                                                                <span className='gc-content-label'>Opacidad</span>
+                                                                <span className='gc-content-label'>{t('build_quote.label_opacity')}</span>
 
 
                                                                 <Slider
@@ -509,7 +511,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                             <Col style={{
                                                                 width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column'
                                                             }}>
-                                                                <span className='gc-content-label'>Grosor</span>
+                                                                <span className='gc-content-label'>{t('build_quote.label_weight')}</span>
 
                                                                 <Slider
                                                                     style={{ width: '95%' }}
@@ -542,7 +544,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                                         flexDirection: 'row', width: '100%'
                                                     }}>
-                                                        <span className='gc-content-label'>Color</span>
+                                                        <span className='gc-content-label'>{t('build_quote.label_color')}</span>
 
                                                     </Row>
 

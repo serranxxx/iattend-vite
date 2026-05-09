@@ -1,4 +1,5 @@
 import { Button, Col, Input, } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { IoMdAdd } from 'react-icons/io';
 import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
@@ -6,6 +7,7 @@ import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
+    const { t } = useTranslation()
 
     const addNewNotice = () => {
         setInvitation(prevInvitation => ({
@@ -75,7 +77,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                         style={{
                                             width: 'auto',
                                         }}
-                                    >Avisos</spanx>
+                                    >{t('build_notices.title')}</spanx>
                                 </div>
                                 <BuildMenu invitation={invitation} label={'notices'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
 
@@ -85,7 +87,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                 invitation.notices.active ?
                                     <>
                                         <div className='build-generals-simple-column'>
-                                            <span className='gc-content-label'>Título</span>
+                                            <span className='gc-content-label'>{t('build_notices.label_title')}</span>
 
                                             <Input
                                                 onChange={onChangeTitle}
@@ -97,7 +99,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                         <Button
                                             style={{ margin: '16px 0px' }}
                                             className='primarybutton--active' icon={<IoMdAdd />} onClick={addNewNotice}>
-                                            Nuevo aviso
+                                            {t('build_notices.btn_new')}
                                         </Button>
 
                                         <Col style={{
@@ -126,7 +128,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                                                     style={{ borderRadius: '16px 16px 0px 0px', minWidth: '290px', padding: '12px' }}
                                                                     autoSize={{ minRows: 4, maxRows: 10 }}
                                                                     onChange={(e) => editNoticeByIndex(index, e.target.value)}
-                                                                    placeholder='Nuevo aviso'
+                                                                    placeholder={t('build_notices.placeholder')}
                                                                     value={notice} />
 
 
@@ -143,7 +145,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                                                     style={{width:'100%', borderRadius:'0px 0px 16px 16px', maxHeight:'24px', color:'#CCC'}}
                                                                     // icon={<IoClose size={18} />}
                                                                 // style={{ position: 'absolute', top: '5px', right: '5px' }}
-                                                                >Borrar</Button>
+                                                                >{t('build_notices.btn_delete')}</Button>
                                                             </div>
                                                         </div>
                                                     ))

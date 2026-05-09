@@ -10,13 +10,14 @@ import { Grid } from "antd";
 import { HeaderDashboard } from '../../modules/Header/Header'
 import { load } from '../../helpers/assets/images'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 const { useBreakpoint } = Grid;
 
 
 export const DashboardPage = () => {
 
-
+    const { t } = useTranslation()
     const [confirmed, setConfirmed] = useState(0)
     const [waiting, setWaiting] = useState(0)
     const [available, setAvailable] = useState(0)
@@ -29,7 +30,7 @@ export const DashboardPage = () => {
     const id = searchParams.get("id");
 
     const chartData = {
-        labels: ['Confirmados', 'En espera', 'Disponibles'],
+        labels: [t('dashboard.stat_confirmed'), t('dashboard.stat_waiting_chart'), t('dashboard.stat_available_chart')],
         datasets: [
             {
                 // label: '# of Votes',
@@ -121,7 +122,7 @@ export const DashboardPage = () => {
 
                         <div className='dashboard_invitation'>
                             <div className='invitation_header_dash'>
-                                <span style={{ fontWeight: 600 }}>Invitación Paperless</span>
+                                <span style={{ fontWeight: 600 }}>{t('dashboard.card_invitation')}</span>
                                 <Button onClick={() => handleMoode('build')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                             </div>
 
@@ -136,7 +137,7 @@ export const DashboardPage = () => {
 
                                 <div className='dashboard_guests'>
                                     <div className='invitation_header_dash'>
-                                        <span style={{ fontWeight: 600 }}>Gestión de invitados</span>
+                                        <span style={{ fontWeight: 600 }}>{t('dashboard.card_guests')}</span>
                                         <Button onClick={() => handleMoode('guests')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
 
@@ -152,7 +153,7 @@ export const DashboardPage = () => {
 
                                             <div className='two_col_grid'>
                                                 <div className='dash_col'>
-                                                    <span style={{ opacity: '0.4' }}>Confirmados</span>
+                                                    <span style={{ opacity: '0.4' }}>{t('dashboard.stat_confirmed')}</span>
                                                     <div className='dash_row'>
                                                         <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{confirmed}</span>
                                                         <LuCalendarCheck2 size={28} style={{ color: '#BFBFBF' }} />
@@ -160,7 +161,7 @@ export const DashboardPage = () => {
                                                 </div>
 
                                                 <div className='dash_col'>
-                                                    <span style={{ opacity: '0.4' }}>Esperando</span>
+                                                    <span style={{ opacity: '0.4' }}>{t('dashboard.stat_waiting')}</span>
                                                     <div className='dash_row'>
                                                         <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{waiting}</span>
                                                         <LuCalendarClock size={28} style={{ color: '#BFBFBF' }} />
@@ -168,7 +169,7 @@ export const DashboardPage = () => {
                                                 </div>
 
                                                 <div className='dash_col'>
-                                                    <span style={{ opacity: '0.4' }}>Disponible</span>
+                                                    <span style={{ opacity: '0.4' }}>{t('dashboard.stat_available')}</span>
                                                     <div className='dash_row'>
                                                         <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{available}</span>
                                                         <LuCalendar size={28} style={{ color: '#BFBFBF' }} />
@@ -186,7 +187,7 @@ export const DashboardPage = () => {
 
                                 <div className='side_events_dash'>
                                     <div className='invitation_header_dash'>
-                                        <span style={{ fontWeight: 600 }}>Side events</span>
+                                        <span style={{ fontWeight: 600 }}>{t('dashboard.card_side_events')}</span>
                                         <Button onClick={() => handleMoode('side')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
                                     <div className="guests_dash_cont" style={{ minHeight: '80px', display:'flex',alignItems:'center',justifyContent:'center', padding:'0'}}>

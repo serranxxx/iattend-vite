@@ -1,5 +1,6 @@
 import { Layout, message } from 'antd'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import './build-invitation.css'
 import { supabase } from '../../../../lib/supabase'
 import { FooterApp } from '../../../Footer/FooterApp'
@@ -14,13 +15,14 @@ import { BookUser, Camera, Feather, Gift, HeartHandshake, MapPinned, MessageSqua
 
 export const BuildPage = () => {
 
+    const { t } = useTranslation()
 
     const size = 16
     const buttons = [
         {
             icon: <Settings size={size}  />,
             action: null,
-            name: 'Generales',
+            name: t('buttons_menu.generals'),
             type: 'generals',
             value: 1,
             position: 0,
@@ -29,7 +31,7 @@ export const BuildPage = () => {
         {
             icon: <ScanHeart size={size} />,
             action: null,
-            name: 'Portada',
+            name: t('buttons_menu.cover'),
             type: 'cover',
             value: 2,
             position: 0,
@@ -38,7 +40,7 @@ export const BuildPage = () => {
         {
             icon: <HeartHandshake size={size} />,
             action: null,
-            name: 'Bienvenida',
+            name: t('buttons_menu.greeting'),
             type: 'greeting',
             value: 3,
             position: 950,
@@ -47,7 +49,7 @@ export const BuildPage = () => {
         {
             icon: <BookUser size={size} />,
             action: null,
-            name: 'Personas',
+            name: t('buttons_menu.family'),
             type: 'family',
             value: 4,
             position: 1375,
@@ -56,7 +58,7 @@ export const BuildPage = () => {
         {
             icon: <Feather size={size} />,
             action: null,
-            name: 'Cita',
+            name: t('buttons_menu.quote'),
             type: 'quote',
             value: 5,
             position: 1750,
@@ -65,7 +67,7 @@ export const BuildPage = () => {
         {
             icon: <ScrollText size={size} />,
             action: null,
-            name: 'Itinerario',
+            name: t('buttons_menu.itinerary'),
             type: 'itinerary',
             value: 6,
             position: 2100,
@@ -74,7 +76,7 @@ export const BuildPage = () => {
         {
             icon: <Shirt size={size} />,
             action: null,
-            name: 'Dresscode',
+            name: t('buttons_menu.dresscode'),
             type: 'dresscode',
             value: 7,
             position: 2750,
@@ -83,7 +85,7 @@ export const BuildPage = () => {
         {
             icon: <Gift size={size} />,
             action: null,
-            name: 'Regalos',
+            name: t('buttons_menu.gifts'),
             type: 'gifts',
             value: 8,
             position: 3050,
@@ -92,7 +94,7 @@ export const BuildPage = () => {
         {
             icon: <MapPinned size={size} />,
             action: null,
-            name: 'Destinos',
+            name: t('buttons_menu.destinations'),
             type: 'destinations',
             value: 9,
             position: 2750,
@@ -101,7 +103,7 @@ export const BuildPage = () => {
         {
             icon: <MessageSquareHeart size={size} />,
             action: null,
-            name: 'Avisos',
+            name: t('buttons_menu.notices'),
             type: 'notices',
             value: 10,
             position: 3550,
@@ -110,7 +112,7 @@ export const BuildPage = () => {
         {
             icon: <Camera size={size} />,
             action: null,
-            name: 'Galería',
+            name: t('buttons_menu.gallery'),
             type: 'gallery',
             value: 11,
             position: 4500,
@@ -186,7 +188,7 @@ export const BuildPage = () => {
                 { id, data: savedInvitation }
             );
 
-            messageApi.info('Cambios escritos')
+            messageApi.info(t('buttons_menu.msg_written'))
             setSaved(true)
 
         } catch (error) {
@@ -238,7 +240,7 @@ export const BuildPage = () => {
         if (error) {
             console.error('Error actualizando:', error)
         } else {
-            messageApi.success('Cambios guardados')
+            messageApi.success(t('buttons_menu.msg_saved'))
             setSaved(true)
 
         }

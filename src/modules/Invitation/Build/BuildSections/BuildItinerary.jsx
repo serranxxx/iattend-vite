@@ -1,4 +1,5 @@
 import { Button, Drawer, Dropdown, Input, InputNumber, Row, Switch, TimePicker, Tooltip, } from 'antd'
+import { useTranslation } from 'react-i18next'
 import React, { useEffect, useState, useRef, } from 'react'
 import dayjs from 'dayjs';
 import { LuArrowUpRight, LuBadgeHelp, LuImage, LuX, } from 'react-icons/lu';
@@ -17,6 +18,7 @@ import { AddressAutocomplete } from '../../../SideEvents/AddressAutocomplete';
 
 export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSaved, }) => {
 
+    const { t } = useTranslation()
 
     const instanciasContainer = useRef(null);
     const [currentItem, setCurrentItem] = useState(null)
@@ -46,7 +48,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                 object: [
                     ...prevInvitation.itinerary.object,
                     {
-                        name: "Nuevo momento",
+                        name: t('build_itinerary.btn_new_moment'),
                         time: "00:00 am",
                         subtext: " ",
                         address: null,
@@ -413,7 +415,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
             itinerary: {
                 ...prevInvitation.itinerary,
                 object: prevInvitation.itinerary.object.map(obj => {
-                    if (obj.id === objectId) return { ...obj, subtext: obj.subtext ? null : "Descripción" };
+                    if (obj.id === objectId) return { ...obj, subtext: obj.subtext ? null : t('build_itinerary.default_description') };
                     return obj;
                 })
             }
@@ -572,8 +574,8 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <span><b>Información general</b></span>
-                    <span className='gc-content-label'>Imagen de fondo</span>
+                    <span><b>{t('build_itinerary.section_info')}</b></span>
+                    <span className='gc-content-label'>{t('build_itinerary.label_bg_image')}</span>
                     <div style={{
                         width: '100%', height: '180px', border: '1px solid #CCC',
                         borderRadius: '12px', overflow: 'hidden', position: 'relative',
@@ -591,7 +593,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                 <div style={{ display: 'flex', gap: '16px' }}>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span className='gc-content-label'>Hora</span>
+                            <span className='gc-content-label'>{t('build_itinerary.label_time')}</span>
                             <Switch onChange={() => handleTime(item.id)} checked={!!item.time} size='small' style={{ backgroundColor: item.time ? '#1777FF' : '#AAA', border: 'none' }} />
                         </div>
                         <TimePicker
@@ -604,7 +606,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span className='gc-content-label'>Descripción</span>
+                            <span className='gc-content-label'>{t('build_itinerary.label_description')}</span>
                             <Switch onChange={() => handleSubname(item.id)} checked={!!item.subtext} size='small' style={{ backgroundColor: item.subtext ? '#1777FF' : '#AAA', border: 'none' }} />
                         </div>
                         <Input
@@ -618,54 +620,54 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span><b>Dirección</b></span>
+                        <span><b>{t('build_itinerary.section_address')}</b></span>
                         <Switch size='small' checked={!!item.address} onChange={() => handleAdress(item.id)} />
                     </div>
                     {item.address && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <AddressAutocomplete
                                 className='gc-input-text'
-                                placeholder='Buscar dirección...'
+                                placeholder={t('build_itinerary.placeholder_search')}
                                 onSelect={(addr) => onAddressAutoFill(item.id, addr)}
                             />
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>Calle</span>
+                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_street')}</span>
                                     <Input className='gc-input-text' onChange={(e) => onCalleChange(item.id, e.target.value)} value={item.address?.street || ''} />
                                 </div>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>Número</span>
+                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_number')}</span>
                                     <InputNumber className='gc-input-text' onChange={(e) => onNumeroChange(item.id, e)} value={item.address?.number || ''} style={{ width: '100%' }} />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>Colonia</span>
+                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_neighborhood')}</span>
                                     <Input className='gc-input-text' onChange={(e) => onColoniaChange(item.id, e.target.value)} value={item.address?.neighborhood || ''} />
                                 </div>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>Código Postal</span>
+                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_zip')}</span>
                                     <InputNumber className='gc-input-text' onChange={(e) => onCPChange(item.id, e)} value={item.address?.zip || ''} style={{ width: '100%' }} />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>Estado</span>
+                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_state')}</span>
                                     <Input className='gc-input-text' onChange={(e) => onEstadoChange(item.id, e.target.value)} value={item.address?.state || ''} />
                                 </div>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>Ciudad</span>
+                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_city')}</span>
                                     <Input className='gc-input-text' onChange={(e) => onCiudadChange(item.id, e.target.value)} value={item.address?.city || ''} />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>País</span>
+                                    <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_country')}</span>
                                     <Input className='gc-input-text' onChange={(e) => onPaisChange(item.id, e.target.value)} value={item.address?.country || ''} />
                                 </div>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <span className='gc-content-label' style={{ opacity: 0.5 }}>URL Maps</span>
+                                        <span className='gc-content-label' style={{ opacity: 0.5 }}>{t('build_itinerary.label_maps_url')}</span>
                                         <LuBadgeHelp size={15} onClick={() => handleHowTo('maps')} style={{ color: 'var(--brand-color-500)', cursor: 'pointer' }} />
                                     </div>
                                     <Input className='gc-input-text' onChange={(e) => onUrlChange(item.id, e.target.value)} value={item.address?.url || ''} />
@@ -682,7 +684,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                         className='primarybutton'
                         style={{ width: '100%' }}
                     >
-                        Agregar instancias
+                        {t('build_itinerary.btn_add_instances')}
                     </Button>
                 ) : (
                     <Button
@@ -691,7 +693,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                         className='primarybutton--active'
                         style={{ width: '100%' }}
                     >
-                        Ver instancias ({item.moments.length})
+                        {t('build_itinerary.btn_view_instances', { count: item.moments.length })}
                     </Button>
                 )}
             </div>
@@ -703,8 +705,8 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ebebeb', paddingBottom: '12px' }}>
-                    <span><b>Instancias</b></span>
-                    <Button onClick={() => addNewSubitem(item)} className='primarybutton--active' style={{ maxHeight: '32px', fontSize: '12px' }} icon={<IoMdAdd />}>Nueva</Button>
+                    <span><b>{t('build_itinerary.section_instances')}</b></span>
+                    <Button onClick={() => addNewSubitem(item)} className='primarybutton--active' style={{ maxHeight: '32px', fontSize: '12px' }} icon={<IoMdAdd />}>{t('build_itinerary.btn_new_instance')}</Button>
                 </div>
                 {item.moments.map((subitem, index) => (
                     <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -712,10 +714,10 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                         <div className='build-generals-simple-column instancia-container' style={{ width: '100%' }}>
                             <div style={{ display: 'flex', gap: '12px', alignSelf: 'stretch' }}>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <span className='gc-content-label'>Nombre</span>
+                                    <span className='gc-content-label'>{t('build_itinerary.label_name')}</span>
                                     <Input
                                         className='gc-input-text'
-                                        placeholder='Instancia'
+                                        placeholder={t('build_itinerary.placeholder_instance')}
                                         value={subitem.name}
                                         style={{ fontSize: '12px' }}
                                         onChange={(e) => onSubNameChange(item.id, index, e.target.value)}
@@ -728,7 +730,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                             checked={!!subitem.time}
                                             size='small'
                                         />
-                                        <span className='gc-content-label'>Hora</span>
+                                        <span className='gc-content-label'>{t('build_itinerary.label_time')}</span>
                                     </div>
                                     <TimePicker
                                         disabled={!subitem.time}
@@ -742,10 +744,10 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                 </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
-                                <span className='gc-content-label'>Descripción</span>
+                                <span className='gc-content-label'>{t('build_itinerary.label_description')}</span>
                                 <Input.TextArea
                                     className='gc-input-text'
-                                    placeholder='¿De qué trata tu instancia?'
+                                    placeholder={t('build_itinerary.placeholder_instance_desc')}
                                     autoSize={{ minRows: 3, maxRows: 4 }}
                                     style={{ borderRadius: '12px', fontSize: '12px' }}
                                     value={subitem.description}
@@ -753,7 +755,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                 />
                                 <div style={{ marginTop: '5px', display: 'flex', justifyContent: 'center' }}>
                                     <Button style={{ opacity: 0.5 }} className='secondarybutton' onClick={() => removeSubitem(item.id, index)} icon={<RiDeleteBack2Line size={16} />}>
-                                        Borrar instancia
+                                        {t('build_itinerary.btn_delete_instance')}
                                     </Button>
                                 </div>
                             </div>
@@ -774,13 +776,13 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
                             <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
                                 <div className='general-cards-single-row'>
-                                    <span className={'module--title'} style={{ width: 'auto' }}>Itinerario</span>
+                                    <span className={'module--title'} style={{ width: 'auto' }}>{t('build_itinerary.title')}</span>
                                 </div>
                                 <BuildMenu invitation={invitation} label={'itinerary'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
                             </div>
 
                             <div className='build-generals-simple-column'>
-                                <span className='gc-content-label'>Título</span>
+                                <span className='gc-content-label'>{t('build_itinerary.label_title')}</span>
                                 <Input
                                     onChange={onChangeTitle}
                                     value={invitation.itinerary.title}
@@ -796,7 +798,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                     onClick={handleNewItem}
                                     className='primarybutton--active'
                                 >
-                                    Nuevo momento
+                                    {t('build_itinerary.btn_new_moment')}
                                 </Button>
                             }
 
@@ -841,7 +843,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                                                                         alignSelf: 'stretch', paddingRight: '20px'
                                                                     }}>
-                                                                        <Tooltip title="Eliminar momento" color='var(--error-color)'>
+                                                                        <Tooltip title={t('build_itinerary.tooltip_delete')} color='var(--error-color)'>
                                                                             <Button
                                                                                 className='primarybutton'
                                                                                 onClick={() => removeObjectById(item.id)}
@@ -849,7 +851,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                             />
                                                                         </Tooltip>
 
-                                                                        <Tooltip title="Editar icono">
+                                                                        <Tooltip title={t('build_itinerary.tooltip_edit_icon')}>
                                                                             <Dropdown
                                                                                 popupRender={() => (
                                                                                     <Row className='gc-icons-modal-container'>
@@ -885,9 +887,9 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
                                                                             <div className='single_col' style={{ flex: 1, width: 'auto', gap: '12px' }}>
 
-                                                                                <span><b>Información general</b></span>
+                                                                                <span><b>{t('build_itinerary.section_info')}</b></span>
                                                                                 <div className='single_row' style={{ alignSelf: 'stretch', justifyContent: 'space-between' }}>
-                                                                                    <span className='gc-content-label'>Imagen de fondo</span>
+                                                                                    <span className='gc-content-label'>{t('build_itinerary.label_bg_image')}</span>
                                                                                 </div>
 
                                                                                 <div style={{
@@ -907,7 +909,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                     <div className='build-generals-simple-column' style={{ gap: '16px', width: '100%', flexDirection: 'row' }}>
                                                                                         <div className='build-generals-simple-column'>
                                                                                             <div className='general-cards-single-row' style={{ flex: 1, justifyContent: 'space-between', width: '100%' }}>
-                                                                                                <span className='gc-content-label'>Hora</span>
+                                                                                                <span className='gc-content-label'>{t('build_itinerary.label_time')}</span>
                                                                                                 <Switch
                                                                                                     onChange={() => handleTime(item.id)}
                                                                                                     checked={item.time ? true : false}
@@ -925,7 +927,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                         </div>
                                                                                         <div className='build-generals-simple-column'>
                                                                                             <div className='general-cards-single-row' style={{ flex: 1, justifyContent: 'space-between', width: '100%' }}>
-                                                                                                <span className='gc-content-label'>Descripción</span>
+                                                                                                <span className='gc-content-label'>{t('build_itinerary.label_description')}</span>
                                                                                                 <Switch
                                                                                                     onChange={() => handleSubname(item.id)}
                                                                                                     checked={item.subtext ? true : false}
@@ -946,7 +948,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
                                                                             <div className='build-component-elements' style={{ flex: 1, gap: '8px' }}>
                                                                                 <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
-                                                                                    <span><b>Dirección</b></span>
+                                                                                    <span><b>{t('build_itinerary.section_address')}</b></span>
                                                                                     <Switch size='small' checked={item.address ? true : false} onChange={() => handleAdress(item.id)} />
                                                                                 </div>
 
@@ -954,47 +956,47 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                     <>
                                                                                         <AddressAutocomplete
                                                                                             className='gc-input-text'
-                                                                                            placeholder='Buscar dirección...'
+                                                                                            placeholder={t('build_itinerary.placeholder_search')}
                                                                                             onSelect={(addr) => onAddressAutoFill(item.id, addr)}
                                                                                         />
                                                                                         <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>Calle</span>
+                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_street')}</span>
                                                                                                 <Input className='gc-input-text' onChange={(e) => onCalleChange(item.id, e.target.value)} value={item.address ? item.address.street : ''} />
                                                                                             </div>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>Número</span>
+                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_number')}</span>
                                                                                                 <InputNumber className='gc-input-text' onChange={(e) => onNumeroChange(item.id, e)} value={item.address ? item.address.number : ''} />
                                                                                             </div>
                                                                                         </div>
                                                                                         <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>Colonia</span>
+                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_neighborhood')}</span>
                                                                                                 <Input className='gc-input-text' onChange={(e) => onColoniaChange(item.id, e.target.value)} value={item.address ? item.address.neighborhood : ''} />
                                                                                             </div>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>Código Postal</span>
+                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_zip')}</span>
                                                                                                 <InputNumber className='gc-input-text' onChange={(e) => onCPChange(item.id, e)} value={item.address ? item.address.zip : ''} />
                                                                                             </div>
                                                                                         </div>
                                                                                         <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>Estado</span>
+                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_state')}</span>
                                                                                                 <Input className='gc-input-text' onChange={(e) => onEstadoChange(item.id, e.target.value)} value={item.address ? item.address.state : ''} />
                                                                                             </div>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>Ciudad</span>
+                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_city')}</span>
                                                                                                 <Input className='gc-input-text' onChange={(e) => onCiudadChange(item.id, e.target.value)} value={item.address ? item.address.city : ''} />
                                                                                             </div>
                                                                                         </div>
                                                                                         <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>País</span>
+                                                                                                <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_country')}</span>
                                                                                                 <Input className='gc-input-text' onChange={(e) => onPaisChange(item.id, e.target.value)} value={item.address ? item.address.country : ''} />
                                                                                             </div>
                                                                                             <div className='build-generals-simple-column' style={{ gap: '4px' }}>
                                                                                                 <div className='general-cards-single-row'>
-                                                                                                    <span className='gc-content-label' style={{ opacity: '0.5' }}>URL Google Maps</span>
+                                                                                                    <span className='gc-content-label' style={{ opacity: '0.5' }}>{t('build_itinerary.label_maps_url_full')}</span>
                                                                                                     <LuBadgeHelp size={15} onClick={() => handleHowTo('maps')} style={{ color: 'var(--brand-color-500)', cursor: 'pointer' }} />
                                                                                                 </div>
                                                                                                 <Input className='gc-input-text' onChange={(e) => onUrlChange(item.id, e.target.value)} value={item.address ? item.address.url : ''} />
@@ -1005,7 +1007,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                             </div>
 
                                                                             {(!item.moments || item.moments.length === 0) &&
-                                                                                <Button onClick={() => handleSubitems(item.id)} icon={<IoMdAdd />} className='primarybutton'>Agregar instancias</Button>
+                                                                                <Button onClick={() => handleSubitems(item.id)} icon={<IoMdAdd />} className='primarybutton'>{t('build_itinerary.btn_add_instances')}</Button>
                                                                             }
                                                                         </div>
 
@@ -1013,7 +1015,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                             <div className='build-component-elements' style={{ maxWidth: '250px', height: '610px', gap: '12px', backgroundColor: '#F5F3F2', padding: '16px', borderRadius: '12px' }}>
                                                                                 <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
                                                                                     <div className='general-cards-single-row'>
-                                                                                        <span><b>Instancias</b></span>
+                                                                                        <span><b>{t('build_itinerary.section_instances')}</b></span>
                                                                                     </div>
                                                                                     {item.moments &&
                                                                                         <Button
@@ -1023,7 +1025,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                             style={{ maxHeight: '32px', fontSize: '12px' }}
                                                                                             icon={<IoMdAdd />}
                                                                                         >
-                                                                                            Nueva
+                                                                                            {t('build_itinerary.btn_new_instance')}
                                                                                         </Button>
                                                                                     }
                                                                                 </div>
@@ -1035,10 +1037,10 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                             <div className='build-generals-simple-column instancia-container'>
                                                                                                 <div className='general-cards-single-row' style={{ alignSelf: 'stretch', gap: '12px' }}>
                                                                                                     <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                        <span className='gc-content-label'>Nombre</span>
+                                                                                                        <span className='gc-content-label'>{t('build_itinerary.label_name')}</span>
                                                                                                         <Input
                                                                                                             className='gc-input-text'
-                                                                                                            placeholder='Instancia'
+                                                                                                            placeholder={t('build_itinerary.placeholder_instance')}
                                                                                                             value={subitem.name}
                                                                                                             style={{ fontSize: '12px' }}
                                                                                                             onChange={(e) => onSubNameChange(item.id, index, e.target.value)}
@@ -1051,7 +1053,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                                                 checked={subitem.time ? true : false}
                                                                                                                 size='small'
                                                                                                             />
-                                                                                                            <span className='gc-content-label'>Hora</span>
+                                                                                                            <span className='gc-content-label'>{t('build_itinerary.label_time')}</span>
                                                                                                         </div>
                                                                                                         <TimePicker
                                                                                                             disabled={subitem.time ? false : true}
@@ -1065,10 +1067,10 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <div className='build-generals-simple-column' style={{ gap: '4px' }}>
-                                                                                                    <span className='gc-content-label'>Descripción</span>
+                                                                                                    <span className='gc-content-label'>{t('build_itinerary.label_description')}</span>
                                                                                                     <Input.TextArea
                                                                                                         className='gc-input-text'
-                                                                                                        placeholder='¿De qué trata tu instancia?'
+                                                                                                        placeholder={t('build_itinerary.placeholder_instance_desc')}
                                                                                                         autoSize={{ minRows: 4, maxRows: 5 }}
                                                                                                         style={{ borderRadius: '12px', fontSize: '12px' }}
                                                                                                         value={subitem.description}
@@ -1081,7 +1083,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                                             onClick={() => removeSubitem(item.id, index)}
                                                                                                             icon={<RiDeleteBack2Line size={16} />}
                                                                                                         >
-                                                                                                            Borrar instancia
+                                                                                                            {t('build_itinerary.btn_delete_instance')}
                                                                                                         </Button>
                                                                                                     </div>
                                                                                                 </div>

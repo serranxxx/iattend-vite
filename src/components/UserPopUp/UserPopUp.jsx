@@ -6,9 +6,11 @@ import { Button } from 'antd';
 import { supabase } from '../../lib/supabase';
 import { NewInvitationDrawer } from '../Create/NewInvitationDrawer';
 import { FaPlus } from 'react-icons/fa6';
+import { useTranslation } from 'react-i18next';
 
 export default function UserPopUp() {
 
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
     const session = JSON.parse(localStorage.getItem("session"));
@@ -95,7 +97,7 @@ export default function UserPopUp() {
                                         <img src='/images/user_icon.png' alt='' style={{ width: '80px', height: '80px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)', borderRadius: '99px' }} />
                                         <Button onClick={logout} icon={<LuLogOut />} style={{
                                             borderRadius: '99px', backgroundColor: '#FFFFFF10'
-                                        }}>Cerrar sesión</Button>
+                                        }}>{t('user_popup.logout')}</Button>
                                     </div>
 
                                     <div className='user_col'>
@@ -105,15 +107,15 @@ export default function UserPopUp() {
 
                                     <div className='user_row'>
                                         <div className='user_col'>
-                                            <span >Eventos creados</span>
-                                            <span className='stat_label'>{totalEvents ?? 'Cargando ...'}</span>
+                                            <span>{t('user_popup.events_created')}</span>
+                                            <span className='stat_label'>{totalEvents ?? t('user_popup.loading')}</span>
                                         </div>
 
                                         <div className='border_r' />
 
                                         <div className='user_col'>
-                                            <span >Invitados confirmados</span>
-                                            <span className='stat_label'>{totalConfirmed ?? 'Cargando ...'}</span>
+                                            <span>{t('user_popup.guests_confirmed')}</span>
+                                            <span className='stat_label'>{totalConfirmed ?? t('user_popup.loading')}</span>
                                         </div>
 
 

@@ -106,94 +106,31 @@ export const PRODUCTS = {
   
 
   export const plan_paperless = [
-    {
-      text: "Invitación Paperless",
-      icon: LuSmartphone,
-    },
-    {
-      text: "Diseño libre",
-      icon: LuPalette,
-    },
-    {
-      text: "Ediciones ilimitadas",
-      icon: LuPencilRuler,
-    },
-    {
-      text: "Evento público",
-      icon: LuPencilRuler,
-    },
-    {
-      text: "Confirmación manual",
-      icon: LuPencilRuler,
-    },
+    { key: "plan_features.digital_invitation", icon: LuSmartphone },
+    { key: "plan_features.free_design", icon: LuPalette },
+    { key: "plan_features.unlimited_edits", icon: LuPencilRuler },
+    { key: "plan_features.public_event", icon: LuPencilRuler },
+    { key: "plan_features.manual_confirmation", icon: LuPencilRuler },
   ];
-  
+
   export const plan_pro = [
-    {
-      text: "Invitación Paperless",
-      icon: LuSmartphone,
-    },
-    {
-      text: "Diseño libre",
-      icon: LuPalette,
-    },
-    {
-      text: "Ediciones ilimitadas",
-      icon: LuPencilRuler,
-    },
-    {
-      text: "Evento público o privado",
-      icon: LuPencilRuler,
-    },
-    {
-      text: "Lista de asistencia",
-      icon: LuClipboardList,
-    },
-    {
-      text: "Mapa de mesas",
-      icon: LuArmchair,
-    },
-    {
-      text: "Envíos automáticos",
-      icon: LuSend,
-    },
-    {
-      text: "Pases digitales",
-      icon: LuTicket,
-    },
-    {
-      text: "3 Side events",
-      icon: LuPartyPopper,
-    },
+    { key: "plan_features.digital_invitation", icon: LuSmartphone },
+    { key: "plan_features.free_design", icon: LuPalette },
+    { key: "plan_features.unlimited_edits", icon: LuPencilRuler },
+    { key: "plan_features.public_private_event", icon: LuPencilRuler },
+    { key: "plan_features.guest_list", icon: LuClipboardList },
+    { key: "plan_features.seating_chart", icon: LuArmchair },
+    { key: "plan_features.auto_sends", icon: LuSend },
+    { key: "plan_features.digital_passes", icon: LuTicket },
+    { key: "plan_features.side_events_3", icon: LuPartyPopper },
   ];
-  
+
   export const plan_lite = [
-    {
-      text: "Invitación Paperless",
-      icon: LuSmartphone,
-    },
-    {
-      text: "Diseño libre",
-      icon: LuPalette,
-    },
-    {
-      text: "Ediciones ilimitadas",
-      icon: LuPencilRuler,
-    },
-    {
-      text: "Evento público o privado",
-      icon: LuPencilRuler,
-    },
-    {
-      text: "Lista de asistencia",
-      icon: LuClipboardList,
-    },
-    {
-      text: "Mapa de mesas",
-      icon: LuArmchair,
-    },
-    {
-      text: "1 Side event",
-      icon: LuPartyPopper,
-    },
+    { key: "plan_features.digital_invitation", icon: LuSmartphone },
+    { key: "plan_features.free_design", icon: LuPalette },
+    { key: "plan_features.unlimited_edits", icon: LuPencilRuler },
+    { key: "plan_features.public_private_event", icon: LuPencilRuler },
+    { key: "plan_features.guest_list", icon: LuClipboardList },
+    { key: "plan_features.seating_chart", icon: LuArmchair },
+    { key: "plan_features.side_events_1", icon: LuPartyPopper },
   ];

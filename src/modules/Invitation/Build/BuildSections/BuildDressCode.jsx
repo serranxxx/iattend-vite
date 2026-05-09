@@ -1,5 +1,6 @@
 import { Button, ColorPicker, Empty, Input, Tooltip, message } from 'antd'
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
 import { LuImage, LuImageOff, LuLink, LuLink2Off } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
@@ -13,6 +14,7 @@ import { Plus } from 'lucide-react';
 
 export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSaved, }) => {
 
+    const { t } = useTranslation()
     const [visible, setVisible] = useState(false)
     const [type, setType] = useState(null)
     const [onGeneration] = useState(false)
@@ -153,7 +155,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
             }))
             setSaved(false)
         } else {
-            message.warning('No puedes agregar más de 5 colores')
+            message.warning(t('build_dresscode.warning_max_colors'))
         }
 
     }
@@ -192,7 +194,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
         setDescriptionValue(invitation.dresscode.description)
         const presetColors = [
             {
-                label: 'Fondo',
+                label: t('build_dresscode.preset_bg'),
                 colors: [
                     darker(invitation.generals.colors.primary, 0.3),
                     darker(invitation.generals.colors.primary, 0.5),
@@ -207,7 +209,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                 ]
             },
             {
-                label: 'Contrastes',
+                label: t('build_dresscode.preset_contrast'),
                 colors: [
                     darker(invitation.generals.colors.secondary, 0.3),
                     darker(invitation.generals.colors.secondary, 0.5),
@@ -222,7 +224,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                 ]
             },
             {
-                label: 'Textos',
+                label: t('build_dresscode.preset_texts'),
                 colors: [
                     darker(invitation.generals.colors.accent, 0.3),
                     darker(invitation.generals.colors.accent, 0.5),
@@ -237,7 +239,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                 ]
             },
             {
-                label: 'Botones',
+                label: t('build_dresscode.preset_buttons'),
                 colors: [
                     darker(invitation.generals.colors.actions, 0.3),
                     darker(invitation.generals.colors.actions, 0.5),
@@ -279,7 +281,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                         style={{
                                             width: 'auto',
                                         }}
-                                    >Dresscode</span>
+                                    >{t('build_dresscode.title')}</span>
                                 </div>
 
                                 <BuildMenu invitation={invitation} label={'dresscode'} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
@@ -289,17 +291,17 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                             {
                                 invitation.dresscode.active &&
                                 <>
-                                    <span className='gc-content-label'>Título</span>
+                                    <span className='gc-content-label'>{t('build_dresscode.label_title')}</span>
 
                                     <Input
-                                        placeholder='Título'
+                                        placeholder={t('build_dresscode.label_title')}
                                         className='gc-input-text'
                                         onChange={onChangeTitle}
                                         value={invitation.dresscode.title} />
 
-                                    <span className='gc-content-label'>Descripción</span>
+                                    <span className='gc-content-label'>{t('build_dresscode.label_description')}</span>
                                     <Input.TextArea
-                                        placeholder={'Descripción'}
+                                        placeholder={t('build_dresscode.label_description')}
                                         value={descriptionValue}
                                         onChange={onChangeDescription}
                                         autoSize={{ minRows: 3, maxRows: 5 }}
@@ -322,7 +324,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                             width: '100%', justifyContent: 'space-between'
                                         }}>
                                             <span className={'module--title'} style={{ textAlign: 'left' }}
-                                            >Paleta de colores</span>
+                                            >{t('build_dresscode.section_palette')}</span>
 
                                             <Button
                                                 className='primarybutton'
@@ -348,7 +350,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                                                 id='build-cover-date-buttons'
                                                                 onClick={() => onDeleteColorByIndex(index)}
                                                                 icon={<RiDeleteBack2Line size={20} />}
-                                                            >Eliminar</Button>
+                                                            >{t('build_dresscode.btn_delete')}</Button>
 
                                                         </div>
 
@@ -368,12 +370,12 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                             <div className='general-cards-single-row'>
 
                                                 <span className={'module--title'} style={{ width: 'auto' }}
-                                                >URL Pinterest</span>
+                                                >{t('build_dresscode.section_pinterest')}</span>
 
                                             </div>
 
                                             {
-                                                <Tooltip title="Ocultar">
+                                                <Tooltip title={t('build_dresscode.tooltip_hide')}>
                                                     <Button onClick={() => {
                                                         setHideLink(!hideLink);
                                                         handleOnLinks(!hideLink);
@@ -382,7 +384,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                                     }} /> : <LuLink2Off style={{
                                                         marginTop: '2px',
                                                     }} />}>
-                                                        {!hideLink ? 'Mostrar' : 'Ocultar'}
+                                                        {!hideLink ? t('build_dresscode.btn_show') : t('build_dresscode.btn_hide')}
                                                     </Button>
                                                 </Tooltip>
 
@@ -414,7 +416,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                             <div className='general-cards-single-row'>
 
                                                 <span className={'module--title'} style={{ width: 'auto', }}
-                                                >Imagenes</span>
+                                                >{t('build_dresscode.section_images')}</span>
 
 
                                             </div>
@@ -422,7 +424,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                             <div style={{
                                                 display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px'
                                             }}>
-                                                <Tooltip title="Ocultar">
+                                                <Tooltip title={t('build_dresscode.tooltip_hide')}>
                                                     <Button onClick={() => {
                                                         setHideImages(!hideImages);
                                                         handleOnImages(!hideImages);
@@ -431,7 +433,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                                     }} /> : <LuImageOff style={{
                                                         marginTop: '2px',
                                                     }} />}>
-                                                        {!hideImages ? 'Mostrar' : 'Ocultar'}
+                                                        {!hideImages ? t('build_dresscode.btn_show') : t('build_dresscode.btn_hide')}
                                                     </Button>
                                                 </Tooltip>
 
@@ -449,7 +451,7 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                                         className='primarybutton--active'
                                                         // onClick={addNewLink}
                                                         icon={<IoMdAdd size={14} />}>
-                                                        Nueva
+                                                        {t('build_dresscode.btn_new')}
                                                     </Button>
                                                 }
                                             </div>

@@ -285,6 +285,32 @@ input:-webkit-autofill:focus {
     transform: rotate(180deg);
 }
 
+.login-lang-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 200;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 16px;
+    border-radius: 99px;
+    border: 1.5px solid var(--brand-color-500);
+    background: #ffffffcc;
+    color: var(--brand-color-500);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.login-lang-toggle:hover {
+    background: var(--brand-color-500);
+    color: #fff;
+}
+
 @keyframes stickersRise {
     0% {
         transform: translateY(180px);
