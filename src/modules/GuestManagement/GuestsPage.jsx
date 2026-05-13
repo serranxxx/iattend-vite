@@ -1,4 +1,4 @@
-import { Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Table, notification } from 'antd'
+import { Badge, Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Table, notification } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Legend, } from 'chart.js';
@@ -24,9 +24,10 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
-import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
+import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { useTranslation } from 'react-i18next';
+import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages';
 
 const { useBreakpoint } = Grid;
 
@@ -100,6 +101,8 @@ export default function GuestsPage() {
     const [owners, setOwners] = useState(null)
     const [url_image, setUrl_image] = useState(null)
     const [plan, setPlan] = useState(null)
+    const [conversations, setConversations] = useState([])
+    const [unAnswer, setUnAnswer] = useState(0)
 
 
     const openColumns = useMemo(() => ([
@@ -1168,6 +1171,11 @@ export default function GuestsPage() {
         }
     }
 
+    const guestsByPhone = useMemo(() =>
+        new Map(rowData.map(g => [String(g.phone_number).replace(/\D/g, ''), g.name]))
+        , [rowData]);
+
+
     const getTickets = async () => {
 
         const { data, error } = await supabase
@@ -1234,6 +1242,7 @@ export default function GuestsPage() {
         setName(data.name)
         setOpenCard(data.type === 'open' ? true : false)
         getGuests()
+        getChats()
         setLocalTags(data.tags)
         setOwners(data.owners)
         setUrl_image(data.url_image)
@@ -1487,6 +1496,16 @@ export default function GuestsPage() {
         // console.log('Créditos actualizados correctamente:', newCredits)
     }
 
+    const getChats = async () => {
+        // const { data, error } = await supabase.rpc('get_conversations_v2');
+        const { data, error } = await supabase.rpc('get_conversations_by_invitation', {
+            p_invitation_id: id
+        });
+        if (error) return
+        setConversations(data)
+        calculateUnAnswer(data)
+    }
+
     const addGuestToTable = async (table, guest) => {
 
         try {
@@ -1572,6 +1591,21 @@ export default function GuestsPage() {
     }, [messagesDispatch]);
 
 
+    const calculateUnAnswer = (conversations) => {
+
+        let count = 0
+        let read = 0
+
+        conversations.forEach(conv => (
+            conv.messages.forEach(message => (
+                !message.read && message.direction === 'inbound' ? count += 1 : read += 1
+                // !message.read ? console.log(message) : null
+            ))
+        ))
+        setUnAnswer(count)
+    }
+
+
     useEffect(() => {
         if (!supabase || !id) return;
 
@@ -1615,6 +1649,43 @@ export default function GuestsPage() {
                         refreshPage();
                         // refreshPage();
                     }
+
+                }
+            )
+
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'whatsapp_incoming_messages'
+                },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+                    getChats();
+                    if (!row.read) {
+                        api.info({
+                            message: <strong>{row.contact_name || row.from_phone}</strong>,
+                            description: row.message_body?.slice(0, 80) || 'Nuevo mensaje',
+                            showProgress: true,
+                            duration: 8,
+                        });
+                    }
+                }
+            )
+
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'whatsapp_freetext_dispatches'
+                },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+                    getChats()
 
                 }
             )
@@ -1899,9 +1970,6 @@ export default function GuestsPage() {
 
 
 
-
-
-
                             <div onClick={() => setOnSending(false)} className={`edit-tickets-container`} style={{
                                 width: onSending ? '190px' : '0px',
                                 borderRadius: '99px',
@@ -1931,29 +1999,18 @@ export default function GuestsPage() {
 
                             <div className='gst-buttons-container' >
 
-
-
-
-                                {/* <Button onClick={() => handleGuests(guestsList)}>Handle Guests</Button> */}
-
-
-
-
-
-
-
-
-                                {/* {
-                                    !screens.xs &&
-                                    <Tooltip title="Novedades">
-                                        <Button className='primarybutton' onClick={() => setOnNotificationCenter(true)} icon={<IoNotifications size={12} />} ></Button>
-                                    </Tooltip>
-
-                                } */}
-
-
-
-
+                                <Dropdown
+                                    trigger={['click']}
+                                    placement='bottomLeft'
+                                    arrow
+                                    popupRender={() => (
+                                        <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
+                                    )}
+                                >
+                                    <Badge count={unAnswer} color='var(--purple-color)' size='large'>
+                                        <Button style={{ minWidth: '32px', }} className='primarybutton' icon={<MessageCircle size={12} />} />
+                                    </Badge>
+                                </Dropdown>
 
                                 {
                                     !screens.xs &&
@@ -2277,7 +2334,7 @@ export default function GuestsPage() {
                                                     </Button>
                                                 </Dropdown>
 
-                                                 <Button
+                                                <Button
                                                     onClick={() => sethandleTables(true)}
                                                     style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
                                                     icon={<Pin size={14} />} className="primarybutton_transparent">

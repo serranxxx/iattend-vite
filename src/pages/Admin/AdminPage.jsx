@@ -1,4 +1,4 @@
-import { Button, Divider, Dropdown, Input, InputNumber, Layout, Modal, Select, Space, Table, Tabs, message } from 'antd'
+import { Badge, Button, Divider, Dropdown, Input, InputNumber, Layout, Modal, Select, Space, Table, Tabs, message } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import './AdminPanel.css'
 import { supabase } from '../../lib/supabase'
@@ -9,8 +9,9 @@ import { LuArrowUpFromLine, LuArrowUpRight, LuChevronDown, LuCopy, LuLink, LuPlu
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import UserPopUp from '../../components/UserPopUp/UserPopUp'
-import { ArrowUpRight, ChevronDown, Copy, Link2, Plus, SquareChevronDown } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Copy, Link2, MessageCircle, Plus, SquareChevronDown } from 'lucide-react'
 import { IoMdAdd } from 'react-icons/io'
+import { WhatsappMessages } from '../../modules/GuestManagement/WhatsappMessages/WhatsappMessages'
 
 
 export const AdminPage = () => {
@@ -28,6 +29,8 @@ export const AdminPage = () => {
     const [activeKey, setActiveKey] = useState('esperando');
     const [nextEvents, setNextEvents] = useState([])
     const [ownerInputs, setOwnerInputs] = useState({});
+    const [conversations, setConversations] = useState([])
+    const [unAnswer, setUnAnswer] = useState(0)
 
     const copyToClipboard = async (textToCopy) => {
         try {
@@ -106,11 +109,6 @@ export const AdminPage = () => {
 
     }
 
-    useEffect(() => {
-        getInvitationsByDate()
-        getNewInvitations()
-        getNewUsers()
-    }, [])
 
 
     const updateInvitationCredits = async (id) => {
@@ -641,101 +639,198 @@ export const AdminPage = () => {
         }
     };
 
+    const invitationsById = useMemo(() =>
+        new Map((newInvitations ?? []).map(i => [i.id, i]))
+    , [newInvitations]);
+
+    const getChats = async () => {
+        // const { data, error } = await supabase.rpc('get_conversations_v2');
+        const { data, error } = await supabase.rpc('get_conversations_v2');
+        if (error) return
+        setConversations(data)
+        calculateUnAnswer(data)
+        console.log(data)
+    }
+
+    useEffect(() => {
+      console.log(invitationsById ?? "")
+    }, [invitationsById])
+    
+
+    const calculateUnAnswer = (conversations) => {
+
+        let count = 0
+        let read = 0
+
+        conversations.forEach(conv => (
+            conv.messages.forEach(message => (
+                !message.read && message.direction === 'inbound' ? count += 1 : read += 1
+                // !message.read ? console.log(message) : null
+            ))
+        ))
+        setUnAnswer(count)
+    }
+
+    useEffect(() => {
+        if (!supabase) return;
+
+        const channel = supabase
+            .channel(`upload_dynamic_admin`)
+
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'whatsapp_freetext_dispatches'
+                },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+                    getChats()
+                    
+
+                }
+            )
+
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'whatsapp_incoming_messages'
+                },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+                    getChats();
+                    message.info('Nuevo mensaje')
+                }
+            )
+
+        .subscribe((status) => {
+            console.log('sub status:', status);
+        });
+
+    return () => {
+        supabase.removeChannel(channel);
+    };
+}, []);
+
+useEffect(() => {
+    getInvitationsByDate()
+    getNewInvitations()
+    getNewUsers()
+    getChats()
+}, [])
 
 
-    return (
-        <div className='invitations-page-main-container'>
-            {contextHolder}
-            <Layout style={{
-                position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
-                alignItems: 'flex-start', justifyContent: 'flex-start',
-                backgroundColor: 'var(--ft-color)',
-                // maxWidth: '1480px',
-                gap: '24px',
-            }}>
-                <HeaderBuild position={'admin'} />
+
+return (
+    <div className='invitations-page-main-container'>
+        {contextHolder}
+        <Layout style={{
+            position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
+            alignItems: 'flex-start', justifyContent: 'flex-start',
+            backgroundColor: 'var(--ft-color)',
+            // maxWidth: '1480px',
+            gap: '24px',
+        }}>
+            <HeaderBuild position={'admin'} />
 
 
-                <UserPopUp />
-                <div className='user-table-container' style={{marginTop:'24px'}}>
-                    <Tabs
-                        style={{ width: '100%', }}
-                        type="card"
-                        activeKey={activeKey}
-                        onChange={setActiveKey}
-                        items={items}
-                        tabBarExtraContent={
-                            <div className='title-new-user-container'>
+            <UserPopUp />
+            <div className='user-table-container' style={{ marginTop: '24px' }}>
+                <Tabs
+                    style={{ width: '100%', }}
+                    type="card"
+                    activeKey={activeKey}
+                    onChange={setActiveKey}
+                    items={items}
+                    tabBarExtraContent={
+                        <div className='title-new-user-container'>
 
-                                <Input placeholder='Búscar...' value={filterName} onChange={(e) => setFilterName(e.target.value)} style={{ flex: 1, borderRadius: '99px', minWidth: '400px' }} />
-                                <Dropdown
-                                    arrow
-                                    trigger={['click']}
-                                    popupRender={() => (
-                                        <div style={{
-                                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            backgroundColor: '#FFF', borderRadius: '16px', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)',
-                                            boxSizing: 'border-box', padding: '12px'
-                                        }}>
-                                            <CreateAccount refreshData={refreshData} setVisible={setVisible} setUserData={setUserData} />
-                                        </div>
-                                    )}
-                                >
-                                    <Button className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<LuUserPlus size={16} />}>Nuevo usuario</Button>
-                                </Dropdown>
+                            <Input placeholder='Búscar...' value={filterName} onChange={(e) => setFilterName(e.target.value)} style={{ flex: 1, borderRadius: '99px', minWidth: '400px' }} />
+                            <Dropdown
+                                trigger={['click']}
+                                placement='bottomLeft'
+                                arrow
+                                popupRender={() => (
+                                    <WhatsappMessages conversations={conversations} isAdmin={true} invitationsById={invitationsById} />
+                                )}
+                            >
+                                <Badge count={unAnswer} color='var(--purple-color)' size='large'>
+                                    <Button style={{ minWidth: '32px', }} className='primarybutton' icon={<MessageCircle size={12} />} />
+                                </Badge>
+                            </Dropdown>
+                            <Dropdown
+                                arrow
+                                trigger={['click']}
+                                popupRender={() => (
+                                    <div style={{
+                                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        backgroundColor: '#FFF', borderRadius: '16px', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)',
+                                        boxSizing: 'border-box', padding: '12px'
+                                    }}>
+                                        <CreateAccount refreshData={refreshData} setVisible={setVisible} setUserData={setUserData} />
+                                    </div>
+                                )}
+                            >
+                                <Button className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<LuUserPlus size={16} />}>Nuevo usuario</Button>
+                            </Dropdown>
 
-                            </div>
-                        }
-                    />
+                        </div>
+                    }
+                />
 
 
 
 
 
+            </div>
+
+            <Modal
+                // centered // Esta propiedad centra el modal verticalmente
+                footer={null} // Elimina el footer si no necesitas botones adicionales
+                open={visible && userData}
+                onOk={() => setVisible(false)}
+                onCancel={() => setVisible(false)}
+                title="Nuevo usuario agregado exitosamente"
+                width={400}
+                styles={{
+                    container: {
+                        borderRadius: '24px',
+                        padding: '32px',
+                    },
+                    header: {
+                        borderBottom: 'none',
+                        padding: 0,
+                    },
+                    body: {
+                        padding: 0,
+                    }
+                }}
+
+            >
+                <div className='new_user_col' style={{ alignSelf: 'stretch', }}>
+                    <span>{userData?.email ?? "----"}</span>
+                    <div className='new_user_col' style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'space-between' }}>
+                        <span>{userData?.pass ?? "*******"}</span>
+                        <Button onClick={() => copyToClipboard(userData.password ?? "")} icon={<LuCopy />}>Copiar contraseña</Button>
+                    </div>
                 </div>
 
-                <Modal
-                    // centered // Esta propiedad centra el modal verticalmente
-                    footer={null} // Elimina el footer si no necesitas botones adicionales
-                    open={visible && userData}
-                    onOk={() => setVisible(false)}
-                    onCancel={() => setVisible(false)}
-                    title="Nuevo usuario agregado exitosamente"
-                    width={400}
-                    styles={{
-                        container: {
-                            borderRadius: '24px',
-                            padding: '32px',
-                        },
-                        header: {
-                            borderBottom: 'none',
-                            padding: 0,
-                        },
-                        body: {
-                            padding: 0,
-                        }
-                    }}
+            </Modal>
 
-                >
-                    <div className='new_user_col' style={{ alignSelf: 'stretch', }}>
-                        <span>{userData?.email ?? "----"}</span>
-                        <div className='new_user_col' style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'space-between' }}>
-                            <span>{userData?.pass ?? "*******"}</span>
-                            <Button onClick={() => copyToClipboard(userData.password ?? "")} icon={<LuCopy />}>Copiar contraseña</Button>
-                        </div>
-                    </div>
-
-                </Modal>
-
-            </Layout>
+        </Layout>
 
 
-            <NewInvitationDrawer
-                visible={onNewInvitation} setVisible={setOnNewInvitation} refreshInvitations={refreshData} user={user}
-            />
+        <NewInvitationDrawer
+            visible={onNewInvitation} setVisible={setOnNewInvitation} refreshInvitations={refreshData} user={user}
+        />
 
-        </div>
+    </div>
 
-    )
+)
 
 }

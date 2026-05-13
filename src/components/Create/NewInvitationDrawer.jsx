@@ -27,7 +27,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
     const [dominio, setDominio] = useState(null);
     const [currentPhone, setCurrentPhone] = useState(null)
     const [owners, setOwners] = useState([null, null])
-    // const [isAdm, setIsAdm] = useState(false)
+
 
     const steps = [
         {
@@ -136,7 +136,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
     //         })
     //         message.success('Invitación creada')
     //         handleClose()
-    //         if (refreshInvitations) refreshInvitations()
+           
     //     } catch (err) {
     //         message.error('Error al crear la invitación', err)
     //     } finally {
@@ -145,10 +145,6 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
     // }
 
 
-
-    // useEffect(() => {
-    //     setIsAdm(isAdmin(user?.user_id))
-    // }, [user])
 
 
 
@@ -168,17 +164,17 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                 }}
                 extra={
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        {/* {
-                            isAdm && <Button
+
+                        {/* <Button
                             type='primary'
                             disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
                             loading={freeLoading}
                             onClick={handleFree}
-                            style={{ fontWeight: 700, borderRadius:'99px' }}
+                            style={{ fontWeight: 700, borderRadius: '99px' }}
                         >
                             Crear gratis
-                        </Button>
-                        } */}
+                        </Button> */}
+
                         <Button
                             disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
                             icon={<FaPlus />}
