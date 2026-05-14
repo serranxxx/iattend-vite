@@ -91,51 +91,231 @@
       "Guest Management"
     ],
     "items": [
-      { "type": "General Settings", "bold": "Unlimited changes", "text": "Enjoy unlimited changes with no restrictions." },
-      { "type": "General Settings", "bold": "Edit whenever you want", "text": "Make edits at any time." },
-      { "type": "General Settings", "bold": "Choose your font", "text": "Select the typography that best reflects your event's essence." },
-      { "type": "General Settings", "bold": "Change the invitation color", "text": "Adjust your invitation's colors to perfectly match your event's theme." },
-      { "type": "General Settings", "bold": "Choose a color palette that fits your event", "text": "Select a custom color palette to make your invitation stand out." },
-      { "type": "General Settings", "bold": "Choose an automatic color palette", "text": "Let the algorithm pick an automatic color palette so everything looks perfect." },
-      { "type": "General Settings", "bold": "Change the order of the invitation", "text": "Rearrange the invitation modules to present them in your preferred order." },
-      { "type": "Cover", "bold": "Customize the title to your liking", "text": "Adjust the title to your preference at any time." },
-      { "type": "Cover", "bold": "Organize and arrange elements", "text": "Place elements where you prefer, creating a unique and personalized invitation." },
-      { "type": "Cover", "bold": "Easily update the cover photo", "text": "Change the cover image with just a few clicks, adapting it to your event's theme." },
-      { "type": "Cover", "bold": "Choose backgrounds to your liking", "text": "Opt for solid colors or gradient backgrounds that perfectly adapt to your invitation's style." },
-      { "type": "Cover", "bold": "Select the ideal typography", "text": "Choose the font that best suits your event's personality." },
-      { "type": "Cover", "bold": "Adjust text details", "text": "Modify the size, color, opacity and weight of texts to give your invitation the perfect touch." },
-      { "type": "Cover", "bold": "Reposition the date as needed", "text": "Change the date's position in the invitation to harmoniously integrate it into your design." },
-      { "type": "Cover", "bold": "Hide the date if you prefer", "text": "If desired, you can hide the date for a cleaner design or for events without a specific date." },
-      { "type": "Messages", "bold": "Write a welcome message for your guests", "text": "Greet your guests with a personalized message that reflects your event's essence." },
-      { "type": "Messages", "bold": "Highlight key people at the event", "text": "Recognize the important people who will make your event special." },
-      { "type": "Messages", "bold": "Include a meaningful or inspiring quote", "text": "Add a quote that resonates with the occasion and inspires your guests." },
-      { "type": "Messages", "bold": "Post important event-related notices", "text": "Keep your guests informed with key announcements for the event." },
-      { "type": "Itinerary", "bold": "Add the event's special moments", "text": "Highlight the most important and exciting moments of your event." },
-      { "type": "Itinerary", "bold": "Add a name, a time and a place", "text": "Provide key details such as the event name, time and location." },
-      { "type": "Itinerary", "bold": "Add locations, maps and Google Maps links", "text": "Help your guests arrive easily with maps and direct links to Google Maps." },
-      { "type": "Itinerary", "bold": "Share the local weather", "text": "Keep your guests informed about the weather so they can prepare accordingly." },
-      { "type": "Itinerary", "bold": "Create instances — key events within your moment", "text": "Divide the event into specific instances, highlighting key activities." },
-      { "type": "Itinerary", "bold": "Share the menu", "text": "Delight your guests by sharing the menu they will enjoy at the event." },
-      { "type": "Itinerary", "bold": "Share an album or playlist from Spotify", "text": "Set the mood by sharing a special playlist or album from Spotify." },
-      { "type": "Dress Code", "bold": "Share the dress code description", "text": "Inform your guests about the appropriate dress code for the event." },
-      { "type": "Dress Code", "bold": "Select a color palette to share with your guests", "text": "Guide your guests with a suggested color palette for the event." },
-      { "type": "Dress Code", "bold": "Share reference photos", "text": "Provide visual examples to inspire your guests in their clothing choices." },
-      { "type": "Dress Code", "bold": "Share direct links to Pinterest, Instagram, etc.", "text": "Offer additional inspiration with links to platforms like Pinterest or Instagram." },
-      { "type": "Gift Registry", "bold": "Share a description about event gifts", "text": "Inform your guests about gift options or contributions for the event." },
-      { "type": "Gift Registry", "bold": "Add gift cards", "text": "Provide the option to receive gift cards for guests to contribute conveniently." },
-      { "type": "Gift Registry", "bold": "Add debit cards", "text": "Allow your guests to make contributions using debit cards safely and quickly." },
-      { "type": "Gallery", "bold": "Share up to 10 related images", "text": "Upload and share up to 10 images that capture the essence of your event." },
-      { "type": "Gallery", "bold": "Edit them whenever you want", "text": "Make changes to images at any time to keep your gallery updated." },
-      { "type": "Gallery", "bold": "Arrange them as you like", "text": "Organize images in the order you prefer, creating a visually appealing presentation." },
-      { "type": "Guest Management", "bold": "Share your invitation", "text": "Easily distribute your digital invitation with just one click." },
-      { "type": "Guest Management", "bold": "Guest management", "text": "Add, edit or delete guests easily from your control panel." },
-      { "type": "Guest Management", "bold": "Visibility control", "text": "Decide who can see your invitation, ensuring your desired privacy." },
-      { "type": "Guest Management", "bold": "Real-time confirmations", "text": "Receive attendance confirmations instantly to stay up to date." },
-      { "type": "Guest Management", "bold": "Pass management", "text": "Control the number of passes and guests for your event in a simple way." },
-      { "type": "Guest Management", "bold": "Team collaboration", "text": "Share the guest panel with your team for collaborative management." },
-      { "type": "Guest Management", "bold": "Event privacy", "text": "Protect your event with security codes to ensure only guests can access it." },
-      { "type": "Guest Management", "bold": "Public or private invitations", "text": "Choose whether your invitations will be public or limited to a specific list." },
-      { "type": "Guest Management", "bold": "Attendance confirmation", "text": "Allow guests to confirm their attendance directly from the invitation, facilitating event organization." }
+      {
+        "type": "General Settings",
+        "bold": "Unlimited changes",
+        "text": "Enjoy unlimited changes with no restrictions."
+      },
+      {
+        "type": "General Settings",
+        "bold": "Edit whenever you want",
+        "text": "Make edits at any time."
+      },
+      {
+        "type": "General Settings",
+        "bold": "Choose your font",
+        "text": "Select the typography that best reflects your event's essence."
+      },
+      {
+        "type": "General Settings",
+        "bold": "Change the invitation color",
+        "text": "Adjust your invitation's colors to perfectly match your event's theme."
+      },
+      {
+        "type": "General Settings",
+        "bold": "Choose a color palette that fits your event",
+        "text": "Select a custom color palette to make your invitation stand out."
+      },
+      {
+        "type": "General Settings",
+        "bold": "Choose an automatic color palette",
+        "text": "Let the algorithm pick an automatic color palette so everything looks perfect."
+      },
+      {
+        "type": "General Settings",
+        "bold": "Change the order of the invitation",
+        "text": "Rearrange the invitation modules to present them in your preferred order."
+      },
+      {
+        "type": "Cover",
+        "bold": "Customize the title to your liking",
+        "text": "Adjust the title to your preference at any time."
+      },
+      {
+        "type": "Cover",
+        "bold": "Organize and arrange elements",
+        "text": "Place elements where you prefer, creating a unique and personalized invitation."
+      },
+      {
+        "type": "Cover",
+        "bold": "Easily update the cover photo",
+        "text": "Change the cover image with just a few clicks, adapting it to your event's theme."
+      },
+      {
+        "type": "Cover",
+        "bold": "Choose backgrounds to your liking",
+        "text": "Opt for solid colors or gradient backgrounds that perfectly adapt to your invitation's style."
+      },
+      {
+        "type": "Cover",
+        "bold": "Select the ideal typography",
+        "text": "Choose the font that best suits your event's personality."
+      },
+      {
+        "type": "Cover",
+        "bold": "Adjust text details",
+        "text": "Modify the size, color, opacity and weight of texts to give your invitation the perfect touch."
+      },
+      {
+        "type": "Cover",
+        "bold": "Reposition the date as needed",
+        "text": "Change the date's position in the invitation to harmoniously integrate it into your design."
+      },
+      {
+        "type": "Cover",
+        "bold": "Hide the date if you prefer",
+        "text": "If desired, you can hide the date for a cleaner design or for events without a specific date."
+      },
+      {
+        "type": "Messages",
+        "bold": "Write a welcome message for your guests",
+        "text": "Greet your guests with a personalized message that reflects your event's essence."
+      },
+      {
+        "type": "Messages",
+        "bold": "Highlight key people at the event",
+        "text": "Recognize the important people who will make your event special."
+      },
+      {
+        "type": "Messages",
+        "bold": "Include a meaningful or inspiring quote",
+        "text": "Add a quote that resonates with the occasion and inspires your guests."
+      },
+      {
+        "type": "Messages",
+        "bold": "Post important event-related notices",
+        "text": "Keep your guests informed with key announcements for the event."
+      },
+      {
+        "type": "Itinerary",
+        "bold": "Add the event's special moments",
+        "text": "Highlight the most important and exciting moments of your event."
+      },
+      {
+        "type": "Itinerary",
+        "bold": "Add a name, a time and a place",
+        "text": "Provide key details such as the event name, time and location."
+      },
+      {
+        "type": "Itinerary",
+        "bold": "Add locations, maps and Google Maps links",
+        "text": "Help your guests arrive easily with maps and direct links to Google Maps."
+      },
+      {
+        "type": "Itinerary",
+        "bold": "Share the local weather",
+        "text": "Keep your guests informed about the weather so they can prepare accordingly."
+      },
+      {
+        "type": "Itinerary",
+        "bold": "Create instances — key events within your moment",
+        "text": "Divide the event into specific instances, highlighting key activities."
+      },
+      {
+        "type": "Itinerary",
+        "bold": "Share the menu",
+        "text": "Delight your guests by sharing the menu they will enjoy at the event."
+      },
+      {
+        "type": "Itinerary",
+        "bold": "Share an album or playlist from Spotify",
+        "text": "Set the mood by sharing a special playlist or album from Spotify."
+      },
+      {
+        "type": "Dress Code",
+        "bold": "Share the dress code description",
+        "text": "Inform your guests about the appropriate dress code for the event."
+      },
+      {
+        "type": "Dress Code",
+        "bold": "Select a color palette to share with your guests",
+        "text": "Guide your guests with a suggested color palette for the event."
+      },
+      {
+        "type": "Dress Code",
+        "bold": "Share reference photos",
+        "text": "Provide visual examples to inspire your guests in their clothing choices."
+      },
+      {
+        "type": "Dress Code",
+        "bold": "Share direct links to Pinterest, Instagram, etc.",
+        "text": "Offer additional inspiration with links to platforms like Pinterest or Instagram."
+      },
+      {
+        "type": "Gift Registry",
+        "bold": "Share a description about event gifts",
+        "text": "Inform your guests about gift options or contributions for the event."
+      },
+      {
+        "type": "Gift Registry",
+        "bold": "Add gift cards",
+        "text": "Provide the option to receive gift cards for guests to contribute conveniently."
+      },
+      {
+        "type": "Gift Registry",
+        "bold": "Add debit cards",
+        "text": "Allow your guests to make contributions using debit cards safely and quickly."
+      },
+      {
+        "type": "Gallery",
+        "bold": "Share up to 10 related images",
+        "text": "Upload and share up to 10 images that capture the essence of your event."
+      },
+      {
+        "type": "Gallery",
+        "bold": "Edit them whenever you want",
+        "text": "Make changes to images at any time to keep your gallery updated."
+      },
+      {
+        "type": "Gallery",
+        "bold": "Arrange them as you like",
+        "text": "Organize images in the order you prefer, creating a visually appealing presentation."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Share your invitation",
+        "text": "Easily distribute your digital invitation with just one click."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Guest management",
+        "text": "Add, edit or delete guests easily from your control panel."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Visibility control",
+        "text": "Decide who can see your invitation, ensuring your desired privacy."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Real-time confirmations",
+        "text": "Receive attendance confirmations instantly to stay up to date."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Pass management",
+        "text": "Control the number of passes and guests for your event in a simple way."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Team collaboration",
+        "text": "Share the guest panel with your team for collaborative management."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Event privacy",
+        "text": "Protect your event with security codes to ensure only guests can access it."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Public or private invitations",
+        "text": "Choose whether your invitations will be public or limited to a specific list."
+      },
+      {
+        "type": "Guest Management",
+        "bold": "Attendance confirmation",
+        "text": "Allow guests to confirm their attendance directly from the invitation, facilitating event organization."
+      }
     ]
   },
   "login": {
@@ -165,66 +345,113 @@
     "err_connection": "Connection error with the server"
   },
   "guests": {
-    "col_name": "Name", "col_contact": "Contact", "col_state": "Status",
-    "col_tag": "Tag", "col_table": "Table", "col_priority": "Priority",
-    "col_actions": "Actions", "col_password": "Password",
-    "col_magic_link": "Magic link", "col_category": "Category",
-    "tooltip_open": "Open", "tooltip_copy_password": "Copy password",
+    "col_name": "Name",
+    "col_contact": "Contact",
+    "col_state": "Status",
+    "col_tag": "Tag",
+    "col_table": "Table",
+    "col_priority": "Priority",
+    "col_actions": "Actions",
+    "col_password": "Password",
+    "col_magic_link": "Magic link",
+    "col_category": "Category",
+    "tooltip_open": "Open",
+    "tooltip_copy_password": "Copy password",
     "tooltip_copy_magic_link": "Copy magic link",
-    "state_creado": "To invite", "state_esperando": "Waiting",
-    "state_confirmado": "Confirmed", "state_asistente": "Attendee",
+    "state_creado": "To invite",
+    "state_esperando": "Waiting",
+    "state_confirmado": "Confirmed",
+    "state_asistente": "Attendee",
     "state_rechazado": "Declined",
-    "type_female": "Female", "type_male": "Male",
-    "type_child": "Child", "type_undefined": "Undefined",
-    "priority_a": "Must be there no matter what.", "priority_b": "Very important",
-    "priority_c": "Desirable", "priority_d": "Optional",
-    "msg_processing": "Processing", "msg_sent": "Sent",
-    "msg_delivered": "Delivered", "msg_read": "Seen",
-    "msg_retry": "Retry", "msg_retry_tooltip": "A retry does not consume credits",
+    "type_female": "Female",
+    "type_male": "Male",
+    "type_child": "Child",
+    "type_undefined": "Undefined",
+    "priority_a": "Must be there no matter what.",
+    "priority_b": "Very important",
+    "priority_c": "Desirable",
+    "priority_d": "Optional",
+    "msg_processing": "Processing",
+    "msg_sent": "Sent",
+    "msg_delivered": "Delivered",
+    "msg_read": "Seen",
+    "msg_retry": "Retry",
+    "msg_retry_tooltip": "A retry does not consume credits",
     "msg_waiting": "Waiting",
-    "select_table": "Select table", "table_prefix": "Table",
-    "view_map": "View map", "no_table": "No table", "no_name": "No name",
-    "btn_send": "Send", "tooltip_mark_invited": "Mark as invited",
+    "select_table": "Select table",
+    "table_prefix": "Table",
+    "view_map": "View map",
+    "no_table": "No table",
+    "no_name": "No name",
+    "btn_send": "Send",
+    "tooltip_mark_invited": "Mark as invited",
     "tooltip_national_only": "Only national sends are supported",
     "btn_assign": "Assign",
-    "tab_waiting": "Waiting list", "tab_sent": "Invitation sent",
-    "tab_confirmed": "Attendance confirmed", "tab_rejected": "Won't attend",
+    "tab_waiting": "Waiting list",
+    "tab_sent": "Invitation sent",
+    "tab_confirmed": "Attendance confirmed",
+    "tab_rejected": "Won't attend",
     "search_placeholder": "Search by name or number",
-    "filter_tag": "Tag", "filter_table": "Table",
-    "filter_priority": "Priority", "filter_category": "Category", "filter_side": "Side",
-    "btn_new_guest": "New guest", "btn_new": "New",
-    "btn_downloads": "Downloads", "download_title": "Download list",
-    "download_waiting": "Waiting for response", "download_confirmed": "Confirmed",
+    "filter_tag": "Tag",
+    "filter_table": "Table",
+    "filter_priority": "Priority",
+    "filter_category": "Category",
+    "filter_side": "Side",
+    "btn_new_guest": "New guest",
+    "btn_new": "New",
+    "btn_downloads": "Downloads",
+    "download_title": "Download list",
+    "download_waiting": "Waiting for response",
+    "download_confirmed": "Confirmed",
     "table_map": "Seating map",
-    "btn_public": "Public event", "btn_private": "Private event",
-    "confirm_public_title": "Public Invitation", "confirm_private_title": "Private Invitation",
+    "btn_public": "Public event",
+    "btn_private": "Private event",
+    "confirm_public_title": "Public Invitation",
+    "confirm_private_title": "Private Invitation",
     "confirm_public_desc": "By accepting, your invitation will be private — only your guests will be able to access it.",
     "confirm_private_desc": "By accepting, your invitation will be public — anyone will be able to access it.",
-    "btn_continue": "Continue", "btn_cancel": "Cancel",
-    "btn_scanner": "Pass reader", "scanner_title": "Pass reader",
-    "scanner_subtitle": "Share information", "scanner_user": "User",
-    "scanner_password": "Password", "scanner_link": "Access link",
+    "btn_continue": "Continue",
+    "btn_cancel": "Cancel",
+    "btn_scanner": "Pass reader",
+    "scanner_title": "Pass reader",
+    "scanner_subtitle": "Share information",
+    "scanner_user": "User",
+    "scanner_password": "Password",
+    "scanner_link": "Access link",
     "btn_access_scanner": "Access reader",
-    "control_title": "Control", "control_total": "Total passes",
-    "control_distribution": "Distribution", "control_confirmed": "Confirmed",
-    "control_waiting": "Waiting", "control_available": "Available",
-    "seg_individual": "Individual", "seg_group": "Group",
+    "control_title": "Control",
+    "control_total": "Total passes",
+    "control_distribution": "Distribution",
+    "control_confirmed": "Confirmed",
+    "control_waiting": "Waiting",
+    "control_available": "Available",
+    "seg_individual": "Individual",
+    "seg_group": "Group",
     "my_guests": "My guests",
     "notification_title": "You received a response",
     "notification_confirmed_suffix": "just confirmed their attendance.",
     "notification_rejected_prefix": "Unfortunately",
     "notification_rejected_suffix": "won't be able to attend.",
-    "copied": "Copied", "state_updated": "Status updated",
-    "passes_updated": "Passes updated", "invitation_sent": "Sending invitation",
-    "crud_title_edit": "Edit guest", "crud_title_new": "New guest",
-    "crud_btn_save": "Save", "crud_btn_add": "Add",
+    "copied": "Copied",
+    "state_updated": "Status updated",
+    "passes_updated": "Passes updated",
+    "invitation_sent": "Sending invitation",
+    "crud_title_edit": "Edit guest",
+    "crud_title_new": "New guest",
+    "crud_btn_save": "Save",
+    "crud_btn_add": "Add",
     "crud_section_data": "Guest data",
-    "crud_label_name": "Name", "crud_label_contact": "Contact",
-    "crud_label_tag": "Tag", "crud_label_priority": "Priority",
-    "crud_label_category": "Category", "crud_label_side": "Side",
-    "crud_label_state": "Status", "crud_label_notes": "Notes",
+    "crud_label_name": "Name",
+    "crud_label_contact": "Contact",
+    "crud_label_tag": "Tag",
+    "crud_label_priority": "Priority",
+    "crud_label_category": "Category",
+    "crud_label_side": "Side",
+    "crud_label_state": "Status",
+    "crud_label_notes": "Notes",
     "crud_phone_placeholder": "Phone number",
-    "crud_tag_select": "Select tag", "crud_tag_new": "New tag",
+    "crud_tag_select": "Select tag",
+    "crud_tag_new": "New tag",
     "crud_tag_add": "Add",
     "crud_priority_placeholder": "Guest priority",
     "crud_category_placeholder": "Guest category",
@@ -247,7 +474,12 @@
     "crud_msg_delete_error": "Could not delete guest",
     "crud_msg_companion_local": "Companion removed locally",
     "crud_msg_companion_deleted": "Companion deleted",
-    "crud_msg_companion_error": "Could not delete companion"
+    "crud_msg_companion_error": "Could not delete companion",
+    "whatsapp_inbox_title": "Message inbox",
+    "whatsapp_inbox_info": "When a guest replies to your invitation, the message will appear here. You have 24 hours to reply from when they wrote to you. You can always reply directly from your WhatsApp account.",
+    "whatsapp_inbox_empty": "No messages yet",
+    "whatsapp_inbox_info_1": "When a guest replies to your invitation, the message will appear here. You have 24 hours to reply from when they wrote to you.",
+    "whatsapp_inbox_info_2": "You can always reply directly from your WhatsApp account."
   },
   "custom_link": {
     "copied": "Link copied",

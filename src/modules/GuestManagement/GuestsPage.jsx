@@ -79,6 +79,7 @@ export default function GuestsPage() {
     const [notifications, setNotifications] = useState([])
     const [tables, setTables] = useState([])
     const [onBubble, setOnBubble] = useState(false)
+    const [showMobileMessages, setShowMobileMessages] = useState(false)
     const [onSending, setOnSending] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [hierarchyData, setHierarchyData] = useState([])
@@ -599,8 +600,8 @@ export default function GuestsPage() {
         {
             title: t('guests.col_actions'),
             key: "send",
-            width: plan !== 'pro' ? 190 : 160,
-            minWidth: plan !== 'pro' ? 190 : 160,
+            width: plan !== 'pro' ? 180 : 160,
+            minWidth: plan !== 'pro' ? 180 : 160,
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
                 const { state, table, phone_number } = record;
@@ -1999,18 +2000,7 @@ export default function GuestsPage() {
 
                             <div className='gst-buttons-container' >
 
-                                <Dropdown
-                                    trigger={['click']}
-                                    placement='bottomLeft'
-                                    arrow
-                                    popupRender={() => (
-                                        <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
-                                    )}
-                                >
-                                    <Badge count={unAnswer} color='var(--purple-color)' size='large'>
-                                        <Button style={{ minWidth: '32px', }} className='primarybutton' icon={<MessageCircle size={12} />} />
-                                    </Badge>
-                                </Dropdown>
+
 
                                 {
                                     !screens.xs &&
@@ -2018,7 +2008,7 @@ export default function GuestsPage() {
                                     <Dropdown
                                         placement='bottomRight'
                                         popupRender={() => (
-                                            <div className="items_list_guests" style={{ minWidth: '220px' }}>
+                                            <div className="items_list_guests" style={{ minWidth: plan !== 'pro' ? '210px' : 0 }}>
 
 
                                                 <Dropdown
@@ -2223,6 +2213,29 @@ export default function GuestsPage() {
 
                                 }
 
+                                {
+                                    !screens.xs &&
+
+                                    <Dropdown
+                                        trigger={['click']}
+                                        placement='bottomLeft'
+                                        arrow
+                                        popupRender={() => (
+                                            <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
+                                        )}
+                                    >
+                                        <Badge count={unAnswer} color='var(--purple-color)' size='large'>
+                                            <Button
+                                                disabled={plan !== 'pro'}
+                                                style={{ minWidth: plan !== 'pro' ? '145px' : '32px', justifyContent: plan !== 'pro' ? 'flex-start' : 'center', padding: plan !== 'pro' ? '12px' : undefined }} className={`primarybutton${plan !== 'pro' ? '_transparent' : ''} ${plan !== 'pro' ? 'pro_badge' : ''}`} icon={<MessageCircle size={12} />} >
+                                                {plan !== 'pro' ? 'Mensajes' : ''}
+                                            </Button>
+                                        </Badge>
+                                    </Dropdown>
+                                }
+
+
+
 
                                 {
                                     !screens.xs &&
@@ -2258,207 +2271,223 @@ export default function GuestsPage() {
                             <div style={{ padding: '12px', boxSizing: 'border-box', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <span style={{ fontFamily: 'Poppins', fontSize: '20px', fontWeight: 600 }}>{t('guests.my_guests')}</span>
-                                    <Dropdown
-                                        popupRender={() => (
-                                            <div className="items_list_guests">
+
+                                    <div style={{
+                                        display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'
+                                    }}>
+                                        <Badge count={unAnswer} color='var(--purple-color)' size='large'>
+                                            <Button
+                                                disabled={plan !== 'pro'}
+                                                onClick={() => setShowMobileMessages(v => !v)}
+                                                style={{ minWidth: plan !== 'pro' ? '150px' : '32px', justifyContent: plan !== 'pro' ? 'flex-start' : 'center', padding: plan !== 'pro' ? '12px' : undefined }} className={`primarybutton${plan !== 'pro' ? '_transparent' : ''} ${plan !== 'pro' ? 'pro_badge' : ''}`} icon={<MessageCircle size={12} />} >
+                                                {plan !== 'pro' ? 'Mensajes' : ''}
+                                            </Button>
+                                        </Badge>
+                                        {showMobileMessages && (
+                                            <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} onMarkRead={(phone) => setConversations(prev => prev.map(conv => conv.phone === phone ? { ...conv, messages: conv.messages.map(m => ({ ...m, read: true })) } : conv))} className='whatsapp_mobile' onClose={() => setShowMobileMessages(false)} />
+                                        )}
+                                        <Dropdown
+                                            popupRender={() => (
+                                                <div className="items_list_guests">
 
 
-                                                <Dropdown
-                                                    trigger={["click"]}
-                                                    placement='topRight'
-                                                    popupRender={() => (
-                                                        <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
-                                                            <span className="on-transfer-label">{t('guests.download_title')}</span>
+                                                    <Dropdown
+                                                        trigger={["click"]}
+                                                        placement='topRight'
+                                                        popupRender={() => (
+                                                            <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
+                                                                <span className="on-transfer-label">{t('guests.download_title')}</span>
 
-                                                            <div className="transfer-mesas-cont">
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.tab_waiting')}
-                                                                    </span>
+                                                                <div className="transfer-mesas-cont">
+                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                        <span>
+                                                                            {t('guests.tab_waiting')}
+                                                                        </span>
 
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
+                                                                        <Button
+                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
+                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                            icon={<Download size={14} />} className="primarybutton">
+                                                                        </Button>
 
+                                                                    </div>
+
+                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                        <span>
+                                                                            {t('guests.download_waiting')}
+                                                                        </span>
+
+                                                                        <Button
+                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
+                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                            icon={<Download size={14} />} className="primarybutton">
+                                                                        </Button>
+
+                                                                    </div>
+
+                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                        <span>
+                                                                            {t('guests.download_confirmed')}
+                                                                        </span>
+
+                                                                        <Button
+                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
+                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                            icon={<Download size={14} />} className="primarybutton">
+                                                                        </Button>
+
+                                                                    </div>
+
+                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                                                        <span>
+                                                                            {t('guests.tab_rejected')}
+                                                                        </span>
+
+                                                                        <Button
+                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
+                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                            icon={<Download size={14} />} className="primarybutton">
+                                                                        </Button>
+
+                                                                    </div>
                                                                 </div>
 
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.download_waiting')}
-                                                                    </span>
-
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
-
-                                                                </div>
-
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.download_confirmed')}
-                                                                    </span>
-
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
-
-                                                                </div>
-
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.tab_rejected')}
-                                                                    </span>
-
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
-
-                                                                </div>
                                                             </div>
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                            icon={<Download size={14} />} className="primarybutton_transparent">
+                                                            {t('guests.btn_downloads')}
+                                                        </Button>
+                                                    </Dropdown>
 
-                                                        </div>
-                                                    )}
-                                                >
                                                     <Button
-                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                        icon={<Download size={14} />} className="primarybutton_transparent">
-                                                        {t('guests.btn_downloads')}
+                                                        onClick={() => sethandleTables(true)}
+                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                                                        icon={<Pin size={14} />} className="primarybutton_transparent">
+                                                        Mapa de mesas
                                                     </Button>
-                                                </Dropdown>
-
-                                                <Button
-                                                    onClick={() => sethandleTables(true)}
-                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                    icon={<Pin size={14} />} className="primarybutton_transparent">
-                                                    Mapa de mesas
-                                                </Button>
 
 
-                                                <Popconfirm
-                                                    title={openCard ? t('guests.confirm_public_title') : t('guests.confirm_private_title')}
-                                                    description={openCard ? t('guests.confirm_public_desc') : t('guests.confirm_private_desc')}
-                                                    onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
-                                                    placement="bottomLeft"
-                                                    okText={t('guests.btn_continue')}
-                                                    cancelText={t('guests.btn_cancel')}
-                                                    style={{ width: '400px' }}
-                                                    id="popup-confirm"
-                                                >
-                                                    {
-                                                        openCard ?
-                                                            <Button
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
-                                                                {t('guests.btn_public')}
-                                                            </Button>
-                                                            : <Button
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
-                                                                {t('guests.btn_private')}
-                                                            </Button>
-                                                    }
+                                                    <Popconfirm
+                                                        title={openCard ? t('guests.confirm_public_title') : t('guests.confirm_private_title')}
+                                                        description={openCard ? t('guests.confirm_public_desc') : t('guests.confirm_private_desc')}
+                                                        onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
+                                                        placement="bottomLeft"
+                                                        okText={t('guests.btn_continue')}
+                                                        cancelText={t('guests.btn_cancel')}
+                                                        style={{ width: '400px' }}
+                                                        id="popup-confirm"
+                                                    >
+                                                        {
+                                                            openCard ?
+                                                                <Button
+                                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                    icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
+                                                                    {t('guests.btn_public')}
+                                                                </Button>
+                                                                : <Button
+                                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                                                    icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
+                                                                    {t('guests.btn_private')}
+                                                                </Button>
+                                                        }
 
-                                                </Popconfirm>
+                                                    </Popconfirm>
 
-                                                <Dropdown
-                                                    trigger={['click']}
-                                                    popupRender={() => (
-                                                        <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
-                                                            <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >Lector de pases</span>
-                                                            <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >Compartir información</span>
+                                                    <Dropdown
+                                                        trigger={['click']}
+                                                        popupRender={() => (
+                                                            <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
+                                                                <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >Lector de pases</span>
+                                                                <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >Compartir información</span>
 
-                                                            <div style={{
-                                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
-
-                                                            }}>
                                                                 <div style={{
-                                                                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start', alignSelf: 'stretch',
-                                                                    gap: '24px'
+                                                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
 
                                                                 }}>
                                                                     <div style={{
-                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', alignSelf: 'stretch',
+                                                                        gap: '24px'
 
                                                                     }}>
-                                                                        <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Usuario</span>
-                                                                        <Button
-                                                                            onClick={() => copyToClipboard(String(id).slice(0, 4))}
-                                                                            type='text'
-                                                                            icon={<Copy size={14} />}
-                                                                            style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                        >
-                                                                            {invitation?.generals?.event?.name}
-                                                                        </Button>
-                                                                    </div>
-
-                                                                    <div style={{
-                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
-
-                                                                    }}>
-
                                                                         <div style={{
                                                                             display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
 
                                                                         }}>
-                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Contraseña</span>
+                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Usuario</span>
                                                                             <Button
                                                                                 onClick={() => copyToClipboard(String(id).slice(0, 4))}
                                                                                 type='text'
                                                                                 icon={<Copy size={14} />}
                                                                                 style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
                                                                             >
-                                                                                {String(id).slice(0, 4)}
+                                                                                {invitation?.generals?.event?.name}
                                                                             </Button>
                                                                         </div>
 
+                                                                        <div style={{
+                                                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                        }}>
+
+                                                                            <div style={{
+                                                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                                                            }}>
+                                                                                <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Contraseña</span>
+                                                                                <Button
+                                                                                    onClick={() => copyToClipboard(String(id).slice(0, 4))}
+                                                                                    type='text'
+                                                                                    icon={<Copy size={14} />}
+                                                                                    style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                                >
+                                                                                    {String(id).slice(0, 4)}
+                                                                                </Button>
+                                                                            </div>
+
+                                                                        </div>
                                                                     </div>
+
+                                                                    <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Link de acceso</span>
+                                                                    <Button
+                                                                        onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
+                                                                        type='text'
+                                                                        icon={<Copy size={16} />}
+                                                                        style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                                                    >
+                                                                        https://www.iattend.site/scanner
+                                                                    </Button>
                                                                 </div>
 
-                                                                <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Link de acceso</span>
+
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', borderTop: '1px solid #ebebeb', paddingTop: '12px', boxSizing: 'border-box' }} />
+
                                                                 <Button
-                                                                    onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
-                                                                    type='text'
-                                                                    icon={<Copy size={16} />}
-                                                                    style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                >
-                                                                    https://www.iattend.site/scanner
-                                                                </Button>
+                                                                    icon={<ArrowUpRight size={16} />}
+                                                                    onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
+                                                                    type='primary'
+                                                                >Acceder al lector</Button>
                                                             </div>
+                                                        )}
+                                                    >
+                                                        <Button
 
+                                                            disabled={plan !== 'pro' ? true : false}
+                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                                                            icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
+                                                            Lector de pases
+                                                        </Button>
+                                                    </Dropdown>
+                                                </div>
+                                            )}
+                                        >
+                                            <Button className='primarybutton' icon={<TextAlignJustify size={12} />}>
 
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', borderTop: '1px solid #ebebeb', paddingTop: '12px', boxSizing: 'border-box' }} />
-
-                                                            <Button
-                                                                icon={<ArrowUpRight size={16} />}
-                                                                onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
-                                                                type='primary'
-                                                            >Acceder al lector</Button>
-                                                        </div>
-                                                    )}
-                                                >
-                                                    <Button
-
-                                                        disabled={plan !== 'pro' ? true : false}
-                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                        icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
-                                                        Lector de pases
-                                                    </Button>
-                                                </Dropdown>
-                                            </div>
-                                        )}
-                                    >
-                                        <Button className='primarybutton' icon={<TextAlignJustify size={12} />}>
-
-                                        </Button>
-                                    </Dropdown>
+                                            </Button>
+                                        </Dropdown>
+                                    </div>
                                 </div>
                                 <Input
                                     prefix={<Search size={14} style={{ opacity: 0.4 }} />}

@@ -65,11 +65,12 @@
     content: "PRO";
     position: absolute;
     right: 5%;
-    padding: 2px 12px;
-    background-color: goldenrod;
-    color: #000;
+    padding: 2px 8px;
+    background-color: #20212B;
+    color: #F8F4F9;
+    font-weight: 800;
     border-radius: 99px;
-    z-index: 999;
+    z-index: 99;
 }
 
 .active_cont {

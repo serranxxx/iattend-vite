@@ -12,6 +12,15 @@
     overflow: hidden;
 }
 
+.whatsapp_mobile {
+    position: fixed;
+    bottom: 2.5%;
+    left: 5%;
+    width: 90%;
+    z-index: 1000;
+    height: 70vh;
+}
+
 .messages_main_col {
     gap: 12px;
     display: flex;
@@ -45,9 +54,8 @@
     justify-content: flex-start;
     flex-direction: column;
     align-self: stretch;
+    flex: 1;
     overflow-y: auto;
-    max-height: 80vh;
-    padding: 12px 6px;
     padding: 0px;
     box-sizing: border-box;
 }

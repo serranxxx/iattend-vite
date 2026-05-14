@@ -1,10 +1,10 @@
-import { Button, Drawer, Grid, Steps } from 'antd'
+import { Button, Drawer, Grid, message, Steps } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
 import { supabase } from '../../lib/supabase'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { FaPlus } from 'react-icons/fa6'
-import { fetchPrices, handleCheckoutInvitation, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
+import { fetchPrices, handleCheckoutInvitation, handleCreateFree, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
 import { ChevronsLeft, ChevronsRight, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -120,29 +120,29 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
         }, currentPriceId);
     };
 
-    // const [freeLoading, setFreeLoading] = useState(false)
+    const [freeLoading, setFreeLoading] = useState(false)
 
-    // const handleFree = async () => {
-    //     setFreeLoading(true)
-    //     try {
-    //         await handleCreateFree({
-    //             userId: user.user_id,
-    //             userEmail: user.user_email,
-    //             name: dominio,
-    //             phoneNumber: currentPhone,
-    //             label: currentTemplate,
-    //             plan: currentPlan || 'pro',
-    //             owners: currentTemplate === 'wedding' ? owners : [],
-    //         })
-    //         message.success('Invitación creada')
-    //         handleClose()
+    const handleFree = async () => {
+        setFreeLoading(true)
+        try {
+            await handleCreateFree({
+                userId: user.user_id,
+                userEmail: user.user_email,
+                name: dominio,
+                phoneNumber: currentPhone,
+                label: currentTemplate,
+                plan: currentPlan || 'pro',
+                owners: currentTemplate === 'wedding' ? owners : [],
+            })
+            message.success('Invitación creada')
+            handleClose()
            
-    //     } catch (err) {
-    //         message.error('Error al crear la invitación', err)
-    //     } finally {
-    //         setFreeLoading(false)
-    //     }
-    // }
+        } catch (err) {
+            message.error('Error al crear la invitación', err)
+        } finally {
+            setFreeLoading(false)
+        }
+    }
 
 
 
@@ -165,7 +165,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                 extra={
                     <div style={{ display: 'flex', gap: '8px' }}>
 
-                        {/* <Button
+                        <Button
                             type='primary'
                             disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
                             loading={freeLoading}
@@ -173,7 +173,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                             style={{ fontWeight: 700, borderRadius: '99px' }}
                         >
                             Crear gratis
-                        </Button> */}
+                        </Button>
 
                         <Button
                             disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}

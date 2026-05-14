@@ -91,51 +91,231 @@
       "Administración de invitados"
     ],
     "items": [
-      { "type": "Configuraciones generales", "bold": "Cambios ilimitados", "text": "Disfruta de cambios ilimitados sin restricciones." },
-      { "type": "Configuraciones generales", "bold": "Edita cuando quieras", "text": "Realiza ediciones en cualquier momento." },
-      { "type": "Configuraciones generales", "bold": "Elige el tipo de letra", "text": "Selecciona la tipografía que mejor refleje la esencia de tu evento." },
-      { "type": "Configuraciones generales", "bold": "Cambia el color de la invitación", "text": "Ajusta los colores de tu invitación para que se adapten perfectamente al tema de tu evento." },
-      { "type": "Configuraciones generales", "bold": "Escoge la paleta de colores que se ajuste a tu evento", "text": "Selecciona una paleta de colores personalizada para que tu invitación destaque." },
-      { "type": "Configuraciones generales", "bold": "Escoge una paleta de colores automáticos", "text": "Deja que el algoritmo elija una paleta de colores automática para que todo luzca perfecto." },
-      { "type": "Configuraciones generales", "bold": "Cambia el orden de la invitación", "text": "Reorganiza los módulos de la invitación para que se presenten en el orden que prefieras." },
-      { "type": "Portada", "bold": "Personaliza el título a tu gusto", "text": "Ajusta el título según tu preferencia en cualquier momento." },
-      { "type": "Portada", "bold": "Organiza y acomoda los elementos", "text": "Coloca los elementos donde más te convengan, creando una invitación única y personalizada." },
-      { "type": "Portada", "bold": "Actualiza la foto de portada fácilmente", "text": "Cambia la imagen de portada con solo unos clics, adaptándola a la temática de tu evento." },
-      { "type": "Portada", "bold": "Elige fondos a tu medida", "text": "Opta por colores sólidos o gradientes de fondo que se adapten perfectamente al estilo de tu invitación." },
-      { "type": "Portada", "bold": "Selecciona la tipografía ideal", "text": "Escoge el tipo de letra que mejor se ajuste a la personalidad de tu evento." },
-      { "type": "Portada", "bold": "Ajusta los detalles del texto", "text": "Modifica el tamaño, color, opacidad y grosor de los textos para darle el toque perfecto a tu invitación." },
-      { "type": "Portada", "bold": "Reubica la fecha según tus necesidades", "text": "Cambia la posición de la fecha en la invitación para que se integre de manera armónica en tu diseño." },
-      { "type": "Portada", "bold": "Oculta la fecha si lo prefieres", "text": "Si lo deseas, tienes la opción de ocultar la fecha para mantener un diseño más limpio o para eventos sin fecha específica." },
-      { "type": "Mensajes", "bold": "Escribe un mensaje de bienvenida para tus invitados", "text": "Saluda a tus invitados con un mensaje personalizado que refleje la esencia de tu evento." },
-      { "type": "Mensajes", "bold": "Destaca a las personas clave del evento", "text": "Reconoce a las personas importantes que harán de tu evento algo especial." },
-      { "type": "Mensajes", "bold": "Incluye una cita significativa o inspiradora", "text": "Añade una cita que resuene con la ocasión e inspire a tus invitados." },
-      { "type": "Mensajes", "bold": "Publica avisos importantes relacionados con el evento", "text": "Mantén a tus invitados informados con anuncios clave para el evento." },
-      { "type": "Itinerario", "bold": "Agrega los momentos especiales del evento", "text": "Destaca los momentos más importantes y emocionantes de tu evento." },
-      { "type": "Itinerario", "bold": "Agrega nombre, una hora y un lugar", "text": "Proporciona detalles clave como el nombre del evento, la hora y la ubicación." },
-      { "type": "Itinerario", "bold": "Agrega ubicaciones, mapas y accesos a Google Maps", "text": "Facilita a tus invitados la llegada con mapas y enlaces directos a Google Maps." },
-      { "type": "Itinerario", "bold": "Comparte el clima del lugar", "text": "Mantén a tus invitados informados sobre el clima para que se preparen adecuadamente." },
-      { "type": "Itinerario", "bold": "Crea instancias, eventos importantes que ocurren dentro de tu momento", "text": "Divide el evento en instancias específicas, resaltando actividades clave." },
-      { "type": "Itinerario", "bold": "Comparte el menú", "text": "Deleita a tus invitados compartiendo el menú que disfrutarán en el evento." },
-      { "type": "Itinerario", "bold": "Comparte un álbum o una playlist desde Spotify", "text": "Ambienta el evento compartiendo una playlist o álbum especial desde Spotify." },
-      { "type": "Dress code", "bold": "Comparte la descripción del código de vestimenta", "text": "Informa a tus invitados sobre el código de vestimenta adecuado para el evento." },
-      { "type": "Dress code", "bold": "Selecciona una paleta de colores para compartir con tus invitados", "text": "Guía a tus invitados con una paleta de colores sugerida para el evento." },
-      { "type": "Dress code", "bold": "Comparte fotografías de referencia", "text": "Proporciona ejemplos visuales para inspirar a tus invitados en su elección de vestimenta." },
-      { "type": "Dress code", "bold": "Comparte accesos directos hacia Pinterest, Instagram, etc.", "text": "Ofrece inspiración adicional con enlaces a plataformas como Pinterest o Instagram." },
-      { "type": "Mesa de regalos", "bold": "Comparte una descripción sobre los regalos del evento", "text": "Informa a tus invitados sobre las opciones de regalos o contribuciones para el evento." },
-      { "type": "Mesa de regalos", "bold": "Agrega tarjetas de regalo", "text": "Facilita la opción de recibir tarjetas de regalo para que tus invitados contribuyan de manera conveniente." },
-      { "type": "Mesa de regalos", "bold": "Agrega tarjetas de débito", "text": "Permite a tus invitados hacer aportaciones utilizando tarjetas de débito de manera segura y rápida." },
-      { "type": "Galería", "bold": "Comparte hasta 10 imágenes relacionadas", "text": "Sube y comparte hasta 10 imágenes que capturen la esencia de tu evento." },
-      { "type": "Galería", "bold": "Edítalas cuando quieras", "text": "Realiza cambios en las imágenes en cualquier momento para mantener tu galería actualizada." },
-      { "type": "Galería", "bold": "Acomódalas como gustes", "text": "Organiza las imágenes en el orden que prefieras, creando una presentación visualmente atractiva." },
-      { "type": "Administración de invitados", "bold": "Comparte tu invitación", "text": "Facilita la distribución de tu invitación digital con solo un clic." },
-      { "type": "Administración de invitados", "bold": "Gestión de invitados", "text": "Agrega, edita o elimina invitados fácilmente desde tu panel de control." },
-      { "type": "Administración de invitados", "bold": "Control de visibilidad", "text": "Decide quién puede ver tu invitación, asegurando la privacidad que desees." },
-      { "type": "Administración de invitados", "bold": "Confirmaciones en tiempo real", "text": "Recibe confirmaciones de asistencia al instante para mantenerte al día." },
-      { "type": "Administración de invitados", "bold": "Administración de pases", "text": "Controla el número de pases e invitados para tu evento de manera sencilla." },
-      { "type": "Administración de invitados", "bold": "Colaboración en equipo", "text": "Comparte el panel de invitados con tu equipo para una gestión colaborativa." },
-      { "type": "Administración de invitados", "bold": "Privacidad del evento", "text": "Protege tu evento con códigos de seguridad para garantizar que solo los invitados puedan acceder." },
-      { "type": "Administración de invitados", "bold": "Invitaciones públicas o privadas", "text": "Escoge si tus invitaciones serán públicas o limitadas solo a una lista específica." },
-      { "type": "Administración de invitados", "bold": "Confirmación de asistencia", "text": "Permite que los invitados confirmen su asistencia directamente desde la invitación, facilitando la organización del evento." }
+      {
+        "type": "Configuraciones generales",
+        "bold": "Cambios ilimitados",
+        "text": "Disfruta de cambios ilimitados sin restricciones."
+      },
+      {
+        "type": "Configuraciones generales",
+        "bold": "Edita cuando quieras",
+        "text": "Realiza ediciones en cualquier momento."
+      },
+      {
+        "type": "Configuraciones generales",
+        "bold": "Elige el tipo de letra",
+        "text": "Selecciona la tipografía que mejor refleje la esencia de tu evento."
+      },
+      {
+        "type": "Configuraciones generales",
+        "bold": "Cambia el color de la invitación",
+        "text": "Ajusta los colores de tu invitación para que se adapten perfectamente al tema de tu evento."
+      },
+      {
+        "type": "Configuraciones generales",
+        "bold": "Escoge la paleta de colores que se ajuste a tu evento",
+        "text": "Selecciona una paleta de colores personalizada para que tu invitación destaque."
+      },
+      {
+        "type": "Configuraciones generales",
+        "bold": "Escoge una paleta de colores automáticos",
+        "text": "Deja que el algoritmo elija una paleta de colores automática para que todo luzca perfecto."
+      },
+      {
+        "type": "Configuraciones generales",
+        "bold": "Cambia el orden de la invitación",
+        "text": "Reorganiza los módulos de la invitación para que se presenten en el orden que prefieras."
+      },
+      {
+        "type": "Portada",
+        "bold": "Personaliza el título a tu gusto",
+        "text": "Ajusta el título según tu preferencia en cualquier momento."
+      },
+      {
+        "type": "Portada",
+        "bold": "Organiza y acomoda los elementos",
+        "text": "Coloca los elementos donde más te convengan, creando una invitación única y personalizada."
+      },
+      {
+        "type": "Portada",
+        "bold": "Actualiza la foto de portada fácilmente",
+        "text": "Cambia la imagen de portada con solo unos clics, adaptándola a la temática de tu evento."
+      },
+      {
+        "type": "Portada",
+        "bold": "Elige fondos a tu medida",
+        "text": "Opta por colores sólidos o gradientes de fondo que se adapten perfectamente al estilo de tu invitación."
+      },
+      {
+        "type": "Portada",
+        "bold": "Selecciona la tipografía ideal",
+        "text": "Escoge el tipo de letra que mejor se ajuste a la personalidad de tu evento."
+      },
+      {
+        "type": "Portada",
+        "bold": "Ajusta los detalles del texto",
+        "text": "Modifica el tamaño, color, opacidad y grosor de los textos para darle el toque perfecto a tu invitación."
+      },
+      {
+        "type": "Portada",
+        "bold": "Reubica la fecha según tus necesidades",
+        "text": "Cambia la posición de la fecha en la invitación para que se integre de manera armónica en tu diseño."
+      },
+      {
+        "type": "Portada",
+        "bold": "Oculta la fecha si lo prefieres",
+        "text": "Si lo deseas, tienes la opción de ocultar la fecha para mantener un diseño más limpio o para eventos sin fecha específica."
+      },
+      {
+        "type": "Mensajes",
+        "bold": "Escribe un mensaje de bienvenida para tus invitados",
+        "text": "Saluda a tus invitados con un mensaje personalizado que refleje la esencia de tu evento."
+      },
+      {
+        "type": "Mensajes",
+        "bold": "Destaca a las personas clave del evento",
+        "text": "Reconoce a las personas importantes que harán de tu evento algo especial."
+      },
+      {
+        "type": "Mensajes",
+        "bold": "Incluye una cita significativa o inspiradora",
+        "text": "Añade una cita que resuene con la ocasión e inspire a tus invitados."
+      },
+      {
+        "type": "Mensajes",
+        "bold": "Publica avisos importantes relacionados con el evento",
+        "text": "Mantén a tus invitados informados con anuncios clave para el evento."
+      },
+      {
+        "type": "Itinerario",
+        "bold": "Agrega los momentos especiales del evento",
+        "text": "Destaca los momentos más importantes y emocionantes de tu evento."
+      },
+      {
+        "type": "Itinerario",
+        "bold": "Agrega nombre, una hora y un lugar",
+        "text": "Proporciona detalles clave como el nombre del evento, la hora y la ubicación."
+      },
+      {
+        "type": "Itinerario",
+        "bold": "Agrega ubicaciones, mapas y accesos a Google Maps",
+        "text": "Facilita a tus invitados la llegada con mapas y enlaces directos a Google Maps."
+      },
+      {
+        "type": "Itinerario",
+        "bold": "Comparte el clima del lugar",
+        "text": "Mantén a tus invitados informados sobre el clima para que se preparen adecuadamente."
+      },
+      {
+        "type": "Itinerario",
+        "bold": "Crea instancias, eventos importantes que ocurren dentro de tu momento",
+        "text": "Divide el evento en instancias específicas, resaltando actividades clave."
+      },
+      {
+        "type": "Itinerario",
+        "bold": "Comparte el menú",
+        "text": "Deleita a tus invitados compartiendo el menú que disfrutarán en el evento."
+      },
+      {
+        "type": "Itinerario",
+        "bold": "Comparte un álbum o una playlist desde Spotify",
+        "text": "Ambienta el evento compartiendo una playlist o álbum especial desde Spotify."
+      },
+      {
+        "type": "Dress code",
+        "bold": "Comparte la descripción del código de vestimenta",
+        "text": "Informa a tus invitados sobre el código de vestimenta adecuado para el evento."
+      },
+      {
+        "type": "Dress code",
+        "bold": "Selecciona una paleta de colores para compartir con tus invitados",
+        "text": "Guía a tus invitados con una paleta de colores sugerida para el evento."
+      },
+      {
+        "type": "Dress code",
+        "bold": "Comparte fotografías de referencia",
+        "text": "Proporciona ejemplos visuales para inspirar a tus invitados en su elección de vestimenta."
+      },
+      {
+        "type": "Dress code",
+        "bold": "Comparte accesos directos hacia Pinterest, Instagram, etc.",
+        "text": "Ofrece inspiración adicional con enlaces a plataformas como Pinterest o Instagram."
+      },
+      {
+        "type": "Mesa de regalos",
+        "bold": "Comparte una descripción sobre los regalos del evento",
+        "text": "Informa a tus invitados sobre las opciones de regalos o contribuciones para el evento."
+      },
+      {
+        "type": "Mesa de regalos",
+        "bold": "Agrega tarjetas de regalo",
+        "text": "Facilita la opción de recibir tarjetas de regalo para que tus invitados contribuyan de manera conveniente."
+      },
+      {
+        "type": "Mesa de regalos",
+        "bold": "Agrega tarjetas de débito",
+        "text": "Permite a tus invitados hacer aportaciones utilizando tarjetas de débito de manera segura y rápida."
+      },
+      {
+        "type": "Galería",
+        "bold": "Comparte hasta 10 imágenes relacionadas",
+        "text": "Sube y comparte hasta 10 imágenes que capturen la esencia de tu evento."
+      },
+      {
+        "type": "Galería",
+        "bold": "Edítalas cuando quieras",
+        "text": "Realiza cambios en las imágenes en cualquier momento para mantener tu galería actualizada."
+      },
+      {
+        "type": "Galería",
+        "bold": "Acomódalas como gustes",
+        "text": "Organiza las imágenes en el orden que prefieras, creando una presentación visualmente atractiva."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Comparte tu invitación",
+        "text": "Facilita la distribución de tu invitación digital con solo un clic."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Gestión de invitados",
+        "text": "Agrega, edita o elimina invitados fácilmente desde tu panel de control."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Control de visibilidad",
+        "text": "Decide quién puede ver tu invitación, asegurando la privacidad que desees."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Confirmaciones en tiempo real",
+        "text": "Recibe confirmaciones de asistencia al instante para mantenerte al día."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Administración de pases",
+        "text": "Controla el número de pases e invitados para tu evento de manera sencilla."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Colaboración en equipo",
+        "text": "Comparte el panel de invitados con tu equipo para una gestión colaborativa."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Privacidad del evento",
+        "text": "Protege tu evento con códigos de seguridad para garantizar que solo los invitados puedan acceder."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Invitaciones públicas o privadas",
+        "text": "Escoge si tus invitaciones serán públicas o limitadas solo a una lista específica."
+      },
+      {
+        "type": "Administración de invitados",
+        "bold": "Confirmación de asistencia",
+        "text": "Permite que los invitados confirmen su asistencia directamente desde la invitación, facilitando la organización del evento."
+      }
     ]
   },
   "login": {
@@ -165,66 +345,113 @@
     "err_connection": "Error de conexión con el servidor"
   },
   "guests": {
-    "col_name": "Nombre", "col_contact": "Contacto", "col_state": "Estado",
-    "col_tag": "Etiqueta", "col_table": "Mesa", "col_priority": "Prioridad",
-    "col_actions": "Acciones", "col_password": "Contraseña",
-    "col_magic_link": "Link mágico", "col_category": "Categoría",
-    "tooltip_open": "Abrir", "tooltip_copy_password": "Copiar contraseña",
+    "col_name": "Nombre",
+    "col_contact": "Contacto",
+    "col_state": "Estado",
+    "col_tag": "Etiqueta",
+    "col_table": "Mesa",
+    "col_priority": "Prioridad",
+    "col_actions": "Acciones",
+    "col_password": "Contraseña",
+    "col_magic_link": "Link mágico",
+    "col_category": "Categoría",
+    "tooltip_open": "Abrir",
+    "tooltip_copy_password": "Copiar contraseña",
     "tooltip_copy_magic_link": "Copiar link mágico",
-    "state_creado": "Por invitar", "state_esperando": "Esperando",
-    "state_confirmado": "Confirmado", "state_asistente": "Asistente",
+    "state_creado": "Por invitar",
+    "state_esperando": "Esperando",
+    "state_confirmado": "Confirmado",
+    "state_asistente": "Asistente",
     "state_rechazado": "Declinó",
-    "type_female": "Mujer", "type_male": "Hombre",
-    "type_child": "Niño/a", "type_undefined": "Indefinido",
-    "priority_a": "Tiene que estar sí o sí.", "priority_b": "Muy importante",
-    "priority_c": "Deseable", "priority_d": "Opcional",
-    "msg_processing": "Procesando", "msg_sent": "Enviado",
-    "msg_delivered": "Entregado", "msg_read": "Visto",
-    "msg_retry": "Reintentar", "msg_retry_tooltip": "Un reintento no consume créditos",
+    "type_female": "Mujer",
+    "type_male": "Hombre",
+    "type_child": "Niño/a",
+    "type_undefined": "Indefinido",
+    "priority_a": "Tiene que estar sí o sí.",
+    "priority_b": "Muy importante",
+    "priority_c": "Deseable",
+    "priority_d": "Opcional",
+    "msg_processing": "Procesando",
+    "msg_sent": "Enviado",
+    "msg_delivered": "Entregado",
+    "msg_read": "Visto",
+    "msg_retry": "Reintentar",
+    "msg_retry_tooltip": "Un reintento no consume créditos",
     "msg_waiting": "Esperando",
-    "select_table": "Selecciona mesa", "table_prefix": "Mesa",
-    "view_map": "Ver mapa", "no_table": "Sin mesa", "no_name": "Sin nombre",
-    "btn_send": "Enviar", "tooltip_mark_invited": "Marcar como invitado",
+    "select_table": "Selecciona mesa",
+    "table_prefix": "Mesa",
+    "view_map": "Ver mapa",
+    "no_table": "Sin mesa",
+    "no_name": "Sin nombre",
+    "btn_send": "Enviar",
+    "tooltip_mark_invited": "Marcar como invitado",
     "tooltip_national_only": "Solo puedes hacer envíos nacionales",
     "btn_assign": "Asignar",
-    "tab_waiting": "Lista de espera", "tab_sent": "Invitación enviada",
-    "tab_confirmed": "Asistencia confirmada", "tab_rejected": "No asistirán",
+    "tab_waiting": "Lista de espera",
+    "tab_sent": "Invitación enviada",
+    "tab_confirmed": "Asistencia confirmada",
+    "tab_rejected": "No asistirán",
     "search_placeholder": "Buscar por nombre o número",
-    "filter_tag": "Etiqueta", "filter_table": "Mesa",
-    "filter_priority": "Prioridad", "filter_category": "Categoría", "filter_side": "Lado",
-    "btn_new_guest": "Nuevo invitado", "btn_new": "Nuevo",
-    "btn_downloads": "Descargables", "download_title": "Descargar lista",
-    "download_waiting": "Esperando respuesta", "download_confirmed": "Confirmados",
+    "filter_tag": "Etiqueta",
+    "filter_table": "Mesa",
+    "filter_priority": "Prioridad",
+    "filter_category": "Categoría",
+    "filter_side": "Lado",
+    "btn_new_guest": "Nuevo invitado",
+    "btn_new": "Nuevo",
+    "btn_downloads": "Descargables",
+    "download_title": "Descargar lista",
+    "download_waiting": "Esperando respuesta",
+    "download_confirmed": "Confirmados",
     "table_map": "Mapa de mesas",
-    "btn_public": "Evento público", "btn_private": "Evento privado",
-    "confirm_public_title": "Invitación Pública", "confirm_private_title": "Invitación Privada",
+    "btn_public": "Evento público",
+    "btn_private": "Evento privado",
+    "confirm_public_title": "Invitación Pública",
+    "confirm_private_title": "Invitación Privada",
     "confirm_public_desc": "Al aceptar tu invitación será privada, por lo cual solo tus invitados podrán acceder.",
     "confirm_private_desc": "Al aceptar tu invitación será pública, por lo cual cualquier persona podrá acceder.",
-    "btn_continue": "Continuar", "btn_cancel": "Cancelar",
-    "btn_scanner": "Lector de pases", "scanner_title": "Lector de pases",
-    "scanner_subtitle": "Compartir información", "scanner_user": "Usuario",
-    "scanner_password": "Contraseña", "scanner_link": "Link de acceso",
+    "btn_continue": "Continuar",
+    "btn_cancel": "Cancelar",
+    "btn_scanner": "Lector de pases",
+    "scanner_title": "Lector de pases",
+    "scanner_subtitle": "Compartir información",
+    "scanner_user": "Usuario",
+    "scanner_password": "Contraseña",
+    "scanner_link": "Link de acceso",
     "btn_access_scanner": "Acceder al lector",
-    "control_title": "Control", "control_total": "Total de pases",
-    "control_distribution": "Distribución", "control_confirmed": "Confirmados",
-    "control_waiting": "Esperando", "control_available": "Disponibles",
-    "seg_individual": "Individual", "seg_group": "Grupo",
+    "control_title": "Control",
+    "control_total": "Total de pases",
+    "control_distribution": "Distribución",
+    "control_confirmed": "Confirmados",
+    "control_waiting": "Esperando",
+    "control_available": "Disponibles",
+    "seg_individual": "Individual",
+    "seg_group": "Grupo",
     "my_guests": "Mis invitados",
     "notification_title": "Has recibido una respuesta",
     "notification_confirmed_suffix": "acaba de confirmar su asistencia.",
     "notification_rejected_prefix": "Desafortunadamente",
     "notification_rejected_suffix": "no podrá asistir.",
-    "copied": "Copiado", "state_updated": "Estado actualizado",
-    "passes_updated": "Pases actualizados", "invitation_sent": "Enviando invitación",
-    "crud_title_edit": "Editar invitado", "crud_title_new": "Nuevo invitado",
-    "crud_btn_save": "Guardar", "crud_btn_add": "Agregar",
+    "copied": "Copiado",
+    "state_updated": "Estado actualizado",
+    "passes_updated": "Pases actualizados",
+    "invitation_sent": "Enviando invitación",
+    "crud_title_edit": "Editar invitado",
+    "crud_title_new": "Nuevo invitado",
+    "crud_btn_save": "Guardar",
+    "crud_btn_add": "Agregar",
     "crud_section_data": "Datos de invitado",
-    "crud_label_name": "Nombre", "crud_label_contact": "Contacto",
-    "crud_label_tag": "Etiqueta", "crud_label_priority": "Prioridad",
-    "crud_label_category": "Categoría", "crud_label_side": "Lado",
-    "crud_label_state": "Estado", "crud_label_notes": "Notas",
+    "crud_label_name": "Nombre",
+    "crud_label_contact": "Contacto",
+    "crud_label_tag": "Etiqueta",
+    "crud_label_priority": "Prioridad",
+    "crud_label_category": "Categoría",
+    "crud_label_side": "Lado",
+    "crud_label_state": "Estado",
+    "crud_label_notes": "Notas",
     "crud_phone_placeholder": "Número de teléfono",
-    "crud_tag_select": "Seleccionar etiqueta", "crud_tag_new": "Nueva etiqueta",
+    "crud_tag_select": "Seleccionar etiqueta",
+    "crud_tag_new": "Nueva etiqueta",
     "crud_tag_add": "Agregar",
     "crud_priority_placeholder": "Prioridad de invitado",
     "crud_category_placeholder": "Categoría de invitado",
@@ -247,7 +474,12 @@
     "crud_msg_delete_error": "No se pudo eliminar el invitado",
     "crud_msg_companion_local": "Acompañante eliminado localmente",
     "crud_msg_companion_deleted": "Acompañante eliminado",
-    "crud_msg_companion_error": "No se pudo eliminar el acompañante"
+    "crud_msg_companion_error": "No se pudo eliminar el acompañante",
+    "whatsapp_inbox_title": "Buzón de mensajes",
+    "whatsapp_inbox_info": "Cuando un invitado responda tu invitación, el mensaje llegará aquí. Tienes 24 horas para responderle desde que te escribió. Siempre podrás responder directamente desde tu cuenta de WhatsApp.",
+    "whatsapp_inbox_empty": "Aún no tienes mensajes",
+    "whatsapp_inbox_info_1": "Cuando un invitado responda tu invitación, el mensaje llegará aquí. Tienes 24 horas para responderle desde que te escribió.",
+    "whatsapp_inbox_info_2": "Siempre podrás responder directamente desde tu cuenta de WhatsApp."
   },
   "custom_link": {
     "copied": "Link copiado",
