@@ -1514,6 +1514,7 @@ export default function GuestsPage() {
                 .from("guests")
                 .update({
                     table: table.id,
+                    last_action_by: 'admin',
                     last_update_date: new Date(), // si tienes este campo en guests
                 })
                 .eq("id", guest.id)
