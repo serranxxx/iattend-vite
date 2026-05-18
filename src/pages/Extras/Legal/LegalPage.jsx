@@ -22,18 +22,18 @@ export const LegalPage = () => {
 
                 <h3>Responsable del Tratamiento de los Datos Personales</h3>
                 <h4>
-                    <b>LUIS ALBERTO SERRANO GARCÍA</b>, titular de la plataforma digital <b>iAttend</b>, disponible en <b>www.iattend.mx</b> e <b>iattend.events</b> (en lo sucesivo, "iAttend"), con domicilio en Chihuahua, Chihuahua, C.P. 31130, en cumplimiento con la <b>Ley Federal de Protección de Datos Personales en Posesión de los Particulares</b> (en adelante la "Ley") y su Reglamento, se presenta como responsable del tratamiento de los datos personales que usted proporciona a través de nuestra plataforma.
+                    <b>LUIS ALBERTO SERRANO GARCÍA</b>, titular de la plataforma digital <b>I attend</b>, disponible en <b>www.I attend.mx</b> e <b>I attend.events</b> (en lo sucesivo, "I attend"), con domicilio en Chihuahua, Chihuahua, C.P. 31130, en cumplimiento con la <b>Ley Federal de Protección de Datos Personales en Posesión de los Particulares</b> (en adelante la "Ley") y su Reglamento, se presenta como responsable del tratamiento de los datos personales que usted proporciona a través de nuestra plataforma.
                 </h4>
 
-                <h3>¿Qué es iAttend?</h3>
+                <h3>¿Qué es I attend?</h3>
                 <h4>
-                    iAttend es una plataforma digital de gestión de eventos e invitaciones. A través de ella, los usuarios pueden crear y personalizar invitaciones digitales, administrar listas de invitados, gestionar confirmaciones de asistencia, generar pases digitales con código QR, organizar mesas y distribución de lugares, y coordinar múltiples eventos o sub-eventos. La plataforma está orientada principalmente a bodas y celebraciones sociales en México y Latinoamérica.
+                    I attend es una plataforma digital de gestión de eventos e invitaciones. A través de ella, los usuarios pueden crear y personalizar invitaciones digitales, administrar listas de invitados, gestionar confirmaciones de asistencia, generar pases digitales con código QR, organizar mesas y distribución de lugares, y coordinar múltiples eventos o sub-eventos. La plataforma está orientada principalmente a bodas y celebraciones sociales en México y Latinoamérica.
                 </h4>
 
                 <h3>1. ¿PARA QUÉ FINES UTILIZAREMOS SUS DATOS PERSONALES?</h3>
                 <h4>Los datos personales que recabamos serán utilizados para las siguientes finalidades <b>necesarias</b> para la prestación del servicio:</h4>
                 <ul>
-                    <li>Crear y administrar su cuenta de usuario en la plataforma iAttend.</li>
+                    <li>Crear y administrar su cuenta de usuario en la plataforma I attend.</li>
                     <li>Procesar la contratación de los planes disponibles (Paperless, Lite o Pro).</li>
                     <li>Proveer acceso a las funciones de la plataforma: creación de invitaciones digitales, gestión de invitados, distribución de lugares, pases digitales con QR, y sub-eventos.</li>
                     <li>Gestionar las confirmaciones de asistencia (RSVP) de sus invitados.</li>
@@ -44,10 +44,10 @@ export const LegalPage = () => {
                 </ul>
                 <h4>De manera <b>secundaria</b>, y solo con su consentimiento, podremos utilizar sus datos para:</h4>
                 <ul>
-                    <li>Enviarle información sobre nuevas funcionalidades, planes o promociones de iAttend.</li>
+                    <li>Enviarle información sobre nuevas funcionalidades, planes o promociones de I attend.</li>
                     <li>Realizar encuestas de satisfacción para mejorar nuestros servicios.</li>
                 </ul>
-                <h4>Si usted no desea que sus datos sean utilizados para las finalidades secundarias, puede indicarlo enviando un correo a <b>contacto.iattend@gmail.com</b>. La negativa no afectará la prestación del servicio contratado.</h4>
+                <h4>Si usted no desea que sus datos sean utilizados para las finalidades secundarias, puede indicarlo enviando un correo a <b>contacto.I attend@gmail.com</b>. La negativa no afectará la prestación del servicio contratado.</h4>
 
                 <h3>2. ¿QUÉ DATOS PERSONALES UTILIZAREMOS PARA ESTOS FINES?</h3>
                 <h4>Para llevar a cabo las finalidades descritas, recabaremos los siguientes datos personales:</h4>
@@ -74,13 +74,13 @@ export const LegalPage = () => {
                     <li>Registro de actividad dentro de la plataforma (páginas visitadas, acciones realizadas).</li>
                     <li>Información recopilada a través de cookies y tecnologías similares (ver sección 7).</li>
                 </ul>
-                <h4>iAttend <b>no recaba datos personales sensibles</b> (datos de salud, biométricos, ideología política, creencias religiosas, etc.).</h4>
+                <h4>I attend <b>no recaba datos personales sensibles</b> (datos de salud, biométricos, ideología política, creencias religiosas, etc.).</h4>
 
                 <h3>3. TRANSFERENCIA DE INFORMACIÓN PERSONAL CON TERCEROS</h3>
                 <h4>Nos comprometemos a no transferir su información personal a terceros sin su consentimiento, salvo en los casos previstos en el Artículo 37 de la Ley. Para el funcionamiento técnico de la plataforma, sus datos podrán ser procesados por los siguientes proveedores tecnológicos bajo acuerdos de confidencialidad:</h4>
                 <ul>
                     <li><b>Supabase Inc.</b> — Proveedor de base de datos, autenticación y almacenamiento en la nube donde se alojan los datos de la plataforma.</li>
-                    <li><b>Stripe Inc.</b> — Procesador de pagos. Los datos de tarjetas bancarias son manejados directamente por Stripe y no son almacenados por iAttend.</li>
+                    <li><b>Stripe Inc.</b> — Procesador de pagos. Los datos de tarjetas bancarias son manejados directamente por Stripe y no son almacenados por I attend.</li>
                     <li><b>OpenAI LLC</b> — Proveedor de inteligencia artificial utilizado para funcionalidades de asistencia dentro de la plataforma.</li>
                     <li><b>Proveedores de servicios de correo electrónico y mensajería</b> — Utilizados para el envío de notificaciones y confirmaciones a invitados.</li>
                 </ul>
@@ -95,9 +95,9 @@ export const LegalPage = () => {
                     <li><b>Cancelar</b> sus datos cuando no sean necesarios para las finalidades del servicio o haya concluido la relación contractual.</li>
                     <li><b>Oponerse</b> al tratamiento de sus datos para finalidades específicas.</li>
                 </ul>
-                <h4>Para ejercer cualquiera de estos derechos ARCO, envíe su solicitud al correo electrónico: <b>contacto.iattend@gmail.com</b> con el asunto "Solicitud ARCO". La solicitud deberá incluir:</h4>
+                <h4>Para ejercer cualquiera de estos derechos ARCO, envíe su solicitud al correo electrónico: <b>contacto.I attend@gmail.com</b> con el asunto "Solicitud ARCO". La solicitud deberá incluir:</h4>
                 <ul>
-                    <li>Su nombre completo y correo electrónico registrado en iAttend.</li>
+                    <li>Su nombre completo y correo electrónico registrado en I attend.</li>
                     <li>Una descripción clara y precisa de los datos sobre los que desea ejercer su derecho.</li>
                     <li>Documento que acredite su identidad (INE, pasaporte u otro documento oficial).</li>
                     <li>Cualquier otro elemento que facilite la localización de sus datos.</li>
@@ -107,16 +107,16 @@ export const LegalPage = () => {
                 <h3>5. ¿CÓMO PUEDE LIMITAR EL USO O DIVULGACIÓN DE SU INFORMACIÓN PERSONAL?</h3>
                 <h4>Para limitar el uso o divulgación de su información personal puede:</h4>
                 <ul>
-                    <li>Enviar un correo a <b>contacto.iattend@gmail.com</b> indicando de manera específica su solicitud.</li>
+                    <li>Enviar un correo a <b>contacto.I attend@gmail.com</b> indicando de manera específica su solicitud.</li>
                     <li>Configurar las preferencias de notificaciones desde su cuenta dentro de la plataforma.</li>
                     <li>Solicitar la eliminación de su cuenta, lo que implicará la eliminación de sus datos personales, salvo aquellos que deban conservarse por obligaciones legales o fiscales.</li>
                 </ul>
 
                 <h3>6. RETENCIÓN Y ELIMINACIÓN DE DATOS</h3>
-                <h4>Sus datos personales serán conservados durante el tiempo que su cuenta permanezca activa y mientras exista una relación contractual vigente con iAttend. Una vez concluida dicha relación, los datos serán eliminados o anonimizados en un plazo no mayor a <b>90 días naturales</b>, salvo que exista una obligación legal que requiera su conservación por un período mayor (por ejemplo, datos de facturación conforme a la legislación fiscal mexicana).</h4>
+                <h4>Sus datos personales serán conservados durante el tiempo que su cuenta permanezca activa y mientras exista una relación contractual vigente con I attend. Una vez concluida dicha relación, los datos serán eliminados o anonimizados en un plazo no mayor a <b>90 días naturales</b>, salvo que exista una obligación legal que requiera su conservación por un período mayor (por ejemplo, datos de facturación conforme a la legislación fiscal mexicana).</h4>
 
                 <h3>7. USO DE COOKIES Y TECNOLOGÍAS DE RASTREO</h3>
-                <h4>iAttend utiliza cookies y tecnologías similares para:</h4>
+                <h4>I attend utiliza cookies y tecnologías similares para:</h4>
                 <ul>
                     <li>Mantener su sesión activa dentro de la plataforma.</li>
                     <li>Recordar sus preferencias de uso.</li>
@@ -125,12 +125,12 @@ export const LegalPage = () => {
                 <h4>Usted puede configurar su navegador para rechazar o eliminar cookies. Sin embargo, deshabilitar las cookies esenciales puede afectar el funcionamiento correcto de la plataforma.</h4>
 
                 <h3>8. MEDIDAS DE SEGURIDAD</h3>
-                <h4>iAttend implementa medidas técnicas, administrativas y físicas para proteger sus datos personales contra acceso no autorizado, pérdida, alteración o divulgación indebida. Entre estas medidas se incluyen: cifrado de contraseñas, conexiones seguras (HTTPS), autenticación de usuarios y control de acceso a los datos almacenados.</h4>
+                <h4>I attend implementa medidas técnicas, administrativas y físicas para proteger sus datos personales contra acceso no autorizado, pérdida, alteración o divulgación indebida. Entre estas medidas se incluyen: cifrado de contraseñas, conexiones seguras (HTTPS), autenticación de usuarios y control de acceso a los datos almacenados.</h4>
 
                 <h3>9. ¿CÓMO PUEDE CONOCER LOS CAMBIOS EN ESTE AVISO DE PRIVACIDAD?</h3>
                 <h4>Este aviso de privacidad puede ser modificado para cumplir con cambios en la legislación, en nuestras prácticas internas o en nuestro modelo de negocio. Le notificaremos sobre cualquier modificación relevante a través de:</h4>
                 <ul>
-                    <li>Nuestro sitio web: <b>www.iattend.mx</b></li>
+                    <li>Nuestro sitio web: <b>www.I attend.mx</b></li>
                     <li>Un aviso dentro de la plataforma al iniciar sesión.</li>
                     <li>Correo electrónico a la dirección registrada en su cuenta.</li>
                 </ul>
