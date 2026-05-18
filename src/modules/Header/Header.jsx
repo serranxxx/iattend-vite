@@ -135,9 +135,9 @@ export const HeaderBuild = ({ position, isVisible }) => {
                         width: '90%', position: 'relative',
                     }}>
 
-                    
 
-                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<Menu style={{color:'#000'}}/>} />
+
+                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<Menu style={{ color: '#000' }} />} />
 
                 </div>
 
@@ -199,7 +199,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const [invitation, setInvitation] = useState(null)
     const [plan, setPlan] = useState(null)
 
-  const isEditing = mode === "edit" || mode === "on-edit";
+    const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
     const screens = useBreakpoint();
     const [urlImage, setUrlImage] = useState(null)
@@ -402,7 +402,18 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                     {/* RIGHT SIDE */}
                     <div className="header-dashboard-single-row" style={{ gap: 8 }}>
 
-                        {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />}
+                        {!screens.xs &&
+                            <div style={{
+                                display:'flex',alignItems:'center',justifyContent:'center',
+                                borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)', overflow:'hidden',
+                                paddingLeft:plan !== 'pro'? '8px' : 0, backgroundColor:'#20212B'
+                            }}>
+                                {
+                                    plan !== 'pro' && <span style={{marginRight:'-6px', fontSize:'16px', fontWeight:'800', color:'#F4EEF8',zIndex:'2'}}>Cambiate a</span>
+                                }
+                                <img src={`/images/plan_pro.png`} alt="" style={{ maxHeight: '30px',  }} />
+                            </div>
+                        }
 
                         {screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={isEditing} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} buttonText="Compartir" />}
 
@@ -410,7 +421,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             <Button
                                 icon={<LuUpload size={14} />}
                                 type="primary"
-                                style={{ position: "relative", height:'32px', borderRadius:'99px' }}
+                                style={{ position: "relative", height: '32px', borderRadius: '99px' }}
                                 onClick={onSaveChanges}
                             >
                                 {t('dashboard_header.publish')}
@@ -424,7 +435,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             <Button
                                 icon={<LuSendHorizontal size={14} />}
                                 type="primary"
-                                style={{ position: "relative", backgroundColor: "#20212B", height:'32px', borderRadius:'99px' }}
+                                style={{ position: "relative", backgroundColor: "#20212B", height: '32px', borderRadius: '99px' }}
                                 onClick={onWriteChanges}
                             >
                                 {t('dashboard_header.write')}
