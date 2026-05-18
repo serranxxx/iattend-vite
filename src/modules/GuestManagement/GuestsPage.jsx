@@ -1301,7 +1301,7 @@ export default function GuestsPage() {
 
 
     const handleCompanions = (id) => {
-        const comps = rowData?.filter((row) => row.companion_id === id.toString())
+        const comps = rowData?.filter((row) => row.companion_id === id)
         return comps
     }
 
@@ -1350,11 +1350,11 @@ export default function GuestsPage() {
 
     const onSendInvitation = async (guest) => {
         const guestPatch = {
-
             state: 'esperando',
             last_action: guest.state,
-            last_action_by: true,
-            last_update_date: new Date()
+            last_action_by: 'admin',
+            last_update_date: new Date().toISOString(),
+            invitation_sent_at: new Date().toISOString(),
         };
 
         const { error: guestError } = await supabase
@@ -1626,7 +1626,7 @@ export default function GuestsPage() {
 
                     if (row.invitation_id === id) {
                         refreshPage();
-                        if (!row.last_action_by) {
+                        if (row.last_action_by !== 'admin') {
                             handleNotification(row);
                         }
                     }

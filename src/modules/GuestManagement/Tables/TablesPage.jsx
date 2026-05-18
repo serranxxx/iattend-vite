@@ -194,7 +194,7 @@ export const TablesPage = ({ invitationID }) => {
 
                 const { error: guestsError } = await supabase
                     .from("guests")
-                    .update({ table: data.id, last_action_by: true })  // o table_id si así se llama tu columna
+                    .update({ table: data.id, last_action_by: 'admin' })  // o table_id si así se llama tu columna
                     .in("id", guestIds);
 
                 if (guestsError) {
@@ -500,7 +500,7 @@ export const TablesPage = ({ invitationID }) => {
             if (toRemove.length) {
                 const { error: removeError } = await supabase
                     .from("guests")
-                    .update({ table: null, last_action_by: true })
+                    .update({ table: null, last_action_by: 'admin' })
                     .in("id", toRemove);
 
                 if (removeError) {
@@ -512,7 +512,7 @@ export const TablesPage = ({ invitationID }) => {
             if (toAdd.length) {
                 const { error: addError } = await supabase
                     .from("guests")
-                    .update({ table: selectedTable.id, last_action_by: true  })
+                    .update({ table: selectedTable.id, last_action_by: 'admin'  })
                     .in("id", toAdd);
 
                 if (addError) {
@@ -598,8 +598,8 @@ export const TablesPage = ({ invitationID }) => {
                 .from("guests")
                 .update({
                     table: table.id,
-                    last_update_date: new Date(), // si tienes este campo en guests
-                    last_action_by: true 
+                    last_update_date: new Date().toISOString(),
+                    last_action_by: 'admin',
                 })
                 .eq("id", guest.id)
                 .select()
@@ -643,7 +643,7 @@ export const TablesPage = ({ invitationID }) => {
             if (guestIds.length) {
                 const { error: removeError } = await supabase
                     .from("guests")
-                    .update({ table: null, last_action_by: true  })
+                    .update({ table: null, last_action_by: 'admin'  })
                     .in("id", guestIds);
 
                 if (removeError) {
@@ -817,7 +817,7 @@ export const TablesPage = ({ invitationID }) => {
             const isLeader = g.has_companion && g.companion_id == null;
             const isCompanion = g.companion_id != null;
 
-            const groupId = isLeader ? g.id : isCompanion ? g.companion_id : null;
+            const groupId = isLeader ? String(g.id) : isCompanion ? String(g.companion_id) : null;
             if (!groupId) return;
 
             if (!map.has(groupId)) {
@@ -1540,7 +1540,7 @@ export const TablesPage = ({ invitationID }) => {
                                                                                         onClick={() => setOnExtendedWhos(!onExtendedWhos)}
                                                                                         className='parent-label-whois'
                                                                                     >
-                                                                                        {confirmedGuests_?.find(g => g.id.toString() === guest.companion_id)?.name}
+                                                                                        {confirmedGuests_?.find(g => g.id === guest.companion_id)?.name}
                                                                                     </b>
                                                                                 </span>
                                                                             </div>
@@ -1555,7 +1555,7 @@ export const TablesPage = ({ invitationID }) => {
                                                                                                 g => g.id.toString() === guest.companion_id
                                                                                             );
                                                                                             const companions = confirmedGuests_?.filter(
-                                                                                                g => g.companion_id === parent?.id.toString()
+                                                                                                g => g.companion_id === parent?.id
                                                                                             );
 
                                                                                             return (
@@ -1595,7 +1595,7 @@ export const TablesPage = ({ invitationID }) => {
 
                                                                             {(() => {
                                                                                 const companions = confirmedGuests_?.filter(
-                                                                                    c => c.companion_id === guest.id.toString()
+                                                                                    c => c.companion_id === guest.id
                                                                                 );
 
                                                                                 return companions?.length > 0 ? (
@@ -1699,7 +1699,7 @@ export const TablesPage = ({ invitationID }) => {
                                                                                     onClick={() => setOnExtendedWhos(!onExtendedWhos)}
                                                                                     className='parent-label-whois'
                                                                                 >
-                                                                                    {confirmedGuests_?.find(g => g.id.toString() === guest.companion_id)?.name}
+                                                                                    {confirmedGuests_?.find(g => g.id === guest.companion_id)?.name}
                                                                                 </b>
                                                                             </span>
                                                                         </div>
@@ -1714,7 +1714,7 @@ export const TablesPage = ({ invitationID }) => {
                                                                                             g => g.id.toString() === guest.companion_id
                                                                                         );
                                                                                         const companions = confirmedGuests_?.filter(
-                                                                                            g => g.companion_id === parent?.id.toString()
+                                                                                            g => g.companion_id === parent?.id
                                                                                         );
 
                                                                                         return (
@@ -1754,7 +1754,7 @@ export const TablesPage = ({ invitationID }) => {
 
                                                                         {(() => {
                                                                             const companions = confirmedGuests_?.filter(
-                                                                                c => c.companion_id === guest.id.toString()
+                                                                                c => c.companion_id === guest.id
                                                                             );
 
                                                                             return companions?.length > 0 ? (

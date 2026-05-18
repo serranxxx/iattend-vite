@@ -227,7 +227,13 @@ export const GuestsCRUD = ({
                 companion_id: null,
                 ticket: true,
                 has_companion: companionsData?.length > 0,
-                last_action_by: true,
+                last_action_by: isSideEvent ? true : 'admin',
+                ...(!isSideEvent && {
+                    invitation_sent_at: null,
+                    reminder_count: 0,
+                    last_reminder_at: null,
+                    special_needs: null,
+                })
             }
 
             const { data: guestRows, error: guestError } = await supabase
@@ -266,7 +272,13 @@ export const GuestsCRUD = ({
                     companion_id: guestId,
                     ticket: true,
                     has_companion: false,
-                    last_action_by: true,
+                    last_action_by: isSideEvent ? true : 'admin',
+                    ...(!isSideEvent && {
+                        invitation_sent_at: null,
+                        reminder_count: 0,
+                        last_reminder_at: null,
+                        special_needs: null,
+                    })
                 }))
 
                 const { error: companionsError } = await supabase
@@ -304,8 +316,13 @@ export const GuestsCRUD = ({
                 notes: guestData.notes,
                 last_action: drawerState.currentGuest?.state,
                 has_companion: companionsData?.length > 0,
-                last_action_by: true,
-                last_update_date: new Date(),
+                last_action_by: isSideEvent ? true : 'admin',
+                // ...(!isSideEvent && {
+                //     invitation_sent_at: null,
+                //     reminder_count: 0,
+                //     last_reminder_at: null,
+                //     special_needs: null,
+                // })
             })
 
             const { error: guestError } = await supabase
@@ -344,8 +361,13 @@ export const GuestsCRUD = ({
                         state: edit.state,
                         notes: edit.notes,
                         last_action: dbComps[i].state,
-                        last_action_by: true,
-                        last_update_date: new Date(),
+                        last_action_by: isSideEvent ? true : 'admin',
+                        // ...(!isSideEvent && {
+                        //     invitation_sent_at: null,
+                        //     reminder_count: 0,
+                        //     last_reminder_at: null,
+                        //     special_needs: null,
+                        // })
                     })
 
                     if (Object.keys(patch).length === 0) continue
@@ -375,7 +397,13 @@ export const GuestsCRUD = ({
                         companion_id: guestId,
                         ticket: true,
                         last_action: 'creado',
-                        last_action_by: true,
+                        last_action_by: isSideEvent ? true : 'admin',
+                        // ...(!isSideEvent && {
+                        //     invitation_sent_at: null,
+                        //     reminder_count: 0,
+                        //     last_reminder_at: null,
+                        //     special_needs: null,
+                        // })
                     })
                 }
             }
