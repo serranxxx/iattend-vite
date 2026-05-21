@@ -65,12 +65,11 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
             .eq('read', false);
     };
 
-    const openConversation = (convId) => {
-        setOpenMessage((prev) => {
-            if (prev === convId) return null;
-            markConversationAsRead(convId);
-            return convId;
-        });
+    const openConversation = (convId, phone) => {
+        if (openMessage !== convId) {
+            markConversationAsRead(phone)
+        }
+        setOpenMessage(prev => prev === convId ? null : convId)
     };
 
     const MessagePreview = ({ message }) => {
@@ -155,7 +154,7 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
                                         <OpenChat name={guestName(conversation.phone, conversation.messages[0].contact_name)} phoneFormatter={phoneFormatter} conversation={conversation} setOpenMessage={setOpenMessage} invitation_id={id} />
 
                                         :
-                                        <div onClick={() => openConversation(convId)} className='messages_main_row' style={{ justifyContent: 'space-between', padding: '16px', width: '100%' }}>
+                                        <div onClick={() => openConversation(convId, conversation.phone)} className='messages_main_row' style={{ justifyContent: 'space-between', padding: '16px', width: '100%' }}>
                                             <div className='messages_main_row' style={{ padding: 0 }}>
                                                 <Badge color='var(--purple-color)' offset={[-2, 2]} size='large'
                                                     count={messagesCount(conversation)}>
