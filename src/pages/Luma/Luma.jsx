@@ -233,7 +233,7 @@ export default function Luma() {
                 {pendingActions.length > 0 && (
                     <div className="luma-actions-area">
                         {pendingActions.map(action => (
-                            <ActionCard key={action.action_id} action={action} onApprove={approveAction} onReject={rejectAction} />
+                            <ActionCard key={action.id} action={action} onApprove={approveAction} onReject={rejectAction} />
                         ))}
                     </div>
                 )}
