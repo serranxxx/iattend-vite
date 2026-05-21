@@ -14,6 +14,7 @@ import GuestsPage from '../modules/GuestManagement/GuestsPage'
 import { SideEvents } from '../modules/SideEvents/SideEvents'
 import { Login } from '../components/Auth/Login'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
+import Luma from '../pages/Luma/Luma'
 
 
 
@@ -33,6 +34,7 @@ export const AppRouter = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/linktree" element={<LinkTree />} />
       <Route path="/legal" element={<LegalPage />} />
+      <Route path="/luma" element={<Luma />} />
       <Route path="/*" element={<PageNotFound />} />
       <Route path="/dashboard/success" element={<Success />} />
 
