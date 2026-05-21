@@ -73,6 +73,34 @@ export const SideEvents = () => {
     const screens = Grid.useBreakpoint();
     const currentRef = useRef(null);
 
+     const phoneFormatter = (params) => {
+        const val = typeof params === 'object' && params !== null ? params.value : params;
+        if (!val) return "";
+
+        const digits = String(val).replace(/\D/g, "");
+
+        // +52 México (12 dígitos)
+        if (digits.length === 12) {
+            const country = digits.slice(0, 2);
+            const phone = digits.slice(2);
+            return `+${country} (${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
+        }
+
+        // +1 US/Canadá (11 dígitos)
+        if (digits.length === 11) {
+            const country = digits.slice(0, 1);
+            const phone = digits.slice(1);
+            return `+${country} (${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
+        }
+
+        // Local sin código (10 dígitos)
+        if (digits.length === 10) {
+            return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+        }
+
+        return val;
+    };
+
     const columns = useMemo(() => ([
         {
             title: t('side_events.col_name'),
@@ -110,17 +138,17 @@ export const SideEvents = () => {
             title: t('side_events.col_contact'),
             dataIndex: "phone_number",
             key: "phone_number",
-            width: 140,
+            width: 160,
 
 
-            //   render: (value) => phoneFormatter(value),
+              render: (value) => phoneFormatter(value),
         },
 
         {
             title: t('side_events.col_state'),
             dataIndex: "state",
             key: "state",
-            width: 100,
+            width: 120,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
