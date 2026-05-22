@@ -11,11 +11,13 @@ const API = 'http://localhost:4000'
 
 const renderMarkdown = (text) => {
     const parseInline = (str) =>
-        str.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, i) => {
+        str.split(/(\*\*[^*]+\*\*|\*[^*]+\*|https?:\/\/[^\s]+)/g).map((part, i) => {
             if (part.startsWith('**') && part.endsWith('**'))
                 return <strong key={i}>{part.slice(2, -2)}</strong>
             if (part.startsWith('*') && part.endsWith('*'))
                 return <em key={i}>{part.slice(1, -1)}</em>
+            if (/^https?:\/\//.test(part))
+                return <a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>
             return part
         })
 
