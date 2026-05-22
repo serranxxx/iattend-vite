@@ -2227,9 +2227,8 @@ export default function GuestsPage() {
                                     >
                                         <Badge count={unAnswer} color='var(--purple-color)' size='large'>
                                             <Button
-                                                disabled={plan !== 'pro'}
-                                                style={{ minWidth: plan !== 'pro' ? '145px' : '32px', justifyContent: plan !== 'pro' ? 'flex-start' : 'center', padding: plan !== 'pro' ? '12px' : undefined }} className={`primarybutton${plan !== 'pro' ? '_transparent' : ''} ${plan !== 'pro' ? 'pro_badge' : ''}`} icon={<MessageCircle size={12} />} >
-                                                {plan !== 'pro' ? 'Mensajes' : ''}
+                                                 className={`primarybutton`} icon={<MessageCircle size={12} />} >
+                                               
                                             </Button>
                                         </Badge>
                                     </Dropdown>
