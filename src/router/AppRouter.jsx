@@ -1,5 +1,12 @@
 import React from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
+import { ChatContainer } from '../components/ChatContainer/ChatContainer'
+
+const DashboardChat = () => {
+  const { pathname } = useLocation()
+  if (!pathname.startsWith('/dashboard')) return null
+  return <ChatContainer />
+}
 import { InvitationsPage } from '../pages/Board/InvitationsPage'
 import { PageNotFound } from '../pages/Extras/PageNotFound'
 import { AdminHOC } from './AdminHOC'
@@ -22,6 +29,8 @@ export const AppRouter = () => {
 
 
   return (
+    <>
+    <DashboardChat />
     <Routes>
       <Route path="/" element={<InvitationsPage />} />
       <Route path="/scanner" element={<ScannerPage />} />
@@ -47,5 +56,6 @@ export const AppRouter = () => {
         } />
 
     </Routes>
+    </>
   )
 }

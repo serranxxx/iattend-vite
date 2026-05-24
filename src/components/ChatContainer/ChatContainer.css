@@ -1,0 +1,129 @@
+/* ── Root container ──────────────────────────────────── */
+.chat-morph {
+    position: fixed;
+    z-index: 1200;
+    overflow: hidden;
+    transition:
+        width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        border-radius 0.38s ease,
+        box-shadow    0.38s ease;
+    touch-action: none;
+}
+
+/* Animate position only when snapping to corner */
+.chat-morph--snapping {
+    transition:
+        left          0.34s cubic-bezier(0.34, 1.15, 0.64, 1),
+        top           0.34s cubic-bezier(0.34, 1.15, 0.64, 1),
+        width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        border-radius 0.38s ease,
+        box-shadow    0.38s ease;
+}
+
+/* ── Closed (circle) ─────────────────────────────────── */
+.chat-morph--closed {
+    width: 52px;
+    height: 52px;
+    border-radius: 99px;
+    background: var(--brand-color-500);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.24);
+    cursor: pointer;
+}
+
+.chat-morph--closed:hover {
+    filter: brightness(1.1);
+}
+
+/* ── Open (panel) ────────────────────────────────────── */
+.chat-morph--open {
+    width: 380px;
+    height: 560px;
+    border-radius: 20px;
+    background: var(--ft-color);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Toggle button icon (visible when closed) ───────── */
+.chat-morph-btn {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.14s ease;
+    pointer-events: auto;
+}
+
+.chat-morph--open .chat-morph-btn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chat-morph-star {
+    font-size: 22px;
+    color: #fff;
+    line-height: 1;
+}
+
+/* ── Luma panel content (visible when open) ─────────── */
+.chat-morph-panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease 0.24s;
+}
+
+.chat-morph--open .chat-morph-panel {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.chat-morph-panel .luma-page {
+    height: 100%;
+}
+
+/* ── Close button ────────────────────────────────────── */
+.chat-morph-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    border: none;
+    background: var(--sc-color);
+    color: var(--text-color-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.chat-morph-close:hover {
+    background: var(--brand-color-100);
+    color: var(--text-color);
+}
+
+/* ── Drag cursor on header ───────────────────────────── */
+.chat-morph--open .luma-chat-header {
+    cursor: grab;
+    user-select: none;
+}
+
+.chat-morph--open .luma-chat-header:active {
+    cursor: grabbing;
+}
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .chat-morph--open {
+        width: calc(100vw - 32px);
+        height: 70dvh;
+    }
+}

@@ -27,7 +27,8 @@ import { useSearchParams } from 'react-router-dom';
 import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { useTranslation } from 'react-i18next';
-import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages';
+import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
+import { useLuma } from '../../context/LumaContext';
 
 const { useBreakpoint } = Grid;
 
@@ -104,6 +105,35 @@ export default function GuestsPage() {
     const [plan, setPlan] = useState(null)
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
+
+    const { uiAction, clearUiAction } = useLuma()
+
+    useEffect(() => {
+        if (!uiAction) return
+        switch (uiAction.type) {
+            case 'filter_guests':
+                setSearchUser(uiAction.payload?.query ?? '')
+                setActiveSearcher(true)
+                break
+            case 'filter_by_state':
+                setActiveKey(uiAction.value)
+                break
+            case 'open_guest_form':
+                setDrawerState({ currentGuest: null, onEditGuest: true, companions: [], visible: true })
+                break
+            case 'open_guest_detail': {
+                const guest = rowData.find(g =>
+                    g.phone_number === uiAction.value ||
+                    g.name?.toLowerCase().includes((uiAction.value ?? '').toLowerCase())
+                )
+                if (guest) setDrawerState({ currentGuest: guest, onEditGuest: false, companions: guest.children ?? [], visible: true })
+                break
+            }
+            default:
+                break
+        }
+        clearUiAction()
+    }, [uiAction])
 
 
     const openColumns = useMemo(() => ([

@@ -135,7 +135,7 @@
     overflow: hidden;
     min-width: 0;
     box-sizing: border-box;
-
+    position: relative;
 }
 
 .luma-chat-header {
@@ -180,9 +180,8 @@
 /* ── Messages area ───────────────────────────────────────── */
 .luma-messages-area {
     flex: 1;
-
     overflow-y: auto;
-    padding: 20px 16px;
+    padding: 20px 16px 156px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -192,7 +191,7 @@
         linear-gradient(to right, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
         radial-gradient(ellipse at center, #EBE6F180, #FFFFFF);
-    background-size: 40px 40px, 40px 40px, 200% 100%;
+    background-size: 20px 20px, 20px 20px, 200% 100%;
     background-position: 0 0, 0 0, 0% 50%;
     animation: luma-drift 6s ease-in-out infinite;
 }
@@ -359,39 +358,170 @@
 
 /* ── Footer ──────────────────────────────────────────────── */
 .luma-footer {
-    padding: 12px 16px;
-    background-color: var(--ft-color);
-    border-top: 1px solid var(--brand-color-100);
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    flex-shrink: 0;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    /* padding: 8px 12px 14px; */
     box-sizing: border-box;
+    z-index: 10;
+   /* backdrop-filter: blur(10px);
+   background-color: #FFFFFF20; */
+}
+
+.luma-input-card {
+    background: #FFFFFF99;
+    border: 1px solid #ebebeb;
+    border-radius: 24px 24px 16px 16px;
+    padding: 10px 12px 10px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    backdrop-filter: blur(12px);
+}
+
+.luma-context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--sc-color);
+    border: 0.5px solid var(--brand-color-100);
+    border-radius: 99px;
+    padding: 4px;
+    padding-right: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-color-80);
+    width: fit-content;
+}
+
+.luma-context-chip-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 99px;
+    background: var(--brand-color-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 9px;
+    flex-shrink: 0;
 }
 
 .luma-textarea {
-    flex: 1;
+    width: 100%;
     resize: none;
-    border-radius: 24px;
-    border: 1px solid #ebebeb;
-    padding: 8px 12px;
+    border: none;
+    padding: 0;
     font-size: 14px;
     color: var(--text-color);
-    background-color: #FFF;
-    transition: border-color 0.2s;
+    background: transparent;
     box-sizing: border-box;
     line-height: 1.5;
-    min-height: 38px;
+    min-height: 22px;
 }
 
 .luma-textarea:focus {
     outline: none;
-    border-color: var(--brand-color-500);
 }
 
 .luma-textarea:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.luma-textarea::placeholder {
+    color: var(--text-color-50);
+}
+
+.luma-input-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+    
+}
+
+.luma-prompt-plus-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    border: 0.5px solid var(--brand-color-200, #d9d0f0);
+    background: var(--sc-color);
+    color: var(--text-color-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.luma-prompt-plus-btn:hover,
+.luma-prompt-plus-btn.active {
+    background: var(--brand-color-500);
+    color: #fff;
+    border-color: var(--brand-color-500);
+}
+
+/* ── Prompt popup ────────────────────────────────────────── */
+.luma-prompt-popup {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    background: var(--ft-color);
+    border: 0.5px solid var(--brand-color-100);
+    border-radius: 12px;
+    width: 280px;
+    max-height: 360px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    overflow: hidden;
+}
+
+.luma-prompt-popup-header {
+    padding: 10px 12px 8px;
+    border-bottom: 0.5px solid var(--brand-color-100);
+    flex-shrink: 0;
+}
+
+.luma-prompt-popup-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-color-50);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0;
+}
+
+.luma-prompt-popup-body {
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.luma-prompt-category {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-color-50);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 8px 8px 4px;
+}
+
+.luma-prompt-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-color);
+    cursor: pointer;
 }
 
 /* ── Error / empty state ─────────────────────────────────── */
@@ -412,3 +542,93 @@
     margin-bottom: 4px;
 }
 
+
+/* ── Landing screen ──────────────────────────────────────── */
+.luma-landing {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-bottom: 156px;
+    box-sizing: border-box;
+    background-color: var(--ft-color);
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
+        radial-gradient(ellipse at center, #EBE6F180, #FFFFFF);
+    background-size: 20px 20px, 20px 20px, 200% 100%;
+    background-position: 0 0, 0 0, 0% 50%;
+    animation: luma-drift 6s ease-in-out infinite;
+}
+
+.luma-landing-content {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 24px;
+    gap: 24px;
+    align-self: stretch;
+    flex: 1;;
+}
+
+.luma-landing-greeting {
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.luma-landing-summary {
+    font-size: 14px;
+    color: var(--text-color-80);
+    line-height: 1.6;
+}
+
+.luma-landing-summary p {
+    margin: 0 0 4px;
+}
+
+.luma-landing-summary ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.luma-cta-grid {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    /* flex-wrap: wrap; */
+    gap: 12px;
+    
+}
+
+.luma-cta-btn {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-color);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    line-height: 1.4;
+    font-family: inherit;
+}
+
+.luma-cta-btn:hover {
+    background: #f5f3f2;
+    border-color: #d0cece;
+}
+
+.luma-cta-btn:active {
+    background: #ede9e8;
+}
