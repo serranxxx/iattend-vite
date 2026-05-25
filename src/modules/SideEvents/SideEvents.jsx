@@ -1,4 +1,4 @@
-import { Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
+import { Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Popconfirm, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
@@ -10,9 +10,10 @@ import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
-import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import { handleCheckout } from '../../components/Payment/functions'
 import { useSearchParams } from 'react-router-dom'
+import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
+import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { Check, CheckCheck, ChevronLeft, ChevronRight, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
@@ -29,6 +30,7 @@ const { Option } = Select;
 
 export const SideEvents = () => {
     const { t } = useTranslation()
+    const { setCreditSending, setCreditSuccess, clearCreditState } = useLia()
 
     const translateState = (value) => {
         const map = {
@@ -40,20 +42,13 @@ export const SideEvents = () => {
         return map[value] ?? value
     }
     const [sideEvent, setsideEvent] = useState(null)
-    const [open, setOpen] = useState(false)
     const [current, setCurrent] = useState(null)
-    // const [images, setImages] = useState([])
     const [handlePreview, setHandlePreview] = useState(false)
     const [rawData, setRawData] = useState([])
     const [mainGuests, setMainGuests] = useState(null)
     const [readyToAdd, setReadyToAdd] = useState([])
     const [searchMain, setSearchMain] = useState("")
-    // const [onCreate, setOnCreate] = useState(false)
-    const [onSending, setOnSending] = useState(false)
-    const [onTickets, setOnTickets] = useState(false)
     const [messagesDispatch, setMessagesDispatch] = useState([])
-    const [activeTickets, setActiveTickets] = useState(false)
-    const [onBubble, setOnBubble] = useState(false)
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
     const [addressOpen, setAddressOpen] = useState(false)
@@ -63,6 +58,7 @@ export const SideEvents = () => {
     const [mobilePanel, setMobilePanel] = useState(0)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
+    const { subscribe } = useDashboardRealtime()
     const [drawerState, setDrawerState] = useState({
         currentGuest: null,
         onEditGuest: false,
@@ -240,7 +236,7 @@ export const SideEvents = () => {
         pagination: false,
         scroll: {
             x: 'max-content',
-            y: screens.xs ? undefined : 'calc(90vh - 180px)',
+            y: screens.xs ? undefined : '84vh',
         },
     }), [columns, screens.xs]);
 
@@ -421,7 +417,7 @@ export const SideEvents = () => {
 
 
         if (data) {
-            setOnSending(true)
+            setCreditSending()
             try {
                 const payload = {
 
@@ -488,13 +484,13 @@ export const SideEvents = () => {
                 );
                 if (response.data.ok) {
                     onUpdateCredits()
-                    setOnSending(false)
-                    setOnBubble(true)
+                    setCreditSuccess()
                     onSendInvitation(guest)
 
                 }
 
             } catch (error) {
+                clearCreditState()
                 console.log(error.response?.data || error.message);
                 throw error;
             }
@@ -844,75 +840,32 @@ export const SideEvents = () => {
 
 
     useEffect(() => {
-        if (open)
+        if (current)
             getGuests()
-    }, [open])
-
-    useEffect(() => {
-        if (current) {
-            setOpen(true)
-        }
     }, [current])
-
-    useEffect(() => {
-        if (!open) {
-            setCurrent(null)
-        }
-    }, [open])
 
     useEffect(() => {
         currentRef.current = current;
     }, [current])
 
     useEffect(() => {
-        if (onBubble) {
-            setTimeout(() => {
-                setOnBubble(false)
-            }, 1800);
-        }
-    }, [onBubble])
+        if (!id) return;
 
-    useEffect(() => {
-        if (!supabase || !id) return;
+        const u1 = subscribe('side_events_guests', (payload) => {
+            const sideEventId = payload.new?.side_events_id ?? payload.old?.side_events_id;
+            if (sideEventId && String(sideEventId) === String(currentRef.current?.id)) {
+                getGuests(currentRef.current.id)
+            }
+        });
 
-        const channel = supabase
-            .channel(`realtime_side_events_${id}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'side_events_guests'
-                },
-                (payload) => {
-                    const sideEventId = payload.new?.side_events_id ?? payload.old?.side_events_id;
-                    if (sideEventId && String(sideEventId) === String(currentRef.current?.id)) {
-                        getGuests(currentRef.current.id)
-                    }
-                }
-            )
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'invitation_message_dispatches'
-                },
-                (payload) => {
-                    const row = payload.new || payload.old;
-                    if (!row) return;
+        const u2 = subscribe('invitation_message_dispatches', (payload) => {
+            const row = payload.new || payload.old;
+            if (!row || String(row.invitation_id) !== String(id)) return;
+            getMessagesUpdates()
+            getGuests(currentRef.current?.id)
+        });
 
-                    if (row.invitation_id === id) {
-                        getMessagesUpdates()
-                        getGuests(currentRef.current?.id)
-                    }
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => { u1(); u2(); };
     }, [id])
 
 
@@ -927,13 +880,17 @@ export const SideEvents = () => {
                     backgroundColor: 'var(--ft-color)',
                     width: '100%',
                 }}>
-                <HeaderDashboard mode={'side'} />
+                <HeaderDashboard
+                    mode={'side'}
+                    sideEventName={current?.name}
+                    onSideEventsBack={current ? () => { setCurrent(null); setMobilePanel(0); } : undefined}
+                />
                 <Layout className='build-invitation-layout' style={{
                     paddingTop: '0px',
                     position: 'relative',
                 }} >
 
-                    <div className='guests-info-container' style={{ padding: '24px', marginTop: '65px', paddingBottom: '24px', }}>
+                    {!current && <div className='guests-info-container' style={{ padding: '24px', marginTop: '65px', paddingBottom: '24px', }}>
 
                         <span className='guests-title-page'>{t('side_events.page_title')}</span>
 
@@ -990,65 +947,13 @@ export const SideEvents = () => {
                                 </div>
                         }
 
-                    </div>
+                    </div>}
 
-                    <Modal
-                        footer={false}
-                        onCancel={() => { setOpen(false); setMobilePanel(0); }}
-                        onOk={() => { setOpen(false); setMobilePanel(0); }}
-                        style={{ top: screens.xs ? 0 : 20, maxWidth: '1320px', margin: screens.xs ? 0 : undefined, padding: screens.xs ? 0 : undefined }}
-                        width={screens.xs ? '100%' : '90%'}
-                        closeIcon={false}
-                        styles={{
-                            container: {
-                                borderRadius: screens.xs ? '0px' : '24px',
-                                padding: '0px',
-                                height: screens.xs ? '100vh' : '90vh',
-                                overflow: 'hidden',
-                                position: 'relative',
-                                border: '4px solid #F5F3F2'
-                            },
-                            body: {
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                justifyContent: 'flex-start',
-                                flexDirection: 'row',
-                                width: '100%',
-                                height: screens.xs ? '100vh' : undefined,
-                                padding: screens.xs ? '0' : undefined,
-                                overflow: screens.xs ? 'hidden' : undefined,
-                                position: 'relative',
-                            }
-                        }}
-                        open={open}
-                    >
-
-                        <div onClick={() => setOnSending(false)} className={`edit-tickets-container`} style={{
-                            width: onSending ? '190px' : '0px',
-                            borderRadius: '99px',
-                            height: '40px',
-                        }}>
-
-                            {
-                                onSending &&
-                                <div
-                                    style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
-                                        boxSizing: 'border-box', padding: '0px 12px', height: '100%', borderRadius: '99px',
-                                        cursor: 'pointer',
-                                        width: '100%'
-                                    }}>
-                                    <FaPaperPlane className='paper_flight' />
-                                    <span style={{ fontSize: '14px' }}>{t('side_events.sending_bubble')}</span>
-                                </div>
-                            }
-
-                        </div>
-
-                        <div className={onBubble ? 'ticket_bubble' : 'hide_bubble'}>-1 crédito</div>
+                    {current && (
+                    <div className='side-event-detail-cont'>
 
                         {/* Slider wrapper: relative container on mobile, transparent on desktop */}
-                        <div style={screens.xs ? { position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', flexShrink: 0 } : { display: 'contents' }}>
+                        <div style={screens.xs ? { position: 'relative', width: '100%', flex: 1, overflow: 'hidden' } : { display: 'flex', flex: 1, overflow: 'hidden', gap:'12px' }}>
 
                             {/* Slide track: 200% wide flex row on mobile, transparent on desktop */}
                             <div style={screens.xs ? {
@@ -1057,10 +962,11 @@ export const SideEvents = () => {
                                 transform: `translateX(${mobilePanel === 0 ? '0%' : '-50%'})`,
                                 transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                                 willChange: 'transform',
+                                
                             } : { display: 'contents' }}>
 
                                 {/* Panel 0 — design */}
-                                <div style={screens.xs ? { width: '50%', flexShrink: 0, height: '100%', overflow: 'hidden' } : { display: 'contents' }}>
+                                <div style={screens.xs ? { width: '50%', flexShrink: 0, height: '100%', overflow: 'hidden',  } : { display: 'contents',  }}>
                                     <div className='side_invitation_cont' style={{ background: handlePreview ? '#FFFFFF' : undefined, ...(screens.xs ? { width: '100%', maxWidth: '100%', minWidth: 'unset', height: '100%' } : {}) }}>
                                         {
                                             handlePreview ?
@@ -1470,7 +1376,7 @@ export const SideEvents = () => {
                                         style={{ minWidth: '44px', minHeight: '44px', borderRadius: '99px', background: '#00000080', backdropFilter: 'blur(10px)', border: 'none', color: '#FFF', opacity: mobilePanel === 0 ? 0.3 : 1, transition: 'opacity 0.3s ease', pointerEvents: mobilePanel === 0 ? 'none' : 'auto' }}
                                     />
                                     <Button
-                                        onClick={() => { setOpen(false); setMobilePanel(0); }}
+                                        onClick={() => { setCurrent(null); setMobilePanel(0); }}
                                         style={{ flex: 1, borderRadius: '99px', minHeight: '44px', background: '#00000080', backdropFilter: 'blur(10px)', border: 'none', color: '#FFF', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }}
                                     >{t('side_events.btn_close')}</Button>
                                     <CustomLink
@@ -1491,41 +1397,7 @@ export const SideEvents = () => {
                             )}
                         </div>
 
-                        {!screens.xs && (
-                            <Tooltip color="#6D3CFA">
-                                <div
-                                    onClick={() => setActiveTickets(true)}
-                                    onMouseEnter={() => setOnTickets(true)} onMouseLeave={() => setOnTickets(false)}
-                                    style={{ bottom: '2%', right: '1.4%', maxHeight: '210px', borderRadius: activeTickets && '16px', }}
-                                    className={`tickets_button ${activeTickets ? 'tickets_button_active' : ''}`}>
-                                    {!activeTickets && (
-                                        <>
-                                            <Progress
-                                                showInfo={false}
-                                                status="active"
-                                                type="circle"
-                                                percent={(credits * 100) / 300}
-                                                size={80}
-                                                strokeWidth={12}
-                                                strokeColor={"#6D3CFA"}
-                                            />
-                                            {!onTickets ? (
-                                                <LuCoins size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
-                                            ) : (
-                                                <LuPlus size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
-                                            )}
-                                        </>
-                                    )}
-                                    {activeTickets && (
-                                        <div onClick={(e) => e.stopPropagation()} className='active_tickets_cont' style={{ position: 'relative' }}>
-                                            <CreditsComponent getType={getCredits} credits={credits} invitationID={id} isClosable={true} setOnClose={setActiveTickets} />
-                                        </div>
-                                    )}
-                                </div>
-                            </Tooltip>
-                        )}
-
-                    </Modal>
+                    </div>)}
 
                     <Drawer
                         open={colorDrawerOpen}

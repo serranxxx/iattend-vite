@@ -3,12 +3,13 @@
     position: fixed;
     z-index: 1200;
     overflow: hidden;
+    touch-action: none;
     transition:
         width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         border-radius 0.38s ease,
-        box-shadow    0.38s ease;
-    touch-action: none;
+        box-shadow    0.38s ease,
+        transform     0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
 /* Animate position only when snapping to corner */
@@ -19,21 +20,40 @@
         width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         border-radius 0.38s ease,
-        box-shadow    0.38s ease;
+        box-shadow    0.38s ease,
+        transform     0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
 /* ── Closed (circle) ─────────────────────────────────── */
 .chat-morph--closed {
-    width: 52px;
-    height: 52px;
+    width: 64px;
+    height: 64px;
     border-radius: 99px;
-    background: var(--brand-color-500);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.24);
+    background:#F5F3F2;
+    border: 2px solid #FFF;
+    box-shadow: 0 0px 24px rgba(0, 0, 0, 0.2);
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .chat-morph--closed:hover {
     filter: brightness(1.1);
+}
+
+@keyframes lia-gradient-flow {
+    0%   { background-position: 0%   50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0%   50%; }
+}
+
+/* ── Notification pill (Dynamic Island) ──────────────── */
+.chat-morph--notif {
+    width: 300px;
+    height: 64px;
+    border-radius: 99px;
+    background: #16323d;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
+    cursor: pointer;
 }
 
 /* ── Open (panel) ────────────────────────────────────── */
@@ -45,7 +65,7 @@
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
 }
 
-/* ── Toggle button icon (visible when closed) ───────── */
+/* ── Circle button icon ──────────────────────────────── */
 .chat-morph-btn {
     position: absolute;
     inset: 0;
@@ -56,15 +76,106 @@
     pointer-events: auto;
 }
 
-.chat-morph--open .chat-morph-btn {
+.chat-morph--open .chat-morph-btn,
+.chat-morph--notif .chat-morph-btn {
     opacity: 0;
     pointer-events: none;
 }
 
 .chat-morph-star {
-    font-size: 22px;
+    font-size: 32px;
     color: #fff;
     line-height: 1;
+}
+
+/* ── Notification badge on button ────────────────────── */
+.chat-morph-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #ff4d4f;
+    color: #fff;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none;
+    animation: notif-badge-in 0.2s ease;
+}
+
+@keyframes notif-badge-in {
+    from { transform: scale(0); }
+    to   { transform: scale(1); }
+}
+
+/* ── Dynamic Island pill content ─────────────────────── */
+.chat-morph-pill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 0px 24px;
+    padding-left: 12px;
+    opacity: 0;
+    pointer-events: none;
+    background: #16323d;
+    border: 2px solid #16323d;
+    border-radius: 99px;
+    /* Appear after pill has expanded, disappear before it contracts */
+    transition: opacity 0.15s ease 0.22s;
+    overflow: hidden;
+    
+}
+
+.chat-morph--notif .chat-morph-pill {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.chat-morph-pill-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 99px;
+    object-fit: cover;
+    flex-shrink: 0;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.chat-morph-pill-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0px;
+    min-width: 0;
+    flex: 1;
+}
+
+.chat-morph-pill-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #eeeadf;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+}
+
+.chat-morph-pill-body {
+    font-size: 12px;
+    color: #eeeadf99;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ── Luma panel content (visible when open) ─────────── */

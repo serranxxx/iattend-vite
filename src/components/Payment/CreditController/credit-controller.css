@@ -1,0 +1,104 @@
+.coins_cont {
+    width: 120px;
+    height: 32px;
+    border-radius: 99px;
+    background-color: #ffffff40;
+    backdrop-filter: blur(10px);
+    border: 1px solid #ebebeb;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.06);
+    transition: width 0.35s cubic-bezier(0.34, 1.15, 0.64, 1),
+                background-color 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+.coins_cont--sending {
+    width: 200px;
+    background-color: #b9a2e1;
+    background-image:
+        radial-gradient(120% 180% at 0% 0%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(120% 180% at 100% 100%, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 60%),
+        linear-gradient(135deg, #c9b8ea 0%, #b9a2e1 45%, #a189d8 100%);
+    background-size: 220% 220%, 220% 220%, 100% 100%;
+    background-position: 0% 0%, 100% 100%, 0% 50%;
+    animation: creditWaves 1.3s ease-in-out infinite;
+    border-color: transparent;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2), inset 0px 0px 8px rgba(0, 0, 0, 0.2);
+}
+
+.coins_sending_content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.credit_minus_bubble {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #6D3CFA;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 3px 14px;
+    border-radius: 99px;
+    white-space: nowrap;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    animation: creditBubbleRise 1.5s ease-in-out forwards;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+@keyframes creditBubbleRise {
+    0%   { bottom: -8px; opacity: 1; }
+    70%  { bottom: calc(100% + 16px); opacity: 1; }
+    100% { bottom: calc(100% + 26px); opacity: 0; }
+}
+
+@keyframes creditWaves {
+    0%   { background-position: 0% 0%, 100% 100%, 0% 50%; }
+    50%  { background-position: 100% 20%, 0% 80%, 100% 50%; }
+    100% { background-position: 0% 0%, 100% 100%, 0% 50%; }
+}
+
+.coins_rel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.coins_img {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    left: -12px;
+}
+
+.coins_btn {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 99px;
+    height: 28px;
+    max-width: 28px;
+    background-color: #F3F2F2;
+    border: none;
+    /* border-radius: 99px; */
+}
+
+.credits_label {
+    font-weight: 400;
+    letter-spacing: 1px;
+    /* text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2); */
+}

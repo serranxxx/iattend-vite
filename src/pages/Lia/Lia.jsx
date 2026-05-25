@@ -11,8 +11,8 @@ const API = 'http://localhost:4000'
 
 const CTAS = [
     'Resumen del evento',
+    'Mis notificaciones',
     'Mensajes nuevos',
-    'Cancelaciones recientes',
     'Pendientes de respuesta',
     'Espacios disponibles en mesas',
     // 'Side events',
@@ -106,7 +106,7 @@ const renderMarkdown = (text) => {
 
 const TypingIndicator = () => (
     <div className="lia-typing-row">
-        <div className="lia-avatar">✦</div>
+        {/* <div className="lia-avatar">✦</div> */}
         <div className="lia-typing-bubble">
             <div className="lia-typing-dot" />
             <div className="lia-typing-dot" />
@@ -141,7 +141,7 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) =>
 
     return (
         <div className={`lia-message-row ${isUser ? 'user' : ''}`}>
-            {!isUser && <div className="lia-avatar">✦</div>}
+            
             <div className={`lia-bubble ${isUser ? 'user' : 'assistant'}`}>
                 {isUser ? safeContent : renderMarkdown(safeContent)}
                 {!isUser && (msg.message_id || msg.action_id) && (
@@ -238,14 +238,14 @@ const ActionCard = ({ action, onApprove, onStartReject, onConfirmReject, onCance
 
 const CreditCircle = ({ freeRemaining, freeLimit, paidBalance }) => {
     const [hovered, setHovered] = useState(false)
-    const pct           = freeLimit > 0 ? freeRemaining / freeLimit : 1
-    const radius        = 9
-    const stroke        = 2.5
+    const pct = freeLimit > 0 ? freeRemaining / freeLimit : 1
+    const radius = 9
+    const stroke = 2.5
     const circumference = 2 * Math.PI * radius
-    const offset        = circumference * (1 - pct)
-    const color         = pct > 0.5 ? 'var(--brand-color-500)'
-                        : pct > 0.2 ? '#faad14'
-                        : '#ff4d4f'
+    const offset = circumference * (1 - pct)
+    const color = pct > 0.5 ? 'var(--brand-color-500)'
+        : pct > 0.2 ? '#faad14'
+            : '#ff4d4f'
 
     return (
         <div
@@ -318,8 +318,8 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance }) => {
 }
 
 const CREDIT_PACKAGES = [
-    { aiCredits: 50,  iattendCost: 50  },
-    { aiCredits: 100, iattendCost: 80  },
+    { aiCredits: 50, iattendCost: 50 },
+    { aiCredits: 100, iattendCost: 80 },
     { aiCredits: 150, iattendCost: 120 },
 ]
 
@@ -667,8 +667,14 @@ export default function Lia({ id: idProp, onMinimize }) {
             <div className="lia-main">
                 <header className="lia-chat-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="lia-header-title">Lia ✦</span>
-                    <span className="lia-beta-badge">Beta</span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap:4 }}>
+                            {/* <div className='lia_cont_img'>
+                                <img src="/images/lia/heart_3.png" className="lia-avatar" alt="Lia" />
+                            </div> */}
+                            <span className="lia-header-title">Lia </span>
+
+                        </div>
+                        <span className="lia-beta-badge">Beta</span>
 
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>

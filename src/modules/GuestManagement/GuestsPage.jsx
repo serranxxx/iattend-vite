@@ -1,11 +1,11 @@
-import { Badge, Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Table, notification } from 'antd'
+import { Badge, Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Table } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Legend, } from 'chart.js';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoMdAdd, } from 'react-icons/io';
 import { FooterApp } from '../Footer/FooterApp';
 import { supabase } from '../../lib/supabase';
-import { FaCheck, FaPaperPlane, FaPlus, FaRegCopy, } from 'react-icons/fa';
+import { FaCheck, FaPlus, FaRegCopy, } from 'react-icons/fa';
 import { AiOutlineClockCircle, } from 'react-icons/ai';
 import { FiArrowUpRight, FiMinus } from 'react-icons/fi';
 import { NotificationCard } from '../../components/NotificationCard/NotificationCard';
@@ -24,11 +24,12 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams } from 'react-router-dom';
-import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, X } from 'lucide-react';
+import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { useTranslation } from 'react-i18next';
 import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
 import { useLia } from '../../context/LiaContext';
+import { useDashboardRealtime } from '../../context/DashboardRealtimeContext';
 
 const { useBreakpoint } = Grid;
 
@@ -53,9 +54,7 @@ export default function GuestsPage() {
     const [confirmed, setConfirmed] = useState(0)
     const [waiting, setWaiting] = useState(0)
     const [tickets, setTickets] = useState(0)
-    const [onTickets, setOnTickets] = useState(false)
     const [activeTickets, setActiveTickets] = useState(false)
-    const [api, contextHolder] = notification.useNotification();
     const [onNotificationCenter, setOnNotificationCenter] = useState(false)
     const [onEditTickets, setOnEditTickets] = useState(false)
     const [drawerState, setDrawerState] = useState({
@@ -79,9 +78,7 @@ export default function GuestsPage() {
     const [createdData, setCreatedData] = useState([])
     const [notifications, setNotifications] = useState([])
     const [tables, setTables] = useState([])
-    const [onBubble, setOnBubble] = useState(false)
     const [showMobileMessages, setShowMobileMessages] = useState(false)
-    const [onSending, setOnSending] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [hierarchyData, setHierarchyData] = useState([])
     const [expandedRowKeys, setExpandedRowKeys] = useState([]);
@@ -106,7 +103,8 @@ export default function GuestsPage() {
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
 
-    const { uiAction, clearUiAction } = useLia()
+    const { uiAction, clearUiAction, setCreditSending, setCreditSuccess, clearCreditState } = useLia()
+    const { subscribe } = useDashboardRealtime()
 
     useEffect(() => {
         if (!uiAction) return
@@ -1402,7 +1400,7 @@ export default function GuestsPage() {
     }
 
     const onSedingInvitation = async (guest, retry) => {
-        setOnSending(true)
+        setCreditSending()
         try {
             const payload = {
                 invitationId: id,
@@ -1467,13 +1465,13 @@ export default function GuestsPage() {
                 if (!retry) {
                     onUpdateCredits()
                 }
-                setOnSending(false)
-                setOnBubble(true)
+                setCreditSuccess()
                 onSendInvitation(guest)
 
             }
 
         } catch (error) {
+            clearCreditState()
             console.log(error.response?.data || error.message);
             throw error;
         }
@@ -1567,33 +1565,6 @@ export default function GuestsPage() {
 
     };
 
-    const handleNotification = (payload) => {
-        const title = <strong>{t('guests.notification_title')}</strong>
-
-        if (payload.state === 'confirmado') {
-            api.success({
-                message: title,
-                description: (
-                    <>
-                        <strong>{payload.name}</strong> {t('guests.notification_confirmed_suffix')}
-                    </>
-                ),
-                showProgress: true,
-                duration: 10
-            })
-        } else {
-            api.error({
-                message: title,
-                description: (
-                    <>
-                        {t('guests.notification_rejected_prefix')} <strong>{payload.name}</strong> {t('guests.notification_rejected_suffix')}
-                    </>
-                ),
-                showProgress: true,
-                duration: 10
-            })
-        }
-    }
 
     const getMessagesUpdates = async () => {
 
@@ -1639,105 +1610,36 @@ export default function GuestsPage() {
 
 
     useEffect(() => {
-        if (!supabase || !id) return;
+        if (!id) return;
 
-        const channel = supabase
-            .channel(`upload_dynamic_table_${id}`)
+        const u1 = subscribe('guests', (payload) => {
+            const row = payload.new || payload.old;
+            if (!row || String(row.invitation_id) !== String(id)) return;
+            refreshPage();
+        });
 
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'guests'
-                },
-                (payload) => {
-                    const row = payload.new || payload.old;
-                    if (!row) return;
+        const u2 = subscribe('invitation_message_dispatches', (payload) => {
+            const row = payload.new || payload.old;
+            if (!row || String(row.invitation_id) !== String(id)) return;
+            getMessagesUpdates();
+            refreshPage();
+        });
 
-                    if (row.invitation_id === id) {
-                        refreshPage();
-                        if (row.last_action_by !== 'admin') {
-                            handleNotification(row);
-                        }
-                    }
-                }
-            )
+        const u3 = subscribe('whatsapp_incoming_messages', (payload) => {
+            const row = payload.new || payload.old;
+            if (!row) return;
+            getChats();
+        });
 
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'invitation_message_dispatches'
-                },
-                (payload) => {
-                    const row = payload.new || payload.old;
-                    if (!row) return;
+        const u4 = subscribe('whatsapp_freetext_dispatches', (payload) => {
+            const row = payload.new || payload.old;
+            if (!row) return;
+            getChats();
+        });
 
-                    if (row.invitation_id === id) {
-                        // console.log('message status update:', row);
-                        getMessagesUpdates()
-                        refreshPage();
-                        // refreshPage();
-                    }
+        return () => { u1(); u2(); u3(); u4(); };
+    }, [id]);
 
-                }
-            )
-
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'whatsapp_incoming_messages'
-                },
-                (payload) => {
-                    const row = payload.new || payload.old;
-                    if (!row) return;
-                    getChats();
-                    if (!row.read) {
-                        api.info({
-                            message: <strong>{row.contact_name || row.from_phone}</strong>,
-                            description: row.message_body?.slice(0, 80) || 'Nuevo mensaje',
-                            showProgress: true,
-                            duration: 8,
-                        });
-                    }
-                }
-            )
-
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'whatsapp_freetext_dispatches'
-                },
-                (payload) => {
-                    const row = payload.new || payload.old;
-                    if (!row) return;
-                    getChats()
-
-                }
-            )
-
-            .subscribe((status) => {
-                console.log('sub status:', status);
-            });
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [supabase, id]);
-
-    useEffect(() => {
-        if (onBubble) {
-            setTimeout(() => {
-                setOnBubble(false)
-            }, 1800);
-        }
-    }, [onBubble])
 
     useEffect(() => {
         if (onGroupTable) {
@@ -1809,7 +1711,6 @@ export default function GuestsPage() {
 
     return (
         <>
-            {contextHolder}
             <Layout
                 className='guests_main'
                 style={{
@@ -1817,18 +1718,20 @@ export default function GuestsPage() {
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: 'var(--ft-color)',
                 }}>
-                <HeaderDashboard mode={'guests'} />
+                <HeaderDashboard
+                    mode={'guests'}
+                />
 
                 <Layout className='build-invitation-layout' style={{
-                    paddingTop: screens.xs ? '50px' : '65px', paddingBottom: '24px', position: 'relative',
+                    paddingTop: screens.xs ? '50px' : '75px', paddingBottom: '24px', position: 'relative',
                     boxSizing: 'border-box'
                 }} >
                     <div onClick={() => { setOnNotificationCenter(false); setActiveTickets(false) }} style={{
                         width: '100%', height: '100vh',
                         position: 'absolute', backgroundColor: '#FFFFFF40',
                         zIndex: 98,
-                        opacity: activeTickets | onSending | onNotificationCenter ? 1 : 0,
-                        pointerEvents: activeTickets | onSending | onNotificationCenter ? undefined : 'none',
+                        opacity: onNotificationCenter ? 1 : 0,
+                        pointerEvents: onNotificationCenter ? undefined : 'none',
                     }}></div>
 
 
@@ -2002,30 +1905,6 @@ export default function GuestsPage() {
 
 
 
-                            <div onClick={() => setOnSending(false)} className={`edit-tickets-container`} style={{
-                                width: onSending ? '190px' : '0px',
-                                borderRadius: '99px',
-                                height: '40px',
-                            }}>
-
-
-
-
-                                {
-                                    onSending &&
-                                    <div
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
-                                            boxSizing: 'border-box', padding: '0px 12px', height: '100%', borderRadius: '99px',
-                                            cursor: 'pointer',
-                                            width: '100%'
-                                        }}>
-                                        <FaPaperPlane className='paper_flight' />
-                                        <span style={{ fontSize: '14px' }}>{t('guests.invitation_sent')}</span>
-                                    </div>
-                                }
-
-                            </div>
 
 
 
@@ -2244,29 +2123,73 @@ export default function GuestsPage() {
 
                                 }
 
-                                {
-                                    !screens.xs &&
-
-                                    <Dropdown
-                                        trigger={['click']}
-                                        placement='bottomLeft'
-                                        arrow
-                                        popupRender={() => (
-                                            <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
-                                        )}
-                                    >
-                                        <Badge count={unAnswer} color='var(--purple-color)' size='large'>
-                                            <Button
-                                                disabled={plan !== 'pro'}
-                                                style={{ minWidth: plan !== 'pro' ? '145px' : '32px', justifyContent: plan !== 'pro' ? 'flex-start' : 'center', padding: plan !== 'pro' ? '12px' : undefined }} className={`primarybutton${plan !== 'pro' ? '_transparent' : ''} ${plan !== 'pro' ? 'pro_badge' : ''}`} icon={<MessageCircle size={12} />} >
-                                                {plan !== 'pro' ? 'Mensajes' : ''}
-                                            </Button>
-                                        </Badge>
-                                    </Dropdown>
-                                }
 
 
 
+
+                                <Dropdown
+                                    trigger={['click']}
+                                    placement='bottomRight'
+                                    arrow
+                                    open={activeTickets}
+                                    onOpenChange={setActiveTickets}
+                                    popupRender={() => (
+                                        <div className='active_tickets_cont'>
+                                            <div className='edit-tickets-buttons-container'>
+
+                                                <div className='edit-tickets-dash'>
+                                                    <div className='active_t_row' style={{ justifyContent: 'space-between' }}>
+                                                        <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_total')}</span>
+                                                    </div>
+                                                    <div className='dash-row-pie' style={{ gap: '12px' }}>
+                                                        <Input onChange={(e) => {
+                                                            const onlyNumbers = e.target.value.replace(/\D/g, '')
+                                                            setCopyTickets(Number(onlyNumbers))
+                                                        }} value={copyTickets} style={{
+                                                            maxWidth: '100%', maxHeight: '100px', borderRadius: '99px', flex: 1, textAlign: 'center', fontSize: '18px', fontWeight: 800,
+                                                        }} />
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0px' }}>
+                                                            <Button onClick={() => setCopyTickets(copyTickets - 1)} icon={<FiMinus style={{ marginTop: '2px' }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '99px 0px 0px 99px', flex: '1' }}></Button>
+                                                            <Button onClick={() => setCopyTickets(copyTickets + 1)} icon={<IoMdAdd style={{ marginTop: '2px' }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '0px 99px 99px 0px', flex: '1' }}></Button>
+                                                            <Button onClick={() => onHandleTickets(copyTickets)} className="save_tickets" icon={<FaCheck size={10} style={{ color: '#FFF', marginBottom: '1px' }} />}
+                                                                style={{ maxHeight: '32px', maxWidth: '32px', borderRadius: '99px', marginLeft: '6px', backgroundColor: '#6D3CFA' }}></Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className='edit-tickets-dash'>
+                                                    <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_distribution')}</span>
+                                                    <div className='dash-row-pie'>
+                                                        <div className='pie_cont'>
+                                                            <Pie data={chartData} options={options} />
+                                                        </div>
+                                                        <div className='pie_cols'>
+                                                            <div className='pie_row'>
+                                                                <div style={{ backgroundColor: '#6D3CFA' }} className='pie_dot'></div>
+                                                                <span>{t('guests.control_confirmed')} ({confirmed})</span>
+                                                            </div>
+                                                            <div className='pie_row'>
+                                                                <div style={{ backgroundColor: '#6D3CFA50' }} className='pie_dot'></div>
+                                                                <span>{t('guests.control_waiting')} ({waiting})</span>
+                                                            </div>
+                                                            {type === 'closed' &&
+                                                                <div className='pie_row'>
+                                                                    <div style={{ backgroundColor: '#6D3CFA20' }} className='pie_dot'></div>
+                                                                    <span>{t('guests.control_available')} ({tickets - (waiting + confirmed)})</span>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    )}
+                                >
+                                    <Button className='primarybutton' icon={<Tickets size={14} />}>
+                                        
+                                    </Button>
+                                </Dropdown>
 
                                 {
                                     !screens.xs &&
@@ -2555,120 +2478,6 @@ export default function GuestsPage() {
 
                     </div>
 
-                    <div className={onBubble ? 'ticket_bubble' : 'hide_bubble'}>-1 crédito</div>
-
-                    <Tooltip title={!activeTickets && <span style={{ color: '#FFF' }}>{`${(waiting + confirmed)} / ${tickets} ${t('guests.control_total')}`}</span>} color="#6D3CFA">
-                        <div
-                            onClick={() => setActiveTickets(true)}
-                            // onClick={() => setOnBubble(true)}
-                            onMouseEnter={() => setOnTickets(true)} onMouseLeave={() => setOnTickets(false)}
-                            style={{ bottom: screens.xs ? '10px' : '30px', right: screens.xs ? '10px' : '30px' }}
-                            className={`tickets_button ${activeTickets ? 'tickets_button_active' : ''}`}>
-                            {!activeTickets && (
-                                <>
-                                    <Progress
-                                        showInfo={false}
-                                        status="active"
-                                        type="circle"
-                                        percent={((waiting + confirmed) * 100) / tickets}
-                                        size={80}
-                                        strokeWidth={8}
-                                        strokeColor={"#6D3CFA"}
-                                    />
-
-                                    {!onTickets ? (
-                                        <IoTicket size={28} style={{ position: "absolute", color: "#6D3CFA" }} />
-                                    ) : (
-                                        <PlusCircle size={36} style={{ position: "absolute", color: "#6D3CFA" }} />
-                                    )}
-                                </>
-                            )}
-
-                            {
-                                activeTickets && (
-                                    <div onClick={(e) => e.stopPropagation()} className='active_tickets_cont'>
-                                        <div className='active_t_row' style={{ justifyContent: 'space-between', }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                                <LuSettings2 size={18} />
-                                                <span className='active_t_title'>  {t('guests.control_title')}</span>
-                                            </div>
-                                            <Button icon={<GoChevronDown style={{ marginTop: '6px' }} size={18} />} type='text' onClick={() => setActiveTickets(false)}></Button>
-                                        </div>
-
-
-                                        <div className='edit-tickets-buttons-container'>
-
-                                            <div className='edit-tickets-dash'>
-                                                <div className='active_t_row' style={{ justifyContent: 'space-between' }}>
-                                                    <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_total')}</span>
-
-                                                </div>
-                                                <div className='dash-row-pie' style={{ gap: '12px' }}>
-                                                    <Input onChange={(e) => {
-                                                        const onlyNumbers = e.target.value.replace(/\D/g, ''); // elimina todo lo que no sea número
-                                                        setCopyTickets(Number(onlyNumbers)); // convierte a número
-                                                    }} value={copyTickets} style={{
-                                                        maxWidth: '100%', maxHeight: '100px', borderRadius: '99px', flex: 1, textAlign: 'center', fontSize: '18px', fontWeight: 800,
-                                                    }} />
-
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0px' }}>
-                                                        <Button onClick={() => setCopyTickets(copyTickets - 1)} icon={<FiMinus style={{ marginTop: '2px', }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '99px 0px 0px 99px', flex: '1' }}></Button>
-                                                        <Button onClick={() => setCopyTickets(copyTickets + 1)} icon={<IoMdAdd style={{ marginTop: '2px', }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '0px 99px 99px 0px', flex: '1' }}></Button>
-                                                        <Button onClick={() => onHandleTickets(copyTickets)} className="save_tickets" icon={<FaCheck size={10} style={{ color: '#FFF', marginBottom: '1px' }} />}
-                                                            style={{
-                                                                maxHeight: '32px', maxWidth: '32px', borderRadius: '99px', marginLeft: '6px',
-                                                                backgroundColor: '#6D3CFA'
-                                                            }}></Button>
-                                                    </div>
-
-                                                </div>
-
-
-
-                                            </div>
-
-                                            <div className='edit-tickets-dash'>
-                                                <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_distribution')}</span>
-                                                <div className='dash-row-pie'>
-                                                    <div className='pie_cont' >
-                                                        <Pie data={chartData} options={options} />
-                                                    </div>
-                                                    <div className='pie_cols'>
-                                                        <div className='pie_row'>
-                                                            <div style={{ backgroundColor: '#6D3CFA' }} className='pie_dot'></div>
-                                                            <span>{t('guests.control_confirmed')} ({confirmed})</span>
-                                                        </div>
-
-                                                        <div className='pie_row'>
-                                                            <div style={{ backgroundColor: '#6D3CFA50' }} className='pie_dot'></div>
-                                                            <span>{t('guests.control_waiting')} ({waiting})</span>
-                                                        </div>
-
-                                                        {
-                                                            type === 'closed' &&
-                                                            <div className='pie_row'>
-                                                                <div style={{ backgroundColor: '#6D3CFA20' }} className='pie_dot'></div>
-                                                                <span>{t('guests.control_available')} ({tickets - (waiting + confirmed)})</span>
-                                                            </div>
-                                                        }
-
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                        <div className='edit-tickets-buttons-container'>
-
-                                            <CreditsComponent getType={getType} credits={credits} invitationID={id} />
-
-                                        </div>
-                                    </div>
-                                )
-                            }
-                        </div>
-                    </Tooltip>
                 </Layout >
 
                 <div

@@ -1,5 +1,5 @@
 
-import { Breadcrumb, Button, Grid, Popconfirm, Row, Tooltip, message } from "antd"
+import { Badge, Breadcrumb, Button, Dropdown, Grid, Popconfirm, Row, Tooltip, message } from "antd"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
@@ -7,8 +7,11 @@ import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart,
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { Menu } from "lucide-react";
+import { Menu, MessageCircle } from "lucide-react";
+import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
+import { CreditController } from "../../components/Payment/CreditController/CreditController"
+import { useDashboardRealtime } from "../../context/DashboardRealtimeContext";
 
 const baseProd = "https://www.iattend.events"
 
@@ -135,9 +138,9 @@ export const HeaderBuild = ({ position, isVisible }) => {
                         width: '90%', position: 'relative',
                     }}>
 
-                    
 
-                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<Menu style={{color:'#000'}}/>} />
+
+                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<Menu style={{ color: '#000' }} />} />
 
                 </div>
 
@@ -187,7 +190,7 @@ export const HeaderBuild = ({ position, isVisible }) => {
         </>
     )
 }
-export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges }) => {
+export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges, sideEventName, onSideEventsBack }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -197,9 +200,12 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
     const [messageApi, contextHolder] = message.useMessage();
     const [invitation, setInvitation] = useState(null)
-    const [plan, setPlan] = useState(null)
 
-  const isEditing = mode === "edit" || mode === "on-edit";
+    const [conversations, setConversations] = useState([])
+    const [unAnswer, setUnAnswer] = useState(0)
+    const [guestsByPhone, setGuestsByPhone] = useState(new Map())
+
+    const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
     const screens = useBreakpoint();
     const [urlImage, setUrlImage] = useState(null)
@@ -218,10 +224,30 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             console.error("Error al obtener invitaciones:", error);
         } else {
             setInvitation(data.data)
-            setPlan(data.plan)
+
             setName(data.name)
             setUrlImage(data.url_image)
         }
+    }
+
+    const calculateUnAnswer = (convs) => {
+        let count = 0
+        convs.forEach(conv => conv.messages.forEach(msg => {
+            if (!msg.read && msg.direction === 'inbound') count += 1
+        }))
+        setUnAnswer(count)
+    }
+
+    const getChats = async () => {
+        const { data, error } = await supabase.rpc('get_conversations_by_invitation', { p_invitation_id: id })
+        if (error) return
+        setConversations(data)
+        calculateUnAnswer(data)
+    }
+
+    const getGuestsMap = async () => {
+        const { data } = await supabase.from('guests').select('phone_number, name').eq('invitation_id', id)
+        if (data) setGuestsByPhone(new Map(data.map(g => [String(g.phone_number).replace(/\D/g, ''), g.name])))
     }
 
     /* ========================
@@ -230,13 +256,14 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
 
     const handleBack = useCallback(() => {
-        if (mode === 'dashboard') {
+        if (onSideEventsBack) {
+            onSideEventsBack();
+        } else if (mode === 'dashboard') {
             navigate('/invitations');
         } else {
             navigate(-1);
         }
-
-    }, [navigate]);
+    }, [navigate, onSideEventsBack, mode]);
 
     const goToDashboard = useCallback(() => {
         navigate(`/dashboard?id=${id}`);
@@ -286,14 +313,14 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             );
 
         const items = [
-            {
-                title: confirmWrapper(
-                    <span style={{ cursor: "pointer" }} onClick={goToInvitations}>
-                        {t('dashboard_header.my_invitations')}
-                    </span>,
-                    goToInvitations
-                )
-            },
+            // {
+            //     title: confirmWrapper(
+            //         <span style={{ cursor: "pointer" }} onClick={goToInvitations}>
+            //             {t('dashboard_header.my_invitations')}
+            //         </span>,
+            //         goToInvitations
+            //     )
+            // },
             {
                 title: confirmWrapper(
                     <span style={{ cursor: "pointer" }} onClick={goToDashboard}>
@@ -312,7 +339,14 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         };
 
         if (modeMap[mode]) {
-            items.push({ title: modeMap[mode] });
+            if (mode === 'side' && sideEventName) {
+                items.push({
+                    title: <span style={{ cursor: 'pointer' }} onClick={onSideEventsBack}>Side events</span>
+                });
+                items.push({ title: sideEventName });
+            } else {
+                items.push({ title: modeMap[mode] });
+            }
         }
 
         return items;
@@ -321,7 +355,9 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         mode,
         hasUnsavedChanges,
         goToDashboard,
-        goToInvitations
+        goToInvitations,
+        sideEventName,
+        onSideEventsBack
     ]);
 
 
@@ -346,7 +382,22 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     useEffect(() => {
         if (id) {
             getInvitation(id)
+            getChats()
+            getGuestsMap()
         }
+    }, [id])
+
+    const { subscribe } = useDashboardRealtime()
+
+    useEffect(() => {
+        if (!id) return;
+        const u1 = subscribe('whatsapp_incoming_messages', () => getChats())
+        const u2 = subscribe('whatsapp_freetext_dispatches', () => getChats())
+        const u3 = subscribe('guests', (payload) => {
+            const row = payload.new || payload.old
+            if (row?.invitation_id === id) getGuestsMap()
+        })
+        return () => { u1(); u2(); u3() }
     }, [id])
 
 
@@ -358,7 +409,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     return (
         <>
             {contextHolder}
-            <div className="header-dashboard-main-container" style={{ justifyContent: "flex-start", borderBottom: '1px solid #e8e8e8' }}>
+            <div className="header-dashboard-main-container" style={{ borderBottom: '1px solid #e8e8e8' }}>
                 <div className="header-dashboard-container">
 
                     {/* LEFT SIDE */}
@@ -391,7 +442,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {screens.xs && (
                             <span style={{ fontFamily: 'Poppins', fontSize: '16px', fontWeight: 500, marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
-                                {invitation?.cover?.title?.text?.value}
+                                {sideEventName ?? invitation?.cover?.title?.text?.value}
                             </span>
                         )}
 
@@ -399,10 +450,32 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                     </div>
 
+                    <CreditController id={id} />
+
                     {/* RIGHT SIDE */}
                     <div className="header-dashboard-single-row" style={{ gap: 8 }}>
 
-                        {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />}
+                        {/* {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />} */}
+
+                        {!screens.xs && (
+                            <Dropdown
+                                trigger={['click']}
+                                placement='bottomLeft'
+                                arrow
+                                popupRender={() => (
+                                    <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
+                                )}
+                            >
+                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--purple-color)' size='large'>
+                                    <Button
+                                        style={{ borderRadius: '99px' }}
+                                        icon={<MessageCircle size={12} />}
+                                    >
+
+                                    </Button>
+                                </Badge>
+                            </Dropdown>
+                        )}
 
                         {screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={isEditing} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} buttonText="Compartir" />}
 
@@ -410,7 +483,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             <Button
                                 icon={<LuUpload size={14} />}
                                 type="primary"
-                                style={{ position: "relative", height:'32px', borderRadius:'99px' }}
+                                style={{ position: "relative", height: '32px', borderRadius: '99px' }}
                                 onClick={onSaveChanges}
                             >
                                 {t('dashboard_header.publish')}
@@ -424,7 +497,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             <Button
                                 icon={<LuSendHorizontal size={14} />}
                                 type="primary"
-                                style={{ position: "relative", backgroundColor: "#20212B", height:'32px', borderRadius:'99px' }}
+                                style={{ position: "relative", backgroundColor: "#20212B", height: '32px', borderRadius: '99px' }}
                                 onClick={onWriteChanges}
                             >
                                 {t('dashboard_header.write')}
@@ -437,7 +510,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                         {
                             !screens.xs &&
                             <Link to="https://wa.me/6145338500" target="_blank">
-                                <Button icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
+                                <Button style={{ borderRadius: '99px' }} icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
                                     {t('dashboard_header.help')}
                                 </Button>
                             </Link>
@@ -450,10 +523,10 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 <Button
                                     icon={<LuUpload size={14} />}
                                     type="primary"
-                                    style={{ position: "relative" }}
-                                    onClick={onSaveChanges}
+                                    style={{ position: "relative", borderRadius: '99px' }}
+                                    onClick={session.user.role === "Administration" ? onWriteChanges : onSaveChanges}
                                 >
-                                    {t('dashboard_header.publish')}
+                                    {session.user.role === "Administration" ? t('dashboard_header.write') : t('dashboard_header.publish')}
                                     {!saved && (
                                         <div
                                             style={{
@@ -470,32 +543,6 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 </Button>
                             </Tooltip>
                         )}
-
-
-                        {
-                            session?.user?.role === "Administration" && !screens.xs &&
-                            <Button
-                                icon={<LuSendHorizontal size={14} />}
-                                type="primary"
-                                style={{ position: "relative", backgroundColor: "#20212B" }}
-                                onClick={onWriteChanges}
-                            >
-                                {t('dashboard_header.write')}
-                                {!saved && (
-                                    <div
-                                        style={{
-                                            position: "absolute",
-                                            top: 0,
-                                            right: 0,
-                                            height: 10,
-                                            width: 10,
-                                            borderRadius: 50,
-                                            backgroundColor: "#A88AFF"
-                                        }}
-                                    />
-                                )}
-                            </Button>
-                        }
 
                     </div>
                 </div>

@@ -231,17 +231,18 @@
     flex-direction: row-reverse;
 }
 
-.lia-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 99px;
-    background: var(--gradient);
+.lia_cont_img {
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    color: var(--ft-color);
-    flex-shrink: 0;
+}
+
+.lia-avatar {
+    height: 100%;
+    /* width: 100%; */
+    object-fit: cover;
 }
 
 .lia-bubble {

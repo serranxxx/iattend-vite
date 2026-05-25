@@ -20,9 +20,10 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    margin-top: 45px;
+    /* margin-top: 55px; */
     flex-direction: row;
     padding: 24px;
+    padding-top: 36px;
     gap: 24px;
 }
 
