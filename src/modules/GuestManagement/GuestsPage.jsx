@@ -28,7 +28,7 @@ import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound,
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { useTranslation } from 'react-i18next';
 import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
-import { useLuma } from '../../context/LumaContext';
+import { useLia } from '../../context/LiaContext';
 
 const { useBreakpoint } = Grid;
 
@@ -106,7 +106,7 @@ export default function GuestsPage() {
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
 
-    const { uiAction, clearUiAction } = useLuma()
+    const { uiAction, clearUiAction } = useLia()
 
     useEffect(() => {
         if (!uiAction) return

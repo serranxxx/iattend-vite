@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import Luma from '../../pages/Luma/Luma'
+import Lia from '../../pages/Lia/Lia'
 import './ChatContainer.css'
 
 const MARGIN = 20
@@ -71,7 +71,7 @@ export const ChatContainer = () => {
 
     const onPointerDown = useCallback((e) => {
         if (e.button !== 0) return
-        const isHandle = e.target.closest('.luma-chat-header') && !e.target.closest('.chat-morph-close')
+        const isHandle = e.target.closest('.lia-chat-header') && !e.target.closest('.chat-morph-close')
         if (openRef.current && !isHandle) return
         drag.current = {
             active: true,
@@ -153,7 +153,7 @@ export const ChatContainer = () => {
 
             {mounted && (
                 <div className="chat-morph-panel">
-                    <Luma id={id} onMinimize={handleToggle} />
+                    <Lia id={id} onMinimize={handleToggle} />
                 </div>
             )}
         </div>

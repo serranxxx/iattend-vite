@@ -81,7 +81,7 @@
     pointer-events: auto;
 }
 
-.chat-morph-panel .luma-page {
+.chat-morph-panel .lia-page {
     height: 100%;
 }
 
@@ -111,12 +111,12 @@
 }
 
 /* ── Drag cursor on header ───────────────────────────── */
-.chat-morph--open .luma-chat-header {
+.chat-morph--open .lia-chat-header {
     cursor: grab;
     user-select: none;
 }
 
-.chat-morph--open .luma-chat-header:active {
+.chat-morph--open .lia-chat-header:active {
     cursor: grabbing;
 }
 
