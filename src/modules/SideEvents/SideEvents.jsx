@@ -153,15 +153,25 @@ export const SideEvents = () => {
             title: t('side_events.col_tag'),
             dataIndex: "tag",
             key: "tag",
-            width: 100,
+            width: 120,
 
-            render: (value) => (
-                <div className="tag-container">
-                    <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        {renderTag(value)}
-                    </span>
-                </div>
-            ),
+            render: (value) => {
+                const label = renderTag(value)
+                return (
+                    <div className="tag-container">
+                        <Tooltip title={label} placement="top">
+                            <span className={`new-table-tag state-${value}`} style={{
+                                maxHeight: '24px', padding: '0px 12px',
+                                maxWidth: '140px', overflow: 'hidden',
+                                whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                                display: 'inline-block', textAlign: 'center'
+                            }}>
+                                {label}
+                            </span>
+                        </Tooltip>
+                    </div>
+                )
+            },
         },
 
         {
@@ -321,7 +331,7 @@ export const SideEvents = () => {
             case 'processing':
 
                 return (
-                    <div className='dispatch_message_tag' style={{ maxHeight: '16px' }}>
+                    <div className='dispatch_message_tag' style={{ maxHeight: '24px', padding: '0px 12px' }}>
                         {t('side_events.msg_processing')}
                     </div>
                 )
@@ -329,7 +339,7 @@ export const SideEvents = () => {
             case 'sent':
 
                 return (
-                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
+                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
                         <Send size={16} />
                         {t('side_events.msg_sent')}
                     </div>
@@ -338,7 +348,7 @@ export const SideEvents = () => {
             case 'delivered':
 
                 return (
-                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
+                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
                         <Check size={16} />
                         {t('side_events.msg_delivered')}
                     </div>
@@ -348,7 +358,7 @@ export const SideEvents = () => {
             case 'read':
 
                 return (
-                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '16px' }}>
+                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
                         <CheckCheck size={16} />
                         {t('side_events.msg_read')}
                     </div>
@@ -382,7 +392,7 @@ export const SideEvents = () => {
 
             default:
                 return (
-                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '16px' }}>
+                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
                         {t('side_events.msg_waiting')}
                     </div>
                 )
