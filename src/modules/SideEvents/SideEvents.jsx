@@ -116,7 +116,7 @@ export const SideEvents = () => {
             title: t('side_events.col_state'),
             dataIndex: "state",
             key: "state",
-            width: 100,
+            width: 140,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
@@ -889,6 +889,7 @@ export const SideEvents = () => {
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: 'var(--ft-color)',
                     width: '100%',
+                    
                 }}>
                 <HeaderDashboard
                     mode={'side'}
@@ -898,6 +899,7 @@ export const SideEvents = () => {
                 <Layout className='build-invitation-layout' style={{
                     paddingTop: '0px',
                     position: 'relative',
+                    marginTop: screens.xs ? '0px' : '20px'
                 }} >
 
                     {!current && <div className='guests-info-container' style={{ padding: '24px', marginTop: '65px', paddingBottom: '24px', }}>
@@ -960,10 +962,10 @@ export const SideEvents = () => {
                     </div>}
 
                     {current && (
-                    <div className='side-event-detail-cont'>
+                    <div className='side-event-detail-cont' style={{ minHeight:'calc(100vh - 60px)'}}>
 
                         {/* Slider wrapper: relative container on mobile, transparent on desktop */}
-                        <div style={screens.xs ? { position: 'relative', width: '100%', flex: 1, overflow: 'hidden' } : { display: 'flex', flex: 1, overflow: 'hidden', gap:'12px' }}>
+                        <div style={screens.xs ? { position: 'relative', width: '100%', flex: 1, overflow: 'hidden' } : { display: 'flex', flex: 1, overflow: 'hidden', gap:'12px', }}>
 
                             {/* Slide track: 200% wide flex row on mobile, transparent on desktop */}
                             <div style={screens.xs ? {

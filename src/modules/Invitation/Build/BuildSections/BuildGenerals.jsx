@@ -8,8 +8,41 @@ import { RxValueNone } from 'react-icons/rx';
 import { LuArrowBigDownDash, LuArrowBigUpDash, LuRedo2, LuRotateCcw, LuSettings2 } from 'react-icons/lu';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
-import { ArrowUpRight, ChevronDown, ChevronUp, Maximize2, Paintbrush, Palette } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, ChevronUp, Maximize2, Paintbrush, Palette, X } from 'lucide-react';
 import { colorCollection } from '../../../../helpers/services/colorPalette';
+import { SiSpotify } from 'react-icons/si';
+
+const _spotifyTokenCache = { token: null, expiry: 0 };
+
+async function getSpotifyToken() {
+    if (_spotifyTokenCache.token && Date.now() < _spotifyTokenCache.expiry) {
+        return _spotifyTokenCache.token;
+    }
+    const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+    const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + btoa(`${clientId}:${clientSecret}`),
+        },
+        body: 'grant_type=client_credentials',
+    });
+    const data = await res.json();
+    _spotifyTokenCache.token = data.access_token;
+    _spotifyTokenCache.expiry = Date.now() + (data.expires_in - 60) * 1000;
+    return data.access_token;
+}
+
+async function searchSpotifyTracks(query) {
+    const token = await getSpotifyToken();
+    const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=5`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    return data.tracks?.items ?? [];
+}
 
 
 const { Option } = Select;
@@ -35,6 +68,9 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
     const [openColeccion, setOpenColeccion] = useState(false)
     const [openTexturas, setOpenTexturas] = useState(false)
     const [openSeparadores, setOpenSeparadores] = useState(false)
+    const [songQuery, setSongQuery] = useState('')
+    const [songResults, setSongResults] = useState([])
+    const [songLoading, setSongLoading] = useState(false)
 
     const screens = useBreakpoint()
 
@@ -359,6 +395,57 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
         setSaved(false)
     };
 
+
+    useEffect(() => {
+        if (!songQuery.trim()) {
+            setSongResults([])
+            return
+        }
+        setSongLoading(true)
+        const timer = setTimeout(async () => {
+            try {
+                const tracks = await searchSpotifyTracks(songQuery)
+                setSongResults(tracks)
+            } catch {
+                setSongResults([])
+            } finally {
+                setSongLoading(false)
+            }
+        }, 400)
+        return () => clearTimeout(timer)
+    }, [songQuery])
+
+    const handleSelectSong = (track) => {
+        setInvitation(prev => ({
+            ...prev,
+            cover: {
+                ...prev.cover,
+                song: {
+                    id: track.id,
+                    name: track.name,
+                    artist: track.artists[0].name,
+                    albumArt: track.album.images[track.album.images.length - 1]?.url,
+                    previewUrl: track.preview_url
+                }
+            }
+        }))
+
+        console.log('track: ', track)
+        setSaved(false)
+        setSongQuery('')
+        setSongResults([])
+    }
+
+    const handleRemoveSong = () => {
+        setInvitation(prev => ({
+            ...prev,
+            cover: {
+                ...prev.cover,
+                song: null
+            }
+        }))
+        setSaved(false)
+    }
 
     const filteredCollection = colorCollection.filter((item) => {
         const query = searchCollection.trim().toLowerCase()
@@ -896,7 +983,77 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                         </div>
 
+                        <div className='build-component-elements' style={{ width: '100%' }}>
+                            <span className={'gc-content-label'}>{t('build_generals.label_song')}</span>
+                            <span style={{ fontSize: '11px', color: '#888', marginTop: '-4px' }}>
+                                {t('build_generals.song_description')}
+                            </span>
 
+                            {invitation.cover?.song ? (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                                    border: '1px solid var(--borders)', borderRadius: '12px', padding: '8px 12px'
+                                }}>
+                                    {invitation.cover.song.albumArt && (
+                                        <img src={invitation.cover.song.albumArt} alt=""
+                                            style={{ width: 40, height: 40, borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                                    )}
+                                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {invitation.cover.song.name}
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {invitation.cover.song.artist}
+                                        </div>
+                                    </div>
+                                    <Button type='text' onClick={handleRemoveSong} size='small'
+                                        icon={<X size={14} />}
+                                        style={{ color: '#888', flexShrink: 0 }} />
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                                    <Input
+                                        value={songQuery}
+                                        onChange={e => setSongQuery(e.target.value)}
+                                        placeholder={t('build_generals.song_placeholder')}
+                                        style={{ borderRadius: '99px' }}
+                                        prefix={<SiSpotify style={{ color: '#1DB954' }} />}
+                                    />
+                                    {songLoading && (
+                                        <span style={{ fontSize: '12px', color: '#888' }}>{t('build_generals.song_searching')}</span>
+                                    )}
+                                    {songResults.length > 0 && (
+                                        <div style={{ border: '1px solid var(--borders)', borderRadius: '12px', overflow: 'hidden', width: '100%' }}>
+                                            {songResults.map((track) => (
+                                                <div
+                                                    key={track.id}
+                                                    onClick={() => handleSelectSong(track)}
+                                                    style={{
+                                                        display: 'flex', alignItems: 'center', gap: '10px',
+                                                        padding: '8px 12px', cursor: 'pointer',
+                                                        borderBottom: '1px solid var(--borders)',
+                                                    }}
+                                                    className='song-result-item'
+                                                >
+                                                    {track.album.images[track.album.images.length - 1]?.url && (
+                                                        <img src={track.album.images[track.album.images.length - 1].url} alt=""
+                                                            style={{ width: 36, height: 36, borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                                                    )}
+                                                    <div style={{ overflow: 'hidden' }}>
+                                                        <div style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            {track.name}
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            {track.artists[0]?.name}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                         <div className='build-component-elements'>
 

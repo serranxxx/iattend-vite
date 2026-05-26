@@ -78,7 +78,6 @@ export default function GuestsPage() {
     const [createdData, setCreatedData] = useState([])
     const [notifications, setNotifications] = useState([])
     const [tables, setTables] = useState([])
-    const [showMobileMessages, setShowMobileMessages] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [hierarchyData, setHierarchyData] = useState([])
     const [expandedRowKeys, setExpandedRowKeys] = useState([]);
@@ -100,8 +99,6 @@ export default function GuestsPage() {
     const [owners, setOwners] = useState(null)
     const [url_image, setUrl_image] = useState(null)
     const [plan, setPlan] = useState(null)
-    const [conversations, setConversations] = useState([])
-    const [unAnswer, setUnAnswer] = useState(0)
 
     const { uiAction, clearUiAction, setCreditSending, setCreditSuccess, clearCreditState } = useLia()
     const { subscribe } = useDashboardRealtime()
@@ -1200,9 +1197,6 @@ export default function GuestsPage() {
         }
     }
 
-    const guestsByPhone = useMemo(() =>
-        new Map(rowData.map(g => [String(g.phone_number).replace(/\D/g, ''), g.name]))
-        , [rowData]);
 
 
     const getTickets = async () => {
@@ -1271,7 +1265,6 @@ export default function GuestsPage() {
         setName(data.name)
         setOpenCard(data.type === 'open' ? true : false)
         getGuests()
-        getChats()
         setLocalTags(data.tags)
         setOwners(data.owners)
         setUrl_image(data.url_image)
@@ -1525,15 +1518,6 @@ export default function GuestsPage() {
         // console.log('Créditos actualizados correctamente:', newCredits)
     }
 
-    const getChats = async () => {
-        // const { data, error } = await supabase.rpc('get_conversations_v2');
-        const { data, error } = await supabase.rpc('get_conversations_by_invitation', {
-            p_invitation_id: id
-        });
-        if (error) return
-        setConversations(data)
-        calculateUnAnswer(data)
-    }
 
     const addGuestToTable = async (table, guest) => {
 
@@ -1594,21 +1578,6 @@ export default function GuestsPage() {
     }, [messagesDispatch]);
 
 
-    const calculateUnAnswer = (conversations) => {
-
-        let count = 0
-        let read = 0
-
-        conversations.forEach(conv => (
-            conv.messages.forEach(message => (
-                !message.read && message.direction === 'inbound' ? count += 1 : read += 1
-                // !message.read ? console.log(message) : null
-            ))
-        ))
-        setUnAnswer(count)
-    }
-
-
     useEffect(() => {
         if (!id) return;
 
@@ -1625,19 +1594,7 @@ export default function GuestsPage() {
             refreshPage();
         });
 
-        const u3 = subscribe('whatsapp_incoming_messages', (payload) => {
-            const row = payload.new || payload.old;
-            if (!row) return;
-            getChats();
-        });
-
-        const u4 = subscribe('whatsapp_freetext_dispatches', (payload) => {
-            const row = payload.new || payload.old;
-            if (!row) return;
-            getChats();
-        });
-
-        return () => { u1(); u2(); u3(); u4(); };
+        return () => { u1(); u2(); };
     }, [id]);
 
 
@@ -2127,7 +2084,7 @@ export default function GuestsPage() {
 
 
 
-                                <Dropdown
+                                {!screens.xs && <Dropdown
                                     trigger={['click']}
                                     placement='bottomRight'
                                     arrow
@@ -2187,9 +2144,9 @@ export default function GuestsPage() {
                                     )}
                                 >
                                     <Button className='primarybutton' icon={<Tickets size={14} />}>
-                                        
+
                                     </Button>
-                                </Dropdown>
+                                </Dropdown>}
 
                                 {
                                     !screens.xs &&
@@ -2229,17 +2186,6 @@ export default function GuestsPage() {
                                     <div style={{
                                         display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'
                                     }}>
-                                        <Badge count={unAnswer} color='var(--purple-color)' size='large'>
-                                            <Button
-                                                disabled={plan !== 'pro'}
-                                                onClick={() => setShowMobileMessages(v => !v)}
-                                                style={{ minWidth: plan !== 'pro' ? '150px' : '32px', justifyContent: plan !== 'pro' ? 'flex-start' : 'center', padding: plan !== 'pro' ? '12px' : undefined }} className={`primarybutton${plan !== 'pro' ? '_transparent' : ''} ${plan !== 'pro' ? 'pro_badge' : ''}`} icon={<MessageCircle size={12} />} >
-                                                {plan !== 'pro' ? 'Mensajes' : ''}
-                                            </Button>
-                                        </Badge>
-                                        {showMobileMessages && (
-                                            <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} onMarkRead={(phone) => setConversations(prev => prev.map(conv => conv.phone === phone ? { ...conv, messages: conv.messages.map(m => ({ ...m, read: true })) } : conv))} className='whatsapp_mobile' onClose={() => setShowMobileMessages(false)} />
-                                        )}
                                         <Dropdown
                                             popupRender={() => (
                                                 <div className="items_list_guests">

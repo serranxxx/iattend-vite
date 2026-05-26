@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { CreditsComponent } from '../Credits/Credits'
+import { CreditsMobile } from '../Credits/CreditsMobile'
 import './credit-controller.css'
 import { supabase } from '../../../lib/supabase'
 import { Button, Dropdown } from 'antd'
-import { Plus } from 'lucide-react'
+import { Coins, Plus } from 'lucide-react'
 import { FaPaperPlane } from 'react-icons/fa'
 import { useLia } from '../../../context/LiaContext'
 import { useTranslation } from 'react-i18next'
 
-export const CreditController = ({ id }) => {
+export const CreditController = ({ id, mobile }) => {
     const [credits, setCredits] = useState(null)
+    const [mobileOpen, setMobileOpen] = useState(false)
     const { creditState } = useLia()
     const { t } = useTranslation()
 
@@ -31,6 +33,24 @@ export const CreditController = ({ id }) => {
 
     const isSending = creditState === 'sending'
     const isBubble  = creditState === 'bubble'
+
+    if (mobile) {
+        return (
+            <>
+                <Button
+                    style={{ borderRadius: '99px' }}
+                    icon={<Coins size={14} style={{ marginTop: '2px' }} />}
+                    onClick={() => setMobileOpen(true)}
+                />
+                <CreditsMobile
+                    invitationID={id}
+                    credits={credits}
+                    open={mobileOpen}
+                    onClose={() => setMobileOpen(false)}
+                />
+            </>
+        )
+    }
 
     return (
         <div className={`coins_cont${isSending ? ' coins_cont--sending' : ''}`}>
@@ -55,6 +75,7 @@ export const CreditController = ({ id }) => {
                         trigger={['click']}
                         placement='bottomRight'
                         arrow
+                        popupClassName='credits-popup'
                         popupRender={() => (
                             <CreditsComponent invitationID={id} isSingle={true} credits={credits} getType={getCredits} />
                         )}>

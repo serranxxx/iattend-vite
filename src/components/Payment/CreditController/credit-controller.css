@@ -102,3 +102,12 @@
     letter-spacing: 1px;
     /* text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2); */
 }
+
+@media (max-width: 575px) {
+    .coins_cont {
+        position: relative;
+        transform: none;
+        left: unset;
+        top: unset;
+    }
+}

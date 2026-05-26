@@ -9,13 +9,16 @@ const PANEL_W = 380
 const PANEL_H = 560
 const PILL_W  = 300
 const PILL_DURATION = 4000
-const PAD = 0.03   // 5% from each edge
+const MOBILE_BP = 480
+
+function getPad() { return window.innerWidth <= MOBILE_BP ? 0.02 : 0.03 }
 
 function getCornerPos(corner, w, h) {
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const px = vw * PAD
-    const py = vh * PAD
+    const pad = getPad()
+    const px = vw * pad
+    const py = vh * pad
     switch (corner) {
         case 'tl': return { x: px,         y: py }
         case 'tr': return { x: vw - w - px, y: py }
@@ -129,8 +132,8 @@ export const ChatContainer = () => {
             const w = openRef.current ? PANEL_W : CIRCLE
             const h = openRef.current ? PANEL_H : CIRCLE
             const newPos = {
-                x: clamp(drag.current.sx + dx, 0, window.innerWidth  - w - window.innerWidth  * PAD),
-                y: clamp(drag.current.sy + dy, 0, window.innerHeight - h - window.innerHeight * PAD),
+                x: clamp(drag.current.sx + dx, 0, window.innerWidth  - w - window.innerWidth  * getPad()),
+                y: clamp(drag.current.sy + dy, 0, window.innerHeight - h - window.innerHeight * getPad()),
             }
             setPos(newPos)
             posRef.current = newPos
@@ -182,12 +185,17 @@ export const ChatContainer = () => {
     const pillShift = notifVisible && isRight ? -(PILL_W - CIRCLE) : 0
 
     const morphState = open ? 'open' : notifVisible ? 'notif' : 'closed'
+    const isMobileOpen = open && window.innerWidth <= MOBILE_BP
 
     return (
         <div
             ref={containerRef}
             className={`chat-morph chat-morph--${morphState}${snapping ? ' chat-morph--snapping' : ''}`}
-            style={{
+            style={isMobileOpen ? {
+                left: '5%',
+                bottom: '1.5%',
+                top: 'auto',
+            } : {
                 left: pos.x,
                 top: pos.y,
                 transform: pillShift ? `translateX(${pillShift}px)` : undefined,

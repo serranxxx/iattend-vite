@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { OpenChat } from './OpenChat/OpenChat';
 import { supabase } from '../../../lib/supabase';
 
-export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(), invitationsById = new Map(), isAdmin, onMarkRead, className = '', onClose }) => {
+export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(), invitationsById = new Map(), isAdmin, onMarkRead, className = '', style, onClose }) => {
 
     const { t } = useTranslation()
     const [openMessage, setOpenMessage] = useState(null)
@@ -104,7 +104,7 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
 
 
     return (
-        <div className={`whatsapp_main_cont${className ? ` ${className}` : ''}`} style={{ paddingBottom: !openMessage ? '0px' : undefined }}>
+        <div className={`whatsapp_main_cont${className ? ` ${className}` : ''}`} style={{ paddingBottom: !openMessage ? '0px' : undefined, ...style }}>
             <div className='messages_main_row' style={{ gap: '12px', borderBottom: '1px solid #ebebeb', justifyContent: 'space-between' }}>
                 <div className='messages_main_row' style={{ gap: '12px', padding: 0 }}>
                     <Inbox size={18} />

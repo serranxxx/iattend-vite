@@ -1,13 +1,14 @@
 
 import { Badge, Breadcrumb, Button, Dropdown, Grid, Popconfirm, Row, Tooltip, message } from "antd"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
 import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { Menu, MessageCircle } from "lucide-react";
+import { Menu, MessageCircle, Share } from "lucide-react";
 import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
 import { CreditController } from "../../components/Payment/CreditController/CreditController"
@@ -204,6 +205,21 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
     const [guestsByPhone, setGuestsByPhone] = useState(new Map())
+
+    const [mobileWaOpen, setMobileWaOpen]       = useState(false)
+    const [mobileWaVisible, setMobileWaVisible] = useState(false)
+    const [mobileWaEntered, setMobileWaEntered] = useState(false)
+
+    useEffect(() => {
+        if (mobileWaOpen) {
+            setMobileWaVisible(true)
+            requestAnimationFrame(() => requestAnimationFrame(() => setMobileWaEntered(true)))
+        } else {
+            setMobileWaEntered(false)
+            const timer = setTimeout(() => setMobileWaVisible(false), 340)
+            return () => clearTimeout(timer)
+        }
+    }, [mobileWaOpen])
 
     const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
@@ -450,12 +466,14 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                     </div>
 
-                    <CreditController id={id} />
+                    {!screens.xs && <CreditController id={id} />}
 
                     {/* RIGHT SIDE */}
                     <div className="header-dashboard-single-row" style={{ gap: 8 }}>
 
                         {/* {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />} */}
+
+                        {screens.xs && !isEditing && <CreditController id={id} mobile={true} />}
 
                         {!screens.xs && (
                             <Dropdown
@@ -467,17 +485,52 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 )}
                             >
                                 <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--purple-color)' size='large'>
-                                    <Button
-                                        style={{ borderRadius: '99px' }}
-                                        icon={<MessageCircle size={12} />}
-                                    >
-
-                                    </Button>
+                                    <Button style={{ borderRadius: '99px' }} icon={<MessageCircle size={12} />} />
                                 </Badge>
                             </Dropdown>
                         )}
 
-                        {screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={isEditing} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} buttonText="Compartir" />}
+                        {screens.xs && !isEditing && (
+                            <>
+                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--purple-color)' size='large'>
+                                    <Button
+                                        style={{ borderRadius: '99px' }}
+                                        icon={<MessageCircle size={12} />}
+                                        onClick={() => setMobileWaOpen(true)}
+                                    />
+                                </Badge>
+
+                                {mobileWaVisible && createPortal(
+                                    <>
+                                        <div
+                                            onClick={() => setMobileWaOpen(false)}
+                                            style={{
+                                                position: 'fixed', inset: 0,
+                                                background: 'rgba(0,0,0,0.4)',
+                                                zIndex: 1299,
+                                                opacity: mobileWaEntered ? 1 : 0,
+                                                transition: 'opacity 0.24s ease',
+                                            }}
+                                        />
+                                        <WhatsappMessages
+                                            className="whatsapp_mobile"
+                                            style={{
+                                                transform: mobileWaEntered ? 'translateY(0)' : 'translateY(-32px)',
+                                                opacity: mobileWaEntered ? 1 : 0,
+                                                transition: 'transform 0.34s cubic-bezier(0.34,1.15,0.64,1), opacity 0.24s ease',
+                                            }}
+                                            id={id}
+                                            conversations={conversations}
+                                            guestsByPhone={guestsByPhone}
+                                            onClose={() => setMobileWaOpen(false)}
+                                        />
+                                    </>,
+                                    document.body
+                                )}
+                            </>
+                        )}
+
+                        {screens.xs && !isEditing && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={true} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} icon={<Share size={14} />} />}
 
                         {isEditing && screens.xs && session?.user?.role !== "Administration" && (
                             <Button

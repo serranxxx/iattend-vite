@@ -234,7 +234,7 @@
 /* ── Mobile ──────────────────────────────────────────── */
 @media (max-width: 480px) {
     .chat-morph--open {
-        width: calc(100vw - 32px);
+        width: 90vw;
         height: 70dvh;
     }
 }

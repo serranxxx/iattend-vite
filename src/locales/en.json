@@ -687,7 +687,11 @@
     "section_gifts": "Gifts",
     "section_destinations": "Destinations",
     "section_notices": "Notices",
-    "section_gallery": "Gallery"
+    "section_gallery": "Gallery",
+    "label_song": "Song",
+    "song_description": "Uses the official Spotify API. Only 30-second previews are available per track.",
+    "song_placeholder": "Search song or artist...",
+    "song_searching": "Searching..."
   },
   "build_cover": {
     "title": "Cover",

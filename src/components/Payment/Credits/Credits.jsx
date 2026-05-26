@@ -7,7 +7,7 @@ import { fetchPrices, handleCheckout, PRODUCTS } from '../functions';
 import { useTranslation } from 'react-i18next';
 import { Info, ShoppingCart } from 'lucide-react';
 
-export const CreditsComponent = ({  invitationID,  }) => {
+export const CreditsComponent = ({ invitationID, creditsDisplay }) => {
 
     const { t } = useTranslation()
     const [prices, setPrices] = useState([])
@@ -20,6 +20,12 @@ export const CreditsComponent = ({  invitationID,  }) => {
 
     return (
         <div className='credits_main'>
+            {creditsDisplay !== undefined && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingBottom: 4, borderBottom: '1px solid #f0f0f0' }}>
+                    <span style={{ fontSize: 13, color: '#888' }}>Créditos disponibles</span>
+                    <strong style={{ fontSize: 20 }}>{creditsDisplay ?? '—'}</strong>
+                </div>
+            )}
             <div className='credits_checkout_cont'>
                 {prices.map((p, index) => {
                     const product = PRODUCTS[p.priceId];
