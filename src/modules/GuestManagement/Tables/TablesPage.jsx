@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './organization-table.css'
-import { Button, Checkbox, Drawer, Dropdown, Input, InputNumber, Progress, Slider, Tooltip, message } from 'antd'
+import { Button, Checkbox, Drawer, Dropdown, Input, InputNumber, Progress, Select, Slider, Tooltip, message } from 'antd'
 import { BsArrowsMove, BsSliders } from 'react-icons/bs'
 import { IoClose } from 'react-icons/io5'
 import { FaAngleDoubleRight, FaList, FaMinus, FaPlus } from 'react-icons/fa'
@@ -12,7 +12,7 @@ import { IoMdAdd, IoMdHelp } from 'react-icons/io'
 import { LuShuffle } from 'react-icons/lu'
 import { RiDeleteBack2Line } from 'react-icons/ri'
 import { formatDate } from '../../../helpers/assets/functions'
-import { ChevronDown, Circle, List, MoveHorizontal, MoveVertical, PartyPopper, Plus, RectangleHorizontal, Square, X } from 'lucide-react'
+import { ChevronDown, Circle, List, MoveHorizontal, MoveVertical, PartyPopper, Plus, RectangleHorizontal, Square } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 
@@ -43,6 +43,7 @@ export const TablesPage = ({ invitationID }) => {
     const [selectedTable, setSelectedTable] = useState(null)
     const [onViewTable, setOnViewTable] = useState(false)
     const [onEditingTable, setonEditingTable] = useState(false)
+    const [editingNumber, setEditingNumber] = useState(null)
     const [availableSeats, setAvailableSeats] = useState(null)
     const [currentGuest, setCurrentGuest] = useState(null)
     const [onTransfer, setOnTransfer] = useState(false)
@@ -63,6 +64,9 @@ export const TablesPage = ({ invitationID }) => {
     const minZoom = 0.2;
     const maxZoom = 1.8;
     const mapContainerRef = useRef(null);
+    const [modalPosition, setModalPosition] = useState({ x: 36, y: 36 })
+    const [isModalDragging, setIsModalDragging] = useState(false)
+    const lastModalMouseRef = useRef({ x: 0, y: 0 })
 
     const backgroundColors = [
         "#FFD1DC", // Rosa pastel
@@ -446,11 +450,39 @@ export const TablesPage = ({ invitationID }) => {
         setonEditingTable(false)
         if (onViewTable) {
             setOnModal(true)
+            setModalPosition({ x: 36, y: 36 })
         }
-
     }, [onViewTable])
 
+    useEffect(() => {
+        if (!isModalDragging) return
+        const onMove = (e) => {
+            const pos = e.touches ? e.touches[0] : e
+            const dx = pos.clientX - lastModalMouseRef.current.x
+            const dy = pos.clientY - lastModalMouseRef.current.y
+            lastModalMouseRef.current = { x: pos.clientX, y: pos.clientY }
+            setModalPosition(prev => ({ x: prev.x + dx, y: prev.y + dy }))
+        }
+        const onStop = () => setIsModalDragging(false)
+        document.addEventListener('mousemove', onMove)
+        document.addEventListener('mouseup', onStop)
+        document.addEventListener('touchmove', onMove, { passive: false })
+        document.addEventListener('touchend', onStop)
+        return () => {
+            document.removeEventListener('mousemove', onMove)
+            document.removeEventListener('mouseup', onStop)
+            document.removeEventListener('touchmove', onMove)
+            document.removeEventListener('touchend', onStop)
+        }
+    }, [isModalDragging])
 
+
+
+    const hasDuplicateNumber = editingNumber != null &&
+        tables_?.some(t => t.id !== selectedTable?.id && Number(t.number) === Number(editingNumber))
+
+    const selectedTableIsRepeated = selectedTable != null &&
+        tables_?.filter(t => Number(t.number) === Number(selectedTable.number)).length > 1
 
     const updateTable = async () => {
 
@@ -459,7 +491,8 @@ export const TablesPage = ({ invitationID }) => {
             name: tablesName,
             size: totalChairs,
             shape: selectedTable.shape,
-            vertical: selectedTable.vertical
+            vertical: selectedTable.vertical,
+            number: editingNumber ?? selectedTable.number,
         };
 
         try {
@@ -536,10 +569,11 @@ export const TablesPage = ({ invitationID }) => {
     }
 
     const editTable = () => {
-        setOnAddingGuests(true) //Muestra la lista
-        setonEditingTable(true) //Activa la edicion y cambia la UI
+        setOnAddingGuests(true)
+        setonEditingTable(true)
         setTablesName(selectedTable.name)
         setTotalChairs(selectedTable.size)
+        setEditingNumber(selectedTable.number)
     }
 
     const updateChair = (guest, e) => {
@@ -1074,7 +1108,8 @@ export const TablesPage = ({ invitationID }) => {
                                             key={index} table={table} occupiedChairs={confirmedGuests_?.filter(g => g.table === table.id).length}
                                             onEditPosition={onEditPosition} setSelectedTable={setSelectedTable}
                                             setOnSelectedTable={setOnSelectedTable} onSelectedTable={onSelectedTable} setOnViewTable={setOnViewTable}
-                                            setTables={setTables} tables={tables_} onMoving={onMoving} onGrab={onGrab} zoomLevel={zoomLevel} onDelete={deleteTableAndAdjust} />
+                                            setTables={setTables} tables={tables_} onMoving={onMoving} onGrab={onGrab} zoomLevel={zoomLevel} onDelete={deleteTableAndAdjust}
+                                            isRepeated={tables_.filter(t => Number(t.number) === Number(table.number)).length > 1} />
                                     ))
                                 }
 
@@ -1144,19 +1179,27 @@ export const TablesPage = ({ invitationID }) => {
 
                     {
                         onModal &&
-                        <div onClick={onClosingModal} style={{
-                            width: '100%', height: '100%', position: 'absolute',
-                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
-                            padding: isMobile ? '0px' : '36px', boxSizing: 'border-box',
-                            top: 0, left: 0, backgroundColor: '#FFFFFF40', zIndex: 9999
-                        }}>
-                            <div onClick={(e) => { setOnTransfer(false); e.stopPropagation(); }} className='modal-main-menu-container' style={{
-                                width: isMobile ? '90%' : undefined,
-                                borderRadius: isMobile ? '16px' : undefined,
-                                position: isMobile ? 'absolute' : undefined,
-                                top: isMobile ? '2.5%' : undefined,
-                                left: isMobile ? '5%' : undefined,
-                            }}>
+                        <>
+                            <div onClick={onClosingModal} style={{ position: 'absolute', inset: 0, zIndex: 9998 }} />
+                            <div
+                                onClick={(e) => { setOnTransfer(false); e.stopPropagation(); }}
+                                onMouseDown={(e) => {
+                                    if (isMobile) return
+                                    if (e.target.closest('button, input, select, textarea, .ant-select, .ant-input-number')) return
+                                    lastModalMouseRef.current = { x: e.clientX, y: e.clientY }
+                                    setIsModalDragging(true)
+                                }}
+                                className='modal-main-menu-container'
+                                style={{
+                                    position: 'absolute',
+                                    left: isMobile ? '5%' : `${modalPosition.x}px`,
+                                    top: isMobile ? '2.5%' : `${modalPosition.y}px`,
+                                    width: isMobile ? '90%' : undefined,
+                                    borderRadius: isMobile ? '16px' : undefined,
+                                    zIndex: 9999,
+                                    userSelect: isModalDragging ? 'none' : undefined,
+                                    cursor: !isMobile ? (isModalDragging ? 'grabbing' : 'default') : undefined,
+                                }}>
 
                                 {
                                     tables && selectedTable && !isMobile &&
@@ -1186,7 +1229,35 @@ export const TablesPage = ({ invitationID }) => {
                                         <div className='new-table-modal'>
                                             <div className='modal-header-sect '>
 
-                                                <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none', lineHeight: '1' }}>{t('tables.modal_table_header', { number: selectedTable.number })}</span>
+                                                {onEditingTable ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        <Select
+                                                            value={editingNumber}
+                                                            onChange={setEditingNumber}
+                                                            status={hasDuplicateNumber ? 'error' : ''}
+                                                            style={{ width: '100px' }}
+                                                            popupMatchSelectWidth={false}
+                                                        >
+                                                            {Array.from({ length: 100 }, (_, i) => (
+                                                                <Select.Option key={i} value={i}>{i}</Select.Option>
+                                                            ))}
+                                                        </Select>
+                                                        {hasDuplicateNumber && (
+                                                            <span style={{ fontSize: '11px', color: '#ff4d4f' }}>
+                                                                Dos mesas tienen el mismo número
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none', lineHeight: '1' }}>{t('tables.modal_table_header', { number: selectedTable.number })}</span>
+                                                        {selectedTableIsRepeated && (
+                                                            <span style={{ fontSize: '11px', color: '#ff4d4f' }}>
+                                                                Dos mesas tienen el mismo número
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
 
 
 
@@ -1387,7 +1458,7 @@ export const TablesPage = ({ invitationID }) => {
 
                                 </div>
                             </div>
-                        </div>
+                        </>
                     }
 
                     {/* Overlay de transferir invitado (solo mobile) */}

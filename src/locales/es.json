@@ -628,7 +628,7 @@
     "seats_available": "Lugares disponibles:",
     "seats_available_mobile": "Disponibles:",
     "modal_table_header": "Mesa #{{number}}",
-    "btn_done": "Terminar",
+    "btn_done": "Guardar",
     "btn_edit": "Editar",
     "label_table_name": "Nombre de mesa",
     "seats_display": "{{count}} Lugares",
