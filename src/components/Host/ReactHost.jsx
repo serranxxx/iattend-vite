@@ -17,7 +17,7 @@ export default function ReactHost({
 
   // URL del componente remoto: /shared/[invitation_label]/[invitation_name]
   const url = useMemo(() => {
-    return new URL("http://localhost:3000/host/").toString();
+    return new URL("https://www.iattend.events/host/").toString();
   }, []);
 
   // Origin destino calculado desde la URL (soporta prod/local)

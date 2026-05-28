@@ -985,9 +985,9 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                         <div className='build-component-elements' style={{ width: '100%' }}>
                             <span className={'gc-content-label'}>{t('build_generals.label_song')}</span>
-                            <span style={{ fontSize: '11px', color: '#888', marginTop: '-4px' }}>
+                            {/* <span style={{ fontSize: '11px', color: '#888', marginTop: '-4px' }}>
                                 {t('build_generals.song_description')}
-                            </span>
+                            </span> */}
 
                             {invitation.cover?.song ? (
                                 <div style={{
