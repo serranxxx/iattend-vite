@@ -7,7 +7,8 @@ import { useLia } from '../../context/LiaContext'
 import { supabase } from '../../lib/supabase'
 import './lia.css'
 
-const API = 'http://localhost:4000'
+const API = import.meta.env.VITE_API_URL
+// const API = "http://localhost:4000"
 
 const CTAS = [
     'Resumen del evento',

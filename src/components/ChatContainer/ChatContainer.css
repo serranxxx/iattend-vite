@@ -26,19 +26,19 @@
 
 /* ── Closed (circle) ─────────────────────────────────── */
 .chat-morph--closed {
-    width: 64px;
-    height: 64px;
+    width: 84px;
+    height: 84px;
     border-radius: 99px;
-    background:#F5F3F2;
-    border: 2px solid #FFF;
-    box-shadow: 0 0px 24px rgba(0, 0, 0, 0.2);
+    background: #B5A5CC;
+    border: 2px solid #ffffff40;
+    box-shadow: 0 0px 16px 0px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.chat-morph--closed:hover {
-    filter: brightness(1.1);
-}
+/* .chat-morph--closed:hover {
+    filter: brightness(1.15);
+} */
 
 @keyframes lia-gradient-flow {
     0%   { background-position: 0%   50%; }
@@ -49,9 +49,9 @@
 /* ── Notification pill (Dynamic Island) ──────────────── */
 .chat-morph--notif {
     width: 300px;
-    height: 64px;
+    height: 84px;
     border-radius: 99px;
-    background: #16323d;
+    background: #CDC3DC;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
     cursor: pointer;
 }
@@ -121,13 +121,13 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 6px;
+    gap: 12px;
     padding: 0px 24px;
-    padding-left: 12px;
+    padding-left: 0px;
     opacity: 0;
     pointer-events: none;
-    background: #16323d;
-    border: 2px solid #16323d;
+    background: #CDC3DC;
+    /* border: 2px solid #16323d; */
     border-radius: 99px;
     /* Appear after pill has expanded, disappear before it contracts */
     transition: opacity 0.15s ease 0.22s;
@@ -140,22 +140,68 @@
     pointer-events: auto;
 }
 
-.chat-morph-pill-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 99px;
-    object-fit: cover;
-    flex-shrink: 0;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-drag: none;
+/* ── Dot Matrix ──────────────────────────────────────── */
+.dot-cell {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    transition: background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.dot-cell--on {
+    background: #FFFFFF;
+    opacity: 1;
+    box-shadow: 0 0 5px #FFFFFF, 0 0 12px #FFFFFF55;
+    animation: dot-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes dot-glow {
+    0%, 100% { box-shadow: 0 0 4px #FFFFFF, 0 0 10px #FFFFFF44; }
+    50%       { box-shadow: 0 0 9px #FFFFFF, 0 0 20px #FFFFFF70; }
+}
+
+.dot-layer-0 { animation: arm-center 2s ease-in-out infinite; }
+.dot-layer-1 { animation: arm-inner  2s ease-in-out infinite; }
+.dot-layer-2 { animation: arm-mid    2s ease-in-out infinite; }
+.dot-layer-3 { animation: arm-tip    2s ease-in-out infinite; }
+
+@keyframes arm-center {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 5px #c8e88a, 0 0 12px #c8e88a55; }
+    50%       { transform: scale(1.15); box-shadow: 0 0 12px #c8e88a, 0 0 26px #c8e88a90; }
+}
+
+@keyframes arm-inner {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(0.7);  opacity: 0.55; }
+}
+
+@keyframes arm-mid {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(0.35); opacity: 0.2; }
+}
+
+@keyframes arm-tip {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(0.05); opacity: 0; }
+}
+
+.dot-cell--off {
+    background: transparent;
+    border: 1px solid #978aa9;
+    animation: dot-idle 3.2s ease-in-out infinite;
+}
+
+@keyframes dot-idle {
+    0%, 100% { opacity: 0.35; }
+    50%       { opacity: 0.65; }
 }
 
 .chat-morph-pill-text {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0px;
+    gap: 4px;
     min-width: 0;
     flex: 1;
 }
@@ -163,7 +209,7 @@
 .chat-morph-pill-title {
     font-size: 16px;
     font-weight: 600;
-    color: #eeeadf;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -172,7 +218,7 @@
 
 .chat-morph-pill-body {
     font-size: 12px;
-    color: #eeeadf99;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

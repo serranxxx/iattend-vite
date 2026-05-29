@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Lia from '../../pages/Lia/Lia'
 import { useLia } from '../../context/LiaContext'
+import { DotMatrix } from './DotMatrix'
 import './ChatContainer.css'
 
-const CIRCLE  = 64
+const CIRCLE  = 84
 const PANEL_W = 380
 const PANEL_H = 560
 const PILL_W  = 300
@@ -40,6 +41,7 @@ export const ChatContainer = () => {
     const [mounted, setMounted]   = useState(false)
     const [snapping, setSnapping] = useState(false)
     const [notifVisible, setNotifVisible] = useState(false)
+    const [btnHovered, setBtnHovered] = useState(false)
     const [searchParams] = useSearchParams()
     const id = searchParams.get('id')
     const { notifications, dismissAll } = useLia()
@@ -180,11 +182,11 @@ export const ChatContainer = () => {
 
     const latestNotif = notifications[notifications.length - 1]
 
+    const morphState = open ? 'open' : notifVisible ? 'notif' : 'closed'
+
     // If the button is on the right half, expand the pill leftward via transform
     const isRight = pos.x > window.innerWidth / 2
-    const pillShift = notifVisible && isRight ? -(PILL_W - CIRCLE) : 0
-
-    const morphState = open ? 'open' : notifVisible ? 'notif' : 'closed'
+    const pillShift = morphState === 'notif' && isRight ? -(PILL_W - CIRCLE) : 0
     const isMobileOpen = open && window.innerWidth <= MOBILE_BP
 
     return (
@@ -203,8 +205,13 @@ export const ChatContainer = () => {
             onPointerDown={onPointerDown}
         >
             {/* Circle button — visible when closed */}
-            <div style={{cursor:'none'}} className="chat-morph-btn" onClick={handleToggle}>
-                <img src="/images/lia/heart_2.png" className="chat-morph-pill-avatar" draggable="false" alt="Lia" />
+            <div
+                className="chat-morph-btn"
+                onClick={handleToggle}
+                onMouseEnter={() => setBtnHovered(true)}
+                onMouseLeave={() => setBtnHovered(false)}
+            >
+                <DotMatrix size={84} hovered={btnHovered && morphState === 'closed'} />
             </div>
 
             {/* Dynamic Island pill content — visible during notif state */}
@@ -212,10 +219,15 @@ export const ChatContainer = () => {
                 className="chat-morph-pill"
                 onClick={() => { dismissAll(); handleToggle() }}
             >
-                <img src="/images/lia/heart_2.png" style={{width:'40px', height:'40px'}} className="chat-morph-pill-avatar" draggable="false" alt="Lia" />
+                <div style={{
+                    height:'84px', width:'84px', overflow:'hidden', borderRadius:'99px',
+                    background:'#B5A5CC', boxShadow:'2px 0px 12px rgba(0,0,0,0.2)'
+                }}>
+                    <DotMatrix size={84} mode='notification'/>
+                </div>
                 <div className="chat-morph-pill-text">
-                    {/* <strong className="chat-morph-pill-title">Alberto Serrano</strong>
-                    <span className="chat-morph-pill-body">Ha confirmado su asistencia</span> */}
+                    {/* <strong className="chat-morph-pill-title">Alberto Serrano</strong> */}
+                    {/* <span className="chat-morph-pill-body">Ha confirmado su asistencia</span> */}
                     <strong className="chat-morph-pill-title">{latestNotif?.title}</strong>
                     {latestNotif?.body && (
                         <span className="chat-morph-pill-body">{latestNotif.body}</span>
