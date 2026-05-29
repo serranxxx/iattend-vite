@@ -141,7 +141,7 @@ export const happyface = [
     { pattern: FACE_HAPPY,     duration: 2000 },
     { pattern: FACE_BIG_SMILE, duration: 2500 },
     { pattern: FACE_HAPPY,     duration: 2500 },
-    // { pattern: FACE_SLEEPY,    duration: 3000 },
+    { pattern: FACE_SLEEPY,    duration: 3000 },
 ]
 
 

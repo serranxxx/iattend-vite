@@ -5,10 +5,10 @@ import { useLia } from '../../context/LiaContext'
 import { DotMatrix } from './DotMatrix'
 import './ChatContainer.css'
 
-const CIRCLE  = 84
+const CIRCLE = 84
 const PANEL_W = 380
 const PANEL_H = 560
-const PILL_W  = 300
+const PILL_W = 300
 const PILL_DURATION = 4000
 const MOBILE_BP = 480
 
@@ -21,27 +21,27 @@ function getCornerPos(corner, w, h) {
     const px = vw * pad
     const py = vh * pad
     switch (corner) {
-        case 'tl': return { x: px,         y: py }
+        case 'tl': return { x: px, y: py }
         case 'tr': return { x: vw - w - px, y: py }
         case 'br': return { x: vw - w - px, y: vh - h - py }
-        default:   return { x: px,          y: vh - h - py }   // bl
+        default: return { x: px, y: vh - h - py }   // bl
     }
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
 
 function clampToViewport(x, y, w, h) {
-    const px = window.innerWidth  * getPad()
+    const px = window.innerWidth * getPad()
     const py = window.innerHeight * getPad()
     return {
-        x: clamp(x, px, window.innerWidth  - w - px),
+        x: clamp(x, px, window.innerWidth - w - px),
         y: clamp(y, py, window.innerHeight - h - py),
     }
 }
 
 export const ChatContainer = () => {
-    const [open, setOpen]         = useState(false)
-    const [mounted, setMounted]   = useState(false)
+    const [open, setOpen] = useState(false)
+    const [mounted, setMounted] = useState(false)
     const [snapping, setSnapping] = useState(false)
     const [notifVisible, setNotifVisible] = useState(false)
     const [btnHovered, setBtnHovered] = useState(false)
@@ -50,11 +50,11 @@ export const ChatContainer = () => {
     const { notifications, dismissAll } = useLia()
 
     const [pos, setPos] = useState(() => getCornerPos('br', CIRCLE, CIRCLE))
-    const posRef      = useRef(pos)
-    const openRef     = useRef(open)
-    const notifTimer  = useRef(null)
-    const prevCount   = useRef(0)
-    const drag        = useRef({ active: false, moved: false, ox: 0, oy: 0, sx: 0, sy: 0 })
+    const posRef = useRef(pos)
+    const openRef = useRef(open)
+    const notifTimer = useRef(null)
+    const prevCount = useRef(0)
+    const drag = useRef({ active: false, moved: false, ox: 0, oy: 0, sx: 0, sy: 0 })
     const containerRef = useRef(null)
 
     useEffect(() => { posRef.current = pos }, [pos])
@@ -138,7 +138,7 @@ export const ChatContainer = () => {
             const w = openRef.current ? PANEL_W : CIRCLE
             const h = openRef.current ? PANEL_H : CIRCLE
             const newPos = {
-                x: clamp(drag.current.sx + dx, 0, window.innerWidth  - w - window.innerWidth  * getPad()),
+                x: clamp(drag.current.sx + dx, 0, window.innerWidth - w - window.innerWidth * getPad()),
                 y: clamp(drag.current.sy + dy, 0, window.innerHeight - h - window.innerHeight * getPad()),
             }
             setPos(newPos)
@@ -191,57 +191,62 @@ export const ChatContainer = () => {
     const isMobileOpen = open && window.innerWidth <= MOBILE_BP
 
     return (
-        <div
+       <div
             ref={containerRef}
-            className={`chat-morph chat-morph--${morphState}${snapping ? ' chat-morph--snapping' : ''}`}
+            className={`chat-morph-shell chat-morph-shell--${morphState}${snapping ? ' chat-morph-shell--snapping' : ''}`}
             style={isMobileOpen ? {
                 left: '5%',
                 bottom: '1.5%',
                 top: 'auto',
             } : {
-                left: pos.x,
-                top: pos.y,
+                left: pos.x - 12,
+                top: pos.y - 12,
                 transform: pillShift ? `translateX(${pillShift}px)` : undefined,
             }}
             onPointerDown={onPointerDown}
         >
-            {/* Circle button — visible when closed */}
-            <div
-                className="chat-morph-btn"
-                onClick={handleToggle}
-                onMouseEnter={() => setBtnHovered(true)}
-                onMouseLeave={() => setBtnHovered(false)}
-            >
-                <DotMatrix size={84} hovered={btnHovered && morphState === 'closed'} />
-            </div>
+            <div className={`chat-morph chat-morph--${morphState}`}>
+                
+                {/* Circle button — visible when closed */}
+                <div
+                    className="chat-morph-btn"
+                    onClick={handleToggle}
+                    onMouseEnter={() => setBtnHovered(true)}
+                    onMouseLeave={() => setBtnHovered(false)}
+                >
+                    <DotMatrix size={84} hovered={btnHovered && morphState === 'closed'} />
+                </div>
 
-            {/* Dynamic Island pill content — visible during notif state */}
-            <div
-                className="chat-morph-pill"
-                onClick={() => { dismissAll(); handleToggle() }}
-            >
-                <div style={{
-                    height:'84px', width:'84px', overflow:'hidden', borderRadius:'99px',
-                    background:'#B5A5CC', boxShadow:'2px 0px 12px rgba(0,0,0,0.2)'
-                }}>
-                    <DotMatrix size={84} mode='notification'/>
+                {/* Dynamic Island pill content — visible during notif state */}
+                <div
+                    className="chat-morph-pill"
+                    onClick={() => { dismissAll(); handleToggle() }}
+                >
+                    <div style={{
+                        height: '64px', width: '84px', overflow: 'hidden', borderRadius: '16px',
+                        background: '#B5A5CC', boxShadow: 'inset 0px 0px 6px rgba(0,0,0,0.3)',
+                        display:'flex',alignItems:'center',justifyContent:'center'
+                    }}>
+                        <DotMatrix size={84} mode='notification' />
+                    </div>
+                    <div className="chat-morph-pill-text">
+                        {/* <strong className="chat-morph-pill-title">Alberto Serrano</strong> */}
+                        {/* <span className="chat-morph-pill-body">Ha confirmado su asistencia</span> */}
+                        <strong className="chat-morph-pill-title">{latestNotif?.title}</strong>
+                        {latestNotif?.body && (
+                            <span className="chat-morph-pill-body">{latestNotif.body}</span>
+                        )}
+                    </div>
                 </div>
-                <div className="chat-morph-pill-text">
-                    {/* <strong className="chat-morph-pill-title">Alberto Serrano</strong> */}
-                    {/* <span className="chat-morph-pill-body">Ha confirmado su asistencia</span> */}
-                    <strong className="chat-morph-pill-title">{latestNotif?.title}</strong>
-                    {latestNotif?.body && (
-                        <span className="chat-morph-pill-body">{latestNotif.body}</span>
-                    )}
-                </div>
-            </div>
 
-            {/* Lia panel — visible when open */}
-            {mounted && (
-                <div className="chat-morph-panel">
-                    <Lia id={id} onMinimize={handleToggle} />
-                </div>
-            )}
+                {/* Lia panel — visible when open */}
+                {mounted && (
+                    <div className="chat-morph-panel">
+                        <Lia id={id} onMinimize={handleToggle} />
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
+

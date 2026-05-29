@@ -1,44 +1,86 @@
-/* ── Root container ──────────────────────────────────── */
-.chat-morph {
+/* ── Shell (posicionamiento + fondo blanco) ──────────────── */
+.chat-morph-shell {
     position: fixed;
     z-index: 1200;
-    overflow: hidden;
     touch-action: none;
+    user-select: none;
+    padding: 12px;
     transition:
         width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         border-radius 0.38s ease,
-        box-shadow    0.38s ease,
+        padding       0.38s ease,
         transform     0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
-/* Animate position only when snapping to corner */
-.chat-morph--snapping {
+.chat-morph-shell--snapping {
     transition:
         left          0.34s cubic-bezier(0.34, 1.15, 0.64, 1),
         top           0.34s cubic-bezier(0.34, 1.15, 0.64, 1),
         width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         border-radius 0.38s ease,
-        box-shadow    0.38s ease,
+        padding       0.38s ease,
         transform     0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
+}
+
+/* Cerrado: 84px, sin padding — el botón llena el shell */
+.chat-morph-shell--closed {
+    width: 102px;
+    height: 90px;
+    border-radius: 24px;
+    padding: 0;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FFF;
+    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18);
+}
+
+.chat-morph-shell--open {
+    width: 404px;
+    height: 584px;
+    border-radius: 32px;   /* 20 (inner) + 12 (padding) */
+    
+}
+
+.chat-morph-shell--notif {
+    width: 300px;
+    height: 64px;
+    border-radius: 24px;
+    background-color: #FFF;
+    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Root container (solo propiedades visuales) ───────────── */
+.chat-morph {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    transition:
+        border-radius 0.38s ease,
+        box-shadow    0.38s ease,
+        background    0.38s ease;
 }
 
 /* ── Closed (circle) ─────────────────────────────────── */
 .chat-morph--closed {
-    width: 84px;
-    height: 84px;
-    border-radius: 99px;
+    border-radius: 18px;
     background: #B5A5CC;
-    border: 2px solid #ffffff40;
-    box-shadow: 0 0px 16px 0px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    transition: all 0.3s ease;
+    box-shadow: inset 0px 0px 6px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    width: 82px;
+    height: 72px;
+    outline: 2px solid #FFF;
+
 }
 
-/* .chat-morph--closed:hover {
-    filter: brightness(1.15);
-} */
 
 @keyframes lia-gradient-flow {
     0%   { background-position: 0%   50%; }
@@ -46,20 +88,9 @@
     100% { background-position: 0%   50%; }
 }
 
-/* ── Notification pill (Dynamic Island) ──────────────── */
-.chat-morph--notif {
-    width: 300px;
-    height: 84px;
-    border-radius: 99px;
-    background: #CDC3DC;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
-    cursor: pointer;
-}
 
 /* ── Open (panel) ────────────────────────────────────── */
 .chat-morph--open {
-    width: 380px;
-    height: 560px;
     border-radius: 20px;
     background: var(--ft-color);
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
@@ -107,6 +138,7 @@
     line-height: 1;
     pointer-events: none;
     animation: notif-badge-in 0.2s ease;
+    
 }
 
 @keyframes notif-badge-in {
@@ -122,13 +154,9 @@
     align-items: center;
     justify-content: flex-start;
     gap: 12px;
-    padding: 0px 24px;
-    padding-left: 0px;
     opacity: 0;
     pointer-events: none;
-    background: #CDC3DC;
-    /* border: 2px solid #16323d; */
-    border-radius: 99px;
+    background: #FFF;
     /* Appear after pill has expanded, disappear before it contracts */
     transition: opacity 0.15s ease 0.22s;
     overflow: hidden;
@@ -200,16 +228,20 @@
 .chat-morph-pill-text {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    align-items: flex-start;
     gap: 4px;
-    min-width: 0;
     flex: 1;
+    height: 100%;
+    width: 100%;
+    padding: 12px 0px;
+    box-sizing: border-box;
 }
 
 .chat-morph-pill-title {
     font-size: 16px;
     font-weight: 600;
-    color: #fff;
+    color: #75698c;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -218,7 +250,7 @@
 
 .chat-morph-pill-body {
     font-size: 12px;
-    color: #fff;
+    color: #A69ABC;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
