@@ -40,6 +40,26 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         return () => window.removeEventListener('resize', check)
     }, [])
 
+    // Items guardados antes de agregar el campo id llegan sin él.
+    // Sin id, obj.id === undefined para todos y cualquier update afecta a todos.
+    // Este efecto corre UNA VEZ al montar: asigna ids a los que no los tienen
+    // y marca como no guardado para que persistan la próxima vez que el usuario guarde.
+    useEffect(() => {
+        if (!invitation?.itinerary?.object?.length) return
+        if (invitation.itinerary.object.every(obj => obj.id)) return
+        setInvitation(prev => ({
+            ...prev,
+            itinerary: {
+                ...prev.itinerary,
+                object: prev.itinerary.object.map(obj =>
+                    obj.id ? obj : { ...obj, id: Math.random().toString(36).substr(2, 9) }
+                )
+            }
+        }))
+        setSaved(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     const handleNewItem = () => {
         setInvitation(prevInvitation => ({
             ...prevInvitation,
