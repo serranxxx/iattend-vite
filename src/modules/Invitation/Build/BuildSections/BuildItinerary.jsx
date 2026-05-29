@@ -30,7 +30,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
     const [isMobile, setIsMobile] = useState(false)
     const [editDrawerOpen, setEditDrawerOpen] = useState(false)
-    const [editDrawerIndex, setEditDrawerIndex] = useState(null)
+    const [editItemId, setEditItemId] = useState(null)
     const [instanciasDrawerOpen, setInstanciasDrawerOpen] = useState(false)
 
     useEffect(() => {
@@ -530,7 +530,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         setIsModalOpen(false)
     }
 
-    const editItem = editDrawerIndex !== null ? invitation?.itinerary?.object?.[editDrawerIndex] : null
+    const editItem = editItemId ? invitation?.itinerary?.object?.find(obj => obj.id === editItemId) ?? null : null
 
 
     const drawerStyles = {
@@ -809,7 +809,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                 <div className='build-component-elements'>
                                     {invitation.itinerary.object.map((item, index) => (
                                         <div
-                                            key={index}
+                                            key={item.id}
                                             className={`generl-card-color-item ${!currentItem && 'general-hover-card'}`}
                                             style={{ cursor: 'pointer', flexDirection: 'column', gap: '12px', width: '100%', borderRadius: '12px', padding: '12px' }}
                                         >
@@ -825,7 +825,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                                     {isMobile ? (
                                                         <Button
-                                                            onClick={() => { setEditDrawerIndex(index); setEditDrawerOpen(true) }}
+                                                            onClick={() => { setEditItemId(item.id); setEditDrawerOpen(true) }}
                                                             className='primarybutton'
                                                             icon={<LuArrowUpRight size={16} style={{ marginTop: '4px' }} />}
                                                         />
