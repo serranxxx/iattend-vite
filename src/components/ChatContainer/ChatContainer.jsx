@@ -28,13 +28,16 @@ function getCornerPos(corner, w, h) {
     }
 }
 
-function detectCorner(cx, cy) {
-    const isLeft = cx < window.innerWidth  / 2
-    const isTop  = cy < window.innerHeight / 2
-    return (isTop ? 't' : 'b') + (isLeft ? 'l' : 'r')
-}
-
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
+
+function clampToViewport(x, y, w, h) {
+    const px = window.innerWidth  * getPad()
+    const py = window.innerHeight * getPad()
+    return {
+        x: clamp(x, px, window.innerWidth  - w - px),
+        y: clamp(y, py, window.innerHeight - h - py),
+    }
+}
 
 export const ChatContainer = () => {
     const [open, setOpen]         = useState(false)
@@ -81,15 +84,6 @@ export const ChatContainer = () => {
         clearTimeout(notifTimer.current)
     }, [open])
 
-    const snapTo = useCallback((x, y, w, h) => {
-        const corner = detectCorner(x + w / 2, y + h / 2)
-        const target = getCornerPos(corner, w, h)
-        setSnapping(true)
-        setPos(target)
-        posRef.current = target
-        setTimeout(() => setSnapping(false), 380)
-    }, [])
-
     const handleToggle = useCallback(() => {
         if (drag.current.moved) return
         setNotifVisible(false)
@@ -101,8 +95,17 @@ export const ChatContainer = () => {
         const nw = nextOpen ? PANEL_W : CIRCLE
         const nh = nextOpen ? PANEL_H : CIRCLE
         const { x, y } = posRef.current
-        const corner = detectCorner(x + (nextOpen ? CIRCLE : PANEL_W) / 2, y + (nextOpen ? CIRCLE : PANEL_H) / 2)
-        const target = getCornerPos(corner, nw, nh)
+
+        let tx = x
+        let ty = y
+        if (!nextOpen) {
+            // Al cerrar: colocar el círculo en la esquina inferior del panel (der o izq según posición)
+            const isRight = x + PANEL_W / 2 > window.innerWidth / 2
+            tx = isRight ? x + PANEL_W - CIRCLE : x
+            ty = y + PANEL_H - CIRCLE
+        }
+
+        const target = clampToViewport(tx, ty, nw, nh)
         setSnapping(true)
         setPos(target)
         posRef.current = target
@@ -129,7 +132,8 @@ export const ChatContainer = () => {
             if (!drag.current.active) return
             const dx = e.clientX - drag.current.ox
             const dy = e.clientY - drag.current.oy
-            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) drag.current.moved = true
+            const threshold = openRef.current ? 4 : 14
+            if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) drag.current.moved = true
             if (!drag.current.moved) return
             const w = openRef.current ? PANEL_W : CIRCLE
             const h = openRef.current ? PANEL_H : CIRCLE
@@ -144,17 +148,14 @@ export const ChatContainer = () => {
         const onUp = () => {
             if (!drag.current.active) return
             drag.current.active = false
-            if (drag.current.moved) {
-                const w = openRef.current ? PANEL_W : CIRCLE
-                const h = openRef.current ? PANEL_H : CIRCLE
-                snapTo(posRef.current.x, posRef.current.y, w, h)
-            }
         }
 
         const onResize = () => {
             const w = openRef.current ? PANEL_W : CIRCLE
             const h = openRef.current ? PANEL_H : CIRCLE
-            snapTo(posRef.current.x, posRef.current.y, w, h)
+            const target = clampToViewport(posRef.current.x, posRef.current.y, w, h)
+            setPos(target)
+            posRef.current = target
         }
 
         window.addEventListener('pointermove', onMove)
@@ -165,7 +166,7 @@ export const ChatContainer = () => {
             window.removeEventListener('pointerup', onUp)
             window.removeEventListener('resize', onResize)
         }
-    }, [snapTo])
+    }, [])
 
     useEffect(() => {
         if (!open) return
