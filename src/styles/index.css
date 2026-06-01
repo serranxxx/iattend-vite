@@ -203,3 +203,76 @@ body {
     font-size: 16px !important;
   }
 }
+
+
+@font-face {
+    font-family: 'Denver Serial';
+    src: url('/assets/fonts/denver-serial-bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Denver Serial';
+    src: url('/assets/fonts/Denver-Serial-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Denver Serial';
+    src: url('/assets/fonts/fonnts.com-denver_serial-bolditalic.otf') format('opentype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Luxora Grotesk';
+    src: url('/assets/fonts/LuxoraGrotesk-Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Luxora Grotesk';
+    src: url('/assets/fonts/LuxoraGrotesk-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Luxora Grotesk';
+    src: url('/assets/fonts/LuxoraGrotesk-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Michigan Signature';
+    src: url('/assets/fonts/Michigan Signature.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Europa Grotesk SH';
+    src: url('/assets/fonts/europa-grotesk-sh-bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Windsor';
+    src: url('/assets/fonts/windsor-bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
