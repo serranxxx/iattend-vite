@@ -18,6 +18,7 @@ export const DynamicTable = ({
     shape = 'rectangle', // 'round' | 'square' | 'rectangle' | 'dance'
     zoomLevel = 1,
     onDelete,
+    isRepeated = false,
 }) => {
     const [chairs, setChairs] = useState([])
     const [mapPosition, setMapPosition] = useState({ x: table.x, y: table.y })
@@ -404,12 +405,18 @@ export const DynamicTable = ({
                     <div
                         className={`table ${tableShapeClass} ${onMoving ? 'moving-table' : ''}`}
                         style={{
-                            backgroundColor: isSelected
-                                ? 'var(--brand-color-100)'
-                                : isFull
-                                    ? 'var(--sc-color)'
-                                    : 'var(--brand-color-300)',
-                            border: isSelected ? '2px solid var(--brand-color-500)' : undefined,
+                            backgroundColor: isRepeated
+                                ? '#ff4d4f30'
+                                : isSelected
+                                    ? 'var(--brand-color-100)'
+                                    : isFull
+                                        ? 'var(--sc-color)'
+                                        : 'var(--brand-color-300)',
+                            border: isRepeated
+                                ? '2px solid #ff4d4f'
+                                : isSelected
+                                    ? '2px solid var(--brand-color-500)'
+                                    : undefined,
                         }}
                     >
                         <span
@@ -424,8 +431,8 @@ export const DynamicTable = ({
                             style={{
                                 left: `${chair.x}px`,
                                 top: `${chair.y}px`,
-                                backgroundColor: isSelected ? 'var(--brand-color-100)' : undefined,
-                                border: isSelected ? '2px solid var(--brand-color-500)' : undefined,
+                                backgroundColor: isRepeated ? '#ff4d4f30' : isSelected ? 'var(--brand-color-100)' : undefined,
+                                border: isRepeated ? '2px solid #ff4d4f' : isSelected ? '2px solid var(--brand-color-500)' : undefined,
                             }}
                         >
                             <span style={{ transform: `${vertical ? 'rotate(-90deg)' : ''}` }}>{chair.id}</span>

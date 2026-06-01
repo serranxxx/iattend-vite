@@ -30,7 +30,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
     const [isMobile, setIsMobile] = useState(false)
     const [editDrawerOpen, setEditDrawerOpen] = useState(false)
-    const [editDrawerIndex, setEditDrawerIndex] = useState(null)
+    const [editItemId, setEditItemId] = useState(null)
     const [instanciasDrawerOpen, setInstanciasDrawerOpen] = useState(false)
 
     useEffect(() => {
@@ -38,6 +38,26 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         check()
         window.addEventListener('resize', check)
         return () => window.removeEventListener('resize', check)
+    }, [])
+
+    // Items guardados antes de agregar el campo id llegan sin él.
+    // Sin id, obj.id === undefined para todos y cualquier update afecta a todos.
+    // Este efecto corre UNA VEZ al montar: asigna ids a los que no los tienen
+    // y marca como no guardado para que persistan la próxima vez que el usuario guarde.
+    useEffect(() => {
+        if (!invitation?.itinerary?.object?.length) return
+        if (invitation.itinerary.object.every(obj => obj.id)) return
+        setInvitation(prev => ({
+            ...prev,
+            itinerary: {
+                ...prev.itinerary,
+                object: prev.itinerary.object.map(obj =>
+                    obj.id ? obj : { ...obj, id: Math.random().toString(36).substr(2, 9) }
+                )
+            }
+        }))
+        setSaved(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const handleNewItem = () => {
@@ -530,7 +550,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         setIsModalOpen(false)
     }
 
-    const editItem = editDrawerIndex !== null ? invitation?.itinerary?.object?.[editDrawerIndex] : null
+    const editItem = editItemId ? invitation?.itinerary?.object?.find(obj => obj.id === editItemId) ?? null : null
 
 
     const drawerStyles = {
@@ -809,7 +829,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                 <div className='build-component-elements'>
                                     {invitation.itinerary.object.map((item, index) => (
                                         <div
-                                            key={index}
+                                            key={item.id}
                                             className={`generl-card-color-item ${!currentItem && 'general-hover-card'}`}
                                             style={{ cursor: 'pointer', flexDirection: 'column', gap: '12px', width: '100%', borderRadius: '12px', padding: '12px' }}
                                         >
@@ -825,7 +845,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                                     {isMobile ? (
                                                         <Button
-                                                            onClick={() => { setEditDrawerIndex(index); setEditDrawerOpen(true) }}
+                                                            onClick={() => { setEditItemId(item.id); setEditDrawerOpen(true) }}
                                                             className='primarybutton'
                                                             icon={<LuArrowUpRight size={16} style={{ marginTop: '4px' }} />}
                                                         />
