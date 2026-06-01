@@ -5,7 +5,7 @@ import { ChevronLeft, Link2, SquareArrowUpRight } from 'lucide-react'
 import { StorageImages } from '../ImagesStorage/StorageImages'
 import { useTranslation } from 'react-i18next'
 
-export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, handleImage, name, label, buttonText, maxHeight = 25, }) => {
+export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, handleImage, name, label, buttonText, maxHeight = 25, icon: iconOverride }) => {
 
     const { t } = useTranslation()
     const [isMobile, setIsMobile] = useState(false)
@@ -48,7 +48,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
             <Button
                 onClick={() => handleShare(url)}
                 style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
-                icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
+                icon={iconOverride ?? <Link2 size={14} />} >
                 {isSmall ? '' : label ?? buttonText ?? (isHeader ? t('custom_link.copy_btn') : t('custom_link.link_btn'))}
             </Button>
         )

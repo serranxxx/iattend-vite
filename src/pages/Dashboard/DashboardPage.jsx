@@ -123,7 +123,7 @@ export const DashboardPage = () => {
                         <div className='dashboard_invitation'>
                             <div className='invitation_header_dash'>
                                 <span style={{ fontWeight: 600 }}>{t('dashboard.card_invitation')}</span>
-                                <Button onClick={() => handleMoode('build')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                <Button onClick={() => handleMoode('build')}  style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                             </div>
 
                             <div className="dash_inv_cont">
@@ -138,7 +138,7 @@ export const DashboardPage = () => {
                                 <div className='dashboard_guests'>
                                     <div className='invitation_header_dash'>
                                         <span style={{ fontWeight: 600 }}>{t('dashboard.card_guests')}</span>
-                                        <Button onClick={() => handleMoode('guests')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        <Button onClick={() => handleMoode('guests')}  style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
 
                                     <div className='guests_dash_cont'>
@@ -188,7 +188,7 @@ export const DashboardPage = () => {
                                 <div className='side_events_dash'>
                                     <div className='invitation_header_dash'>
                                         <span style={{ fontWeight: 600 }}>{t('dashboard.card_side_events')}</span>
-                                        <Button onClick={() => handleMoode('side')} className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        <Button onClick={() => handleMoode('side')}  style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
                                     <div className="guests_dash_cont" style={{ minHeight: '80px', display:'flex',alignItems:'center',justifyContent:'center', padding:'0'}}>
                                         <img src='/images/icons_side_events.png' style={{ width: '90%', }} />

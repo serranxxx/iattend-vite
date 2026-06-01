@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import './whatsapp-messages.css'
 import { Badge, Button, Dropdown, Empty } from 'antd';
 import { ChevronDown, FileText, Inbox, Image, Info, Mic, MapPin, SmilePlus, Video, X } from 'lucide-react';
@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { OpenChat } from './OpenChat/OpenChat';
 import { supabase } from '../../../lib/supabase';
 
-export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(), invitationsById = new Map(), isAdmin, onMarkRead, className = '', onClose }) => {
+export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(), invitationsById = new Map(), isAdmin, onMarkRead, className = '', style, onClose }) => {
 
     const { t } = useTranslation()
     const [openMessage, setOpenMessage] = useState(null)
@@ -65,11 +65,12 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
             .eq('read', false);
     };
 
-    const openConversation = (convId, phone) => {
-        if (openMessage !== convId) {
-            markConversationAsRead(phone)
-        }
-        setOpenMessage(prev => prev === convId ? null : convId)
+    const openConversation = (phone, convId) => {
+        setOpenMessage((prev) => {
+            if (prev === convId) return null;
+            markConversationAsRead(phone);
+            return convId;
+        });
     };
 
     const MessagePreview = ({ message }) => {
@@ -101,13 +102,9 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
         return count
     }
 
-    useEffect(() => {
-        console.log(conversations)
-    }, [conversations])
-
 
     return (
-        <div className={`whatsapp_main_cont${className ? ` ${className}` : ''}`} style={{ paddingBottom: !openMessage ? '0px' : undefined }}>
+        <div className={`whatsapp_main_cont${className ? ` ${className}` : ''}`} style={{ paddingBottom: !openMessage ? '0px' : undefined, ...style }}>
             <div className='messages_main_row' style={{ gap: '12px', borderBottom: '1px solid #ebebeb', justifyContent: 'space-between' }}>
                 <div className='messages_main_row' style={{ gap: '12px', padding: 0 }}>
                     <Inbox size={18} />
@@ -119,7 +116,7 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
                     <Dropdown
                         trigger={['click']}
                         arrow
-                        dropdownRender={() => (
+                        popupRender={() => (
                             <div style={{ background: '#fff', borderRadius: 8, padding: '10px 14px', maxWidth: 240, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', lineHeight: 1.6, fontSize: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 <p style={{ margin: 0 }}>{t('guests.whatsapp_inbox_info_1')}</p>
                                 <p style={{ margin: 0 }}>{t('guests.whatsapp_inbox_info_2')}</p>
@@ -151,10 +148,10 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
                                 {
                                     openMessage === convId ?
 
-                                        <OpenChat name={guestName(conversation.phone, conversation.messages[0].contact_name)} phoneFormatter={phoneFormatter} conversation={conversation} setOpenMessage={setOpenMessage} invitation_id={id} />
+                                        <OpenChat name={guestName(conversation.phone, conversation.messages[0].contact_name)} phoneFormatter={phoneFormatter} conversation={conversation} setOpenMessage={setOpenMessage} invitation_id={id ?? conversation.invitation_id} />
 
                                         :
-                                        <div onClick={() => openConversation(convId, conversation.phone)} className='messages_main_row' style={{ justifyContent: 'space-between', padding: '16px', width: '100%' }}>
+                                        <div onClick={() => openConversation(conversation.phone, convId)} className='messages_main_row' style={{ justifyContent: 'space-between', padding: '16px', width: '100%' }}>
                                             <div className='messages_main_row' style={{ padding: 0 }}>
                                                 <Badge color='var(--purple-color)' offset={[-2, 2]} size='large'
                                                     count={messagesCount(conversation)}>

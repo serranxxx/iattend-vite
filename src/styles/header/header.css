@@ -113,12 +113,13 @@
     position: fixed;
     top: 0px;
     z-index: 999;
-    height: 50px;
+    height: 60px;
 }
 
 .header-dashboard-container {
-    max-width: 1480px;
+    
     width: 100%;
+    max-width: 1480px;
     display: flex;
     align-items: center;
     justify-content: space-between;

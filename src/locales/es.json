@@ -687,7 +687,11 @@
     "section_gifts": "Regalos",
     "section_destinations": "Destinos",
     "section_notices": "Avisos",
-    "section_gallery": "Galería"
+    "section_gallery": "Galería",
+    "label_song": "Canción",
+    "song_description": "Usa la API oficial de Spotify. Solo se tiene acceso a 30 seg de preview por canción.",
+    "song_placeholder": "Buscar canción o artista...",
+    "song_searching": "Buscando..."
   },
   "build_cover": {
     "title": "Portada",

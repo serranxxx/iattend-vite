@@ -1,0 +1,319 @@
+/* ── Shell (posicionamiento + fondo blanco) ──────────────── */
+.chat-morph-shell {
+    position: fixed;
+    z-index: 1200;
+    touch-action: none;
+    user-select: none;
+    padding: 12px;
+    transition:
+        width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        border-radius 0.38s ease,
+        padding       0.38s ease,
+        transform     0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
+}
+
+.chat-morph-shell--snapping {
+    transition:
+        left          0.34s cubic-bezier(0.34, 1.15, 0.64, 1),
+        top           0.34s cubic-bezier(0.34, 1.15, 0.64, 1),
+        width         0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
+        border-radius 0.38s ease,
+        padding       0.38s ease,
+        transform     0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
+}
+
+/* Cerrado: 84px, sin padding — el botón llena el shell */
+.chat-morph-shell--closed {
+    width: 82px;
+    height: 82px;
+    border-radius: 99px;
+    padding: 0;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* background-color: #FFF;
+    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18); */
+}
+
+.chat-morph-shell--open {
+    width: 404px;
+    height: 584px;
+    border-radius: 32px;   /* 20 (inner) + 12 (padding) */
+    
+}
+
+.chat-morph-shell--notif {
+    width: 320px;
+    height: 64px;
+    border-radius: 99px;
+    background-color: #FFF;
+    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Root container (solo propiedades visuales) ───────────── */
+.chat-morph {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    transition:
+        border-radius 0.38s ease,
+        box-shadow    0.38s ease,
+        background    0.38s ease;
+}
+
+/* ── Closed (circle) ─────────────────────────────────── */
+.chat-morph--closed {
+    border-radius: 99px;
+    background: #B5A5CC;
+    box-shadow: inset 0px 0px 6px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    width: 82px;
+    height: 82px;
+    /* outline: 2px solid #FFF; */
+
+}
+
+
+@keyframes lia-gradient-flow {
+    0%   { background-position: 0%   50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0%   50%; }
+}
+
+
+/* ── Open (panel) ────────────────────────────────────── */
+.chat-morph--open {
+    border-radius: 20px;
+    background: var(--ft-color);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Circle button icon ──────────────────────────────── */
+.chat-morph-btn {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.14s ease;
+    pointer-events: auto;
+}
+
+.chat-morph--open .chat-morph-btn,
+.chat-morph--notif .chat-morph-btn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chat-morph-star {
+    font-size: 32px;
+    color: #fff;
+    line-height: 1;
+}
+
+/* ── Notification badge on button ────────────────────── */
+.chat-morph-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #ff4d4f;
+    color: #fff;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none;
+    animation: notif-badge-in 0.2s ease;
+    
+}
+
+@keyframes notif-badge-in {
+    from { transform: scale(0); }
+    to   { transform: scale(1); }
+}
+
+/* ── Dynamic Island pill content ─────────────────────── */
+.chat-morph-pill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    opacity: 0;
+    pointer-events: none;
+
+    /* Appear after pill has expanded, disappear before it contracts */
+    transition: opacity 0.15s ease 0.22s;
+    overflow: hidden;
+    
+}
+
+.chat-morph--notif .chat-morph-pill {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ── Dot Matrix ──────────────────────────────────────── */
+.dot-cell {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    transition: background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.dot-cell--on {
+    background: #FFFFFF;
+    opacity: 1;
+    box-shadow: 0 0 5px #FFFFFF, 0 0 12px #FFFFFF55;
+    animation: dot-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes dot-glow {
+    0%, 100% { box-shadow: 0 0 4px #FFFFFF, 0 0 10px #FFFFFF44; }
+    50%       { box-shadow: 0 0 9px #FFFFFF, 0 0 20px #FFFFFF70; }
+}
+
+.dot-layer-0 { animation: arm-center 2s ease-in-out infinite; }
+.dot-layer-1 { animation: arm-inner  2s ease-in-out infinite; }
+.dot-layer-2 { animation: arm-mid    2s ease-in-out infinite; }
+.dot-layer-3 { animation: arm-tip    2s ease-in-out infinite; }
+
+@keyframes arm-center {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 5px #c8e88a, 0 0 12px #c8e88a55; }
+    50%       { transform: scale(1.15); box-shadow: 0 0 12px #c8e88a, 0 0 26px #c8e88a90; }
+}
+
+@keyframes arm-inner {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(0.7);  opacity: 0.55; }
+}
+
+@keyframes arm-mid {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(0.35); opacity: 0.2; }
+}
+
+@keyframes arm-tip {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(0.05); opacity: 0; }
+}
+
+.dot-cell--off {
+    background: transparent;
+    border: 1px solid #978aa9;
+    animation: dot-idle 3.2s ease-in-out infinite;
+}
+
+@keyframes dot-idle {
+    0%, 100% { opacity: 0.35; }
+    50%       { opacity: 0.65; }
+}
+
+.chat-morph-pill-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 4px;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    padding: 12px 0px;
+    box-sizing: border-box;
+}
+
+.chat-morph-pill-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #75698c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+}
+
+.chat-morph-pill-body {
+    font-size: 12px;
+    color: #A69ABC;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Luma panel content (visible when open) ─────────── */
+.chat-morph-panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease 0.24s;
+}
+
+.chat-morph--open .chat-morph-panel {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.chat-morph-panel .lia-page {
+    height: 100%;
+}
+
+/* ── Close button ────────────────────────────────────── */
+.chat-morph-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    border: none;
+    background: var(--sc-color);
+    color: var(--text-color-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.chat-morph-close:hover {
+    background: var(--brand-color-100);
+    color: var(--text-color);
+}
+
+/* ── Drag cursor on header ───────────────────────────── */
+.chat-morph--open .lia-chat-header {
+    cursor: grab;
+    user-select: none;
+}
+
+.chat-morph--open .lia-chat-header:active {
+    cursor: grabbing;
+}
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .chat-morph--open {
+        width: 90vw;
+        height: 70dvh;
+    }
+}

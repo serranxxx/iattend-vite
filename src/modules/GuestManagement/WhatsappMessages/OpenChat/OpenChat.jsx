@@ -94,6 +94,9 @@ export const OpenChat = ({ name, conversation, setOpenMessage, invitation_id, ph
 
 
     const sendFreeText = async (phone, reply) => {
+        const to = String(phone ?? '').replace(/^\+/, '')
+        if (!to || !reply?.trim()) return;
+
         const optimistic = {
             body: reply,
             timestamp: new Date().toISOString(),
@@ -106,7 +109,7 @@ export const OpenChat = ({ name, conversation, setOpenMessage, invitation_id, ph
         try {
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/freetext`,
-                { to: phone.replace(/^\+/, ''), text: reply, invitation_id: invitation_id }
+                { to, text: reply, invitation_id: invitation_id }
             );
             if (!response.data.ok) {
                 setOptimisticMessages(prev => prev.filter(m => m !== optimistic));
