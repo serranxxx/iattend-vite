@@ -26,16 +26,17 @@
 
 /* Cerrado: 84px, sin padding — el botón llena el shell */
 .chat-morph-shell--closed {
-    width: 102px;
-    height: 90px;
-    border-radius: 24px;
+    width: 82px;
+    height: 82px;
+    border-radius: 99px;
     padding: 0;
     cursor: grab;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #FFF;
-    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18);
+    
+    /* background-color: #FFF;
+    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18); */
 }
 
 .chat-morph-shell--open {
@@ -46,9 +47,9 @@
 }
 
 .chat-morph-shell--notif {
-    width: 300px;
+    width: 320px;
     height: 64px;
-    border-radius: 24px;
+    border-radius: 99px;
     background-color: #FFF;
     box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18);
     cursor: pointer;
@@ -71,13 +72,13 @@
 
 /* ── Closed (circle) ─────────────────────────────────── */
 .chat-morph--closed {
-    border-radius: 18px;
+    border-radius: 99px;
     background: #B5A5CC;
     box-shadow: inset 0px 0px 6px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     width: 82px;
-    height: 72px;
-    outline: 2px solid #FFF;
+    height: 82px;
+    /* outline: 2px solid #FFF; */
 
 }
 
@@ -156,7 +157,7 @@
     gap: 12px;
     opacity: 0;
     pointer-events: none;
-    background: #FFF;
+
     /* Appear after pill has expanded, disappear before it contracts */
     transition: opacity 0.15s ease 0.22s;
     overflow: hidden;

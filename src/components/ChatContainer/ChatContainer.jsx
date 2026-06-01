@@ -223,7 +223,7 @@ export const ChatContainer = () => {
                     onClick={() => { dismissAll(); handleToggle() }}
                 >
                     <div style={{
-                        height: '64px', width: '84px', overflow: 'hidden', borderRadius: '16px',
+                        height: '64px', width: '64px', minWidth:'64px', overflow: 'hidden', borderRadius: '99px',
                         background: '#B5A5CC', boxShadow: 'inset 0px 0px 6px rgba(0,0,0,0.3)',
                         display:'flex',alignItems:'center',justifyContent:'center'
                     }}>
