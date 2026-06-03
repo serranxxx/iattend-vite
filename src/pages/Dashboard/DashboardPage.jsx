@@ -37,9 +37,9 @@ export const DashboardPage = () => {
                 // data: [55, 121, 8],
                 data: [confirmed, waiting, available],
                 backgroundColor: [
-                    '#B4A5CC',
-                    '#978BAB',
-                    '#CCC2DC',
+                    '#C5D5AD',
+                    '#aac187',
+                    '#8FA271',
                 ],
                 borderColor: 'transparent',
                 borderWidth: 2,

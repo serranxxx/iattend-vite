@@ -1,14 +1,16 @@
 
 import { Badge, Breadcrumb, Button, Dropdown, Grid, Popconfirm, Row, Tooltip, message } from "antd"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import logoBlue from '/images/logo_blue.png'
+import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
-import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
+import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuLogOut, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { Menu, MessageCircle, Share } from "lucide-react";
+import { ChevronDown, Menu, MessageCircle, Share } from "lucide-react";
+import { appContext } from '../../context';
 import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
 import { CreditController } from "../../components/Payment/CreditController/CreditController"
@@ -20,174 +22,153 @@ const { useBreakpoint } = Grid;
 
 //  
 
-export const HeaderBuild = ({ position, isVisible }) => {
-    const { t } = useTranslation();
-
-    const [setIsScrollTop] = useState(false);
+export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = true }) => {
+    const { t } = useTranslation()
+    const { logout } = useContext(appContext)
     const [openMenu, setOpenMenu] = useState(false)
-    const session = JSON.parse(localStorage.getItem("session"));
-
-    useEffect(() => {
-        if (position === 'land-page') {
-            const handleScroll = () => {
-                if (window.scrollY >= 0 && window.scrollY <= 100) {
-                    setIsScrollTop(false);
-                } else {
-                    setIsScrollTop(false);
-                }
-            };
-
-            window.addEventListener('scroll', handleScroll);
-
-            return () => {
-                window.removeEventListener('scroll', handleScroll);
-            };
-        }
-
-    }, []);
-
+    const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [totalEvents, setTotalEvents] = useState(null)
+    const [totalConfirmed, setTotalConfirmed] = useState(null)
+    const session = JSON.parse(localStorage.getItem("session"))
 
     const navItems = [
-        {
-            name: t('header.board'),
-            icon: LuClipboard,
-            selected: LuClipboardCheck,
-            path: "/invitations",
-            position: "invitations"
-        },
-        {
-            name: t('header.explore'),
-            icon: LuFolderOpen,
-            selected: LuFolderHeart,
-            path: "/features",
-            position: "pricing"
-        },
-        {
-            name: t('header.admin'),
-            icon: LuShield,
-            selected: LuShieldCheck,
-            path: "/admin",
-            position: "admin"
-        },
+        { name: 'Mis eventos', path: '/invitations', position: 'invitations' },
+        { name: 'Explora',     path: '/features',    position: 'pricing'     },
+        { name: 'Administrador', path: '/admin',     position: 'admin', adminOnly: true },
     ]
 
+    const [pastBanner, setPastBanner] = useState(false)
+
+    useEffect(() => {
+        const THRESHOLD = 340  // banner height (400) - header height (60)
+        const onScroll = () => setPastBanner(window.scrollY > THRESHOLD)
+        window.addEventListener('scroll', onScroll, { passive: true })
+        onScroll()
+        return () => window.removeEventListener('scroll', onScroll)
+    }, [])
+
+    const loadUserStats = async () => {
+        if (!session?.user?.uid) return
+        try {
+            const [{ data: events }, { data: confirmed }] = await Promise.all([
+                supabase.rpc('get_total_invitations_by_user',       { p_user_id: session.user.uid }),
+                supabase.rpc('get_confirmed_guests_count_by_user',  { p_user_id: session.user.uid }),
+            ])
+            setTotalEvents(events)
+            setTotalConfirmed(confirmed)
+        } catch (e) { console.error(e) }
+    }
+
+    const userDropdown = (
+        <div className="hb-user-dropdown" onClick={e => e.stopPropagation()}>
+            <div className="hb-user-dropdown-top">
+                <img src='/images/user_icon.png' alt='' className="hb-user-avatar" />
+                <Button onClick={logout} icon={<LuLogOut size={14} />} size="small" className="hb-logout-btn">
+                    Cerrar sesión
+                </Button>
+            </div>
+            <div className="hb-user-info">
+                <span className="hb-user-name">{session?.user?.name}</span>
+                <span className="hb-user-email">{session?.user?.email}</span>
+            </div>
+            <div className="hb-user-stats">
+                <div className="hb-user-stat">
+                    <span className="hb-stat-value">{totalEvents ?? '…'}</span>
+                    <span className="hb-stat-label">Eventos creados</span>
+                </div>
+                <div className="hb-stat-divider" />
+                <div className="hb-user-stat">
+                    <span className="hb-stat-value">{totalConfirmed ?? '…'}</span>
+                    <span className="hb-stat-label">Invitados confirmados</span>
+                </div>
+            </div>
+        </div>
+    )
+
     return (
-
         <>
-            <div className="header-main-container web-opt" style={{ borderBottom: '1px solid #ebebeb80' }}>
-                <Row className="header-container" style={{ position: 'relative' }}>
+            {/* ── Desktop ── */}
+            <header className={`header-main-container web-opt${(!alwaysSolid && !pastBanner) ? ' hb-transparent' : ''}${fixed ? '' : ' hb-relative'}`}>
+                <div className="hb-inner">
+                    <Link to="/invitations" className="hb-brand">
+                        <img
+                            src={(alwaysSolid || pastBanner) ? logoBlue : '/images/logo_cover.png'}
+                            alt="I attend"
+                            style={{ height: '42px', objectFit: 'contain' }}
+                        />
+                    </Link>
 
-                    <div style={{
-                        height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '4px 4px 12px rgba(0,0,0,0.2)', borderRadius: '99px',
+                    <nav className="hb-nav-right">
+                        {navItems.map(item => {
+                            if (item.adminOnly && session?.user?.role !== 'Administration') return null
+                            return (
+                                <Link to={item.path} key={item.name}>
+                                    <span className={`hb-nav-btn${item.position === position ? ' hb-nav-btn--active' : ''}`}>
+                                        {item.name}
+                                    </span>
+                                </Link>
+                            )
+                        })}
 
+                        {session?.logged && (
+                            <Dropdown
+                                open={dropdownOpen}
+                                onOpenChange={open => { setDropdownOpen(open); if (open) loadUserStats() }}
+                                trigger={['click']}
+                                dropdownRender={() => userDropdown}
+                                placement="bottomRight"
+                            >
+                                <button className="hb-user-btn">
+                                    {session?.user?.name?.split(' ')[0]}
+                                    <ChevronDown size={13} />
+                                </button>
+                            </Dropdown>
+                        )}
+                    </nav>
+                </div>
+            </header>
 
-                    }}>
-                        <img alt='' src="/images/icon_pp.png" style={{
-                            height: '40px', width: '40px', borderRadius: '99px',
-                            outline: '2px solid #FfF'
-                        }} />
+            {/* ── Mobile bar ── */}
+            <div style={{ opacity: isVisible ? 1 : 0 }} className="header-main-container mobile-opt">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '90%' }}>
+                    <Link to="/invitations">
+                        <img src={logoBlue} alt="I attend" style={{ height: '36px', objectFit: 'contain' }} />
+                    </Link>
+                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<Menu style={{ color: '#0c171b' }} />} />
+                </div>
+            </div>
 
-                    </div>
-                    <Row
-                        className="nav_cont">
-                        {
-                            navItems.map((item) => {
-                                // Condiciones para ocultar el elemento 'Admin'
-                                if (item.position === 'admin' && (!session?.logged || session?.user?.role !== "Administration")) {
-                                    return null;  // No renderiza nada
-                                }
-
-                                return (
-                                    <Link to={item.path} key={item.name}>
-                                        <div
-
-                                            className={`nav-item-col ${item.position === position ? '--selected' : ''}`}>
-                                            {
-                                                item.position === position
-                                                    ? <item.selected className="nav-item-icon-selec" />
-                                                    : <item.icon className="nav-item-icon" />
-                                            }
-                                            <span className="nav-item-label">{item.name}</span>
-                                        </div>
-                                    </Link>
-                                );
-                            })
-                        }
-
-
-                    </Row>
-
-                    <div style={{
-                        height: '60px', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        position: 'relative', width: '120px', zIndex: 999,
-                    }}>
-                    </div>
-                </Row>
-
-            </div >
-
-
-            <div style={{
-                opacity: isVisible ? 1 : 0
-            }} className="header-main-container mobile-opt"
+            {/* ── Mobile overlay ── */}
+            <div
+                style={{ right: !openMenu ? '-100vw' : '0px', opacity: openMenu ? 1 : 0 }}
+                className="mobile-menu-container"
             >
-                <div
-                    style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexDirection: 'row',
-                        width: '90%', position: 'relative',
-                    }}>
+                <button className="mobile-close-btn" onClick={() => setOpenMenu(false)} aria-label="Cerrar">
+                    <IoClose size={28} strokeWidth={3} />
+                </button>
 
-
-
-                    <Button onClick={() => setOpenMenu(true)} type="text" icon={<Menu style={{ color: '#000' }} />} />
-
-                </div>
-
-                <div style={{
-                    right: !openMenu ? '-100vw' : '0px'
-                }} className="mobile-menu-container">
-                    <div className="header-main-container">
-                        <div
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexDirection: 'row',
-                                width: '90%', position: 'relative',
-                            }}>
-                            {/* <span className="mobile-menu-label">Menú</span> */}
-                            <Button onClick={() => setOpenMenu(false)} type="text" icon={<IoClose size={36} />} />
-                        </div>
-                    </div>
-
-                    <div className="mobile-menu-routes">
-                        {
-                            navItems.map((item) => {
-                                // Condiciones para ocultar el elemento 'Admin'
-                                if (item.position === 'admin' && (!session?.logged || session?.user?.role !== "Administration")) {
-                                    return null;  // No renderiza nada
-                                }
-
-                                return (
-                                    <Link
-                                        style={{ textDecoration: 'none' }}
-                                        to={item.path} key={item.name}>
-                                        <span style={{
-                                            color: item.position === position && 'var(--brand-color-500)'
-                                        }} className="mobile-nav-item">{item.name}</span>
-                                    </Link>
-                                );
-                            })
-                        }
-
-                        <Link target='_blank' style={{ textDecoration: 'none' }} to="https://wa.me/6145338500">
-                            <span className="mobile-nav-item">{t('header.contact')}</span>
-                        </Link>
-
-                    </div>
-
-                </div>
-
-            </div >
+                <nav className="mobile-menu-routes">
+                    {navItems.map((item, i) => {
+                        if (item.adminOnly && session?.user?.role !== 'Administration') return null
+                        const isActive = item.position === position
+                        return (
+                            <Link
+                                key={item.name}
+                                style={{ textDecoration: 'none', transitionDelay: openMenu ? `${i * 60}ms` : '0ms' }}
+                                to={item.path}
+                                onClick={() => setOpenMenu(false)}
+                            >
+                                <span className={`mobile-nav-item ${isActive ? 'mobile-nav-item--active' : 'mobile-nav-item--inactive'}`}>
+                                    {item.name}
+                                </span>
+                            </Link>
+                        )
+                    })}
+                    <Link target='_blank' style={{ textDecoration: 'none' }} to="https://wa.me/6145338500" onClick={() => setOpenMenu(false)}>
+                        <span className="mobile-nav-item mobile-nav-item--inactive">{t('header.contact')}</span>
+                    </Link>
+                </nav>
+            </div>
         </>
     )
 }
@@ -484,7 +465,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                     <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
                                 )}
                             >
-                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--purple-color)' size='large'>
+                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-600)' size='large'>
                                     <Button style={{ borderRadius: '99px' }} icon={<MessageCircle size={12} />} />
                                 </Badge>
                             </Dropdown>
@@ -492,7 +473,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {screens.xs && !isEditing && (
                             <>
-                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--purple-color)' size='large'>
+                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-600)' size='large'>
                                     <Button
                                         style={{ borderRadius: '99px' }}
                                         icon={<MessageCircle size={12} />}

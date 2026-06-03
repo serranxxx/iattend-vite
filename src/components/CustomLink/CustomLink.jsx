@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import './custom_link.css'
 import { Button, Dropdown, message } from 'antd'
-import { ChevronLeft, Link2, SquareArrowUpRight } from 'lucide-react'
+import { ChevronLeft, Share2, SquareArrowUpRight } from 'lucide-react'
 import { StorageImages } from '../ImagesStorage/StorageImages'
 import { useTranslation } from 'react-i18next'
 
@@ -48,7 +48,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
             <Button
                 onClick={() => handleShare(url)}
                 style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
-                icon={iconOverride ?? <Link2 size={14} />} >
+                icon={iconOverride ?? <Share2 size={14} />} >
                 {isSmall ? '' : label ?? buttonText ?? (isHeader ? t('custom_link.copy_btn') : t('custom_link.link_btn'))}
             </Button>
         )
@@ -101,7 +101,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
                     <Button
                         style={{ width: '100%' }}
                         onClick={() => handleShare(url)}
-                        icon={<Link2 size={14} />} className="primarybutton--active">
+                        icon={<Share2 size={14} />} className="primarybutton--active">
                         {t('custom_link.copy_btn')}
                     </Button>
                 </div>
@@ -109,7 +109,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
         >
             <Button
                 style={{ maxHeight: isHeader ? maxHeight : undefined, borderRadius: isHeader ? '99px' : '99px', minHeight: label ? '44px' : undefined, background: label ? '#00000080' : undefined, backdropFilter: label ? 'blur(10px)' : undefined, border: label ? 'none' : undefined, color: label ? '#FFF' : undefined, boxShadow: label ? '0px 0px 8px rgba(0,0,0,0.2)' : undefined }}
-                icon={<Link2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
+                icon={<Share2 size={14} />} className={`primarybutton${isHeader ? '--active' : ''}`}>
                 {isSmall ? '' : label ?? buttonText ?? (isHeader ? t('custom_link.copy_btn') : t('custom_link.link_btn'))}
             </Button>
         </Dropdown>

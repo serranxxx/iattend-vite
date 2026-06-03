@@ -646,11 +646,12 @@ export default function GuestsPage() {
 
                                 title={plan !== 'pro' ? '' : !/^\+52\d+/.test(phone_number) ? t('guests.tooltip_national_only') : ""} color="var(--brand-color-500)">
                                 <Button
+                                    type='primary'
                                     disabled={
                                         !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
                                     }
                                     onClick={() => onSedingInvitation(record, false)}
-                                    className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active'}`}
+                                    // className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton'}`}
                                     icon={<Send size={14} />}
                                     style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
                                 >
@@ -661,7 +662,7 @@ export default function GuestsPage() {
                             <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('guests.tooltip_mark_invited')}</span></div>} color="var(--brand-color-500)">
                                 <Button
                                     onClick={() => onSendInvitation(record)}
-                                    className="primarybutton--active"
+                                    className="primarybutton"
                                     icon={<Check size={14} style={{ marginTop: '2px' }} />}
                                     style={{ minWidth: 30, maxWidth: 30, maxHeight: 30 }}
                                 />
@@ -769,7 +770,7 @@ export default function GuestsPage() {
                                 )}
                             >
                                 <Button
-                                    className="primarybutton--active"
+                                    className="primarybutton"
                                     icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
                                     style={{ flex: 1, maxWidth: '120px', maxHeight: 30, borderRadius: 99 }}
                                 >

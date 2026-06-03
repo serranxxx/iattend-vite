@@ -224,13 +224,14 @@ export const SideEvents = () => {
                         >
                             <Tooltip placement='topRight' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaPaperPlane size={12} /><span>{t('side_events.tooltip_send')}</span></div>} color="var(--brand-color-500)">
                                 <Button
+                                    type='primary'
                                     disabled={!phone_number || !credits > 0}
                                     // disabled={t!phone_number}
                                     // onMouseEnter={() => setActiveIcon(true)} onMouseLeave={() => setActiveIcon(false)}
                                     onClick={() => onSedingInvitation(current, record)}
-                                    className="primarybutton--active"
+                                    // className="primarybutton--active"
                                     icon={<LuSend size={12} />}
-                                    style={{ flex: 1, maxHeight: 30 }}
+                                    style={{ flex: 1, maxHeight: 30, borderRadius: 99 }}
                                 >
                                     {t('side_events.btn_invite')}
                                 </Button>
@@ -239,7 +240,7 @@ export const SideEvents = () => {
                             <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('side_events.tooltip_mark')}</span></div>} color="var(--brand-color-500)">
                                 <Button
                                     onClick={() => onSendInvitation(record)}
-                                    className="primarybutton--active"
+                                    className="primarybutton"
                                     icon={<LuCheck size={12} />}
                                     style={{ minWidth: 30, maxWidth: 30, maxHeight: 30 }}
                                 />
@@ -943,14 +944,13 @@ export const SideEvents = () => {
                                         return (
                                             <div
                                                 onClick={canCreate ? insertSideEvent : () => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
-                                                className='side_event_item'
-                                                style={{ backgroundColor: '#F5F3F2' }}
+                                                className='side_event_item se-new-card'
                                             >
                                                 <div className='new_inv_cont' style={{ minHeight: 'unset', flex: 1, width: '100%' }}>
                                                     <div className='add_button_circle'>
                                                         {canCreate
-                                                            ? <Plus size={32} color='var(--brand-color-500)' />
-                                                            : <LuShoppingCart size={32} color='var(--brand-color-500)' />
+                                                            ? <Plus size={32} color='#0c171b' strokeWidth={2} />
+                                                            : <LuShoppingCart size={32} color='#0c171b' strokeWidth={2} />
                                                         }
                                                     </div>
                                                     <span className='cta_title'>
@@ -959,7 +959,7 @@ export const SideEvents = () => {
                                                     <span className='cta_text'>
                                                         {canCreate ? t('side_events.cta_new_text') : t('side_events.cta_more_text')}
                                                     </span>
-                                                    {!canCreate && <Button className='cta_plans'>{t('side_events.cta_buy')}</Button>}
+                                                    {!canCreate && <Button type='primary' className='cta_plans'>{t('side_events.cta_buy')}</Button>}
                                                 </div>
                                             </div>
                                         );

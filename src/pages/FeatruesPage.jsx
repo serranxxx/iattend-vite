@@ -3,7 +3,6 @@ import { FooterApp } from '../modules/Footer/FooterApp'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { FaCheck } from 'react-icons/fa'
 import { HeaderBuild } from '../modules/Header/Header'
-import UserPopUp from '../components/UserPopUp/UserPopUp'
 import { useTranslation } from 'react-i18next'
 
 export const FeaturesPage = () => {
@@ -21,8 +20,7 @@ export const FeaturesPage = () => {
                     backgroundColor: 'var(--ft-color)',
                     maxWidth:'1480px',
                 }}>
-                <HeaderBuild position={'pricing'}  isVisible={true} />
-                <UserPopUp />
+                <HeaderBuild position={'pricing'} isVisible={true} />
                 <div className='pricing-main-container'>
 
                     <div className='pricing-title-subtext-container'>

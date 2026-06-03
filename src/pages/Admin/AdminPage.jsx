@@ -8,7 +8,6 @@ import { HeaderBuild } from '../../modules/Header/Header'
 import { LuArrowUpFromLine, LuArrowUpRight, LuChevronDown, LuCopy, LuLink, LuPlus, LuPower, LuPowerOff, LuUserPlus } from 'react-icons/lu'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
-import UserPopUp from '../../components/UserPopUp/UserPopUp'
 import { ArrowUpRight, ChevronDown, Copy, Link2, MessageCircle, Plus, SquareChevronDown } from 'lucide-react'
 import { IoMdAdd } from 'react-icons/io'
 import { WhatsappMessages } from '../../modules/GuestManagement/WhatsappMessages/WhatsappMessages'
@@ -737,9 +736,6 @@ return (
             gap: '24px',
         }}>
             <HeaderBuild position={'admin'} />
-
-
-            <UserPopUp />
             <div className='user-table-container' style={{ marginTop: '24px' }}>
                 <Tabs
                     style={{ width: '100%', }}

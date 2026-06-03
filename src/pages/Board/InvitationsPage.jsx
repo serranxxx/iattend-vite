@@ -5,9 +5,8 @@ import { supabase } from '../../lib/supabase';
 import { appContext } from '../../context';
 import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
-import { darker } from '../../helpers/assets/functions';
-import UserPopUp from '../../components/UserPopUp/UserPopUp';
-import { Calendar1, Gift, Link2, Play, Plus } from 'lucide-react';
+import { AdsCarousel } from '../../components/AdsCarousel/AdsCarousel';
+import { ArrowRight, Calendar1, Gift, Plus, Share } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
 import { GiftDrawer } from '../../components/Gift/GiftDrawer';
 import { FooterApp } from '../../modules/Footer/FooterApp';
@@ -137,22 +136,22 @@ export const InvitationsPage = () => {
 
 
     return (
-        <div className='invitations-page-main-container' >
+        <div className='invitations-page-main-container'>
 
             <Layout
                 style={{
                     position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: 'var(--ft-color)',
-                    maxWidth: '1480px',
+                    backgroundColor: 'transparent',
                 }}>
 
-                <HeaderBuild position={'invitations'} isVisible={true} />
-                <UserPopUp logout={logout} />
+                <HeaderBuild position={'invitations'} isVisible={true} alwaysSolid={true} />
                 <Layout className='scroll-invitation build-invitation-layout main-dash-layout' style={{
-                    marginTop: '80px', maxWidth: '100vw', padding: 0,
-                    backgroundColor: 'transparent',
+                     maxWidth: '100vw', padding: 0,
+                    backgroundColor: 'transparent', 
                 }} >
+                    <div style={{ padding: '0px', width: '100%',  overflow: 'hidden' }}>
+                        <AdsCarousel />
+                    </div>
                     {
                         loader ?
                             <div style={{
@@ -174,7 +173,7 @@ export const InvitationsPage = () => {
                                     <div className='invitations-content-wrapper' style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: 'column',
                                         position: 'relative', padding: '0px', gap: '36px', width: '100%',
-                                        paddingTop: '36px'
+                                        paddingTop: '54px', paddingBottom: '84px'
                                     }}>
                                         <div className='inv-title-cta-filter'>
 
@@ -198,39 +197,27 @@ export const InvitationsPage = () => {
                                             {
                                                 invitationsCopy?.length > 1 ?
 
-                                                    <div onClick={() => setVisible(true)} className={`invitation-container`} >
-
-
+                                                    <div onClick={() => setVisible(true)} className="invitation-container new-event-card">
                                                         <div className='new_inv_cont'>
                                                             <div className='add_button_circle'>
-                                                                <Plus size={32} color='var(--brand-color-500)' />
+                                                                <Plus size={32} color='#0c171b' strokeWidth={3} />
                                                             </div>
-
                                                             <span className='cta_title'>{t('invitations.new_event_title')}</span>
                                                             <span className='cta_text'>{t('invitations.new_event_cta')}</span>
                                                         </div>
-
-
                                                     </div>
 
                                                     :
-                                                    <div  onClick={() => setVisible(true)} className={`invitation-container`} >
-
-
+                                                    <div onClick={() => setVisible(true)} className="invitation-container new-event-card">
                                                         <div className='new_inv_cont'>
                                                             <div className='add_button_circle'>
-                                                                <Calendar1 size={32} color='var(--brand-color-500)' />
+                                                                <Calendar1 size={32} color='#0c171b' strokeWidth={3} />
                                                             </div>
-
                                                             <span className='cta_title'>{t('invitations.empty_title')}</span>
                                                             <span className='cta_text'>{t('invitations.empty_text')}</span>
-
                                                             <Button className='cta_plans'>{t('invitations.empty_cta')}</Button>
-
                                                             <small className='cta_support'>{t('invitations.empty_support')} <a>{t('invitations.empty_support_link')}</a></small>
                                                         </div>
-
-
                                                     </div>
 
                                             }
@@ -240,69 +227,59 @@ export const InvitationsPage = () => {
                                                     invitationsCopy?.map((invitation) => (
                                                         <div
                                                             key={invitation.id}
-                                                            className={`invitation-container`}
+                                                            className="invitation-container"
                                                         >
-                                                            <div className={`invitation-image-container`}>
-                                                                {
-                                                                    invitation?.data?.cover?.image?.prod && (
-                                                                        <img src={invitation.data.cover.image.prod} alt="Featured product" />
-                                                                    )}
-                                                                <div style={{
-                                                                    position: 'absolute', width: '100%', height: '100%', top: '0px', left: '0px',
-                                                                    background: `linear-gradient(to top, ${darker(invitation?.data?.generals?.colors?.primary, 0.2)}, rgba(0,0,0,0))`,
-                                                                    mixBlendMode: 'multiply', opacity: 0.5,
-                                                                }}></div>
+                                                            {/* Full-bleed background image */}
+                                                            {invitation?.data?.cover?.image?.prod && (
+                                                                <img
+                                                                    src={invitation.data.cover.image.prod}
+                                                                    alt=""
+                                                                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                />
+                                                            )}
+                                                            {/* Dark overlay */}
+                                                            <div style={{
+                                                                position: 'absolute', inset: 0,
+                                                                background: 'rgba(0,0,0,0.5)',
+                                                                mixBlendMode: 'multiply',
+                                                            }} />
+
+                                                            {/* Text + buttons — pushed to bottom */}
+                                                            <div style={{
+                                                                position: 'relative', zIndex: 1,
+                                                                width: '100%', marginTop: 'auto',
+                                                                display: 'flex', flexDirection: 'column', gap: '4px',
+                                                            }}>
+                                                                <span className='invitation_name'>
+                                                                    {invitation?.data?.cover?.title?.text?.value}
+                                                                </span>
+                                                                <span className='invitation_path'>
+                                                                    {invitation?.name}
+                                                                </span>
+                                                                <div className='invitation_btns_cont'>
+                                                                    <Button
+                                                                        icon={<ArrowRight size={16} />}
+                                                                        className='invitation_start_button'
+                                                                        onClick={() => handleMoode(invitation.id)}
+                                                                    >
+                                                                        {t('invitations.btn_start')}
+                                                                    </Button>
+                                                                    <Button
+                                                                        icon={<Share size={16} />}
+                                                                        className='invitation_url_button'
+                                                                        onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
+                                                                    />
+                                                                </div>
                                                             </div>
 
-                                                            {
-
-                                                                <div style={{
-                                                                    width: '100%',
-                                                                    boxSizing: 'border-box', display: 'flex',
-                                                                    alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
-                                                                    gap: '4px', padding: '12px',
-                                                                }}>
-
-                                                                    <span className='invitation_name'>
-                                                                        {invitation?.data?.cover?.title?.text?.value}
-                                                                    </span>
-
-                                                                    <span className='invitation_path'>
-                                                                        {invitation?.name}
-                                                                    </span>
-                                                                    <div className='invitation_btns_cont'>
-                                                                        <Button
-                                                                            icon={<Play size={16} />}
-                                                                            className='invitation_start_button'
-                                                                            onClick={() => handleMoode(invitation.id)}
-                                                                        >
-                                                                            {t('invitations.btn_start')}
-                                                                        </Button>
-
-                                                                        <Button
-                                                                            icon={<Link2 size={16} />}
-                                                                            className='invitation_url_button'
-                                                                            onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
-                                                                        >
-                                                                            {t('invitations.btn_copy_link')}
-                                                                        </Button>
-                                                                    </div>
-
-                                                                </div>
-                                                            }
-
+                                                            {/* Status badge */}
                                                             <div
                                                                 className='invitation_status'
-                                                                style={{
-                                                                    position: 'absolute', top: '16px', right: '16px',
-                                                                }}
+                                                                style={{ position: 'absolute', top: '22px', right: '22px', zIndex: 2 }}
                                                             >
-                                                                <div className='status_indicator' style={{ backgroundColor: invitation.active ? '#4ADE80' : '#FBBF24' }}></div>
+                                                                <div className='status_indicator' style={{ backgroundColor: invitation.active ? '#4ADE80' : '#FBBF24' }} />
                                                                 <span>{invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}</span>
-
                                                             </div>
-
-
                                                         </div>
                                                     ))
                                                 )
