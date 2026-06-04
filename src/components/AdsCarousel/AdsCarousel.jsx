@@ -26,15 +26,15 @@ const SLIDES = [
         img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/wedding%20flowers.jpg',
         accent: '#eeeadf',
     },
-    {
-        id: 'regalo',
-        product: '🎁 Regala I attend',
-        headline: 'Regala la invitación perfecta.',
-        desc: 'Alguien que conoces está planeando su boda. Dales I attend y que ellos diseñen cada detalle.',
-        img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/dinner.jpg',
-        accent: '#eeeadf',
-        cta: { label: 'Regalar ahora', href: '/gift' },
-    },
+    // {
+    //     id: 'regalo',
+    //     product: '🎁 Regala I attend',
+    //     headline: 'Regala la invitación perfecta.',
+    //     desc: 'Alguien que conoces está planeando su boda. Dales I attend y que ellos diseñen cada detalle.',
+    //     img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/dinner.jpg',
+    //     accent: '#eeeadf',
+    //     cta: { label: 'Regalar ahora', href: '/gift' },
+    // },
 ]
 
 export const AdsCarousel = () => {

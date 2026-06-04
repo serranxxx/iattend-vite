@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './dashboard.css'
 import { Button } from 'antd'
 import { FooterApp } from '../../modules/Footer/FooterApp'
@@ -28,6 +28,24 @@ export const DashboardPage = () => {
     const [searchParams] = useSearchParams();
 
     const id = searchParams.get("id");
+    const interBubbleRef = useRef(null)
+
+    useEffect(() => {
+        const el = interBubbleRef.current
+        if (!el) return
+        let curX = 0, curY = 0, tgX = 0, tgY = 0
+        let rafId
+        const move = () => {
+            curX += (tgX - curX) / 20
+            curY += (tgY - curY) / 20
+            el.style.transform = `translate(${Math.round(curX)}px, ${Math.round(curY)}px)`
+            rafId = requestAnimationFrame(move)
+        }
+        const onMouseMove = (e) => { tgX = e.clientX; tgY = e.clientY }
+        window.addEventListener('mousemove', onMouseMove)
+        move()
+        return () => { window.removeEventListener('mousemove', onMouseMove); cancelAnimationFrame(rafId) }
+    }, [invitation, plan])
 
     const chartData = {
         labels: [t('dashboard.stat_confirmed'), t('dashboard.stat_waiting_chart'), t('dashboard.stat_available_chart')],
@@ -116,6 +134,18 @@ export const DashboardPage = () => {
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1_1' /> */}
                 <div className='dashboard_body'>
 
+                    {/* ── Gradient background ── */}
+                    <div className="gradient-bg">
+
+                        <div className="gradients-container">
+                            <div className="g1" />
+                            <div className="g2" />
+                            <div className="g3" />
+                            <div className="g4" />
+                            <div className="g5" />
+                            <div className="interactive" ref={interBubbleRef} />
+                        </div>
+                    </div>vmnn
 
                     <div className='single_row_dashboard' style={{gap:'24px'}}>
 

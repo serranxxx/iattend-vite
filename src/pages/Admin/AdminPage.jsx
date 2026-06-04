@@ -736,7 +736,7 @@ return (
             gap: '24px',
         }}>
             <HeaderBuild position={'admin'} />
-            <div className='user-table-container' style={{ marginTop: '24px' }}>
+            <div className='user-table-container' >
                 <Tabs
                     style={{ width: '100%', }}
                     type="card"

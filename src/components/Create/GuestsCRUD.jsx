@@ -640,7 +640,7 @@ export const GuestsCRUD = ({
                         <Button
                             icon={<FaCheck style={{ marginTop: '2px' }} />}
                             onClick={onSaveChanges}
-                            className="primarybutton--black--active"
+                            className="primarybutton--active"
                             style={{ borderRadius: '99px' }}
                         >
                             {t('guests.crud_btn_save')}
@@ -649,7 +649,7 @@ export const GuestsCRUD = ({
                         <Button
                             icon={<IoMdAdd style={{ marginTop: '2px' }} />}
                             onClick={onAddingGuest}
-                            className="primarybutton--black--active"
+                            className="primarybutton--active"
                             style={{ borderRadius: '99px' }}
                         >
                             {t('guests.crud_btn_add')}

@@ -48,9 +48,9 @@
 .chat-morph-shell--notif {
     width: 300px;
     height: 64px;
-    border-radius: 24px;
-    /* background-color: #FFF; */
-    /* box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18); */
+    border-radius: 99px;
+    background-color: #16323d;
+    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -156,7 +156,7 @@
     gap: 12px;
     opacity: 0;
     pointer-events: none;
-    background: #FFF;
+    /* background: #FFF; */
     /* Appear after pill has expanded, disappear before it contracts */
     transition: opacity 0.15s ease 0.22s;
     overflow: hidden;
@@ -241,7 +241,7 @@
 .chat-morph-pill-title {
     font-size: 16px;
     font-weight: 600;
-    color: #75698c;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -250,7 +250,7 @@
 
 .chat-morph-pill-body {
     font-size: 12px;
-    color: #A69ABC;
+    color: #ffffff80;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -311,6 +311,16 @@
 
 /* ── Mobile ──────────────────────────────────────────── */
 @media (max-width: 480px) {
+    .chat-morph-shell--closed {
+        transform: scale(0.95);
+        transform-origin: bottom right;
+    }
+
+    .chat-morph-shell--open,
+    .chat-morph-shell--notif {
+        transform: scale(1);
+    }
+
     .chat-morph--open {
         width: 90vw;
         height: 70dvh;

@@ -262,11 +262,127 @@
     padding: 24px;
     padding-top: 74px;
     box-sizing: border-box;
+}
+
+/* ── Gradient blob background ──────────────────────────── */
+:root {
+    --dash-bg1: #ffffff;
+    --dash-bg2: #f8f6f0;
+    --dash-c1: 170, 193, 135;   /* #FFFFFF       */
+    --dash-c2: 255, 255, 255;    /* #F5F3F2       */
+    --dash-c3: 210, 191, 221;    /* light-green   */
+    --dash-c4: 210, 191, 221;    /* light-purple  */
+    --dash-c5: 255, 255, 255;    /* #FFFFFF       */
+    --dash-ci: 210, 191, 221;    /* #F5F5F5       */
+    --dash-size: 100%;
+    --dash-blend: hard-light;
+}
+
+@keyframes dash-moveVertical {
+    0%   { transform: translateY(-50%); }
+    50%  { transform: translateY(50%);  }
+    100% { transform: translateY(-50%); }
+}
+@keyframes dash-moveInCircle {
+    0%   { transform: rotate(0deg);   }
+    50%  { transform: rotate(180deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes dash-moveHorizontal {
+    0%   { transform: translateX(-50%) translateY(-10%); }
+    50%  { transform: translateX(50%)  translateY(10%);  }
+    100% { transform: translateX(-50%) translateY(-10%); }
+}
+
+.gradient-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(40deg, var(--dash-bg1), var(--dash-bg2));
+    overflow: hidden;
+    z-index: 0;
+}
+
+.gradient-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
     background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
-        radial-gradient(ellipse at center, #e9e9e9, #FFFFFF);
-    background-size: 50px 50px, 50px 50px, 100% 100%;
+        linear-gradient(to right, rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.gradients-container {
+    filter: url(#goo) blur(40px);
+    width: 100%;
+    height: 100%;
+}
+
+.g1 {
+    position: absolute;
+    background: radial-gradient(circle at center, rgba(var(--dash-c1), 0.4) 0, rgba(var(--dash-c1), 0) 50%) no-repeat;
+    mix-blend-mode: var(--dash-blend);
+    width: var(--dash-size); height: var(--dash-size);
+    top: calc(50% - var(--dash-size) / 2);
+    left: calc(50% - var(--dash-size) / 2);
+    transform-origin: center center;
+    animation: dash-moveVertical 30s ease infinite;
+}
+.g2 {
+    position: absolute;
+    background: radial-gradient(circle at center, rgba(var(--dash-c2), 0.9) 0, rgba(var(--dash-c2), 0) 50%) no-repeat;
+    mix-blend-mode: var(--dash-blend);
+    width: var(--dash-size); height: var(--dash-size);
+    top: calc(50% - var(--dash-size) / 2);
+    left: calc(50% - var(--dash-size) / 2);
+    transform-origin: calc(50% - 400px);
+    animation: dash-moveInCircle 20s reverse infinite;
+}
+.g3 {
+    position: absolute;
+    background: radial-gradient(circle at center, rgba(var(--dash-c3), 0.4) 0, rgba(var(--dash-c3), 0) 50%) no-repeat;
+    mix-blend-mode: var(--dash-blend);
+    width: var(--dash-size); height: var(--dash-size);
+    top: calc(50% - var(--dash-size) / 2 + 200px);
+    left: calc(50% - var(--dash-size) / 2 - 500px);
+    transform-origin: calc(50% + 400px);
+    animation: dash-moveInCircle 40s linear infinite;
+}
+.g4 {
+    position: absolute;
+    background: radial-gradient(circle at center, rgba(var(--dash-c4), 0.4) 0, rgba(var(--dash-c4), 0) 50%) no-repeat;
+    mix-blend-mode: var(--dash-blend);
+    width: var(--dash-size); height: var(--dash-size);
+    top: calc(50% - var(--dash-size) / 2);
+    left: calc(50% - var(--dash-size) / 2);
+    transform-origin: calc(50% - 200px);
+    animation: dash-moveHorizontal 40s ease infinite;
+    opacity: 0.7;
+}
+.g5 {
+    position: absolute;
+    background: radial-gradient(circle at center, rgba(var(--dash-c5), 0.9) 0, rgba(var(--dash-c5), 0) 50%) no-repeat;
+    mix-blend-mode: var(--dash-blend);
+    width: calc(var(--dash-size) * 2); height: calc(var(--dash-size) * 2);
+    top: calc(50% - var(--dash-size));
+    left: calc(50% - var(--dash-size));
+    transform-origin: calc(50% - 800px) calc(50% + 200px);
+    animation: dash-moveInCircle 20s ease infinite;
+}
+.interactive {
+    position: absolute;
+    background: radial-gradient(circle at center, rgba(var(--dash-ci), 0.8) 0, rgba(var(--dash-ci), 0) 50%) no-repeat;
+    mix-blend-mode: var(--dash-blend);
+    width: var(--dash-size); height: var(--dash-size);
+    top: -75%; left: -75%;
+    opacity: 0.5;
+}
+
+.dashboard_body > *:not(.gradient-bg) {
+    position: relative;
+    z-index: 1;
 }
 
 .single_row_dashboard  {

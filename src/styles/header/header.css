@@ -347,6 +347,7 @@
     .mobile-nav-item--inactive { opacity: 0.35; }
     .mobile-nav-item--inactive:hover { opacity: 0.65; }
 
+
     .header-container,
     .web-opt {
         display: none;

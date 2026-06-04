@@ -3,67 +3,67 @@
    ═══════════════════════════════════════════════════════ */
 
 @font-face {
-    font-family: 'Denver-Serial';
-    src: url('/assets/fonts/denver-serial-bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Denver-Serial';
+  src: url('/assets/fonts/denver-serial-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Denver-Serial';
-    src: url('/assets/fonts/Denver-Serial-BoldItalic.ttf') format('truetype');
-    font-weight: 700;
-    font-style: italic;
-    font-display: swap;
+  font-family: 'Denver-Serial';
+  src: url('/assets/fonts/Denver-Serial-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Luxora Grotesk';
-    src: url('/assets/fonts/LuxoraGrotesk-Light.otf') format('opentype');
-    font-weight: 300;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Luxora Grotesk';
+  src: url('/assets/fonts/LuxoraGrotesk-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Luxora Grotesk';
-    src: url('/assets/fonts/LuxoraGrotesk-Medium.otf') format('opentype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Luxora Grotesk';
+  src: url('/assets/fonts/LuxoraGrotesk-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Luxora Grotesk';
-    src: url('/assets/fonts/LuxoraGrotesk-Bold.otf') format('opentype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Luxora Grotesk';
+  src: url('/assets/fonts/LuxoraGrotesk-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Windsor';
-    src: url('/assets/fonts/windsor-bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Windsor';
+  src: url('/assets/fonts/windsor-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Michigan Signature';
-    src: url('/assets/fonts/Michigan Signature.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Michigan Signature';
+  src: url('/assets/fonts/Michigan Signature.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Europa Grotesk SH';
-    src: url('/assets/fonts/europa-grotesk-sh-bold.otf') format('opentype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
+  font-family: 'Europa Grotesk SH';
+  src: url('/assets/fonts/europa-grotesk-sh-bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 
@@ -74,57 +74,55 @@
 :root {
 
   /* ── Global ──────────────────────────────────────────── */
-  --font-family:      'Poppins';
-  --borders:          #EBEBEB;
-  --error-color:      #D32F2F;
-  --gradient:         linear-gradient(to right, var(--mid-blue-500), var(--mid-blue-300));
-  --gradient-reverse: linear-gradient(to left,  var(--brand-color-500), var(--brand-color-300));
+  --font-family: 'Poppins';
+  --borders: #EBEBEB;
+  --error-color: #D32F2F;
+  --gradient: linear-gradient(to right, var(--mid-blue-500), var(--mid-blue-300));
+  --gradient-reverse: linear-gradient(to left, var(--brand-color-500), var(--brand-color-300));
 
   /* ── Semantic ────────────────────────────────────────── */
-  --ft-color:    #FFFFFF;
+  --ft-color: #FFFFFF;
   --ft-color-80: #FFFFFF80;
   --ft-color-50: #FFFFFF50;
   --ft-color-20: #FFFFFF20;
 
-  --sc-color:    #F5F3F2;
+  --sc-color: #F5F3F2;
   --sc-color-80: #F5F3F280;
   --sc-color-50: #F5F3F250;
   --sc-color-20: #F5F3F220;
 
-  --text-color:    #29262D;
+  --text-color: #29262D;
   --text-color-80: #29262D80;
   --text-color-50: #29262D50;
   --text-color-20: #29262D20;
 
-  --gray-color:    #787878;
+  --gray-color: #787878;
   --gray-color-80: #78787880;
   --gray-color-40: #78787840;
   --gray-color-20: #78787820;
 
-  --gray-bg:    #F1F1F1;
+  --gray-bg: #F1F1F1;
   --gray-bg-80: #F1F1F180;
   --gray-bg-40: #F1F1F140;
   --gray-bg-20: #F1F1F120;
 
   /* ── Brand (purple) ──────────────────────────────────── */
-  --brand-color-900: #29262D;
-  --brand-color-800: #5E566A;
-  --brand-color-600: #aac18780;
-  --brand-color-500: #d2bfdd;
-  --brand-color-300: #CCC2DC;
-  --brand-color-100: #EAE6F1;
+  --brand-color-900: var(--light-purple-900);
+  --brand-color-800: var(--light-purple-800);
+  --brand-color-600: var(--light-purple-600);
+  --brand-color-500: var(--light-purple-500);
+  --brand-color-300: var(--light-purple-300);
+  --brand-color-100: var(--light-purple-100);
 
-  --brand-color-900-80: #29262D80;
-  --brand-color-800-80: #5E566A80;
-  --brand-color-600-80: #978BAB80;
-  --brand-color-500-80: #B4A5CC80;
-  --brand-color-500-40: #B4A5CC40;
-  --brand-color-500-20: #B4A5CC20;
-  --brand-color-300-80: #CCC2DC80;
-  --brand-color-100-80: #EAE6F180;
+  --brand-color-600-80: var(--light-purple-600-80);
+  --brand-color-500-80: var(--light-purple-500-80);
+  --brand-color-500-40: var(--light-purple-500-40);
+  --brand-color-500-20: var(--light-purple-500-20);
+  --brand-color-300-80: var(--light-purple-300-80);
+  --brand-color-100-80: var(--light-purple-100-80);
 
   /* ── Status: success ─────────────────────────────────── */
-  --success-color-50:  #CAEBD2;
+  --success-color-50: #CAEBD2;
   --success-color-100: #BBE5C5;
   --success-color-200: #9DDAAB;
   --success-color-300: #7FCE91;
@@ -135,18 +133,18 @@
   --success-color-800: #235F30;
   --success-color-900: #184221;
 
-  --green-color:    #37C25C;
+  --green-color: #37C25C;
   --green-color-80: #37C25C80;
   --green-color-40: #37C25C40;
   --green-color-20: #37C25C20;
 
-  --green-bg:    #E1FAE8;
+  --green-bg: #E1FAE8;
   --green-bg-80: #E1FAE880;
   --green-bg-40: #E1FAE840;
   --green-bg-20: #E1FAE820;
 
   /* ── Status: danger ──────────────────────────────────── */
-  --danger-color-50:  #FACBC9;
+  --danger-color-50: #FACBC9;
   --danger-color-100: #F9BCBA;
   --danger-color-200: #F69E9B;
   --danger-color-300: #F3807C;
@@ -157,18 +155,18 @@
   --danger-color-800: #7C2321;
   --danger-color-900: #561817;
 
-  --red-color:    #EC6A5B;
+  --red-color: #EC6A5B;
   --red-color-80: #EC6A5B80;
   --red-color-40: #EC6A5B40;
   --red-color-20: #EC6A5B20;
 
-  --red-bg:    #FDEFEE;
+  --red-bg: #FDEFEE;
   --red-bg-80: #FDEFEE80;
   --red-bg-40: #FDEFEE40;
   --red-bg-20: #FDEFEE20;
 
   /* ── Status: warning ─────────────────────────────────── */
-  --warning-color-50:  #FFE7B8;
+  --warning-color-50: #FFE7B8;
   --warning-color-100: #FFE0A3;
   --warning-color-200: #FFD37A;
   --warning-color-300: #FFC552;
@@ -179,28 +177,28 @@
   --warning-color-800: #855800;
   --warning-color-900: #5C3D00;
 
-  --orange-color:    #E6961F;
+  --orange-color: #E6961F;
   --orange-color-80: #E6961F80;
   --orange-color-40: #E6961F40;
   --orange-color-20: #E6961F20;
 
-  --orange-bg:    #FCF4DB;
+  --orange-bg: #FCF4DB;
   --orange-bg-80: #FCF4DB80;
   --orange-bg-40: #FCF4DB40;
   --orange-bg-20: #FCF4DB20;
 
-  --yellow-color:    #E6961F;
+  --yellow-color: #E6961F;
   --yellow-color-80: #E6961F80;
   --yellow-color-40: #E6961F40;
   --yellow-color-20: #E6961F20;
 
-  --yellow-bg:    #FCF4DB;
+  --yellow-bg: #FCF4DB;
   --yellow-bg-80: #FCF4DB80;
   --yellow-bg-40: #FCF4DB40;
   --yellow-bg-20: #FCF4DB20;
 
   /* ── Status: info ────────────────────────────────────── */
-  --info-color-50:  #B8E1FF;
+  --info-color-50: #B8E1FF;
   --info-color-100: #A3D9FF;
   --info-color-200: #7AC8FF;
   --info-color-300: #52B7FF;
@@ -211,28 +209,28 @@
   --info-color-800: #004D85;
   --info-color-900: #00365C;
 
-  --blue-color:    #008DFF;
+  --blue-color: #008DFF;
   --blue-color-80: #008DFF80;
   --blue-color-40: #008DFF40;
   --blue-color-20: #008DFF20;
 
-  --blue-bg:    #E5F3FE;
+  --blue-bg: #E5F3FE;
   --blue-bg-80: #E5F3FE80;
   --blue-bg-40: #E5F3FE40;
   --blue-bg-20: #E5F3FE20;
 
-  --purple-color:    #6D3CFA;
+  --purple-color: #6D3CFA;
   --purple-color-80: #6D3CFA80;
   --purple-color-40: #6D3CFA40;
   --purple-color-20: #6D3CFA20;
 
-  --purple-bg:    #EFEAFF;
+  --purple-bg: #EFEAFF;
   --purple-bg-80: #EFEAFF80;
   --purple-bg-40: #EFEAFF40;
   --purple-bg-20: #EFEAFF20;
 
   /* ── mid-blue ────────────────────────────────────────── */
-  --mid-blue-50:  #BEC6C9;
+  --mid-blue-50: #BEC6C9;
   --mid-blue-100: #ABB5B9;
   --mid-blue-200: #86949A;
   --mid-blue-300: #61747B;
@@ -243,19 +241,49 @@
   --mid-blue-800: #0B1A20;
   --mid-blue-900: #081216;
 
-  --mid-blue-50-80:  #BEC6C9cc; --mid-blue-50-60:  #BEC6C999; --mid-blue-50-40:  #BEC6C966; --mid-blue-50-20:  #BEC6C933;
-  --mid-blue-100-80: #ABB5B9cc; --mid-blue-100-60: #ABB5B999; --mid-blue-100-40: #ABB5B966; --mid-blue-100-20: #ABB5B933;
-  --mid-blue-200-80: #86949Acc; --mid-blue-200-60: #86949A99; --mid-blue-200-40: #86949A66; --mid-blue-200-20: #86949A33;
-  --mid-blue-300-80: #61747Bcc; --mid-blue-300-60: #61747B99; --mid-blue-300-40: #61747B66; --mid-blue-300-20: #61747B33;
-  --mid-blue-400-80: #3B535Ccc; --mid-blue-400-60: #3B535C99; --mid-blue-400-40: #3B535C66; --mid-blue-400-20: #3B535C33;
-  --mid-blue-500-80: #16323dcc; --mid-blue-500-60: #16323d99; --mid-blue-500-40: #16323d66; --mid-blue-500-20: #16323d33;
-  --mid-blue-600-80: #122A33cc; --mid-blue-600-60: #122A3399; --mid-blue-600-40: #122A3366; --mid-blue-600-20: #122A3333;
-  --mid-blue-700-80: #0F2229cc; --mid-blue-700-60: #0F222999; --mid-blue-700-40: #0F222966; --mid-blue-700-20: #0F222933;
-  --mid-blue-800-80: #0B1A20cc; --mid-blue-800-60: #0B1A2099; --mid-blue-800-40: #0B1A2066; --mid-blue-800-20: #0B1A2033;
-  --mid-blue-900-80: #081216cc; --mid-blue-900-60: #08121699; --mid-blue-900-40: #08121666; --mid-blue-900-20: #08121633;
+  --mid-blue-50-80: #BEC6C9cc;
+  --mid-blue-50-60: #BEC6C999;
+  --mid-blue-50-40: #BEC6C966;
+  --mid-blue-50-20: #BEC6C933;
+  --mid-blue-100-80: #ABB5B9cc;
+  --mid-blue-100-60: #ABB5B999;
+  --mid-blue-100-40: #ABB5B966;
+  --mid-blue-100-20: #ABB5B933;
+  --mid-blue-200-80: #86949Acc;
+  --mid-blue-200-60: #86949A99;
+  --mid-blue-200-40: #86949A66;
+  --mid-blue-200-20: #86949A33;
+  --mid-blue-300-80: #61747Bcc;
+  --mid-blue-300-60: #61747B99;
+  --mid-blue-300-40: #61747B66;
+  --mid-blue-300-20: #61747B33;
+  --mid-blue-400-80: #3B535Ccc;
+  --mid-blue-400-60: #3B535C99;
+  --mid-blue-400-40: #3B535C66;
+  --mid-blue-400-20: #3B535C33;
+  --mid-blue-500-80: #16323dcc;
+  --mid-blue-500-60: #16323d99;
+  --mid-blue-500-40: #16323d66;
+  --mid-blue-500-20: #16323d33;
+  --mid-blue-600-80: #122A33cc;
+  --mid-blue-600-60: #122A3399;
+  --mid-blue-600-40: #122A3366;
+  --mid-blue-600-20: #122A3333;
+  --mid-blue-700-80: #0F2229cc;
+  --mid-blue-700-60: #0F222999;
+  --mid-blue-700-40: #0F222966;
+  --mid-blue-700-20: #0F222933;
+  --mid-blue-800-80: #0B1A20cc;
+  --mid-blue-800-60: #0B1A2099;
+  --mid-blue-800-40: #0B1A2066;
+  --mid-blue-800-20: #0B1A2033;
+  --mid-blue-900-80: #081216cc;
+  --mid-blue-900-60: #08121699;
+  --mid-blue-900-40: #08121666;
+  --mid-blue-900-20: #08121633;
 
   /* ── dark-blue ───────────────────────────────────────── */
-  --dark-blue-50:  #BBBEBF;
+  --dark-blue-50: #BBBEBF;
   --dark-blue-100: #A8ABAD;
   --dark-blue-200: #818688;
   --dark-blue-300: #5A6164;
@@ -266,19 +294,49 @@
   --dark-blue-800: #060C0E;
   --dark-blue-900: #04080A;
 
-  --dark-blue-50-80:  #BBBEBFcc; --dark-blue-50-60:  #BBBEBF99; --dark-blue-50-40:  #BBBEBF66; --dark-blue-50-20:  #BBBEBF33;
-  --dark-blue-100-80: #A8ABADcc; --dark-blue-100-60: #A8ABAD99; --dark-blue-100-40: #A8ABAD66; --dark-blue-100-20: #A8ABAD33;
-  --dark-blue-200-80: #818688cc; --dark-blue-200-60: #81868899; --dark-blue-200-40: #81868866; --dark-blue-200-20: #81868833;
-  --dark-blue-300-80: #5A6164cc; --dark-blue-300-60: #5A616499; --dark-blue-300-40: #5A616466; --dark-blue-300-20: #5A616433;
-  --dark-blue-400-80: #333C3Fcc; --dark-blue-400-60: #333C3F99; --dark-blue-400-40: #333C3F66; --dark-blue-400-20: #333C3F33;
-  --dark-blue-500-80: #0C171Bcc; --dark-blue-500-60: #0C171B99; --dark-blue-500-40: #0C171B66; --dark-blue-500-20: #0C171B33;
-  --dark-blue-600-80: #0A1317cc; --dark-blue-600-60: #0A131799; --dark-blue-600-40: #0A131766; --dark-blue-600-20: #0A131733;
-  --dark-blue-700-80: #081012cc; --dark-blue-700-60: #08101299; --dark-blue-700-40: #08101266; --dark-blue-700-20: #08101233;
-  --dark-blue-800-80: #060C0Ecc; --dark-blue-800-60: #060C0E99; --dark-blue-800-40: #060C0E66; --dark-blue-800-20: #060C0E33;
-  --dark-blue-900-80: #04080Acc; --dark-blue-900-60: #04080A99; --dark-blue-900-40: #04080A66; --dark-blue-900-20: #04080A33;
+  --dark-blue-50-80: #BBBEBFcc;
+  --dark-blue-50-60: #BBBEBF99;
+  --dark-blue-50-40: #BBBEBF66;
+  --dark-blue-50-20: #BBBEBF33;
+  --dark-blue-100-80: #A8ABADcc;
+  --dark-blue-100-60: #A8ABAD99;
+  --dark-blue-100-40: #A8ABAD66;
+  --dark-blue-100-20: #A8ABAD33;
+  --dark-blue-200-80: #818688cc;
+  --dark-blue-200-60: #81868899;
+  --dark-blue-200-40: #81868866;
+  --dark-blue-200-20: #81868833;
+  --dark-blue-300-80: #5A6164cc;
+  --dark-blue-300-60: #5A616499;
+  --dark-blue-300-40: #5A616466;
+  --dark-blue-300-20: #5A616433;
+  --dark-blue-400-80: #333C3Fcc;
+  --dark-blue-400-60: #333C3F99;
+  --dark-blue-400-40: #333C3F66;
+  --dark-blue-400-20: #333C3F33;
+  --dark-blue-500-80: #0C171Bcc;
+  --dark-blue-500-60: #0C171B99;
+  --dark-blue-500-40: #0C171B66;
+  --dark-blue-500-20: #0C171B33;
+  --dark-blue-600-80: #0A1317cc;
+  --dark-blue-600-60: #0A131799;
+  --dark-blue-600-40: #0A131766;
+  --dark-blue-600-20: #0A131733;
+  --dark-blue-700-80: #081012cc;
+  --dark-blue-700-60: #08101299;
+  --dark-blue-700-40: #08101266;
+  --dark-blue-700-20: #08101233;
+  --dark-blue-800-80: #060C0Ecc;
+  --dark-blue-800-60: #060C0E99;
+  --dark-blue-800-40: #060C0E66;
+  --dark-blue-800-20: #060C0E33;
+  --dark-blue-900-80: #04080Acc;
+  --dark-blue-900-60: #04080A99;
+  --dark-blue-900-40: #04080A66;
+  --dark-blue-900-20: #04080A33;
 
   /* ── light-green ─────────────────────────────────────── */
-  --light-green-50:  #E7EEDD;
+  --light-green-50: #E7EEDD;
   --light-green-100: #E0E9D4;
   --light-green-200: #D3DFC1;
   --light-green-300: #C5D5AD;
@@ -289,19 +347,49 @@
   --light-green-800: #586446;
   --light-green-900: #3D4531;
 
-  --light-green-50-80:  #E7EEDDcc; --light-green-50-60:  #E7EEDD99; --light-green-50-40:  #E7EEDD66; --light-green-50-20:  #E7EEDD33;
-  --light-green-100-80: #E0E9D4cc; --light-green-100-60: #E0E9D499; --light-green-100-40: #E0E9D466; --light-green-100-20: #E0E9D433;
-  --light-green-200-80: #D3DFC1cc; --light-green-200-60: #D3DFC199; --light-green-200-40: #D3DFC166; --light-green-200-20: #D3DFC133;
-  --light-green-300-80: #C5D5ADcc; --light-green-300-60: #C5D5AD99; --light-green-300-40: #C5D5AD66; --light-green-300-20: #C5D5AD33;
-  --light-green-400-80: #B8CB9Acc; --light-green-400-60: #B8CB9A99; --light-green-400-40: #B8CB9A66; --light-green-400-20: #B8CB9A33;
-  --light-green-500-80: #aac187cc; --light-green-500-60: #aac18799; --light-green-500-40: #aac18766; --light-green-500-20: #aac18733;
-  --light-green-600-80: #8FA271cc; --light-green-600-60: #8FA27199; --light-green-600-40: #8FA27166; --light-green-600-20: #8FA27133;
-  --light-green-700-80: #74835Ccc; --light-green-700-60: #74835C99; --light-green-700-40: #74835C66; --light-green-700-20: #74835C33;
-  --light-green-800-80: #586446cc; --light-green-800-60: #58644699; --light-green-800-40: #58644666; --light-green-800-20: #58644633;
-  --light-green-900-80: #3D4531cc; --light-green-900-60: #3D453199; --light-green-900-40: #3D453166; --light-green-900-20: #3D453133;
+  --light-green-50-80: #E7EEDDcc;
+  --light-green-50-60: #E7EEDD99;
+  --light-green-50-40: #E7EEDD66;
+  --light-green-50-20: #E7EEDD33;
+  --light-green-100-80: #E0E9D4cc;
+  --light-green-100-60: #E0E9D499;
+  --light-green-100-40: #E0E9D466;
+  --light-green-100-20: #E0E9D433;
+  --light-green-200-80: #D3DFC1cc;
+  --light-green-200-60: #D3DFC199;
+  --light-green-200-40: #D3DFC166;
+  --light-green-200-20: #D3DFC133;
+  --light-green-300-80: #C5D5ADcc;
+  --light-green-300-60: #C5D5AD99;
+  --light-green-300-40: #C5D5AD66;
+  --light-green-300-20: #C5D5AD33;
+  --light-green-400-80: #B8CB9Acc;
+  --light-green-400-60: #B8CB9A99;
+  --light-green-400-40: #B8CB9A66;
+  --light-green-400-20: #B8CB9A33;
+  --light-green-500-80: #aac187cc;
+  --light-green-500-60: #aac18799;
+  --light-green-500-40: #aac18766;
+  --light-green-500-20: #aac18733;
+  --light-green-600-80: #8FA271cc;
+  --light-green-600-60: #8FA27199;
+  --light-green-600-40: #8FA27166;
+  --light-green-600-20: #8FA27133;
+  --light-green-700-80: #74835Ccc;
+  --light-green-700-60: #74835C99;
+  --light-green-700-40: #74835C66;
+  --light-green-700-20: #74835C33;
+  --light-green-800-80: #586446cc;
+  --light-green-800-60: #58644699;
+  --light-green-800-40: #58644666;
+  --light-green-800-20: #58644633;
+  --light-green-900-80: #3D4531cc;
+  --light-green-900-60: #3D453199;
+  --light-green-900-40: #3D453166;
+  --light-green-900-20: #3D453133;
 
   /* ── light-purple ────────────────────────────────────── */
-  --light-purple-50:  #F2EDF5;
+  --light-purple-50: #F2EDF5;
   --light-purple-100: #EFE8F3;
   --light-purple-200: #E8DEED;
   --light-purple-300: #E0D3E8;
@@ -312,16 +400,46 @@
   --light-purple-800: #6D6373;
   --light-purple-900: #4C4550;
 
-  --light-purple-50-80:  #F2EDF5cc; --light-purple-50-60:  #F2EDF599; --light-purple-50-40:  #F2EDF566; --light-purple-50-20:  #F2EDF533;
-  --light-purple-100-80: #EFE8F3cc; --light-purple-100-60: #EFE8F399; --light-purple-100-40: #EFE8F366; --light-purple-100-20: #EFE8F333;
-  --light-purple-200-80: #E8DEEDcc; --light-purple-200-60: #E8DEED99; --light-purple-200-40: #E8DEED66; --light-purple-200-20: #E8DEED33;
-  --light-purple-300-80: #E0D3E8cc; --light-purple-300-60: #E0D3E899; --light-purple-300-40: #E0D3E866; --light-purple-300-20: #E0D3E833;
-  --light-purple-400-80: #D9C9E2cc; --light-purple-400-60: #D9C9E299; --light-purple-400-40: #D9C9E266; --light-purple-400-20: #D9C9E233;
-  --light-purple-500-80: #d2bfddcc; --light-purple-500-60: #d2bfdd99; --light-purple-500-40: #d2bfdd66; --light-purple-500-20: #d2bfdd33;
-  --light-purple-600-80: #B0A0BAcc; --light-purple-600-60: #B0A0BA99; --light-purple-600-40: #B0A0BA66; --light-purple-600-20: #B0A0BA33;
-  --light-purple-700-80: #8F8296cc; --light-purple-700-60: #8F829699; --light-purple-700-40: #8F829666; --light-purple-700-20: #8F829633;
-  --light-purple-800-80: #6D6373cc; --light-purple-800-60: #6D637399; --light-purple-800-40: #6D637366; --light-purple-800-20: #6D637333;
-  --light-purple-900-80: #4C4550cc; --light-purple-900-60: #4C455099; --light-purple-900-40: #4C455066; --light-purple-900-20: #4C455033;
+  --light-purple-50-80: #F2EDF5cc;
+  --light-purple-50-60: #F2EDF599;
+  --light-purple-50-40: #F2EDF566;
+  --light-purple-50-20: #F2EDF533;
+  --light-purple-100-80: #EFE8F3cc;
+  --light-purple-100-60: #EFE8F399;
+  --light-purple-100-40: #EFE8F366;
+  --light-purple-100-20: #EFE8F333;
+  --light-purple-200-80: #E8DEEDcc;
+  --light-purple-200-60: #E8DEED99;
+  --light-purple-200-40: #E8DEED66;
+  --light-purple-200-20: #E8DEED33;
+  --light-purple-300-80: #E0D3E8cc;
+  --light-purple-300-60: #E0D3E899;
+  --light-purple-300-40: #E0D3E866;
+  --light-purple-300-20: #E0D3E833;
+  --light-purple-400-80: #D9C9E2cc;
+  --light-purple-400-60: #D9C9E299;
+  --light-purple-400-40: #D9C9E266;
+  --light-purple-400-20: #D9C9E233;
+  --light-purple-500-80: #d2bfddcc;
+  --light-purple-500-60: #d2bfdd99;
+  --light-purple-500-40: #d2bfdd66;
+  --light-purple-500-20: #d2bfdd33;
+  --light-purple-600-80: #B0A0BAcc;
+  --light-purple-600-60: #B0A0BA99;
+  --light-purple-600-40: #B0A0BA66;
+  --light-purple-600-20: #B0A0BA33;
+  --light-purple-700-80: #8F8296cc;
+  --light-purple-700-60: #8F829699;
+  --light-purple-700-40: #8F829666;
+  --light-purple-700-20: #8F829633;
+  --light-purple-800-80: #6D6373cc;
+  --light-purple-800-60: #6D637399;
+  --light-purple-800-40: #6D637366;
+  --light-purple-800-20: #6D637333;
+  --light-purple-900-80: #4C4550cc;
+  --light-purple-900-60: #4C455099;
+  --light-purple-900-40: #4C455066;
+  --light-purple-900-20: #4C455033;
 }
 
 
@@ -356,8 +474,12 @@ body {
 
 /* Prevent input zoom on mobile */
 @media (max-width: 750px) {
-  input, textarea, select,
-  .ant-input, .ant-input-affix-wrapper,
+
+  input,
+  textarea,
+  select,
+  .ant-input,
+  .ant-input-affix-wrapper,
   .ant-select-selection-search-input,
   .ant-picker-input input {
     font-size: 16px !important;

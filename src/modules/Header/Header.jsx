@@ -167,6 +167,12 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
                     <Link target='_blank' style={{ textDecoration: 'none' }} to="https://wa.me/6145338500" onClick={() => setOpenMenu(false)}>
                         <span className="mobile-nav-item mobile-nav-item--inactive">{t('header.contact')}</span>
                     </Link>
+
+                    {session?.logged && (
+                        <span className="mobile-nav-item mobile-nav-item--inactive" onClick={() => { logout(); setOpenMenu(false) }}>
+                            Cerrar sesión
+                        </span>
+                    )}
                 </nav>
             </div>
         </>
@@ -465,7 +471,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                     <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
                                 )}
                             >
-                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-600)' size='large'>
+                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-500)' size='large'>
                                     <Button style={{ borderRadius: '99px' }} icon={<MessageCircle size={12} />} />
                                 </Badge>
                             </Dropdown>
@@ -473,7 +479,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {screens.xs && !isEditing && (
                             <>
-                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-600)' size='large'>
+                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-500)' size='large'>
                                     <Button
                                         style={{ borderRadius: '99px' }}
                                         icon={<MessageCircle size={12} />}
