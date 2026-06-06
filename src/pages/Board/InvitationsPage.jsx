@@ -6,6 +6,7 @@ import { appContext } from '../../context';
 import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
 import { AdsCarousel } from '../../components/AdsCarousel/AdsCarousel';
+import { RegalaIAttend } from '../../components/RegalaIAttend/RegalaIAttend';
 import { ArrowRight, Calendar1, Gift, Plus, Share } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
 import { GiftDrawer } from '../../components/Gift/GiftDrawer';
@@ -36,6 +37,7 @@ export const InvitationsPage = () => {
     const sessions = JSON.parse(localStorage.getItem("session"));
     const [visible, setVisible] = useState(false)
     const [giftVisible, setGiftVisible] = useState(false)
+    const [regalaVisible, setRegalaVisible] = useState(false)
 
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -150,7 +152,7 @@ export const InvitationsPage = () => {
                     backgroundColor: 'transparent', 
                 }} >
                     <div style={{ padding: '0px', width: '100%',  overflow: 'hidden' }}>
-                        <AdsCarousel />
+                        <AdsCarousel onRegalar={() => setRegalaVisible(true)} />
                     </div>
                     {
                         loader ?
@@ -202,7 +204,9 @@ export const InvitationsPage = () => {
                                                             <div className='add_button_circle'>
                                                                 <Plus size={32} color='#0c171b' strokeWidth={3} />
                                                             </div>
-                                                            <span className='cta_title'>{t('invitations.new_event_title')}</span>
+                                                            <span className='cta_title' style={{ maxWidth: '100%' }}>
+                                                                {t('invitations.new_event_title')}
+                                                            </span>
                                                             <span className='cta_text'>{t('invitations.new_event_cta')}</span>
                                                         </div>
                                                     </div>
@@ -211,12 +215,12 @@ export const InvitationsPage = () => {
                                                     <div onClick={() => setVisible(true)} className="invitation-container new-event-card">
                                                         <div className='new_inv_cont'>
                                                             <div className='add_button_circle'>
-                                                                <Calendar1 size={32} color='#0c171b' strokeWidth={3} />
+                                                                <Calendar1 size={32} color='#0c171b' strokeWidth={2} />
                                                             </div>
                                                             <span className='cta_title'>{t('invitations.empty_title')}</span>
                                                             <span className='cta_text'>{t('invitations.empty_text')}</span>
-                                                            <Button className='cta_plans'>{t('invitations.empty_cta')}</Button>
-                                                            <small className='cta_support'>{t('invitations.empty_support')} <a>{t('invitations.empty_support_link')}</a></small>
+                                                            <Button type="primary" className='cta_plans'>{t('invitations.empty_cta')}</Button>
+                                                            {/* <small className='cta_support'>{t('invitations.empty_support')} <a>{t('invitations.empty_support_link')}</a></small> */}
                                                         </div>
                                                     </div>
 
@@ -337,6 +341,7 @@ export const InvitationsPage = () => {
 
             </Layout >
             <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: sessions?.user?.uid, user_email: sessions?.user?.email }} refreshInvitations={getNewInvitations} />
+            <RegalaIAttend visible={regalaVisible} onClose={() => setRegalaVisible(false)} />
             <GiftDrawer visible={giftVisible} setVisible={setGiftVisible} />
             <FooterApp></FooterApp>
 

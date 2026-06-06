@@ -161,10 +161,12 @@
 
 .cta_title {
     font-weight: 600;
-    font-size: 16px;
+    font-size: 18px;
     margin-bottom: -8px;
     margin-top: 8px;
     text-align: center;
+    max-width: 80%;
+    line-height: 1.2;
     color: #fff;
     font-family: 'Windsor', var(--font-family);
 }
@@ -178,22 +180,32 @@
 }
 
 .cta_plans {
-    /* background-color: var(--brand-color-500); */
     color: #FFF;
     border: none;
     border-radius: 12px;
     padding: 12px 36px;
     height: 40px;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 800;
+    font-family: 'Windsor' !important;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .cta_support {
-    font-size: 14px;
-    color: var(--gray-color);
+    font-size: 13px;
+    font-weight: 200;
+    font-family: 'Luxora Grotesk' !important;
+    color: #fff;
     line-height: 1.4;
+}
+
+.cta_support a {
+    font-family: 'Windsor' !important;
+    font-weight: 400;
+    color: #ffffff80;
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 .cta_support a {

@@ -26,18 +26,18 @@ const SLIDES = [
         img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/wedding%20flowers.jpg',
         accent: '#eeeadf',
     },
-    // {
-    //     id: 'regalo',
-    //     product: '🎁 Regala I attend',
-    //     headline: 'Regala la invitación perfecta.',
-    //     desc: 'Alguien que conoces está planeando su boda. Dales I attend y que ellos diseñen cada detalle.',
-    //     img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/dinner.jpg',
-    //     accent: '#eeeadf',
-    //     cta: { label: 'Regalar ahora', href: '/gift' },
-    // },
+    {
+        id: 'regalo',
+        product: '🎁 Regala I attend',
+        headline: 'Regala la invitación perfecta.',
+        desc: 'Alguien que conoces está planeando su boda. Dales I attend y que ellos diseñen cada detalle.',
+        img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/dinner.jpg',
+        accent: '#eeeadf',
+        cta: { label: 'Regalar ahora', href: '/gift' },
+    },
 ]
 
-export const AdsCarousel = () => {
+export const AdsCarousel = ({ onRegalar }) => {
     const [activeIdx, setActiveIdx] = useState(0)
 
     useEffect(() => {
@@ -61,9 +61,12 @@ export const AdsCarousel = () => {
                         <h2 className="ads-headline">{slide.headline}</h2>
                         <p className="ads-desc">{slide.desc}</p>
                         {slide.cta && (
-                            <a href={slide.cta.href} className="ads-cta">
+                            <button
+                                className="ads-cta"
+                                onClick={() => slide.id === 'regalo' && onRegalar?.()}
+                            >
                                 {slide.cta.label}
-                            </a>
+                            </button>
                         )}
                     </div>
                 </div>
