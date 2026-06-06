@@ -26,17 +26,17 @@
 
 /* Cerrado: 84px, sin padding — el botón llena el shell */
 .chat-morph-shell--closed {
-    width: 82px;
-    height: 82px;
-    border-radius: 99px;
+    width: 102px;
+    height: 102px;
+    border-radius: 28px;
     padding: 0;
     cursor: grab;
     display: flex;
     align-items: center;
     justify-content: center;
     
-    /* background-color: #FFF;
-    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18); */
+    background-color: #FFF;
+    box-shadow: inset 0px 0px 6px rgba(63, 63, 63, 0.28), 0px 0px 12px rgba(0, 0, 0, 0.18);
 }
 
 .chat-morph-shell--open {
@@ -72,7 +72,7 @@
 
 /* ── Closed (circle) ─────────────────────────────────── */
 .chat-morph--closed {
-    border-radius: 99px;
+    border-radius: 24px;
     background: #B5A5CC;
     box-shadow: inset 0px 0px 6px rgba(0, 0, 0, 0.3);
     overflow: hidden;
