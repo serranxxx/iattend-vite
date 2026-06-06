@@ -1,4 +1,5 @@
 import {
+    App,
     Button,
     Divider,
     Drawer,
@@ -9,7 +10,6 @@ import {
     Select,
     Space,
     Tooltip,
-    message,
 } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -84,6 +84,7 @@ export const GuestsCRUD = ({
 }) => {
 
     const { t } = useTranslation()
+    const { message } = App.useApp()
 
     const TABLE_NAME = isSideEvent ? 'side_events_guests' : 'guests'
     const FOREIGN_KEY = isSideEvent ? 'side_events_id' : 'invitation_id'
@@ -354,10 +355,10 @@ export const GuestsCRUD = ({
                     const patch = pruneUndefined({
                         phone_number: cPhone || undefined,
                         name: (edit.name ?? '').trim(),
-                        tier: edit.tier,
-                        tag: edit.tag,
-                        type: edit.type,
-                        side: edit.side,
+                        tier: edit.tier || null,
+                        tag: edit.tag || null,
+                        type: edit.type || null,
+                        side: edit.side || null,
                         state: edit.state,
                         notes: edit.notes,
                         last_action: dbComps[i].state,
@@ -526,10 +527,10 @@ export const GuestsCRUD = ({
                         phone_code: code || '+52',
                         phone_number: number,
                         name: guest.name || '',
-                        tier: guest.tier || '',
-                        tag: guest.tag || '',
-                        side: guest.side || '',
-                        type: guest.type || '',
+                        tier: guest.tier || null,
+                        tag: guest.tag || null,
+                        side: guest.side || null,
+                        type: guest.type || null,
                         notes: guest.notes || '',
                         state: guest.state || null,
                     })

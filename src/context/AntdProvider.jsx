@@ -1,6 +1,6 @@
 // AntdProvider.jsx
 import React from 'react';
-import { ConfigProvider } from 'antd';
+import { App, ConfigProvider } from 'antd';
 import { StyleProvider } from '@ant-design/cssinjs';
 import es_ES from 'antd/locale/es_ES';
 // Importa estilos base de antd v5 (opcional pero recomendado)
@@ -121,7 +121,9 @@ export const AntdProvider = ({ children }) => {
           },
         }}
       >
-        {children}
+        <App>
+          {children}
+        </App>
       </ConfigProvider>
     </StyleProvider>
   );
