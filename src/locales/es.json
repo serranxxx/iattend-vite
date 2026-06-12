@@ -897,5 +897,13 @@
     "unsaved_desc_short": "Tienes cambios sin guardar. ¿Deseas salir?",
     "exit": "Salir",
     "cancel": "Cancelar"
+  },
+  "preview_mood": {
+    "label_names": "Nombres",
+    "label_date": "Fecha",
+    "label_colors": "Colores",
+    "label_texture": "Textura",
+    "btn_photo": "Foto",
+    "btn_song": "Canción"
   }
 }

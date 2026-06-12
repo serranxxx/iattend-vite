@@ -897,5 +897,13 @@
     "unsaved_desc_short": "You have unsaved changes. Do you want to exit?",
     "exit": "Exit",
     "cancel": "Cancel"
+  },
+  "preview_mood": {
+    "label_names": "Names",
+    "label_date": "Date",
+    "label_colors": "Colors",
+    "label_texture": "Texture",
+    "btn_photo": "Photo",
+    "btn_song": "Song"
   }
 }

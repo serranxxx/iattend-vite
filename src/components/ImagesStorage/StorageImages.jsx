@@ -7,7 +7,7 @@ import { deleteImageFromSupabase, getCoversFromSubapase, getDresscodesFromSupaba
 import { Sparkles } from 'lucide-react'
 
 
-export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small }) => {
+export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small, hideUpload, customTrigger }) => {
 
     const { t } = useTranslation()
     const [images, setImages] = useState([])
@@ -135,7 +135,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
             style={{ width: '100%' }}
             items={items}
             tabBarExtraContent={
-                selectedKey === 0 && !isMobile &&
+                selectedKey === 0 && !isMobile && !hideUpload &&
                 <Upload accept="image/*" showUploadList={false} customRequest={customUpload}>
                     <Button style={{ marginBottom: '12px' }} icon={<LuUpload />} className='primarybutton'>{t('storage.btn_upload')}</Button>
                 </Upload>
@@ -148,15 +148,17 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         if (isMobile) setDrawerOpen(true)
     }
 
-    const triggerButton = (
-        <Button
-            style={{ position: absolute && 'absolute', top: absolute && 10, right: absolute && 10 }}
-            onClick={handleOpen}
-            className='full-screen-button'
-            id="expandedbutton"
-            icon={<LuImagePlus size={small ? 12 : 16} style={{ marginTop: '2px' }} />}
-        />
-    )
+    const triggerButton = customTrigger
+        ? React.cloneElement(customTrigger, { onClick: handleOpen })
+        : (
+            <Button
+                style={{ position: absolute && 'absolute', top: absolute && 10, right: absolute && 10 }}
+                onClick={handleOpen}
+                className='full-screen-button'
+                id="expandedbutton"
+                icon={<LuImagePlus size={small ? 12 : 16} style={{ marginTop: '2px' }} />}
+            />
+        )
 
     return (
         <>

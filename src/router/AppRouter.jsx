@@ -1,11 +1,14 @@
 import React from 'react'
 import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
+import { Grid } from 'antd'
 import { ChatContainer } from '../components/ChatContainer/ChatContainer'
 import { DashboardRealtimeProvider } from '../context/DashboardRealtimeContext'
 
 const DashboardChat = () => {
   const { pathname } = useLocation()
+  const screens = Grid.useBreakpoint()
   if (!pathname.startsWith('/dashboard')) return null
+  if (screens.xs) return null
   return <ChatContainer />
 }
 
@@ -30,6 +33,7 @@ import { SideEvents } from '../modules/SideEvents/SideEvents'
 import { Login } from '../components/Auth/Login'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
 import Lia from '../pages/Lia/Lia'
+import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
 
 
 
@@ -57,6 +61,7 @@ export const AppRouter = () => {
       <Route path="/linktree" element={<LinkTree />} />
       <Route path="/legal" element={<LegalPage />} />
       <Route path="/luma" element={<Lia />} />
+      <Route path="/preview-mood" element={<PreviewMoodPage />} />
       <Route path="/*" element={<PageNotFound />} />
 
       <Route path="/admin"

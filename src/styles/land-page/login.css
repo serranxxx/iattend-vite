@@ -238,6 +238,55 @@ input:-webkit-autofill:active {
     font-weight: 200;
 }
 
+/* ── OAuth ───────────────────────────────────────────────── */
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    color: #eeeadf55;
+    font-size: 13px;
+    font-family: 'Luxora Grotesk';
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #eeeadf25;
+}
+
+.login-oauth-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.login-oauth-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    border-radius: 16px;
+    border: 1.5px solid #eeeadf30;
+    background: #eeeadf10;
+    backdrop-filter: blur(10px);
+    color: #eeeadf;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Luxora Grotesk';
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.login-oauth-btn:hover {
+    background: #eeeadf20;
+    border-color: #eeeadf60;
+}
+
 /* ── Lang toggle ─────────────────────────────────────────── */
 .login-lang-toggle {
     position: absolute;
@@ -306,5 +355,19 @@ input:-webkit-autofill:active {
     .page_subtitle {
         font-size: 18px;
         max-width: 100%;
+    }
+
+    .login-oauth-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .login-oauth-btn {
+        min-height: 48px;
+        min-width: 80%;
     }
 }

@@ -45,7 +45,7 @@ export const AntdProvider = ({ children }) => {
             // Form: { itemMarginBottom: 0, labelFontSize: 12, labelColor: "var(--text-color-400)", colorError: "var(--danger-color)" },
             // Breadcrumb: { borderRadiusOuter: 999, borderRadius: 999, borderRadiusLG: 999, borderRadiusSM: 999, borderRadiusXS: 999, separatorMargin: 6 },
             // Spin: { colorPrimary: "var(--secondary-color-700)" },
-            // Modal: { boxShadow: "0 0 24px rgba(0, 0, 0, 0.25)", borderRadius: 20, borderRadiusLG: 20, borderRadiusSM: 20, borderRadiusXS: 20, padding: 0, paddingContentHorizontal: 0, paddingContentHorizontalLG: 0, paddingContentVertical: 0, paddingContentVerticalLG: 0, paddingContentHorizontalSM: 0, paddingContentVerticalSM: 0, paddingLG: 0, paddingSM: 0, paddingXS: 0, paddingMD: 0, paddingXL: 0, paddingXXS: 0 },
+            Modal: { borderRadiusLG: 36, borderRadius: 36 },
             Button: {
               borderRadius: 8,
               colorPrimary: "#d2bfdd",
