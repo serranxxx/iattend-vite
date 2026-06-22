@@ -487,7 +487,8 @@
     "invite_message": "¡Estamos muy felices de invitarte!",
     "read_more": "Leer más",
     "view_invitation": "Ver invitación",
-    "copy_btn": "Copiar link",
+    "copy_btn": "URL",
+    "copy_url_btn": "Copiar URL",
     "link_btn": "Link del evento"
   },
   "dashboard": {

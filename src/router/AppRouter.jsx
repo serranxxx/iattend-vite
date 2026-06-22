@@ -27,6 +27,7 @@ import { LegalPage } from '../pages/Extras/Legal/LegalPage'
 import { LinkTree } from '../pages/Extras/LinkTree/LinkTree'
 import { Success } from '../pages/Success/Success'
 import { DashboardPage } from '../pages/Dashboard/DashboardPage'
+import { PhotoWallPage } from '../pages/Dashboard/PhotoWallPage'
 import { BuildPage } from '../modules/Invitation/Build/PageSections/BuildPage'
 import GuestsPage from '../modules/GuestManagement/GuestsPage'
 import { SideEvents } from '../modules/SideEvents/SideEvents'
@@ -34,6 +35,7 @@ import { Login } from '../components/Auth/Login'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
 import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
+import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
 
 
 
@@ -53,6 +55,7 @@ export const AppRouter = () => {
         <Route path="/dashboard/build" element={<BuildPage />} />
         <Route path="/dashboard/guests" element={<GuestsPage />} />
         <Route path="/dashboard/side" element={<SideEvents />} />
+        <Route path="/dashboard/photowall" element={<PhotoWallPage />} />
         <Route path="/dashboard/success" element={<Success />} />
       </Route>
 
@@ -62,6 +65,7 @@ export const AppRouter = () => {
       <Route path="/legal" element={<LegalPage />} />
       <Route path="/luma" element={<Lia />} />
       <Route path="/preview-mood" element={<PreviewMoodPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/*" element={<PageNotFound />} />
 
       <Route path="/admin"

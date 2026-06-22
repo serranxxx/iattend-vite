@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { Button, Input } from 'antd'
-import { Send, ThumbsUp, ThumbsDown, RotateCcw, Bot, Minus, Plus, Copy, Check, MousePointer2 } from 'lucide-react'
+import { Send, ThumbsUp, ThumbsDown, RotateCcw, Bot, Minus, Plus, Copy, Check, MousePointer2, Lock } from 'lucide-react'
 import axios from 'axios'
 import { useLia } from '../../context/LiaContext'
 import { supabase } from '../../lib/supabase'
@@ -429,6 +429,7 @@ export default function Lia({ id: idProp, onMinimize }) {
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
     const [credits, setCredits] = useState(null)
+    const [isPro, setIsPro] = useState(true)
     const [sessionId] = useState(() => crypto.randomUUID())
     const [rejectingActionId, setRejectingActionId] = useState(null)
     const [rejectNote, setRejectNote] = useState('')
@@ -466,6 +467,12 @@ export default function Lia({ id: idProp, onMinimize }) {
         if (!id) return
         callGreeting()
         fetchCredits()
+        supabase
+            .from('invitations')
+            .select('plan')
+            .eq('id', id)
+            .single()
+            .then(({ data }) => setIsPro(data?.plan === 'pro'))
     }, [])
 
     useEffect(() => {
@@ -805,25 +812,34 @@ export default function Lia({ id: idProp, onMinimize }) {
                                     className='primarybutton'
                                     icon={<Plus size={12} />}
                                     onClick={() => setShowPromptMenu(prev => !prev)}
+                                    disabled={!isPro}
                                 />
 
                             </div>
                         </div>
 
-                        <textarea
-                            ref={textareaRef}
-                            className="lia-textarea scroll-invitation"
-                            placeholder="Preguntale a Lia..."
-                            value={input}
-                            rows={3}
-                            onChange={(e) => {
-                                setInput(e.target.value)
-                                e.target.style.height = 'auto'
-                                e.target.style.height = `${Math.min(e.target.scrollHeight, 96)}px`
-                            }}
-                            onKeyDown={handleKeyDown}
-                            disabled={loading}
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <textarea
+                                ref={textareaRef}
+                                className="lia-textarea scroll-invitation"
+                                placeholder={isPro ? 'Preguntale a Lia...' : 'Desbloquea Lia con Pro...'}
+                                value={input}
+                                rows={3}
+                                onChange={(e) => {
+                                    setInput(e.target.value)
+                                    e.target.style.height = 'auto'
+                                    e.target.style.height = `${Math.min(e.target.scrollHeight, 96)}px`
+                                }}
+                                onKeyDown={handleKeyDown}
+                                disabled={loading || !isPro}
+                            />
+                            {!isPro && (
+                                <Lock
+                                    size={14}
+                                    style={{ position: 'absolute', right: 10, bottom: 10, color: '#bfbfbf', pointerEvents: 'none' }}
+                                />
+                            )}
+                        </div>
                     </div>
                     <span className="lia-disclaimer">Lia puede cometer errores. Por favor verifica las respuestas.</span>
                 </footer>

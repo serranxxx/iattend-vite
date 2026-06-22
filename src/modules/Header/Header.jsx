@@ -1,11 +1,11 @@
 
-import { Badge, Breadcrumb, Button, Dropdown, Grid, Popconfirm, Row, Tooltip, message } from "antd"
+import { Badge, Breadcrumb, Button, Divider, Dropdown, Grid, Input, Popconfirm, Select, Space, Tooltip, message } from "antd"
 import logoBlue from '/images/logo_blue.png'
 import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
-import { LuArrowLeft, LuBadgeHelp, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuLogOut, LuMenu, LuSendHorizontal, LuShield, LuShieldCheck, LuUpload, } from "react-icons/lu"
+import { LuArrowLeft, LuBadgeHelp, LuCheck, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuLogOut, LuMenu, LuPlus, LuSendHorizontal, LuShield, LuShieldCheck, LuTriangleAlert, LuUpload, LuX } from "react-icons/lu"
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
@@ -33,7 +33,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
 
     const navItems = [
         { name: 'Mis eventos', path: '/invitations', position: 'invitations' },
-        { name: 'Explora',     path: '/features',    position: 'pricing'     },
+        // { name: 'Explora',     path: '/features',    position: 'pricing'     },
         { name: 'Administrador', path: '/admin',     position: 'admin', adminOnly: true },
     ]
 
@@ -212,14 +212,37 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const hasUnsavedChanges = isEditing && !saved;
     const screens = useBreakpoint();
     const [urlImage, setUrlImage] = useState(null)
-
     const [name, setName] = useState(null)
 
-    const getInvitation = async () => {
+    // Pending info — DB values (for badge count)
+    const [invOwners, setInvOwners] = useState([])
+    const [invLabel, setInvLabel] = useState(null)
+    const [invPhone, setInvPhone] = useState(null)
+    const [pendingOpen, setPendingOpen] = useState(false)
+    const [pendingSaving, setPendingSaving] = useState(false)
+    // Draft form state (only for missing fields)
+    const [phoneCode, setPhoneCode] = useState('+52')
+    const [phoneDigits, setPhoneDigits] = useState('')
+    const [nameSlug, setNameSlug] = useState('')
+    const [allNames, setAllNames] = useState([])
+    const [nameIsMatch, setNameIsMatch] = useState(null)
+    const [nameError, setNameError] = useState(null)
+    const [ownerInput, setOwnerInput] = useState('')
+    const [draftOwners, setDraftOwners] = useState([])
+    // Snapshot of which sections to show (captured on open, so form doesn't hide while typing)
+    const [showSections, setShowSections] = useState({ name: false, label: false, phone: false, owners: false })
 
+    const pendingCount = invitation ? [
+        !invOwners?.length,
+        !invLabel && !invitation?.generals?.event?.label,
+        !name && !invitation?.generals?.event?.name,
+        !invPhone,
+    ].filter(Boolean).length : 0
+
+    const getInvitation = async () => {
         const { data, error } = await supabase
             .from("invitations")
-            .select("data, plan, name, url_image")
+            .select("data, plan, name, url_image, owners, label, phone_number")
             .eq("id", id)
             .maybeSingle();
 
@@ -227,10 +250,76 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             console.error("Error al obtener invitaciones:", error);
         } else {
             setInvitation(data.data)
-
             setName(data.name)
             setUrlImage(data.url_image)
+            setInvOwners(data.owners ?? [])
+            setInvLabel(data.label ?? null)
+            setInvPhone(data.phone_number ?? null)
         }
+    }
+
+    /* ========================
+       PENDING INFO HELPERS
+    ======================== */
+
+    const openPendingInfo = async () => {
+        const { data } = await supabase.from('invitations').select('name').not('name', 'is', null)
+        setAllNames(data?.map(r => r.name).filter(Boolean) ?? [])
+        setShowSections({ name: !name && !invitation?.generals?.event?.name, label: !invLabel && !invitation?.generals?.event?.label, phone: !invPhone, owners: !invOwners?.length })
+        setDraftOwners([])
+        setNameSlug('')
+        setNameIsMatch(null)
+        setNameError(null)
+        setPhoneDigits('')
+        setPendingOpen(true)
+    }
+
+    const validateNameSlug = (value) => {
+        setNameSlug(value)
+        const lower = value.toLowerCase()
+        const invalidChars = /[ !@#$%^*(){}[\]|\\:;"'<>,.?/~+]/
+        if (invalidChars.test(lower)) {
+            setNameIsMatch(false)
+            setNameError('Caracteres no permitidos')
+            return
+        }
+        const taken = allNames.filter(n => n !== name)
+        if (taken.map(n => n.toLowerCase()).includes(lower)) {
+            setNameIsMatch(false)
+            setNameError('URL ya en uso')
+        } else {
+            setNameIsMatch(value.length > 0 ? true : null)
+            setNameError(null)
+        }
+    }
+
+    const addOwner = () => {
+        const trimmed = ownerInput.trim()
+        if (!trimmed || draftOwners.includes(trimmed)) return
+        setDraftOwners([...draftOwners, trimmed])
+        setOwnerInput('')
+    }
+
+    const removeOwner = (index) => setDraftOwners(draftOwners.filter((_, i) => i !== index))
+
+    const savePendingInfo = async () => {
+        const updates = {}
+        if (showSections.name && nameSlug && nameIsMatch) updates.name = nameSlug
+        if (showSections.label && invLabel) updates.label = invLabel
+        if (showSections.phone && phoneDigits.length === 10) updates.phone_number = `${phoneCode}${phoneDigits}`
+        if (showSections.owners) updates.owners = draftOwners
+
+        setPendingSaving(true)
+        const { error } = await supabase.from('invitations').update(updates).eq('id', id)
+        setPendingSaving(false)
+
+        if (error) return messageApi.error('Error al guardar')
+        if (updates.name) setName(updates.name)
+        if (updates.phone_number) setInvPhone(updates.phone_number)
+        if (updates.label) setInvLabel(updates.label)
+        if (updates.owners !== undefined) setInvOwners(updates.owners)
+        messageApi.success('Información guardada')
+        setPendingOpen(false)
     }
 
     const calculateUnAnswer = (convs) => {
@@ -263,10 +352,12 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             onSideEventsBack();
         } else if (mode === 'dashboard') {
             navigate('/invitations');
+        } else if (mode === 'photowall') {
+            navigate(`/dashboard?id=${id}`);
         } else {
             navigate(-1);
         }
-    }, [navigate, onSideEventsBack, mode]);
+    }, [navigate, onSideEventsBack, mode, id]);
 
     const goToDashboard = useCallback(() => {
         navigate(`/dashboard?id=${id}`);
@@ -338,7 +429,8 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             side: "Side events",
             edit: "Paperless",
             guests: "Guest management",
-            "on-dashboard-guests": "Mis invitados"
+            "on-dashboard-guests": "Mis invitados",
+            photowall: "Photo Wall",
         };
 
         if (modeMap[mode]) {
@@ -380,6 +472,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             searchParams.delete("canceled");
             setSearchParams(searchParams, { replace: true });
         }
+
     }, [sessionId, canceled]);
 
     useEffect(() => {
@@ -441,7 +534,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             />
                         )}
 
-                        {!screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} />}
+                        {!screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} setupRequired={pendingCount > 0} onSetupNeeded={openPendingInfo} />}
 
                         {screens.xs && (
                             <span style={{ fontFamily: 'Poppins', fontSize: '16px', fontWeight: 500, marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
@@ -517,7 +610,125 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             </>
                         )}
 
-                        {screens.xs && !isEditing && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={true} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} icon={<Share size={14} />} />}
+
+                        {screens.xs && !isEditing && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={true} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} icon={<Share size={14} />} setupRequired={pendingCount > 0} onSetupNeeded={openPendingInfo} />}
+
+                        {screens.xs && !isEditing && pendingCount > 0 && (
+                            <Dropdown
+                                open={pendingOpen}
+                                onOpenChange={async (open) => {
+                                    if (open) {
+                                        const { data } = await supabase.from('invitations').select('name').not('name', 'is', null)
+                                        setAllNames(data?.map(r => r.name).filter(Boolean) ?? [])
+                                        setShowSections({ name: !name && !invitation?.generals?.event?.name, label: !invLabel && !invitation?.generals?.event?.label, phone: !invPhone, owners: !invOwners?.length })
+                                        setDraftOwners([])
+                                        setNameSlug('')
+                                        setNameIsMatch(null)
+                                        setNameError(null)
+                                        setPhoneDigits('')
+                                    }
+                                    setPendingOpen(open)
+                                }}
+                                trigger={['click']}
+                                placement='bottomRight'
+                                overlayStyle={{ width: '90vw' }}
+                                popupRender={() => (
+                                    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                                        {showSections.name && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Link personalizado</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Para enviar tus invitaciones necesitas definir tu link único.</div>
+                                                <div style={{ border: '1px solid #d9d9d9', borderRadius: 10, padding: '8px 12px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        <span style={{ color: '#aaa', whiteSpace: 'nowrap', fontSize: 12 }}>iattend.events/</span>
+                                                        <input
+                                                            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13 }}
+                                                            placeholder='paulina-y-luis'
+                                                            value={nameSlug}
+                                                            onChange={e => validateNameSlug(e.target.value)}
+                                                        />
+                                                        {nameSlug && (
+                                                            <span style={{ color: nameIsMatch ? '#52c41a' : '#ff4d4f' }}>
+                                                                {nameIsMatch ? <LuCheck size={14} /> : <LuX size={14} />}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {nameError && <div style={{ color: '#ff4d4f', fontSize: 11, marginTop: 3 }}>{nameError}</div>}
+                                                    {nameIsMatch && nameSlug && <div style={{ color: '#52c41a', fontSize: 11, marginTop: 3 }}>Disponible</div>}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {showSections.label && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Tipo de evento</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Selecciona si tu evento es una boda o XV años.</div>
+                                                <Select
+                                                    style={{ width: '100%' }}
+                                                    value={invLabel || undefined}
+                                                    onChange={setInvLabel}
+                                                    placeholder="Selecciona el tipo"
+                                                    options={[
+                                                        { label: 'Boda', value: 'wedding' },
+                                                        { label: 'XV años', value: 'xv' },
+                                                    ]}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {showSections.phone && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Número de WhatsApp</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Asocia un número celular para que tus invitados puedan contactarte.</div>
+                                                <div style={{ border: '1px solid #d9d9d9', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span>🇲🇽</span>
+                                                    <input style={{ width: 44, border: 'none', outline: 'none', fontSize: 13 }} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} />
+                                                    <div style={{ width: 1, height: 16, background: '#d9d9d9' }} />
+                                                    <input style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13 }} placeholder='1234567890' maxLength={10} value={phoneDigits} onChange={e => setPhoneDigits(e.target.value)} />
+                                                    {phoneDigits.length === 10 && <LuCheck size={14} style={{ color: '#25D366' }} />}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {showSections.owners && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Nombres de la pareja</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Agrega los nombres. Ej: Paulina y Luis</div>
+                                                {draftOwners.length > 0 && (
+                                                    <>
+                                                        {draftOwners.map((o, i) => (
+                                                            <div key={o} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, padding: '4px 8px', border: '1px solid #f0f0f0', borderRadius: 8 }}>
+                                                                <span style={{ fontSize: 13 }}>{o}</span>
+                                                                <Button size='small' onClick={() => removeOwner(i)} style={{ borderRadius: 99, width: 24, height: 24, minWidth: 24 }}>−</Button>
+                                                            </div>
+                                                        ))}
+                                                        <Divider style={{ margin: '6px 0' }} />
+                                                    </>
+                                                )}
+                                                <Space style={{ width: '100%' }}>
+                                                    <Input
+                                                        size='small'
+                                                        style={{ borderRadius: 99 }}
+                                                        placeholder='Ej: Paulina'
+                                                        value={ownerInput}
+                                                        onChange={e => setOwnerInput(e.target.value)}
+                                                        onKeyDown={e => e.key === 'Enter' && addOwner()}
+                                                    />
+                                                    <Button size='small' onClick={addOwner} className='primarybutton' icon={<LuPlus size={13} />} />
+                                                </Space>
+                                            </div>
+                                        )}
+
+                                        <Button onClick={savePendingInfo} loading={pendingSaving} className='primarybutton--active' style={{ width: '100%', borderRadius: 99 }}>
+                                            Guardar
+                                        </Button>
+                                    </div>
+                                )}
+                            >
+                                <Button style={{ borderRadius: '99px', width: 32, height: 32, minWidth: 32, padding: 0, background: '#FFF4E5', border: '1px solid #FFCC80', color: '#FF8C00', display: 'flex', alignItems: 'center', justifyContent: 'center' }} icon={<LuTriangleAlert size={14} />} />
+                            </Dropdown>
+                        )}
 
                         {isEditing && screens.xs && session?.user?.role !== "Administration" && (
                             <Button
@@ -545,6 +756,131 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                     <div style={{ position: "absolute", top: 0, right: 0, height: 10, width: 10, borderRadius: 50, backgroundColor: "#A88AFF" }} />
                                 )}
                             </Button>
+                        )}
+
+                        {!screens.xs && pendingCount > 0 && (
+                            <Dropdown
+                                open={pendingOpen}
+                                onOpenChange={async (open) => {
+                                    if (open) {
+                                        const { data } = await supabase.from('invitations').select('name').not('name', 'is', null)
+                                        setAllNames(data?.map(r => r.name).filter(Boolean) ?? [])
+                                        setShowSections({ name: !name && !invitation?.generals?.event?.name, label: !invLabel && !invitation?.generals?.event?.label, phone: !invPhone, owners: !invOwners?.length })
+                                        setDraftOwners([])
+                                        setNameSlug('')
+                                        setNameIsMatch(null)
+                                        setNameError(null)
+                                        setPhoneDigits('')
+                                    }
+                                    setPendingOpen(open)
+                                }}
+                                trigger={['click']}
+                                placement='bottomRight'
+                                popupRender={() => (
+                                    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', padding: 20, width: 340, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                                        {/* URL / name — solo si falta */}
+                                        {showSections.name && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Link personalizado</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Para enviar tus invitaciones necesitas definir tu link único.</div>
+                                                <div style={{ border: '1px solid #d9d9d9', borderRadius: 10, padding: '8px 12px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        <span style={{ color: '#aaa', whiteSpace: 'nowrap', fontSize: 12 }}>iattend.events/</span>
+                                                        <input
+                                                            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13 }}
+                                                            placeholder='paulina-y-luis'
+                                                            value={nameSlug}
+                                                            onChange={e => validateNameSlug(e.target.value)}
+                                                        />
+                                                        {nameSlug && (
+                                                            <span style={{ color: nameIsMatch ? '#52c41a' : '#ff4d4f' }}>
+                                                                {nameIsMatch ? <LuCheck size={14} /> : <LuX size={14} />}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {nameError && <div style={{ color: '#ff4d4f', fontSize: 11, marginTop: 3 }}>{nameError}</div>}
+                                                    {nameIsMatch && nameSlug && <div style={{ color: '#52c41a', fontSize: 11, marginTop: 3 }}>Disponible</div>}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Label — solo si falta */}
+                                        {showSections.label && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Tipo de evento</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Selecciona si tu evento es una boda o XV años.</div>
+                                                <Select
+                                                    style={{ width: '100%' }}
+                                                    value={invLabel || undefined}
+                                                    onChange={setInvLabel}
+                                                    placeholder="Selecciona el tipo"
+                                                    options={[
+                                                        { label: 'Boda', value: 'wedding' },
+                                                        { label: 'XV años', value: 'xv' },
+                                                    ]}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Phone — solo si falta */}
+                                        {showSections.phone && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Número de WhatsApp</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Asocia un número celular para que tus invitados puedan contactarte.</div>
+                                                <div style={{ border: '1px solid #d9d9d9', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span>🇲🇽</span>
+                                                    <input style={{ width: 44, border: 'none', outline: 'none', fontSize: 13 }} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} />
+                                                    <div style={{ width: 1, height: 16, background: '#d9d9d9' }} />
+                                                    <input style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13 }} placeholder='1234567890' maxLength={10} value={phoneDigits} onChange={e => setPhoneDigits(e.target.value)} />
+                                                    {phoneDigits.length === 10 && <LuCheck size={14} style={{ color: '#25D366' }} />}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Owners — solo si falta */}
+                                        {showSections.owners && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Nombres de la pareja</div>
+                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Agrega los nombres. Ej: Paulina y Luis</div>
+                                                {draftOwners.length > 0 && (
+                                                    <>
+                                                        {draftOwners.map((o, i) => (
+                                                            <div key={o} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, padding: '4px 8px', border: '1px solid #f0f0f0', borderRadius: 8 }}>
+                                                                <span style={{ fontSize: 13 }}>{o}</span>
+                                                                <Button size='small' onClick={() => removeOwner(i)} style={{ borderRadius: 99, width: 24, height: 24, minWidth: 24 }}>−</Button>
+                                                            </div>
+                                                        ))}
+                                                        <Divider style={{ margin: '6px 0' }} />
+                                                    </>
+                                                )}
+                                                <Space style={{ width: '100%' }}>
+                                                    <Input
+                                                        size='small'
+                                                        style={{ borderRadius: 99 }}
+                                                        placeholder='Ej: Paulina'
+                                                        value={ownerInput}
+                                                        onChange={e => setOwnerInput(e.target.value)}
+                                                        onKeyDown={e => e.key === 'Enter' && addOwner()}
+                                                    />
+                                                    <Button size='small' onClick={addOwner} className='primarybutton' icon={<LuPlus size={13} />} />
+                                                </Space>
+                                            </div>
+                                        )}
+
+                                        <Button onClick={savePendingInfo} loading={pendingSaving} className='primarybutton--active' style={{ width: '100%', borderRadius: 99 }}>
+                                            Guardar
+                                        </Button>
+                                    </div>
+                                )}
+                            >
+                                <Badge count={pendingCount} color='#FF8C00' size='small'>
+                                    {isEditing
+                                        ? <Button style={{ borderRadius: '99px', width: 32, height: 32, minWidth: 32, padding: 0, background: '#FFF4E5', border: '1px solid #FFCC80', color: '#FF8C00', display: 'flex', alignItems: 'center', justifyContent: 'center' }} icon={<LuTriangleAlert size={14} />} />
+                                        : <Button style={{ borderRadius: '99px', background: '#FFF4E5', color: '#FF8C00', border: '1px solid #FFCC80', fontWeight: 500 }}>Información pendiente</Button>
+                                    }
+                                </Badge>
+                            </Dropdown>
                         )}
 
                         {

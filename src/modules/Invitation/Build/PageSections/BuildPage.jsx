@@ -12,6 +12,7 @@ import { load } from '../../../../helpers/assets/images'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { BookUser, Camera, Feather, Gift, HeartHandshake, MapPinned, MessageSquareHeart, ScanHeart, ScrollText, Settings, Shirt } from 'lucide-react'
+import { UpgradeBanner } from '../../../../components/Payment/UpgradeBanner/UpgradeBanner'
 
 export const BuildPage = () => {
 
@@ -129,6 +130,7 @@ export const BuildPage = () => {
     const [device, setDevice] = useState('ios')
     const [settingsModal, setSettingsModal] = useState(false)
     const [invitation, setInvitation] = useState(null)
+    const [plan, setPlan] = useState(null)
     const [saved, setSaved] = useState(true);
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
@@ -260,7 +262,7 @@ export const BuildPage = () => {
 
         const { data, error } = await supabase
             .from("invitations")
-            .select("data, id")
+            .select("data, id, plan")
             // .eq("user_id", session.user.id)
             .eq("id", id)
             .maybeSingle();
@@ -272,6 +274,7 @@ export const BuildPage = () => {
             console.error("Error al obtener invitaciones:", error);
         } else {
             setInvitation(data?.data)
+            setPlan(data?.plan ?? null)
             // setInvitationID(data?.id)
         }
 
@@ -387,6 +390,7 @@ export const BuildPage = () => {
                         </div>
 
 
+                        <UpgradeBanner plan={plan} invitationId={id} floating={false} hideOnMobile />
                     </Layout >
                     : <div className='build-loading-container'>
                         <img alt='' src={load} style={{

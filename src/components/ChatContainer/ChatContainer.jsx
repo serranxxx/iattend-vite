@@ -148,6 +148,20 @@ export const ChatContainer = () => {
         const onUp = () => {
             if (!drag.current.active) return
             drag.current.active = false
+            if (!drag.current.moved) return
+            const w = openRef.current ? PANEL_W : CIRCLE
+            const h = openRef.current ? PANEL_H : CIRCLE
+            const { x, y } = posRef.current
+            const px = window.innerWidth * getPad()
+            const py = window.innerHeight * getPad()
+            const snapX = (x + w / 2) < window.innerWidth / 2
+                ? px
+                : window.innerWidth - w - px
+            const snapY = clamp(y, py, window.innerHeight - h - py)
+            setSnapping(true)
+            setPos({ x: snapX, y: snapY })
+            posRef.current = { x: snapX, y: snapY }
+            setTimeout(() => setSnapping(false), 380)
         }
 
         const onResize = () => {

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import './credits.css'
 import { Button, Dropdown, Progress } from 'antd';
 import { LuChevronDown, LuCoins, LuInfo, LuRefreshCcw, LuShoppingCart } from 'react-icons/lu';
-import { fetchPrices, handleCheckout, PRODUCTS } from '../functions';
+import { fetchPrices, handleCheckout, PRICE_IDS, PRODUCTS } from '../functions';
 import { useTranslation } from 'react-i18next';
 import { Info, ShoppingCart } from 'lucide-react';
 
@@ -11,10 +11,11 @@ export const CreditsComponent = ({ invitationID, creditsDisplay }) => {
 
     const { t } = useTranslation()
     const [prices, setPrices] = useState([])
-    const [selectedItem, setSelectedItem] = useState('price_1Sx8RWAAdNlITNVbj7c85GlG')
+    const [loading, setLoading] = useState(true)
+    const [selectedItem, setSelectedItem] = useState(PRICE_IDS.CREDITS_200)
 
     useEffect(() => {
-        fetchPrices(setPrices)
+        fetchPrices(setPrices).finally(() => setLoading(false))
     }, [])
 
 
@@ -27,22 +28,31 @@ export const CreditsComponent = ({ invitationID, creditsDisplay }) => {
                 </div>
             )}
             <div className='credits_checkout_cont'>
-                {prices.map((p, index) => {
-                    const product = PRODUCTS[p.priceId];
-                    if (product?.type === 'credits') {
-                        return (
-                            <div key={index} className={`price_card ${selectedItem === p.priceId && 'selected_card'}`} onClick={() => setSelectedItem(p.priceId)}>
-                                <div className='image_price'>
-                                    <img src={`/images/c_${p.amount}.png`} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {loading
+                    ? [0, 1, 2].map(i => (
+                        <div key={i} className='price_card skeleton_card' style={{ width: '100%', maxWidth: 'unset' }}>
+                            <div className='image_price skeleton_block' style={{ height: 80 }} />
+                            <div className='skeleton_block' style={{ height: 12, width: '80%', borderRadius: 6 }} />
+                            <div className='skeleton_block' style={{ height: 14, width: '55%', borderRadius: 6 }} />
+                        </div>
+                    ))
+                    : prices.map((p, index) => {
+                        const product = PRODUCTS[p.priceId];
+                        if (product?.type === 'credits') {
+                            return (
+                                <div key={index} className={`price_card ${selectedItem === p.priceId && 'selected_card'}`} onClick={() => setSelectedItem(p.priceId)}>
+                                    <div className='image_price'>
+                                        <img src={`/images/c_${product.value}.png`} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                    <div className='card_col'>
+                                        <span style={{ minWidth: '120px', fontSize: '14px', fontWeight: 400 }}>{p.productName}</span>
+                                        <span style={{ minWidth: '100px', fontSize: '16px', fontWeight: 600 }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
+                                    </div>
                                 </div>
-                                <div className='card_col'>
-                                    <span style={{ minWidth: '120px', fontSize: '14px', fontWeight: 400 }}>{p.productName}</span>
-                                    <span style={{ minWidth: '100px', fontSize: '16px', fontWeight: 600 }}>${p.amount} <span style={{ textTransform: 'uppercase' }}>{p.currency}</span></span>
-                                </div>
-                            </div>
-                        )
-                    }
-                })}
+                            )
+                        }
+                    })
+                }
             </div>
             <div style={{ display: 'flex', gap: 8, width: '100%' }}>
                  <Dropdown
@@ -80,6 +90,7 @@ export const CreditsComponent = ({ invitationID, creditsDisplay }) => {
                     style={{ flex: 1, fontSize: '16px', minHeight: '44px' }}
                     icon={<ShoppingCart size={16} />}
                     onClick={() => handleCheckout(invitationID, selectedItem)}
+                    disabled={loading}
                     type='primary'
                 >
                     {t('credits.btn_buy')}

@@ -88,20 +88,42 @@ export const handleCheckoutGift = async (senderName, recipientName, email, giftM
     }
 };
 
+// ── Stripe price IDs ─────────────────────────────────────────────────────────
+// Single source of truth. Update here when changing prices in Stripe.
+export const PRICE_IDS = {
+  // Credits
+  CREDITS_3:        'price_1T1DRoAAdNlITNVbLwiUVWAj',
+  CREDITS_50:       'price_1Tl9qVAAdNlITNVbzMviUvKo',   // $150
+  CREDITS_100:      'price_1Tl9oiAAdNlITNVby13ZND99',   // $200
+  CREDITS_200:      'price_1Tl9tfAAdNlITNVbTIy9P6X9',   // $300
+
+  // Plans
+  PLAN_PAPERLESS:   'price_1SkRvtAAdNlITNVbj8BA6F2Q',
+  PLAN_LITE:        'price_1Tl9jyAAdNlITNVbm0hq6omU',   // $2,899
+  PLAN_PRO:         'price_1Tl9fQAAdNlITNVb953oCZLs',   // $3,999
+
+  // Upgrade
+  UPGRADE_TO_PRO:   'price_1TlC4RAAdNlITNVbjcRtexSy',
+
+  // Side events
+  SIDE_EVENT:       'price_1Tl9kwAAdNlITNVbqroYr991',   // $300
+  SIDE_EVENT_ALT:   'price_1T1WY5AAdNlITNVbGrRJx77i',
+};
+
 export const PRODUCTS = {
-    price_1T1DRoAAdNlITNVbLwiUVWAj: { type: "credits", value: 3 },
-    price_1Sx8PvAAdNlITNVbchl6tJBW: { type: "credits", value: 50 },
-    price_1Sx8QpAAdNlITNVbIod9MW44: { type: "credits", value: 100 },
-    price_1Sx8RWAAdNlITNVbj7c85GlG: { type: "credits", value: 200 },
-    // price_1T1H17AAdNlITNVbrTS94Xdr: { type: "credits", value: 1 },
-  
-    price_1SkRvtAAdNlITNVbj8BA6F2Q: { type: "plan", value: "paperless" },
-    price_1SkRwZAAdNlITNVbEsPlYN0F: { type: "plan", value: "lite" },
-    price_1SkRxCAAdNlITNVbB0AB16LN: { type: "plan", value: "pro" },
-    // price_1TO1kjAAdNlITNVbmfuaY1nm: { type: "plan", value: "pro" }, // test
-  
-    price_1T1VeXAAdNlITNVbXeWLTh3Y: { type: "side", value: "side_event" },
-    price_1T1WY5AAdNlITNVbGrRJx77i: {type: "side", value: "side_event"}
+    [PRICE_IDS.CREDITS_3]:      { type: "credits", value: 3 },
+    [PRICE_IDS.CREDITS_50]:     { type: "credits", value: 50 },
+    [PRICE_IDS.CREDITS_100]:    { type: "credits", value: 100 },
+    [PRICE_IDS.CREDITS_200]:    { type: "credits", value: 200 },
+
+    [PRICE_IDS.PLAN_PAPERLESS]: { type: "plan", value: "paperless" },
+    [PRICE_IDS.PLAN_LITE]:      { type: "plan", value: "lite" },
+    [PRICE_IDS.PLAN_PRO]:       { type: "plan", value: "pro" },
+
+    [PRICE_IDS.UPGRADE_TO_PRO]: { type: "plan", value: "pro" },
+
+    [PRICE_IDS.SIDE_EVENT]:     { type: "side", value: "side_event" },
+    [PRICE_IDS.SIDE_EVENT_ALT]: { type: "side", value: "side_event" },
   };
   
 

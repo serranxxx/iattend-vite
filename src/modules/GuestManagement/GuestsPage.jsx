@@ -1,5 +1,6 @@
 import { Badge, Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Table } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
+import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Legend, } from 'chart.js';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoMdAdd, } from 'react-icons/io';
@@ -8,7 +9,8 @@ import { supabase } from '../../lib/supabase';
 import { FaCheck, FaPlus, FaRegCopy, } from 'react-icons/fa';
 import { AiOutlineClockCircle, } from 'react-icons/ai';
 import { FiArrowUpRight, FiMinus } from 'react-icons/fi';
-import { NotificationCard } from '../../components/NotificationCard/NotificationCard';
+import { NotificationCard } from '../../components/NotificationCard/NotificationCard'
+import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner';
 import { IoChevronDownSharp, IoTicket, } from 'react-icons/io5';
 import { RiArrowRightDoubleLine } from 'react-icons/ri';
 import axios from 'axios';
@@ -99,6 +101,10 @@ export default function GuestsPage() {
     const [owners, setOwners] = useState(null)
     const [url_image, setUrl_image] = useState(null)
     const [plan, setPlan] = useState(null)
+    const [invLabel, setInvLabel] = useState(null)
+    const [invPhone, setInvPhone] = useState(null)
+
+    const hasPendingInfo = !name || !owners?.length || !invLabel || !invPhone
 
     const { uiAction, clearUiAction, setCreditSending, setCreditSuccess, clearCreditState } = useLia()
     const { subscribe } = useDashboardRealtime()
@@ -1082,6 +1088,10 @@ export default function GuestsPage() {
     };
 
     const handleShare = async (url) => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de compartir el link.')
+            return
+        }
         const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
         if (isMobileDevice && navigator.share) {
             try {
@@ -1251,7 +1261,7 @@ export default function GuestsPage() {
     const getType = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('type, credits, name, tags, owners, url_image, plan')
+            .select('type, credits, name, tags, owners, url_image, plan, label, phone_number')
             .eq('id', id)
             .maybeSingle()
 
@@ -1269,6 +1279,8 @@ export default function GuestsPage() {
         setOwners(data.owners)
         setUrl_image(data.url_image)
         setPlan(data.plan)
+        setInvLabel(data.label ?? null)
+        setInvPhone(data.phone_number ?? null)
     }
 
     const getTables = async () => {
@@ -1393,6 +1405,10 @@ export default function GuestsPage() {
     }
 
     const onSedingInvitation = async (guest, retry) => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return
+        }
         setCreditSending()
         try {
             const payload = {
@@ -1416,7 +1432,7 @@ export default function GuestsPage() {
                                 {
                                     type: "image",
                                     image: {
-                                        link: url_image ?? invitation.cover.image.prod,
+                                        link: url_image ?? toFirstString(invitation.cover.image.prod),
                                     },
                                 },
                             ],
@@ -2457,6 +2473,7 @@ export default function GuestsPage() {
                     }
                 </div>
 
+                <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />
                 <FooterApp></FooterApp>
 
             </Layout >

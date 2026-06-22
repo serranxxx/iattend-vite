@@ -10,7 +10,8 @@ import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
-import { handleCheckout } from '../../components/Payment/functions'
+import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
+import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
 import { useSearchParams } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
@@ -51,6 +52,12 @@ export const SideEvents = () => {
     const [messagesDispatch, setMessagesDispatch] = useState([])
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
+    const [invName, setInvName] = useState(null)
+    const [invLabel, setInvLabel] = useState(null)
+    const [invPhone, setInvPhone] = useState(null)
+    const [invOwners, setInvOwners] = useState([])
+
+    const hasPendingInfo = !invName || !invLabel || !invPhone || !invOwners?.length
     const [addressOpen, setAddressOpen] = useState(false)
     const [datePickerOpen, setDatePickerOpen] = useState(false)
     const [colorDrawerOpen, setColorDrawerOpen] = useState(false)
@@ -453,7 +460,10 @@ export const SideEvents = () => {
     }
 
     const onSedingInvitation = async (data, guest) => {
-
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return
+        }
 
         if (data) {
             setCreditSending()
@@ -558,7 +568,7 @@ export const SideEvents = () => {
     const getCredits = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('credits, plan')
+            .select('credits, plan, name, label, phone_number, owners')
             .eq('id', id)
             .maybeSingle()
 
@@ -568,6 +578,10 @@ export const SideEvents = () => {
         }
         setPlan(data.plan)
         setCredits(data.credits)
+        setInvName(data.name ?? null)
+        setInvLabel(data.label ?? null)
+        setInvPhone(data.phone_number ?? null)
+        setInvOwners(data.owners ?? [])
     }
 
     const renderTag = (value) => {
@@ -664,6 +678,10 @@ export const SideEvents = () => {
     };
 
     const handleShare = async (url) => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de compartir el link.')
+            return
+        }
         const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
         if (isMobileDevice && navigator.share) {
             try {
@@ -918,7 +936,6 @@ export const SideEvents = () => {
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: 'var(--ft-color)',
                     width: '100%',
-                    
                 }}>
                 <HeaderDashboard
                     mode={'side'}
@@ -943,7 +960,7 @@ export const SideEvents = () => {
                                         const canCreate = (plan === 'pro' && sideEvent.length < 3) || (plan === 'lite' && sideEvent.length < 1);
                                         return (
                                             <div
-                                                onClick={canCreate ? insertSideEvent : () => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
+                                                onClick={canCreate ? insertSideEvent : () => handleCheckout(id, PRICE_IDS.SIDE_EVENT)}
                                                 className='side_event_item se-new-card'
                                             >
                                                 <div className='new_inv_cont' style={{ minHeight: 'unset', flex: 1, width: '100%' }}>
@@ -1497,6 +1514,7 @@ export const SideEvents = () => {
                 </Layout >
 
                 <GuestsCRUD rowData={rawData} invitationID={id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} />
+                <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />
                 <FooterApp></FooterApp>
             </Layout >
         </>

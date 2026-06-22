@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Button, DatePicker, Drawer, Input, Select } from 'antd'
+import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { useTranslation } from 'react-i18next'
 import { SiSpotify } from 'react-icons/si'
 import { RxValueNone } from 'react-icons/rx'
 import { LuSettings2 } from 'react-icons/lu'
 import dayjs from 'dayjs'
 import {
-    ArrowUp, Calendar, Eye, Image, Lock, Music, Palette,
-    Save, Share2, Sparkles, Type, X, Layers,
-    CalendarCheck2, CalendarClock, Users, CalendarRange,
-    ArrowUpRight,
+    ArrowUp, Calendar, Eye, Image, Music, Palette,
+    Type, X, Layers,
+    ArrowRight,
+    Bookmark,
 } from 'lucide-react'
 import logoBlue from '/images/logo_blue.png'
 import ReactHost from '../../components/Host/ReactHost'
@@ -18,6 +19,8 @@ import { colorCollection } from '../../helpers/services/colorPalette'
 import { formatDateToISO } from '../../helpers/assets/functions'
 import { textures } from '../../helpers/services/textures'
 import { LiaPreview } from './LiaPreview'
+import { FEATURE_SLIDES } from './featureSlides'
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 
 const { Option } = Select
 
@@ -56,15 +59,31 @@ const CHIPS = [
 ]
 
 /* ─────────────────────────────────────────────────────────── */
-export const PreviewMoodMobile = ({ invitation, setInvitation, invitationID, onSave, onPublish, saving }) => {
+export const PreviewMoodMobile = ({ invitation, setInvitation, savedId, onSave, onPublish, saving, onRequestSaveForImage }) => {
     const { i18n } = useTranslation()
-    const sessionName = (() => { try { return JSON.parse(localStorage.getItem('session'))?.user?.name ?? null } catch { return null } })()
+    const sessionName = (() => { try { return JSON.parse(localStorage.getItem('session'))?.user?.name?.split(' ')[0] ?? null } catch { return null } })()
     const [activeChip, setActiveChip] = useState(null)
     const [showUpsell, setShowUpsell]   = useState(false)
-    const [onHide, setOnHide]           = useState(true) // true = iframe interactive
+    const [onHide, setOnHide]           = useState(true)
     const [songQuery, setSongQuery]     = useState('')
     const [songResults, setSongResults] = useState([])
     const [songLoading, setSongLoading] = useState(false)
+    const [activeFeature, setActiveFeature] = useState(0)
+    const [featurePaused, setFeaturePaused] = useState(false)
+    const [featureTimerKey, setFeatureTimerKey] = useState(0)
+
+    useEffect(() => {
+        if (featurePaused) return
+        const timer = setInterval(() => {
+            setActiveFeature(i => (i + 1) % FEATURE_SLIDES.length)
+        }, 5000)
+        return () => clearInterval(timer)
+    }, [featurePaused, featureTimerKey])
+
+    const goToFeature = (indexFn) => {
+        setActiveFeature(indexFn)
+        setFeatureTimerKey(k => k + 1)
+    }
 
     const patch = (fn) => setInvitation(prev => fn(prev))
 
@@ -154,16 +173,17 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, invitationID, onS
         foto: (
             <div className='pm-sheet-body'>
                 <span className='pm-sheet-label'>Foto de portada</span>
-                {invitation.cover.image.dev && (
+                {toFirstString(invitation.cover.image.dev) && (
                     <div className='pm-sheet-img-preview'>
-                        <img src={invitation.cover.image.dev} alt='' />
+                        <img src={toFirstString(invitation.cover.image.dev)} alt='' />
                     </div>
                 )}
                 <StorageImages
                     type='cover'
-                    invitationID={invitationID}
+                    invitationID={savedId}
                     handleImage={(url) => { onChangeCover(url); setActiveChip(null) }}
-                    hideUpload
+                    hideMyImages={!savedId}
+                    onRequestSaveForImage={onRequestSaveForImage}
                     customTrigger={
                         <Button icon={<Image size={14} />} block size='large' style={{ borderRadius: 12 }}>
                             Elegir foto
@@ -246,7 +266,7 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, invitationID, onS
                         <span>{sessionName ?? 'sin cuenta'}</span>
                     </div>
                 </div>
-                <Button style={{ borderRadius: 99 }} onClick={onSave} loading={saving}>
+                <Button icon={<Bookmark size={14} />} style={{ borderRadius: 99 }} onClick={onSave} loading={saving}>
                     Guardar
                 </Button>
             </div>
@@ -285,14 +305,15 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, invitationID, onS
                     Descubre todo lo que hay en I attend
                 </Button>
                 <Button
-                    type='primary'
+                    // type='primary'
                     block
+                    className='primarybutton--active'
                     size='large'
-                    icon={<ArrowUpRight size={16}/>} 
+                    icon={<ArrowRight size={16}/>} 
                     style={{ borderRadius: 16, height: 52, fontSize: 16, fontWeight: 700 }}
                     onClick={onPublish}
                 >
-                    Terminar mi invitación
+                    Quiero mi invitación
                 </Button>
             </div>
 
@@ -337,76 +358,53 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, invitationID, onS
                     <span className='pm-upsell-sheet-title'>Tu invitación es solo el principio</span>
                     <span className='pm-upsell-label'>Esto también es I attend</span>
 
-                    {/* Invitados */}
-                    <div className='pm-upsell-card'>
-                        <div className='pm-upsell-card-header'>
-                            <span className='pm-upsell-title'>Invitados</span>
-                            <div className='pm-upsell-badge'><Lock size={10} /></div>
-                        </div>
-                        <div className='pm-upsell-card-body pm-upsell-card-body--row'>
-                            <div className='pm-pie-chart' />
-                            <div className='pm-pie-stats'>
-                                <div className='pm-pie-stats-grid'>
-                                    <div className='pm-pie-stat'>
-                                        <span className='pm-pie-stat-label'>Confirmados</span>
-                                        <div className='pm-pie-stat-value'><span>75</span><CalendarCheck2 size={16} strokeWidth={1.4} color='#aaa' /></div>
-                                    </div>
-                                    <div className='pm-pie-stat'>
-                                        <span className='pm-pie-stat-label'>Esperando</span>
-                                        <div className='pm-pie-stat-value'><span>35</span><CalendarClock size={16} strokeWidth={1.4} color='#aaa' /></div>
-                                    </div>
-                                </div>
-                                <div className='pm-pie-stat'>
-                                    <span className='pm-pie-stat-label'>Disponible</span>
-                                    <div className='pm-pie-stat-value'><span>40</span><Calendar size={16} strokeWidth={1.4} color='#aaa' /></div>
+                    <div className='pm-feature-carousel' style={{ height: 280, flexShrink: 0 }}>
+                        {FEATURE_SLIDES.map((slide, i) => (
+                            <div key={slide.id} className={`pm-feature-slide${i === activeFeature ? ' pm-feature-slide--active' : ''}`}>
+                                <img src={slide.img} alt='' className='pm-feature-slide-bg' />
+                                <div className='pm-feature-slide-overlay' />
+                                <div className='pm-feature-content'>
+                                    <span className='pm-feature-product'>{slide.product}</span>
+                                    <p className='pm-feature-headline'>{slide.headline}</p>
+                                    <p className='pm-feature-desc'>{slide.desc}</p>
                                 </div>
                             </div>
+                        ))}
+
+                        <button
+                            className='pm-feature-nav-btn pm-feature-pause-btn'
+                            onClick={() => setFeaturePaused(p => !p)}
+                        >
+                            {featurePaused ? <Play size={14} /> : <Pause size={14} />}
+                        </button>
+
+                        <div className='pm-feature-nav'>
+                            <button className='pm-feature-nav-btn' onClick={() => goToFeature(i => (i - 1 + FEATURE_SLIDES.length) % FEATURE_SLIDES.length)}>
+                                <ChevronLeft size={16} />
+                            </button>
+                            <button className='pm-feature-nav-btn' onClick={() => goToFeature(i => (i + 1) % FEATURE_SLIDES.length)}>
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+
+                        <div className='pm-feature-dots'>
+                            {FEATURE_SLIDES.map((_, i) => (
+                                <button
+                                    key={i}
+                                    className={`pm-feature-dot${i === activeFeature ? ' pm-feature-dot--active' : ''}`}
+                                    onClick={() => goToFeature(() => i)}
+                                />
+                            ))}
                         </div>
                     </div>
 
-                    {/* Side events */}
-                    <div className='pm-upsell-card'>
-                        <div className='pm-upsell-card-header'>
-                            <span className='pm-upsell-title'>Side events</span>
-                            <div className='pm-upsell-badge'><Lock size={10} /></div>
-                        </div>
-                        <div className='pm-upsell-card-body'>
-                            <div className='pm-side-events-row'>
-                                {SIDE_EVENTS.map((ev, i) => (
-                                    <div key={i} className='pm-side-event-card'>
-                                        <img src={ev.img} alt='' className='pm-side-event-img' />
-                                        <span className='pm-side-event-title'>{ev.title}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Lia */}
-                    <div className='pm-upsell-card'>
-                        <div className='pm-upsell-card-header'>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <Sparkles size={16} strokeWidth={1.5} />
-                                <span className='pm-upsell-title'>Lia</span>
-                            </div>
-                            <div className='pm-upsell-badge'><Lock size={10} /></div>
-                        </div>
-                        <div className='pm-upsell-card-body'>
-                            <div className='pm-lia-chat'>
-                                <div className='pm-lia-bubble pm-lia-bubble--user'>¿Quiénes han confirmado hoy?</div>
-                                <div className='pm-lia-bubble pm-lia-bubble--lia'>Hoy confirmaron la familia Herrera (4), Laura M. y Javier con +1 ✅ Ya van 75 de 150.</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CTA inside upsell panel */}
                     <Button
-                        type='primary' block size='large'
-                        icon={<ArrowUp size={16} />}
+                        className='primarybutton--active' block size='large'
+                        icon={<ArrowRight size={16} />}
                         style={{ borderRadius: 16, height: 52, fontSize: 16, fontWeight: 700, marginTop: 8 }}
                         onClick={onPublish}
                     >
-                        Terminar mi invitación
+                        Quiero mi invitación
                     </Button>
                 </div>
             </Drawer>

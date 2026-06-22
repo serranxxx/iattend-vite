@@ -27,13 +27,21 @@ const SLIDES = [
         accent: '#eeeadf',
     },
     {
+        id: 'photowall',
+        product: 'Photo Wall',
+        headline: 'Todas las fotos de tu evento, en un mismo lugar.',
+        desc: 'Tus invitados toman fotos y aparecen aquí en tiempo real. Sin grupos de WhatsApp, sin pedirlas una por una. Las tienes disponibles para descargar durante 30 días.',
+        img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/block1.jpg',
+        accent: '#eeeadf',
+    },
+    {
         id: 'regalo',
         product: '🎁 Regala I attend',
         headline: 'Regala la invitación perfecta.',
         desc: 'Alguien que conoces está planeando su boda. Dales I attend y que ellos diseñen cada detalle.',
         img: 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/dinner.jpg',
         accent: '#eeeadf',
-        cta: { label: 'Regalar ahora', href: '/gift' },
+        // cta: { label: 'Regalar ahora', href: '/gift' },
     },
 ]
 

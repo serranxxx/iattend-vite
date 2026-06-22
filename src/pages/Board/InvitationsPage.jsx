@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Input, Layout, Row, message, Button } from 'antd';
+import { Input, Layout, Row, message, Button, notification } from 'antd';
+import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { appContext } from '../../context';
 import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
-import { AdsCarousel } from '../../components/AdsCarousel/AdsCarousel';
+import { AdsCarousel } from '../../components/AdsCarousel/AdsCarousel'
 import { RegalaIAttend } from '../../components/RegalaIAttend/RegalaIAttend';
 import { ArrowRight, Calendar1, Gift, Plus, Share } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
@@ -24,7 +25,7 @@ export const InvitationsPage = () => {
         const hour = new Date().getHours();
         const key = hour >= 6 && hour < 13 ? 'greet_morning'
             : hour >= 13 && hour < 20 ? 'greet_afternoon'
-            : 'greet_night';
+                : 'greet_night';
         const pool = t(`invitations.${key}`, { returnObjects: true, name });
         return pool[Math.floor(Math.random() * pool.length)];
     };
@@ -41,6 +42,19 @@ export const InvitationsPage = () => {
 
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get('welcome') === '1') {
+            notification.success({
+                message: '¡Bienvenido a I attend!',
+                description: 'Tu evento ha sido creado. Personalízalo y compártelo cuando estés listo.',
+                placement: 'topRight',
+                duration: 6,
+            })
+            searchParams.delete('welcome')
+            setSearchParams(searchParams, { replace: true })
+        }
+    }, [])
 
     const handleFilter = (value) => {
         setInvitationsCopy(
@@ -148,10 +162,10 @@ export const InvitationsPage = () => {
 
                 <HeaderBuild position={'invitations'} isVisible={true} alwaysSolid={true} />
                 <Layout className='scroll-invitation build-invitation-layout main-dash-layout' style={{
-                     maxWidth: '100vw', padding: 0,
-                    backgroundColor: 'transparent', 
+                    maxWidth: '100vw', padding: 0,
+                    backgroundColor: 'transparent',
                 }} >
-                    <div style={{ padding: '0px', width: '100%',  overflow: 'hidden' }}>
+                    <div style={{ padding: '0px', width: '100%', overflow: 'hidden' }}>
                         <AdsCarousel onRegalar={() => setRegalaVisible(true)} />
                     </div>
                     {
@@ -199,7 +213,7 @@ export const InvitationsPage = () => {
                                             {
                                                 invitationsCopy?.length > 1 ?
 
-                                                    <div onClick={() => setVisible(true)} className="invitation-container new-event-card">
+                                                    <div onClick={() => navigate('/checkout')} className="invitation-container new-event-card">
                                                         <div className='new_inv_cont'>
                                                             <div className='add_button_circle'>
                                                                 <Plus size={32} color='#0c171b' strokeWidth={3} />
@@ -212,8 +226,8 @@ export const InvitationsPage = () => {
                                                     </div>
 
                                                     :
-                                                    <div onClick={() => setVisible(true)} className="invitation-container new-event-card">
-                                                        <div className='new_inv_cont'>
+                                                    <div onClick={() => navigate('/checkout')} className="invitation-container new-event-card">
+                                                        <div className='new_inv_cont' style={{minHeight:'400px', maxHeight:'400px'}}>
                                                             <div className='add_button_circle'>
                                                                 <Calendar1 size={32} color='#0c171b' strokeWidth={2} />
                                                             </div>
@@ -234,9 +248,9 @@ export const InvitationsPage = () => {
                                                             className="invitation-container"
                                                         >
                                                             {/* Full-bleed background image */}
-                                                            {invitation?.data?.cover?.image?.prod && (
+                                                            {toFirstString(invitation?.data?.cover?.image?.prod) && (
                                                                 <img
-                                                                    src={invitation.data.cover.image.prod}
+                                                                    src={toFirstString(invitation.data.cover.image.prod)}
                                                                     alt=""
                                                                     style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                                                                 />
@@ -262,6 +276,7 @@ export const InvitationsPage = () => {
                                                                 </span>
                                                                 <div className='invitation_btns_cont'>
                                                                     <Button
+                                                                        disabled={!invitation.active}
                                                                         icon={<ArrowRight size={16} />}
                                                                         className='invitation_start_button'
                                                                         onClick={() => handleMoode(invitation.id)}
@@ -269,6 +284,7 @@ export const InvitationsPage = () => {
                                                                         {t('invitations.btn_start')}
                                                                     </Button>
                                                                     <Button
+                                                                        disabled={!invitation.active}
                                                                         icon={<Share size={16} />}
                                                                         className='invitation_url_button'
                                                                         onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
