@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Modal, Input } from 'antd'
-import { Download, Trash2, Search } from 'lucide-react'
+import { Download, Trash2, Search, Heart } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import styles from './PhotoWall.module.css'
 
@@ -32,6 +32,8 @@ export const PhotoWall = ({ eventId, allowAdmin }) => {
     const [newPhotoIds, setNewPhotoIds] = useState(new Set())
     const [searchQuery, setSearchQuery] = useState('')
     const [activeGuest, setActiveGuest] = useState(null)
+    const [likesMap, setLikesMap] = useState({})
+    const [likersModal, setLikersModal] = useState(null)
 
     useEffect(() => {
         if (!eventId) return
@@ -67,6 +69,21 @@ export const PhotoWall = ({ eventId, allowAdmin }) => {
             .subscribe()
 
         return () => supabase.removeChannel(channel)
+    }, [eventId])
+
+    useEffect(() => {
+        if (!eventId) return
+        fetch(`${API_URL}/api/photos/likes/event/${eventId}`)
+            .then(r => r.ok ? r.json() : [])
+            .then(data => {
+                const map = {}
+                for (const like of data) {
+                    if (!map[like.photo_id]) map[like.photo_id] = []
+                    map[like.photo_id].push(like.guest_name)
+                }
+                setLikesMap(map)
+            })
+            .catch(() => {})
     }, [eventId])
 
     useEffect(() => {
@@ -192,41 +209,86 @@ export const PhotoWall = ({ eventId, allowAdmin }) => {
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {filteredPhotos.map(photo => (
-                        <div
-                            key={photo.id}
-                            className={`${styles.card} ${newPhotoIds.current?.has(photo.id) ? styles.cardNew : ''}`}
-                        >
-                            <img
-                                src={photo.public_url}
-                                alt={photo.guest_name || 'Invitado'}
-                                className={styles.image}
-                            />
-                            <div className={styles.overlay}>
-                                <span className={styles.guestName}>{photo.guest_name || 'Invitado'}</span>
-                            </div>
-                            {allowAdmin && (
-                                <div className={styles.actions}>
-                                    <button
-                                        className={styles.actionBtn}
-                                        onClick={() => handleDownload(photo)}
-                                        title="Descargar"
-                                    >
-                                        <Download size={15} />
-                                    </button>
-                                    <button
-                                        className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                                        onClick={() => handleDelete(photo)}
-                                        title="Eliminar"
-                                    >
-                                        <Trash2 size={15} />
-                                    </button>
+                    {filteredPhotos.map(photo => {
+                        const likers = likesMap[photo.id] ?? []
+                        const count = likers.length
+                        return (
+                            <div
+                                key={photo.id}
+                                className={`${styles.card} ${newPhotoIds.current?.has(photo.id) ? styles.cardNew : ''}`}
+                            >
+                                <img
+                                    src={photo.public_url}
+                                    alt={photo.guest_name || 'Invitado'}
+                                    className={styles.image}
+                                />
+                                <div className={styles.overlay}>
+                                    <span className={styles.guestName}>{photo.guest_name || 'Invitado'}</span>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                                {count > 0 && (
+                                    <button
+                                        className={styles.likesBadge}
+                                        onClick={() => setLikersModal({ photo, likers })}
+                                        title="Ver likes"
+                                    >
+                                        <Heart size={11} fill="currentColor" />
+                                        <span>{count}</span>
+                                    </button>
+                                )}
+                                {allowAdmin && (
+                                    <div className={styles.actions}>
+                                        <button
+                                            className={styles.actionBtn}
+                                            onClick={() => handleDownload(photo)}
+                                            title="Descargar"
+                                        >
+                                            <Download size={15} />
+                                        </button>
+                                        <button
+                                            className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
+                                            onClick={() => handleDelete(photo)}
+                                            title="Eliminar"
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
                 </div>
             )}
-        </div>
+
+        <Modal
+            open={!!likersModal}
+            onCancel={() => setLikersModal(null)}
+            footer={null}
+            title={
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Heart size={15} fill="#ff4d6d" color="#ff4d6d" />
+                    {likersModal?.likers.length} {likersModal?.likers.length === 1 ? 'like' : 'likes'} — {likersModal?.photo.guest_name || 'Invitado'}
+                </span>
+            }
+            width={360}
+        >
+            {likersModal && (
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {likersModal.likers.map(name => (
+                        <li key={name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{
+                                width: 32, height: 32, borderRadius: '50%',
+                                background: '#fff0f3', color: '#ff4d6d',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontWeight: 700, fontSize: 13, flexShrink: 0,
+                            }}>
+                                {name[0]?.toUpperCase()}
+                            </span>
+                            <span style={{ fontSize: 14, color: '#1a1a1a' }}>{name}</span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </Modal>
+    </div>
     )
 }
