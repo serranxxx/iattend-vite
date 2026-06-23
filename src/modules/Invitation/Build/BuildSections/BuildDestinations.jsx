@@ -2,18 +2,112 @@ import { Button, Drawer, Input, message, Select, Dropdown, } from 'antd'
 import { useTranslation } from 'react-i18next'
 
 import { useEffect, useState } from 'react';
-import { LuArrowUpRight, LuCheck, } from 'react-icons/lu';
+import { LuArrowUpRight, LuCheck, LuGripVertical } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { IoMdAdd } from 'react-icons/io';
 import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 import { LuX } from 'react-icons/lu';
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+    arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const { Option } = Select;
 
 const drawerStyles = {
     header: { borderBottom: '1px solid #F0F0F0', padding: '12px 16px' },
     body: { padding: '18px', overflow: 'auto' },
+}
+
+let _idCounter = 0;
+const generateId = () => `dest_${Date.now()}_${++_idCounter}`;
+
+const ensureId = (card) => card._id ? card : { ...card, _id: generateId() };
+
+function SortableDestCard({ card, isMobile, handleTypes, t, onOpen, setEditDrawerId, setEditDrawerOpen }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card._id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            <div className='dest-build-card' style={{ position: 'relative' }}>
+                <div
+                    {...attributes}
+                    {...listeners}
+                    style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '-22px',
+                        transform: 'translateY(-50%)',
+                        cursor: isDragging ? 'grabbing' : 'grab',
+                        color: '#BDBDBD',
+                        display: 'flex',
+                        alignItems: 'center',
+                        touchAction: 'none',
+                    }}
+                >
+                    <LuGripVertical size={16} />
+                </div>
+
+                <div style={{
+                    backgroundImage: `url(${card?.image})`,
+                    backgroundSize: 'cover', backgroundPosition: 'center',
+                    width: '100%', height: '120px', borderRadius: '8px', maxWidth: '180px'
+                }} />
+
+                <div style={{
+                    display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                    flexDirection: 'column', gap: '4px', lineHeight: 1, alignSelf: 'stretch', flex: 1
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            <div style={{ height: '8px', width: '8px', borderRadius: '99px', backgroundColor: handleTypes(card.type)?.color }} />
+                            <span style={{ fontSize: '12px' }}>{handleTypes(card.type)?.label}</span>
+                        </div>
+                        <span style={{ fontWeight: 600, fontSize: '16px' }} className='gc-content-label'>{card?.name}</span>
+                    </div>
+
+                    {isMobile ? (
+                        <Button
+                            icon={<LuArrowUpRight />}
+                            className='primarybutton'
+                            style={{ alignSelf: 'stretch', minWidth: '100%', borderRadius: '8px' }}
+                            onClick={() => { setEditDrawerId(card._id); setEditDrawerOpen(true) }}>
+                            {t('build_destinations.btn_open')}
+                        </Button>
+                    ) : (
+                        <Dropdown
+                            placement='right'
+                            arrow={{ pointAtCenter: true }}
+                            trigger={['click']}
+                            popupRender={() => onOpen(card._id)}
+                        >
+                            <Button icon={<LuArrowUpRight />}
+                                className='primarybutton' style={{ alignSelf: 'stretch', minWidth: '100%', borderRadius: '8px' }}>
+                                {t('build_destinations.btn_open')}
+                            </Button>
+                        </Dropdown>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 }
 
 
@@ -34,17 +128,33 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
     const [destUrl, setDestUrl] = useState(null)
     const [destType, setDestType] = useState(null)
     const [destDesc, setDestDesc] = useState(null)
-    const [currentDest, setCurrentDest] = useState(null)
     const [isMobile, setIsMobile] = useState(false)
     const [addDrawerOpen, setAddDrawerOpen] = useState(false)
     const [editDrawerOpen, setEditDrawerOpen] = useState(false)
-    const [editDrawerIndex, setEditDrawerIndex] = useState(null)
+    const [editDrawerId, setEditDrawerId] = useState(null)
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
     useEffect(() => {
         const check = () => setIsMobile(window.innerWidth <= 750)
         check()
         window.addEventListener('resize', check)
         return () => window.removeEventListener('resize', check)
+    }, [])
+
+    // Ensure all existing cards have a _id
+    useEffect(() => {
+        setInvitation(prev => {
+            const cards = prev.destinations.cards;
+            if (cards.every(c => c._id)) return prev;
+            return {
+                ...prev,
+                destinations: {
+                    ...prev.destinations,
+                    cards: cards.map(ensureId)
+                }
+            };
+        });
     }, [])
 
     const handelClose = () => {
@@ -84,7 +194,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                     ...prevInvitation.destinations,
                     cards: [
                         ...prevInvitation.destinations.cards,
-                        { image: destImage, name: destName, url: destUrl, type: destType, description: destDesc }
+                        { _id: generateId(), image: destImage, name: destName, url: destUrl, type: destType, description: destDesc }
                     ]
                 }
             }));
@@ -96,21 +206,39 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
         }
     }
 
-    const deleteCardByIndex = (index) => {
+    const deleteCardById = (cardId) => {
         setInvitation(prevInvitation => ({
             ...prevInvitation,
             destinations: {
                 ...prevInvitation.destinations,
-                cards: prevInvitation.destinations.cards.filter((card, i) => i !== index)
+                cards: prevInvitation.destinations.cards.filter(card => card._id !== cardId)
             }
         }));
         setSaved(false)
     }
 
-    const handleDelete = (card, index) => {
-        deleteCardByIndex(index)
+    const handleDelete = (cardId) => {
+        deleteCardById(cardId)
         setEditDrawerOpen(false)
     }
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        setInvitation(prev => {
+            const cards = prev.destinations.cards;
+            const oldIndex = cards.findIndex(c => c._id === active.id);
+            const newIndex = cards.findIndex(c => c._id === over.id);
+            return {
+                ...prev,
+                destinations: {
+                    ...prev.destinations,
+                    cards: arrayMove(cards, oldIndex, newIndex)
+                }
+            };
+        });
+        setSaved(false);
+    };
 
     useEffect(() => {
         setDescriptionValue(invitation.destinations.description)
@@ -133,56 +261,56 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
         }
     }
 
-    const editDestinationName = (index, value) => {
+    const editDestinationName = (cardId, value) => {
         setInvitation(prev => ({
             ...prev,
             destinations: {
                 ...prev.destinations,
-                cards: prev.destinations.cards.map((card, i) => i === index ? { ...card, name: value } : card)
+                cards: prev.destinations.cards.map(card => card._id === cardId ? { ...card, name: value } : card)
             }
         }));
         setSaved(false);
     };
 
-    const editDestinationType = (index, value) => {
+    const editDestinationType = (cardId, value) => {
         setInvitation(prev => ({
             ...prev,
             destinations: {
                 ...prev.destinations,
-                cards: prev.destinations.cards.map((card, i) => i === index ? { ...card, type: value } : card)
+                cards: prev.destinations.cards.map(card => card._id === cardId ? { ...card, type: value } : card)
             }
         }));
         setSaved(false);
     };
 
-    const editDestinationImage = (value, index, id) => {
+    const editDestinationImage = (value, _unused, cardId) => {
         setInvitation(prev => ({
             ...prev,
             destinations: {
                 ...prev.destinations,
-                cards: prev.destinations.cards.map((card, i) => i === id ? { ...card, image: value } : card)
+                cards: prev.destinations.cards.map(card => card._id === cardId ? { ...card, image: value } : card)
             }
         }));
         setSaved(false);
     };
 
-    const editDestinationDescription = (index, value) => {
+    const editDestinationDescription = (cardId, value) => {
         setInvitation(prev => ({
             ...prev,
             destinations: {
                 ...prev.destinations,
-                cards: prev.destinations.cards.map((card, i) => i === index ? { ...card, description: value } : card)
+                cards: prev.destinations.cards.map(card => card._id === cardId ? { ...card, description: value } : card)
             }
         }));
         setSaved(false);
     };
 
-    const editDestinationUrl = (index, value) => {
+    const editDestinationUrl = (cardId, value) => {
         setInvitation(prev => ({
             ...prev,
             destinations: {
                 ...prev.destinations,
-                cards: prev.destinations.cards.map((card, i) => i === index ? { ...card, url: value } : card)
+                cards: prev.destinations.cards.map(card => card._id === cardId ? { ...card, url: value } : card)
             }
         }));
         setSaved(false);
@@ -229,9 +357,10 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
         </div>
     )
 
-    const editFormContent = (index) => {
-        if (index === null || !invitation.destinations.cards[index]) return null
-        const card = invitation.destinations.cards[index]
+    const editFormContent = (cardId) => {
+        if (!cardId) return null;
+        const card = invitation.destinations.cards.find(c => c._id === cardId);
+        if (!card) return null;
         return (
             <div className='dest-input-form' style={{ padding: isMobile ? 0 : '18px', width: isMobile ? '100%' : undefined }}>
                 {
@@ -243,18 +372,18 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
 
                 <div className='des-image-container' style={{ position: 'relative', height: '120px' }}>
                     <img src={card.image} alt='' />
-                    <StorageImages absolute={true} invitationID={invitationID} handleImage={editDestinationImage} id={index} />
+                    <StorageImages absolute={true} invitationID={invitationID} handleImage={editDestinationImage} id={cardId} />
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', width: '100%' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', flex: 1, gap: '4px' }}>
                         <span className='gc-content-label'>{t('build_destinations.label_name')}</span>
                         <Input placeholder={t('build_destinations.placeholder_activity')} className='gc-input-text'
-                            onChange={(e) => editDestinationName(index, e.target.value)} value={card.name} />
+                            onChange={(e) => editDestinationName(cardId, e.target.value)} value={card.name} />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', flex: 1, gap: '4px' }}>
                         <span className='gc-content-label'>{t('build_destinations.label_type')}</span>
-                        <Select value={card.type} onChange={(e) => editDestinationType(index, e)} style={{ width: '100%' }}>
+                        <Select value={card.type} onChange={(e) => editDestinationType(cardId, e)} style={{ width: '100%' }}>
                             {types.map((type, i) => <Option key={i} value={type.value}>{type.label}</Option>)}
                         </Select>
                     </div>
@@ -263,17 +392,17 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                 <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', width: '100%', gap: '4px' }}>
                     <span className='gc-content-label'>{t('build_destinations.label_description')}</span>
                     <Input.TextArea className='gc-input-text' style={{ borderRadius: '8px' }}
-                        value={card.description} onChange={(e) => editDestinationDescription(index, e.target.value)}
+                        value={card.description} onChange={(e) => editDestinationDescription(cardId, e.target.value)}
                         autoSize={{ minRows: 2, maxRows: 5 }} />
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', width: '100%', gap: '4px' }}>
                     <span className='gc-content-label'>{t('build_destinations.label_url')}</span>
                     <Input placeholder={t('build_destinations.placeholder_url')} className='gc-input-text'
-                        onChange={(e) => editDestinationUrl(index, e.target.value)} value={card.url} />
+                        onChange={(e) => editDestinationUrl(cardId, e.target.value)} value={card.url} />
                 </div>
 
-                <Button onClick={() => handleDelete(currentDest, index)} className='primarybutton' style={{ width: '100%' }}>{t('build_destinations.btn_delete')}</Button>
+                <Button onClick={() => handleDelete(cardId)} className='primarybutton' style={{ width: '100%' }}>{t('build_destinations.btn_delete')}</Button>
             </div>
         )
     }
@@ -284,6 +413,22 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
             <Button type='text' icon={<LuX size={18} />} onClick={onClose} style={{ borderRadius: '99px' }} />
         </div>
     )
+
+    const VisibilityDivider = () => (
+        <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: '4px 0', width: '100%'
+        }}>
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#E0E0E0' }} />
+            <span style={{
+                fontSize: '11px', color: '#AAAAAA', whiteSpace: 'nowrap',
+                fontWeight: 500, letterSpacing: '0.2px'
+            }}>
+                {t('build_destinations.visibility_limit', 'Solo las primeras 6 son visibles')}
+            </span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#E0E0E0' }} />
+        </div>
+    );
 
     return (
         <>
@@ -343,55 +488,38 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                     </Dropdown>
                                 )}
 
-                                <div style={{
-                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
-                                    flexDirection: 'column', gap: '16px', alignSelf: 'stretch', marginTop: '12px'
-                                }}>
-                                    {invitation.destinations.cards.map((dest, index) => (
-                                        <div className='dest-build-card' key={index} style={{ position: 'relative' }}>
-                                            <div style={{
-                                                backgroundImage: `url(${dest?.image})`,
-                                                backgroundSize: 'cover', backgroundPosition: 'center',
-                                                width: '100%', height: '120px', borderRadius: '8px', maxWidth: '180px'
-                                            }} />
-
-                                            <div style={{
-                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-                                                flexDirection: 'column', gap: '4px', lineHeight: 1, alignSelf: 'stretch', flex: 1
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column', gap: '6px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                                        <div style={{ height: '8px', width: '8px', borderRadius: '99px', backgroundColor: handleTypes(dest.type)?.color }} />
-                                                        <span style={{ fontSize: '12px' }}>{handleTypes(dest.type)?.label}</span>
-                                                    </div>
-                                                    <span style={{ fontWeight: 600, fontSize: '16px' }} className='gc-content-label'>{dest?.name}</span>
+                                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                    <SortableContext
+                                        items={invitation.destinations.cards.map(c => c._id).filter(Boolean)}
+                                        strategy={verticalListSortingStrategy}
+                                    >
+                                        <div style={{
+                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
+                                            flexDirection: 'column', gap: '16px', alignSelf: 'stretch',
+                                            marginTop: '12px', paddingLeft: '24px'
+                                        }}>
+                                            {invitation.destinations.cards.map((dest, index) => (
+                                                <div key={dest._id || index} style={{ width: '100%' }}>
+                                                    <SortableDestCard
+                                                        card={dest}
+                                                        index={index}
+                                                        isMobile={isMobile}
+                                                        handleTypes={handleTypes}
+                                                        t={t}
+                                                        onOpen={editFormContent}
+                                                        setEditDrawerId={setEditDrawerId}
+                                                        setEditDrawerOpen={setEditDrawerOpen}
+                                                    />
+                                                    {index === 5 && invitation.destinations.cards.length > 6 && (
+                                                        <div style={{ marginTop: '16px' }}>
+                                                            <VisibilityDivider />
+                                                        </div>
+                                                    )}
                                                 </div>
-
-                                                {isMobile ? (
-                                                    <Button
-                                                        icon={<LuArrowUpRight />}
-                                                        className='primarybutton'
-                                                        style={{ alignSelf: 'stretch', minWidth: '100%', borderRadius: '8px' }}
-                                                        onClick={() => { setCurrentDest(dest); setEditDrawerIndex(index); setEditDrawerOpen(true) }}>
-                                                        {t('build_destinations.btn_open')}
-                                                    </Button>
-                                                ) : (
-                                                    <Dropdown
-                                                        placement='right'
-                                                        arrow={{ pointAtCenter: true }}
-                                                        trigger={['click']}
-                                                        popupRender={() => editFormContent(index)}
-                                                    >
-                                                        <Button onClick={() => setCurrentDest(dest)} icon={<LuArrowUpRight />}
-                                                            className='primarybutton' style={{ alignSelf: 'stretch', minWidth: '100%', borderRadius: '8px' }}>
-                                                            {t('build_destinations.btn_open')}
-                                                        </Button>
-                                                    </Dropdown>
-                                                )}
-                                            </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                    </SortableContext>
+                                </DndContext>
 
                                 {isMobile && (
                                     <Drawer
@@ -404,7 +532,7 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                                         styles={drawerStyles}
                                         style={{ borderRadius: '24px 24px 0 0' }}
                                     >
-                                        {editFormContent(editDrawerIndex)}
+                                        {editFormContent(editDrawerId)}
                                     </Drawer>
                                 )}
 
