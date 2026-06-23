@@ -278,6 +278,8 @@ export const Login = () => {
                                 src={src}
                                 muted
                                 playsInline
+                                autoPlay
+                                preload="auto"
                                 className={`login-video${i === activeIdx ? ' login-video--active' : ''}`}
                             />
                         ))}

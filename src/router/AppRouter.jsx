@@ -6,9 +6,7 @@ import { DashboardRealtimeProvider } from '../context/DashboardRealtimeContext'
 
 const DashboardChat = () => {
   const { pathname } = useLocation()
-  const screens = Grid.useBreakpoint()
   if (!pathname.startsWith('/dashboard')) return null
-  if (screens.xs) return null
   return <ChatContainer />
 }
 

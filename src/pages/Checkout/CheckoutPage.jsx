@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, message } from 'antd'
+import { Button, Grid, message } from 'antd'
+
+const { useBreakpoint } = Grid
 import { Check, Shield, ShoppingCart } from 'lucide-react'
 import axios from 'axios'
 import { useSearchParams } from 'react-router-dom'
@@ -76,6 +78,9 @@ const SectionLabel = ({ children }) => (
 )
 
 export const CheckoutPage = () => {
+    const screens = useBreakpoint()
+    const isMobile = !screens.md
+
     const [searchParams] = useSearchParams()
     const planParam = searchParams.get('plan')
     const [selected, setSelected] = useState(planParam === 'lite' ? 'lite' : 'pro')
@@ -88,7 +93,6 @@ export const CheckoutPage = () => {
     const [activeIdx, setActiveIdx] = useState(0)
     const videoRefs = useRef([])
 
-    // Video carousel
     useEffect(() => {
         const el = videoRefs.current[activeIdx]
         if (!el) return
@@ -153,17 +157,19 @@ export const CheckoutPage = () => {
 
     return (
         <div style={{
-            height: '100vh',
-            overflow: 'hidden',
+            minHeight: '100dvh',
+            overflow: isMobile ? 'auto' : 'hidden',
             position: 'relative',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: isMobile ? 'flex-start' : 'center',
             justifyContent: 'center',
+            padding: isMobile ? '24px 0 120px' : '0 0 120px',
+            background: '#0c171b',
         }}>
             {contextHolder}
 
             {/* ── Video background ── */}
-            <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+            <div style={{ position: isMobile ? 'fixed' : 'absolute', inset: 0, zIndex: 0, background: '#0c171b' }}>
                 {VIDEOS.map((src, i) => (
                     <video
                         key={src}
@@ -171,6 +177,8 @@ export const CheckoutPage = () => {
                         src={src}
                         muted
                         playsInline
+                        autoPlay
+                        preload="auto"
                         className={`login-video${i === activeIdx ? ' login-video--active' : ''}`}
                     />
                 ))}
@@ -182,7 +190,7 @@ export const CheckoutPage = () => {
                 position: 'relative', zIndex: 1,
                 width: '100%', maxWidth: 480,
                 margin: '0 16px',
-                maxHeight: 'calc(100vh - 48px)',
+                ...(isMobile ? {} : { maxHeight: 'calc(100dvh - 48px)' }),
                 background: 'rgba(255,255,255,0.06)',
                 backdropFilter: 'blur(8px) saturate(1.3)',
                 WebkitBackdropFilter: 'blur(32px) saturate(1.3)',
@@ -195,26 +203,27 @@ export const CheckoutPage = () => {
 
                 {/* Scrollable content */}
                 <div style={{
-                    flex: 1, overflowY: 'auto', padding: '32px 28px 0',
+                    ...(isMobile ? {} : { flex: 1, overflowY: 'auto' }),
+                    padding: '32px 28px 0',
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
                 }}>
 
                     <h1 style={{
-                        fontSize: 58, fontWeight: 800, color: TEXT,
+                        fontSize: isMobile ? 38 : 58, fontWeight: 800, color: TEXT,
                         fontFamily: 'Denver-Serial', textAlign:'center',
                         margin: '0', lineHeight: 1.1,
                     }}>
-                        TU EVENTO, 
+                        TU EVENTO,
                     </h1>
                     <h1 style={{
-                        fontSize: 44, fontWeight: 800, color: TEXT,
+                        fontSize: isMobile ? 30 : 44, fontWeight: 800, color: TEXT,
                         fontFamily: 'Denver-Serial',textAlign:'center',
                         margin: '0px 0px', lineHeight: 1.1,
                     }}>
                         BAJO CONTROL
                     </h1>
                     <h1 style={{
-                        fontSize: 22, fontWeight: 500, color: TEXT,
+                        fontSize: isMobile ? 18 : 22, fontWeight: 500, color: TEXT,
                         fontFamily: 'Michigan Signature',textAlign:'center',
                         margin: '0 0 24px', lineHeight: 1,
                         marginTop:'16px'
@@ -255,11 +264,13 @@ export const CheckoutPage = () => {
 
                     {/* Checklist */}
                     <SectionLabel>Tu invitación</SectionLabel>
-                    <CheckItem label='Portada de invitación'  />
-                    <CheckItem label='Dresscode' />
-                    <CheckItem label='Itinerario' />
-                    <CheckItem label='Mesa de regalos' />
-                    <CheckItem label='Galería de fotos' />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
+                        <CheckItem label='Portada de invitación' />
+                        <CheckItem label='Dresscode' />
+                        <CheckItem label='Itinerario' />
+                        <CheckItem label='Mesa de regalos' />
+                        <CheckItem label='Galería de fotos' />
+                    </div>
 
                     <SectionLabel>Gestión del evento</SectionLabel>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>

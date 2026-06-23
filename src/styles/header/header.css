@@ -334,7 +334,7 @@
         font-family: 'Denver-Serial', var(--font-family);
         font-style: italic;
         font-weight: 800;
-        font-size: clamp(40px, 12vw, 64px);
+        font-size: 44px;
         color: #eeeadf;
         text-decoration: none;
         line-height: 1.1;
