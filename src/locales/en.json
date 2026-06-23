@@ -487,7 +487,8 @@
     "invite_message": "We're so happy to invite you!",
     "read_more": "Read more",
     "view_invitation": "View invitation",
-    "copy_btn": "Copy link",
+    "copy_btn": "URL",
+    "copy_url_btn": "Copy URL",
     "link_btn": "Event link"
   },
   "dashboard": {
@@ -897,5 +898,13 @@
     "unsaved_desc_short": "You have unsaved changes. Do you want to exit?",
     "exit": "Exit",
     "cancel": "Cancel"
+  },
+  "preview_mood": {
+    "label_names": "Names",
+    "label_date": "Date",
+    "label_colors": "Colors",
+    "label_texture": "Texture",
+    "btn_photo": "Photo",
+    "btn_song": "Song"
   }
 }

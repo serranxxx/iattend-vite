@@ -7,7 +7,7 @@ import { useLuma } from '../../context/LumaContext'
 import { supabase } from '../../lib/supabase'
 import './luma.css'
 
-const API = 'http://localhost:4000'
+const API = import.meta.env.VITE_API_URL
 
 const CTAS = [
     'Resumen del evento',

@@ -1,0 +1,180 @@
+.banner {
+    position: absolute;
+    bottom: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 48px);
+    max-width: 760px;
+    border-radius: 16px;
+    background: var(--light-blue-200-40);
+    border: 1px solid var(--light-purple-50-80);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    z-index: 10;
+}
+
+.bannerLeft {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.bannerIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--brand-color-500-20);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bannerTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    display: block;
+}
+
+.bannerDesc {
+    font-size: 12px;
+    color: var(--text-color-50);
+    margin-top: 2px;
+    display: block;
+}
+
+/* ── Modal carousel ── */
+.modalCarousel {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slideActive {
+    opacity: 1;
+}
+
+.slideBg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.slideOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.3) 55%, transparent 100%);
+}
+
+.slideContent {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px;
+}
+
+.slideProduct {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--brand-color-300);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.slideHeadline {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin: 0 0 6px;
+}
+
+.slideDesc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.55;
+    margin: 0;
+}
+
+.navBtn {
+    position: absolute;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 99px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    backdrop-filter: blur(6px);
+    z-index: 2;
+    transition: background 0.15s;
+}
+
+.navBtn:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.pauseBtn {
+    top: 14px;
+    left: 14px;
+}
+
+.navRow {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+}
+
+.dots {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    z-index: 2;
+}
+
+.dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.35);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: width 0.3s, background 0.3s;
+}
+
+.dotActive {
+    width: 16px;
+    background: #fff;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 16px;
+}

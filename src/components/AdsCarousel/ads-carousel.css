@@ -1,0 +1,163 @@
+.ads-carousel {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 0;
+    isolation: isolate;
+}
+
+.ads-carousel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.ads-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 40px;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+
+.ads-slide--active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ads-slide-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.ads-slide-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 60%, rgba(0, 0, 0, 0) 100%);
+    z-index: 1;
+}
+
+.ads-content {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    padding-bottom: 36px;
+    gap: 16px;
+}
+
+.ads-product {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-family: 'Luxora Grotesk', var(--font-family);
+}
+
+.ads-headline {
+    font-size: 42px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+    margin: 0;
+    font-family: 'Denver-Serial', var(--font-family);
+}
+
+.ads-desc {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.6;
+    margin: 0;
+    font-family: 'Luxora Grotesk', var(--font-family);
+    font-weight: 200;
+    max-width: 480px;
+}
+
+.ads-dots {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+}
+
+.ads-cta {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 8px;
+    padding: 10px 24px;
+    background: #eeeadf;
+    color: #0c171b;
+    border-radius: 99px;
+    font-family: 'Windsor', var(--font-family);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    width: fit-content;
+}
+
+.ads-cta:hover { opacity: 0.85; }
+
+.ads-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.35);
+    border: none;
+    cursor: pointer;
+    transition: width 0.3s ease, background 0.3s ease;
+    padding: 0;
+}
+
+.ads-dot--active {
+    width: 24px;
+    background: #ffffff;
+}
+
+@media (max-width: 750px) {
+    .ads-carousel {
+        height: 450px;
+    }
+
+    .ads-slide {
+        padding: 0 24px 80px;
+    }
+
+    .ads-dots {
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 36px;
+    }
+
+    .ads-headline {
+        font-size: 28px;
+    }
+
+    .ads-desc {
+        font-size: 14px;
+    }
+
+    .ads-content {
+        padding-bottom: 0px;
+
+    }
+}

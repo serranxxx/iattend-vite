@@ -45,12 +45,12 @@ export const AntdProvider = ({ children }) => {
             // Form: { itemMarginBottom: 0, labelFontSize: 12, labelColor: "var(--text-color-400)", colorError: "var(--danger-color)" },
             // Breadcrumb: { borderRadiusOuter: 999, borderRadius: 999, borderRadiusLG: 999, borderRadiusSM: 999, borderRadiusXS: 999, separatorMargin: 6 },
             // Spin: { colorPrimary: "var(--secondary-color-700)" },
-            // Modal: { boxShadow: "0 0 24px rgba(0, 0, 0, 0.25)", borderRadius: 20, borderRadiusLG: 20, borderRadiusSM: 20, borderRadiusXS: 20, padding: 0, paddingContentHorizontal: 0, paddingContentHorizontalLG: 0, paddingContentVertical: 0, paddingContentVerticalLG: 0, paddingContentHorizontalSM: 0, paddingContentVerticalSM: 0, paddingLG: 0, paddingSM: 0, paddingXS: 0, paddingMD: 0, paddingXL: 0, paddingXXS: 0 },
+            Modal: { borderRadiusLG: 36, borderRadius: 36 },
             Button: {
               borderRadius: 8,
-              colorPrimary: "#6D3CFA",
-              colorPrimaryActive: "#6D3CFA",
-              colorPrimaryHover: "#6D3CFA",
+              colorPrimary: "#d2bfdd",
+              colorPrimaryActive: "#16323d",
+              colorPrimaryHover: "#aac187",
               fontSize: 12,
               // fontWeight: 600, fontSizeSM: 12, lineHeightSM: 16, 
               // fontSize: 14, lineHeight: 16, fontSizeLG: 16, lineHeightLG: 20, 
@@ -67,11 +67,11 @@ export const AntdProvider = ({ children }) => {
             },
             Input: {
               colorBorder: "var(--borders)",
-              colorPrimary: "#6D3CFA",
-              colorPrimaryBgHover: "#6D3CFA",
-              activeBorderColor: '#6D3CFA',
-              colorPrimaryActive: "#6D3CFA",
-              colorPrimaryHover: "#6D3CFA",
+              colorPrimary: "#d2bfdd",
+              colorPrimaryBgHover: "#d2bfdd",
+              activeBorderColor: '#d2bfdd',
+              colorPrimaryActive: "#d2bfdd",
+              colorPrimaryHover: "#d2bfdd",
 
 
             },
@@ -83,10 +83,10 @@ export const AntdProvider = ({ children }) => {
             Select: {
               borderRadius: 99,
               borderRadiusSM: 99,
-              colorPrimary: '#6D3CFA',
-              hoverBorderColor: '#6D3CFA',
-              activeOutlineColor: '#6D3CFA',
-              controlItemBgActive: '#6D3CFA20',
+              colorPrimary: '#d2bfdd',
+              hoverBorderColor: '#d2bfdd',
+              activeOutlineColor: '#d2bfdd',
+              controlItemBgActive: '#d2bfdd20',
               colorBorder: "var(--borders)"
             },
             // Calendar: { itemActiveBg: 'var(--secondary-color-50)', colorPrimary: 'red', controlItemBgHover: 'var(--secondary-color-400-80)', colorSplit: 'var(--secondary-color-500)', borderRadiusSM: 99 },
@@ -94,18 +94,18 @@ export const AntdProvider = ({ children }) => {
             // Drawer: { paddingLG: 0 
 
             Tabs: {
-              colorPrimary: '#6D3CFA',
-              itemHoverColor: '#6D3CFA',
-              itemActiveColor: '#6D3CFA',
+              colorPrimary: '#16323d',
+              itemHoverColor: '#16323d',
+              itemActiveColor: '#16323d',
               lineWidthBold: 3,
               lineWidth: 1,
-              itemColor: 'var(--text-color-200)',
+              itemColor: '#ABB5B9',
               cardGutter: 4,
               // lineWidth: 0
 
             },
             Rate: {
-              starColor: '#6D3CFA60'
+              starColor: '#d2bfdd60'
             },
             Notification: {
               borderRadiusLG: 24, fontSize: 14, colorErrorBg: '#F1F1F1',

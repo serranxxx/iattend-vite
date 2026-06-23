@@ -10,7 +10,8 @@ import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
-import { handleCheckout } from '../../components/Payment/functions'
+import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
+import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
 import { useSearchParams } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
@@ -51,6 +52,12 @@ export const SideEvents = () => {
     const [messagesDispatch, setMessagesDispatch] = useState([])
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
+    const [invName, setInvName] = useState(null)
+    const [invLabel, setInvLabel] = useState(null)
+    const [invPhone, setInvPhone] = useState(null)
+    const [invOwners, setInvOwners] = useState([])
+
+    const hasPendingInfo = !invName || !invLabel || !invPhone || !invOwners?.length
     const [addressOpen, setAddressOpen] = useState(false)
     const [datePickerOpen, setDatePickerOpen] = useState(false)
     const [colorDrawerOpen, setColorDrawerOpen] = useState(false)
@@ -224,13 +231,14 @@ export const SideEvents = () => {
                         >
                             <Tooltip placement='topRight' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaPaperPlane size={12} /><span>{t('side_events.tooltip_send')}</span></div>} color="var(--brand-color-500)">
                                 <Button
+                                    type='primary'
                                     disabled={!phone_number || !credits > 0}
                                     // disabled={t!phone_number}
                                     // onMouseEnter={() => setActiveIcon(true)} onMouseLeave={() => setActiveIcon(false)}
                                     onClick={() => onSedingInvitation(current, record)}
-                                    className="primarybutton--active"
+                                    // className="primarybutton--active"
                                     icon={<LuSend size={12} />}
-                                    style={{ flex: 1, maxHeight: 30 }}
+                                    style={{ flex: 1, maxHeight: 30, borderRadius: 99 }}
                                 >
                                     {t('side_events.btn_invite')}
                                 </Button>
@@ -239,7 +247,7 @@ export const SideEvents = () => {
                             <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('side_events.tooltip_mark')}</span></div>} color="var(--brand-color-500)">
                                 <Button
                                     onClick={() => onSendInvitation(record)}
-                                    className="primarybutton--active"
+                                    className="primarybutton"
                                     icon={<LuCheck size={12} />}
                                     style={{ minWidth: 30, maxWidth: 30, maxHeight: 30 }}
                                 />
@@ -452,7 +460,10 @@ export const SideEvents = () => {
     }
 
     const onSedingInvitation = async (data, guest) => {
-
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return
+        }
 
         if (data) {
             setCreditSending()
@@ -557,7 +568,7 @@ export const SideEvents = () => {
     const getCredits = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('credits, plan')
+            .select('credits, plan, name, label, phone_number, owners')
             .eq('id', id)
             .maybeSingle()
 
@@ -567,6 +578,10 @@ export const SideEvents = () => {
         }
         setPlan(data.plan)
         setCredits(data.credits)
+        setInvName(data.name ?? null)
+        setInvLabel(data.label ?? null)
+        setInvPhone(data.phone_number ?? null)
+        setInvOwners(data.owners ?? [])
     }
 
     const renderTag = (value) => {
@@ -663,6 +678,10 @@ export const SideEvents = () => {
     };
 
     const handleShare = async (url) => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de compartir el link.')
+            return
+        }
         const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
         if (isMobileDevice && navigator.share) {
             try {
@@ -917,7 +936,6 @@ export const SideEvents = () => {
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: 'var(--ft-color)',
                     width: '100%',
-                    
                 }}>
                 <HeaderDashboard
                     mode={'side'}
@@ -942,15 +960,14 @@ export const SideEvents = () => {
                                         const canCreate = (plan === 'pro' && sideEvent.length < 3) || (plan === 'lite' && sideEvent.length < 1);
                                         return (
                                             <div
-                                                onClick={canCreate ? insertSideEvent : () => handleCheckout(id, 'price_1T1VeXAAdNlITNVbXeWLTh3Y')}
-                                                className='side_event_item'
-                                                style={{ backgroundColor: '#F5F3F2' }}
+                                                onClick={canCreate ? insertSideEvent : () => handleCheckout(id, PRICE_IDS.SIDE_EVENT)}
+                                                className='side_event_item se-new-card'
                                             >
                                                 <div className='new_inv_cont' style={{ minHeight: 'unset', flex: 1, width: '100%' }}>
                                                     <div className='add_button_circle'>
                                                         {canCreate
-                                                            ? <Plus size={32} color='var(--brand-color-500)' />
-                                                            : <LuShoppingCart size={32} color='var(--brand-color-500)' />
+                                                            ? <Plus size={32} color='#0c171b' strokeWidth={2} />
+                                                            : <LuShoppingCart size={32} color='#0c171b' strokeWidth={2} />
                                                         }
                                                     </div>
                                                     <span className='cta_title'>
@@ -959,7 +976,7 @@ export const SideEvents = () => {
                                                     <span className='cta_text'>
                                                         {canCreate ? t('side_events.cta_new_text') : t('side_events.cta_more_text')}
                                                     </span>
-                                                    {!canCreate && <Button className='cta_plans'>{t('side_events.cta_buy')}</Button>}
+                                                    {!canCreate && <Button type='primary' className='cta_plans'>{t('side_events.cta_buy')}</Button>}
                                                 </div>
                                             </div>
                                         );
@@ -1497,6 +1514,7 @@ export const SideEvents = () => {
                 </Layout >
 
                 <GuestsCRUD rowData={rawData} invitationID={id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} />
+                <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />
                 <FooterApp></FooterApp>
             </Layout >
         </>

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './dashboard.css'
 import { Button } from 'antd'
+import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { FooterApp } from '../../modules/Footer/FooterApp'
 import { Pie } from 'react-chartjs-2'
 import { IoChevronForward } from 'react-icons/io5'
@@ -11,6 +12,8 @@ import { HeaderDashboard } from '../../modules/Header/Header'
 import { load } from '../../helpers/assets/images'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Camera } from 'lucide-react'
+import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
 
 const { useBreakpoint } = Grid;
 
@@ -28,6 +31,24 @@ export const DashboardPage = () => {
     const [searchParams] = useSearchParams();
 
     const id = searchParams.get("id");
+    const interBubbleRef = useRef(null)
+
+    useEffect(() => {
+        const el = interBubbleRef.current
+        if (!el) return
+        let curX = 0, curY = 0, tgX = 0, tgY = 0
+        let rafId
+        const move = () => {
+            curX += (tgX - curX) / 20
+            curY += (tgY - curY) / 20
+            el.style.transform = `translate(${Math.round(curX)}px, ${Math.round(curY)}px)`
+            rafId = requestAnimationFrame(move)
+        }
+        const onMouseMove = (e) => { tgX = e.clientX; tgY = e.clientY }
+        window.addEventListener('mousemove', onMouseMove)
+        move()
+        return () => { window.removeEventListener('mousemove', onMouseMove); cancelAnimationFrame(rafId) }
+    }, [invitation, plan])
 
     const chartData = {
         labels: [t('dashboard.stat_confirmed'), t('dashboard.stat_waiting_chart'), t('dashboard.stat_available_chart')],
@@ -37,9 +58,9 @@ export const DashboardPage = () => {
                 // data: [55, 121, 8],
                 data: [confirmed, waiting, available],
                 backgroundColor: [
-                    '#B4A5CC',
-                    '#978BAB',
-                    '#CCC2DC',
+                    '#C5D5AD',
+                    '#aac187',
+                    '#8FA271',
                 ],
                 borderColor: 'transparent',
                 borderWidth: 2,
@@ -116,18 +137,29 @@ export const DashboardPage = () => {
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1_1' /> */}
                 <div className='dashboard_body'>
 
+                    {/* ── Gradient background ── */}
+                    <div className="gradient-bg">
 
-                    <div className='single_row_dashboard' style={{gap:'24px'}}>
+                        <div className="gradients-container">
+                            <div className="g1" />
+                            <div className="g2" />
+                            <div className="g3" />
+                            <div className="g4" />
+                            <div className="g5" />
+                            <div className="interactive" ref={interBubbleRef} />
+                        </div>
+                    </div>
 
+                    <div className='single_row_dashboard' style={{ gap: '24px' }}>
 
                         <div className='dashboard_invitation'>
                             <div className='invitation_header_dash'>
                                 <span style={{ fontWeight: 600 }}>{t('dashboard.card_invitation')}</span>
-                                <Button onClick={() => handleMoode('build')}  style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                <Button onClick={() => handleMoode('build')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                             </div>
 
                             <div className="dash_inv_cont">
-                                <img src={invitation.cover.image.prod} alt='' style={{ objectFit: 'cover', width: '100%', height: '100%', opacity: '0.8', backdropFilter: 'blur(10px)' }} />
+                                <img src={toFirstString(invitation.cover.image.prod)} alt='' style={{ objectFit: 'cover', width: '100%', height: '100%', opacity: '0.8', backdropFilter: 'blur(10px)' }} />
                             </div>
                         </div>
 
@@ -138,7 +170,7 @@ export const DashboardPage = () => {
                                 <div className='dashboard_guests'>
                                     <div className='invitation_header_dash'>
                                         <span style={{ fontWeight: 600 }}>{t('dashboard.card_guests')}</span>
-                                        <Button onClick={() => handleMoode('guests')}  style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        <Button onClick={() => handleMoode('guests')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
                                     </div>
 
                                     <div className='guests_dash_cont'>
@@ -146,7 +178,7 @@ export const DashboardPage = () => {
 
                                             {
                                                 !screens.xs &&
-                                                <div style={{ width: '160px', height: '160px' }}>
+                                                <div style={{ width: '140px', height: '140px' }}>
                                                     <Pie data={chartData} options={options} />
                                                 </div>
                                             }
@@ -177,39 +209,60 @@ export const DashboardPage = () => {
                                                 </div>
                                             </div>
 
-
-
-
                                         </div>
                                     </div>
                                 </div>
 
+                                <div className='side_photowall_row'>
 
-                                <div className='side_events_dash'>
-                                    <div className='invitation_header_dash'>
-                                        <span style={{ fontWeight: 600 }}>{t('dashboard.card_side_events')}</span>
-                                        <Button onClick={() => handleMoode('side')}  style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                    <div className='side_events_dash'>
+                                        <div className='invitation_header_dash'>
+                                            <span style={{ fontWeight: 600 }}>{t('dashboard.card_side_events')}</span>
+                                            <Button onClick={() => handleMoode('side')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        </div>
+                                        <div className="guests_dash_cont" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', gap: '4px', flexDirection: 'row' }}>
+                                            <img src="/images/stickers/calendar.png" alt='' style={{ width: '70px' }} />
+                                            <img src="/images/stickers/envelope.png" alt='' style={{ width: '70px' }} />
+                                            <img src="/images/stickers/laptop.png" alt='' style={{ width: '70px' }} />
+                                        </div>
                                     </div>
-                                    <div className="guests_dash_cont" style={{ minHeight: '80px', display:'flex',alignItems:'center',justifyContent:'center', padding:'0'}}>
-                                        <img src='/images/icons_side_events.png' style={{ width: '90%', }} />
+
+                                    <div style={{
+                                        pointerEvents: plan !== 'pro' && 'none'
+                                    }} className='dashboard_photowall' onClick={() => handleMoode('photowall')}>
+                                        <div className='invitation_header_dash'>
+                                            <span style={{ fontWeight: 600 }}>Photo Wall</span>
+                                            <Button
+                                                disabled={plan !== 'pro'}
+                                                onClick={(e) => { e.stopPropagation(); handleMoode('photowall') }}
+                                                style={{ borderRadius: '99px' }}
+                                                icon={<IoChevronForward />}
+                                            />
+                                        </div>
+                                        <div className='photowall_card_body'>
+                                            <img src="/images/stickers/camera.png" alt='' style={{ width: '80px' }} />
+                                        </div>
+
+                                        {
+                                            plan !== 'pro' &&
+                                            <div className="pro_shadow pro_badge_">
+
+                                            </div>
+                                        }
                                     </div>
+
                                 </div>
 
                             </div>
                         }
 
-
-
-
                     </div>
-
-
-
-
 
                 </div>
 
-                <FooterApp ></FooterApp>
+                <UpgradeBanner plan={plan} invitationId={id} />
+
+                <FooterApp />
             </div>
             :
 

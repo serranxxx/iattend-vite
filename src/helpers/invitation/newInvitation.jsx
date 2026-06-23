@@ -556,4 +556,15 @@ export const handleTemplates = (user, currentType, currentPlan, dominio, current
 
 }
 
+/**
+ * Normalizes cover.image.prod / cover.image.dev to a single URL string.
+ * Handles: string, string[], null, undefined, or a stale JSONB {} object.
+ * Returns the first valid URL, or null.
+ */
+export const toFirstString = (src) => {
+    if (!src || (typeof src === 'object' && !Array.isArray(src))) return null;
+    if (typeof src === 'string') return src.trim() || null;
+    return src.find(s => typeof s === 'string' && s.trim()) ?? null;
+};
+
 

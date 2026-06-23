@@ -983,21 +983,6 @@ export const TablesPage = ({ invitationID }) => {
                                 className='button-mobile primarybutton'>
                             </Button>
 
-                            {/* <Button
-                                icon={<BsArrowsMove style={{ marginTop: '3px' }} />}
-                                style={{ borderRadius: '99px' }}
-                                onClick={() => { setOnEditPosition(!onEditPosition); setOnMoving(!onMoving) }}
-                                className={`button-web primarybutton--black${onEditPosition ? '--active' : ''}`}>
-                                {onEditPosition ? t('tables.btn_stop_move') : t('tables.btn_move_tables')}
-                            </Button> */}
-
-                            {/* <Button
-                                icon={<BsArrowsMove style={{ marginTop: '3px' }} />}
-                                style={{ borderRadius: '99px' }}
-                                onClick={() => setOnEditPosition(!onEditPosition)}
-                                className={`button-mobile primarybutton--black${onEditPosition ? '--active' : ''}`}>
-                            </Button> */}
-
                             <Dropdown
                                 trigger={['click']}
                                 placement='bottomRight'
@@ -1020,8 +1005,8 @@ export const TablesPage = ({ invitationID }) => {
                                                             <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none' }}>{t('tables.modal_new_title')}</span>
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                            <Button style={{ borderRadius: '99px' }} className='secondarybutton' onClick={(e) => { e.stopPropagation(); setNewTableType(null); setOnAddingGuests(false); }}>{t('tables.btn_cancel')}</Button>
-                                                            <Button style={{ borderRadius: '99px' }} className='primarybutton--black--active' onClick={addNewTable}>{t('tables.btn_create')}</Button>
+                                                            <Button style={{ borderRadius: '99px' }} className='primarybutton' onClick={(e) => { e.stopPropagation(); setNewTableType(null); setOnAddingGuests(false); }}>{t('tables.btn_cancel')}</Button>
+                                                            <Button style={{ borderRadius: '99px' }} type='primary' onClick={addNewTable}>{t('tables.btn_create')}</Button>
                                                         </div>
                                                     </div>
                                                     <div className='modal-content-sect'>
@@ -1269,7 +1254,7 @@ export const TablesPage = ({ invitationID }) => {
 
                                                     <Button
                                                         style={{ borderRadius: '99px' }}
-                                                        className={`button-web primarybutton${!onEditingTable ? '--black' : ''}--active`} onClick={onEditingTable ? updateTable : editTable}>
+                                                        className={`button-web primarybutton${!onEditingTable ? '' : ''}--active`} onClick={onEditingTable ? updateTable : editTable}>
                                                         {onEditingTable ? t('tables.btn_done') : t('tables.btn_edit')}
                                                     </Button>
                                                     {/* Selector de forma — solo desktop */}

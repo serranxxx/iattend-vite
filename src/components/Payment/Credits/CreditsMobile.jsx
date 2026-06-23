@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Button, Dropdown } from 'antd'
 import { Info, ShoppingCart, X } from 'lucide-react'
-import { fetchPrices, handleCheckout, PRODUCTS } from '../functions'
+import { fetchPrices, handleCheckout, PRICE_IDS, PRODUCTS } from '../functions'
 import { useTranslation } from 'react-i18next'
 
 export const CreditsMobile = ({ invitationID, credits, open, onClose }) => {
     const { t } = useTranslation()
     const [prices, setPrices] = useState([])
-    const [selectedItem, setSelectedItem] = useState('price_1Sx8RWAAdNlITNVbj7c85GlG')
+    const [selectedItem, setSelectedItem] = useState(PRICE_IDS.CREDITS_200)
     const [visible, setVisible] = useState(false)
     const [entered, setEntered] = useState(false)
 
@@ -92,7 +92,7 @@ export const CreditsMobile = ({ invitationID, credits, open, onClose }) => {
                                 }}
                             >
                                 <div style={{ width: '100%', borderRadius: 8, background: '#ffffff80', overflow: 'hidden', display:'flex',alignItems:'center' }}>
-                                    <img src={`/images/c_${p.amount}.png`} alt='' style={{ width: '100%', objectFit: 'cover' }} />
+                                    <img src={`/images/c_${product.value}.png`} alt='' style={{ width: '100%', objectFit: 'cover' }} />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, fontFamily: 'Poppins' }}>
                                     <span style={{ fontSize: 14, fontWeight: 400 }}>{p.productName}</span>

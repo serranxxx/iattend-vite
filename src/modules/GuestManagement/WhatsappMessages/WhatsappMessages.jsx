@@ -153,7 +153,7 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
                                         :
                                         <div onClick={() => openConversation(conversation.phone, convId)} className='messages_main_row' style={{ justifyContent: 'space-between', padding: '16px', width: '100%' }}>
                                             <div className='messages_main_row' style={{ padding: 0 }}>
-                                                <Badge color='var(--purple-color)' offset={[-2, 2]} size='large'
+                                                <Badge color='#d2bfdd' offset={[-2, 2]} size='large'
                                                     count={messagesCount(conversation)}>
                                                     <div className='message_icon'>
                                                         {guestName(conversation.phone, conversation.messages[0].contact_name)?.[0]}

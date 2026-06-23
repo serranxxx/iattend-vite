@@ -1,20 +1,23 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './storage-images.css'
-import { Button, Drawer, Dropdown, Empty, Tabs, Upload } from 'antd'
+import { Button, Drawer, Dropdown, Empty, Tabs } from 'antd'
 import { LuImageOff, LuImagePlus, LuUpload, LuX } from 'react-icons/lu'
 import { deleteImageFromSupabase, getCoversFromSubapase, getDresscodesFromSupabase, getImagesFromSupabase, getQuotesFromSubapase, uploadImagesSupabase } from '../../helpers/services/uploadImage'
 import { Sparkles } from 'lucide-react'
 
 
-export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small }) => {
+export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small, hideUpload, customTrigger, hideMyImages, onRequestSaveForImage }) => {
 
     const { t } = useTranslation()
     const [images, setImages] = useState([])
-    const [selectedKey, setSelectedKey] = useState(0)
+    const [selectedKey, setSelectedKey] = useState(hideMyImages ? 1 : 0)
     const [ideas, setIdeas] = useState([])
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
+    const resolvedIdRef = useRef(invitationID)
+    const fileInputRef = useRef(null)
+    const mobileFileInputRef = useRef(null)
 
     useEffect(() => {
         const check = () => setIsMobile(window.innerWidth <= 750)
@@ -23,15 +26,33 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         return () => window.removeEventListener('resize', check)
     }, [])
 
-    const customUpload = async ({ file, onSuccess, onError }) => {
-        try {
-            await uploadImagesSupabase({ file, invitationID, setImages });
-            onSuccess();
-        } catch (err) {
-            console.error(err);
-            onError(err);
+    useEffect(() => {
+        if (invitationID) resolvedIdRef.current = invitationID
+    }, [invitationID])
+
+    useEffect(() => {
+        if (hideMyImages && selectedKey === 0) setSelectedKey(1)
+    }, [hideMyImages])
+
+    const handleUploadClick = async (inputRef) => {
+        if (!resolvedIdRef.current && onRequestSaveForImage) {
+            const id = await onRequestSaveForImage()
+            if (!id) return
+            resolvedIdRef.current = id
         }
-    };
+        inputRef.current?.click()
+    }
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file || !resolvedIdRef.current) return
+        e.target.value = ''
+        try {
+            await uploadImagesSupabase({ file, invitationID: resolvedIdRef.current, setImages })
+        } catch (err) {
+            console.error(err)
+        }
+    }
 
     const handleType = () => {
         switch (type) {
@@ -62,7 +83,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         }
     }
 
-    const items = [
+    const allItems = [
         {
             label: t('storage.tab_my_images'),
             key: 0,
@@ -77,7 +98,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         {[...images].reverse()?.map((i, index) => (
                             <div onClick={selectImage(handleImage ? () => handleImage(i.url, index, id) : null)} className='storage_img' key={index}>
                                 <img src={i.url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                <Button onClick={(e) => { e.stopPropagation(); deleteImageFromSupabase(i.path, invitationID, setImages) }} className='storage_delete'>{t('storage.btn_delete')}</Button>
+                                <Button onClick={(e) => { e.stopPropagation(); deleteImageFromSupabase(i.path, resolvedIdRef.current, setImages) }} className='storage_delete'>{t('storage.btn_delete')}</Button>
                             </div>
                         ))}
                     </div>
@@ -116,6 +137,8 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         },
     ]
 
+    const items = hideMyImages ? allItems.filter(i => i.key !== 0) : allItems
+
     useEffect(() => {
         if (type) {
             switch (type) {
@@ -128,35 +151,46 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         }
     }, [type])
 
+    const uploadButton = (
+        <>
+            <input ref={fileInputRef} type='file' accept='image/*' style={{ display: 'none' }} onChange={handleFileChange} />
+            <Button
+                style={{ marginBottom: '12px' }}
+                icon={<LuUpload />}
+                className='primarybutton'
+                onClick={() => handleUploadClick(fileInputRef)}
+            >
+                {t('storage.btn_upload')}
+            </Button>
+        </>
+    )
+
     const tabsContent = (
         <Tabs
             onChange={(e) => setSelectedKey(e)}
             type="card"
             style={{ width: '100%' }}
             items={items}
-            tabBarExtraContent={
-                selectedKey === 0 && !isMobile &&
-                <Upload accept="image/*" showUploadList={false} customRequest={customUpload}>
-                    <Button style={{ marginBottom: '12px' }} icon={<LuUpload />} className='primarybutton'>{t('storage.btn_upload')}</Button>
-                </Upload>
-            }
+            tabBarExtraContent={!isMobile && !hideUpload && uploadButton}
         />
     )
 
     const handleOpen = () => {
-        getImagesFromSupabase(invitationID, setImages)
+        getImagesFromSupabase(resolvedIdRef.current, setImages)
         if (isMobile) setDrawerOpen(true)
     }
 
-    const triggerButton = (
-        <Button
-            style={{ position: absolute && 'absolute', top: absolute && 10, right: absolute && 10 }}
-            onClick={handleOpen}
-            className='full-screen-button'
-            id="expandedbutton"
-            icon={<LuImagePlus size={small ? 12 : 16} style={{ marginTop: '2px' }} />}
-        />
-    )
+    const triggerButton = customTrigger
+        ? React.cloneElement(customTrigger, { onClick: handleOpen })
+        : (
+            <Button
+                style={{ position: absolute && 'absolute', top: absolute && 10, right: absolute && 10 }}
+                onClick={handleOpen}
+                className='full-screen-button'
+                id="expandedbutton"
+                icon={<LuImagePlus size={small ? 12 : 16} style={{ marginTop: '2px' }} />}
+            />
+        )
 
     return (
         <>
@@ -175,7 +209,6 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                                     <Sparkles size={16} />
                                     <span style={{ fontWeight: 600, fontSize: '16px' }}>{t('storage.drawer_title')}</span>
                                 </div>
-
                             </div>
                         }
                         styles={{
@@ -184,16 +217,19 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         }}
                         style={{ borderRadius: '24px 24px 0 0' }}
                         extra={
-
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom:'6px' }}>
-                                {
-                                    isMobile &&
-                                    <Upload accept="image/*" showUploadList={false} customRequest={customUpload}>
-                                        <Button icon={<LuUpload />} className='primarybutton--active'>{t('storage.btn_upload')}</Button>
-                                    </Upload>
-                                }
-
-
+                                {isMobile && (
+                                    <>
+                                        <input ref={mobileFileInputRef} type='file' accept='image/*' style={{ display: 'none' }} onChange={handleFileChange} />
+                                        <Button
+                                            icon={<LuUpload />}
+                                            className='primarybutton--active'
+                                            onClick={() => handleUploadClick(mobileFileInputRef)}
+                                        >
+                                            {t('storage.btn_upload')}
+                                        </Button>
+                                    </>
+                                )}
                                 <Button
                                     className='primarybutton'
                                     icon={<LuX size={16} style={{marginTop:'2px'}}/>}

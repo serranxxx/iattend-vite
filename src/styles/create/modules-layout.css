@@ -458,7 +458,7 @@
 }
 
 .primarybutton:hover {
-    background-color: var(--brand-color-600) !important;
+    background-color: var(--light-green-400) !important;
     color: var(--ft-color) !important;
 }
 

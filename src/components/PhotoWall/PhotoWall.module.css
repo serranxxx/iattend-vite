@@ -1,0 +1,283 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+}
+
+/* ── Top bar ─────────────────────────────────────────── */
+
+.topBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.daysLeft {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8FA271;
+}
+
+.dot {
+    font-size: 13px;
+    opacity: 0.3;
+    color: var(--text-color, #1a1a1a);
+}
+
+.count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color, #1a1a1a);
+}
+
+.updated {
+    font-size: 13px;
+    opacity: 0.4;
+    color: var(--text-color, #1a1a1a);
+}
+
+.searchInput {
+    width: 220px;
+    border-radius: 99px !important;
+    font-size: 13px;
+}
+
+/* ── Pills ───────────────────────────────────────────── */
+
+.pillsRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+
+.pillsRow::-webkit-scrollbar {
+    display: none;
+}
+
+.pill {
+    flex-shrink: 0;
+    padding: 5px 14px;
+    border-radius: 99px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.pill:hover {
+    border-color: #aac187;
+    color: #6e8c54;
+}
+
+.pillActive {
+    background: #aac187;
+    border-color: #aac187;
+    color: #fff;
+}
+
+/* ── Empty states ────────────────────────────────────── */
+
+.empty {
+    padding: 32px;
+    text-align: center;
+    opacity: 0.4;
+    font-size: 14px;
+    color: var(--text-color, #1a1a1a);
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.emptyTitle {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-color, #1a1a1a);
+    opacity: 0.6;
+}
+
+.emptyDesc {
+    font-size: 14px;
+    color: var(--text-color, #1a1a1a);
+    opacity: 0.4;
+    max-width: 420px;
+    line-height: 1.6;
+}
+
+/* ── Masonry grid ────────────────────────────────────── */
+
+.grid {
+    column-count: 3;
+    column-gap: 10px;
+}
+
+/* ── Card ────────────────────────────────────────────── */
+
+.card {
+    break-inside: avoid;
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: all 0.3s ease;
+}
+
+.card:hover .overlay {
+    opacity: 1;
+}
+
+.card:hover .actions {
+    opacity: 1;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes photoEnter {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.cardNew {
+    animation: photoEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    outline: 2px solid #aac187;
+    outline-offset: -2px;
+}
+
+.image {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+/* ── Overlay — visible on hover ──────────────────────── */
+
+.overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    padding: 28px 10px 10px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 60%);
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.guestName {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Admin action buttons ────────────────────────────── */
+
+.actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.actionBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.92);
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.actionBtn:hover {
+    background: #fff;
+    color: #000;
+}
+
+.actionBtnDelete:hover {
+    background: #ff4d4f;
+    color: #fff;
+}
+
+/* ── Likes badge ─────────────────────────────────────── */
+
+.likesBadge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 77, 109, 0.92);
+    color: #fff;
+    border: none;
+    border-radius: 99px;
+    padding: 3px 8px 3px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: transform 0.15s ease, background 0.15s ease;
+    z-index: 2;
+}
+
+.likesBadge:hover {
+    background: #ff4d6d;
+    transform: scale(1.05);
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+
+@media (max-width: 900px) {
+    .grid { column-count: 2; }
+    .searchInput { width: 160px; }
+}
+
+@media (max-width: 600px) {
+    .grid { column-count: 2; }
+    .topBar { flex-direction: column; align-items: flex-start; }
+    .searchInput { width: 100%; }
+}

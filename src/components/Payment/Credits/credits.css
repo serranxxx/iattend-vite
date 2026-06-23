@@ -116,3 +116,20 @@
         max-width: unset;
     }
 }
+
+@keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+.skeleton_card {
+    cursor: default;
+    pointer-events: none;
+}
+
+.skeleton_block {
+    background: linear-gradient(90deg, #ebe8e5 25%, #d9d5d1 50%, #ebe8e5 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: 8px;
+}

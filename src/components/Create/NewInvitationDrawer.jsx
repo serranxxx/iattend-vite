@@ -170,7 +170,7 @@ export const NewInvitationDrawer = ({ visible, setVisible, user }) => {
                             disabled={!(currentPlan && currentPhone && currentTemplate && dominio)}
                             loading={freeLoading}
                             onClick={handleFree}
-                            style={{ fontWeight: 700, borderRadius: '99px', display:'none' }}
+                            style={{ fontWeight: 700, borderRadius: '99px', }}
                         >
                             Crear gratis
                         </Button>

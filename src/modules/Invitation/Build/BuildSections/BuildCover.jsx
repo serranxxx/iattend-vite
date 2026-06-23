@@ -89,7 +89,6 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
     const [datePosition, setDatePosition] = useState(true)
     const [itemAlign, setitemAlign] = useState('')
     const [itemJustify, setitemJustify] = useState('')
-    const [zoom] = useState(1);
     const [onSettings, setOnSettings] = useState(false)
     const screens = useBreakpoint()
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -254,56 +253,37 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
         setSaved(false)
     };
 
-    const onChangeCover = (e) => {
-        setInvitation(prevInvitation => ({
-            ...prevInvitation,
+    // Normalize current media to array (backward compat with string)
+    const currentMedia = (() => {
+        const v = invitation?.cover?.image?.dev;
+        if (!v) return [];
+        return Array.isArray(v) ? v : [v];
+    })();
+
+    const onAddCoverItem = (url) => {
+        const next = [...currentMedia, url];
+        setInvitation(prev => ({
+            ...prev,
             cover: {
-                ...prevInvitation.cover,
-                image: {
-                    ...prevInvitation.cover.image,
-                    dev: e
-                }
+                ...prev.cover,
+                image: { ...prev.cover.image, dev: next, prod: next },
             },
         }));
-        setSaved(false)
+        setSaved(false);
     };
 
-    // const startDrag = (event) => {
-    //     setIsDragging(true);
-    //     setLastMousePosition({ x: event.clientX, y: event.clientY });
-    // };
-
-    // const drag = (event) => {
-    //     if (isDragging) {
-    //         const deltaX = event.clientX - lastMousePosition.x;
-    //         const deltaY = event.clientY - lastMousePosition.y;
-
-    //         setMapPosition((prevPosition) => {
-    //             // Definir límites
-    //             const minX = -550;
-    //             const maxX = 550; // Ancho máximo del contenedor
-    //             const minY = -500;
-    //             const maxY = 150; // Altura máxima del contenedor
-
-    //             // Calcular nueva posición con límites
-    //             const newX = Math.min(Math.max(prevPosition.x + deltaX, minX), maxX);
-    //             const newY = Math.min(Math.max(prevPosition.y + deltaY, minY), maxY);
-
-    //             return { x: newX, y: newY };
-    //         });
-
-    //         setLastMousePosition({ x: event.clientX, y: event.clientY });
-    //     }
-    // };
-
-    // const stopDrag = () => {
-    //     setIsDragging(false);
-    // };
-
-    // const resetPositions = () => {
-    //     setMapPosition({ x: 0, y: 0 })
-    //     setZoomLevel(1)
-    // }
+    const onRemoveCoverItem = (index) => {
+        const next = currentMedia.filter((_, i) => i !== index);
+        const value = next.length === 0 ? null : next.length === 1 ? next[0] : next;
+        setInvitation(prev => ({
+            ...prev,
+            cover: {
+                ...prev.cover,
+                image: { ...prev.cover.image, dev: value, prod: value },
+            },
+        }));
+        setSaved(false);
+    };
 
     useEffect(() => {
         setSaved(false)
@@ -699,62 +679,41 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
 
                         <div className='build-component-elements'>
 
-                            <div style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch'
-                            }}>
-                                <span className={'module--title'}
-                                    style={{ textAlign: 'left' }}
-                                >{t('build_cover.section_image')}</span>
-{/* 
-                                <Dropdown
-                                    arrow
-                                    trigger={['click']}
-                                    popupRender={() => (
-                                        <div className='adjust_controller'>
-
-                                            <div className='controller_cont'>
-                                                <Button onClick={() => setMapPosition((prev) => ({ x: prev.x - 20, y: prev.y }))} icon={<ArrowLeft size={16} style={{ marginTop: '2px' }} />}></Button>
-                                                <div className='controller_butons_col'>
-                                                    <Button onClick={() => setMapPosition((prev) => ({ x: prev.x, y: prev.y - 20 }))} icon={<ArrowUp size={16} style={{ marginTop: '2px' }} />}></Button>
-                                                    <Button onClick={() => setMapPosition((prev) => ({ x: prev.x, y: prev.y + 20 }))} icon={<ArrowDown size={16} style={{ marginTop: '2px' }} />}></Button>
-                                                </div>
-                                                <Button onClick={() => setMapPosition((prev) => ({ x: prev.x + 20, y: prev.y }))} icon={<ArrowRight size={16} style={{ marginTop: '2px' }} />}></Button>
-                                            </div>
-
-                                            <div className='slider-container-adj-image' >
-                                                <ZoomIn size={16} />
-                                                <Slider
-                                                    // vertical
-                                                    min={minZoom}
-                                                    max={maxZoom}
-                                                    step={zoomStep}
-                                                    onChange={(e) => setZoomLevel(e)}
-                                                    value={zoomLevel}
-                                                    style={{ flex: 1 }}
-                                                />
-                                                <ZoomOut size={16} />
-                                            </div>
-
-                                        </div>
-                                    )}
-                                >
-                                    <Button icon={<Ratio size={16} style={{ marginTop: '2px' }} />}>Ajustar</Button>
-                                </Dropdown> */}
-
-
-
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch' }}>
+                                <span className={'module--title'} style={{ textAlign: 'left', margin: 0 }}>
+                                    {t('build_cover.section_image')}
+                                </span>
+                                <StorageImages type={'cover'} invitationID={invitationID} handleImage={onAddCoverItem} />
                             </div>
 
-                            <div className='gc-edit-featured-container' style={{ position: 'relative' }}>
-
-                                <img alt='' src={invitation.cover.image.dev}
-                                    style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})` }}
-                                />
-
-                                <StorageImages type={'cover'} absolute={true} invitationID={invitationID} handleImage={onChangeCover} />
-
-
-
+                            {/* ── Media list ── */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'stretch' }}>
+                                {currentMedia.map((src, index) => {
+                                    const isVid = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(src);
+                                    return (
+                                        <div key={src + index} style={{
+                                            display: 'flex', alignItems: 'center', gap: '10px',
+                                            background: 'var(--bg-color, #f5f5f5)', borderRadius: '10px',
+                                            padding: '6px 10px',
+                                        }}>
+                                            {isVid ? (
+                                                <video src={src} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} muted />
+                                            ) : (
+                                                <img alt='' src={src} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                                            )}
+                                            <span style={{ flex: 1, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.5 }}>
+                                                {src.split('/').pop()}
+                                            </span>
+                                            <Button
+                                                type='text'
+                                                danger
+                                                size='small'
+                                                icon={<FaMinus size={11} />}
+                                                onClick={() => onRemoveCoverItem(index)}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                             <Button
@@ -899,7 +858,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         }}
                                         className='adj-image-container'>
                                         <img alt=''
-                                            src={invitation.cover.image.dev}
+                                            src={toFirstString(invitation.cover.image.dev)}
                                         />
                                         {/* <div style={{
                                             position: 'absolute', width: '100%', height: '100%', top: '0px', left: '0px',

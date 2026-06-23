@@ -58,7 +58,7 @@ export const CreditController = ({ id, mobile }) => {
 
             <div className="coins_rel">
                 {!isSending && (
-                    <img src="/images/c_100.png" alt="" className="coins_img" />
+                    <img src="/images/c_50.png" alt="" className="coins_img" />
                 )}
 
                 {isSending ? (
