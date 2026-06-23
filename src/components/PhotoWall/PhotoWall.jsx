@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Modal, Input } from 'antd'
-import { Download, Trash2, Search, Heart } from 'lucide-react'
+import { Download, Trash2, Search, Heart, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import styles from './PhotoWall.module.css'
 
@@ -34,6 +34,7 @@ export const PhotoWall = ({ eventId, allowAdmin }) => {
     const [activeGuest, setActiveGuest] = useState(null)
     const [likesMap, setLikesMap] = useState({})
     const [likersModal, setLikersModal] = useState(null)
+    const [downloadingIds, setDownloadingIds] = useState(new Set())
 
     useEffect(() => {
         if (!eventId) return
@@ -129,12 +130,27 @@ export const PhotoWall = ({ eventId, allowAdmin }) => {
         })
     }
 
-    const handleDownload = (photo) => {
-        const a = document.createElement('a')
-        a.href = photo.public_url
-        a.download = `foto-${photo.guest_name || 'invitado'}.jpg`
-        a.target = '_blank'
-        a.click()
+    const handleDownload = async (photo) => {
+        setDownloadingIds(prev => new Set([...prev, photo.id]))
+        try {
+            const res = await fetch(photo.public_url)
+            const blob = await res.blob()
+            const imageBitmap = await createImageBitmap(blob)
+            const canvas = document.createElement('canvas')
+            canvas.width = imageBitmap.width
+            canvas.height = imageBitmap.height
+            canvas.getContext('2d').drawImage(imageBitmap, 0, 0)
+            canvas.toBlob((outputBlob) => {
+                const url = URL.createObjectURL(outputBlob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `iattend-${(photo.guest_name || 'invitado').replace(/\s+/g, '-')}-photo.png`
+                a.click()
+                URL.revokeObjectURL(url)
+            }, 'image/png')
+        } finally {
+            setDownloadingIds(prev => { const next = new Set(prev); next.delete(photo.id); return next })
+        }
     }
 
     const elapsed = lastUpdated ? secondsSince(lastUpdated) : null
@@ -240,9 +256,12 @@ export const PhotoWall = ({ eventId, allowAdmin }) => {
                                         <button
                                             className={styles.actionBtn}
                                             onClick={() => handleDownload(photo)}
+                                            disabled={downloadingIds.has(photo.id)}
                                             title="Descargar"
                                         >
-                                            <Download size={15} />
+                                            {downloadingIds.has(photo.id)
+                                                ? <Loader2 size={15} className={styles.spinning} />
+                                                : <Download size={15} />}
                                         </button>
                                         <button
                                             className={`${styles.actionBtn} ${styles.actionBtnDelete}`}

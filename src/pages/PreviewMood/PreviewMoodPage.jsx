@@ -19,8 +19,7 @@ const { useBreakpoint } = Grid
 
 const PREVIEW_ID = '3cb0ab8b-41cb-428d-b383-ff9d5bbae17d'
 const LS_KEY = 'invitation-preview'
-// const API = import.meta.env.VITE_API_URL
-const API = 'http://localhost:4000'
+const API = import.meta.env.VITE_API_URL
 
 const processInvitation = (raw) => ({
     ...raw,

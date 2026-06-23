@@ -7,8 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { AuthModal } from '../PreviewMood/AuthModal'
 import { fetchPrices, PRODUCTS } from '../../components/Payment/functions'
 
-// const API = import.meta.env.VITE_API_URL
-const API = "http://localhost:4000"
+const API = import.meta.env.VITE_API_URL
 const PREVIEW_ID = '3cb0ab8b-41cb-428d-b383-ff9d5bbae17d'
 const LS_KEY = 'invitation-preview'
 
@@ -112,8 +111,9 @@ export const CheckoutPage = () => {
     }, [])
 
     const planPrices = prices.filter(p => {
+        if (p.priceId === 'price_1TlC4RAAdNlITNVbjcRtexSy') return;
         const product = PRODUCTS[p.priceId]
-        return product?.type === 'plan' && product?.value !== 'paperless'
+        return product?.type === 'plan' && product?.value !== 'paperless' 
     })
 
     const selectedEntry = planPrices.find(p => PRODUCTS[p.priceId]?.value === selected)
