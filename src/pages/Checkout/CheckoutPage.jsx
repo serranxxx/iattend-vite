@@ -164,7 +164,7 @@ export const CheckoutPage = () => {
             alignItems: isMobile ? 'flex-start' : 'center',
             justifyContent: 'center',
             padding: isMobile ? '24px 0 120px' : '0 0 120px',
-            background: '#0c171b',
+            background: 'var(--dark-blue-500)',
         }}>
             {contextHolder}
 
@@ -199,6 +199,8 @@ export const CheckoutPage = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
+                transform: isMobile ? 'scale(0.89)' : undefined,
+                marginTop: isMobile ? '-30px' : undefined
             }}>
 
                 {/* Scrollable content */}

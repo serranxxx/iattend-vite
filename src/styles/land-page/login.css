@@ -1,30 +1,36 @@
 .login-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    position: relative;
-    background: #0c171b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 100svh;
+  min-height: 100dvh;
+  height: auto;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  position: relative;
+  background: #0c171b;
+  padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 
 /* ── Video carousel ─────────────────────────────────────── */
 .login-video-bg {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background: #0c171b url('https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/field.jpg') center center / cover no-repeat;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #0c171b url('https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/field.jpg') center center / cover no-repeat;
 }
 
 .login-video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity 1s ease;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100svh;
+  object-fit: cover;
 }
 
 .login-video--active {
@@ -329,6 +335,12 @@ input:-webkit-autofill:active {
 
 /* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width: 480px) {
+
+    .login-image-container {
+    transition: all 0.2s ease;
+    width: 40%;
+    margin-bottom: 36px;
+}
 
     .login_input,
     .texts_container,

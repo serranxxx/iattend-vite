@@ -6,12 +6,12 @@ import { supabase } from '../../lib/supabase'
 import { Eye, EyeOff, Languages } from 'lucide-react'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
-import i18n from '../../i18n'
+// import i18n from '../../i18n'
 
 const VIDEOS = [
-  "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/hf_20260526_202936_917dc5b6-9089-4b7f-82b0-2e76d8126e5d.mp4",
-  "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/bucket.mp4",
-//   "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/video.mp4",
+    "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/hf_20260526_202936_917dc5b6-9089-4b7f-82b0-2e76d8126e5d.mp4",
+    "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/bucket.mp4",
+    //   "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/video.mp4",
 ];
 
 
@@ -26,7 +26,7 @@ export const Login = () => {
         if (!el) return
         el.currentTime = 0
         // Espera a que el video esté listo antes de reproducir
-        const tryPlay = () => el.play().catch(() => {})
+        const tryPlay = () => el.play().catch(() => { })
         if (el.readyState >= 3) {
             tryPlay()
         } else {
@@ -95,11 +95,11 @@ export const Login = () => {
 
     const { t } = useTranslation()
 
-    const toggleLanguage = () => {
-        const next = i18n.language === 'es' ? 'en' : 'es'
-        localStorage.setItem('lang', next)
-        window.location.reload()
-    }
+    // const toggleLanguage = () => {
+    //     const next = i18n.language === 'es' ? 'en' : 'es'
+    //     localStorage.setItem('lang', next)
+    //     window.location.reload()
+    // }
 
     const navigate = useNavigate();
     const { login, logged } = useContext(appContext)
@@ -269,7 +269,6 @@ export const Login = () => {
                 {contextHolder}
                 <div className='login-container'>
 
-                    {/* Video carousel background */}
                     <div className='login-video-bg'>
                         {VIDEOS.map((src, i) => (
                             <video
@@ -280,61 +279,18 @@ export const Login = () => {
                                 playsInline
                                 autoPlay
                                 preload="auto"
+                                
                                 className={`login-video${i === activeIdx ? ' login-video--active' : ''}`}
                             />
                         ))}
                         <div className='login-video-overlay' />
+                       
                     </div>
 
-                    <button className='login-lang-toggle' onClick={toggleLanguage}>
+                    {/* <button className='login-lang-toggle' onClick={toggleLanguage}>
                         <Languages size={16} />
                         {t('footer.lang_toggle')}
-                    </button>
-
-                    {/* <img src='/images/paper.jpg' alt='' style={{
-                    position:'absolute', width:'100%', objectFit:'cover',
-                    opacity:0.5, mixBlendMode:'multiply'
-                }}/> */}
-
-                    {/* <div className='left_side_stickers stickers-enter'>
-                        <div className='stickers_cont'>
-
-                            {
-                                screens.xs ?
-                                    allStickers.map((s, i) => (
-                                        <img
-                                            key={i}
-                                            src={`/images/stickers/${s.src}`}
-                                            alt=''
-                                            style={{
-                                                position: 'absolute',
-                                                width: s.size,
-                                                top: s.top,
-                                                left: s.left,
-                                                transform: `rotate(${s.rot}deg)`,
-                                            }}
-                                        />
-                                    ))
-                                    :
-                                    leftStickers.map((s, i) => (
-                                        <img
-                                            key={i}
-                                            src={`/images/stickers/${s.src}`}
-                                            alt=''
-                                            style={{
-                                                position: 'absolute',
-                                                width: s.size,
-                                                top: s.top,
-                                                left: s.left,
-                                                transform: `rotate(${s.rot}deg)`,
-                                            }}
-                                        />
-                                    ))
-
-                            }
-                        </div>
-
-                    </div> */}
+                    </button> */}
 
                     <div className='login-form-container' >
 
@@ -428,29 +384,12 @@ export const Login = () => {
 
                     </div>
 
-                    {/* <div className='right_side_stickers stickers-enter'>
-                        <div className='stickers_cont'>
-                            {rightStickers.map((s, i) => (
-                                <img
-                                    key={i}
-                                    src={`/images/stickers/${s.src}`}
-                                    alt=''
-                                    style={{
-                                        position: 'absolute',
-                                        width: s.size,
-                                        top: s.top,
-                                        right: s.right,
-                                        transform: `rotate(${s.rot}deg)`,
-                                    }}
-                                />
-                            ))}
-                        </div>
+                    {/* <div style={{ minHeight: '660px', width: '100%', }}>
+
+                    </div>
+                    <div style={{ minHeight: '660px', width: '100%' }}>
+
                     </div> */}
-
-
-                    {/* <img className='texture_img_top' src="/images/texture_bg.png" alt='' />
-
-                    <img className='texture_img_right' src="/images/texture_bg.png" alt='' /> */}
 
 
                 </div>
