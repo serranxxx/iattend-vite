@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Button, DatePicker, Drawer, Input, Select } from 'antd'
+import { Button, ColorPicker, DatePicker, Drawer, Input, Select, Slider } from 'antd'
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { useTranslation } from 'react-i18next'
 import { SiSpotify } from 'react-icons/si'
@@ -7,16 +7,17 @@ import { RxValueNone } from 'react-icons/rx'
 import { LuSettings2 } from 'react-icons/lu'
 import dayjs from 'dayjs'
 import {
-    ArrowUp, Calendar, Eye, Image, Music, Palette,
+    Calendar, Eye, Image, Music, Palette,
     Type, X, Layers,
     ArrowRight,
     Bookmark,
+    ArrowUp,
 } from 'lucide-react'
-import logoBlue from '/images/logo_blue.png'
 import ReactHost from '../../components/Host/ReactHost'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { colorCollection } from '../../helpers/services/colorPalette'
-import { formatDateToISO } from '../../helpers/assets/functions'
+import { colorFactoryToHex, formatDateToISO } from '../../helpers/assets/functions'
+import { fonts } from '../../helpers/assets/fonts'
 import { textures } from '../../helpers/services/textures'
 import { LiaPreview } from './LiaPreview'
 import { FEATURE_SLIDES } from './featureSlides'
@@ -48,6 +49,19 @@ async function spotifySearch(q) {
     return (await (await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=5`, { headers: { Authorization: `Bearer ${t}` } })).json()).tracks?.items ?? []
 }
 
+/* ── Position grid ────────────────────────────────────────── */
+const POSITION_GRID = [
+    { justify: 'left',   align: 'flex-start' },
+    { justify: 'center', align: 'flex-start' },
+    { justify: 'right',  align: 'flex-start' },
+    { justify: 'left',   align: 'center'     },
+    { justify: 'center', align: 'center'     },
+    { justify: 'right',  align: 'center'     },
+    { justify: 'left',   align: 'flex-end'   },
+    { justify: 'center', align: 'flex-end'   },
+    { justify: 'right',  align: 'flex-end'   },
+]
+
 /* ── Chip definitions ─────────────────────────────────────── */
 const CHIPS = [
     { key: 'nombres', icon: <Type size={15} />,    label: 'Nombres'  },
@@ -64,6 +78,7 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, savedId, onSave, 
     const sessionName = (() => { try { return JSON.parse(localStorage.getItem('session'))?.user?.name?.split(' ')[0] ?? null } catch { return null } })()
     const [activeChip, setActiveChip] = useState(null)
     const [showUpsell, setShowUpsell]   = useState(false)
+    const [presets, setPresets]         = useState(null)
     const [onHide, setOnHide]           = useState(true)
     const [songQuery, setSongQuery]     = useState('')
     const [songResults, setSongResults] = useState([])
@@ -98,6 +113,24 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, savedId, onSave, 
         setSongQuery(''); setSongResults([])
     }
     const handleRemoveSong = () => patch(p => ({ ...p, cover: { ...p.cover, song: null } }))
+    const onChangeTitleColor = (e) => patch(p => ({ ...p, cover: { ...p.cover, title: { ...p.cover.title, text: { ...p.cover.title.text, color: colorFactoryToHex(e) } } } }))
+    const handlePosition = (x, y) => patch(p => ({ ...p, cover: { ...p.cover, title: { ...p.cover.title, position: { ...p.cover.title.position, align_x: x, align_y: y } } } }))
+
+    useEffect(() => {
+        if (!invitation) return
+        import('../../helpers/assets/functions').then(({ darker, lighter }) => {
+            const build = (key) => [0.3, 0.5, 0.7, 0.9]
+                .map(v => darker(invitation.generals.colors[key], v))
+                .concat([invitation.generals.colors[key]])
+                .concat([0.9, 0.7, 0.5, 0.3, 0.1].map(v => lighter(invitation.generals.colors[key], v)))
+            setPresets([
+                { label: 'Fondo',     colors: build('primary')  },
+                { label: 'Contraste', colors: build('secondary') },
+                { label: 'Textos',    colors: build('accent')    },
+                { label: 'Botones',   colors: build('actions')   },
+            ])
+        })
+    }, [])
 
     const isActivePalette = (pal) => invitation.generals.colors.primary === pal.primary && invitation.generals.colors.secondary === pal.secondary
 
@@ -133,6 +166,78 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, savedId, onSave, 
                     style={{ borderRadius: 12 }}
                 />
                 <span className='pm-sheet-hint'>Escribe los nombres como quieres que aparezcan en la portada.</span>
+
+                {/* ── Estilo del título ── */}
+                <span className='pm-sheet-label' style={{ marginTop: 4 }}>Estilo del título</span>
+
+                <div>
+                    <span className='pm-dropdown-label'>Fuente</span>
+                    <Select
+                        value={invitation.cover.title.text?.typeFace}
+                        onChange={(v) => patch(p => ({ ...p, cover: { ...p.cover, title: { ...p.cover.title, text: { ...p.cover.title.text, typeFace: v } } } }))}
+                        style={{ width: '100%', marginTop: 4 }}
+                    >
+                        {fonts.map((f, i) => <Option key={i} value={f}><span style={{ fontFamily: f }}>{f}</span></Option>)}
+                    </Select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div>
+                        <span className='pm-dropdown-label'>Tamaño</span>
+                        <Slider min={8} max={96} step={2}
+                            value={invitation.cover.title.text?.size}
+                            onChange={(v) => patch(p => ({ ...p, cover: { ...p.cover, title: { ...p.cover.title, text: { ...p.cover.title.text, size: v } } } }))} />
+                    </div>
+                    <div>
+                        <span className='pm-dropdown-label'>Peso</span>
+                        <Slider min={100} max={1000} step={100}
+                            value={invitation.cover.title.text?.weight}
+                            onChange={(v) => patch(p => ({ ...p, cover: { ...p.cover, title: { ...p.cover.title, text: { ...p.cover.title.text, weight: v } } } }))} />
+                    </div>
+                </div>
+
+                <div>
+                    <span className='pm-dropdown-label'>Opacidad</span>
+                    <Slider min={0.1} max={1} step={0.01}
+                        value={invitation.cover.title.text?.opacity}
+                        onChange={(v) => patch(p => ({ ...p, cover: { ...p.cover, title: { ...p.cover.title, text: { ...p.cover.title.text, opacity: v } } } }))} />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
+                    <div>
+                        <span className='pm-dropdown-label'>Color</span>
+                        <div style={{ marginTop: 6 }}>
+                            <ColorPicker
+                                presets={presets}
+                                disabledAlpha={false}
+                                value={invitation.cover.title.text?.color}
+                                onChangeComplete={onChangeTitleColor}
+                            />
+                        </div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <span className='pm-dropdown-label'>Posición</span>
+                        <div className='gc-position-container' style={{ marginTop: 6 }}>
+                            {POSITION_GRID.map((item, i) => (
+                                <div key={i}
+                                    onClick={() => handlePosition(item.justify, item.align)}
+                                    className='gc-position-item'
+                                >
+                                    {item.justify === invitation.cover.title.position?.align_x && item.align === invitation.cover.title.position?.align_y ? (
+                                        <div className='gc-position-selected-container'
+                                            style={{ alignItems: item.justify === 'left' ? 'flex-start' : item.justify === 'right' ? 'flex-end' : 'center' }}>
+                                            <div className='gc-position-selected-item' style={{ width: '70%' }} />
+                                            <div className='gc-position-selected-item' style={{ width: '100%', margin: '3px 0' }} />
+                                            <div className='gc-position-selected-item' style={{ width: '30%' }} />
+                                        </div>
+                                    ) : (
+                                        <div style={{ height: 5, aspectRatio: '1', borderRadius: '50%', backgroundColor: '#d9d9d9' }} />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         ),
         fecha: (
@@ -259,14 +364,16 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, savedId, onSave, 
 
             {/* Mini header */}
             <div className='pm-mobile-header'>
-                <div className='pm-mobile-header-left'>
-                    <img src={logoBlue} alt='I attend' className='pm-mobile-header-logo' />
-                    <div className='pm-header-chip'>
-                        <Eye size={12} strokeWidth={1.8} />
-                        <span>{sessionName ?? 'sin cuenta'}</span>
-                    </div>
+                <div className='pm-header-chip'>
+                    <Eye size={12} strokeWidth={1.8} />
+                    <span>{sessionName ?? 'sin cuenta'}</span>
                 </div>
-                <Button icon={<Bookmark size={14} />} style={{ borderRadius: 99 }} onClick={onSave} loading={saving}>
+                <Button
+                    icon={<Bookmark size={14} />}
+                    onClick={onSave}
+                    loading={saving}
+                    className='pm-header-save-btn'
+                >
                     Guardar
                 </Button>
             </div>
@@ -279,41 +386,38 @@ export const PreviewMoodMobile = ({ invitation, setInvitation, savedId, onSave, 
                 <ReactHost config={invitation} onHide={onHide} screens={true} />
             </div>
 
-            {/* Chips bar */}
-            <div className='pm-mobile-chips-bar'>
+            {/* Floating tools — vertical, right side */}
+            <div className='pm-tools-float'>
                 {CHIPS.map(chip => (
                     <button
                         key={chip.key}
-                        className={`pm-chip${activeChip === chip.key ? ' pm-chip--active' : ''}`}
+                        className={`pm-tool-btn${activeChip === chip.key ? ' pm-tool-btn--active' : ''}`}
+                        title={chip.label}
                         onClick={() => setActiveChip(prev => prev === chip.key ? null : chip.key)}
                     >
                         {chip.icon}
-                        <span>{chip.label}</span>
                     </button>
                 ))}
             </div>
 
-            {/* Swipe hint + CTA */}
-            <div className='pm-mobile-cta-area'>
+            {/* Fixed CTA */}
+            <div className='pm-cta-fixed'>
                 <Button
-                    type="text"
-                    // className='primarybutton'
-                    icon={<ArrowUp size={14} strokeWidth={2.5} />}
-                    style={{ borderRadius: 99, textDecoration: 'underline', fontSize: 14,}}
-                    onClick={() => setShowUpsell(true)}
-                >
-                    Descubre todo lo que hay en I attend
-                </Button>
-                <Button
-                    // type='primary'
                     block
                     className='primarybutton--active'
                     size='large'
-                    icon={<ArrowRight size={16}/>} 
+                    icon={<ArrowRight size={16} />}
                     style={{ borderRadius: 16, height: 52, fontSize: 16, fontWeight: 700 }}
                     onClick={onPublish}
                 >
                     Quiero mi invitación
+                </Button>
+            </div>
+
+            {/* Footer strip */}
+            <div className='pm-mobile-footer-strip'>
+                <Button icon={<ArrowUp size={14}/>} type='text' className='pm-footer-strip-label' onClick={() => setShowUpsell(true)}>
+                    Descubre todo lo que hay en i attend
                 </Button>
             </div>
 
