@@ -11,7 +11,7 @@
   overflow-x: hidden;
 
   position: relative;
-  background: #0c171b;
+  background: #7093B0;
   padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
@@ -21,7 +21,7 @@
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: #0c171b url('https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/field.jpg') center center / cover no-repeat;
+  background: #7093B0 url('https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/field.jpg') center center / cover no-repeat;
 }
 
 .login-video {

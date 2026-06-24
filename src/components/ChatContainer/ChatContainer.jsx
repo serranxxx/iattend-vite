@@ -193,6 +193,22 @@ export const ChatContainer = () => {
         return () => document.removeEventListener('mousedown', onClickOutside)
     }, [open, handleToggle])
 
+    useEffect(() => {
+        const isMob = window.innerWidth <= MOBILE_BP
+        if (!isMob) return
+        if (open) {
+            document.body.style.overflow = 'hidden'
+            document.documentElement.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = ''
+            document.documentElement.style.overflow = ''
+        }
+        return () => {
+            document.body.style.overflow = ''
+            document.documentElement.style.overflow = ''
+        }
+    }, [open])
+
     if (!id) return null
 
     const latestNotif = notifications[notifications.length - 1]
@@ -209,9 +225,11 @@ export const ChatContainer = () => {
             ref={containerRef}
             className={`chat-morph-shell chat-morph-shell--${morphState}${snapping ? ' chat-morph-shell--snapping' : ''}`}
             style={isMobileOpen ? {
-                left: '5%',
-                bottom: '1.5%',
-                top: 'auto',
+                inset: 0,
+                width: '100vw',
+                height: '100dvh',
+                borderRadius: 0,
+                transform: 'none',
             } : {
                 left: pos.x - 12,
                 top: pos.y - 12,

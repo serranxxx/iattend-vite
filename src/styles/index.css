@@ -59,6 +59,22 @@
 }
 
 @font-face {
+  font-family: 'Denver-Serial';
+  src: url('/assets/fonts/fonnts.com-denver_serial-bolditalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Europa Grotesk';
+  src: url('/assets/fonts/europa-grotesk-sh-bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Europa Grotesk SH';
   src: url('/assets/fonts/europa-grotesk-sh-bold.otf') format('opentype');
   font-weight: 700;

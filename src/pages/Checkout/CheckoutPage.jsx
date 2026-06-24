@@ -164,7 +164,7 @@ export const CheckoutPage = () => {
             alignItems: isMobile ? 'flex-start' : 'center',
             justifyContent: 'center',
             padding: isMobile ? '24px 0 120px' : '0 0 120px',
-            background: 'var(--dark-blue-500)',
+            background: '#7093B0',
         }}>
             {contextHolder}
 

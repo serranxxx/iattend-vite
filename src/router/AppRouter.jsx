@@ -6,7 +6,10 @@ import { DashboardRealtimeProvider } from '../context/DashboardRealtimeContext'
 
 const DashboardChat = () => {
   const { pathname } = useLocation()
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
   if (!pathname.startsWith('/dashboard')) return null
+  if (isMobile && pathname === '/dashboard/build') return null
   return <ChatContainer />
 }
 
