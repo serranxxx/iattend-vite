@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { AuthModal } from '../PreviewMood/AuthModal'
 import { fetchPrices, PRODUCTS } from '../../components/Payment/functions'
+import { FooterApp } from '../../modules/Footer/FooterApp'
 
 const API = import.meta.env.VITE_API_URL
 const PREVIEW_ID = '3cb0ab8b-41cb-428d-b383-ff9d5bbae17d'
@@ -97,7 +98,7 @@ export const CheckoutPage = () => {
         const el = videoRefs.current[activeIdx]
         if (!el) return
         el.currentTime = 0
-        const tryPlay = () => el.play().catch(() => {})
+        const tryPlay = () => el.play().catch(() => { })
         if (el.readyState >= 3) tryPlay()
         else el.addEventListener('canplay', tryPlay, { once: true })
     }, [activeIdx])
@@ -117,7 +118,7 @@ export const CheckoutPage = () => {
     const planPrices = prices.filter(p => {
         if (p.priceId === 'price_1TlC4RAAdNlITNVbjcRtexSy') return;
         const product = PRODUCTS[p.priceId]
-        return product?.type === 'plan' && product?.value !== 'paperless' 
+        return product?.type === 'plan' && product?.value !== 'paperless'
     })
 
     const selectedEntry = planPrices.find(p => PRODUCTS[p.priceId]?.value === selected)
@@ -156,192 +157,197 @@ export const CheckoutPage = () => {
     }
 
     return (
-        <div style={{
-            minHeight: '100dvh',
-            overflow: isMobile ? 'auto' : 'hidden',
-            position: 'relative',
-            display: 'flex',
-            alignItems: isMobile ? 'flex-start' : 'center',
-            justifyContent: 'center',
-            padding: isMobile ? '24px 0 120px' : '0 0 120px',
-            background: '#7093B0',
-        }}>
-            {contextHolder}
-
-            {/* ── Video background ── */}
-            <div style={{ position: isMobile ? 'fixed' : 'absolute', inset: 0, zIndex: 0, background: '#0c171b' }}>
-                {VIDEOS.map((src, i) => (
-                    <video
-                        key={src}
-                        ref={el => { videoRefs.current[i] = el }}
-                        src={src}
-                        muted
-                        playsInline
-                        autoPlay
-                        preload="auto"
-                        className={`login-video${i === activeIdx ? ' login-video--active' : ''}`}
-                    />
-                ))}
-                <div className='login-video-overlay' />
-            </div>
-
-            {/* ── Card ── */}
+        <>
             <div style={{
-                position: 'relative', zIndex: 1,
-                width: '100%', maxWidth: 480,
-                margin: '0 16px',
-                ...(isMobile ? {} : { maxHeight: 'calc(100dvh - 48px)' }),
-                background: 'rgba(255,255,255,0.06)',
-                backdropFilter: 'blur(8px) saturate(1.3)',
-                WebkitBackdropFilter: 'blur(32px) saturate(1.3)',
-                border: `1px solid ${TEXT_FAINT}`,
-                borderRadius: 24,
+                // minHeight: '100dvh',
+                overflow: isMobile ? 'auto' : 'hidden',
+                position: 'relative',
                 display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                transform: isMobile ? 'scale(0.89)' : undefined,
-                marginTop: isMobile ? '-30px' : undefined
+                alignItems: isMobile ? 'center' : 'center',
+                justifyContent: 'center',
+                padding: isMobile ? '24px 0 120px' : '0 0 120px',
+                background: '#7093B0',
             }}>
+                {contextHolder}
 
-                {/* Scrollable content */}
-                <div style={{
-                    ...(isMobile ? {} : { flex: 1, overflowY: 'auto' }),
-                    padding: '32px 28px 0',
-                    scrollbarWidth: 'none', msOverflowStyle: 'none',
-                }}>
-
-                    <h1 style={{
-                        fontSize: isMobile ? 38 : 58, fontWeight: 800, color: TEXT,
-                        fontFamily: 'Denver-Serial', textAlign:'center',
-                        margin: '0', lineHeight: 1.1,
-                    }}>
-                        TU EVENTO,
-                    </h1>
-                    <h1 style={{
-                        fontSize: isMobile ? 30 : 44, fontWeight: 800, color: TEXT,
-                        fontFamily: 'Denver-Serial',textAlign:'center',
-                        margin: '0px 0px', lineHeight: 1.1,
-                    }}>
-                        BAJO CONTROL
-                    </h1>
-                    <h1 style={{
-                        fontSize: isMobile ? 18 : 22, fontWeight: 500, color: TEXT,
-                        fontFamily: 'Michigan Signature',textAlign:'center',
-                        margin: '0 0 24px', lineHeight: 1,
-                        marginTop:'16px'
-                    }}>
-                        En menos de una tarde
-                    </h1>
-
-                    {/* Plan tabs */}
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-                        {planPrices.map(p => {
-                            const planValue = PRODUCTS[p.priceId]?.value
-                            if (!planValue) return null
-                            const isSelected = selected === planValue
-                            const planName = planValue === 'pro' ? 'Plan Pro' : 'Plan Lite'
-                            return (
-                                <button
-                                    key={p.priceId}
-                                    onClick={() => setSelected(planValue)}
-                                    style={{
-                                        flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
-                                        fontWeight: 600, fontSize: 14,
-                                        fontFamily: 'Luxora Grotesk',
-                                        border: isSelected
-                                            ? '2px solid rgba(210,191,221,0.8)'
-                                            : `1.5px solid ${TEXT_FAINT}`,
-                                        background: isSelected
-                                            ? 'rgba(210,191,221,0.18)'
-                                            : 'rgba(239,234,223,0.05)',
-                                        color: isSelected ? TEXT : TEXT_DIM,
-                                        transition: 'all 0.15s',
-                                    }}
-                                >
-                                    {planName}
-                                </button>
-                            )
-                        })}
-                    </div>
-
-                    {/* Checklist */}
-                    <SectionLabel>Tu invitación</SectionLabel>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
-                        <CheckItem label='Portada de invitación' />
-                        <CheckItem label='Dresscode' />
-                        <CheckItem label='Itinerario' />
-                        <CheckItem label='Mesa de regalos' />
-                        <CheckItem label='Galería de fotos' />
-                    </div>
-
-                    <SectionLabel>Gestión del evento</SectionLabel>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
-                        <CheckItem label='Lista de invitados' />
-                        <CheckItem label='Acomodo de mesas' />
-                        <CheckItem label={selected === 'pro' ? '3 Side events' : '1 Side event'} />
-                        {selected === 'pro' && (
-                            <>
-                                <CheckItem label='Photo Wall' />
-                                <CheckItem label='Envíos por WhatsApp' />
-                                <CheckItem label='Pases en Apple Wallet' />
-                                <CheckItem label='Lia · asistente IA' />
-                            </>
-                        )}
-                    </div>
-
-                    <div style={{ height: 24 }} />
+                {/* ── Video background ── */}
+                <div style={{ position: isMobile ? 'fixed' : 'absolute', inset: 0, zIndex: 0, background: '#0c171b' }}>
+                    {VIDEOS.map((src, i) => (
+                        <video
+                            key={src}
+                            ref={el => { videoRefs.current[i] = el }}
+                            src={src}
+                            muted
+                            playsInline
+                            autoPlay
+                            preload="auto"
+                            className={`login-video${i === activeIdx ? ' login-video--active' : ''}`}
+                        />
+                    ))}
+                    <div className='login-video-overlay' />
                 </div>
 
-                {/* Sticky bottom */}
+                {/* ── Card ── */}
                 <div style={{
-                    padding: '16px 28px 28px',
-                    borderTop: `1px solid ${TEXT_FAINT}`,
-                    background: 'rgba(0,0,0,0.15)',
+                    position: 'relative', zIndex: 1,
+                    width: '100%', maxWidth: 480,
+                    margin: '0 16px',
+                    ...(isMobile ? {} : { maxHeight: 'calc(100dvh - 48px)' }),
+                    background: 'rgba(255,255,255,0.06)',
+                    backdropFilter: 'blur(8px) saturate(1.3)',
+                    WebkitBackdropFilter: 'blur(32px) saturate(1.3)',
+                    border: `1px solid ${TEXT_FAINT}`,
+                    borderRadius: 24,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    transform: isMobile ? 'scale(0.89)' : undefined,
+                    marginTop: isMobile ? '-30px' : undefined
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <span style={{ fontSize: 15, fontWeight: 500, color: TEXT_DIM, fontFamily: 'Luxora Grotesk' }}>
-                            {selected === 'pro' ? 'Plan Pro' : 'Plan Lite'}
-                        </span>
-                        <span style={{ fontSize: 28, fontWeight: 800, color: TEXT, fontFamily: 'Windsor', lineHeight: 1 }}>
-                            {selectedPriceFormatted}
-                        </span>
-                    </div>
-                    <span style={{ fontSize: 12, color: TEXT_DIM, display: 'block', marginBottom: 14, fontFamily: 'Luxora Grotesk' }}>
-                        Pago único · activa para siempre
-                    </span>
 
-                    <button
-                        disabled={planPrices.length === 0 || loading}
-                        onClick={executePurchase}
-                        style={{
-                            width: '100%', height: 50, borderRadius: 12,
-                            background: loading || planPrices.length === 0 ? 'rgba(239,234,223,0.4)' : TEXT,
-                            color: '#0c171b',
-                            border: 'none', cursor: planPrices.length === 0 ? 'not-allowed' : 'pointer',
-                            fontSize: 16, fontWeight: 800, fontFamily: 'Windsor',
-                            letterSpacing: 0.5,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                            transition: 'opacity 0.2s',
-                        }}
-                    >
-                        <ShoppingCart size={16} />
-                        {loading ? 'Procesando...' : `Comprar · ${selectedPriceFormatted}`}
-                    </button>
+                    {/* Scrollable content */}
+                    <div style={{
+                        ...(isMobile ? {} : { flex: 1, overflowY: 'auto' }),
+                        padding: '32px 28px 0',
+                        scrollbarWidth: 'none', msOverflowStyle: 'none',
+                    }}>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 10, color: TEXT_DIM }}>
-                        <Shield size={13} />
-                        <span style={{ fontSize: 12, fontFamily: 'Luxora Grotesk' }}>Pago seguro con Stripe</span>
+                        <h1 style={{
+                            fontSize: isMobile ? 38 : 58, fontWeight: 800, color: TEXT,
+                            fontFamily: 'Denver-Serial', textAlign: 'center',
+                            margin: '0', lineHeight: 1.1,
+                        }}>
+                            TU EVENTO,
+                        </h1>
+                        <h1 style={{
+                            fontSize: isMobile ? 30 : 44, fontWeight: 800, color: TEXT,
+                            fontFamily: 'Denver-Serial', textAlign: 'center',
+                            margin: '0px 0px', lineHeight: 1.1,
+                        }}>
+                            BAJO CONTROL
+                        </h1>
+                        <h1 style={{
+                            fontSize: isMobile ? 18 : 22, fontWeight: 500, color: TEXT,
+                            fontFamily: 'Michigan Signature', textAlign: 'center',
+                            margin: '0 0 24px', lineHeight: 1,
+                            marginTop: '16px'
+                        }}>
+                            En menos de una tarde
+                        </h1>
+
+                        {/* Plan tabs */}
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+                            {planPrices.map(p => {
+                                const planValue = PRODUCTS[p.priceId]?.value
+                                if (!planValue) return null
+                                const isSelected = selected === planValue
+                                const planName = planValue === 'pro' ? 'Plan Pro' : 'Plan Lite'
+                                return (
+                                    <button
+                                        key={p.priceId}
+                                        onClick={() => setSelected(planValue)}
+                                        style={{
+                                            flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                                            fontWeight: 600, fontSize: 14,
+                                            fontFamily: 'Luxora Grotesk',
+                                            border: isSelected
+                                                ? '2px solid rgba(210,191,221,0.8)'
+                                                : `1.5px solid ${TEXT_FAINT}`,
+                                            background: isSelected
+                                                ? 'rgba(210,191,221,0.18)'
+                                                : 'rgba(239,234,223,0.05)',
+                                            color: isSelected ? TEXT : TEXT_DIM,
+                                            transition: 'all 0.15s',
+                                        }}
+                                    >
+                                        {planName}
+                                    </button>
+                                )
+                            })}
+                        </div>
+
+                        {/* Checklist */}
+                        <SectionLabel>Tu invitación</SectionLabel>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
+                            <CheckItem label='Portada de invitación' />
+                            <CheckItem label='Dresscode' />
+                            <CheckItem label='Itinerario' />
+                            <CheckItem label='Mesa de regalos' />
+                            <CheckItem label='Galería de fotos' />
+                        </div>
+
+                        <SectionLabel>Gestión del evento</SectionLabel>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
+                            <CheckItem label='Lista de invitados' />
+                            <CheckItem label='Acomodo de mesas' />
+                            <CheckItem label={selected === 'pro' ? '3 Side events' : '1 Side event'} />
+                            {selected === 'pro' && (
+                                <>
+                                    <CheckItem label='Photo Wall' />
+                                    <CheckItem label='Envíos por WhatsApp' />
+                                    <CheckItem label='Pases en Apple Wallet' />
+                                    <CheckItem label='Lia · asistente IA' />
+                                </>
+                            )}
+                        </div>
+
+                        <div style={{ height: 24 }} />
                     </div>
+
+                    {/* Sticky bottom */}
+                    <div style={{
+                        padding: '16px 28px 28px',
+                        borderTop: `1px solid ${TEXT_FAINT}`,
+                        background: 'rgba(0,0,0,0.15)',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                            <span style={{ fontSize: 15, fontWeight: 500, color: TEXT_DIM, fontFamily: 'Luxora Grotesk' }}>
+                                {selected === 'pro' ? 'Plan Pro' : 'Plan Lite'}
+                            </span>
+                            <span style={{ fontSize: 28, fontWeight: 800, color: TEXT, fontFamily: 'Windsor', lineHeight: 1 }}>
+                                {selectedPriceFormatted}
+                            </span>
+                        </div>
+                        <span style={{ fontSize: 12, color: TEXT_DIM, display: 'block', marginBottom: 14, fontFamily: 'Luxora Grotesk' }}>
+                            Pago único · activa para siempre
+                        </span>
+
+                        <button
+                            disabled={planPrices.length === 0 || loading}
+                            onClick={executePurchase}
+                            style={{
+                                width: '100%', height: 50, borderRadius: 12,
+                                background: loading || planPrices.length === 0 ? 'rgba(239,234,223,0.4)' : TEXT,
+                                color: '#0c171b',
+                                border: 'none', cursor: planPrices.length === 0 ? 'not-allowed' : 'pointer',
+                                fontSize: 16, fontWeight: 800, fontFamily: 'Windsor',
+                                letterSpacing: 0.5,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                transition: 'opacity 0.2s',
+                            }}
+                        >
+                            <ShoppingCart size={16} />
+                            {loading ? 'Procesando...' : `Comprar · ${selectedPriceFormatted}`}
+                        </button>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 10, color: TEXT_DIM }}>
+                            <Shield size={13} />
+                            <span style={{ fontSize: 12, fontFamily: 'Luxora Grotesk' }}>Pago seguro con Stripe</span>
+                        </div>
+                    </div>
+
                 </div>
+
+                <AuthModal
+                    open={authOpen}
+                    onClose={() => setAuthOpen(false)}
+                    onSuccess={() => setAuthOpen(false)}
+                    context='publish'
+                />
+
 
             </div>
-
-            <AuthModal
-                open={authOpen}
-                onClose={() => setAuthOpen(false)}
-                onSuccess={() => setAuthOpen(false)}
-                context='publish'
-            />
-        </div>
+            <FooterApp></FooterApp>
+        </>
     )
 }
