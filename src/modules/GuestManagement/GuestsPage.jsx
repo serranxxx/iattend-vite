@@ -1529,7 +1529,7 @@ export default function GuestsPage() {
 
         // console.log('update credits: ', updateCredits)
 
-        setCredits(updateCredits[0].credits ?? credits)
+        setCredits(updateCredits?.[0]?.credits ?? newCredits)
 
         // console.log('Créditos actualizados correctamente:', newCredits)
     }
