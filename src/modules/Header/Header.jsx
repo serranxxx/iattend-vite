@@ -1,5 +1,6 @@
 
 import { Badge, Breadcrumb, Button, Divider, Dropdown, Grid, Input, Popconfirm, Select, Space, Tooltip, message } from "antd"
+import axios from "axios"
 import logoBlue from '/images/logo_blue.png'
 import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
@@ -311,16 +312,21 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         if (showSections.owners) updates.owners = draftOwners
 
         setPendingSaving(true)
-        const { error } = await supabase.from('invitations').update(updates).eq('id', id)
-        setPendingSaving(false)
+        try {
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/invitation/update-fields`, { id, ...updates })
 
-        if (error) return messageApi.error('Error al guardar')
-        if (updates.name) setName(updates.name)
-        if (updates.phone_number) setInvPhone(updates.phone_number)
-        if (updates.label) setInvLabel(updates.label)
-        if (updates.owners !== undefined) setInvOwners(updates.owners)
-        messageApi.success('Información guardada')
-        setPendingOpen(false)
+            if (updates.name) setName(updates.name)
+            if (updates.phone_number) setInvPhone(updates.phone_number)
+            if (updates.label) setInvLabel(updates.label)
+            if (updates.owners !== undefined) setInvOwners(updates.owners)
+            messageApi.success('Información guardada')
+            setPendingOpen(false)
+        } catch (error) {
+            console.error('Error al guardar información pendiente:', error.response?.data || error.message)
+            messageApi.error('Error al guardar')
+        } finally {
+            setPendingSaving(false)
+        }
     }
 
     const calculateUnAnswer = (convs) => {
@@ -369,19 +375,13 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     }, [navigate]);
 
     const updateURLimage = async (e) => {
-
-        const { error } = await supabase
-            .from('invitations')
-            .update({ url_image: e })
-            .eq("id", id)
-
-
-        if (error) {
-            console.error('Error actualizando:', error)
-        } else {
+        try {
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/invitation/update-fields`, { id, url_image: e })
             message.success('Imagen actualizada')
             setUrlImage(e)
-
+        } catch (error) {
+            console.error('Error actualizando:', error.response?.data || error.message)
+            message.error('Error al actualizar imagen')
         }
     };
 
