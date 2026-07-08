@@ -753,7 +753,9 @@
     "placeholder_instance_desc": "What is this instance about?",
     "btn_delete_instance": "Delete instance",
     "tooltip_delete": "Delete moment",
-    "tooltip_edit_icon": "Edit icon"
+    "tooltip_edit_icon": "Edit icon",
+    "tab_icons": "Icons",
+    "tab_images": "Images"
   },
   "build_dresscode": {
     "title": "Dresscode",

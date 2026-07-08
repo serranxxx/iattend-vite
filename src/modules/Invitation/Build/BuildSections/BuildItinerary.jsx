@@ -1,10 +1,11 @@
-import { Button, Drawer, Dropdown, Input, InputNumber, Row, Switch, TimePicker, Tooltip, } from 'antd'
+import { Button, Drawer, Dropdown, Input, InputNumber, Switch, TimePicker, Tooltip, } from 'antd'
 import { useTranslation } from 'react-i18next'
 import React, { useEffect, useState, useRef, } from 'react'
 import dayjs from 'dayjs';
 import { LuArrowUpRight, LuBadgeHelp, LuImage, LuX, } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { IconsModal } from '../../../../components/Helpers/IconsModal';
+import { IconsImagesPicker } from '../../../../components/Helpers/IconsImagesPicker';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer'
 import { HowToDrawer } from '../../../../components/Helpers/HowToDrawer'
 import { iconsItinerary } from '../../../../helpers/services/menuIcons';
@@ -511,6 +512,9 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
     }
 
     const renderIcon = (index, size) => {
+        if (typeof index === 'string') {
+            return <img src={index} alt='' style={{ width: size, height: size, minWidth: size, objectFit: 'contain' }} />;
+        }
         const icon = iconsItinerary.find(icon => icon.index === index);
         if (icon) {
             const IconComponent = icon.value;
@@ -568,18 +572,11 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                         arrow
                         placement='bottomRight'
                         popupRender={() => (
-                            <Row className='gc-icons-modal-container'>
-                                {iconsItinerary.map((icon, idx) => (
-                                    <Button
-                                        id={`gc-cta-buttons${icon.index === currentIcon ? '--selected' : ''}`}
-                                        className='gc-icons-modal-icon'
-                                        type='text'
-                                        onClick={() => handleIcon(icon.index, item.id)}
-                                        key={idx}
-                                        icon={<icon.value size={20} />}
-                                    />
-                                ))}
-                            </Row>
+                            <IconsImagesPicker
+                                currentIcon={currentIcon}
+                                onSelectIcon={(index) => handleIcon(index, item.id)}
+                                onSelectImage={(path) => handleIcon(path, item.id)}
+                            />
                         )}>
                         <Button className='primarybutton' style={{ maxWidth: '32px', backgroundColor: '#FFF', border: '1px solid var(--borders)' }}>
                             {renderIcon(item.icon, 18)}
@@ -827,7 +824,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                         {
                             invitation.itinerary.active ?
                                 <div className='build-component-elements'>
-                                    {invitation.itinerary.object.map((item, index) => (
+                                    {invitation.itinerary.object.map((item) => (
                                         <div
                                             key={item.id}
                                             className={`generl-card-color-item ${!currentItem && 'general-hover-card'}`}
@@ -874,18 +871,11 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                         <Tooltip title={t('build_itinerary.tooltip_edit_icon')}>
                                                                             <Dropdown
                                                                                 popupRender={() => (
-                                                                                    <Row className='gc-icons-modal-container'>
-                                                                                        {iconsItinerary.map((icon, index) => (
-                                                                                            <Button
-                                                                                                id={`gc-cta-buttons${icon.index === currentIcon ? '--selected' : ''}`}
-                                                                                                className='gc-icons-modal-icon'
-                                                                                                type='text'
-                                                                                                onClick={() => handleIcon(icon.index, item.id)}
-                                                                                                key={index}
-                                                                                                icon={<icon.value size={20} />}
-                                                                                            />
-                                                                                        ))}
-                                                                                    </Row>
+                                                                                    <IconsImagesPicker
+                                                                                        currentIcon={currentIcon}
+                                                                                        onSelectIcon={(index) => handleIcon(index, item.id)}
+                                                                                        onSelectImage={(path) => handleIcon(path, item.id)}
+                                                                                    />
                                                                                 )}
                                                                             >
                                                                                 <Button className='primarybutton' style={{ maxWidth: '32px', backgroundColor: '#FFF', border: '1px solid var(--borders)' }}>
