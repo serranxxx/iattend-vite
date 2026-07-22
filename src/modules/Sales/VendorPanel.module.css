@@ -1,0 +1,323 @@
+.wrapper {
+  min-height: 100vh;
+  background: #FFF;
+  padding: 20px 16px 40px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 99px;
+  background: var(--mid-blue-500);
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.greeting {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.logoutBtn {
+  background: transparent;
+  border: none;
+  color: var(--gray-color);
+  cursor: pointer;
+  padding: 6px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.statCard {
+  background: var(--sc-color-80);
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.statLabel {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  color: var(--gray-color);
+}
+
+.statValue {
+  font-family: 'Poppins', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--mid-blue-500);
+  margin-top: 4px;
+}
+
+.paymentBox {
+  background: var(--sc-color-80);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.paymentTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 6px;
+  user-select: none;
+}
+
+.paymentBody {
+  overflow: hidden;
+  max-height: 400px;
+  opacity: 1;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+
+.paymentBodyClosed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.paymentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.paymentRowText {
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.paymentRowLabel {
+  font-family: 'Poppins', sans-serif;
+  font-size: 10px;
+  color: var(--gray-color);
+}
+
+.paymentValue {
+  font-family: 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--text-color);
+}
+
+.paymentLink {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: var(--info-color-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  background: #fff;
+  border: 0.5px solid var(--light-purple-500);
+  color: #4a2f57;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+
+.copyBankBtn {
+  width: 100%;
+  background: var(--light-purple-500);
+  color: #4a2f57;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 9px;
+  border-radius: 99px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.newSaleBtn {
+  background: var(--light-purple-500) !important;
+  color: #4a2f57 !important;
+  border: none !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: 99px !important;
+  height: 32px !important;
+  padding: 0 14px !important;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.listLabel {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: var(--gray-color);
+  white-space: nowrap;
+}
+
+.listFilters {
+  display: flex;
+  gap: 6px;
+}
+
+.switchFilter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.switchLabel {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  color: var(--gray-color);
+  white-space: nowrap;
+}
+
+.filterSelect {
+  min-width: 80px;
+}
+
+.filterSelect :global(.ant-select-selector) {
+  border-radius: 99px !important;
+  height: 28px !important;
+  align-items: center !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 11px !important;
+  padding: 0 10px !important;
+}
+
+.filterSelect :global(.ant-select-arrow) {
+  display: none !important;
+}
+
+.empty {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: var(--gray-color);
+  padding: 16px 0;
+  text-align: center;
+}
+
+.ventaList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ventaCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #fff;
+  border: 0.5px solid var(--borders);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ventaCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ventaCardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ventaEvento {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.ventaMeta {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  color: var(--gray-color);
+}
+
+.ventaSaldo {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  color: var(--gray-color);
+}
+
+.ventaDate {
+  font-family: 'Poppins', sans-serif;
+  font-size: 10px;
+  color: var(--gray-color);
+  opacity: 0.7;
+}
+
+.statusBadge {
+  font-family: 'Poppins', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: var(--gray-bg);
+  color: var(--gray-color);
+  white-space: nowrap;
+}
+
+.status_completo {
+  background: var(--success-color-100);
+  color: var(--success-color-700);
+}
+
+.status_apartado {
+  background: #FFF6E5;
+  color: #A6720C;
+}
+
+.status_sin_pago {
+  background: var(--danger-color-100);
+  color: var(--danger-color-700);
+}

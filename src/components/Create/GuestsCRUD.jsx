@@ -16,20 +16,12 @@ import { useTranslation } from 'react-i18next'
 import './guests-crud.css'
 import { supabase } from '../../lib/supabase'
 import { FaCheck } from 'react-icons/fa'
-import { generateSimpleId } from '../../helpers/assets/functions'
+import { generateSimpleId, PHONE_CODES, splitPhoneNumber, buildPhoneNumberSafe } from '../../helpers/assets/functions'
 import { IoMdAdd } from 'react-icons/io'
 import { FiMinus } from 'react-icons/fi'
 import { CalculateTier } from './CalculateTier/CalculateTier'
 
 const { useBreakpoint } = Grid
-
-const PHONE_CODES = [
-    { label: '🇺🇸 +1', value: '+1' },
-    { label: '🇬🇧 +44', value: '+44' },
-    { label: '🇫🇷 +33', value: '+33' },
-    { label: '🇲🇽 +52', value: '+52' },
-    { label: '🇪🇸 +34', value: '+34' },
-]
 
 const TIER_OPTIONS = [
     { label: 'A', value: 'A' },
@@ -58,20 +50,6 @@ const createPerson = (overrides = {}) => ({
 
 const pruneUndefined = (obj) =>
     Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined))
-
-const splitPhoneNumber = (fullNumber = '') => {
-    const cleanNumber = String(fullNumber).replace(/\s+/g, '')
-    const number = cleanNumber.slice(-10)
-    const code = cleanNumber.replace(number, '')
-    return { code, number }
-}
-
-const buildPhoneNumberSafe = (code, number) => {
-    const cleanCode = (code ?? '').replace(/[^\d+]/g, '')
-    const cleanNumber = (number ?? '').replace(/\D/g, '')
-    if (!cleanCode || !cleanNumber) return ''
-    return `${cleanCode}${cleanNumber}`
-}
 
 export const GuestsCRUD = ({
     rowData,

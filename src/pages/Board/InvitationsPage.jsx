@@ -13,6 +13,8 @@ import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer
 import { GiftDrawer } from '../../components/Gift/GiftDrawer';
 import { FooterApp } from '../../modules/Footer/FooterApp';
 import { useTranslation } from 'react-i18next';
+import { OnboardingWizard } from '../PreviewMood/OnboardingWizard';
+import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData';
 
 const { Content } = Layout;
 
@@ -39,6 +41,8 @@ export const InvitationsPage = () => {
     const [visible, setVisible] = useState(false)
     const [giftVisible, setGiftVisible] = useState(false)
     const [regalaVisible, setRegalaVisible] = useState(false)
+    const [onboardingOpen, setOnboardingOpen] = useState(false)
+    const { invitation: demoInvitation, buttons: demoButtons, invitationID: demoInvitationID } = useOnboardingDemoData()
 
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -160,7 +164,7 @@ export const InvitationsPage = () => {
                     backgroundColor: 'transparent',
                 }}>
 
-                <HeaderBuild position={'invitations'} isVisible={true} alwaysSolid={true} />
+                <HeaderBuild position={'invitations'} isVisible={true} alwaysSolid={true} onTourClick={() => setOnboardingOpen(true)} />
                 <Layout className='scroll-invitation build-invitation-layout main-dash-layout' style={{
                     maxWidth: '100vw', padding: 0,
                     backgroundColor: 'transparent',
@@ -359,6 +363,13 @@ export const InvitationsPage = () => {
             <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: sessions?.user?.uid, user_email: sessions?.user?.email }} refreshInvitations={getNewInvitations} />
             <RegalaIAttend visible={regalaVisible} onClose={() => setRegalaVisible(false)} />
             <GiftDrawer visible={giftVisible} setVisible={setGiftVisible} />
+            <OnboardingWizard
+                open={onboardingOpen && !!demoInvitation}
+                onClose={() => setOnboardingOpen(false)}
+                invitation={demoInvitation}
+                buttons={demoButtons}
+                invitationID={demoInvitationID}
+            />
             <FooterApp></FooterApp>
 
         </div>

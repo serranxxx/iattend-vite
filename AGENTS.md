@@ -1,4 +1,4 @@
-# CLAUDE.md — iattend-vite
+# AGENTS.md — iattend-vite
 
 ## Qué es este repo
 App del organizador de I attend (los novios, o quien haya comprado la plataforma). Desde aquí se crea y edita la invitación digital, se administran invitados y mesas (con drag & drop), se crean side events, se monitorea el Photo Wall en vivo, se gestionan créditos/pagos (Stripe) y se interactúa con "Lia", el asistente del dashboard.
@@ -99,7 +99,7 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
 - ESLint: `no-unused-vars` permite constantes en MAYÚSCULAS sin usar; las reglas `exhaustive-deps`, `set-state-in-effect` y `preserve-manual-memoization` de `react-hooks` están desactivadas — no asumir que el linter las va a atrapar.
 
 ## Design system
-Existe una skill de proyecto (`.claude/skills/iattend-design-system/`) con los colores, tipografías, radios, sombras y patrones de componentes reales de I attend (marca vs. producto). Se activa automáticamente al construir mockups, pantallas o componentes nuevos — no dupliques esos valores aquí, consulta la skill.
+Existe una skill de proyecto (`.Codex/skills/iattend-design-system/`) con los colores, tipografías, radios, sombras y patrones de componentes reales de I attend (marca vs. producto). Se activa automáticamente al construir mockups, pantallas o componentes nuevos — no dupliques esos valores aquí, consulta la skill.
 
 ## Rutas / páginas principales
 | Ruta | Qué hace | Componente principal |

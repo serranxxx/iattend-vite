@@ -12,7 +12,7 @@ import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { fonts } from '../../helpers/assets/fonts'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
 import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
@@ -23,6 +23,7 @@ import { FiArrowUpRight } from 'react-icons/fi'
 import { CustomLink } from '../../components/CustomLink/CustomLink'
 import { FooterApp } from '../Footer/FooterApp'
 import { useTranslation } from 'react-i18next'
+import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
 
 
 const { Option } = Select;
@@ -65,6 +66,7 @@ export const SideEvents = () => {
     const [mobilePanel, setMobilePanel] = useState(0)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
+    const navigate = useNavigate()
     const { subscribe } = useDashboardRealtime()
     const [drawerState, setDrawerState] = useState({
         currentGuest: null,
@@ -1337,74 +1339,79 @@ export const SideEvents = () => {
                                                         trigger={['click']}
                                                         placement='bottomRight'
                                                         popupRender={() => (
-                                                            <div key={2} className='single_col' style={{
-                                                                boxSizing: 'border-box', backgroundColor: '#FFF', padding: '12px',
-                                                                boxShadow: '0px 0px 12px rgba(0,0,0,0.2)', borderRadius: '16px', gap: '12px',
-                                                                marginTop: '8px', maxWidth:'260px'
-                                                            }}>
-                                                                <Dropdown
-                                                                    key={1}
-                                                                    trigger={['click']}
-                                                                    placement='bottomLeft'
-                                                                    popupRender={() => (
-                                                                        <div key={3} className='side_guest_list'>
-                                                                            <div className='single_row' style={{
-                                                                                alignSelf: 'stretch', justifyContent: 'space-between',
-                                                                                alignItems: 'flex-end'
-                                                                            }}>
-                                                                                <span><b>{t('side_events.import_title')}</b></span>
-                                                                                <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>{t('side_events.import_add')}</Button>
-                                                                            </div>
-                                                                            <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder={t('side_events.import_search')} style={{ borderRadius: '99px' }} />
-                                                                            <div className='single_col scroll-invitation' style={{
-                                                                                alignSelf: 'stretch', gap: '2px',
-                                                                                maxHeight: '480px', overflowY: 'auto', display:'flex',alignItems:'flex-start', justifyContent:'flex-start', flexDirection:'column'
-                                                                            }}>
-                                                                                {
-                                                                                    mainGuests ? mainGuests?.filter(i =>
-                                                                                        i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
-                                                                                            <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
-                                                                                                alignSelf: 'stretch',
-                                                                                                padding: '8px'
-                                                                                            }}>
-                                                                                                {
-                                                                                                    rawData.find(n => n.password === i.password)
-                                                                                                        ? <Checkbox disabled checked />
-                                                                                                        : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
-                                                                                                }
+                                                            <GuestAddTiles
+                                                                plan={plan}
+                                                                // locked={plan !== 'pro'}
+                                                                onIndividual={() => setDrawerState({
+                                                                    currentGuest: null,
+                                                                    onEditGuest: false,
+                                                                    companions: [],
+                                                                    visible: true
+                                                                })}
+                                                                onFile={(file) => navigate(`/dashboard/guests/import?id=${id}&side_events_id=${current?.id}`, { state: { file } })}
+                                                                topExtra={
+                                                                    <Dropdown
+                                                                        key={1}
+                                                                        trigger={['click']}
+                                                                        placement='bottomLeft'
+                                                                        popupRender={() => (
+                                                                            <div key={3} className='side_guest_list'>
+                                                                                <div className='single_row' style={{
+                                                                                    alignSelf: 'stretch', justifyContent: 'space-between',
+                                                                                    alignItems: 'flex-end'
+                                                                                }}>
+                                                                                    <span><b>{t('side_events.import_title')}</b></span>
+                                                                                    <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>{t('side_events.import_add')}</Button>
+                                                                                </div>
+                                                                                <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder={t('side_events.import_search')} style={{ borderRadius: '99px' }} />
+                                                                                <div className='single_col scroll-invitation' style={{
+                                                                                    alignSelf: 'stretch', gap: '2px',
+                                                                                    maxHeight: '480px', overflowY: 'auto', display:'flex',alignItems:'flex-start', justifyContent:'flex-start', flexDirection:'column'
+                                                                                }}>
+                                                                                    {
+                                                                                        mainGuests ? mainGuests?.filter(i =>
+                                                                                            i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
+                                                                                                <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
+                                                                                                    alignSelf: 'stretch',
+                                                                                                    padding: '8px'
+                                                                                                }}>
+                                                                                                    {
+                                                                                                        rawData.find(n => n.password === i.password)
+                                                                                                            ? <Checkbox disabled checked />
+                                                                                                            : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
+                                                                                                    }
 
-                                                                                                <span style={{ minWidth: '130px', flex:1, }}>{truncate(i.name, 20)}</span>
+                                                                                                    <span style={{ minWidth: '130px', flex:1, }}>{truncate(i.name, 20)}</span>
 
-                                                                                                <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px', maxWidth:'60px' }}>
-                                                                                                    <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
+                                                                                                    <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px', maxWidth:'60px' }}>
+                                                                                                        <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
+                                                                                                    </div>
+
+                                                                                                    <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', maxWidth:'80px' }}>
+                                                                                                        <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
+                                                                                                    </div>
+
                                                                                                 </div>
+                                                                                            ))
 
-                                                                                                <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', maxWidth:'80px' }}>
-                                                                                                    <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
-                                                                                                </div>
+                                                                                            : <Spin />
+                                                                                    }
 
-                                                                                            </div>
-                                                                                        ))
-
-                                                                                        : <Spin />
-                                                                                }
-
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    )}
-                                                                >
-                                                                    <Button onClick={getMainGuests} style={{ width: '100%' }} icon={<Copy size={14} />}>{t('side_events.btn_copy_list')}</Button>
-
-                                                                </Dropdown>
-                                                                <Button
-
-                                                                    onClick={() => setDrawerState({
-                                                                        currentGuest: null,
-                                                                        onEditGuest: false,
-                                                                        companions: [],
-                                                                        visible: true
-                                                                    })} style={{ width: '100%' }} icon={<Plus size={14} />}>{t('side_events.btn_new_guest')}</Button>
-                                                            </div>
+                                                                        )}
+                                                                    >
+                                                                        <button type="button" onClick={getMainGuests} className="guest-add-tile guest-add-tile--individual">
+                                                                            <span className="guest-add-tile-icon">
+                                                                                <Copy size={14} />
+                                                                            </span>
+                                                                            <span className="guest-add-tile-text">
+                                                                                <span className="guest-add-tile-title">{t('side_events.btn_copy_list')}</span>
+                                                                            </span>
+                                                                        </button>
+                                                                    </Dropdown>
+                                                                }
+                                                            />
                                                         )}
                                                     >
                                                         <Button className='primarybutton--active' icon={<Plus size={14} />} >{t('side_events.btn_add')}</Button>

@@ -1,13 +1,13 @@
 import logoBlue from '/images/logo_blue.png'
 import { Button } from 'antd'
-import { ArrowRight, ArrowUpRight, Bookmark, Eye, Save, Share2, ShoppingCart } from 'lucide-react'
+import { ArrowRight, ArrowUp, ArrowUpRight, Bookmark, Eye, Save, Share2, ShoppingCart, Wand2 } from 'lucide-react'
 
 const getSessionName = () => {
     try { return JSON.parse(localStorage.getItem('session'))?.user?.name ?? null }
     catch { return null }
 }
 
-export const PreviewMoodHeader = ({ onSave, onPublish, saving }) => {
+export const PreviewMoodHeader = ({ onSave, onPublish, saving, onOpenOnboarding }) => {
     const name = getSessionName()
     const firstName = name?.split(' ')[0] ?? null
     const chipLabel = name ? `Modo preview · ${name}` : 'Modo preview · sin cuenta'
@@ -23,11 +23,16 @@ export const PreviewMoodHeader = ({ onSave, onPublish, saving }) => {
                         <span className='pm-chip-label-desktop'>{chipLabel}</span>
                         <span className='pm-chip-label-mobile'>{chipLabelMobile}</span>
                     </div>
+                    <button type='button' className='pm-header-tour-btn' onClick={onOpenOnboarding}>
+                        <Wand2 size={15} strokeWidth={2} />
+                        Conoce I attend
+                    </button>
                 </div>
                 <div className='pm-header-right'>
-                    <Button icon={<Bookmark size={14} />} className='primarybutton' onClick={onSave} loading={saving}>Guardar mi invitación</Button>
-                    <Button icon={<ArrowRight size={14} />} className='primarybutton--active' onClick={onPublish}>
-                        Quiero mi invitación
+                    
+                    <Button icon={<Bookmark size={14} />} className='primarybutton' onClick={onSave} loading={saving}>Guardar</Button>
+                    <Button icon={<ArrowUp size={14} />} className='primarybutton--active' onClick={onPublish}>
+                        Publicar
                     </Button>
                 </div>
             </div>

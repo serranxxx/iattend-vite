@@ -213,6 +213,28 @@ export function generateSimpleId() {
     return result;
 }
 
+export const PHONE_CODES = [
+    { label: '🇺🇸 +1', value: '+1' },
+    { label: '🇬🇧 +44', value: '+44' },
+    { label: '🇫🇷 +33', value: '+33' },
+    { label: '🇲🇽 +52', value: '+52' },
+    { label: '🇪🇸 +34', value: '+34' },
+]
+
+export const splitPhoneNumber = (fullNumber = '') => {
+    const cleanNumber = String(fullNumber).replace(/\s+/g, '')
+    const number = cleanNumber.slice(-10)
+    const code = cleanNumber.replace(number, '')
+    return { code, number }
+}
+
+export const buildPhoneNumberSafe = (code, number) => {
+    const cleanCode = (code ?? '').replace(/[^\d+]/g, '')
+    const cleanNumber = (number ?? '').replace(/\D/g, '')
+    if (!cleanCode || !cleanNumber) return ''
+    return `${cleanCode}${cleanNumber}`
+}
+
 const key = "AIzaSyBZ8NLpvAl4DiTeE2gYekBqhmSZFx43R0M"
 
 export function simpleaddress(direccion, numero, colonia, codigoPostal, ciudad, estado) {

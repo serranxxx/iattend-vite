@@ -31,12 +31,15 @@ import { DashboardPage } from '../pages/Dashboard/DashboardPage'
 import { PhotoWallPage } from '../pages/Dashboard/PhotoWallPage'
 import { BuildPage } from '../modules/Invitation/Build/PageSections/BuildPage'
 import GuestsPage from '../modules/GuestManagement/GuestsPage'
+import GuestsImportPage from '../modules/GuestManagement/GuestsImportPage'
 import { SideEvents } from '../modules/SideEvents/SideEvents'
 import { Login } from '../components/Auth/Login'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
 import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
+import { SalesApp } from '../modules/Sales/SalesApp'
+import { SalesAdminPage } from '../pages/Admin/SalesAdminPage'
 
 
 
@@ -55,6 +58,7 @@ export const AppRouter = () => {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/dashboard/build" element={<BuildPage />} />
         <Route path="/dashboard/guests" element={<GuestsPage />} />
+        <Route path="/dashboard/guests/import" element={<GuestsImportPage />} />
         <Route path="/dashboard/side" element={<SideEvents />} />
         <Route path="/dashboard/photowall" element={<PhotoWallPage />} />
         <Route path="/dashboard/success" element={<Success />} />
@@ -73,6 +77,15 @@ export const AppRouter = () => {
         element={
           <AdminHOC>
             <AdminPage />
+          </AdminHOC>
+        } />
+
+      <Route path="/sales" element={<SalesApp />} />
+
+      <Route path="/admin/sales"
+        element={
+          <AdminHOC>
+            <SalesAdminPage />
           </AdminHOC>
         } />
 

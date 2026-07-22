@@ -10,10 +10,17 @@ const ALLOWED_ORIGINS = new Set([
 
 
 export default function ReactHost({
-  config, onHide, screens
+  config, onHide, screens, scrollToSection, onSectionChange
 }) {
   const iframeRef = useRef(null);
   const lastSentHashRef = useRef("");
+  const lastSentSectionRef = useRef(null);
+  const lastReceivedSectionRef = useRef(null);
+  const onSectionChangeRef = useRef(onSectionChange);
+
+  useEffect(() => {
+    onSectionChangeRef.current = onSectionChange;
+  }, [onSectionChange]);
 
   // URL del componente remoto: /shared/[invitation_label]/[invitation_name]
   const url = useMemo(() => {
@@ -46,6 +53,17 @@ export default function ReactHost({
     );
   };
 
+  // Función segura para pedir auto-scroll a una sección
+  const postScrollTo = (section) => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win || !section) return;
+
+    win.postMessage(
+      { type: "HOST_SCROLL_TO", payload: { section } },
+      targetOrigin
+    );
+  };
+
   // 1) Handshake: cuando el remoto avisa que está listo, manda la versión actual
   useEffect(() => {
     function onMessage(ev) {
@@ -57,6 +75,11 @@ export default function ReactHost({
       if (ev.data?.type === "REMOTE_REQUEST_LATEST") {
         postProps("request-latest");
       }
+      // El invitado scrolleó dentro del iframe: avisar al builder qué sección quedó activa
+      if (ev.data?.type === "REMOTE_SCROLL_SECTION" && ev.data?.payload?.section) {
+        lastReceivedSectionRef.current = ev.data.payload.section;
+        onSectionChangeRef.current?.(ev.data.payload.section);
+      }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -66,6 +89,21 @@ export default function ReactHost({
   useEffect(() => {
     postProps("config-change");
   }, [config, targetOrigin]);
+
+  // 2b) Pedir auto-scroll cada que cambie la sección activa en el builder
+  useEffect(() => {
+    if (!scrollToSection || scrollToSection === lastSentSectionRef.current) return;
+
+    // Si este valor llegó como eco del propio scroll del invitado, no hay que reenviarlo
+    if (scrollToSection === lastReceivedSectionRef.current) {
+      lastSentSectionRef.current = scrollToSection;
+      lastReceivedSectionRef.current = null;
+      return;
+    }
+
+    lastSentSectionRef.current = scrollToSection;
+    postScrollTo(scrollToSection);
+  }, [scrollToSection, targetOrigin]);
 
   // 3) (Opcional) al cargar/navegar el iframe, vuelve a enviar
   useEffect(() => {

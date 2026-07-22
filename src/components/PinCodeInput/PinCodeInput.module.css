@@ -1,0 +1,36 @@
+.wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.box {
+  width: 40px;
+  height: 48px;
+  border: 0.5px solid var(--borders);
+  border-radius: 12px;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-color);
+  background: #fff;
+}
+
+.box:focus {
+  outline: none;
+  border-color: var(--light-purple-500);
+}
+
+.dash {
+  width: 8px;
+  height: 1.5px;
+  background: var(--borders);
+  border-radius: 1px;
+}

@@ -103,6 +103,53 @@
     opacity: 0.8;
 }
 
+/* ── Tour CTA ("Conoce I attend") ──────────────────────── */
+.hb-tour-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 36px;
+    margin-left: 10px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 99px;
+    background: var(--light-green-500);
+    color: #1c3249;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Luxora Grotesk', var(--font-family);
+    cursor: pointer;
+    flex-shrink: 0;
+    animation: hb-tour-pulse 2.4s ease-out infinite, hb-tour-breathe 2.4s ease-in-out infinite;
+    transition: background 0.18s ease;
+}
+
+.hb-tour-btn:hover {
+    background: #bdd19c;
+    animation-play-state: paused;
+}
+
+@keyframes hb-tour-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(170, 193, 135, 0.55);
+    }
+    60% {
+        box-shadow: 0 0 0 9px rgba(170, 193, 135, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(170, 193, 135, 0);
+    }
+}
+
+@keyframes hb-tour-breathe {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.045);
+    }
+}
+
 /* ── Non-fixed (absolute at top) ──────────────────────── */
 .hb-relative {
     position: absolute !important;

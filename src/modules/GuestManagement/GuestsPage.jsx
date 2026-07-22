@@ -25,9 +25,10 @@ import { Grid } from "antd";
 import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
+import { GuestAddTiles } from './GuestAddTiles';
 import { useTranslation } from 'react-i18next';
 import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
 import { useLia } from '../../context/LiaContext';
@@ -87,6 +88,7 @@ export default function GuestsPage() {
     const [activeKey, setActiveKey] = useState('confirmado');
     const [invitation, setInvitation] = useState(null)
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [name, setName] = useState(null)
     const id = searchParams.get("id");
     const [messagesDispatch, setMessagesDispatch] = useState([])
@@ -2167,16 +2169,27 @@ export default function GuestsPage() {
                                 {
                                     !screens.xs &&
 
-                                    <Button
-                                        icon={<Plus size={14} />}
-                                        className='primarybutton--active' onClick={() => setDrawerState({
-                                            currentGuest: null,
-                                            onEditGuest: false,
-                                            companions: [],
-                                            visible: true
-                                        })}>
-                                        {t('guests.btn_new_guest')}
-                                    </Button>
+                                    <Dropdown
+                                        // trigger={['click']}
+                                        popupRender={() => (
+                                            <GuestAddTiles
+                                                plan={plan}
+                                                onIndividual={() => setDrawerState({
+                                                    currentGuest: null,
+                                                    onEditGuest: false,
+                                                    companions: [],
+                                                    visible: true
+                                                })}
+                                                onFile={(file) => navigate(`/dashboard/guests/import?id=${id}`, { state: { file } })}
+                                            />
+                                        )}
+                                    >
+                                        <Button
+                                            icon={<Plus size={14} />}
+                                            className='primarybutton--active'>
+                                            {t('guests.btn_new_guest')}
+                                        </Button>
+                                    </Dropdown>
 
                                 }
 

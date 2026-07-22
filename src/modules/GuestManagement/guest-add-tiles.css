@@ -1,0 +1,117 @@
+.guest-add-tiles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 260px;
+    padding: 4px;
+    background-color: #FFF;
+    padding: 8px;
+    box-sizing: border-box;
+    border-radius: 16px;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+}
+
+.guest-add-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #FFFFFF;
+    border: 1px solid var(--borders, #EBEBEB);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+.guest-add-tile--individual:hover {
+    border-color: #D9D9D9;
+    background: #FAFAFA;
+}
+
+.guest-add-tile-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    background: var(--gray-bg, #F1F1F1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color, #29262D);
+}
+
+.guest-add-tile-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.guest-add-tile-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-color, #29262D);
+}
+
+.guest-add-tile-sub {
+    font-size: 11px;
+    color: var(--gray-color, #787878);
+}
+
+.guest-add-tile--excel {
+    position: relative;
+    border: 1.5px dashed #C9B8F5;
+    background: #EFEAFF;
+    padding: 14px 12px;
+    /* min-height: 100px; */
+}
+
+.guest-add-tile--excel:hover {
+    border-color: #6D3CFA;
+    background: #E4DBFF;
+}
+
+.guest-add-tile--excel.is-dragover {
+    border-style: solid;
+    border-color: #6D3CFA;
+    background: #E4DBFF;
+    box-shadow: inset 0 0 0 3px rgba(109, 60, 250, 0.12);
+}
+
+.guest-add-tile--excel .guest-add-tile-icon--excel {
+    background: #FFFFFF;
+    color: #6D3CFA;
+    box-shadow: 0 0 0 1px rgba(109, 60, 250, 0.15);
+}
+
+.guest-add-tile--excel .guest-add-tile-title {
+    color: #4B22C4;
+}
+
+.guest-add-tile--excel .guest-add-tile-sub {
+    color: #6B5A9E;
+}
+
+.guest-add-tile-lock-overlay {
+    position: absolute;
+    inset: 0;
+    background: #FFFFFF;
+    opacity: 0.5;
+    border-radius: 12px;
+    cursor: not-allowed;
+}
+
+.guest-add-tile-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 99px;
+    background: #6D3CFA;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

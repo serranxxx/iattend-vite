@@ -1,0 +1,51 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-bg);
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 24px;
+  border: 0.5px solid var(--borders);
+  padding: 40px 28px;
+  text-align: center;
+}
+
+.brand {
+  font-family: 'Denver-Serial', 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--mid-blue-500);
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: var(--gray-color);
+  margin-bottom: 24px;
+}
+
+.pinRow {
+  margin-bottom: 18px;
+}
+
+.error {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: var(--error-color);
+  margin-top: 4px;
+}
+
+.loading {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: var(--gray-color);
+  margin-top: 4px;
+}

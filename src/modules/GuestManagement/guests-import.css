@@ -1,0 +1,55 @@
+.guests-import-page {
+    padding: 24px;
+    max-width: 1520px;
+    margin: 0 auto;
+}
+
+.guests-import-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.guests-import-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 64px 24px;
+    border: 1px dashed var(--borders);
+    border-radius: 16px;
+    background: var(--gray-bg-40);
+}
+
+.guests-import-hint {
+    color: var(--gray-color);
+    font-size: 14px;
+    max-width: 420px;
+    text-align: center;
+}
+
+.guests-import-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.guests-import-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.guests-import-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.guests-import-result {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}

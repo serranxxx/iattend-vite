@@ -10,7 +10,7 @@ import { LuArrowLeft, LuBadgeHelp, LuCheck, LuClipboard, LuClipboardCheck, LuFol
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { ChevronDown, Menu, MessageCircle, Share } from "lucide-react";
+import { ChevronDown, Menu, MessageCircle, Share, Sparkles } from "lucide-react";
 import { appContext } from '../../context';
 import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,7 @@ const { useBreakpoint } = Grid;
 
 //  
 
-export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = true }) => {
+export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = true, onTourClick }) => {
     const { t } = useTranslation()
     const { logout } = useContext(appContext)
     const navigate = useNavigate()
@@ -36,7 +36,8 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
     const navItems = [
         { name: 'Mis eventos', path: '/invitations', position: 'invitations' },
         // { name: 'Explora',     path: '/features',    position: 'pricing'     },
-        { name: 'Administrador', path: '/admin',     position: 'admin', adminOnly: true },
+        { name: 'Administrador', path: '/admin', position: 'admin', adminOnly: true },
+        { name: 'Ventas', path: '/admin/sales', position: 'admin-sales', adminOnly: true },
     ]
 
     const [pastBanner, setPastBanner] = useState(false)
@@ -53,8 +54,8 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
         if (!session?.user?.uid) return
         try {
             const [{ data: events }, { data: confirmed }] = await Promise.all([
-                supabase.rpc('get_total_invitations_by_user',       { p_user_id: session.user.uid }),
-                supabase.rpc('get_confirmed_guests_count_by_user',  { p_user_id: session.user.uid }),
+                supabase.rpc('get_total_invitations_by_user', { p_user_id: session.user.uid }),
+                supabase.rpc('get_confirmed_guests_count_by_user', { p_user_id: session.user.uid }),
             ])
             setTotalEvents(events)
             setTotalConfirmed(confirmed)
@@ -126,6 +127,15 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
                                 </button>
                             </Dropdown>
                         )}
+
+                        {
+                            onTourClick &&
+                            <button type="button" className="hb-tour-btn" onClick={() => (onTourClick ? onTourClick() : navigate('/preview-mood'))}>
+                                <Sparkles size={15} strokeWidth={2} />
+                                {/* Conoce I attend */}
+                            </button>
+                        }
+
                     </nav>
                 </div>
             </header>
@@ -195,7 +205,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const [unAnswer, setUnAnswer] = useState(0)
     const [guestsByPhone, setGuestsByPhone] = useState(new Map())
 
-    const [mobileWaOpen, setMobileWaOpen]       = useState(false)
+    const [mobileWaOpen, setMobileWaOpen] = useState(false)
     const [mobileWaVisible, setMobileWaVisible] = useState(false)
     const [mobileWaEntered, setMobileWaEntered] = useState(false)
 

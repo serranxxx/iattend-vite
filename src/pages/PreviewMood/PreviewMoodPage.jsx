@@ -1,17 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { DatePicker, Grid, Input, Layout, message } from 'antd'
-import confetti from 'canvas-confetti'
+import { useTranslation } from 'react-i18next'
+import { Grid, Layout, message } from 'antd'
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
-import { ChevronDown } from 'lucide-react'
+import { BookUser, Camera, Feather, Gift, HeartHandshake, MapPinned, MessageSquareHeart, ScanHeart, ScrollText, Settings, Shirt } from 'lucide-react'
 import { BuildContent } from '../../modules/Invitation/Build/PageSections/BuildContent'
+import { ButtonsMenu } from '../../modules/Invitation/Build/PageSections/ButtonsMenu'
+import { BuildMenu } from '../../modules/Invitation/Build/PageSections/BuildMenu'
 import { PreviewMoodHeader } from './PreviewMoodHeader'
 import { PreviewMoodPanel } from './PreviewMoodPanel'
 import { PreviewMoodMobile } from './PreviewMoodMobile'
 import { LiaPreview } from './LiaPreview'
 import { PublishModal } from './PublishModal'
 import { AuthModal } from './AuthModal'
+import { OnboardingWizard } from './OnboardingWizard'
 import { load } from '../../helpers/assets/images'
 import './preview-mood.css'
 
@@ -44,20 +47,61 @@ const getSession = () => {
 }
 
 export const PreviewMoodPage = () => {
+    const { t } = useTranslation()
     const screens = useBreakpoint()
     const isMobile = screens.xs
     const [searchParams, setSearchParams] = useSearchParams()
 
     const pendingImageResolveRef = useRef(null)
+    const menuTimerRef = useRef(null)
+
+    const size = 16
+    const buttons = [
+        { icon: <Settings size={size} />,          action: null, name: t('buttons_menu.generals'),     type: 'generals',     value: 1,  position: 0,    index: 0 },
+        { icon: <ScanHeart size={size} />,          action: null, name: t('buttons_menu.cover'),        type: 'cover',        value: 2,  position: 0,    index: 0 },
+        { icon: <HeartHandshake size={size} />,     action: null, name: t('buttons_menu.greeting'),     type: 'greeting',     value: 3,  position: 950,  index: 1 },
+        { icon: <BookUser size={size} />,           action: null, name: t('buttons_menu.family'),       type: 'family',       value: 4,  position: 1375, index: 2 },
+        { icon: <Feather size={size} />,            action: null, name: t('buttons_menu.quote'),        type: 'quote',        value: 5,  position: 1750, index: 3 },
+        { icon: <ScrollText size={size} />,         action: null, name: t('buttons_menu.itinerary'),    type: 'itinerary',    value: 6,  position: 2100, index: 4 },
+        { icon: <Shirt size={size} />,              action: null, name: t('buttons_menu.dresscode'),    type: 'dresscode',    value: 7,  position: 2750, index: 5 },
+        { icon: <Gift size={size} />,               action: null, name: t('buttons_menu.gifts'),        type: 'gifts',        value: 8,  position: 3050, index: 6 },
+        { icon: <MapPinned size={size} />,          action: null, name: t('buttons_menu.destinations'), type: 'destinations', value: 9,  position: 2750, index: 7 },
+        { icon: <MessageSquareHeart size={size} />, action: null, name: t('buttons_menu.notices'),      type: 'notices',      value: 10, position: 3550, index: 8 },
+        { icon: <Camera size={size} />,             action: null, name: t('buttons_menu.gallery'),      type: 'gallery',      value: 11, position: 4500, index: 9 },
+    ]
 
     const [publishOpen, setPublishOpen] = useState(false)
     const [authOpen, setAuthOpen] = useState(false)
     const [authCtx, setAuthCtx] = useState('save')
     const [saving, setSaving] = useState(false)
     const [onboarding, setOnboarding] = useState(() => !searchParams.get('id'))
-    const [obName, setObName] = useState('')
-    const [obDate, setObDate] = useState('')
     const [onHide, setOnHide] = useState(false)
+    const [device, setDevice] = useState('ios')
+    const [coverUpdated] = useState(false)
+    const [positionY, setPositionY] = useState('cover')
+    const [currentSection, setCurrentSection] = useState(1)
+    const [settingsModal, setSettingsModal] = useState(false)
+    const [saved, setSaved] = useState(true)
+
+    const hideMenu = useCallback(() => {
+        if (menuTimerRef.current) {
+            clearTimeout(menuTimerRef.current)
+            menuTimerRef.current = null
+        }
+        setOnHide(true)
+    }, [])
+
+    const handleClick = (item) => {
+        setCurrentSection(item.value)
+        setPositionY(item.type)
+    }
+
+    const handleSectionChange = (type) => {
+        const item = buttons.find((b) => b.type === type)
+        if (!item) return
+        setCurrentSection(item.value)
+        setPositionY(item.type)
+    }
 
     const [copy, setCopy] = useState(() => {
         try {
@@ -206,172 +250,6 @@ export const PreviewMoodPage = () => {
         saveInvitation()
     }
 
-    const handleOnboardingSubmit = () => {
-        if (!obName.trim()) return
-
-        updateCopy((prev) => ({
-            ...prev,
-            cover: {
-                ...prev.cover,
-                title: {
-                    ...prev.cover.title,
-                    text: {
-                        ...prev.cover.title.text,
-                        value: obName.trim(),
-                    },
-                },
-                date: {
-                    ...prev.cover.date,
-                    value: obDate
-                        ? new Date(obDate).toISOString()
-                        : prev.cover.date?.value,
-                    active: true,
-                },
-            },
-        }))
-
-        setOnboarding(false)
-
-        confetti({
-            particleCount: 140,
-            spread: 80,
-            origin: { y: 0.55 },
-            colors: ['#FF6B6B', '#FFE66D', '#A8E6CF', '#C3B1E1', '#FDCAE1', '#FFB347'],
-        })
-    }
-
-    const OnboardingOverlay = () => (
-        <div
-            style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 1000,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 16px',
-                background: 'rgba(0,0,0,0.8)',
-                backdropFilter:'blur(6px)'
-            }}
-        >
-            <div className='am-modal' style={{ maxWidth: 480, width: '100%' }}>
-                <div className='am-header'>
-                    <h2
-                        style={{
-                            margin: 0,
-                            fontSize: 28,
-                            fontWeight: 800,
-                            color: '#EFEADF',
-                            fontFamily: 'Denver-Serial',
-                            lineHeight: 1.15,
-                            textAlign: 'center',
-                        }}
-                    >
-                        Empecemos por ustedes
-                    </h2>
-
-                    <p className='am-sub'>
-                        Diseña tu portada y descubre todo lo que I attend tiene para tu evento.
-                    </p>
-                </div>
-
-                <div className='am-body'>
-                    <div>
-                        <label
-                            style={{
-                                display: 'block',
-                                color: '#EFEADF',
-                                fontSize: 14,
-                                fontFamily: 'Luxora Grotesk',
-                                marginBottom: 6,
-                            }}
-                        >
-                            ¿Cómo se llaman?
-                        </label>
-
-                        <Input
-                            className='am-input'
-                            placeholder='Ale & Santiago'
-                            value={obName}
-                            onChange={(e) => setObName(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleOnboardingSubmit()
-                            }}
-                            autoFocus
-                        />
-                    </div>
-
-                    <div>
-                        <label
-                            style={{
-                                display: 'block',
-                                color: '#EFEADF',
-                                fontSize: 14,
-                                fontFamily: 'Luxora Grotesk',
-                                marginBottom: 6,
-                            }}
-                        >
-                            ¿Qué día es la boda?{' '}
-                            <span
-                                style={{
-                                    color: 'rgba(239,234,223,0.45)',
-                                    fontSize: 12,
-                                }}
-                            >
-                                · opcional
-                            </span>
-                        </label>
-
-                        <DatePicker
-                            className='am-input'
-                            value={obDate}
-                            onChange={(e) => setObDate(e)}
-                            style={{ colorScheme: 'dark' }}
-                        />
-                    </div>
-
-                    <button
-                        className='am-submit-btn'
-                        onClick={handleOnboardingSubmit}
-                        style={{ marginTop: 8 }}
-                    >
-                        Ver mi invitación →
-                    </button>
-
-                    <p
-                        style={{
-                            textAlign: 'center',
-                            fontSize: 12,
-                            color: 'rgba(239,234,223,0.4)',
-                            fontFamily: 'Luxora Grotesk',
-                            margin: '2px 0 4px',
-                        }}
-                    >
-                        Sin cuenta · sin tarjeta
-                    </p>
-
-                    <button
-                        onClick={() => setOnboarding(false)}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'rgba(239,234,223,0.35)',
-                            fontSize: 12,
-                            fontFamily: 'Luxora Grotesk',
-                            textDecoration: 'underline',
-                            display: 'block',
-                            margin: '0 auto',
-                            padding: 0,
-                        }}
-                    >
-                        Saltar por ahora
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-
     if (!copy) {
         return (
             <div className='pm-loading'>
@@ -386,14 +264,36 @@ export const PreviewMoodPage = () => {
                 <PreviewMoodMobile
                     invitation={copy}
                     setInvitation={updateCopy}
-                    savedId={searchParams.get('id')}
-                    onRequestSaveForImage={requestSaveForImage}
                     onSave={openSave}
                     onPublish={openPublish}
                     saving={saving}
+                    buttons={buttons}
+                    currentSection={currentSection}
+                    handleClick={handleClick}
+                    menuTimerRef={menuTimerRef}
+                    settingsModal={settingsModal}
+                    setSettingsModal={setSettingsModal}
+                    saved={saved}
+                    setSaved={setSaved}
+                    onHide={onHide}
+                    setOnHide={setOnHide}
+                    hideMenu={hideMenu}
+                    positionY={positionY}
+                    setPositionY={setPositionY}
+                    onSectionChange={handleSectionChange}
+                    invitationID={searchParams.get('id') || PREVIEW_ID}
+                    device={device}
+                    setDevice={setDevice}
+                    coverUpdated={coverUpdated}
                 />
 
-                {onboarding && <OnboardingOverlay />}
+                <OnboardingWizard
+                    open={onboarding}
+                    onClose={() => setOnboarding(false)}
+                    invitation={copy}
+                    buttons={buttons}
+                    invitationID={searchParams.get('id') || PREVIEW_ID}
+                />
 
                 <PublishModal
                     open={publishOpen}
@@ -419,29 +319,53 @@ export const PreviewMoodPage = () => {
                     onSave={openSave}
                     onPublish={openPublish}
                     saving={saving}
+                    onOpenOnboarding={() => setOnboarding(true)}
                 />
 
                 <div className='pm-body'>
                     <div className='pm-phone-col'>
                         <LiaPreview />
 
+                        <div className='buld-interacting-tools-cont' style={{ zIndex: 999, marginLeft:'24px' }}>
+                            <ButtonsMenu
+                                invitation={copy}
+                                setOnHide={setOnHide}
+                                menuTimerRef={menuTimerRef}
+                                buttons={buttons}
+                                currentSection={currentSection}
+                                handleClick={handleClick}
+                            />
+                            <BuildMenu
+                                invitationID={searchParams.get('id') || PREVIEW_ID}
+                                setSettingsModal={setSettingsModal}
+                                settingsModal={settingsModal}
+                                setSaved={setSaved}
+                                saved={saved}
+                                onHide={onHide}
+                                setOnHide={setOnHide}
+                                hideMenu={hideMenu}
+                                buttons={buttons}
+                                currentSection={currentSection}
+                                setPositionY={setPositionY}
+                                positionY={positionY}
+                                invitation={copy}
+                                setInvitation={updateCopy}
+                            />
+                        </div>
+
                         <BuildContent
                             invitationID={PREVIEW_ID}
                             onHide={onHide}
                             setOnHide={setOnHide}
-                            setDevice={() => {}}
-                            currentDevice='ios'
-                            coverUpdated={false}
-                            positionY='cover'
-                            setPositionY={() => {}}
+                            setDevice={setDevice}
+                            currentDevice={device}
+                            coverUpdated={coverUpdated}
+                            positionY={positionY}
+                            setPositionY={setPositionY}
                             invitation={copy}
+                            onSectionChange={handleSectionChange}
                         />
 
-                        <div className='pm-scroll-hint'>
-                            <span className='pm-scroll-hint-label'>Scroll</span>
-                            <ChevronDown size={18} className='pm-scroll-hint-icon' />
-                            <ChevronDown size={18} className='pm-scroll-hint-icon pm-scroll-hint-icon--delayed' />
-                        </div>
                     </div>
 
                     <div className='pm-panel-col'>
@@ -455,7 +379,13 @@ export const PreviewMoodPage = () => {
                 </div>
             </Layout>
 
-            {onboarding && <OnboardingOverlay />}
+            <OnboardingWizard
+                open={onboarding}
+                onClose={() => setOnboarding(false)}
+                invitation={copy}
+                buttons={buttons}
+                invitationID={searchParams.get('id') || PREVIEW_ID}
+            />
 
             <PublishModal
                 open={publishOpen}

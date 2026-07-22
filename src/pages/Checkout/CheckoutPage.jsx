@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, Grid, message } from 'antd'
 
 const { useBreakpoint } = Grid
-import { Check, Shield, ShoppingCart } from 'lucide-react'
+import { Check, Shield, ShoppingCart, Sparkles } from 'lucide-react'
 import axios from 'axios'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { AuthModal } from '../PreviewMood/AuthModal'
+import { OnboardingWizard } from '../PreviewMood/OnboardingWizard'
+import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData'
 import { fetchPrices, PRODUCTS } from '../../components/Payment/functions'
 import { FooterApp } from '../../modules/Footer/FooterApp'
 
@@ -16,7 +18,7 @@ const LS_KEY = 'invitation-preview'
 
 const VIDEOS = [
     "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/hf_20260526_202936_917dc5b6-9089-4b7f-82b0-2e76d8126e5d.mp4",
-    "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/bucket.mp4",
+    "https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing/hf_20260526_202936_917dc5b6-9089-4b7f-82b0-2e76d8126e5d.mp4"
 ]
 
 const TEXT = '#EFEADF'
@@ -26,6 +28,8 @@ const TEXT_FAINT = 'rgba(239,234,223,0.25)'
 const getSession = () => {
     try { return JSON.parse(localStorage.getItem('session')) } catch { return null }
 }
+
+const isLoggedIn = () => getSession()?.logged === true
 
 const getPreviewData = async () => {
     const stored = localStorage.getItem(LS_KEY)
@@ -89,6 +93,8 @@ export const CheckoutPage = () => {
     const [prices, setPrices] = useState([])
     const [loading, setLoading] = useState(false)
     const [authOpen, setAuthOpen] = useState(false)
+    const [onboardingOpen, setOnboardingOpen] = useState(() => searchParams.get('openWizard') === 'true' || !isLoggedIn())
+    const { invitation: demoInvitation, buttons: demoButtons, invitationID: demoInvitationID } = useOnboardingDemoData()
     const [messageApi, contextHolder] = message.useMessage()
 
     const [activeIdx, setActiveIdx] = useState(0)
@@ -112,7 +118,6 @@ export const CheckoutPage = () => {
 
     useEffect(() => {
         fetchPrices(setPrices)
-        if (!getSession()?.user?.uid) setAuthOpen(true)
     }, [])
 
     const planPrices = prices.filter(p => {
@@ -157,16 +162,10 @@ export const CheckoutPage = () => {
     }
 
     return (
-        <>
-            <div style={{
-                // minHeight: '100dvh',
-                overflow: isMobile ? 'auto' : 'hidden',
-                position: 'relative',
-                display: 'flex',
-                alignItems: isMobile ? 'center' : 'center',
-                justifyContent: 'center',
-                padding: isMobile ? '24px 0 120px' : '0 0 120px',
-                background: '#7093B0',
+        <div style={{
+                background: 'var(--dark-blue-500)',
+                display:'flex',alignItems:'center', justifyContent:'center',
+                width:'100%', height:'100vh'
             }}>
                 {contextHolder}
 
@@ -189,27 +188,21 @@ export const CheckoutPage = () => {
 
                 {/* ── Card ── */}
                 <div style={{
-                    position: 'relative', zIndex: 1,
-                    width: '100%', maxWidth: 480,
-                    margin: '0 16px',
-                    ...(isMobile ? {} : { maxHeight: 'calc(100dvh - 48px)' }),
+                    position: 'relative',
+                    height: '100%',width:'100%',
+                     maxWidth: 480,
                     background: 'rgba(255,255,255,0.06)',
                     backdropFilter: 'blur(8px) saturate(1.3)',
                     WebkitBackdropFilter: 'blur(32px) saturate(1.3)',
-                    border: `1px solid ${TEXT_FAINT}`,
-                    borderRadius: 24,
                     display: 'flex',
                     flexDirection: 'column',
-                    overflow: 'hidden',
-                    transform: isMobile ? 'scale(0.89)' : undefined,
-                    marginTop: isMobile ? '-30px' : undefined
                 }}>
 
                     {/* Scrollable content */}
                     <div style={{
-                        ...(isMobile ? {} : { flex: 1, overflowY: 'auto' }),
+                        
                         padding: '32px 28px 0',
-                        scrollbarWidth: 'none', msOverflowStyle: 'none',
+                        flex:1
                     }}>
 
                         <h1 style={{
@@ -229,13 +222,27 @@ export const CheckoutPage = () => {
                         <h1 style={{
                             fontSize: isMobile ? 18 : 22, fontWeight: 500, color: TEXT,
                             fontFamily: 'Michigan Signature', textAlign: 'center',
-                            margin: '0 0 24px', lineHeight: 1,
+                            margin: '0', lineHeight: 1,
                             marginTop: '16px'
                         }}>
                             En menos de una tarde
                         </h1>
 
-                        {/* Plan tabs */}
+                        <button
+                            type='button'
+                            onClick={() => setOnboardingOpen(true)}
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                margin: '14px auto 24px', padding: '8px 18px',
+                                border: 'none', borderRadius: 99, cursor: 'pointer',
+                                background: '#aac187', color: '#1c3249',
+                                fontSize: 13, fontWeight: 700, fontFamily: 'Luxora Grotesk',
+                            }}
+                        >
+                            <Sparkles size={14} />
+                            Conoce I attend
+                        </button>
+
                         <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
                             {planPrices.map(p => {
                                 const planValue = PRODUCTS[p.priceId]?.value
@@ -266,7 +273,7 @@ export const CheckoutPage = () => {
                             })}
                         </div>
 
-                        {/* Checklist */}
+    
                         <SectionLabel>Tu invitación</SectionLabel>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
                             <CheckItem label='Portada de invitación' />
@@ -294,7 +301,7 @@ export const CheckoutPage = () => {
                         <div style={{ height: 24 }} />
                     </div>
 
-                    {/* Sticky bottom */}
+        
                     <div style={{
                         padding: '16px 28px 28px',
                         borderTop: `1px solid ${TEXT_FAINT}`,
@@ -341,13 +348,18 @@ export const CheckoutPage = () => {
                 <AuthModal
                     open={authOpen}
                     onClose={() => setAuthOpen(false)}
-                    onSuccess={() => setAuthOpen(false)}
+                    onSuccess={() => { setAuthOpen(false); setOnboardingOpen(true) }}
                     context='publish'
                 />
 
+                <OnboardingWizard
+                    open={onboardingOpen && !!demoInvitation}
+                    onClose={() => setOnboardingOpen(false)}
+                    invitation={demoInvitation}
+                    buttons={demoButtons}
+                    invitationID={demoInvitationID}
+                />
 
             </div>
-            <FooterApp></FooterApp>
-        </>
     )
 }

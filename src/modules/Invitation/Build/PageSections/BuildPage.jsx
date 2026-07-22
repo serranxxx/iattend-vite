@@ -151,6 +151,13 @@ export const BuildPage = () => {
         setPositionY(item.type)
     }
 
+    const handleSectionChange = (type) => {
+        const item = buttons.find((b) => b.type === type)
+        if (!item) return
+        setCurrentSection(item.value)
+        setPositionY(item.type)
+    }
+
     const onWriteChanges = async () => {
 
         const savedInvitation = {
@@ -385,7 +392,7 @@ export const BuildPage = () => {
                             </div>
 
                             <BuildContent invitationID={id} onHide={onHide} setOnHide={setOnHide}
-                                setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={copy} />
+                                setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={copy} onSectionChange={handleSectionChange} />
 
                         </div>
 
