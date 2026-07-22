@@ -165,7 +165,8 @@ export const CheckoutPage = () => {
         <div style={{
                 background: 'var(--dark-blue-500)',
                 display:'flex',alignItems:'center', justifyContent:'center',
-                width:'100%', height:'100vh'
+                width:'100%', height:'100vh', 
+                border:'1px solid red'
             }}>
                 {contextHolder}
 
@@ -190,6 +191,7 @@ export const CheckoutPage = () => {
                 <div style={{
                     position: 'relative',
                     height: '100%',width:'100%',
+                    maxHeight:'100vh',overflowY:'auto', 
                      maxWidth: 480,
                     background: 'rgba(255,255,255,0.06)',
                     backdropFilter: 'blur(8px) saturate(1.3)',

@@ -658,9 +658,9 @@ const Step5Demo = () => {
                     Agregar una mesa
                 </Button>
 
-                <button type='button' className='ob-wizard-link-cta ob-step5-cta-mobile' onClick={handleAddTable}>
+                {/* <button type='button' className='ob-wizard-link-cta ob-step5-cta-mobile' onClick={handleAddTable}>
                     Agregar una mesa <ArrowRight size={16} />
-                </button>
+                </button> */}
             </div>
         </div>
     )
