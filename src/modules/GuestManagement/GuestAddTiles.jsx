@@ -37,7 +37,7 @@ export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan }) => {
             <button
                 type="button"
                 disabled={plan !== 'pro' ? true : false}
-                style={{overflow:'hidden'}}
+                style={{ overflow: 'hidden' }}
                 className={`guest-add-tile guest-add-tile--excel ${isDragOver ? 'is-dragover' : ''} ${plan !== 'pro' ? 'pro_badge' : ''} `}
                 onClick={() => plan === 'pro' && fileInputRef.current?.click()}
                 onDragEnter={(e) => { e.preventDefault(); if (plan === 'pro') setIsDragOver(true) }}
@@ -45,15 +45,21 @@ export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan }) => {
                 onDragLeave={() => setIsDragOver(false)}
                 onDrop={handleDrop}
             >
-                <div 
-                style={{
-                    position:'absolute', width:'100%', height:'100%',
-                    backgroundColor: '#00000020',
-                    backdropFilter:'blur(1px)', 
-                    left:0, top:0
-                }}>
-                    
-                </div>
+                {
+                    plan !== 'pro' && (
+                        <div
+                            style={{
+                                position: 'absolute', width: '100%', height: '100%',
+                                backgroundColor: '#00000020',
+                                backdropFilter: 'blur(1px)',
+                                left: 0, top: 0
+                            }}>
+                        </div>
+                    )
+
+                }
+
+
                 <span className="guest-add-tile-icon guest-add-tile-icon--excel">
                     <Sparkles size={14} />
                 </span>
