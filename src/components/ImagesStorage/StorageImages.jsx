@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './storage-images.css'
 import { Button, Drawer, Dropdown, Empty, Tabs } from 'antd'
@@ -175,10 +175,10 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         />
     )
 
-    const handleOpen = () => {
-        getImagesFromSupabase(resolvedIdRef.current, setImages)
+    const handleOpen = useCallback(() => {
+        getImagesFromSupabase(invitationID, setImages)
         if (isMobile) setDrawerOpen(true)
-    }
+    }, [isMobile, invitationID])
 
     const triggerButton = customTrigger
         ? React.cloneElement(customTrigger, { onClick: handleOpen })

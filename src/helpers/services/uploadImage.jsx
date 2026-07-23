@@ -31,11 +31,12 @@ export const uploadImagesSupabase = async ({
         return;
     }
 
+    const isPng = file.type === 'image/png';
     const compressedFile = await imageCompression(file, {
-        maxSizeMB: 0.4,
-        maxWidthOrHeight: 1600,
-        initialQuality: 0.6,
-        fileType: 'image/jpeg',
+        maxSizeMB: 1,
+        maxWidthOrHeight: 2000,
+        initialQuality: 0.85,
+        fileType: isPng ? 'image/png' : 'image/jpeg',
         useWebWorker: true,
     });
 
