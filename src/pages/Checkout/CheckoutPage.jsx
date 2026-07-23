@@ -29,7 +29,6 @@ const getSession = () => {
     try { return JSON.parse(localStorage.getItem('session')) } catch { return null }
 }
 
-const isLoggedIn = () => getSession()?.logged === true
 
 const getPreviewData = async () => {
     const stored = localStorage.getItem(LS_KEY)
@@ -93,7 +92,7 @@ export const CheckoutPage = () => {
     const [prices, setPrices] = useState([])
     const [loading, setLoading] = useState(false)
     const [authOpen, setAuthOpen] = useState(false)
-    const [onboardingOpen, setOnboardingOpen] = useState(() => searchParams.get('openWizard') === 'true' || !isLoggedIn())
+    const [onboardingOpen, setOnboardingOpen] = useState(() => searchParams.get('openWizard') === 'true')
     const { invitation: demoInvitation, buttons: demoButtons, invitationID: demoInvitationID } = useOnboardingDemoData()
     const [messageApi, contextHolder] = message.useMessage()
 
@@ -194,8 +193,8 @@ export const CheckoutPage = () => {
                     maxHeight:'100vh',overflowY:'auto', 
                      maxWidth: 480,
                     background: 'rgba(255,255,255,0.06)',
-                    backdropFilter: 'blur(8px) saturate(1.3)',
-                    WebkitBackdropFilter: 'blur(32px) saturate(1.3)',
+                    backdropFilter: 'blur(6px)',
+                    // WebkitBackdropFilter: 'blur(32px) saturate(1.3)',
                     display: 'flex',
                     flexDirection: 'column',
                 }}>
