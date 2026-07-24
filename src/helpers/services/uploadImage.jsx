@@ -61,6 +61,35 @@ export const uploadImagesSupabase = async ({
 };
 
 
+export const uploadTextureImage = async (file) => {
+    const isPng = file.type === 'image/png';
+    const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 2000,
+        initialQuality: 0.85,
+        fileType: isPng ? 'image/png' : 'image/jpeg',
+        useWebWorker: true,
+    });
+
+    const filePath = `Textures/${Date.now()}-${compressedFile.name}`;
+
+    const { error } = await supabase.storage
+        .from('assets')
+        .upload(filePath, compressedFile, {
+            upsert: true,
+            contentType: compressedFile.type,
+        });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+    return { url: data.publicUrl, path: filePath };
+};
+
+
 export const getImagesFromSupabase = async (invitationID, setImages) => {
     const { data, error } = await supabase.storage
         .from('user_images')

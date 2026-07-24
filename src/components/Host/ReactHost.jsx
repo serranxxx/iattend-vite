@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = new Set([
 
 
 export default function ReactHost({
-  config, onHide, screens, scrollToSection, onSectionChange
+  config, onHide, screens, scrollToSection, onSectionChange, textureOverride
 }) {
   const iframeRef = useRef(null);
   const lastSentHashRef = useRef("");
@@ -36,7 +36,7 @@ export default function ReactHost({
     if (!win) return;
 
     // hash simple para evitar re-envíos idénticos
-    const hash = JSON.stringify(config);
+    const hash = JSON.stringify({ config, textureOverride });
     if (hash === lastSentHashRef.current && reason !== "ready") return;
     lastSentHashRef.current = hash;
 
@@ -45,6 +45,7 @@ export default function ReactHost({
         type: "HOST_PROPS",
         payload: {
           invitationConfig: config,
+          textureOverride: textureOverride ?? null,
           sentAt: Date.now(),
           reason,
         },
@@ -83,12 +84,12 @@ export default function ReactHost({
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [targetOrigin, config]);
+  }, [targetOrigin, config, textureOverride]);
 
-  // 2) Re-enviar cada que cambie `config`
+  // 2) Re-enviar cada que cambie `config` o `textureOverride`
   useEffect(() => {
     postProps("config-change");
-  }, [config, targetOrigin]);
+  }, [config, textureOverride, targetOrigin]);
 
   // 2b) Pedir auto-scroll cada que cambie la sección activa en el builder
   useEffect(() => {
@@ -112,7 +113,7 @@ export default function ReactHost({
     const onLoad = () => postProps("iframe-load");
     iframe.addEventListener("load", onLoad);
     return () => iframe.removeEventListener("load", onLoad);
-  }, [url, targetOrigin, config]);
+  }, [url, targetOrigin, config, textureOverride]);
 
   return (
     <iframe

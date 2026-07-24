@@ -37,7 +37,6 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
         { name: 'Mis eventos', path: '/invitations', position: 'invitations' },
         // { name: 'Explora',     path: '/features',    position: 'pricing'     },
         { name: 'Administrador', path: '/admin', position: 'admin', adminOnly: true },
-        { name: 'Ventas', path: '/admin/sales', position: 'admin-sales', adminOnly: true },
     ]
 
     const [pastBanner, setPastBanner] = useState(false)

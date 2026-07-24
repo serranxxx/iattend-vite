@@ -26,7 +26,7 @@ const devices = [
 
 
 export const BuildContent = ({
-    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange
+    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -175,7 +175,7 @@ export const BuildContent = ({
                                 </div>
 
                                 <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
-                                    <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} />
+                                    <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} />
 
                                 </div>
                                 <div className={`inv-light-space-${currentDevice}`} />
@@ -186,7 +186,7 @@ export const BuildContent = ({
                 </div >
 
                 <div className='mobile-devices' onClick={() => setOnHide(true)} style={{ width: '100%', height: '100vh', overflowY: 'auto', paddingBottom: '0px', boxSizing: 'border-box' }}>
-                    <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} onSectionChange={onSectionChange}/>
+                    <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride}/>
                 </div>
             </>
             : <></>

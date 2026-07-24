@@ -12,7 +12,6 @@ import {
 } from 'chart.js'
 import { Segmented, Select, Table, Tag, Dropdown, Button, Modal, Form, Input, InputNumber, DatePicker, Upload, Tooltip, message } from 'antd'
 import { ChevronDown, SlidersHorizontal, UserPlus, ReceiptText, Wallet, Upload as UploadIcon } from 'lucide-react'
-import { HeaderBuild } from '../../modules/Header/Header'
 import {
     fetchAdminVentas,
     updateAdminVenta,
@@ -478,8 +477,6 @@ export const SalesAdminPage = () => {
 
     return (
         <div className={styles.page}>
-            <HeaderBuild position="admin-sales" />
-
             <div className={styles.container}>
                 <div className={styles.headerRow}>
                     <div>

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Separador } from '../../../../components/Invitation/Logos';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
-import { textures } from '../../../../helpers/services/textures';
+import { useTextures } from '../../../../context/TexturesContext';
 import { RxValueNone } from 'react-icons/rx';
 import { LuArrowBigDownDash, LuArrowBigUpDash, LuRedo2, LuRotateCcw, LuSettings2 } from 'react-icons/lu';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
@@ -53,6 +53,8 @@ const { useBreakpoint } = Grid;
 export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
     const { t } = useTranslation()
+    const { textures } = useTextures()
+    const selectedTexture = textures.find(texture => texture.id === invitation.generals.texture)
     const [currentPosition, setCurrentPosition] = useState(null)
     const [currentItem, setCurrentItem] = useState(null)
     const [visible, setVisible] = useState(false)
@@ -745,14 +747,14 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 <RxValueNone size={64} style={{ color: '#00000040' }} />
             </div>
             {
-                textures.map((texture, index) => (
+                textures.map((texture) => (
                     <div
-                        key={index}
-                        onClick={() => handleTexture(index)}
+                        key={texture.id}
+                        onClick={() => handleTexture(texture.id)}
                         style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%',
                             height: '120px', borderRadius: '8px', overflow: 'hidden',
-                            border: invitation.generals.texture === index ? '1px solid var(--brand-color-500)' : '1px solid var(--borders)',
+                            border: invitation.generals.texture === texture.id ? '1px solid var(--brand-color-500)' : '1px solid var(--borders)',
                             cursor: 'pointer'
                         }}>
                         <img alt='' src={texture?.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1120,9 +1122,9 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                 }}>
 
                                 {
-                                    textures[invitation.generals.texture]?.image &&
+                                    selectedTexture?.image &&
 
-                                    <img alt='' src={textures[invitation.generals.texture]?.image} style={{
+                                    <img alt='' src={selectedTexture?.image} style={{
                                         width: '100%', height: '100%', objectFit: 'cover'
                                     }} />
                                 }

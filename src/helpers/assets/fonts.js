@@ -25,5 +25,6 @@ export const fonts = [
     "Fredoka",
     "Tangerine",
     "WindSong",
-    "Monsieur La Doulaise"
+    "Monsieur La Doulaise",
+    "Chiro"
 ]

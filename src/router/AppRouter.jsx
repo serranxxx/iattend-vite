@@ -23,6 +23,7 @@ import { InvitationsPage } from '../pages/Board/InvitationsPage'
 import { PageNotFound } from '../pages/Extras/PageNotFound'
 import { AdminHOC } from './AdminHOC'
 import { AdminPage } from '../pages/Admin/AdminPage'
+import { TextureLabPage } from '../pages/Admin/TextureLabPage'
 import { FeaturesPage } from '../pages/FeatruesPage'
 import { LegalPage } from '../pages/Extras/Legal/LegalPage'
 import { LinkTree } from '../pages/Extras/LinkTree/LinkTree'
@@ -39,7 +40,6 @@ import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
 import { SalesApp } from '../modules/Sales/SalesApp'
-import { SalesAdminPage } from '../pages/Admin/SalesAdminPage'
 
 
 
@@ -82,10 +82,10 @@ export const AppRouter = () => {
 
       <Route path="/sales" element={<SalesApp />} />
 
-      <Route path="/admin/sales"
+      <Route path="/admin/texture-lab"
         element={
           <AdminHOC>
-            <SalesAdminPage />
+            <TextureLabPage />
           </AdminHOC>
         } />
 

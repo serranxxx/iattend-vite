@@ -5,13 +5,19 @@ import { supabase } from '../../lib/supabase'
 import { CreateAccount } from '../../components/Auth/CreateUser'
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer'
 import { HeaderBuild } from '../../modules/Header/Header'
-import { LuArrowUpFromLine, LuArrowUpRight, LuChevronDown, LuCopy, LuLink, LuPlus, LuPower, LuPowerOff, LuUserPlus } from 'react-icons/lu'
-import { Link } from 'react-router-dom'
+import { LuArrowUpFromLine, LuArrowUpRight, LuChevronDown, LuCopy, LuLink, LuPlus, LuUserPlus } from 'react-icons/lu'
+import { Link, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
-import { ArrowUpRight, ChevronDown, Copy, Link2, MessageCircle, Plus, SquareChevronDown } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Copy, FlaskConical, Link2, MessageCircle, MoreVertical, Plus, SquareChevronDown } from 'lucide-react'
 import { IoMdAdd } from 'react-icons/io'
 import { WhatsappMessages } from '../../modules/GuestManagement/WhatsappMessages/WhatsappMessages'
+import { SalesAdminPage } from './SalesAdminPage'
 
+const BLEND_OPTIONS = [
+    'normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten',
+    'color-dodge', 'color-burn', 'hard-light', 'soft-light',
+    'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity',
+].map(value => ({ value, label: value }))
 
 export const AdminPage = () => {
 
@@ -26,11 +32,19 @@ export const AdminPage = () => {
     const [filterName, setFilterName] = useState(null)
     const [actualCredits, setActualCredits] = useState(null)
     const [activeKey, setActiveKey] = useState('esperando');
+    const [searchParams] = useSearchParams();
+    const [outerActiveKey, setOuterActiveKey] = useState(searchParams.get('tab') || 'clientes');
     const [nextEvents, setNextEvents] = useState([])
     const [ownerInputs, setOwnerInputs] = useState({});
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
     const [colaboradores, setColaboradores] = useState(null)
+    const [textures, setTextures] = useState([])
+    const [editingTexture, setEditingTexture] = useState(null)
+    const [editName, setEditName] = useState('')
+    const [editOpacity, setEditOpacity] = useState(0.5)
+    const [editBlend, setEditBlend] = useState('multiply')
+    const [savingEdit, setSavingEdit] = useState(false)
 
     const copyToClipboard = async (textToCopy) => {
         try {
@@ -151,11 +165,45 @@ export const AdminPage = () => {
         setColaboradores(prev => prev.map(c => c.id === id ? { ...c, ...update } : c));
     };
 
+    const getTexturesAdmin = async () => {
+        const { data, error } = await supabase
+            .from('textures')
+            .select('*')
+            .order('sort_order');
+        if (error) console.error('Error al obtener texturas:', error);
+        else setTextures(data);
+    };
+
+    const openEditTexture = (t) => {
+        setEditingTexture(t);
+        setEditName(t.name);
+        setEditOpacity(t.opacity);
+        setEditBlend(t.blend);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingTexture) return;
+        setSavingEdit(true);
+        try {
+            const { error } = await supabase
+                .from('textures')
+                .update({ name: editName.trim(), opacity: editOpacity, blend: editBlend })
+                .eq('id', editingTexture.id);
+            if (error) { messageApi.error('Error al guardar los cambios'); return; }
+            setTextures(prev => prev.map(t => t.id === editingTexture.id ? { ...t, name: editName.trim(), opacity: editOpacity, blend: editBlend } : t));
+            messageApi.success('Textura actualizada');
+            setEditingTexture(null);
+        } finally {
+            setSavingEdit(false);
+        }
+    };
+
     const refreshData = () => {
         getNewInvitations()
         getNewUsers()
         getInvitationsByDate()
         getColaboradores()
+        getTexturesAdmin()
     }
 
     const handleNewInvitation = (user) => {
@@ -563,7 +611,30 @@ export const AdminPage = () => {
         },
     ], [colaboradores]);
 
-    const items = useMemo(() => ([
+    const texturesGrid = useMemo(() => (
+        [...(textures ?? [])].sort((a, b) => a.sort_order - b.sort_order).map(t => (
+            <div key={t.id} style={{
+                display: 'flex', flexDirection: 'column', borderRadius: '16px', overflow: 'hidden',
+                backgroundColor: '#FFF', boxShadow: '0px 0px 12px rgba(0,0,0,0.08)',
+            }}>
+                <div style={{ position: 'relative', width: '100%', height: '140px' }}>
+                    <img src={t.image_url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <Button
+                        shape='circle'
+                        
+                        icon={<MoreVertical size={14} />}
+                        onClick={() => openEditTexture(t)}
+                        style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor:'#FFFFFF40', backdropFilter:'blur(10px)' }}
+                    />
+                </div>
+                <div style={{ padding: '12px' }}>
+                    <span style={{ fontWeight: 600 }}>{t.name}</span>
+                </div>
+            </div>
+        ))
+    ), [textures]);
+
+    const clientesItems = useMemo(() => ([
         {
             label: `Eventos activos (${nextEvents.length})`,
             key: "esperando",
@@ -661,9 +732,78 @@ export const AdminPage = () => {
                 />
             ),
         },
-
-
     ]), [filterName, nextEvents, actualCredits, newInvitations, ownerInputs, colaboradores, colaboradoresCols]);
+
+    const clientesTabBarExtraContent = (
+        <div className='title-new-user-container'>
+            <Input placeholder='Búscar...' value={filterName} onChange={(e) => setFilterName(e.target.value)} style={{ flex: 1, borderRadius: '99px', minWidth: '400px' }} />
+            <Dropdown
+                trigger={['click']}
+                placement='bottomLeft'
+                arrow
+                popupRender={() => (
+                    <WhatsappMessages conversations={conversations} isAdmin={true} invitationsById={invitationsById} />
+                )}
+            >
+                <Badge count={unAnswer} color='var(--purple-color)' size='large'>
+                    <Button style={{ minWidth: '32px', }} className='primarybutton' icon={<MessageCircle size={12} />} />
+                </Badge>
+            </Dropdown>
+            <Dropdown
+                arrow
+                trigger={['click']}
+                popupRender={() => (
+                    <div style={{
+                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        backgroundColor: '#FFF', borderRadius: '16px', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)',
+                        boxSizing: 'border-box', padding: '12px'
+                    }}>
+                        <CreateAccount refreshData={refreshData} setVisible={setVisible} setUserData={setUserData} />
+                    </div>
+                )}
+            >
+                <Button className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<LuUserPlus size={16} />}>Nuevo usuario</Button>
+            </Dropdown>
+        </div>
+    )
+
+    const outerItems = useMemo(() => ([
+        {
+            label: 'Clientes',
+            key: 'clientes',
+            children: (
+                <Tabs
+                    style={{ width: '100%' }}
+                    type="card"
+                    activeKey={activeKey}
+                    onChange={setActiveKey}
+                    items={clientesItems}
+                    tabBarExtraContent={clientesTabBarExtraContent}
+                />
+            ),
+        },
+        {
+            label: 'Ventas',
+            key: 'ventas',
+            children: <SalesAdminPage />,
+        },
+        {
+            label: `Texturas (${textures?.length ?? 0})`,
+            key: 'texturas',
+            children: (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Link to='/admin/texture-lab'>
+                            <Button className='primarybutton--active' icon={<FlaskConical size={14} />}>Laboratorio de texturas</Button>
+                        </Link>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+                        {texturesGrid}
+                    </div>
+                </div>
+            ),
+        },
+    ]), [clientesItems, activeKey, clientesTabBarExtraContent, textures, texturesGrid]);
 
 
     const insertSideEvent = async (id) => {
@@ -750,7 +890,7 @@ export const AdminPage = () => {
 
     const invitationsById = useMemo(() =>
         new Map((newInvitations ?? []).map(i => [i.id, i]))
-    , [newInvitations]);
+        , [newInvitations]);
 
     const getChats = async () => {
         // const { data, error } = await supabase.rpc('get_conversations_v2');
@@ -762,9 +902,9 @@ export const AdminPage = () => {
     }
 
     useEffect(() => {
-      console.log(invitationsById ?? "")
+        console.log(invitationsById ?? "")
     }, [invitationsById])
-    
+
 
     const calculateUnAnswer = (conversations) => {
 
@@ -797,7 +937,7 @@ export const AdminPage = () => {
                     const row = payload.new || payload.old;
                     if (!row) return;
                     getChats()
-                    
+
 
                 }
             )
@@ -817,127 +957,136 @@ export const AdminPage = () => {
                 }
             )
 
-        .subscribe((status) => {
-            console.log('sub status:', status);
-        });
+            .subscribe((status) => {
+                console.log('sub status:', status);
+            });
 
-    return () => {
-        supabase.removeChannel(channel);
-    };
-}, []);
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
-useEffect(() => {
-    getInvitationsByDate()
-    getNewInvitations()
-    getNewUsers()
-    getChats()
-    getColaboradores()
-}, [])
+    useEffect(() => {
+        getInvitationsByDate()
+        getNewInvitations()
+        getNewUsers()
+        getChats()
+        getColaboradores()
+        getTexturesAdmin()
+    }, [])
 
 
 
-return (
-    <div className='invitations-page-main-container'>
-        {contextHolder}
-        <Layout style={{
-            position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
-            alignItems: 'flex-start', justifyContent: 'flex-start',
-            backgroundColor: 'var(--ft-color)',
-            // maxWidth: '1480px',
-            gap: '24px',
-        }}>
-            <HeaderBuild position={'admin'} />
-            <div className='user-table-container' >
-                <Tabs
-                    style={{ width: '100%', }}
-                    type="card"
-                    activeKey={activeKey}
-                    onChange={setActiveKey}
-                    items={items}
-                    tabBarExtraContent={
-                        <div className='title-new-user-container'>
-
-                            <Input placeholder='Búscar...' value={filterName} onChange={(e) => setFilterName(e.target.value)} style={{ flex: 1, borderRadius: '99px', minWidth: '400px' }} />
-                            <Dropdown
-                                trigger={['click']}
-                                placement='bottomLeft'
-                                arrow
-                                popupRender={() => (
-                                    <WhatsappMessages conversations={conversations} isAdmin={true} invitationsById={invitationsById} />
-                                )}
-                            >
-                                <Badge count={unAnswer} color='var(--purple-color)' size='large'>
-                                    <Button style={{ minWidth: '32px', }} className='primarybutton' icon={<MessageCircle size={12} />} />
-                                </Badge>
-                            </Dropdown>
-                            <Dropdown
-                                arrow
-                                trigger={['click']}
-                                popupRender={() => (
-                                    <div style={{
-                                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        backgroundColor: '#FFF', borderRadius: '16px', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)',
-                                        boxSizing: 'border-box', padding: '12px'
-                                    }}>
-                                        <CreateAccount refreshData={refreshData} setVisible={setVisible} setUserData={setUserData} />
-                                    </div>
-                                )}
-                            >
-                                <Button className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<LuUserPlus size={16} />}>Nuevo usuario</Button>
-                            </Dropdown>
-
-                        </div>
-                    }
-                />
+    return (
+        <div className='invitations-page-main-container'>
+            {contextHolder}
+            <Layout style={{
+                position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
+                alignItems: 'flex-start', justifyContent: 'flex-start',
+                backgroundColor: 'var(--ft-color)',
+                // maxWidth: '1480px',
+                gap: '24px',
+            }}>
+                <HeaderBuild position={'admin'} />
+                <div className='user-table-container' >
+                    <Tabs
+                        style={{ width: '100%', }}
+                        type="card"
+                        activeKey={outerActiveKey}
+                        onChange={setOuterActiveKey}
+                        items={outerItems}
+                    />
 
 
 
 
-
-            </div>
-
-            <Modal
-                // centered // Esta propiedad centra el modal verticalmente
-                footer={null} // Elimina el footer si no necesitas botones adicionales
-                open={visible && userData}
-                onOk={() => setVisible(false)}
-                onCancel={() => setVisible(false)}
-                title="Nuevo usuario agregado exitosamente"
-                width={400}
-                styles={{
-                    container: {
-                        borderRadius: '24px',
-                        padding: '32px',
-                    },
-                    header: {
-                        borderBottom: 'none',
-                        padding: 0,
-                    },
-                    body: {
-                        padding: 0,
-                    }
-                }}
-
-            >
-                <div className='new_user_col' style={{ alignSelf: 'stretch', }}>
-                    <span>{userData?.email ?? "----"}</span>
-                    <div className='new_user_col' style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'space-between' }}>
-                        <span>{userData?.pass ?? "*******"}</span>
-                        <Button onClick={() => copyToClipboard(userData.password ?? "")} icon={<LuCopy />}>Copiar contraseña</Button>
-                    </div>
                 </div>
 
-            </Modal>
+                <Modal
+                    // centered // Esta propiedad centra el modal verticalmente
+                    footer={null} // Elimina el footer si no necesitas botones adicionales
+                    open={visible && userData}
+                    onOk={() => setVisible(false)}
+                    onCancel={() => setVisible(false)}
+                    title="Nuevo usuario agregado exitosamente"
+                    width={400}
+                    styles={{
+                        container: {
+                            borderRadius: '24px',
+                            padding: '32px',
+                        },
+                        header: {
+                            borderBottom: 'none',
+                            padding: 0,
+                        },
+                        body: {
+                            padding: 0,
+                        }
+                    }}
 
-        </Layout>
+                >
+                    <div className='new_user_col' style={{ alignSelf: 'stretch', }}>
+                        <span>{userData?.email ?? "----"}</span>
+                        <div className='new_user_col' style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'space-between' }}>
+                            <span>{userData?.pass ?? "*******"}</span>
+                            <Button onClick={() => copyToClipboard(userData.password ?? "")} icon={<LuCopy />}>Copiar contraseña</Button>
+                        </div>
+                    </div>
+
+                </Modal>
+
+                <Modal
+                    open={!!editingTexture}
+                    onCancel={() => setEditingTexture(null)}
+                    onOk={handleSaveEdit}
+                    okText='Guardar cambios'
+                    confirmLoading={savingEdit}
+                    // title='Editar textura'
+                    style={{padding:'24px'}}
+                    styles={{
+                        container: {
+                            borderRadius: '24px',
+                            padding: '0px',
+                        },
+                        header: {
+                            borderBottom: 'none',
+                            padding: 0,
+                        },
+                        body: {
+                            padding: 12,
+                        }
+                    }}
+                
+                width={400}
+                >
+                    {editingTexture && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', }}>
+                            <img src={editingTexture.image_url} alt='' style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '12px' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span className='gc-content-label'>Nombre</span>
+                                <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span className='gc-content-label'>Opacidad</span>
+                                <InputNumber min={0} max={1} step={0.1} value={editOpacity} onChange={(v) => setEditOpacity(v ?? 0)} style={{ width: '100%' }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span className='gc-content-label'>Blend</span>
+                                <Select value={editBlend} options={BLEND_OPTIONS} onChange={setEditBlend} style={{ width: '100%' }} />
+                            </div>
+                        </div>
+                    )}
+                </Modal>
+
+            </Layout>
 
 
-        <NewInvitationDrawer
-            visible={onNewInvitation} setVisible={setOnNewInvitation} refreshInvitations={refreshData} user={user}
-        />
+            <NewInvitationDrawer
+                visible={onNewInvitation} setVisible={setOnNewInvitation} refreshInvitations={refreshData} user={user}
+            />
 
-    </div>
+        </div>
 
-)
+    )
 
 }
