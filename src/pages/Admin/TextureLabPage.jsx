@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Dropdown, Input, InputNumber, Select, message } from 'antd'
-import { Link } from 'react-router-dom'
+import { Button, Dropdown, Input, Select, Slider, message } from 'antd'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Palette, Paintbrush, Upload as UploadIcon, Trash2, Save } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { uploadTextureImage } from '../../helpers/services/uploadImage'
@@ -22,6 +22,10 @@ const DEFAULT_FILTER = 'grayscale(1) contrast(1) brightness(1)'
 
 export const TextureLabPage = () => {
     const [messageApi, contextHolder] = message.useMessage()
+    const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const editId = searchParams.get('id')
+    const isEditMode = editId != null
 
     const [invitation, setInvitation] = useState(null)
     const [positionY, setPositionY] = useState('generals')
@@ -32,6 +36,7 @@ export const TextureLabPage = () => {
     const [blend, setBlend] = useState('multiply')
     const [textureName, setTextureName] = useState('')
     const [uploadedImage, setUploadedImage] = useState(null) // { url, path }
+    const [editingImage, setEditingImage] = useState(null) // { url, filter } -- la textura existente en modo edición
     const [uploading, setUploading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [searchCollection, setSearchCollection] = useState('')
@@ -74,6 +79,27 @@ export const TextureLabPage = () => {
         getLabInvitation()
     }, [])
 
+    useEffect(() => {
+        if (!isEditMode) return
+        const getTextureToEdit = async () => {
+            const { data, error } = await supabase
+                .from('textures')
+                .select('*')
+                .eq('id', editId)
+                .maybeSingle()
+
+            if (error || !data) {
+                messageApi.error('No se pudo cargar la textura a editar')
+                return
+            }
+            setTextureName(data.name)
+            setOpacity(data.opacity)
+            setBlend(data.blend)
+            setEditingImage({ url: data.image_url, filter: data.filter })
+        }
+        getTextureToEdit()
+    }, [editId])
+
     // Cleanup best-effort: si se navega fuera del Laboratorio sin guardar ni
     // descartar explícitamente, se borra la imagen huérfana subida a Storage.
     useEffect(() => {
@@ -84,11 +110,13 @@ export const TextureLabPage = () => {
         }
     }, [])
 
-    const textureOverride = uploadedImage ? {
-        image: uploadedImage.url,
+    const activeImageUrl = isEditMode ? editingImage?.url : uploadedImage?.url
+    const activeFilter = isEditMode ? (editingImage?.filter ?? DEFAULT_FILTER) : DEFAULT_FILTER
+    const textureOverride = activeImageUrl ? {
+        image: activeImageUrl,
         opacity,
         blend,
-        filter: DEFAULT_FILTER,
+        filter: activeFilter,
     } : null
 
     const handleFileChange = async (e) => {
@@ -167,6 +195,22 @@ export const TextureLabPage = () => {
         messageApi.info('Descartado')
     }
 
+    const handleGuardarCambios = async () => {
+        if (!textureName.trim()) { messageApi.error('Ponle un nombre a la textura'); return; }
+        setSaving(true)
+        try {
+            const { error } = await supabase
+                .from('textures')
+                .update({ name: textureName.trim(), opacity, blend })
+                .eq('id', editId)
+            if (error) { messageApi.error('Error al guardar los cambios'); return; }
+            messageApi.success('Textura actualizada')
+            navigate('/admin?tab=texturas')
+        } finally {
+            setSaving(false)
+        }
+    }
+
     const filteredCollection = colorCollection.filter((item) => {
         const query = searchCollection.trim().toLowerCase()
         if (!query) return true
@@ -228,17 +272,19 @@ export const TextureLabPage = () => {
                         <Button icon={<ArrowLeft size={14} />} type='text' style={{ paddingLeft: 0 }}>Volver a Texturas</Button>
                     </Link>
 
-                    <span className='gc-content-label'>Textura candidata</span>
+                    <span className='gc-content-label'>{isEditMode ? 'Editando textura' : 'Textura candidata'}</span>
 
-                    <input ref={fileInputRef} type='file' accept='image/*' style={{ display: 'none' }} onChange={handleFileChange} />
+                    {!isEditMode && (
+                        <input ref={fileInputRef} type='file' accept='image/*' style={{ display: 'none' }} onChange={handleFileChange} />
+                    )}
                     <div style={{ width: '100%', height: '140px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--borders)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {uploadedImage ? (
-                            <img alt='' src={uploadedImage.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {activeImageUrl ? (
+                            <img alt='' src={activeImageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                             <span style={{ color: '#00000040', fontSize: '13px' }}>Sin imagen</span>
                         )}
                     </div>
-                    {!uploadedImage && (
+                    {!isEditMode && !uploadedImage && (
                         <Button icon={<UploadIcon size={14} />} loading={uploading} onClick={() => fileInputRef.current?.click()}>
                             Subir imagen
                         </Button>
@@ -250,8 +296,8 @@ export const TextureLabPage = () => {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span className='gc-content-label'>Opacidad</span>
-                        <InputNumber min={0} max={1} step={0.1} value={opacity} onChange={(v) => setOpacity(v ?? 0)} style={{ width: '100%' }} />
+                        <span className='gc-content-label'>Opacidad ({opacity})</span>
+                        <Slider min={0} max={1} step={0.1} value={opacity} onChange={setOpacity} />
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -267,21 +313,23 @@ export const TextureLabPage = () => {
                         <Button
                             type='primary'
                             icon={<Save size={14} />}
-                            disabled={!uploadedImage || !textureName.trim()}
+                            disabled={isEditMode ? !editingImage || !textureName.trim() : !uploadedImage || !textureName.trim()}
                             loading={saving}
-                            onClick={handleGuardar}
+                            onClick={isEditMode ? handleGuardarCambios : handleGuardar}
                             style={{ flex: 1 }}
                         >
-                            Guardar textura
+                            {isEditMode ? 'Guardar cambios' : 'Guardar textura'}
                         </Button>
-                        <Button
-                            danger
-                            icon={<Trash2 size={14} />}
-                            disabled={!uploadedImage}
-                            onClick={handleDescartar}
-                        >
-                            Descartar
-                        </Button>
+                        {!isEditMode && (
+                            <Button
+                                danger
+                                icon={<Trash2 size={14} />}
+                                disabled={!uploadedImage}
+                                onClick={handleDescartar}
+                            >
+                                Descartar
+                            </Button>
+                        )}
                     </div>
                 </div>
 

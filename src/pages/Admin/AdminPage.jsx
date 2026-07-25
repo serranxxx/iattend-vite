@@ -1,4 +1,4 @@
-import { Badge, Button, Divider, Dropdown, Input, InputNumber, Layout, Modal, Select, Space, Table, Tabs, message } from 'antd'
+import { Badge, Button, Divider, Dropdown, Input, InputNumber, Layout, Modal, Space, Table, Tabs, message } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import './AdminPanel.css'
 import { supabase } from '../../lib/supabase'
@@ -8,16 +8,10 @@ import { HeaderBuild } from '../../modules/Header/Header'
 import { LuArrowUpFromLine, LuArrowUpRight, LuChevronDown, LuCopy, LuLink, LuPlus, LuUserPlus } from 'react-icons/lu'
 import { Link, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
-import { ArrowUpRight, ChevronDown, Copy, FlaskConical, Link2, MessageCircle, MoreVertical, Plus, SquareChevronDown } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, ChevronDown, Copy, FlaskConical, Link2, MessageCircle, MoreVertical, Plus, SquareChevronDown } from 'lucide-react'
 import { IoMdAdd } from 'react-icons/io'
 import { WhatsappMessages } from '../../modules/GuestManagement/WhatsappMessages/WhatsappMessages'
 import { SalesAdminPage } from './SalesAdminPage'
-
-const BLEND_OPTIONS = [
-    'normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten',
-    'color-dodge', 'color-burn', 'hard-light', 'soft-light',
-    'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity',
-].map(value => ({ value, label: value }))
 
 export const AdminPage = () => {
 
@@ -40,11 +34,6 @@ export const AdminPage = () => {
     const [unAnswer, setUnAnswer] = useState(0)
     const [colaboradores, setColaboradores] = useState(null)
     const [textures, setTextures] = useState([])
-    const [editingTexture, setEditingTexture] = useState(null)
-    const [editName, setEditName] = useState('')
-    const [editOpacity, setEditOpacity] = useState(0.5)
-    const [editBlend, setEditBlend] = useState('multiply')
-    const [savingEdit, setSavingEdit] = useState(false)
 
     const copyToClipboard = async (textToCopy) => {
         try {
@@ -172,30 +161,6 @@ export const AdminPage = () => {
             .order('sort_order');
         if (error) console.error('Error al obtener texturas:', error);
         else setTextures(data);
-    };
-
-    const openEditTexture = (t) => {
-        setEditingTexture(t);
-        setEditName(t.name);
-        setEditOpacity(t.opacity);
-        setEditBlend(t.blend);
-    };
-
-    const handleSaveEdit = async () => {
-        if (!editingTexture) return;
-        setSavingEdit(true);
-        try {
-            const { error } = await supabase
-                .from('textures')
-                .update({ name: editName.trim(), opacity: editOpacity, blend: editBlend })
-                .eq('id', editingTexture.id);
-            if (error) { messageApi.error('Error al guardar los cambios'); return; }
-            setTextures(prev => prev.map(t => t.id === editingTexture.id ? { ...t, name: editName.trim(), opacity: editOpacity, blend: editBlend } : t));
-            messageApi.success('Textura actualizada');
-            setEditingTexture(null);
-        } finally {
-            setSavingEdit(false);
-        }
     };
 
     const refreshData = () => {
@@ -619,13 +584,26 @@ export const AdminPage = () => {
             }}>
                 <div style={{ position: 'relative', width: '100%', height: '140px' }}>
                     <img src={t.image_url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    <Button
-                        shape='circle'
-                        
-                        icon={<MoreVertical size={14} />}
-                        onClick={() => openEditTexture(t)}
-                        style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor:'#FFFFFF40', backdropFilter:'blur(10px)' }}
-                    />
+                    <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '6px' }}>
+                        <Dropdown
+                            trigger={['click']}
+                            placement='bottomRight'
+                            popupRender={() => (
+                                <div style={{
+                                    backgroundColor: '#FFF', borderRadius: '12px', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)',
+                                    padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '160px',
+                                }}>
+                                    <span><b>Opacidad:</b> {t.opacity}</span>
+                                    <span><b>Blend:</b> {t.blend}</span>
+                                </div>
+                            )}
+                        >
+                            <Button shape='circle' icon={<MoreVertical size={14} />} style={{ backgroundColor: '#FFFFFF40', backdropFilter: 'blur(10px)' }} />
+                        </Dropdown>
+                        <Link to={`/admin/texture-lab?id=${t.id}`}>
+                            <Button shape='circle' icon={<ArrowRight size={14} />} style={{ backgroundColor: '#FFFFFF40', backdropFilter: 'blur(10px)' }} />
+                        </Link>
+                    </div>
                 </div>
                 <div style={{ padding: '12px' }}>
                     <span style={{ fontWeight: 600 }}>{t.name}</span>
@@ -1033,49 +1011,6 @@ export const AdminPage = () => {
                         </div>
                     </div>
 
-                </Modal>
-
-                <Modal
-                    open={!!editingTexture}
-                    onCancel={() => setEditingTexture(null)}
-                    onOk={handleSaveEdit}
-                    okText='Guardar cambios'
-                    confirmLoading={savingEdit}
-                    // title='Editar textura'
-                    style={{padding:'24px'}}
-                    styles={{
-                        container: {
-                            borderRadius: '24px',
-                            padding: '0px',
-                        },
-                        header: {
-                            borderBottom: 'none',
-                            padding: 0,
-                        },
-                        body: {
-                            padding: 12,
-                        }
-                    }}
-                
-                width={400}
-                >
-                    {editingTexture && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', }}>
-                            <img src={editingTexture.image_url} alt='' style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '12px' }} />
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <span className='gc-content-label'>Nombre</span>
-                                <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <span className='gc-content-label'>Opacidad</span>
-                                <InputNumber min={0} max={1} step={0.1} value={editOpacity} onChange={(v) => setEditOpacity(v ?? 0)} style={{ width: '100%' }} />
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <span className='gc-content-label'>Blend</span>
-                                <Select value={editBlend} options={BLEND_OPTIONS} onChange={setEditBlend} style={{ width: '100%' }} />
-                            </div>
-                        </div>
-                    )}
                 </Modal>
 
             </Layout>

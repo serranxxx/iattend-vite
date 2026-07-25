@@ -9,11 +9,9 @@ export const VendorLogin = ({ onLogin }) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    const handleComplete = async (codigoSinGuion) => {
+    const handleComplete = async (codigo_acceso) => {
         setError('')
         setLoading(true)
-
-        const codigo_acceso = `${codigoSinGuion.slice(0, 3)}-${codigoSinGuion.slice(3)}`
 
         try {
             const { data } = await loginVendedor(codigo_acceso)

@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import styles from './PinCodeInput.module.css'
 
 const LENGTH = 6
-const GAP_AFTER_INDEX = 2
 
 export const PinCodeInput = ({ onComplete, disabled }) => {
     const [chars, setChars] = useState(Array(LENGTH).fill(''))
@@ -15,13 +14,13 @@ export const PinCodeInput = ({ onComplete, disabled }) => {
     const updateChars = (nextChars) => {
         setChars(nextChars)
         if (nextChars.every(c => c !== '')) {
-            onComplete?.(nextChars.join('').toUpperCase())
+            onComplete?.(nextChars.join(''))
         }
     }
 
     const handleChange = (index, rawValue) => {
-        const value = rawValue.slice(-1).toUpperCase()
-        if (value && !/^[A-Z0-9]$/.test(value)) return
+        const value = rawValue.slice(-1)
+        if (value && !/^[0-9]$/.test(value)) return
 
         const next = [...chars]
         next[index] = value
@@ -39,7 +38,7 @@ export const PinCodeInput = ({ onComplete, disabled }) => {
     }
 
     const handlePaste = (e) => {
-        const pasted = e.clipboardData.getData('text').replace(/[^A-Za-z0-9]/g, '').slice(0, LENGTH).toUpperCase()
+        const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, LENGTH)
         if (!pasted) return
         e.preventDefault()
         const next = Array(LENGTH).fill('')
@@ -57,13 +56,11 @@ export const PinCodeInput = ({ onComplete, disabled }) => {
                         className={styles.box}
                         value={char}
                         disabled={disabled}
-                        inputMode="text"
-                        autoCapitalize="characters"
+                        inputMode="numeric"
                         maxLength={1}
                         onChange={(e) => handleChange(index, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(index, e)}
                     />
-                    {index === GAP_AFTER_INDEX && <span className={styles.dash} />}
                 </span>
             ))}
         </div>

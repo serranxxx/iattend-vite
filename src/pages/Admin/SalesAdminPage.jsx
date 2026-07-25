@@ -10,7 +10,7 @@ import {
     Legend,
     Tooltip as ChartTooltip,
 } from 'chart.js'
-import { Segmented, Select, Table, Tag, Dropdown, Button, Modal, Form, Input, InputNumber, DatePicker, Upload, Tooltip, message } from 'antd'
+import { Segmented, Select, Table, Tag, Dropdown, Button, Modal, Form, Input, InputNumber, DatePicker, Upload, Tooltip, message, Checkbox } from 'antd'
 import { ChevronDown, SlidersHorizontal, UserPlus, ReceiptText, Wallet, Upload as UploadIcon } from 'lucide-react'
 import {
     fetchAdminVentas,
@@ -218,7 +218,14 @@ export const SalesAdminPage = () => {
             setNewVendedorOpen(false)
             vendedorForm.resetFields()
             setVendedores(prev => [...prev, data.vendedor])
-            setCreatedVendedor(data.vendedor)
+            setCreatedVendedor({
+                ...data.vendedor,
+                cuenta_creada: data.cuenta_creada,
+                cuenta_error: data.cuenta_error,
+            })
+            if (values.crear_cuenta && !data.cuenta_creada) {
+                message.warning(data.cuenta_error || 'No se pudo crear la cuenta i attend')
+            }
         } catch (err) {
             message.error(err.response?.data?.msg || 'No se pudo crear el vendedor')
         }
@@ -455,7 +462,7 @@ export const SalesAdminPage = () => {
         { title: 'Correo', dataIndex: 'email', key: 'email', render: (v) => v || '—' },
         { title: 'Descuento máx.', dataIndex: 'descuento_max_pct', key: 'descuento_max_pct', align: 'right', render: (v) => `${v}%` },
         {
-            title: 'Código de acceso', dataIndex: 'codigo_acceso', key: 'codigo_acceso',
+            title: 'PIN de acceso', dataIndex: 'codigo_acceso', key: 'codigo_acceso',
             render: (codigo) => (
                 <span className={styles.codigoAccesoInline}>
                     {codigo}
@@ -748,11 +755,24 @@ export const SalesAdminPage = () => {
                     <Form.Item name="telefono" label="Teléfono">
                         <Input />
                     </Form.Item>
-                    <Form.Item name="email" label="Correo">
+                    <Form.Item
+                        name="email"
+                        label="Correo"
+                        dependencies={['crear_cuenta']}
+                        rules={[
+                            ({ getFieldValue }) => ({
+                                required: !!getFieldValue('crear_cuenta'),
+                                message: 'El correo es requerido para crear la cuenta i attend',
+                            }),
+                        ]}
+                    >
                         <Input />
                     </Form.Item>
                     <Form.Item name="descuento_max_pct" label="Descuento máximo (%)" initialValue={0}>
                         <InputNumber style={{ width: '100%' }} min={0} max={100} />
+                    </Form.Item>
+                    <Form.Item name="crear_cuenta" valuePropName="checked" initialValue={false}>
+                        <Checkbox>Crear cuenta i attend</Checkbox>
                     </Form.Item>
                 </Form>
             </Modal>
@@ -767,7 +787,7 @@ export const SalesAdminPage = () => {
             >
                 <div className={styles.newVendedorResult}>
                     <div className={styles.newVendedorNombre}>{createdVendedor?.nombre}</div>
-                    <div className={styles.filterLabel}>Código de acceso</div>
+                    <div className={styles.filterLabel}>PIN de acceso</div>
                     <div className={styles.codigoAcceso}>{createdVendedor?.codigo_acceso}</div>
                     <Button
                         onClick={() => {
@@ -775,8 +795,18 @@ export const SalesAdminPage = () => {
                             message.success('Copiado')
                         }}
                     >
-                        Copiar código
+                        Copiar PIN
                     </Button>
+                    {createdVendedor?.cuenta_creada && (
+                        <div className={styles.filterLabel} style={{ marginTop: 12, color: '#389e0d' }}>
+                            Cuenta i attend creada — el PIN es también su contraseña
+                        </div>
+                    )}
+                    {createdVendedor?.cuenta_error && (
+                        <div className={styles.filterLabel} style={{ marginTop: 12, color: '#cf1322' }}>
+                            No se pudo crear la cuenta i attend: {createdVendedor.cuenta_error}
+                        </div>
+                    )}
                 </div>
             </Modal>
 

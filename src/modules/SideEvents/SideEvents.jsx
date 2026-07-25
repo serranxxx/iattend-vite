@@ -9,6 +9,7 @@ import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
+import { dayjsToWallClock, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts } from '../../helpers/assets/fonts'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
 import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
@@ -595,12 +596,6 @@ export const SideEvents = () => {
 
     dayjs.locale('es');
 
-    const formatInvitationDate = (date) => {
-        if (!date) return '';
-
-        return dayjs(date).format('ddd, D [de] MMMM, HH:mm');
-    }
-
     const insertSideEvent = async () => {
         const { data, error } = await supabase
             .from('side_events')
@@ -621,6 +616,7 @@ export const SideEvents = () => {
                         url: null,
                     },
                     hour: null,
+                    timezone: null,
                     image: null,
                     title: {
                         font: 'Poppins',
@@ -650,12 +646,17 @@ export const SideEvents = () => {
     const saveSideEvent = async () => {
         if (!current?.id) return;
 
+        const body = {
+            ...current.body,
+            timezone: getTimezoneForState(current.body?.address?.state),
+        };
+
         const { error } = await supabase
             .from('side_events')
             .update({
                 name: current.name,
                 url_image: current.url_image === null ? current.body.image : current.url_image,
-                body: current.body,
+                body,
             })
             .eq('id', current.id);
 
@@ -1123,7 +1124,7 @@ export const SideEvents = () => {
                                                                         />
                                                                     </div>
                                                                     <DatePicker
-                                                                        onChange={(e) => { setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: e } })); setDatePickerOpen(false); }}
+                                                                        onChange={(e) => { setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: dayjsToWallClock(e) } })); setDatePickerOpen(false); }}
                                                                         className='date_pciker_sidee'
                                                                         showTime
                                                                         style={{ width: '100%' }}
@@ -1133,7 +1134,7 @@ export const SideEvents = () => {
                                                             ) : (
                                                                 <div className='side_date_time' onClick={() => setDatePickerOpen(true)}>
                                                                     <LuCalendarClock size={20} style={{ color: '#FFF' }} />
-                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>{t('side_events.datetime_label')}</span>}
+                                                                    {current?.body?.hour ? <span>{formatEventDateTime(current.body.hour, { state: current.body?.address?.state, timezone: current.body?.timezone })}</span> : <span>{t('side_events.datetime_label')}</span>}
                                                                 </div>
                                                             )
                                                         ) : (
@@ -1141,12 +1142,12 @@ export const SideEvents = () => {
                                                                 trigger={['click']}
                                                                 placement='right'
                                                                 popupRender={() => (
-                                                                    <DatePicker onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: e } }))} className='date_pciker_sidee' showTime getPopupContainer={() => document.body} />
+                                                                    <DatePicker onChange={(e) => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hour: dayjsToWallClock(e) } }))} className='date_pciker_sidee' showTime getPopupContainer={() => document.body} />
                                                                 )}
                                                             >
                                                                 <div className='side_date_time'>
                                                                     <LuCalendarClock size={20} style={{ color: '#FFF' }} />
-                                                                    {current?.body?.hour ? <span>{formatInvitationDate(current.body.hour)}</span> : <span>{t('side_events.datetime_label')}</span>}
+                                                                    {current?.body?.hour ? <span>{formatEventDateTime(current.body.hour, { state: current.body?.address?.state, timezone: current.body?.timezone })}</span> : <span>{t('side_events.datetime_label')}</span>}
                                                                 </div>
                                                             </Dropdown>
                                                         )}
