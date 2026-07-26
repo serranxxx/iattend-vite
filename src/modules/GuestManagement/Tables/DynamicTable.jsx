@@ -3,6 +3,23 @@ import './dynamic-table.css'
 import { Button } from 'antd'
 import { supabase } from '../../../lib/supabase'
 
+const CANVAS_WIDTH = 3500
+const CANVAS_HEIGHT = 1800
+
+const getTableFootprint = (shape) => {
+    if (shape === 'dance') return { width: 800, height: 600 }
+    if (shape === 'rectangle') return { width: 400, height: 200 }
+    return { width: 200, height: 200 }
+}
+
+const clampToCanvas = (x, y, shape) => {
+    const { width, height } = getTableFootprint(shape)
+    return {
+        x: Math.min(Math.max(x, 0), CANVAS_WIDTH - width),
+        y: Math.min(Math.max(y, 0), CANVAS_HEIGHT - height),
+    }
+}
+
 export const DynamicTable = ({
     onSelectedTable,
     setOnSelectedTable,
@@ -246,7 +263,7 @@ export const DynamicTable = ({
                 if (event.cancelable) event.preventDefault()
                 const deltaX = (pos.clientX - lastMouseRef.current.x) / zoomLevel
                 const deltaY = (pos.clientY - lastMouseRef.current.y) / zoomLevel
-                setMapPosition(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }))
+                setMapPosition(prev => clampToCanvas(prev.x + deltaX, prev.y + deltaY, shape))
             }
 
             lastMouseRef.current = { x: pos.clientX, y: pos.clientY }

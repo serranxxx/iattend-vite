@@ -8,14 +8,14 @@ export const FooterApp = ({ shared_user }) => {
         ? [
             { href: 'https://wa.me/6145338500',                               icon: <FaHeadset />,        label: 'Ayuda' },
             { href: `https://wa.me/${shared_user.whatsapp}`,                   icon: <FaWhatsapp />,       label: 'Contacto', hide: !shared_user.whatsapp },
-            { href: `https://www.instagram.com/${shared_user.instagram}`,      icon: <FaInstagram />,      label: `@${shared_user.instagram}`, hide: !shared_user.instagram },
+            { href: `https://www.instagram.com/${shared_user.instagram}`,      icon: <FaInstagram />,      label: `${shared_user.instagram}`, hide: !shared_user.instagram },
             { href: `mailto:${shared_user.email}`,                             icon: <FaRegEnvelope />,    label: shared_user.email, hide: !shared_user.email },
             { href: '/legal',                                                   icon: <FaRegPaperPlane />,  label: 'Legal' },
         ]
         : [
             { href: 'https://wa.me/6145338500',                               icon: <FaHeadset />,        label: 'Ayuda' },
             { href: 'https://wa.me/6145338500',                               icon: <FaWhatsapp />,       label: 'Contacto' },
-            { href: 'https://www.instagram.com/iattend.mx',                   icon: <FaInstagram />,      label: '@iattend.mx' },
+            { href: 'https://www.instagram.com/iattend.mx',                   icon: <FaInstagram />,      label: 'iattend.mx' },
             { href: 'mailto:contacto.iattend@gmail.com',                      icon: <FaRegEnvelope />,    label: 'Mail' },
             { href: '/legal',                                                   icon: <FaRegPaperPlane />,  label: 'Legal' },
         ]

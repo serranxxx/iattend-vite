@@ -17,7 +17,7 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
     const invitationName = (invitation_id) => {
 
         const item = invitationsById.get(invitation_id)
-        return item.name
+        return item?.name
     }
 
 

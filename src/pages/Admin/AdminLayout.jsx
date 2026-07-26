@@ -1,0 +1,220 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Badge, Dropdown, Layout, Menu, message } from 'antd'
+import { useSearchParams } from 'react-router-dom'
+import { Calendar, MessageCircle, Sparkles, Users, Wrench } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { HeaderBuild } from '../../modules/Header/Header'
+import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer'
+import { WhatsappMessages } from '../../modules/GuestManagement/WhatsappMessages/WhatsappMessages'
+import { EventosSection } from './sections/EventosSection'
+import { UsuariosSection } from './sections/UsuariosSection'
+import { VentasSection } from './sections/VentasSection'
+import { HerramientasSection } from './sections/HerramientasSection'
+
+const { Sider, Content } = Layout
+
+const SECTION_KEYS = ['eventos', 'usuarios', 'ventas', 'herramientas']
+
+const MENU_ITEMS = [
+    { key: 'eventos', icon: <Calendar size={16} />, label: 'Eventos' },
+    { key: 'usuarios', icon: <Users size={16} />, label: 'Usuarios' },
+    { key: 'ventas', icon: <Sparkles size={16} />, label: 'Ventas' },
+    { key: 'herramientas', icon: <Wrench size={16} />, label: 'Herramientas' },
+]
+
+export const AdminLayout = () => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const initialTab = SECTION_KEYS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'eventos'
+    const [activeKey, setActiveKey] = useState(initialTab)
+
+    const [user, setUser] = useState(null)
+    const [onNewInvitation, setOnNewInvitation] = useState(false)
+
+    const [newInvitations, setNewInvitations] = useState(null)
+    const [newProfiles, setNewProfiles] = useState(null)
+    const [nextEvents, setNextEvents] = useState([])
+
+    const [conversations, setConversations] = useState([])
+    const [unAnswer, setUnAnswer] = useState(0)
+
+    const handleSelectSection = (key) => {
+        setActiveKey(key)
+        searchParams.set('tab', key)
+        setSearchParams(searchParams, { replace: true })
+    }
+
+    const onOpenNewInvitation = (profile) => {
+        setUser(profile)
+        setOnNewInvitation(true)
+    }
+
+    const getNewUsers = async () => {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) { console.error("Error al obtener la sesión:", sessionError); return; }
+        if (!session) { console.log("No hay usuario autenticado"); return; }
+
+        const { data, error } = await supabase.from("profiles").select("*")
+        if (error) console.error("Error al obtener invitaciones:", error);
+        else setNewProfiles(data)
+    };
+
+    const getNewInvitations = async () => {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) { console.error("Error al obtener la sesión:", sessionError); return; }
+        if (!session) { console.log("No hay usuario autenticado"); return; }
+
+        const { data, error } = await supabase.from("invitations").select("*")
+        if (error) console.error("Error al obtener invitaciones:", error);
+        else setNewInvitations(data)
+    };
+
+    const getInvitationsByDate = async () => {
+        const { data, error } = await supabase.rpc('get_upcoming_with_userv2');
+        if (error) console.error(error);
+        else {
+            setNextEvents(data.filter(i => i.user_email !== 'albserrano8@gmail.com' && i.user_email !== 'pa.perez98@gmail.com' && i.user_email !== 'pau@iattend.mx'))
+        }
+    }
+
+    const refreshEventos = () => {
+        getNewInvitations()
+        getInvitationsByDate()
+    }
+
+    const getChats = async () => {
+        const { data, error } = await supabase.rpc('get_conversations_v2');
+        if (error) return
+        setConversations(data)
+        calculateUnAnswer(data)
+    }
+
+    const calculateUnAnswer = (convs) => {
+        let count = 0
+        convs.forEach(conv => (
+            conv.messages.forEach(msg => (
+                !msg.read && msg.direction === 'inbound' ? count += 1 : null
+            ))
+        ))
+        setUnAnswer(count)
+    }
+
+    const invitationsById = useMemo(() =>
+        new Map((newInvitations ?? []).map(i => [i.id, i]))
+        , [newInvitations]);
+
+    useEffect(() => {
+        if (!supabase) return;
+
+        const channel = supabase
+            .channel(`upload_dynamic_admin`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'whatsapp_freetext_dispatches' },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+                    getChats()
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'whatsapp_incoming_messages' },
+                (payload) => {
+                    const row = payload.new || payload.old;
+                    if (!row) return;
+                    getChats();
+                    message.info('Nuevo mensaje')
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
+    useEffect(() => {
+        getInvitationsByDate()
+        getNewInvitations()
+        getNewUsers()
+        getChats()
+    }, [])
+
+    const renderSection = () => {
+        switch (activeKey) {
+            case 'usuarios':
+                return (
+                    <UsuariosSection
+                        profiles={newProfiles}
+                        refreshUsuarios={getNewUsers}
+                        onOpenNewInvitation={onOpenNewInvitation}
+                    />
+                )
+            case 'ventas':
+                return <VentasSection />
+            case 'herramientas':
+                return <HerramientasSection />
+            case 'eventos':
+            default:
+                return (
+                    <EventosSection
+                        newInvitations={newInvitations}
+                        nextEvents={nextEvents}
+                        profiles={newProfiles}
+                        refreshEventos={refreshEventos}
+                        onOpenNewInvitation={onOpenNewInvitation}
+                    />
+                )
+        }
+    }
+
+    return (
+        <div className='invitations-page-main-container admin-page-root'>
+            <Layout style={{
+                position: 'relative', width: '100%', display: 'flex', flexDirection: 'column',
+                alignItems: 'flex-start', justifyContent: 'flex-start',
+                backgroundColor: 'var(--ft-color)',
+                gap: '24px',
+            }}>
+                <HeaderBuild position={'admin'} />
+
+                <Layout className='admin-panel-body'>
+                    <Sider width={220} className='admin-panel-sider' theme='light'>
+                        <Menu
+                            mode='inline'
+                            selectedKeys={[activeKey]}
+                            items={MENU_ITEMS}
+                            onClick={({ key }) => handleSelectSection(key)}
+                            className='admin-panel-menu'
+                        />
+
+                        <div className='admin-panel-sider-divider' />
+
+                        <Dropdown
+                            trigger={['click']}
+                            placement='rightTop'
+                            arrow
+                            popupRender={() => (
+                                <WhatsappMessages conversations={conversations} isAdmin={true} invitationsById={invitationsById} />
+                            )}
+                        >
+                            <div className='admin-panel-chat-item'>
+                                <MessageCircle size={16} />
+                                <span>Mensajes</span>
+                                {unAnswer > 0 && <Badge count={unAnswer} color='var(--purple-color)' />}
+                            </div>
+                        </Dropdown>
+                    </Sider>
+
+                    <Content className='admin-panel-content'>
+                        {renderSection()}
+                    </Content>
+                </Layout>
+            </Layout>
+
+            <NewInvitationDrawer
+                visible={onNewInvitation} setVisible={setOnNewInvitation} refreshInvitations={refreshEventos} user={user}
+            />
+        </div>
+    )
+}

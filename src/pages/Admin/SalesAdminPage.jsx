@@ -140,8 +140,10 @@ const calcularCargosPorVenta = (ventas) => {
 
 const now = new Date()
 
-export const SalesAdminPage = () => {
-    const [activeView, setActiveView] = useState('ventas')
+export const SalesAdminPage = ({ forcedView, hideToggle = false } = {}) => {
+    const [internalActiveView, setInternalActiveView] = useState('ventas')
+    const activeView = forcedView ?? internalActiveView
+    const setActiveView = setInternalActiveView
     const [mode, setMode] = useState('mes')
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -491,11 +493,13 @@ export const SalesAdminPage = () => {
                         <div className={styles.subtitle}>Panel interno — solo admin</div>
                     </div>
                     <div className={styles.headerControls}>
-                        <Segmented
-                            value={activeView}
-                            onChange={setActiveView}
-                            options={[{ label: 'Ventas', value: 'ventas' }, { label: 'Vendedores', value: 'vendedores' }]}
-                        />
+                        {!hideToggle && (
+                            <Segmented
+                                value={activeView}
+                                onChange={setActiveView}
+                                options={[{ label: 'Ventas', value: 'ventas' }, { label: 'Vendedores', value: 'vendedores' }]}
+                            />
+                        )}
                         {activeView === 'ventas' && (
                             <>
                                 <Segmented

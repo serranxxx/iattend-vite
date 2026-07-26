@@ -15,7 +15,40 @@ import { formatDate } from '../../../helpers/assets/functions'
 import { ChevronDown, Circle, List, MoveHorizontal, MoveVertical, PartyPopper, Plus, RectangleHorizontal, Square } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+const CANVAS_WIDTH = 3500
+const CANVAS_HEIGHT = 1800
+const COLUMN_STEP = 140
+const ROW_STEP = 220
+const ROW_START_X = 100
 
+const getTableFootprint = (shape) => {
+    if (shape === 'dance') return { width: 800, height: 600 }
+    if (shape === 'rectangle') return { width: 400, height: 200 }
+    return { width: 200, height: 200 }
+}
+
+const clampToCanvas = (x, y, shape) => {
+    const { width, height } = getTableFootprint(shape)
+    return {
+        x: Math.min(Math.max(x, 0), CANVAS_WIDTH - width),
+        y: Math.min(Math.max(y, 0), CANVAS_HEIGHT - height),
+    }
+}
+
+const getNextPosition = (latestTable, shape) => {
+    if (!latestTable) return clampToCanvas(1484, 546, shape)
+
+    const { width } = getTableFootprint(shape)
+    let nextX = latestTable.x + COLUMN_STEP
+    let nextY = latestTable.y
+
+    if (nextX + width > CANVAS_WIDTH) {
+        nextX = ROW_START_X
+        nextY = latestTable.y + ROW_STEP
+    }
+
+    return clampToCanvas(nextX, nextY, shape)
+}
 
 export const TablesPage = ({ invitationID }) => {
     const { t } = useTranslation()
@@ -150,6 +183,8 @@ export const TablesPage = ({ invitationID }) => {
                 return
             }
 
+            const nextPosition = getNextPosition(latestTable, newShape)
+
             newTable = {
                 created_at: new Date(),
                 last_update_at: new Date(),
@@ -159,13 +194,15 @@ export const TablesPage = ({ invitationID }) => {
                 name: tablesName,
                 number: latestTable ? Number(latestTable.number) + 1 : 1,
                 size: totalChairs,
-                x: latestTable ? latestTable.x + 140 : 1484,
-                y: latestTable ? latestTable.y : 546,
+                x: nextPosition.x,
+                y: nextPosition.y,
             }
 
         }
 
         else {
+            const nextPosition = getNextPosition(null, newShape)
+
             newTable = {
                 created_at: new Date(),
                 last_update_at: new Date(),
@@ -173,8 +210,8 @@ export const TablesPage = ({ invitationID }) => {
                 name: tablesName,
                 number: 1,
                 size: totalChairs,
-                x: 1484,
-                y: 546,
+                x: nextPosition.x,
+                y: nextPosition.y,
             }
         }
 
@@ -262,8 +299,9 @@ export const TablesPage = ({ invitationID }) => {
                 .maybeSingle()
             if (error) return
             if (latestTable) {
-                x = latestTable.x + 300
-                y = latestTable.y
+                const nextPosition = getNextPosition(latestTable, 'dance')
+                x = nextPosition.x
+                y = nextPosition.y
                 number = Number(latestTable.number) + 1
             }
         }
