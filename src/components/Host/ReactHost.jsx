@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = new Set([
 
 
 export default function ReactHost({
-  config, onHide, screens, scrollToSection, onSectionChange, textureOverride
+  config, onHide, screens, scrollToSection, onSectionChange, textureOverride, fontOverride, activeLang
 }) {
   const iframeRef = useRef(null);
   const lastSentHashRef = useRef("");
@@ -36,7 +36,7 @@ export default function ReactHost({
     if (!win) return;
 
     // hash simple para evitar re-envíos idénticos
-    const hash = JSON.stringify({ config, textureOverride });
+    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang });
     if (hash === lastSentHashRef.current && reason !== "ready") return;
     lastSentHashRef.current = hash;
 
@@ -46,6 +46,8 @@ export default function ReactHost({
         payload: {
           invitationConfig: config,
           textureOverride: textureOverride ?? null,
+          fontOverride: fontOverride ?? null,
+          lang: activeLang ?? null,
           sentAt: Date.now(),
           reason,
         },
@@ -84,12 +86,12 @@ export default function ReactHost({
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [targetOrigin, config, textureOverride]);
+  }, [targetOrigin, config, textureOverride, fontOverride, activeLang]);
 
-  // 2) Re-enviar cada que cambie `config` o `textureOverride`
+  // 2) Re-enviar cada que cambie `config`, `textureOverride` o el idioma activo
   useEffect(() => {
     postProps("config-change");
-  }, [config, textureOverride, targetOrigin]);
+  }, [config, textureOverride, fontOverride, activeLang, targetOrigin]);
 
   // 2b) Pedir auto-scroll cada que cambie la sección activa en el builder
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function ReactHost({
     const onLoad = () => postProps("iframe-load");
     iframe.addEventListener("load", onLoad);
     return () => iframe.removeEventListener("load", onLoad);
-  }, [url, targetOrigin, config, textureOverride]);
+  }, [url, targetOrigin, config, textureOverride, fontOverride, activeLang]);
 
   return (
     <iframe

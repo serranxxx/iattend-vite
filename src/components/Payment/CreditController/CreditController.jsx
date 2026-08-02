@@ -8,12 +8,14 @@ import { Coins, Plus } from 'lucide-react'
 import { FaPaperPlane } from 'react-icons/fa'
 import { useLia } from '../../../context/LiaContext'
 import { useTranslation } from 'react-i18next'
+import { useDashboardRealtime } from '../../../context/DashboardRealtimeContext'
 
 export const CreditController = ({ id, mobile }) => {
     const [credits, setCredits] = useState(null)
     const [mobileOpen, setMobileOpen] = useState(false)
-    const { creditState } = useLia()
+    const { creditState, creditAmount, creditSendingLabel } = useLia()
     const { t } = useTranslation()
+    const { subscribe } = useDashboardRealtime()
 
     const getCredits = async () => {
         const { data, error } = await supabase
@@ -30,6 +32,17 @@ export const CreditController = ({ id, mobile }) => {
     useEffect(() => {
         if (creditState === 'bubble') getCredits()
     }, [creditState])
+
+    // En tiempo real: cualquier descuento hecho fuera de este componente
+    // (ej. agregar un idioma extra en iattend-events) actualiza el contador
+    // sin esperar a un refresh o a un evento de Lia.
+    useEffect(() => {
+        return subscribe('invitations', (payload) => {
+            const row = payload.new
+            if (!row || String(row.id) !== String(id)) return
+            setCredits(row.credits)
+        })
+    }, [id, subscribe])
 
     const isSending = creditState === 'sending'
     const isBubble  = creditState === 'bubble'
@@ -54,7 +67,7 @@ export const CreditController = ({ id, mobile }) => {
 
     return (
         <div className={`coins_cont${isSending ? ' coins_cont--sending' : ''}`}>
-            {isBubble && <div className="credit_minus_bubble">-1 crédito</div>}
+            {isBubble && <div className="credit_minus_bubble">-{creditAmount} {creditAmount === 1 ? 'crédito' : 'créditos'}</div>}
 
             <div className="coins_rel">
                 {!isSending && (
@@ -64,7 +77,7 @@ export const CreditController = ({ id, mobile }) => {
                 {isSending ? (
                     <div className="coins_sending_content">
                         <FaPaperPlane className="paper_flight" />
-                        <span>{t('guests.invitation_sent')}</span>
+                        <span>{creditSendingLabel ?? t('guests.invitation_sent')}</span>
                     </div>
                 ) : (
                     <span className='credits_label'>{credits}</span>

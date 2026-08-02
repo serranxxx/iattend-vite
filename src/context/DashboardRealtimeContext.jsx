@@ -13,6 +13,7 @@ const WATCHED_TABLES = [
     'whatsapp_incoming_messages',
     'whatsapp_freetext_dispatches',
     'side_events_guests',
+    'invitations',
 ]
 
 export const DashboardRealtimeProvider = ({ children }) => {

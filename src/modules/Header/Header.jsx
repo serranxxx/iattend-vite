@@ -129,7 +129,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
 
                         {
                             onTourClick &&
-                            <button type="button" className="hb-tour-btn" onClick={() => (onTourClick ? onTourClick() : navigate('/preview-mood'))}>
+                            <button type="button" className="hb-tour-btn" onClick={() => (onTourClick ? onTourClick() : navigate('/preview'))}>
                                 <Sparkles size={15} strokeWidth={2} />
                                 {/* Conoce I attend */}
                             </button>

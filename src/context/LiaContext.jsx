@@ -7,6 +7,8 @@ export const LiaProvider = ({ children }) => {
     const [uiAction, setUiActionRaw] = useState(null)
     const [notifications, setNotifications] = useState([])
     const [creditState, setCreditStateRaw] = useState(null)
+    const [creditAmount, setCreditAmount] = useState(1)
+    const [creditSendingLabel, setCreditSendingLabel] = useState(null)
     const timersRef = useRef({})
     const creditTimerRef = useRef(null)
 
@@ -39,13 +41,15 @@ export const LiaProvider = ({ children }) => {
         setNotifications([])
     }, [])
 
-    const setCreditSending = useCallback(() => {
+    const setCreditSending = useCallback((label = null) => {
         clearTimeout(creditTimerRef.current)
+        setCreditSendingLabel(label)
         setCreditStateRaw('sending')
     }, [])
 
-    const setCreditSuccess = useCallback(() => {
+    const setCreditSuccess = useCallback((amount = 1) => {
         clearTimeout(creditTimerRef.current)
+        setCreditAmount(amount)
         setCreditStateRaw('bubble')
         creditTimerRef.current = setTimeout(() => setCreditStateRaw(null), 1800)
     }, [])
@@ -56,7 +60,7 @@ export const LiaProvider = ({ children }) => {
     }, [])
 
     return (
-        <LiaContext.Provider value={{ uiAction, setUiAction, clearUiAction, notifications, notify, dismissNotif, dismissAll, creditState, setCreditSending, setCreditSuccess, clearCreditState }}>
+        <LiaContext.Provider value={{ uiAction, setUiAction, clearUiAction, notifications, notify, dismissNotif, dismissAll, creditState, creditAmount, creditSendingLabel, setCreditSending, setCreditSuccess, clearCreditState }}>
             {children}
         </LiaContext.Provider>
     )

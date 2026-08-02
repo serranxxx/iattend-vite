@@ -67,7 +67,7 @@ const coordenadas = [
 const { Option } = Select;
 
 
-export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }) => {
+export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID, fontOptions = fonts, fontsOnly = false, newFonts = [] }) => {
 
     const { t } = useTranslation()
     const [onGeneration] = useState(false)
@@ -316,7 +316,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                 padding: '10px 15px', transition: 'all 0.3s ease'
                                             }} />
 
-                                        <div className='quote-row-btween'>
+                                        {!fontsOnly && <div className='quote-row-btween'>
                                             <span className={'module--title'}
                                                 style={{ textAlign: 'left' }}
                                             >{t('build_quote.bg_image')}</span>
@@ -333,19 +333,19 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                         },
                                                     },
                                                 }))} />
-                                        </div>
+                                        </div>}
 
                                         {
-                                            onImageActive &&
+                                            (fontsOnly || onImageActive) &&
 
                                             <>
-                                                <div className='quote-image-container'>
+                                                {!fontsOnly && <div className='quote-image-container'>
                                                     <img src={invitation.quote.image.dev} alt='' />
                                                     <StorageImages type={'quote'} absolute={true} invitationID={invitationID} handleImage={handleURL} />
 
-                                                </div>
+                                                </div>}
 
-                                                <Button
+                                                {!fontsOnly && <Button
                                                     className={`quote-shadow-btn`}
                                                     onClick={() => setInvitation(prevInvitation => ({
                                                         ...prevInvitation,
@@ -358,7 +358,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                         },
                                                     }))}>
                                                     {invitation.quote.text.shadow ? t('build_quote.remove_shadow') : t('build_quote.add_shadow')}
-                                                </Button>
+                                                </Button>}
                                                 <span className='gc-content-label'>{t('build_quote.text_position')}</span>
                                                 <div className='gc-position-container'>
 
@@ -421,8 +421,13 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID }
                                                         value={invitation.quote.text.font.typeFace}
                                                         onChange={(e) => handleFont(e)}
                                                         style={{ width: '100%', fontFamily: invitation.quote.text.font.typeFace }}>
-                                                        {fonts.map((font, index) => (
-                                                            <Option style={{ fontFamily: font }} key={index} value={font}>{font}</Option>
+                                                        {fontOptions.map((font, index) => (
+                                                            <Option key={index} value={font}>
+                                                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                                                    <span style={{ fontFamily: font }}>{font}</span>
+                                                                    {newFonts.includes(font) && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff4d4f', flexShrink: 0 }} />}
+                                                                </span>
+                                                            </Option>
                                                         ))}
 
                                                     </Select>

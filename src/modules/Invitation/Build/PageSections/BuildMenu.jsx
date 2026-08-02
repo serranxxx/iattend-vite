@@ -13,25 +13,30 @@ import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 const { useBreakpoint } = Grid;
 
 export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, setSaved, setSettingsModal, settingsModal,
-    onHide, setOnHide, hideMenu, invitationID
+    onHide, setOnHide, hideMenu, invitationID, activeLang
 }) => {
 
     const screens = useBreakpoint();
     const [expanded, setExpanded] = useState(false);
 
+    // key=activeLang fuerza remount del módulo activo al cambiar de idioma —
+    // los Build*.jsx guardan un espejo en useState sincronizado por efectos
+    // con dependencias puntuales, no reaccionan solos a que "invitation" pase
+    // a ser una referencia distinta (la traducción) sin desmontar/montar.
     const handleEditor = (type) => {
+        const langKey = activeLang ?? 'es'
         switch (type) {
-            case 'generals': return <BuildGenerals  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'cover': return <BuildCover invitationID={invitationID} settingsModal={settingsModal} setSettingsModal={setSettingsModal} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'greeting': return <BuildGreeting  invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'family': return <BuildFamily   invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'quote': return <BuildQuote invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'itinerary': return <BuildItinerary invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'dresscode': return <BuildDressCode invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'gifts': return <BuildGifts  invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'destinations': return <BuildDestinations invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'notices': return <BuildNotices  invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
-            case 'gallery': return <BuildGallery invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'generals': return <BuildGenerals key={langKey} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'cover': return <BuildCover key={langKey} invitationID={invitationID} settingsModal={settingsModal} setSettingsModal={setSettingsModal} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'greeting': return <BuildGreeting key={langKey} invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'family': return <BuildFamily key={langKey} invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'quote': return <BuildQuote key={langKey} invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'itinerary': return <BuildItinerary key={langKey} invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'dresscode': return <BuildDressCode key={langKey} invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'gifts': return <BuildGifts key={langKey} invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'destinations': return <BuildDestinations key={langKey} invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'notices': return <BuildNotices key={langKey} invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'gallery': return <BuildGallery key={langKey} invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
 
             default:
                 break;

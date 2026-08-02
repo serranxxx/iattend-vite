@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Dropdown, Input, Select, Slider, message } from 'antd'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Palette, Paintbrush, Upload as UploadIcon, Trash2, Save } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Palette, Paintbrush, Upload as UploadIcon, Trash2, Save } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { uploadTextureImage } from '../../helpers/services/uploadImage'
 import { colorCollection } from '../../helpers/services/colorPalette'
@@ -205,7 +205,7 @@ export const TextureLabPage = () => {
                 .eq('id', editId)
             if (error) { messageApi.error('Error al guardar los cambios'); return; }
             messageApi.success('Textura actualizada')
-            navigate('/admin?tab=texturas')
+            navigate('/admin?tab=herramientas&subtab=texturas')
         } finally {
             setSaving(false)
         }
@@ -268,10 +268,6 @@ export const TextureLabPage = () => {
                     display: 'flex', flexDirection: 'column', gap: '16px', width: '320px', flexShrink: 0,
                     backgroundColor: '#FFF', borderRadius: '16px', padding: '20px', boxShadow: '0px 0px 12px rgba(0,0,0,0.08)',
                 }}>
-                    <Link to='/admin?tab=texturas'>
-                        <Button icon={<ArrowLeft size={14} />} type='text' style={{ paddingLeft: 0 }}>Volver a Texturas</Button>
-                    </Link>
-
                     <span className='gc-content-label'>{isEditMode ? 'Editando textura' : 'Textura candidata'}</span>
 
                     {!isEditMode && (
@@ -342,6 +338,8 @@ export const TextureLabPage = () => {
                     setDevice={setDevice}
                     onHide={onHide}
                     setOnHide={setOnHide}
+                    minimalControls
+                    onBack={() => navigate('/admin?tab=herramientas&subtab=texturas')}
                 />
             </div>
         </div>

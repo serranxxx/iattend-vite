@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Dropdown, Tabs } from 'antd'
-import { ArrowRight, FlaskConical, MoreVertical } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Button, Dropdown, Table, Tag, Tooltip, Tabs, message } from 'antd'
+import { ArrowRight, FlaskConical, MoreVertical, Sparkles } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
+import { fetchAdminFonts, updateAdminFont } from '../fontsAdminApi'
 import styles from '../SalesAdminPage.module.css'
+
+const SUBTAB_KEYS = ['texturas', 'fonts', 'imagenes']
 
 const ComingSoon = ({ label }) => (
     <div className={styles.subtitle} style={{
@@ -15,8 +18,19 @@ const ComingSoon = ({ label }) => (
 )
 
 export const HerramientasSection = () => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const initialSubtab = SUBTAB_KEYS.includes(searchParams.get('subtab')) ? searchParams.get('subtab') : 'texturas'
+
     const [textures, setTextures] = useState([])
-    const [activeKey, setActiveKey] = useState('texturas')
+    const [fonts, setFonts] = useState([])
+    const [fontsLoading, setFontsLoading] = useState(false)
+    const [activeKey, setActiveKey] = useState(initialSubtab)
+
+    const handleTabChange = (key) => {
+        setActiveKey(key)
+        searchParams.set('subtab', key)
+        setSearchParams(searchParams, { replace: true })
+    }
 
     const getTexturesAdmin = async () => {
         const { data, error } = await supabase
@@ -27,9 +41,98 @@ export const HerramientasSection = () => {
         else setTextures(data);
     };
 
+    const getFontsAdmin = async () => {
+        setFontsLoading(true)
+        try {
+            const { data } = await fetchAdminFonts()
+            setFonts(data.fonts || [])
+        } catch (error) {
+            console.error('Error al obtener fonts:', error)
+            message.error('No se pudieron cargar las fonts')
+        } finally {
+            setFontsLoading(false)
+        }
+    }
+
     useEffect(() => {
         getTexturesAdmin()
+        getFontsAdmin()
     }, [])
+
+    const toggleFontActive = async (font) => {
+        try {
+            const { data } = await updateAdminFont(font.id, { active: !font.active })
+            setFonts(prev => prev.map(f => f.id === font.id ? data.font : f))
+            message.success(font.active ? 'Font desactivada' : 'Font activada')
+        } catch (error) {
+            message.error(error?.response?.data?.msg || 'No se pudo actualizar la font')
+        }
+    }
+
+    const fontColumns = [
+        {
+            title: 'Nombre', dataIndex: 'family', key: 'family',
+            render: (family) => <span style={{ fontFamily: `"${family}"`, fontSize: '15px' }}>{family}</span>,
+        },
+        {
+            title: 'Categoría', dataIndex: 'category', key: 'category',
+            render: (category) => category ? <Tag>{category}</Tag> : '—',
+        },
+        {
+            title: 'Origen', dataIndex: 'source', key: 'source',
+            render: (source) => {
+                const label = source === 'self_hosted' ? 'self-hosted' : source === 'system' ? 'sistema' : 'Google Fonts'
+                return <Tag color={source && source !== 'google_fonts' ? 'purple' : 'default'}>{label}</Tag>
+            },
+        },
+        {
+            title: 'Estado', dataIndex: 'active', key: 'active', align: 'center',
+            render: (active) => <Tag color={active ? 'success' : 'default'}>{active ? 'activa' : 'inactiva'}</Tag>,
+        },
+        {
+            title: 'Uso', dataIndex: 'invitation_count', key: 'invitation_count', align: 'center',
+            sorter: (a, b) => a.invitation_count - b.invitation_count,
+            render: (count, record) => {
+                if (!count) return <Tag>sin uso</Tag>
+                return (
+                    <Dropdown
+                        trigger={['click']}
+                        placement='bottomRight'
+                        popupRender={() => (
+                            <div style={{
+                                backgroundColor: '#FFF', borderRadius: '12px', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)',
+                                padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px',
+                                minWidth: '260px', maxHeight: '260px', overflowY: 'auto',
+                            }}>
+                                {(record.invitations || []).map((inv) => (
+                                    <div key={inv.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span className={styles.tableLabel} style={{ marginBottom: 0 }}>{inv.label}</span>
+                                        <span className={styles.filterLabel} style={{ marginBottom: 0, fontSize: '11px', fontFamily: 'monospace' }}>{inv.id}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    >
+                        <Tag color="blue" style={{ cursor: 'pointer' }}>{count} invitación(es)</Tag>
+                    </Dropdown>
+                )
+            },
+        },
+        {
+            title: '', key: 'actions', align: 'center',
+            render: (_, record) => {
+                const blocked = record.active && record.invitation_count > 0
+                const button = (
+                    <Button size="small" disabled={blocked} onClick={() => toggleFontActive(record)}>
+                        {record.active ? 'Desactivar' : 'Activar'}
+                    </Button>
+                )
+                return blocked
+                    ? <Tooltip title={`En uso en ${record.invitation_count} invitación(es)`}><span style={{ display: 'inline-block' }}>{button}</span></Tooltip>
+                    : button
+            },
+        },
+    ]
 
     const texturesGrid = useMemo(() => (
         [...(textures ?? [])].sort((a, b) => a.sort_order - b.sort_order).map(t => (
@@ -78,9 +181,17 @@ export const HerramientasSection = () => {
             ),
         },
         {
-            label: 'Fonts',
+            label: `Fonts (${fonts?.length ?? 0})`,
             key: 'fonts',
-            children: <ComingSoon label='Fonts' />,
+            children: (
+                <Table
+                    rowKey='id'
+                    columns={fontColumns}
+                    dataSource={fonts}
+                    loading={fontsLoading}
+                    pagination={false}
+                />
+            ),
         },
         {
             label: 'Imágenes',
@@ -93,12 +204,12 @@ export const HerramientasSection = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
             <div className={styles.headerRow}>
                 <div>
-                    <div className={styles.title}>Herramientas</div>
+                    <div className={styles.title}>Laboratorio</div>
                     <div className={styles.subtitle}>Panel interno — solo admin</div>
                 </div>
                 <div className={styles.headerControls}>
-                    <Link to='/admin/texture-lab'>
-                        <Button className='primarybutton--active' icon={<FlaskConical size={14} />}>Laboratorio</Button>
+                    <Link to={activeKey === 'fonts' ? '/admin/font-lab' : '/admin/texture-lab'}>
+                        <Button className='primarybutton--active' icon={<Sparkles size={14} />}>Crear</Button>
                     </Link>
                 </div>
             </div>
@@ -106,7 +217,7 @@ export const HerramientasSection = () => {
                 style={{ width: '100%' }}
                 type='card'
                 activeKey={activeKey}
-                onChange={setActiveKey}
+                onChange={handleTabChange}
                 items={items}
             />
         </div>

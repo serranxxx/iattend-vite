@@ -115,7 +115,7 @@ Existe una skill de proyecto (`.Codex/skills/iattend-design-system/`) con los co
 | `/login` | Login / registro | `Login` |
 | `/scanner` | Scanner QR de pases de invitados | `ScannerPage` |
 | `/luma` | Feature Lia/Luma | `Lia` |
-| `/preview-mood` | Preview de estilo antes de comprar | `PreviewMoodPage` |
+| `/preview` | Preview de estilo antes de comprar | `PreviewMoodPage` |
 | `/features` | Landing de features | `FeaturesPage` |
 | `/linktree` | Link tree público | `LinkTree` |
 | `/legal` | Aviso legal / proveedores de terceros | `LegalPage` |

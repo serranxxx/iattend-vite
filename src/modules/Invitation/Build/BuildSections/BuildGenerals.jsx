@@ -50,7 +50,7 @@ const { useBreakpoint } = Grid;
 
 
 
-export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
+export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions = fonts, fontsOnly = false, newFonts = [] }) => {
 
     const { t } = useTranslation()
     const { textures } = useTextures()
@@ -471,8 +471,13 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 value={invitation?.generals?.fonts?.titles?.typeFace ?? invitation?.generals?.fonts?.body?.typeFace}
                 onChange={(e) => handleTitle(e)}
                 style={{ width: '100%' }}>
-                {fonts.map((font, index) => (
-                    <Option key={index} value={font}><span style={{ fontFamily: font }} >{font}</span></Option>
+                {fontOptions.map((font, index) => (
+                    <Option key={index} value={font}>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <span style={{ fontFamily: font }}>{font}</span>
+                            {newFonts.includes(font) && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff4d4f', flexShrink: 0 }} />}
+                        </span>
+                    </Option>
                 ))}
             </Select>
 
@@ -593,8 +598,13 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                 value={invitation?.generals?.fonts.body?.typeFace}
                 onChange={(e) => handleFont(e)}
                 style={{ width: '100%' }}>
-                {fonts.map((font, index) => (
-                    <Option key={index} value={font}><span style={{ fontFamily: font }} >{font}</span></Option>
+                {fontOptions.map((font, index) => (
+                    <Option key={index} value={font}>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <span style={{ fontFamily: font }}>{font}</span>
+                            {newFonts.includes(font) && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff4d4f', flexShrink: 0 }} />}
+                        </span>
+                    </Option>
                 ))}
             </Select>
 
@@ -985,7 +995,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
                         </div>
 
-                        <div className='build-component-elements' style={{ width: '100%' }}>
+                        {!fontsOnly && <div className='build-component-elements' style={{ width: '100%' }}>
                             <span className={'gc-content-label'}>{t('build_generals.label_song')}</span>
                             {/* <span style={{ fontSize: '11px', color: '#888', marginTop: '-4px' }}>
                                 {t('build_generals.song_description')}
@@ -1055,9 +1065,9 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                     )}
                                 </div>
                             )}
-                        </div>
+                        </div>}
 
-                        <div className='build-component-elements'>
+                        {!fontsOnly && <div className='build-component-elements'>
 
 
                             <Row className='gc-cta-buttons-container edit-position-controller' style={{
@@ -1108,9 +1118,9 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
 
 
 
-                        </div>
+                        </div>}
 
-                        <div className='build-component-elements'>
+                        {!fontsOnly && <div className='build-component-elements'>
                             <span className={'gc-content-label'}
                             >{t('build_generals.label_textures')}</span>
                             <div
@@ -1164,9 +1174,9 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                 </div>
                             )}
 
-                        </div>
+                        </div>}
 
-                        <div className='build-component-elements'>
+                        {!fontsOnly && <div className='build-component-elements'>
                             <span className={'gc-content-label'}
                             >{t('build_generals.label_separators')}</span>
 
@@ -1208,7 +1218,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved }) => {
                                 </div>
                             )}
 
-                        </div>
+                        </div>}
 
 
 

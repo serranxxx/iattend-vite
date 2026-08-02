@@ -4,6 +4,9 @@ import './styles'
 import './i18n';
 import { BrowserRouter } from 'react-router-dom';
 import { IAttend } from './IAttend';
+import { initGoogleFonts } from './helpers/services/loadFonts';
+
+initGoogleFonts();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

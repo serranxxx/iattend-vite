@@ -26,13 +26,14 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
+import { AArrowUp, ArrowRight, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { GuestAddTiles } from './GuestAddTiles';
 import { useTranslation } from 'react-i18next';
 import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
 import { useLia } from '../../context/LiaContext';
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext';
+import { POPULAR_LANGUAGES, flagForLanguage } from '../../helpers/services/languageFlags';
 
 const { useBreakpoint } = Grid;
 
@@ -653,17 +654,38 @@ export default function GuestsPage() {
                             <Tooltip placement='topRight'
 
                                 title={plan !== 'pro' ? '' : !/^\+52\d+/.test(phone_number) ? t('guests.tooltip_national_only') : ""} color="var(--brand-color-500)">
-                                <Button
-                                    disabled={
-                                        !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
-                                    }
-                                    onClick={() => onSedingInvitation(record, false)}
-                                    className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active'}`}
-                                    icon={<Send size={14} />}
-                                    style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
-                                >
-                                    {t('guests.btn_send')}
-                                </Button>
+                                {enabledExtraLanguages.length === 0 ? (
+                                    <Button
+                                        disabled={
+                                            !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
+                                        }
+                                        onClick={() => onSedingInvitation(record, false)}
+                                        className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active'}`}
+                                        icon={<Send size={14} />}
+                                        style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
+                                    >
+                                        {t('guests.btn_send')}
+                                    </Button>
+                                ) : (
+                                    <Dropdown
+                                        trigger={['click']}
+                                        disabled={
+                                            !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
+                                        }
+                                        popupRender={() => renderSendLanguagePopup(record, false)}
+                                    >
+                                        <Button
+                                            disabled={
+                                                !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
+                                            }
+                                            className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active'}`}
+                                            icon={<Send size={14} />}
+                                            style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
+                                        >
+                                            {t('guests.btn_send')}
+                                        </Button>
+                                    </Dropdown>
+                                )}
                             </Tooltip>
 
                             <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('guests.tooltip_mark_invited')}</span></div>} color="var(--brand-color-500)">
@@ -981,17 +1003,38 @@ export default function GuestsPage() {
                     <Tooltip placement='topRight'
 
                         title={t('guests.msg_retry_tooltip')} color="var(--brand-color-500)">
-                        <Button
-                            disabled={
-                                !/^\+52\d+/.test(record.phone_number) || credits <= 0
-                            }
-                            onClick={() => onSedingInvitation(record, true)}
-                            className="primarybutton--active"
-                            icon={<MailWarning size={16} />}
-                            style={{ flex: 1, maxHeight: 30 }}
-                        >
-                            {t('guests.msg_retry')}
-                        </Button>
+                        {enabledExtraLanguages.length === 0 ? (
+                            <Button
+                                disabled={
+                                    !/^\+52\d+/.test(record.phone_number) || credits <= 0
+                                }
+                                onClick={() => onSedingInvitation(record, true)}
+                                className="primarybutton--active"
+                                icon={<MailWarning size={16} />}
+                                style={{ flex: 1, maxHeight: 30 }}
+                            >
+                                {t('guests.msg_retry')}
+                            </Button>
+                        ) : (
+                            <Dropdown
+                                trigger={['click']}
+                                disabled={
+                                    !/^\+52\d+/.test(record.phone_number) || credits <= 0
+                                }
+                                popupRender={() => renderSendLanguagePopup(record, true)}
+                            >
+                                <Button
+                                    disabled={
+                                        !/^\+52\d+/.test(record.phone_number) || credits <= 0
+                                    }
+                                    className="primarybutton--active"
+                                    icon={<MailWarning size={16} />}
+                                    style={{ flex: 1, maxHeight: 30 }}
+                                >
+                                    {t('guests.msg_retry')}
+                                </Button>
+                            </Dropdown>
+                        )}
                     </Tooltip>
                     // <div className='dispatch_message_tag'>
 
@@ -1406,7 +1449,47 @@ export default function GuestsPage() {
 
     }
 
-    const onSedingInvitation = async (guest, retry) => {
+    // Idiomas que el invitado puede ver hoy (instalados y no deshabilitados) —
+    // si hay al menos uno, al enviar se le pregunta al organizador en qué
+    // idioma quiere que abra el link, en vez de mandar siempre español.
+    const enabledExtraLanguages = (invitation?.generals?.languages ?? []).filter(
+        (code) => !(invitation?.generals?.disabledLanguages ?? []).includes(code)
+    )
+
+    const labelForSendLangCode = (code) => POPULAR_LANGUAGES.find((l) => l.code === code)?.label ?? code
+
+    // Dropdown de envío: un botón real por idioma disponible (no un Menu de
+    // antd). Sin idiomas extra no tiene sentido preguntar, ese caso lo maneja
+    // el propio botón de envío con un click directo (ver columnas de abajo).
+    const renderSendLanguagePopup = (guest, retry) => (
+        <div style={{
+            background: '#fff', borderRadius: '12px', padding: '6px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '190px',
+        }}>
+            <Button
+                className='primarybutton'
+                style={{ justifyContent: 'space-between' }}
+                onClick={() => onSedingInvitation(guest, retry, 'es')}
+            >
+                <span>{flagForLanguage('es')} Enviar en español</span>
+                <ArrowRight size={14} />
+            </Button>
+            {enabledExtraLanguages.map((code) => (
+                <Button
+                    key={code}
+                    className='primarybutton'
+                    style={{ justifyContent: 'space-between' }}
+                    onClick={() => onSedingInvitation(guest, retry, code)}
+                >
+                    <span>{flagForLanguage(code)} Enviar en {labelForSendLangCode(code)}</span>
+                    <ArrowRight size={14} />
+                </Button>
+            ))}
+        </div>
+    )
+
+    const onSedingInvitation = async (guest, retry, lang = 'es') => {
         if (hasPendingInfo) {
             message.warning('Completa la información pendiente de tu invitación antes de enviar.')
             return
@@ -1459,7 +1542,7 @@ export default function GuestsPage() {
                             parameters: [
                                 {
                                     type: "text",
-                                    text: `${invitation?.generals?.event?.label}/${name}?password=${guest?.password}`,
+                                    text: `${invitation?.generals?.event?.label}/${name}?password=${guest?.password}${lang && lang !== 'es' ? `&lang=${lang}` : ''}`,
                                 },
                             ],
                         },
@@ -2526,6 +2609,7 @@ export default function GuestsPage() {
             >
                 <TablesPage invitationID={id} />
             </Drawer>
+
             <GuestsCRUD rowData={rowData} invitationID={id} setDrawerState={setDrawerState} refreshPage={refreshPage} drawerState={drawerState} />
         </>
     )

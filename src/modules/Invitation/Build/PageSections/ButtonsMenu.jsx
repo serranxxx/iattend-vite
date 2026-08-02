@@ -5,7 +5,7 @@ const { useBreakpoint } = Grid;
 
 export const ButtonsMenu = ({
      buttons, currentSection, handleClick,
-     setOnHide, menuTimerRef, invitation
+     setOnHide, menuTimerRef, invitation, staleSections
 }) => {
 
     const screens = useBreakpoint();
@@ -47,9 +47,17 @@ export const ButtonsMenu = ({
                         const btn = (
                             <div
                                 key={index}
+                                style={{ position: 'relative' }}
                                 className={`single-button${currentSection === item.value ? '--selected' : ''} tag-button-tools`}
                                 onClick={() => handleActions(item)} >
                                 {item.icon}
+                                {staleSections?.has(item.type) && (
+                                    <span style={{
+                                        position: 'absolute', top: '2px', right: '2px',
+                                        width: '7px', height: '7px', borderRadius: '50%',
+                                        backgroundColor: '#faad14',
+                                    }} />
+                                )}
                             </div>
                         );
 

@@ -24,6 +24,7 @@ import { PageNotFound } from '../pages/Extras/PageNotFound'
 import { AdminHOC } from './AdminHOC'
 import { AdminPage } from '../pages/Admin/AdminPage'
 import { TextureLabPage } from '../pages/Admin/TextureLabPage'
+import { FontLabPage } from '../pages/Admin/FontLabPage'
 import { FeaturesPage } from '../pages/FeatruesPage'
 import { LegalPage } from '../pages/Extras/Legal/LegalPage'
 import { LinkTree } from '../pages/Extras/LinkTree/LinkTree'
@@ -40,6 +41,7 @@ import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
 import { SalesApp } from '../modules/Sales/SalesApp'
+import { GuestsCalculatorPage } from '../pages/GuestsCalculator/GuestsCalculatorPage'
 
 
 
@@ -69,8 +71,9 @@ export const AppRouter = () => {
       <Route path="/linktree" element={<LinkTree />} />
       <Route path="/legal" element={<LegalPage />} />
       <Route path="/luma" element={<Lia />} />
-      <Route path="/preview-mood" element={<PreviewMoodPage />} />
+      <Route path="/preview" element={<PreviewMoodPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/guests-calculator" element={<GuestsCalculatorPage />} />
       <Route path="/*" element={<PageNotFound />} />
 
       <Route path="/admin"
@@ -86,6 +89,13 @@ export const AppRouter = () => {
         element={
           <AdminHOC>
             <TextureLabPage />
+          </AdminHOC>
+        } />
+
+      <Route path="/admin/font-lab"
+        element={
+          <AdminHOC>
+            <FontLabPage />
           </AdminHOC>
         } />
 

@@ -11,7 +11,7 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
 - **Otras dependencias clave:**
   - `@supabase/supabase-js` — cliente Supabase, usado directo desde el frontend
   - `axios` — llamadas al backend
-  - `@dnd-kit/*` — drag & drop de mesas/asientos
+  - `@dnd-kit/*` — está en `package.json` pero el canvas de mesas (`modules/GuestManagement/Tables/`) **no** lo usa (drag manual con listeners `mousemove`/`touchmove`); el único uso real hoy es en `modules/Invitation/Build/BuildSections/BuildDestinations.jsx`
   - `chart.js` + `react-chartjs-2` — gráficas del dashboard
   - `i18next` / `react-i18next` — i18n (es/en)
   - `dayjs` — fechas
@@ -46,15 +46,22 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
   /context
     AuthProvider.jsx / authReducer.js / AuthContext.jsx  ← sesión (localStorage: session/user/logged)
     LiaContext.jsx                ← estado del asistente Lia (notificaciones, acciones UI, créditos)
+    LumaContext.jsx                ← estado de la feature Luma (ruta /luma)
+    TexturesContext.jsx           ← texturas disponibles, consumido por el Texture Lab (pages/Admin/TextureLabPage.jsx) y el builder
     DashboardRealtimeContext.jsx  ← hub de subscripciones Supabase Realtime para /dashboard/*
     AntdProvider.jsx              ← configuración/tema de Ant Design
+
+  /modules/Sales
+    VendorSessionContext.jsx      ← sesión de vendedores (login propio, separado de AuthContext/AuthProvider)
 
   /pages
     Board/InvitationsPage.jsx     ← home ("/", "/invitations"): listado de invitaciones del usuario
     Dashboard/DashboardPage.jsx   ← dashboard principal del organizador
     Dashboard/PhotoWallPage.jsx   ← Photo Wall dentro del dashboard (con privilegios de organizador)
     Checkout/CheckoutPage.jsx     ← checkout de compra
-    Admin/AdminPage.jsx           ← panel de administración interna (rol Administration)
+    Admin/AdminPage.jsx + AdminLayout.jsx  ← shell del panel de administración (rol Administration); contenido real vive en Admin/sections/ (EventosSection, UsuariosSection, VentasSection, HerramientasSection, ColaboradoresLeads)
+    Admin/TextureLabPage.jsx      ← laboratorio de texturas (sube/gestiona texturas en Supabase Storage, reemplazó los JPG estáticos de src/assets/textures)
+    Admin/SalesAdminPage.jsx      ← panel de ventas/vendedores dentro de Admin
     Scanner/ScannerPage.jsx       ← scanner QR de pases de invitados
     Lia/, Luma/                   ← páginas relacionadas con el asistente / feature Luma
     PreviewMood/                  ← preview de estilo/mood antes de comprar
@@ -78,6 +85,7 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
   /helpers
     invitation/                    ← transformación y tipos de la invitación
     assets/                        ← fuentes, imágenes, features de la app
+    assets/eventDateTime.js        ← horas de side events/pop events como string "wall-clock" (YYYY-MM-DD HH:mm:00), sin conversión de timezone; ver convención abajo
     services/                      ← paletas de color, texturas, mensajes, subida de imágenes, íconos de menú
 
   /services                        ← llamadas API legacy con patrón "operation" callback (apiLogin, apiInvitation, apiWeather)
@@ -93,7 +101,8 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
 - Sin TypeScript — JS puro; usar PropTypes solo si aporta validación real.
 - Ant Design para tablas, modales, botones de acción y formularios; Lucide React para iconos decorativos/navegación (20px).
 - Nada de llamadas centralizadas a un cliente axios propio — los componentes nuevos hacen `axios.post/get` inline contra `${import.meta.env.VITE_API_URL}/api/...`. No reintroducir el patrón `operation` callback de `src/services/` en código nuevo.
-- Contextos disponibles y su propósito: `LiaProvider` (asistente + notificaciones + créditos), `AppProvider`/`AuthProvider` (sesión), `AntdProvider` (tema Ant Design), `DashboardRealtimeProvider` (Realtime, solo dentro de las rutas `/dashboard/*`).
+- Contextos disponibles y su propósito: `LiaProvider` (asistente + notificaciones + créditos), `AppProvider`/`AuthProvider` (sesión), `AntdProvider` (tema Ant Design), `DashboardRealtimeProvider` (Realtime, solo dentro de las rutas `/dashboard/*`), `LumaContext` (feature Luma), `TexturesContext` (texturas del Texture Lab), `VendorSessionContext` (sesión de vendedores, solo dentro de `modules/Sales/`, no confundir con `AuthContext`).
+- Horas de side events/pop events (`data.body.hour`, `data.information.date` en Supabase): se guardan y leen como string "wall-clock" plano (`YYYY-MM-DD HH:mm:00`), **nunca** se convierten con timezone — ver `src/helpers/assets/eventDateTime.js`, cuya contraparte de lectura vive en `iattend-events/src/helpers/functions.ts`. Datos legados (antes de este cambio) sí son instantes UTC reales y necesitan reconvertirse con el mapa `STATE_TIMEZONES` (BC, BCS, Sonora, Sinaloa, Quintana Roo tienen huso distinto al de CDMX). No reintroducir conversión de timezone en código nuevo que toque estas fechas.
 - Dentro de `/dashboard/*`, suscribirse a cambios de tablas vía `useDashboardRealtime().subscribe(table, cb)` en vez de abrir un canal Supabase propio — evita canales duplicados. La excepción documentada es `PhotoWall`, que gestiona su propio canal para `event_photos`.
 - i18n con `react-i18next`; textos con keys namespaced (ej. `guests.notification_title`) en `src/locales/{es,en}.json`.
 - ESLint: `no-unused-vars` permite constantes en MAYÚSCULAS sin usar; las reglas `exhaustive-deps`, `set-state-in-effect` y `preserve-manual-memoization` de `react-hooks` están desactivadas — no asumir que el linter las va a atrapar.
@@ -115,7 +124,7 @@ Existe una skill de proyecto (`.claude/skills/iattend-design-system/`) con los c
 | `/login` | Login / registro | `Login` |
 | `/scanner` | Scanner QR de pases de invitados | `ScannerPage` |
 | `/luma` | Feature Lia/Luma | `Lia` |
-| `/preview-mood` | Preview de estilo antes de comprar | `PreviewMoodPage` |
+| `/preview` | Preview de estilo antes de comprar | `PreviewMoodPage` |
 | `/features` | Landing de features | `FeaturesPage` |
 | `/linktree` | Link tree público | `LinkTree` |
 | `/legal` | Aviso legal / proveedores de terceros | `LegalPage` |
@@ -160,6 +169,7 @@ npm run lint
 - El puerto de dev está fijo en 3000 con `strictPort: true` (`vite.config.js`) — si el puerto está ocupado, Vite falla en vez de tomar otro.
 - `src/services/apiWeather.js` tiene una API key de OpenWeatherMap hardcodeada en el código fuente del frontend (queda expuesta en el bundle).
 - `dist/` está en `.gitignore` (no se commitea), pero puede existir localmente con un build viejo — no confundir con el código fuente.
+- El sistema de traducciones de la invitación (DeepL + tablas Supabase `copy_bundles`/`copy_translations`/`invitation_translations`) **no vive en este repo** — vive enteramente en `iattend-events` (`src/lib/translation/`). Este repo no llama a DeepL ni lee esas tablas.
 
 ## Pendientes / deuda técnica conocida
 - `src/components/RegalaIAttend/RegalaIAttend.jsx:129` tiene un TODO sin resolver ("enviar regalo").

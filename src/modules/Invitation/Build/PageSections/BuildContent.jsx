@@ -6,8 +6,9 @@ const { useBreakpoint } = Grid;
 import ios_settings from '../../../../assets/images/iphone-settings.svg'
 import android_settings from '../../../../assets/images/android-settings.png'
 import ReactHost from '../../../../components/Host/ReactHost';
-import { LuMinus, LuMonitorSmartphone, LuPlus } from 'react-icons/lu';
+import { LuArrowLeft, LuMinus, LuMonitorSmartphone, LuPlus } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
+import { LanguageSelector } from '../../../../components/LanguageSelector/LanguageSelector';
 
 
 
@@ -26,7 +27,8 @@ const devices = [
 
 
 export const BuildContent = ({
-    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride
+    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride, fontOverride,
+    languages, disabledLanguages, activeLang, onActiveLangChange, onAddLanguage, onToggleLanguageEnabled, onRetranslate, translating, minimalControls = false, onBack
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -93,28 +95,48 @@ export const BuildContent = ({
                     
                     <div className='tools-settings-menu-container'>
 
-                        <Dropdown
-                            trigger={['click']}
-                            placement='bottomLeft'
-                            arrow
-                            popupRender={() => (
-                                <div className='devices-conatinaer'>
-                                    {
-                                        devices.map((device) => (
-                                            <span className='devices-item' onClick={() => setDevice(device.value)} >{device.name}</span>
-                                        ))
-                                    }
-                                </div>
-                            )}
-                        >
+                        {!minimalControls && <>
+                            <Dropdown
+                                trigger={['click']}
+                                placement='bottomLeft'
+                                arrow
+                                popupRender={() => (
+                                    <div className='devices-conatinaer'>
+                                        {
+                                            devices.map((device) => (
+                                                <span className='devices-item' onClick={() => setDevice(device.value)} >{device.name}</span>
+                                            ))
+                                        }
+                                    </div>
+                                )}
+                            >
+                                <Button
+                                    className='full-screen-button'
+                                    id="expandedbutton" icon={<LuMonitorSmartphone size={16} style={{ marginTop: '2px' }} />} />
+
+                            </Dropdown>
+
+                            <StorageImages invitationID={invitationID}/>
+
+                            <LanguageSelector
+                                languages={languages}
+                                disabledLanguages={disabledLanguages}
+                                activeLang={activeLang}
+                                onActiveLangChange={onActiveLangChange}
+                                onAddLanguage={onAddLanguage}
+                                onToggleLanguageEnabled={onToggleLanguageEnabled}
+                                onRetranslate={onRetranslate}
+                                translating={translating}
+                            />
+                        </>}
+
+                        {minimalControls && onBack && (
                             <Button
                                 className='full-screen-button'
-                                id="expandedbutton" icon={<LuMonitorSmartphone size={16} style={{ marginTop: '2px' }} />} />
-
-                        </Dropdown>
-
-                        <StorageImages invitationID={invitationID}/>
-
+                                id="expandedbutton"
+                                onClick={onBack}
+                                icon={<LuArrowLeft size={16} />} />
+                        )}
 
                         <div className='slider-container'>
                             <LuPlus />
@@ -175,7 +197,7 @@ export const BuildContent = ({
                                 </div>
 
                                 <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
-                                    <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} />
+                                    <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />
 
                                 </div>
                                 <div className={`inv-light-space-${currentDevice}`} />
@@ -186,7 +208,7 @@ export const BuildContent = ({
                 </div >
 
                 <div className='mobile-devices' onClick={() => setOnHide(true)} style={{ width: '100%', height: '100vh', overflowY: 'auto', paddingBottom: '0px', boxSizing: 'border-box' }}>
-                    <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride}/>
+                    <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang}/>
                 </div>
             </>
             : <></>

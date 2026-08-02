@@ -105,7 +105,7 @@ export const PublishModal = ({ open, onClose, invitation }) => {
                 priceId,
                 previewData,
                 successUrl: `${window.location.origin}/invitations?welcome=1`,
-                cancelUrl: `${window.location.origin}/preview-mood`,
+                cancelUrl: `${window.location.origin}/preview`,
             })
 
             if (checkout?.url) {

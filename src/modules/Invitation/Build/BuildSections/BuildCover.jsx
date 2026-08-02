@@ -24,7 +24,7 @@ const { useBreakpoint } = Grid;
 
 
 
-export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, }) => {
+export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, fontOptions = fonts, fontsOnly = false, newFonts = [] }) => {
 
     const { t } = useTranslation()
 
@@ -405,9 +405,14 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                         <Select
                                             value={invitation.cover.title.text?.typeFace}
                                             onChange={(e) => handleFont(e)}
-                                            style={{ width: '100%', fontFamily: invitation.cover.title.text?.typeFace }}>
-                                            {fonts.map((font, index) => (
-                                                <Option style={{ fontFamily: `${font}` }} key={index} value={font}>{font}</Option>
+                                            style={{ width: '100%', fontFamily: `"${invitation.cover.title.text?.typeFace}"` }}>
+                                            {fontOptions.map((font, index) => (
+                                                <Option key={index} value={font}>
+                                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                                        <span style={{ fontFamily: `"${font}"` }}>{font}</span>
+                                                        {newFonts.includes(font) && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff4d4f', flexShrink: 0 }} />}
+                                                    </span>
+                                                </Option>
                                             ))}
                                         </Select>
 
@@ -600,7 +605,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
 
                         </div>
 
-                        <div className='build-component-elements'>
+                        {!fontsOnly && <div className='build-component-elements'>
                             <div className='general-cards-single-row' style={{ width: '100%', justifyContent: 'space-between' }}>
 
                                 <span className={'module--title'}
@@ -675,9 +680,9 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
 
 
 
-                        </div>
+                        </div>}
 
-                        <div className='build-component-elements'>
+                        {!fontsOnly && <div className='build-component-elements'>
 
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch' }}>
                                 <span className={'module--title'} style={{ textAlign: 'left', margin: 0 }}>
@@ -781,7 +786,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
 
 
 
-                        </div>
+                        </div>}
 
 
 

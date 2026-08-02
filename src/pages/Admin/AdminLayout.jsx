@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Badge, Dropdown, Layout, Menu, message } from 'antd'
 import { useSearchParams } from 'react-router-dom'
-import { Calendar, MessageCircle, Sparkles, Users, Wrench } from 'lucide-react'
+import { Calendar, FlaskConical, Landmark, MessageCircle, Sparkles, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { HeaderBuild } from '../../modules/Header/Header'
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer'
@@ -14,17 +14,26 @@ import { HerramientasSection } from './sections/HerramientasSection'
 const { Sider, Content } = Layout
 
 const SECTION_KEYS = ['eventos', 'usuarios', 'ventas', 'herramientas']
+const VENTAS_ALLOWED_EMAIL = 'albserrano8@gmail.com'
 
 const MENU_ITEMS = [
     { key: 'eventos', icon: <Calendar size={16} />, label: 'Eventos' },
     { key: 'usuarios', icon: <Users size={16} />, label: 'Usuarios' },
-    { key: 'ventas', icon: <Sparkles size={16} />, label: 'Ventas' },
-    { key: 'herramientas', icon: <Wrench size={16} />, label: 'Herramientas' },
+    { key: 'ventas', icon: <Landmark size={16} />, label: 'Ventas' },
+    { key: 'herramientas', icon: <FlaskConical size={16} />, label: 'Laboratorio' },
 ]
 
 export const AdminLayout = () => {
+    const session = JSON.parse(localStorage.getItem('session'))
+    const canSeeVentas = session?.user?.email === VENTAS_ALLOWED_EMAIL
+
+    const menuItems = useMemo(() => (
+        canSeeVentas ? MENU_ITEMS : MENU_ITEMS.filter(item => item.key !== 'ventas')
+    ), [canSeeVentas])
+
     const [searchParams, setSearchParams] = useSearchParams()
-    const initialTab = SECTION_KEYS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'eventos'
+    const requestedTab = searchParams.get('tab')
+    const initialTab = SECTION_KEYS.includes(requestedTab) && (requestedTab !== 'ventas' || canSeeVentas) ? requestedTab : 'eventos'
     const [activeKey, setActiveKey] = useState(initialTab)
 
     const [user, setUser] = useState(null)
@@ -151,7 +160,7 @@ export const AdminLayout = () => {
                     />
                 )
             case 'ventas':
-                return <VentasSection />
+                return canSeeVentas ? <VentasSection /> : null
             case 'herramientas':
                 return <HerramientasSection />
             case 'eventos':
@@ -183,7 +192,7 @@ export const AdminLayout = () => {
                         <Menu
                             mode='inline'
                             selectedKeys={[activeKey]}
-                            items={MENU_ITEMS}
+                            items={menuItems}
                             onClick={({ key }) => handleSelectSection(key)}
                             className='admin-panel-menu'
                         />
