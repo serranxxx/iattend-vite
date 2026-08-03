@@ -1,0 +1,112 @@
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #787878;
+}
+
+.estadoPill {
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 16px;
+    padding: 4px 10px;
+    width: fit-content;
+}
+
+.igLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #0095FF;
+    text-decoration: none;
+    width: fit-content;
+}
+
+.saveNotasBtn {
+    align-self: flex-start;
+    border-radius: 12px;
+}
+
+.motivoText {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #29262D;
+    margin: 0;
+}
+
+.historyRow {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    color: #787878;
+}
+
+.pendingBanner {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #29262D;
+    background: rgba(255, 140, 0, 0.1);
+    border-radius: 16px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+}
+
+.pendingActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.contextoRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #F1F1F1;
+    border-radius: 12px;
+    padding: 6px 10px;
+}
+
+.contextoText {
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    color: #29262D;
+    overflow-wrap: anywhere;
+}
+
+.contextoAddRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.interesRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.interesPill {
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.interesPill:hover {
+    transform: scale(1.1);
+}

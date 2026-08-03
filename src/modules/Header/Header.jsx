@@ -37,6 +37,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
         { name: 'Mis eventos', path: '/invitations', position: 'invitations' },
         // { name: 'Explora',     path: '/features',    position: 'pricing'     },
         { name: 'Administrador', path: '/admin', position: 'admin', adminOnly: true },
+        { name: 'Tablero', path: '/tablero', position: 'tablero', allowedRoles: ['Administration', 'sales'] },
     ]
 
     const [pastBanner, setPastBanner] = useState(false)
@@ -103,6 +104,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
                     <nav className="hb-nav-right">
                         {navItems.map(item => {
                             if (item.adminOnly && session?.user?.role !== 'Administration') return null
+                            if (item.allowedRoles && !item.allowedRoles.includes(session?.user?.role)) return null
                             return (
                                 <Link to={item.path} key={item.name}>
                                     <span className={`hb-nav-btn${item.position === position ? ' hb-nav-btn--active' : ''}`}>
@@ -161,6 +163,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
                 <nav className="mobile-menu-routes">
                     {navItems.map((item, i) => {
                         if (item.adminOnly && session?.user?.role !== 'Administration') return null
+                        if (item.allowedRoles && !item.allowedRoles.includes(session?.user?.role)) return null
                         const isActive = item.position === position
                         return (
                             <Link

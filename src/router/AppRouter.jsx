@@ -22,6 +22,7 @@ const DashboardLayout = () => (
 import { InvitationsPage } from '../pages/Board/InvitationsPage'
 import { PageNotFound } from '../pages/Extras/PageNotFound'
 import { AdminHOC } from './AdminHOC'
+import { RequireSalesOrAdmin } from './RequireSalesOrAdmin'
 import { AdminPage } from '../pages/Admin/AdminPage'
 import { TextureLabPage } from '../pages/Admin/TextureLabPage'
 import { FontLabPage } from '../pages/Admin/FontLabPage'
@@ -41,6 +42,7 @@ import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
 import { SalesApp } from '../modules/Sales/SalesApp'
+import { ProspectosPage } from '../modules/Prospectos/ProspectosPage'
 import { GuestsCalculatorPage } from '../pages/GuestsCalculator/GuestsCalculatorPage'
 
 
@@ -84,6 +86,13 @@ export const AppRouter = () => {
         } />
 
       <Route path="/sales" element={<SalesApp />} />
+
+      <Route path="/tablero"
+        element={
+          <RequireSalesOrAdmin>
+            <ProspectosPage />
+          </RequireSalesOrAdmin>
+        } />
 
       <Route path="/admin/texture-lab"
         element={
