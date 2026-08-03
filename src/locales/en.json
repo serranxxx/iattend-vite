@@ -662,7 +662,9 @@
     "event_title_placeholder": "Event title",
     "btn_save": "Save",
     "btn_back": "Go back",
-    "tooltip_preview": "Preview"
+    "tooltip_preview": "Preview",
+    "tooltip_hide_weather": "Hide weather",
+    "tooltip_show_weather": "Show weather"
   },
   "tables": {
     "title": "Table Organization",

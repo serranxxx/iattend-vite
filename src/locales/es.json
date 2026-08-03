@@ -662,7 +662,9 @@
     "event_title_placeholder": "Título del evento",
     "btn_save": "Guardar",
     "btn_back": "Regresar",
-    "tooltip_preview": "Previsualizar"
+    "tooltip_preview": "Previsualizar",
+    "tooltip_hide_weather": "Ocultar clima",
+    "tooltip_show_weather": "Mostrar clima"
   },
   "tables": {
     "title": "Organización por mesas",

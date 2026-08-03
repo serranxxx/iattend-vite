@@ -17,7 +17,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { Check, CheckCheck, ChevronLeft, ChevronRight, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
+import { Check, CheckCheck, ChevronLeft, ChevronRight, Cloud, CloudOff, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -627,7 +627,8 @@ export const SideEvents = () => {
                     },
                     font: 'Poppins',
                     color: "#000000",
-                    extras: null
+                    extras: null,
+                    hideWeather: false
                 }
             })
             .select()
@@ -1252,6 +1253,15 @@ export const SideEvents = () => {
                                                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px' }}>
                                                     <Tooltip title={t('side_events.tooltip_preview')}>
                                                         <Button icon={<LuPlay />} onClick={() => setHandlePreview(true)} style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' />
+                                                    </Tooltip>
+
+                                                    <Tooltip title={current?.body?.hideWeather ? t('side_events.tooltip_show_weather') : t('side_events.tooltip_hide_weather')}>
+                                                        <Button
+                                                            icon={current?.body?.hideWeather ? <CloudOff size={16} /> : <Cloud size={16} />}
+                                                            onClick={() => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hideWeather: !prev.body?.hideWeather } }))}
+                                                            style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }}
+                                                            className='preview_button_sidee'
+                                                        />
                                                     </Tooltip>
 
                                                     {screens.xs ? (
