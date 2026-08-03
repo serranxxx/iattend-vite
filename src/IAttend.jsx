@@ -4,6 +4,7 @@ import { AppProvider } from './context/AuthProvider'
 import { AntdProvider } from './context/AntdProvider'
 import { LiaProvider } from './context/LiaContext'
 import { TexturesProvider } from './context/TexturesContext'
+import { FontsProvider } from './context/FontsContext'
 
 export const IAttend = () => {
     return (
@@ -11,7 +12,9 @@ export const IAttend = () => {
             <AppProvider>
                 <AntdProvider>
                     <TexturesProvider>
-                        <AppRouter />
+                        <FontsProvider>
+                            <AppRouter />
+                        </FontsProvider>
                     </TexturesProvider>
                 </AntdProvider>
             </AppProvider>

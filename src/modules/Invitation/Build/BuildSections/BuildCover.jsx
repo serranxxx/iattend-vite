@@ -8,6 +8,7 @@ import { FaMinus, FaPlus } from 'react-icons/fa';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { colorFactoryToHex, darker, formatDateToISO, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
+import { useFonts } from '../../../../context/FontsContext';
 import { LuSettings2 } from 'react-icons/lu';
 import { BiHide, BiShow } from 'react-icons/bi';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, Ratio, ZoomIn, ZoomOut } from 'lucide-react';
@@ -24,9 +25,11 @@ const { useBreakpoint } = Grid;
 
 
 
-export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, fontOptions = fonts, fontsOnly = false, newFonts = [] }) => {
+export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, fontOptions, fontsOnly = false, newFonts = [] }) => {
 
     const { t } = useTranslation()
+    const { fonts: activeFonts } = useFonts()
+    fontOptions = fontOptions ?? (activeFonts.length ? activeFonts : fonts)
 
     const coordenadas = [
         {

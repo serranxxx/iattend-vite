@@ -8,6 +8,7 @@ import { RxValueNone } from 'react-icons/rx';
 import { LuArrowBigDownDash, LuArrowBigUpDash, LuRedo2, LuRotateCcw, LuSettings2 } from 'react-icons/lu';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
+import { useFonts } from '../../../../context/FontsContext';
 import { ArrowUpRight, ChevronDown, ChevronUp, Maximize2, Paintbrush, Palette, X } from 'lucide-react';
 import { colorCollection } from '../../../../helpers/services/colorPalette';
 import { SiSpotify } from 'react-icons/si';
@@ -50,10 +51,12 @@ const { useBreakpoint } = Grid;
 
 
 
-export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions = fonts, fontsOnly = false, newFonts = [] }) => {
+export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions, fontsOnly = false, newFonts = [] }) => {
 
     const { t } = useTranslation()
     const { textures } = useTextures()
+    const { fonts: activeFonts } = useFonts()
+    fontOptions = fontOptions ?? (activeFonts.length ? activeFonts : fonts)
     const selectedTexture = textures.find(texture => texture.id === invitation.generals.texture)
     const [currentPosition, setCurrentPosition] = useState(null)
     const [currentItem, setCurrentItem] = useState(null)

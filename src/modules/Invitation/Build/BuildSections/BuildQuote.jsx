@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
+import { useFonts } from '../../../../context/FontsContext';
 import { TbEyeClosed } from 'react-icons/tb';
 import '../../../../styles/modules/quote.css'
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
@@ -67,9 +68,11 @@ const coordenadas = [
 const { Option } = Select;
 
 
-export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID, fontOptions = fonts, fontsOnly = false, newFonts = [] }) => {
+export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID, fontOptions, fontsOnly = false, newFonts = [] }) => {
 
     const { t } = useTranslation()
+    const { fonts: activeFonts } = useFonts()
+    fontOptions = fontOptions ?? (activeFonts.length ? activeFonts : fonts)
     const [onGeneration] = useState(false)
     const [quoteValue, setQuoteValue] = useState(null)
     // const [textAppear, setTextAppear] = useState(false)
