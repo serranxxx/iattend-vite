@@ -26,7 +26,7 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
     const handleEditor = (type) => {
         const langKey = activeLang ?? 'es'
         switch (type) {
-            case 'generals': return <BuildGenerals key={langKey} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+            case 'generals': return <BuildGenerals key={langKey} invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'cover': return <BuildCover key={langKey} invitationID={invitationID} settingsModal={settingsModal} setSettingsModal={setSettingsModal} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'greeting': return <BuildGreeting key={langKey} invitationID={invitationID}  invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
             case 'family': return <BuildFamily key={langKey} invitationID={invitationID} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />

@@ -37,6 +37,11 @@
     padding: 0px;
 }
 
+.song-mode-segmented.ant-segmented .ant-segmented-item,
+.song-mode-segmented.ant-segmented .ant-segmented-thumb {
+    border-radius: 99px;
+}
+
 .generl-card-color-item {
     flex: 1;
     display: flex;

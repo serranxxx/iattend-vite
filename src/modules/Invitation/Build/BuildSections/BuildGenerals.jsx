@@ -1,5 +1,5 @@
-import { Button, Col, ColorPicker, Dropdown, Grid, Input, Row, Select, Slider, } from 'antd'
-import React, { useEffect, useState } from 'react'
+import { Button, Col, ColorPicker, Dropdown, Grid, Input, Row, Segmented, Select, Slider, message } from 'antd'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Separador } from '../../../../components/Invitation/Logos';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
@@ -9,9 +9,10 @@ import { LuArrowBigDownDash, LuArrowBigUpDash, LuRedo2, LuRotateCcw, LuSettings2
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
 import { useFonts } from '../../../../context/FontsContext';
-import { ArrowUpRight, ChevronDown, ChevronUp, Maximize2, Paintbrush, Palette, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, ChevronUp, Maximize2, Paintbrush, Palette, Upload, X } from 'lucide-react';
 import { colorCollection } from '../../../../helpers/services/colorPalette';
 import { SiSpotify } from 'react-icons/si';
+import { uploadSongAudio } from '../../../../helpers/services/uploadAudio';
 
 const _spotifyTokenCache = { token: null, expiry: 0 };
 
@@ -51,7 +52,7 @@ const { useBreakpoint } = Grid;
 
 
 
-export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions, fontsOnly = false, newFonts = [] }) => {
+export const BuildGenerals = ({ invitation, setInvitation, setSaved, invitationID, fontOptions, fontsOnly = false, newFonts = [] }) => {
 
     const { t } = useTranslation()
     const { textures } = useTextures()
@@ -76,6 +77,9 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions
     const [songQuery, setSongQuery] = useState('')
     const [songResults, setSongResults] = useState([])
     const [songLoading, setSongLoading] = useState(false)
+    const [songMode, setSongMode] = useState('search')
+    const [audioUploading, setAudioUploading] = useState(false)
+    const audioInputRef = useRef(null)
 
     const screens = useBreakpoint()
 
@@ -427,6 +431,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions
                 ...prev.cover,
                 song: {
                     id: track.id,
+                    source: 'spotify',
                     name: track.name,
                     artist: track.artists[0].name,
                     albumArt: track.album.images[track.album.images.length - 1]?.url,
@@ -435,7 +440,6 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions
             }
         }))
 
-        console.log('track: ', track)
         setSaved(false)
         setSongQuery('')
         setSongResults([])
@@ -450,6 +454,39 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions
             }
         }))
         setSaved(false)
+    }
+
+    const handleAudioFileChange = async (e) => {
+        const file = e.target.files?.[0]
+        e.target.value = ''
+        if (!file || !invitationID) return
+
+        setAudioUploading(true)
+        try {
+            const url = await uploadSongAudio({ file, invitationID })
+            if (!url) return
+
+            setInvitation(prev => ({
+                ...prev,
+                cover: {
+                    ...prev.cover,
+                    song: {
+                        id: `upload-${Date.now()}`,
+                        source: 'upload',
+                        name: file.name.replace(/\.[^/.]+$/, ''),
+                        artist: '',
+                        albumArt: null,
+                        previewUrl: url
+                    }
+                }
+            }))
+            setSaved(false)
+        } catch (err) {
+            console.error(err)
+            message.error(t('build_generals.song_upload_error'))
+        } finally {
+            setAudioUploading(false)
+        }
     }
 
     const filteredCollection = colorCollection.filter((item) => {
@@ -1017,9 +1054,11 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions
                                         <div style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {invitation.cover.song.name}
                                         </div>
-                                        <div style={{ fontSize: '11px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            {invitation.cover.song.artist}
-                                        </div>
+                                        {invitation.cover.song.artist && (
+                                            <div style={{ fontSize: '11px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {invitation.cover.song.artist}
+                                            </div>
+                                        )}
                                     </div>
                                     <Button type='text' onClick={handleRemoveSong} size='small'
                                         icon={<X size={14} />}
@@ -1027,44 +1066,82 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, fontOptions
                                 </div>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                                    <Input
-                                        value={songQuery}
-                                        onChange={e => setSongQuery(e.target.value)}
-                                        placeholder={t('build_generals.song_placeholder')}
-                                        style={{ borderRadius: '99px' }}
-                                        prefix={<SiSpotify style={{ color: '#1DB954' }} />}
+                                    <Segmented
+                                        block
+                                        className='song-mode-segmented'
+                                        style={{ borderRadius: '99px', padding: '2px', border: '1px solid #EBEBEB' }}
+                                        value={songMode}
+                                        onChange={setSongMode}
+                                        options={[
+                                            { label: t('build_generals.song_mode_spotify'), value: 'search' },
+                                            { label: t('build_generals.song_mode_upload'), value: 'upload' },
+                                        ]}
                                     />
-                                    {songLoading && (
-                                        <span style={{ fontSize: '12px', color: '#888' }}>{t('build_generals.song_searching')}</span>
-                                    )}
-                                    {songResults.length > 0 && (
-                                        <div style={{ border: '1px solid var(--borders)', borderRadius: '12px', overflow: 'hidden', width: '100%' }}>
-                                            {songResults.map((track) => (
-                                                <div
-                                                    key={track.id}
-                                                    onClick={() => handleSelectSong(track)}
-                                                    style={{
-                                                        display: 'flex', alignItems: 'center', gap: '10px',
-                                                        padding: '8px 12px', cursor: 'pointer',
-                                                        borderBottom: '1px solid var(--borders)',
-                                                    }}
-                                                    className='song-result-item'
-                                                >
-                                                    {track.album.images[track.album.images.length - 1]?.url && (
-                                                        <img src={track.album.images[track.album.images.length - 1].url} alt=""
-                                                            style={{ width: 36, height: 36, borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
-                                                    )}
-                                                    <div style={{ overflow: 'hidden' }}>
-                                                        <div style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                            {track.name}
+
+                                    {songMode === 'search' ? (
+                                        <>
+                                            <Input
+                                                value={songQuery}
+                                                onChange={e => setSongQuery(e.target.value)}
+                                                placeholder={t('build_generals.song_placeholder')}
+                                                style={{ borderRadius: '99px' }}
+                                                prefix={<SiSpotify style={{ color: '#1DB954' }} />}
+                                            />
+                                            {songLoading && (
+                                                <span style={{ fontSize: '12px', color: '#888' }}>{t('build_generals.song_searching')}</span>
+                                            )}
+                                            {songResults.length > 0 && (
+                                                <div style={{ border: '1px solid var(--borders)', borderRadius: '12px', overflow: 'hidden', width: '100%' }}>
+                                                    {songResults.map((track) => (
+                                                        <div
+                                                            key={track.id}
+                                                            onClick={() => handleSelectSong(track)}
+                                                            style={{
+                                                                display: 'flex', alignItems: 'center', gap: '10px',
+                                                                padding: '8px 12px', cursor: 'pointer',
+                                                                borderBottom: '1px solid var(--borders)',
+                                                            }}
+                                                            className='song-result-item'
+                                                        >
+                                                            {track.album.images[track.album.images.length - 1]?.url && (
+                                                                <img src={track.album.images[track.album.images.length - 1].url} alt=""
+                                                                    style={{ width: 36, height: 36, borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} />
+                                                            )}
+                                                            <div style={{ overflow: 'hidden' }}>
+                                                                <div style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                    {track.name}
+                                                                </div>
+                                                                <div style={{ fontSize: '11px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                    {track.artists[0]?.name}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div style={{ fontSize: '11px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                            {track.artists[0]?.name}
-                                                        </div>
-                                                    </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <input
+                                                ref={audioInputRef}
+                                                type='file'
+                                                accept='audio/*'
+                                                style={{ display: 'none' }}
+                                                onChange={handleAudioFileChange}
+                                            />
+                                            <Button
+                                                className='primarybutton'
+                                                loading={audioUploading}
+                                                disabled={!invitationID}
+                                                icon={<Upload size={14} />}
+                                                onClick={() => audioInputRef.current?.click()}
+                                            >
+                                                {t('build_generals.song_upload_btn')}
+                                            </Button>
+                                            <span style={{ fontSize: '11px', color: '#888' }}>
+                                                {t('build_generals.song_upload_hint')}
+                                            </span>
+                                        </>
                                     )}
                                 </div>
                             )}
