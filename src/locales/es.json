@@ -752,7 +752,12 @@
     "label_song": "Canción",
     "song_description": "Usa la API oficial de Spotify. Solo se tiene acceso a 30 seg de preview por canción.",
     "song_placeholder": "Buscar canción o artista...",
-    "song_searching": "Buscando..."
+    "song_searching": "Buscando...",
+    "song_mode_spotify": "Spotify",
+    "song_mode_upload": "Subir",
+    "song_upload_btn": "Subir archivo de audio",
+    "song_upload_hint": "MP3 o similar, máximo 8 MB",
+    "song_upload_error": "Ocurrió un error al subir el audio"
   },
   "build_cover": {
     "title": "Portada",

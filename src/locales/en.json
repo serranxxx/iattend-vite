@@ -752,7 +752,12 @@
     "label_song": "Song",
     "song_description": "Uses the official Spotify API. Only 30-second previews are available per track.",
     "song_placeholder": "Search song or artist...",
-    "song_searching": "Searching..."
+    "song_searching": "Searching...",
+    "song_mode_spotify": "Spotify",
+    "song_mode_upload": "Upload",
+    "song_upload_btn": "Upload audio file",
+    "song_upload_hint": "MP3 or similar, 8 MB max",
+    "song_upload_error": "There was an error uploading the audio"
   },
   "build_cover": {
     "title": "Cover",
