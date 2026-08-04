@@ -27,14 +27,11 @@ export const AsignarVendedorModal = ({ open, vendedores, onCancel, onConfirm }) 
     return (
         <Modal
             open={open}
-            title="Asignar vendedor"
+            // title="Asignar vendedor"
+            closeIcon={false}
             onCancel={handleCancel}
-            footer={[
-                <Button key="cancel" onClick={handleCancel}>Cancelar</Button>,
-                <Button key="ok" type="primary" loading={loading} disabled={!vendedorId} onClick={handleOk} className="primarybutton--active">
-                    Asignar
-                </Button>,
-            ]}
+            styles={{ body: { padding: '24px' } }}
+            footer={null}
         >
             <Select
                 style={{ width: '100%' }}
@@ -50,6 +47,16 @@ export const AsignarVendedorModal = ({ open, vendedores, onCancel, onConfirm }) 
             >
                 Notificar al vendedor por correo
             </Checkbox>
+
+            <div style={{
+                display:'flex',alignItems:'center',justifyContent:'flex-end', alignSelf:'stretch',
+                gap:'8px'
+            }}>
+                <Button key="cancel" onClick={handleCancel}>Cancelar</Button>
+                <Button key="ok" type="primary" loading={loading} disabled={!vendedorId} onClick={handleOk} className="primarybutton--active">
+                    Asignar
+                </Button>
+            </div>
         </Modal>
     )
 }

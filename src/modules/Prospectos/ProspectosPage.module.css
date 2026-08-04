@@ -1,12 +1,15 @@
 .page {
     min-height: 100vh;
-    background: #F1F1F1;
+    background: #FFF;
+
 }
 
 .content {
-    padding: 84px 24px 24px;
     max-width: 1480px;
+    padding: 24px 0px;
+    box-sizing: border-box;
     margin: 0 auto;
+    width: 100%;
 }
 
 .titleRow {
@@ -14,12 +17,13 @@
     align-items: baseline;
     gap: 10px;
     margin-bottom: 20px;
+    padding: 0px 24px;
 }
 
 .title {
     font-family: 'Denver-Serial', 'Poppins', sans-serif;
     font-weight: 800;
-    font-size: 28px;
+    font-size: 24px;
     color: #29262D;
 }
 

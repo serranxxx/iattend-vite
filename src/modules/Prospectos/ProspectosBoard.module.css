@@ -1,16 +1,16 @@
 .board {
     display: flex;
     gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 12px;
+    overflow-x: hidden;
+    padding: 0px 24px;
     align-items: flex-start;
 }
 
 .column {
-    flex: 0 0 272px;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    background: #EBECF0;
+    background: #F5F3F2;
     border-radius: 12px;
     padding: 8px;
     max-height: calc(100vh - 200px);

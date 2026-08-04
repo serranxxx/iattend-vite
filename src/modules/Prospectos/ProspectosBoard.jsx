@@ -148,7 +148,7 @@ export const ProspectosBoard = ({ modo, prospectos, setProspectos, vendedores })
     }
 
     return (
-        <div className={styles.board}>
+        <div className={`scroll-invitation ${styles.board}`}>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 {columnas.map(estado => (
                     <Column key={estado.key} estado={estado} prospectos={porEstado[estado.key] || []} onOpen={setDetalle} onToggleFavorito={toggleFavorito} />

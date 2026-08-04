@@ -46,7 +46,7 @@ export const ProspectosPage = () => {
             <HeaderBuild position="tablero" isVisible={true} alwaysSolid={true} />
             <div className={styles.content}>
                 <div className={styles.titleRow}>
-                    <span className={styles.title}>Tablero de Prospectos</span>
+                    <span className={styles.title}>Tablero de prospectos</span>
                     <span className={styles.subtitle}>Instagram</span>
                 </div>
                 {loading
