@@ -43,7 +43,6 @@ import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
 import { SalesApp } from '../modules/Sales/SalesApp'
 import { ProspectosPage } from '../modules/Prospectos/ProspectosPage'
-import { GuestsCalculatorPage } from '../pages/GuestsCalculator/GuestsCalculatorPage'
 
 
 
@@ -75,7 +74,6 @@ export const AppRouter = () => {
       <Route path="/luma" element={<Lia />} />
       <Route path="/preview" element={<PreviewMoodPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
-      <Route path="/guests-calculator" element={<GuestsCalculatorPage />} />
       <Route path="/*" element={<PageNotFound />} />
 
       <Route path="/admin"
