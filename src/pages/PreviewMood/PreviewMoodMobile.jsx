@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Button, Drawer } from 'antd'
-import { ArrowRight, ArrowUp, Bookmark, ChevronLeft, ChevronRight, Eye, Pause, Play, X } from 'lucide-react'
+import { ArrowRight, ArrowUp, ChevronLeft, ChevronRight, Pause, Play, X } from 'lucide-react'
 import { ButtonsMenu } from '../../modules/Invitation/Build/PageSections/ButtonsMenu'
 import { BuildMenu } from '../../modules/Invitation/Build/PageSections/BuildMenu'
 import { BuildContent } from '../../modules/Invitation/Build/PageSections/BuildContent'
@@ -14,11 +14,6 @@ export const PreviewMoodMobile = ({
     positionY, setPositionY, onSectionChange,
     invitationID, device, setDevice, coverUpdated,
 }) => {
-    const sessionName = (() => {
-        try { return JSON.parse(localStorage.getItem('session'))?.user?.name?.split(' ')[0] ?? null }
-        catch { return null }
-    })()
-
     const [showUpsell, setShowUpsell]       = useState(false)
     const [activeFeature, setActiveFeature] = useState(0)
     const [featurePaused, setFeaturePaused] = useState(false)
@@ -40,22 +35,6 @@ export const PreviewMoodMobile = ({
     return (
         <div className='pm-mobile-root'>
 
-            {/* Mini header */}
-            <div className='pm-mobile-header'>
-                <div className='pm-header-chip'>
-                    <Eye size={12} strokeWidth={1.8} />
-                    <span>{sessionName ?? 'sin cuenta'}</span>
-                </div>
-                <Button
-                    icon={<Bookmark size={14} />}
-                    onClick={onSave}
-                    loading={saving}
-                    className='pm-header-save-btn'
-                >
-                    Guardar
-                </Button>
-            </div>
-
             {/* Build tools + invitation — same structure as BuildPage */}
             <div className='build-componentes-container' style={{ flex: 1, margin: 0, position: 'relative', justifyContent: 'flex-start' }}>
                 <div className='buld-interacting-tools-cont' style={{ zIndex: 999 }}>
@@ -66,6 +45,7 @@ export const PreviewMoodMobile = ({
                         buttons={buttons}
                         currentSection={currentSection}
                         handleClick={handleClick}
+                        autoOpenEditor={false}
                     />
                     <BuildMenu
                         invitationID={invitationID}
@@ -82,6 +62,9 @@ export const PreviewMoodMobile = ({
                         positionY={positionY}
                         invitation={invitation}
                         setInvitation={setInvitation}
+                        onPublish={onPublish}
+                        onSave={onSave}
+                        saving={saving}
                     />
                 </div>
 
@@ -97,20 +80,6 @@ export const PreviewMoodMobile = ({
                     invitation={invitation}
                     onSectionChange={onSectionChange}
                 />
-            </div>
-
-            {/* Fixed CTA */}
-            <div className='pm-cta-fixed'>
-                <Button
-                    block
-                    className='primarybutton--active'
-                    size='large'
-                    icon={<ArrowRight size={16} />}
-                    style={{ borderRadius: 16, height: 52, fontSize: 16, fontWeight: 700 }}
-                    onClick={onPublish}
-                >
-                    Quiero mi invitación
-                </Button>
             </div>
 
             {/* Footer strip */}

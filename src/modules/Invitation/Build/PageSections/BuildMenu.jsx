@@ -8,12 +8,12 @@ import './build-invitation.css'
 import { useState } from 'react';
 import { Button, Grid } from 'antd';
 import { LuChevronsLeft, LuChevronDown, LuChevronUp } from 'react-icons/lu';
-import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { ArrowRight, Bookmark } from 'lucide-react';
 
 const { useBreakpoint } = Grid;
 
 export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, setSaved, setSettingsModal, settingsModal,
-    onHide, setOnHide, hideMenu, invitationID, activeLang
+    onHide, setOnHide, hideMenu, invitationID, activeLang, onPublish, onSave, saving
 }) => {
 
     const screens = useBreakpoint();
@@ -43,17 +43,23 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
         }
     }
 
-    const mobileHeight = expanded ? 'calc(100vh - 86px)' : '300px';
+    // bottom:56px + esta altura deben sumar exactamente 100vh para que, expandido,
+    // el panel llegue hasta el borde superior real de la pantalla sin dejar hueco.
+    const mobileHeight = expanded ? 'calc(100vh - 56px)' : '300px';
 
+    // Oculto = el panel se encoge a solo la fila de controles (chevrons/Guardar/CTA),
+    // que sigue siempre visible y tocable. El formulario queda clippeado por overflow:hidden
+    // (no por transform), así que no queda ninguna zona "fantasma" capturando touches
+    // encima del iframe de la invitación cuando el usuario quiere hacer scroll manual.
+    const CONTROLS_ROW_HEIGHT = 64;
     const mobileWrapperStyle = screens.xs ? {
         position: 'fixed',
         bottom: '56px',
         left: 0,
         width: '100%',
-        height: mobileHeight,
+        height: onHide ? `${CONTROLS_ROW_HEIGHT}px` : mobileHeight,
         zIndex: 9998,
-        transform: onHide ? 'translateY(calc(100% + 60px))' : 'translateY(0)',
-        transition: 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        transition: 'height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         backgroundColor: '#FFFFFF',
         boxShadow: '0px -6px 12px rgba(0,0,0,0.2)',
         borderRadius: '24px 24px 0px 0px',
@@ -71,17 +77,52 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
                 <div
                     style={{
                         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding:'18px', boxSizing:'border-box'
+                        gap: '8px', padding: '12px', boxSizing: 'border-box'
                     }}
                 >
-                    <div onClick={hideMenu} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <div style={{ width: '120px', height: '6px', borderRadius: '99px', backgroundColor: '#ebebeb' }} />
-                    </div>
                     <Button
-                        className={expanded ? 'primarybutton--active' : 'primarybutton'}
-                        icon={expanded ? <ArrowDownToLine size={12} /> : <ArrowUpFromLine color='#00000060' size={12}/>}
-                        onClick={() => setExpanded(v => !v)}
-                        style={{ width:'32px', height:'32px', position:'absolute', right:'8px', top:'8px'}}
+                        className='primarybutton'
+                        icon={<LuChevronDown size={16} />}
+                        onClick={hideMenu}
+                        style={{ width: '32px', height: '32px', flexShrink: 0 }}
+                    />
+
+                    {onSave && (
+                        <Button
+                            icon={<Bookmark size={14} />}
+                            onClick={onSave}
+                            loading={saving}
+                            className='primarybutton'
+                            style={{ width: '40px', height: '40px', flexShrink: 0 }}
+                        />
+                    )}
+
+                    {onPublish && (
+                        <Button
+                            block
+                            className='primarybutton--active'
+                            icon={<ArrowRight size={16} />}
+                            style={{ flex: 1, borderRadius: 16, height: 40, fontSize: 14, fontWeight: 700 }}
+                            onClick={onPublish}
+                        >
+                            Quiero mi invitación
+                        </Button>
+                    )}
+
+                    <Button
+                        className={(!onHide && expanded) ? 'primarybutton--active' : 'primarybutton'}
+                        icon={<LuChevronUp size={16} />}
+                        onClick={() => {
+                            if (onHide) {
+                                // cerrado -> abre a la mitad (primer estado de la iteración)
+                                setOnHide(false)
+                                setExpanded(false)
+                            } else {
+                                // ya abierto -> itera entre mitad y pantalla completa
+                                setExpanded(v => !v)
+                            }
+                        }}
+                        style={{ width: '32px', height: '32px', flexShrink: 0 }}
                     />
                 </div>
             )}

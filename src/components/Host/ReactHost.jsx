@@ -17,6 +17,7 @@ export default function ReactHost({
   const lastSentSectionRef = useRef(null);
   const lastReceivedSectionRef = useRef(null);
   const onSectionChangeRef = useRef(onSectionChange);
+  const isFirstScrollRef = useRef(true);
 
   useEffect(() => {
     onSectionChangeRef.current = onSectionChange;
@@ -93,8 +94,16 @@ export default function ReactHost({
     postProps("config-change");
   }, [config, textureOverride, fontOverride, activeLang, targetOrigin]);
 
-  // 2b) Pedir auto-scroll cada que cambie la sección activa en el builder
+  // 2b) Pedir auto-scroll cada que cambie la sección activa en el builder.
+  // El primer mount no debe reenviar la sección inicial ("cover"): el remoto ya abre
+  // ahí, y ese scrollIntoView redundante es lo que traba el primer swipe del usuario.
   useEffect(() => {
+    if (isFirstScrollRef.current) {
+      isFirstScrollRef.current = false;
+      lastSentSectionRef.current = scrollToSection;
+      return;
+    }
+
     if (!scrollToSection || scrollToSection === lastSentSectionRef.current) return;
 
     // Si este valor llegó como eco del propio scroll del invitado, no hay que reenviarlo

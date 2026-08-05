@@ -5,7 +5,7 @@ const { useBreakpoint } = Grid;
 
 export const ButtonsMenu = ({
      buttons, currentSection, handleClick,
-     setOnHide, menuTimerRef, invitation, staleSections
+     setOnHide, menuTimerRef, invitation, staleSections, autoOpenEditor = true
 }) => {
 
     const screens = useBreakpoint();
@@ -13,6 +13,11 @@ export const ButtonsMenu = ({
     const handleActions = (item) => {
         handleClick(item);
         if (screens.xs) {
+            // En mobile, saltar de sección hace auto-scroll en el iframe. Si autoOpenEditor
+            // está activo (BuildPage), además abrimos el formulario de esa sección — lo que
+            // bloquea el scroll manual del teléfono hasta que se cierre. En Preview eso rompe
+            // el poder simplemente navegar/scrollear, así que ahí se desactiva.
+            if (!autoOpenEditor) return;
             if (menuTimerRef.current) clearTimeout(menuTimerRef.current);
             setOnHide(true);
             menuTimerRef.current = setTimeout(() => {

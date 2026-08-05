@@ -11,21 +11,6 @@
     overflow: hidden;
 }
 
-/* ── Mobile header ────────────────────────────────────────── */
-.pm-mobile-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    background: transparent;
-    z-index: 200;
-}
-
 /* ── Hero ─────────────────────────────────────────────────── */
 .pm-mobile-hero {
     flex: 1;
@@ -72,18 +57,6 @@
 .pm-tool-btn--active {
     background: #0c171b;
     color: #eeeadf;
-}
-
-/* ── Fixed CTA ────────────────────────────────────────────── */
-.pm-cta-fixed {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(110px + 8px + env(safe-area-inset-bottom, 0px));
-    z-index: 100;
-    width: calc(100vw - 80px);
-    max-width: 240px;
-    border-radius: 99px !important;
 }
 
 /* ── Footer strip ─────────────────────────────────────────── */
@@ -348,16 +321,6 @@
     -webkit-backdrop-filter: blur(16px) saturate(1.8);
     border: 1px solid rgba(255, 255, 255, 0.4);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-.pm-header-save-btn {
-    border-radius: 99px !important;
-    background: rgba(255, 255, 255, 0.22) !important;
-    backdrop-filter: blur(16px) saturate(1.8);
-    -webkit-backdrop-filter: blur(16px) saturate(1.8);
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-    color: #0c171b !important;
 }
 
 .pm-header-right {
