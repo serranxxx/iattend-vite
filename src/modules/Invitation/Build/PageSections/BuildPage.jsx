@@ -91,7 +91,7 @@ const mergeSourceIntoTranslation = (translationContent, newSource) => {
     }
     if (result.family && t.family) {
         if (t.family.title !== undefined) result.family.title = t.family.title
-        if (result.family.personas?.length === t.family.personas?.length) {
+        if (result.family.personas && result.family.personas.length === t.family.personas?.length) {
             result.family.personas = result.family.personas.map((p, i) => ({
                 ...p,
                 name: t.family.personas[i]?.name ?? p.name,
@@ -102,13 +102,13 @@ const mergeSourceIntoTranslation = (translationContent, newSource) => {
     if (result.quote && t.quote?.description !== undefined) result.quote.description = t.quote.description
     if (result.itinerary && t.itinerary) {
         if (t.itinerary.title !== undefined) result.itinerary.title = t.itinerary.title
-        if (result.itinerary.items?.length === t.itinerary.items?.length) {
+        if (result.itinerary.items && result.itinerary.items.length === t.itinerary.items?.length) {
             result.itinerary.items = result.itinerary.items.map((item, i) => {
                 const ti = t.itinerary.items[i]
                 const merged = { ...item }
                 if (ti?.name !== undefined) merged.name = ti.name
                 if (ti?.address !== undefined) merged.address = ti.address
-                if (item.subitems?.length === ti?.subitems?.length) {
+                if (item.subitems && item.subitems.length === ti?.subitems?.length) {
                     merged.subitems = item.subitems.map((s, j) => ({ ...s, name: ti.subitems[j]?.name ?? s.name }))
                 }
                 return merged
@@ -122,7 +122,7 @@ const mergeSourceIntoTranslation = (translationContent, newSource) => {
     if (result.gifts && t.gifts) {
         if (t.gifts.title !== undefined) result.gifts.title = t.gifts.title
         if (t.gifts.description !== undefined) result.gifts.description = t.gifts.description
-        if (result.gifts.cards?.length === t.gifts.cards?.length) {
+        if (result.gifts.cards && result.gifts.cards.length === t.gifts.cards?.length) {
             result.gifts.cards = result.gifts.cards.map((c, i) => ({
                 ...c,
                 title: t.gifts.cards[i]?.title ?? c.title,
@@ -133,7 +133,7 @@ const mergeSourceIntoTranslation = (translationContent, newSource) => {
     if (result.destinations && t.destinations) {
         if (t.destinations.title !== undefined) result.destinations.title = t.destinations.title
         if (t.destinations.description !== undefined) result.destinations.description = t.destinations.description
-        if (result.destinations.cards?.length === t.destinations.cards?.length) {
+        if (result.destinations.cards && result.destinations.cards.length === t.destinations.cards?.length) {
             result.destinations.cards = result.destinations.cards.map((c, i) => ({
                 ...c,
                 name: t.destinations.cards[i]?.name ?? c.name,
@@ -144,7 +144,7 @@ const mergeSourceIntoTranslation = (translationContent, newSource) => {
     }
     if (result.notices && t.notices) {
         if (t.notices.title !== undefined) result.notices.title = t.notices.title
-        if (result.notices.notices?.length === t.notices.notices?.length) {
+        if (result.notices.notices && result.notices.notices.length === t.notices.notices?.length) {
             result.notices.notices = result.notices.notices.map((n, i) => ({
                 ...n,
                 title: t.notices.notices[i]?.title ?? n.title,
@@ -283,6 +283,13 @@ export const BuildPage = () => {
     const [staleSections, setStaleSections] = useState(new Set())
     const [translationWarning, setTranslationWarning] = useState(false)
 
+    // Undo/redo de sesión (Ctrl+Z / Ctrl+Shift+Z). Nunca se persiste — vive y
+    // muere con la pestaña. Se reinicia al cambiar de idioma activo porque es,
+    // en la práctica, otro documento.
+    const UNDO_LIMIT = 20
+    const [undoStack, setUndoStack] = useState([])
+    const [redoStack, setRedoStack] = useState([])
+
     const lastSavedTextsRef = useRef(null)
     const pendingSaveRef = useRef(null) // 'write' | 'save'
 
@@ -295,6 +302,15 @@ export const BuildPage = () => {
     }
 
     const setActiveField = (updater) => {
+        const previous = getActiveInvitation()
+        if (previous) {
+            setUndoStack(prev => {
+                const next = [...prev, previous]
+                return next.length > UNDO_LIMIT ? next.slice(next.length - UNDO_LIMIT) : next
+            })
+            setRedoStack([])
+        }
+
         if (!activeLang) {
             setCopy(updater)
             return
@@ -306,6 +322,57 @@ export const BuildPage = () => {
         })
         setSaved(false)
     }
+
+    const applyHistoryEntry = (content) => {
+        if (!activeLang) {
+            setCopy(content)
+        } else {
+            setTranslations(prev => ({
+                ...prev,
+                [activeLang]: { ...(prev[activeLang] ?? { content: {}, section_hashes: {} }), content },
+            }))
+        }
+        setSaved(false)
+    }
+
+    const onUndo = () => {
+        if (undoStack.length === 0) return
+        const entry = undoStack[undoStack.length - 1]
+        setRedoStack(prev => [...prev, getActiveInvitation()])
+        setUndoStack(prev => prev.slice(0, -1))
+        applyHistoryEntry(entry)
+    }
+
+    const onRedo = () => {
+        if (redoStack.length === 0) return
+        const entry = redoStack[redoStack.length - 1]
+        setUndoStack(prev => [...prev, getActiveInvitation()])
+        setRedoStack(prev => prev.slice(0, -1))
+        applyHistoryEntry(entry)
+    }
+
+    // Cambiar de idioma activo cambia el documento que se está editando — el
+    // historial de undo/redo del idioma anterior ya no aplica.
+    useEffect(() => {
+        setUndoStack([])
+        setRedoStack([])
+    }, [activeLang])
+
+    // Ctrl+Z / Ctrl+Shift+Z globales, salvo con el foco en un input de texto
+    // libre (se respeta el undo nativo del navegador para no pelear con él).
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return
+            const target = e.target
+            const isTextInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable
+            if (isTextInput) return
+            e.preventDefault()
+            if (e.shiftKey) onRedo()
+            else onUndo()
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [onUndo, onRedo])
 
     // generals.languages decide si el invitado ve el botón de idioma en la
     // invitación pública — no puede depender de que alguien se acuerde de
@@ -521,10 +588,10 @@ export const BuildPage = () => {
                 )
                 messageApi.info(t('buttons_menu.msg_written'))
             } else {
-                const { error } = await supabase
-                    .from('invitations')
-                    .update({ data: savedInvitation })
-                    .eq('id', id)
+                const { error } = await supabase.rpc('publish_invitation', {
+                    p_invitation_id: id,
+                    p_data: savedInvitation,
+                })
                 if (error) { console.error('Error actualizando:', error); return }
                 messageApi.success(t('buttons_menu.msg_saved'))
             }
@@ -615,6 +682,8 @@ export const BuildPage = () => {
     useEffect(() => {
         getNewInvitations()
         setSaved(true)
+        setUndoStack([])
+        setRedoStack([])
     }, [id])
 
 
@@ -739,7 +808,8 @@ export const BuildPage = () => {
                             <BuildContent invitationID={id} onHide={onHide} setOnHide={setOnHide}
                                 setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={getActiveInvitation()} onSectionChange={handleSectionChange}
                                 languages={copy?.generals?.languages ?? []} disabledLanguages={copy?.generals?.disabledLanguages ?? []} activeLang={activeLang} onActiveLangChange={setActiveLang}
-                                onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating} />
+                                onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating}
+                                onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0} />
 
                         </div>
 

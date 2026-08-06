@@ -6,7 +6,7 @@ const { useBreakpoint } = Grid;
 import ios_settings from '../../../../assets/images/iphone-settings.svg'
 import android_settings from '../../../../assets/images/android-settings.png'
 import ReactHost from '../../../../components/Host/ReactHost';
-import { LuArrowLeft, LuMinus, LuMonitorSmartphone, LuPlus } from 'react-icons/lu';
+import { LuArrowLeft, LuMinus, LuMonitorSmartphone, LuPlus, LuRedo2, LuUndo2 } from 'react-icons/lu';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { LanguageSelector } from '../../../../components/LanguageSelector/LanguageSelector';
 
@@ -28,7 +28,8 @@ const devices = [
 
 export const BuildContent = ({
     positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride, fontOverride,
-    languages, disabledLanguages, activeLang, onActiveLangChange, onAddLanguage, onToggleLanguageEnabled, onRetranslate, translating, minimalControls = false, onBack
+    languages, disabledLanguages, activeLang, onActiveLangChange, onAddLanguage, onToggleLanguageEnabled, onRetranslate, translating, minimalControls = false, onBack,
+    onUndo, onRedo, canUndo, canRedo
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -94,6 +95,23 @@ export const BuildContent = ({
                         !screens.xs &&
                     
                     <div className='tools-settings-menu-container'>
+
+                        {onUndo && (
+                            <Button
+                                className='full-screen-button'
+                                id="undobutton"
+                                disabled={!canUndo}
+                                onClick={onUndo}
+                                icon={<LuUndo2 size={16} style={{ marginTop: '2px' }} />} />
+                        )}
+
+                        {onRedo && canRedo && (
+                            <Button
+                                className='full-screen-button'
+                                id="redobutton"
+                                onClick={onRedo}
+                                icon={<LuRedo2 size={16} style={{ marginTop: '2px' }} />} />
+                        )}
 
                         {!minimalControls && <>
                             <Dropdown
