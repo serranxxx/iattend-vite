@@ -26,7 +26,7 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowRight, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, List, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, Users, X } from 'lucide-react';
+import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, List, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, Users, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { GuestAddTiles } from './GuestAddTiles';
 import { useTranslation } from 'react-i18next';
@@ -103,6 +103,15 @@ export default function GuestsPage() {
     const [filterTier, setFilterTier] = useState(null)
     const [filterType, setFilterType] = useState(null)
     const [filterSide, setfilterSide] = useState(null)
+    // Sort de encabezado por tab (no filtra filas, solo cambia el orden): un solo
+    // { column, dir } activo por tab — activar una columna desactiva cualquier otra
+    // del mismo tab. dir cicla inactivo -> 'asc' -> 'desc' -> inactivo.
+    const [activeSort, setActiveSort] = useState({
+        creado: { column: 'tier', dir: 'asc' },
+        esperando: { column: null, dir: null },
+        confirmado: { column: null, dir: null },
+        rechazado: { column: null, dir: null },
+    })
     const [owners, setOwners] = useState(null)
     const [url_image, setUrl_image] = useState(null)
     const [plan, setPlan] = useState(null)
@@ -141,6 +150,80 @@ export default function GuestsPage() {
         clearUiAction()
     }, [uiAction])
 
+    // Sorts de columna (no filtran filas): un botón en el header cicla
+    // inactivo -> asc -> desc -> inactivo. Solo una columna puede estar activa
+    // por tab (activar una desactiva cualquier otra del mismo tab), por eso
+    // activeSort guarda un único { column, dir } por tab en vez de un booleano
+    // por columna. Deben existir antes de las columnas, que las usan al definirse.
+    const cycleTabSort = (tabKey, column) => {
+        setActiveSort((prev) => {
+            const current = prev[tabKey] || { column: null, dir: null };
+            const nextDir = current.column !== column
+                ? 'asc'
+                : current.dir === 'asc' ? 'desc' : current.dir === 'desc' ? null : 'asc';
+            return {
+                ...prev,
+                [tabKey]: { column: nextDir ? column : null, dir: nextDir },
+            };
+        });
+    };
+
+    const renderSortableHeader = (label, dir, onToggle) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <span>{label}</span>
+            <Button
+                type="text"
+                size="small"
+                onClick={onToggle}
+                icon={
+                    dir === 'asc' ? <ArrowUp size={14} /> :
+                        dir === 'desc' ? <ArrowDown size={14} /> :
+                            <ArrowUpDown size={14} />
+                }
+                className={`sort-header-btn ${dir ? 'sort-header-btn--active' : ''}`}
+                style={{ padding: 0, minWidth: 20, height: 20 }}
+            />
+        </div>
+    );
+
+    const TIER_SORT_ORDER = { A: 1, B: 2, C: 3, D: 4 };
+    const MESSAGE_STATUS_SORT_ORDER = { failed: 0, undefined: 1, processing: 2, sent: 3, delivered: 4, read: 5 };
+
+    const compareByMesa = (a, b) => {
+        const aHas = a.table ? 1 : 0;
+        const bHas = b.table ? 1 : 0;
+        if (aHas !== bHas) return aHas - bHas; // sin mesa primero
+        const aNum = tables.find((tb) => tb.id === a.table)?.number ?? 0;
+        const bNum = tables.find((tb) => tb.id === b.table)?.number ?? 0;
+        return aNum - bNum;
+    };
+
+    const compareByTier = (a, b) => (TIER_SORT_ORDER[a.tier] ?? 99) - (TIER_SORT_ORDER[b.tier] ?? 99);
+
+    // Mismo estatus "efectivo" que muestra handleMessageStatus (considera el envío
+    // optimista de pendingApiSends antes de que llegue su dispatch real).
+    const effectiveMessageStatus = (guest) => {
+        const status = dispatchMap[guest.id]?.status ?? 'undefined';
+        return status === 'undefined' && pendingApiSends.has(guest.id) ? 'processing' : status;
+    };
+
+    const compareByStatus = (a, b) =>
+        (MESSAGE_STATUS_SORT_ORDER[effectiveMessageStatus(a)] ?? 1) - (MESSAGE_STATUS_SORT_ORDER[effectiveMessageStatus(b)] ?? 1);
+
+    const applySortDir = (data, dir, comparator) => {
+        if (!dir) return data;
+        const sorted = [...data].sort(comparator);
+        return dir === 'desc' ? sorted.reverse() : sorted;
+    };
+
+    const SORT_COMPARATORS = { tier: compareByTier, mesa: compareByMesa, estado: compareByStatus };
+
+    const sortForTab = (tabKey, data) => {
+        const sort = activeSort[tabKey];
+        const comparator = sort?.column && SORT_COMPARATORS[sort.column];
+        if (!comparator) return data;
+        return applySortDir(data, sort.dir, comparator);
+    };
 
     const openColumns = useMemo(() => ([
         {
@@ -394,10 +477,23 @@ export default function GuestsPage() {
                     );
                 }
 
+                if ((state === "confirmado" || state === "asistente") && table) {
+                    const assignedTable = tables?.find((tb) => tb.id === table);
+                    return (
+                        <div className="tag-container">
+                            <Tooltip title={assignedTable?.name || ''}>
+                                <span className="new-table-tag new-table-tag--compact">
+                                    {assignedTable ? `#${assignedTable.number}` : "-"}
+                                </span>
+                            </Tooltip>
+                        </div>
+                    );
+                }
+
                 return null;
             },
         },
-    ]), [rowData]);
+    ]), [rowData, tables]);
 
     const columns = useMemo(() => ([
         {
@@ -607,10 +703,10 @@ export default function GuestsPage() {
                             </div>
                         );
                     }
-                    if (!((state === "confirmado" || state === "asistente") && !table)) {
+                    if (!(state === "confirmado" || state === "asistente")) {
                         return null;
                     }
-                    // acompañante confirmado sin mesa: cae al bloque de abajo para poder asignarle mesa
+                    // acompañante confirmado (con o sin mesa): cae al bloque de abajo para mostrar/asignar mesa
                 }
 
                 if (state === "creado") {
@@ -784,6 +880,19 @@ export default function GuestsPage() {
                     );
                 }
 
+                if ((state === "confirmado" || state === "asistente") && table) {
+                    const assignedTable = tables?.find((tb) => tb.id === table);
+                    return (
+                        <div className="tag-container">
+                            <Tooltip title={assignedTable?.name || ''}>
+                                <span className="new-table-tag new-table-tag--compact">
+                                    {assignedTable ? `#${assignedTable.number}` : "-"}
+                                </span>
+                            </Tooltip>
+                        </div>
+                    );
+                }
+
                 // if (state === "rechazado") {
                 //     return (
                 //         <Button
@@ -799,7 +908,7 @@ export default function GuestsPage() {
                 return null;
             },
         },
-    ]), [rowData, name, messagesDispatch]);
+    ]), [rowData, name, messagesDispatch, tables]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
@@ -807,6 +916,37 @@ export default function GuestsPage() {
         pagination: false,
         scroll: { x: 1400 },
     }), [columns, openColumns, openCard]);
+
+    // Cada tab de estado necesita su propia variante de columnas: "mesa" se
+    // oculta salvo en confirmado (donde se fusiona dentro de "Acciones"), y
+    // "Acciones" cambia de título/desaparece según el estado. El sort activo
+    // se lee de activeSort[state] y se decora aquí, ya que depende del tab.
+    const getTabColumns = (baseColumns, state) => {
+        const sort = activeSort[state] || { column: null, dir: null };
+        const dirFor = (column) => (sort.column === column ? sort.dir : null);
+        const withTierSort = (cols) => cols.map((col) => (
+            col.key === "tier"
+                ? { ...col, title: renderSortableHeader(t('guests.col_priority'), dirFor('tier'), () => cycleTabSort(state, 'tier')) }
+                : col
+        ));
+
+        switch (state) {
+            case "creado":
+                return withTierSort(baseColumns.filter((col) => col.key !== "table"));
+            case "esperando":
+                return withTierSort(baseColumns
+                    .filter((col) => col.key !== "table")
+                    .map((col) => (col.key === "send" ? { ...col, title: renderSortableHeader(t('guests.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
+            case "confirmado":
+                return withTierSort(baseColumns
+                    .filter((col) => col.key !== "table")
+                    .map((col) => (col.key === "send" ? { ...col, title: renderSortableHeader(t('guests.col_table'), dirFor('mesa'), () => cycleTabSort(state, 'mesa')) } : col)));
+            case "rechazado":
+                return withTierSort(baseColumns.filter((col) => col.key !== "table" && col.key !== "send"));
+            default:
+                return baseColumns;
+        }
+    };
 
     const filteredGuests = (data = []) => {
         return data.filter((guest) => {
@@ -1905,8 +2045,8 @@ export default function GuestsPage() {
                 <Spin spinning={isLoading}>
                     <div className="guests-card-list-scroll">
                         {hasActiveFilters
-                            ? renderFlatRows(flatFilteredGuests(createdData), tableProps.columns)
-                            : renderGroupedCards(filteredGuests(createdData), tableProps.columns)}
+                            ? renderFlatRows(sortForTab('creado', flatFilteredGuests(createdData)), getTabColumns(tableProps.columns, 'creado'))
+                            : renderGroupedCards(sortForTab('creado', filteredGuests(createdData)), getTabColumns(tableProps.columns, 'creado'))}
                     </div>
                 </Spin>
             ),
@@ -1918,8 +2058,8 @@ export default function GuestsPage() {
                 <Spin spinning={isLoading}>
                     <div className="guests-card-list-scroll guests-card-list-scroll--sent">
                         {hasActiveFilters
-                            ? renderFlatRows(flatFilteredGuests(waitingData), tableProps.columns)
-                            : renderGroupedCards(filteredGuests(waitingData), tableProps.columns)}
+                            ? renderFlatRows(sortForTab('esperando', flatFilteredGuests(waitingData)), getTabColumns(tableProps.columns, 'esperando'))
+                            : renderGroupedCards(sortForTab('esperando', filteredGuests(waitingData)), getTabColumns(tableProps.columns, 'esperando'))}
                     </div>
                 </Spin>
             ),
@@ -1934,8 +2074,8 @@ export default function GuestsPage() {
                     <Spin spinning={isLoading}>
                         <div className="guests-card-list-scroll">
                             {confirmedView === 'individual' || hasActiveFilters
-                                ? renderFlatRows(flatFilteredGuests(confirmedData), tableProps.columns)
-                                : renderGroupedCards(filteredGuests(confirmedData), tableProps.columns)}
+                                ? renderFlatRows(sortForTab('confirmado', flatFilteredGuests(confirmedData)), getTabColumns(tableProps.columns, 'confirmado'))
+                                : renderGroupedCards(sortForTab('confirmado', filteredGuests(confirmedData)), getTabColumns(tableProps.columns, 'confirmado'))}
                         </div>
                     </Spin>
                 ),
@@ -1947,8 +2087,8 @@ export default function GuestsPage() {
                 <Spin spinning={isLoading}>
                     <div className="guests-card-list-scroll">
                         {hasActiveFilters
-                            ? renderFlatRows(flatFilteredGuests(callededData), tableProps.columns)
-                            : renderGroupedCards(filteredGuests(callededData), tableProps.columns)}
+                            ? renderFlatRows(sortForTab('rechazado', flatFilteredGuests(callededData)), getTabColumns(tableProps.columns, 'rechazado'))
+                            : renderGroupedCards(sortForTab('rechazado', filteredGuests(callededData)), getTabColumns(tableProps.columns, 'rechazado'))}
                     </div>
                 </Spin>
             ),
@@ -1970,7 +2110,10 @@ export default function GuestsPage() {
         filterTier,
         filterType,
         filterSide,
-        hasActiveFilters
+        hasActiveFilters,
+        activeSort,
+        dispatchMap,
+        pendingApiSends
     ]);
 
 
@@ -2060,7 +2203,9 @@ export default function GuestsPage() {
                                                         <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >{t('guests.no_table')}</div>
                                                         {
                                                             tables.map(i => (
-                                                                <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`} key={i.id}>{i.name ?? t('guests.no_name')}</div>
+                                                                <Tooltip key={i.id} title={i.name || ''}>
+                                                                    <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`}>{`#${i.number}`}</div>
+                                                                </Tooltip>
                                                             ))
                                                         }
                                                     </div>

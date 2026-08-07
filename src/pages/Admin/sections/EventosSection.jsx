@@ -8,7 +8,18 @@ import axios from 'axios'
 import { supabase } from '../../../lib/supabase'
 import styles from '../SalesAdminPage.module.css'
 
-export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEventos, onOpenNewInvitation }) => {
+const TEST_EMAILS = [
+    'albserrano8@gmail.com',
+    'pa.perez98@gmail.com',
+    'pau@iattend.mx',
+    'gabrielaperezort@gmail.com',
+    'albertoserrano@canplast.com.mx',
+    'ajaredojeda@gmail.com',
+    'lesly_lujan@hotmail.com',
+    'valeriamal08@gmail.com',
+]
+
+export const EventosSection = ({ newInvitations, profiles, refreshEventos, onOpenNewInvitation }) => {
     const [filterName, setFilterName] = useState(null)
     const [actualCredits, setActualCredits] = useState(null)
     const [ownerInputs, setOwnerInputs] = useState({})
@@ -112,10 +123,50 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
         message.success('Side event agregado con éxito')
     }
 
+    const activeInvitations = useMemo(() => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        return (newInvitations ?? [])
+            .filter(i => !TEST_EMAILS.includes(i.user_email))
+            .filter(i => !i.event_date || new Date(i.event_date) >= today)
+            .sort((a, b) => {
+                if (a.event_date && b.event_date) return new Date(a.event_date) - new Date(b.event_date)
+                if (a.event_date) return -1
+                if (b.event_date) return 1
+                return new Date(b.created_at) - new Date(a.created_at)
+            })
+    }, [newInvitations])
+
     const nextEventsCols = useMemo(() => ([
         {
+            title: '',
+            dataIndex: '',
+            key: 'address',
+            render: (_, record) => (
+                <Dropdown
+                    arrow
+                    trigger={['click']}
+                    popupRender={() => (
+                        <div className='buttons_admin_cont'>
+                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
+                                <Button icon={<Link2 size={14} />} className='primarybutton' style={{ width: '100%' }} >Ver invitación</Button>
+                            </Link>
+                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.site/dashboard?id=${record?.id}`}>
+                                <Button icon={<ArrowUpRight size={14} />} className='primarybutton' style={{ width: '100%' }}  >Acceder evento</Button>
+                            </Link>
+                            <Button icon={<Copy size={14} />} className='primarybutton' style={{ width: '100%' }} onClick={() => copyToClipboard(record.id)} >Copiar ID</Button>
+                            <Button onClick={() => insertSideEvent(record?.id)} icon={<Plus size={14} />} className='primarybutton' style={{ width: '100%' }} >Side event</Button>
+                        </div>
+                    )}
+                >
+                    <Button icon={<ChevronDown size={14} />}></Button>
+                </Dropdown>
+            )
+        },
+        {
             title: 'Nombre',
-            dataIndex: 'full_name',
+            dataIndex: 'name',
             key: 'name',
             fixed: "left",
         },
@@ -138,7 +189,7 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
             render: (text, record) => (
                 <div className='admin-table-content-subt' style={{ maxWidth: '160px' }}>
                     <InputNumber value={text} onChange={(e) => setActualCredits(e)} />
-                    <Button style={{ marginLeft: '6px' }} onClick={() => updateInvitationCredits(record.invitation_id)} icon={<LuArrowUpFromLine />} />
+                    <Button style={{ marginLeft: '6px' }} onClick={() => updateInvitationCredits(record.id)} icon={<LuArrowUpFromLine />} />
                 </div>
             )
         },
@@ -161,7 +212,7 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
                                         text.map((t, index) => (
                                             <div className='owner_item' key={t}>
                                                 <span>{t}</span>
-                                                <Button onClick={() => removeOwner(record.invitation_id, index)} className='primarybutton' style={{ maxWidth: '32px' }} >-</Button>
+                                                <Button onClick={() => removeOwner(record.id, index)} className='primarybutton' style={{ maxWidth: '32px' }} >-</Button>
                                             </div>
                                         ))
                                     }
@@ -172,15 +223,15 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
                                 <Input
                                     style={{ minWidth: '100px', borderRadius: '99px' }}
                                     placeholder="Nuevo participante"
-                                    value={ownerInputs[record.invitation_id] || ''}
+                                    value={ownerInputs[record.id] || ''}
                                     onChange={(e) =>
                                         setOwnerInputs((prev) => ({
                                             ...prev,
-                                            [record.invitation_id]: e.target.value,
+                                            [record.id]: e.target.value,
                                         }))
                                     }
                                 />
-                                <Button onClick={() => AddNewOwner(record.invitation_id, ownerInputs[record.invitation_id] || '')} className='primarybutton' icon={<IoMdAdd />} >
+                                <Button onClick={() => AddNewOwner(record.id, ownerInputs[record.id] || '')} className='primarybutton' icon={<IoMdAdd />} >
                                 </Button>
                             </Space>
                         </div>
@@ -194,35 +245,14 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
         },
         {
             title: 'Fecha',
-            dataIndex: 'cover_date',
-            key: 'address',
-            render: text => <span>{text.slice(0, 10)}</span>,
+            dataIndex: 'event_date',
+            key: 'event_date',
+            width: 220,
+            render: (text, record) => text
+                ? <span>{text.slice(0, 10)}</span>
+                : <span style={{ opacity: 0.5 }}>Sin fecha (creado {record.created_at?.slice(0, 10)})</span>,
         },
-        {
-            title: 'Acciones',
-            dataIndex: '',
-            key: 'address',
-            render: (_, record) => (
-                <Dropdown
-                    arrow
-                    trigger={['click']}
-                    popupRender={() => (
-                        <div className='buttons_admin_cont'>
-                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.events/${record?.data?.generals?.event?.label}/${record?.data?.generals?.event?.name}`}>
-                                <Button icon={<Link2 size={14} />} className='primarybutton' style={{ width: '100%' }} >Ver invitación</Button>
-                            </Link>
-                            <Link style={{ width: '100%' }} target='_blank' to={`https://www.iattend.site/dashboard?id=${record?.invitation_id}`}>
-                                <Button icon={<ArrowUpRight size={14} />} className='primarybutton' style={{ width: '100%' }}  >Acceder evento</Button>
-                            </Link>
-                            <Button icon={<Copy size={14} />} className='primarybutton' style={{ width: '100%' }} onClick={() => copyToClipboard(record.invitation_id)} >Copiar ID</Button>
-                            <Button onClick={() => insertSideEvent(record?.invitation_id)} icon={<Plus size={14} />} className='primarybutton' style={{ width: '100%' }} >Side event</Button>
-                        </div>
-                    )}
-                >
-                    <Button icon={<ChevronDown size={14} />}>Opciones</Button>
-                </Dropdown>
-            )
-        },
+        
     ]), [ownerInputs, actualCredits]);
 
     const allUsersCols = [
@@ -336,20 +366,19 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
         },
     ];
 
-    const filteredTestEmails = ['albserrano8@gmail.com', 'pa.perez98@gmail.com', 'pau@iattend.mx']
-
     const items = [
         {
-            label: `Eventos activos (${nextEvents.length})`,
+            label: `Eventos activos (${activeInvitations.length})`,
             key: "esperando",
             children: (
                 <Table
+                    rowKey="id"
                     columns={nextEventsCols}
                     dataSource={
-                        nextEvents.filter(i => {
+                        activeInvitations.filter(i => {
                             if (filterName) {
                                 return (
-                                    i?.full_name?.toLowerCase().includes(filterName?.toLowerCase())
+                                    i?.name?.toLowerCase().includes(filterName?.toLowerCase())
                                 )
                             }
                             else return true
@@ -358,7 +387,7 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
             ),
         },
         {
-            label: `Todos (${newInvitations?.filter(i => !filteredTestEmails.includes(i.user_email))?.length})`,
+            label: `Todos (${newInvitations?.filter(i => !TEST_EMAILS.includes(i.user_email))?.length})`,
             key: "todos",
             children: (
                 <Table
@@ -374,7 +403,7 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
                                 }
                                 return true;
                             })
-                            ?.filter(i => !filteredTestEmails.includes(i.user_email))
+                            ?.filter(i => !TEST_EMAILS.includes(i.user_email))
                             ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                     }
                     pagination={false}
@@ -382,7 +411,7 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
             ),
         },
         {
-            label: `Pruebas (${newInvitations?.filter(i => filteredTestEmails.includes(i.user_email))?.length})`,
+            label: `Pruebas (${newInvitations?.filter(i => TEST_EMAILS.includes(i.user_email))?.length})`,
             key: "pruebas",
             children: (
                 <Table
@@ -398,7 +427,7 @@ export const EventosSection = ({ newInvitations, nextEvents, profiles, refreshEv
                                 }
                                 return true;
                             })
-                            ?.filter(i => filteredTestEmails.includes(i.user_email))
+                            ?.filter(i => TEST_EMAILS.includes(i.user_email))
                             ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                     }
                     pagination={false}

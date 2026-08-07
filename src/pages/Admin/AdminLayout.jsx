@@ -41,7 +41,6 @@ export const AdminLayout = () => {
 
     const [newInvitations, setNewInvitations] = useState(null)
     const [newProfiles, setNewProfiles] = useState(null)
-    const [nextEvents, setNextEvents] = useState([])
 
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
@@ -77,17 +76,8 @@ export const AdminLayout = () => {
         else setNewInvitations(data)
     };
 
-    const getInvitationsByDate = async () => {
-        const { data, error } = await supabase.rpc('get_upcoming_with_userv2');
-        if (error) console.error(error);
-        else {
-            setNextEvents(data.filter(i => i.user_email !== 'albserrano8@gmail.com' && i.user_email !== 'pa.perez98@gmail.com' && i.user_email !== 'pau@iattend.mx'))
-        }
-    }
-
     const refreshEventos = () => {
         getNewInvitations()
-        getInvitationsByDate()
     }
 
     const getChats = async () => {
@@ -143,7 +133,6 @@ export const AdminLayout = () => {
     }, []);
 
     useEffect(() => {
-        getInvitationsByDate()
         getNewInvitations()
         getNewUsers()
         getChats()
@@ -168,7 +157,6 @@ export const AdminLayout = () => {
                 return (
                     <EventosSection
                         newInvitations={newInvitations}
-                        nextEvents={nextEvents}
                         profiles={newProfiles}
                         refreshEventos={refreshEventos}
                         onOpenNewInvitation={onOpenNewInvitation}
