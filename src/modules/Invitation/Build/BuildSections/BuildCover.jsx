@@ -446,7 +446,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                                     <span className='gc-content-label'>{t('build_cover.label_opacity')}</span>
                                                     <Slider
                                                         style={{ width: '95%' }}
-                                                        min={0.1} max={1} step={0.01}
+                                                        min={0} max={1} step={0.01}
                                                         onChange={(e) => setInvitation(prevInvitation => ({
                                                             ...prevInvitation,
                                                             cover: {

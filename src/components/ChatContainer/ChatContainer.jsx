@@ -2,24 +2,44 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Lia from '../../pages/Lia/Lia'
 import { useLia } from '../../context/LiaContext'
-import { DotMatrix } from './DotMatrix'
+// import { DotMatrix } from './DotMatrix'
 import './ChatContainer.css'
 
-const CIRCLE = 84
+const CIRCLE = 50
 const PANEL_W = 380
 const PANEL_H = 560
 const PILL_W = 300
 const PILL_DURATION = 4000
 const MOBILE_BP = 480
+const POS_STORAGE_KEY = 'lia_chat_pos'
 
-function getPad() { return window.innerWidth <= MOBILE_BP ? 0.02 : 0.03 }
+function loadSavedPos() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(POS_STORAGE_KEY))
+        if (typeof saved?.x === 'number' && typeof saved?.y === 'number') return saved
+    } catch {
+        // localStorage no disponible o valor corrupto — se usa la posición por defecto
+    }
+    return null
+}
 
-function getCornerPos(corner, w, h) {
+// Cerrado: margen chico y fijo, pegado al borde. Abierto: margen anterior
+// (proporcional al viewport) para que el panel no se recorte.
+function getPadX(isOpen) {
+    if (isOpen) return window.innerWidth * (window.innerWidth <= MOBILE_BP ? 0.02 : 0.03)
+    return window.innerWidth <= MOBILE_BP ? 8 : 16
+}
+
+function getPadY(isOpen) {
+    if (isOpen) return window.innerHeight * (window.innerWidth <= MOBILE_BP ? 0.02 : 0.03)
+    return window.innerWidth <= MOBILE_BP ? 8 : 16
+}
+
+function getCornerPos(corner, w, h, isOpen = false) {
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const pad = getPad()
-    const px = vw * pad
-    const py = vh * pad
+    const px = getPadX(isOpen)
+    const py = getPadY(isOpen)
     switch (corner) {
         case 'tl': return { x: px, y: py }
         case 'tr': return { x: vw - w - px, y: py }
@@ -30,9 +50,9 @@ function getCornerPos(corner, w, h) {
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
 
-function clampToViewport(x, y, w, h) {
-    const px = window.innerWidth * getPad()
-    const py = window.innerHeight * getPad()
+function clampToViewport(x, y, w, h, isOpen = false) {
+    const px = getPadX(isOpen)
+    const py = getPadY(isOpen)
     return {
         x: clamp(x, px, window.innerWidth - w - px),
         y: clamp(y, py, window.innerHeight - h - py),
@@ -44,12 +64,15 @@ export const ChatContainer = () => {
     const [mounted, setMounted] = useState(false)
     const [snapping, setSnapping] = useState(false)
     const [notifVisible, setNotifVisible] = useState(false)
-    const [btnHovered, setBtnHovered] = useState(false)
+    // const [btnHovered, setBtnHovered] = useState(false)
     const [searchParams] = useSearchParams()
     const id = searchParams.get('id')
     const { notifications, dismissAll } = useLia()
 
-    const [pos, setPos] = useState(() => getCornerPos('br', CIRCLE, CIRCLE))
+    const [pos, setPos] = useState(() => {
+        const saved = loadSavedPos()
+        return saved ? clampToViewport(saved.x, saved.y, CIRCLE, CIRCLE, false) : getCornerPos('br', CIRCLE, CIRCLE)
+    })
     const posRef = useRef(pos)
     const openRef = useRef(open)
     const notifTimer = useRef(null)
@@ -59,6 +82,16 @@ export const ChatContainer = () => {
 
     useEffect(() => { posRef.current = pos }, [pos])
     useEffect(() => { openRef.current = open }, [open])
+
+    // Solo se recuerda la posición cerrada (con la que siempre arranca al refrescar)
+    useEffect(() => {
+        if (open) return
+        try {
+            localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(pos))
+        } catch {
+            // localStorage no disponible — no hay nada que persistir
+        }
+    }, [pos, open])
 
     // Expand to pill when a new notification arrives (only when chat is closed)
     useEffect(() => {
@@ -99,13 +132,12 @@ export const ChatContainer = () => {
         let tx = x
         let ty = y
         if (!nextOpen) {
-            // Al cerrar: colocar el círculo en la esquina inferior del panel (der o izq según posición)
+            // Al cerrar: conserva la posición en Y, pero en X va al borde más cercano (izq o der)
             const isRight = x + PANEL_W / 2 > window.innerWidth / 2
-            tx = isRight ? x + PANEL_W - CIRCLE : x
-            ty = y + PANEL_H - CIRCLE
+            tx = isRight ? window.innerWidth : 0
         }
 
-        const target = clampToViewport(tx, ty, nw, nh)
+        const target = clampToViewport(tx, ty, nw, nh, nextOpen)
         setSnapping(true)
         setPos(target)
         posRef.current = target
@@ -138,8 +170,8 @@ export const ChatContainer = () => {
             const w = openRef.current ? PANEL_W : CIRCLE
             const h = openRef.current ? PANEL_H : CIRCLE
             const newPos = {
-                x: clamp(drag.current.sx + dx, 0, window.innerWidth - w - window.innerWidth * getPad()),
-                y: clamp(drag.current.sy + dy, 0, window.innerHeight - h - window.innerHeight * getPad()),
+                x: clamp(drag.current.sx + dx, 0, window.innerWidth - w - getPadX(openRef.current)),
+                y: clamp(drag.current.sy + dy, 0, window.innerHeight - h - getPadY(openRef.current)),
             }
             setPos(newPos)
             posRef.current = newPos
@@ -152,8 +184,8 @@ export const ChatContainer = () => {
             const w = openRef.current ? PANEL_W : CIRCLE
             const h = openRef.current ? PANEL_H : CIRCLE
             const { x, y } = posRef.current
-            const px = window.innerWidth * getPad()
-            const py = window.innerHeight * getPad()
+            const px = getPadX(openRef.current)
+            const py = getPadY(openRef.current)
             const snapX = (x + w / 2) < window.innerWidth / 2
                 ? px
                 : window.innerWidth - w - px
@@ -167,7 +199,7 @@ export const ChatContainer = () => {
         const onResize = () => {
             const w = openRef.current ? PANEL_W : CIRCLE
             const h = openRef.current ? PANEL_H : CIRCLE
-            const target = clampToViewport(posRef.current.x, posRef.current.y, w, h)
+            const target = clampToViewport(posRef.current.x, posRef.current.y, w, h, openRef.current)
             setPos(target)
             posRef.current = target
         }
@@ -219,6 +251,10 @@ export const ChatContainer = () => {
     const isRight = pos.x > window.innerWidth / 2
     const pillShift = morphState === 'notif' && isRight ? -(PILL_W - CIRCLE) : 0
     const isMobileOpen = open && window.innerWidth <= MOBILE_BP
+    // El shell base tiene padding: 12px, pero el estado "closed" lo pisa a 0 —
+    // hay que restar el offset solo cuando ese padding realmente existe, si no
+    // el botón cerrado queda corrido hacia arriba/izquierda.
+    const shellPad = morphState === 'closed' ? 0 : 12
 
     return (
        <div
@@ -231,8 +267,8 @@ export const ChatContainer = () => {
                 borderRadius: 0,
                 transform: 'none',
             } : {
-                left: pos.x - 12,
-                top: pos.y - 12,
+                left: pos.x - shellPad,
+                top: pos.y - shellPad,
                 transform: pillShift ? `translateX(${pillShift}px)` : undefined,
             }}
             onPointerDown={onPointerDown}
@@ -243,10 +279,11 @@ export const ChatContainer = () => {
                 <div
                     className="chat-morph-btn"
                     onClick={handleToggle}
-                    onMouseEnter={() => setBtnHovered(true)}
-                    onMouseLeave={() => setBtnHovered(false)}
+                    // onMouseEnter={() => setBtnHovered(true)}
+                    // onMouseLeave={() => setBtnHovered(false)}
                 >
-                    <DotMatrix size={84} hovered={btnHovered && morphState === 'closed'} />
+                    {/* <DotMatrix size={84} hovered={btnHovered && morphState === 'closed'} /> */}
+                    <span style={{ fontSize: 22, color: '#fff', lineHeight: 1 }}>✦</span>
                 </div>
 
                 {/* Dynamic Island pill content — visible during notif state */}
@@ -259,7 +296,8 @@ export const ChatContainer = () => {
                         background: 'var(--mid-blue-500)', boxShadow: 'inset 0px 0px 6px rgba(0,0,0,0.3)',
                         display:'flex',alignItems:'center',justifyContent:'center'
                     }}>
-                        <DotMatrix size={84} mode='notification' />
+                        {/* <DotMatrix size={84} mode='notification' /> */}
+                        <span style={{ fontSize: 24, color: '#fff', lineHeight: 1 }}>✦</span>
                     </div>
                     <div className="chat-morph-pill-text">
                         {/* <strong className="chat-morph-pill-title">Alberto Serrano</strong> */}

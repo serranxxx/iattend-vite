@@ -1,4 +1,4 @@
-import { Badge, Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Table } from 'antd'
+import { Badge, Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Spin } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { Pie } from 'react-chartjs-2';
@@ -11,7 +11,7 @@ import { AiOutlineClockCircle, } from 'react-icons/ai';
 import { FiArrowUpRight, FiMinus } from 'react-icons/fi';
 import { NotificationCard } from '../../components/NotificationCard/NotificationCard'
 import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner';
-import { IoChevronDownSharp, IoTicket, } from 'react-icons/io5';
+import { IoTicket, } from 'react-icons/io5';
 import { RiArrowRightDoubleLine } from 'react-icons/ri';
 import axios from 'axios';
 import { TbLocationFilled } from 'react-icons/tb';
@@ -26,7 +26,7 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowRight, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
+import { AArrowUp, ArrowRight, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, List, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, Users, X } from 'lucide-react';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { GuestAddTiles } from './GuestAddTiles';
 import { useTranslation } from 'react-i18next';
@@ -74,7 +74,7 @@ export default function GuestsPage() {
     const [copyTickets, setCopyTickets] = useState(null)
     const [handleTables, sethandleTables] = useState(false)
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 750)
-    const [onGroupTable, setOnGroupTable] = useState(false)
+    const [confirmedView, setConfirmedView] = useState('group')
     const [rowData, setRowData] = useState([]);
     const [waitingData, setWaitingData] = useState([])
     const [confirmedData, setConfirmedData] = useState([])
@@ -83,8 +83,6 @@ export default function GuestsPage() {
     const [notifications, setNotifications] = useState([])
     const [tables, setTables] = useState([])
     const [isLoading, setIsLoading] = useState(false)
-    const [hierarchyData, setHierarchyData] = useState([])
-    const [expandedRowKeys, setExpandedRowKeys] = useState([]);
     const [credits, setCredits] = useState(0)
     const [activeKey, setActiveKey] = useState('confirmado');
     const [invitation, setInvitation] = useState(null)
@@ -93,6 +91,10 @@ export default function GuestsPage() {
     const [name, setName] = useState(null)
     const id = searchParams.get("id");
     const [messagesDispatch, setMessagesDispatch] = useState([])
+    // Guests recién enviados por WhatsApp API en esta sesión, mientras su dispatch
+    // real todavía no llega (fetch inmediato o realtime) — evita que se les
+    // muestre "envío manual" (el fallback de handleMessageStatus) por error.
+    const [pendingApiSends, setPendingApiSends] = useState(() => new Set())
     const [searchUser, setSearchUser] = useState(null)
     const [activeSearcher, setActiveSearcher] = useState(false)
     const [localTags, setLocalTags] = useState([])
@@ -130,7 +132,7 @@ export default function GuestsPage() {
                     g.phone_number === uiAction.value ||
                     g.name?.toLowerCase().includes((uiAction.value ?? '').toLowerCase())
                 )
-                if (guest) setDrawerState({ currentGuest: guest, onEditGuest: false, companions: guest.children ?? [], visible: true })
+                if (guest) setDrawerState({ currentGuest: guest, onEditGuest: false, companions: rowData.filter((row) => row.companion_id === guest.id), visible: true })
                 break
             }
             default:
@@ -147,37 +149,23 @@ export default function GuestsPage() {
             key: "name",
             fixed: "left",
             render: (value, record) => {
-                const isChild = record.companion_id !== null;
-                const hasChildren = record.children?.length > 0;
-                const isExpanded = expandedRowKeys.includes(record.id);
+                const isChild = record.__isGroupChild;
 
-                if (onGroupTable && isChild) {
+                if (isChild) {
                     // ✅ HIJO: sin botones + indent
                     return (
                         <div style={{ paddingLeft: 28, lineHeight: "30px" }}>
-                            <span>{value}</span>
+                            <span className="guest-name-text">{value}</span>
                         </div>
                     );
                 }
 
-                // ✅ PADRE: botones + expand custom
+                // ✅ PADRE: botón de abrir, en absolute dentro de la fila
                 return (
                     <div
                         className="tag-container"
-                        style={{ gap: 8, justifyContent: "flex-start", width: "100%" }}
+                        style={{ justifyContent: "flex-start", width: "100%", paddingLeft: 32 }}
                     >
-                        {hasChildren && (
-                            <Button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleExpand(record);
-                                }}
-                                className="primarybutton"
-                                style={{ maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
-                                icon={isExpanded ? "▾" : "▸"} // cambia por icono que quieras
-                            />
-                        )}
-
                         <Tooltip title={t('guests.tooltip_open')}>
                             <Button
                                 onClick={() =>
@@ -190,11 +178,11 @@ export default function GuestsPage() {
                                 }
                                 className="primarybutton"
                                 icon={<FiArrowUpRight size={14} style={{ marginTop: 2 }} />}
-                                style={{ maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
+                                style={{ position: 'absolute', top: 4, left: 0, maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
                             />
                         </Tooltip>
 
-                        <span style={{ textAlign: "left" }}>{value}</span>
+                        <span className="guest-name-text" style={{ textAlign: "left" }}>{value}</span>
                     </div>
                 );
             },
@@ -417,60 +405,28 @@ export default function GuestsPage() {
             dataIndex: "name",
             key: "name",
             fixed: "left",
-            width: screens.xs ? 170 : 200,
+            width: screens.xs ? 190 : 260,
             render: (value, record) => {
-                const isChild = record.companion_id !== null;
-                const hasChildren = record.children?.length > 0;
-                const isExpanded = expandedRowKeys.includes(record.id);
+                const isChild = record.__isGroupChild;
 
-                if (onGroupTable && isChild) {
+                if (isChild) {
                     // ✅ HIJO: sin botones + indent
                     return (
-                        <div style={{ paddingLeft: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px' }}>
-                            <BsArrowReturnRight /> <span>{value}</span>
+                        <div style={{ paddingLeft: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', minWidth: 0 }}>
+                            <BsArrowReturnRight style={{ flexShrink: 0 }} /> <span className="guest-name-text">{value}</span>
                         </div>
                     );
                 }
 
-                // ✅ PADRE: botones + expand custom
+                // ✅ PADRE: botón de abrir, en absolute dentro de la fila
                 return (
                     <div
                         className="tag-container"
-                        style={{ gap: 8, justifyContent: "flex-start", width: "100%" }}
+                        style={{ justifyContent: "flex-start", width: "100%", paddingLeft: 32 }}
                     >
 
-                        {
-                            onGroupTable &&
-                            <Button
-                                disabled={!hasChildren}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleExpand(record);
-                                }}
-                                type='text'
-                                style={{ opacity: hasChildren ? 1 : 0, maxWidth: '24px', maxHeight: '24px', borderRadius: '99px' }}
-                                icon={<IoChevronDownSharp style={{ transition: 'all 0.3s ease', color: '#6D3CFA', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />} // cambia por icono que quieras
-                            />
-                        }
 
-
-                        <Tooltip title={t('guests.tooltip_open')}>
-                            <Button
-                                onClick={() =>
-                                    setDrawerState({
-                                        currentGuest: record,
-                                        onEditGuest: true,
-                                        companions: handleCompanions(record.id),
-                                        visible: true,
-                                    })
-                                }
-                                className="primarybutton"
-                                icon={<FiArrowUpRight size={14} style={{ marginTop: 2 }} />}
-                                style={{ maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
-                            />
-                        </Tooltip>
-
-                        <span style={{ textAlign: "left" }}>{value}</span>
+                        <span className="guest-name-text" style={{ textAlign: "left" }}>{value}</span>
                     </div>
                 );
             },
@@ -489,7 +445,7 @@ export default function GuestsPage() {
             title: t('guests.col_state'),
             dataIndex: "state",
             key: "state",
-            width: 160,
+            width: 120,
             render: (value) => (
                 <div className="tag-container">
                     <span className={`new-table-tag state-${value}`}>
@@ -504,7 +460,7 @@ export default function GuestsPage() {
             title: t('guests.col_password'),
             dataIndex: "password",
             key: "password",
-            width: 140,
+            width: 120,
             render: (value, record) => (
                 <div
                     style={{
@@ -532,7 +488,7 @@ export default function GuestsPage() {
         {
             title: t('guests.col_magic_link'),
             key: "link",
-            width: 160,
+            width: 140,
             render: (_, record) => {
                 const url = `https://www.iattend.events/${invitation?.generals?.event?.label}/${name}?password=${record.password}`;
                 return (
@@ -545,7 +501,7 @@ export default function GuestsPage() {
                         }}
                     >
                         <span >
-                            www.iattend...
+                            www.iatt...
                         </span>
                         <Tooltip title={t('guests.tooltip_copy_magic_link')}>
                             <Button
@@ -566,7 +522,7 @@ export default function GuestsPage() {
             title: t('guests.col_tag'),
             dataIndex: "tag",
             key: "tag",
-            width: 160,
+            width: 140,
             render: (value) => (
                 <div className="tag-container">
                     <Tooltip title={isTagLong(value) ? renderTagFull(value) : ''}>
@@ -583,7 +539,7 @@ export default function GuestsPage() {
             title: t('guests.col_table'),
             dataIndex: "table",
             key: "table",
-            width: 180,
+            width: 140,
             render: (value) => (
                 <div className="tag-container">
                     <span className="new-table-tag">
@@ -611,7 +567,7 @@ export default function GuestsPage() {
             title: t('guests.col_priority'),
             dataIndex: "tier",
             key: "tier",
-            width: 140,
+            width: 100,
             // fixed: screens.xs ? undefined : "right",
             render: (value) => (
                 <div style={{
@@ -639,6 +595,23 @@ export default function GuestsPage() {
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
                 const { state, table, phone_number } = record;
+                const isChild = record.__isGroupChild;
+
+                if (isChild) {
+                    if (state === "esperando") {
+                        return (
+                            <div className="tag-container">
+                                <span className="new-table-tag companion-tag">
+                                    {t('guests.companion_tag')}
+                                </span>
+                            </div>
+                        );
+                    }
+                    if (!((state === "confirmado" || state === "asistente") && !table)) {
+                        return null;
+                    }
+                    // acompañante confirmado sin mesa: cae al bloque de abajo para poder asignarle mesa
+                }
 
                 if (state === "creado") {
                     return (
@@ -826,21 +799,14 @@ export default function GuestsPage() {
                 return null;
             },
         },
-    ]), [rowData, onGroupTable, expandedRowKeys, name, messagesDispatch]);
+    ]), [rowData, name, messagesDispatch]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
         columns: openCard ? openColumns : columns,
         pagination: false,
         scroll: { x: 1400 },
-        expandedRowKeys,
-        onExpand: (expanded, record) => handleExpand(record),
-        expandable: {
-            expandIconColumnIndex: -1, // oculta el chevron default
-            childrenColumnName: "children",
-            rowExpandable: (record) => record.children?.length > 0,
-        },
-    }), [columns, openColumns, openCard, expandedRowKeys]);
+    }), [columns, openColumns, openCard]);
 
     const filteredGuests = (data = []) => {
         return data.filter((guest) => {
@@ -881,71 +847,31 @@ export default function GuestsPage() {
         });
     };
 
-    const items = useMemo(() => ([
-        {
-            label: screens.xs ? <Clock size={14} /> : `${t('guests.tab_waiting')} (${filteredGuests(createdData).length})`,
-            key: "creado",
-            children: (
-                <Table
-                    className='table_container'
-                    size='small'
-                    {...tableProps}
-                    loading={isLoading}
-                    dataSource={filteredGuests(createdData)}
-                />
-            ),
-        },
-        {
-            label: screens.xs ? <Send size={14} /> : `${t('guests.tab_sent')} (${filteredGuests(waitingData).length})`,
-            key: "esperando",
-            children: (
-                <Table
-                    size='small'
-                    {...tableProps}
-                    loading={isLoading}
-                    dataSource={filteredGuests(waitingData)}
-                />
-            ),
-        },
-        {
-            label: screens.xs ? <CheckCheck size={14} /> : `${t('guests.tab_confirmed')} (${filteredGuests(confirmedData).length})`,
-            key: "confirmado",
-            children: (
-                <Table
-                    size='small'
-                    {...tableProps}
-                    loading={isLoading}
-                    dataSource={filteredGuests(confirmedData)}
-                />
-            ),
-        },
-        {
-            label: screens.xs ? <X size={14} /> : `${t('guests.tab_rejected')} (${filteredGuests(callededData).length})`,
-            key: "rechazado",
-            children: (
-                <Table
-                    size='small'
-                    {...tableProps}
-                    loading={isLoading}
-                    dataSource={filteredGuests(callededData)}
-                />
-            ),
-        },
-    ]), [
-        createdData,
-        waitingData,
-        confirmedData,
-        callededData,
-        tableProps,
-        isLoading,
-        screens,
-        searchUser,
-        filterTag,
-        filterTable,
-        filterTier,
-        filterType,
-        filterSide
-    ]);
+    // Deshace el agrupamiento por familia (líder + children) en una lista plana
+    // de filas individuales — para contar/filtrar/mostrar por fila, no por grupo.
+    const flattenGroups = (groupedData = []) =>
+        groupedData.flatMap((g) => [g, ...(g.children || [])]);
+
+    // Cuenta filas individuales (líder + acompañantes), no grupos familiares —
+    // para los chips de los tabs, que agrupan con groupByFamilyForStates.
+    const countGuestRows = (groupedData = []) =>
+        filteredGuests(flattenGroups(groupedData)).length;
+
+    // Vista individual (sin agrupar por familia): se usa cuando hay una
+    // búsqueda/filtro activo, para que coincidencias en acompañantes también
+    // aparezcan como su propia fila en vez de quedar ocultas dentro de un grupo.
+    const flatFilteredGuests = (groupedData = []) =>
+        filteredGuests(flattenGroups(groupedData));
+
+    // activeSearcher también queda en true cuando el panel de filtros está
+    // simplemente abierto sin ningún valor elegido — para decidir si se
+    // muestran las tarjetas agrupadas o las filas individuales necesitamos
+    // saber si hay un filtro/búsqueda realmente aplicado, no solo el panel abierto.
+    const hasActiveFilters = Boolean(searchUser || filterTag || filterTable || filterTier || filterType || filterSide);
+
+    // (renderGuestCardRow, renderGroupedCards, confirmedFlatData, renderConfirmedByTable
+    // e items viven más abajo, después de todos los helpers que sus columnas invocan —
+    // ver comentario junto al return())
 
     const handleTypes = (type) => {
         switch (type) {
@@ -959,7 +885,11 @@ export default function GuestsPage() {
 
 
     const handleMessageStatus = (record, status) => {
-        switch (status) {
+        // Sin dispatch todavía pero enviado por WhatsApp API en esta sesión:
+        // se ve como "procesando", nunca como "envío manual".
+        const effectiveStatus = status === 'undefined' && pendingApiSends.has(record.id) ? 'processing' : status;
+
+        switch (effectiveStatus) {
             case 'processing':
 
                 return (
@@ -1045,20 +975,13 @@ export default function GuestsPage() {
 
             default:
                 return (
-                    <div className={`new-table-tag state-rechazado dispatch_message_tag`}>
-                        {t('guests.msg_waiting')}
+                    <div className={`new-table-tag manual-sent-tag dispatch_message_tag`}>
+                        {t('guests.msg_manual')}
                     </div>
                 )
         }
     }
 
-    const handleExpand = (record) => {
-        setExpandedRowKeys(prev => {
-            const isExpanded = prev.includes(record.id);
-            if (isExpanded) return prev.filter(k => k !== record.id);
-            return [...prev, record.id];
-        });
-    }
 
     const linkColor = (state) => {
         switch (state) {
@@ -1222,16 +1145,31 @@ export default function GuestsPage() {
         }
     }
 
-    const buildHierarchy = (data) => {
-        return data
-            .filter(d => d.companion_id === null)
-            .map(principal => ({
-                ...principal,
-                children: data.filter(child =>
-                    child.companion_id !== null &&
-                    Number(child.companion_id) === principal.id
-                )
-            }));
+    // Agrupa por familia (companion_id) solo entre quienes comparten alguno de
+    // los `states` pedidos — así, si un acompañante avanza de estado distinto
+    // al resto de su familia (ej. declinó mientras los demás confirmaron), se
+    // separa del grupo original y se re-agrupa con quien sí comparta su nuevo
+    // estado, en vez de quedar atrapado dentro del grupo de otra pestaña.
+    const groupByFamilyForStates = (data, states) => {
+        const relevant = data.filter((g) => states.includes(g.state));
+        const clusters = new Map();
+
+        relevant.forEach((g) => {
+            const familyKey = g.companion_id === null ? g.id : Number(g.companion_id);
+            if (!clusters.has(familyKey)) clusters.set(familyKey, []);
+            clusters.get(familyKey).push(g);
+        });
+
+        return Array.from(clusters.values()).map((members) => {
+            const principal = members.find((m) => m.companion_id === null);
+            const leader = principal ?? members[0];
+            const children = members.filter((m) => m.id !== leader.id);
+            return {
+                ...leader,
+                __isGroupChild: false,
+                children: children.map((c) => ({ ...c, __isGroupChild: true })),
+            };
+        });
     };
 
     const getGuests = async () => {
@@ -1248,7 +1186,6 @@ export default function GuestsPage() {
             setRowData(data)
             setWaiting(data.filter((d) => d.state === 'esperando').length)
             setConfirmed(data.filter((d) => d.state === 'confirmado').length)
-            setHierarchyData(buildHierarchy(data))
         }
     }
 
@@ -1270,22 +1207,6 @@ export default function GuestsPage() {
         }
     }
 
-    const handleGroupTables = () => {
-        setWaitingData(hierarchyData?.filter((row) => row.state === 'esperando'))
-        setConfirmedData(hierarchyData?.filter((row) => row.state === 'confirmado' || row.state === 'asistente'))
-        setCallededData(hierarchyData?.filter((row) => row.state === 'rechazado'))
-        setCreatedData(hierarchyData.filter((c) => c.state === 'creado'))
-    }
-
-    const handleFullTable = () => {
-
-        setWaitingData(rowData?.filter((row) => row.state === 'esperando'))
-        setConfirmedData(rowData?.filter((row) => row.state === 'confirmado' || row.state === 'asistente'))
-        setCallededData(rowData?.filter((row) => row.state === 'rechazado'))
-        setCreatedData(rowData.filter((c) => c.state === 'creado'))
-        setIsLoading(false)
-
-    }
     const getNotifications = async () => {
         const { data, error } = await supabase
             .from('guests')
@@ -1427,12 +1348,13 @@ export default function GuestsPage() {
     };
 
     const onSendInvitation = async (guest) => {
+        const nowIso = new Date().toISOString();
         const guestPatch = {
             state: 'esperando',
             last_action: guest.state,
             last_action_by: 'admin',
-            last_update_date: new Date().toISOString(),
-            invitation_sent_at: new Date().toISOString(),
+            last_update_date: nowIso,
+            invitation_sent_at: nowIso,
         };
 
         const { error: guestError } = await supabase
@@ -1443,8 +1365,22 @@ export default function GuestsPage() {
             .maybeSingle();
 
         if (guestError) throw guestError;
-        // console.log('Guest actualizado:', guestRow);
-        // setOnBubble(true)
+
+        // Al invitar al líder del grupo, sus acompañantes se mueven junto con él
+        // en vez de quedarse colgados en Lista de espera hasta moverlos a mano.
+        const companionIds = rowData
+            .filter((g) => g.companion_id === guest.id)
+            .map((g) => g.id);
+
+        if (companionIds.length > 0) {
+            const { error: companionsError } = await supabase
+                .from('guests')
+                .update(guestPatch)
+                .in('id', companionIds);
+
+            if (companionsError) throw companionsError;
+        }
+
         refreshPage()
 
     }
@@ -1494,6 +1430,12 @@ export default function GuestsPage() {
             message.warning('Completa la información pendiente de tu invitación antes de enviar.')
             return
         }
+
+        if (!invitation?.cover?.title?.text?.value?.trim()) {
+            message.warning(t('guests.warning_no_title'))
+            return
+        }
+
         setCreditSending()
         try {
             const payload = {
@@ -1560,7 +1502,11 @@ export default function GuestsPage() {
                     onUpdateCredits()
                 }
                 setCreditSuccess()
+                // El backend ya insertó el dispatch (status: 'processing') antes de
+                // responder — no hay que esperar al realtime para verlo reflejado.
+                setPendingApiSends((prev) => new Set(prev).add(guest.id))
                 onSendInvitation(guest)
+                getMessagesUpdates()
 
             }
 
@@ -1659,9 +1605,11 @@ export default function GuestsPage() {
                     p_invitation_id: id
                 });
 
-            if (error) return
+            if (error) {
+                console.error('Error al obtener dispatches de mensajes:', error)
+                return
+            }
 
-            // console.log('messages updates: ', data)
             setMessagesDispatch(data)
         } catch (error) {
             console.log(error)
@@ -1678,6 +1626,17 @@ export default function GuestsPage() {
         return map;
     }, [messagesDispatch]);
 
+    // Ya llegó el dispatch real (fetch inmediato, realtime o refresh de página) —
+    // se puede sacar de "pendiente", su status real toma el control desde dispatchMap.
+    useEffect(() => {
+        setPendingApiSends((prev) => {
+            if (prev.size === 0) return prev;
+            const next = new Set(prev);
+            messagesDispatch.forEach((m) => next.delete(m.guest_id));
+            return next.size === prev.size ? prev : next;
+        });
+    }, [messagesDispatch]);
+
 
     useEffect(() => {
         if (!id) return;
@@ -1690,6 +1649,7 @@ export default function GuestsPage() {
 
         const u2 = subscribe('invitation_message_dispatches', (payload) => {
             const row = payload.new || payload.old;
+            console.log('[GuestsPage] dispatch event received:', row, '| matches this invitation:', row && String(row.invitation_id) === String(id));
             if (!row || String(row.invitation_id) !== String(id)) return;
             getMessagesUpdates();
             refreshPage();
@@ -1700,12 +1660,12 @@ export default function GuestsPage() {
 
 
     useEffect(() => {
-        if (onGroupTable) {
-            handleGroupTables()
-        } else {
-            handleFullTable()
-        }
-    }, [onGroupTable])
+        setCreatedData(groupByFamilyForStates(rowData, ['creado']))
+        setWaitingData(groupByFamilyForStates(rowData, ['esperando']))
+        setConfirmedData(groupByFamilyForStates(rowData, ['confirmado', 'asistente']))
+        setCallededData(groupByFamilyForStates(rowData, ['rechazado']))
+        setIsLoading(false)
+    }, [rowData])
 
     useEffect(() => {
         getNotifications()
@@ -1727,16 +1687,6 @@ export default function GuestsPage() {
             getMessagesUpdates()
         }
     }, [id])
-
-    useEffect(() => {
-        if (rowData.length > 0) {
-            if (onGroupTable) {
-                handleGroupTables()
-            } else {
-                handleFullTable()
-            }
-        }
-    }, [rowData])
 
     useEffect(() => {
         setCopyTickets(tickets)
@@ -1763,6 +1713,265 @@ export default function GuestsPage() {
         }
     }, [filterTable, filterTag, filterTier, searchUser, filterType, filterSide])
 
+    // A partir de aquí: helpers que invocan columns/openColumns.render(...) de forma
+    // síncrona (no vía <Table>, que difiere su propio render a después de que este
+    // componente termine de ejecutarse). Por eso deben declararse después de TODOS
+    // los helpers que esas columnas puedan llamar (phoneFormatter, handleMessageStatus,
+    // onSendInvitation, etc.) — si no, revientan con "Cannot access ... before initialization".
+
+    // "name" queda fijo a la izquierda y "send" (Acciones) fijo a la derecha,
+    // igual que el fixed:"left"/"right" que tenían las columnas en el <Table>.
+    const stickyClassFor = (colKey) => {
+        if (colKey === 'name') return 'guests-card-cell--sticky-left';
+        // En mobile no hay espacio para 2 columnas sticky — solo "name" se queda fija.
+        if (colKey === 'send' && !screens.xs) return 'guests-card-cell--sticky-right';
+        return '';
+    };
+
+    // Renderiza una fila de invitado reutilizando exactamente las mismas
+    // columnas/render de la tabla (misma información), fuera de un <table>
+    // para poder envolver cada grupo en su propia tarjeta con bordes.
+    const renderGuestCardRow = (record, cols, extraClassName = '') => {
+        const isChildRow = extraClassName === 'guests-card-row--child';
+
+        return (
+            <div key={record.id} className={`guests-card-row ${extraClassName}`}>
+                {cols.map((col) => (
+                    <div
+                        key={col.key}
+                        className={`guests-card-cell ${stickyClassFor(col.key)}`}
+                        style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
+                    >
+                        {col.render ? col.render(record[col.dataIndex], record) : record[col.dataIndex]}
+
+                        {!isChildRow && stickyClassFor(col.key) === 'guests-card-cell--sticky-left' && (
+                            <Tooltip title={t('guests.tooltip_open')}>
+                                <Button
+                                    onClick={() =>
+                                        setDrawerState({
+                                            currentGuest: record,
+                                            onEditGuest: true,
+                                            companions: handleCompanions(record.id),
+                                            visible: true,
+                                        })
+                                    }
+                                    className="primarybutton"
+                                    icon={<FiArrowUpRight size={12} style={{ marginTop: 2 }} />}
+                                    style={{ position: 'absolute', top: 16, left: 12, maxWidth: 20, maxHeight: 20, borderRadius: 99, zIndex:99 }}
+                                />
+                            </Tooltip>
+                        )}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    // Reemplaza el antiguo expand/collapse por chevron: cada grupo (líder +
+    // acompañantes) se ve siempre desplegado, envuelto en su propia tarjeta
+    // con borde redondeado, para que sea claro dónde empieza y termina.
+    const renderGroupedCards = (data, cols) => {
+        if (!data || data.length === 0) {
+            return <div className="table-group-empty">{t('guests.no_guests')}</div>;
+        }
+
+        return (
+            <div className="guests-card-list" >
+                <div className="guests-card-list-header">
+                    {cols.map((col) => (
+                        <div
+                            key={col.key}
+                            className={`guests-card-header-cell ${stickyClassFor(col.key)}`}
+                            style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
+                        >
+                            {col.title}
+                        </div>
+                    ))}
+                </div>
+                {data.map((group) => (
+                    <div key={group.id} className="guests-group-card">
+                        {renderGuestCardRow(group, cols)}
+                        {group.children?.map((child) => renderGuestCardRow(child, cols, 'guests-card-row--child'))}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    // Vista sin agrupar: cada invitado (líder o acompañante) en su propia
+    // fila/tarjeta, sin jerarquía de familia — se usa mientras hay una
+    // búsqueda/filtro activo, para que cualquier coincidencia sea visible.
+    const renderFlatRows = (data, cols) => {
+        if (!data || data.length === 0) {
+            return <div className="table-group-empty">{t('guests.no_guests')}</div>;
+        }
+
+        return (
+            <div className="guests-card-list guests-card-list--flat">
+                <div className="guests-card-list-header">
+                    {cols.map((col) => (
+                        <div
+                            key={col.key}
+                            className={`guests-card-header-cell ${stickyClassFor(col.key)}`}
+                            style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
+                        >
+                            {col.title}
+                        </div>
+                    ))}
+                </div>
+                {data.map((guest) =>
+                    // __isGroupChild se apaga para que la columna "name" no dibuje
+                    // el indent/ícono de acompañante — en lista plana todos son iguales.
+                    renderGuestCardRow({ ...guest, __isGroupChild: false }, cols, 'guests-card-row--flat')
+                )}
+            </div>
+        );
+    };
+
+    // Vista "individual" de Asistencia confirmada: un renglón plano por persona,
+    // sin agrupar por familia (líder y acompañantes por igual).
+    const confirmedFlatData = useMemo(
+        () => rowData.filter((g) => g.state === 'confirmado' || g.state === 'asistente'),
+        [rowData]
+    );
+
+    // Vista "por mesa" de Asistencia confirmada: solo lectura, agrupada por
+    // número de mesa. La asignación/reasignación real sigue viviendo en el
+    // mapa de mesas (Drawer de TablesPage).
+    const renderConfirmedByTable = () => {
+        const guests = filteredGuests(confirmedFlatData);
+        const grouped = tables
+            .map((tb) => ({
+                table: tb,
+                guests: guests.filter((g) => g.table === tb.id),
+            }))
+            .filter((group) => group.guests.length > 0);
+        const unassigned = guests.filter((g) => !g.table);
+
+        if (grouped.length === 0 && unassigned.length === 0) {
+            return <div className="table-group-empty">{t('guests.no_confirmed_guests')}</div>;
+        }
+
+        return (
+            <div className="confirmed-by-table-container">
+                {grouped.map(({ table, guests: tableGuests }) => (
+                    <div key={table.id} className="table-group-card">
+                        <div className="table-group-header">
+                            <span>
+                                {table.name ? `#${table.number} - ${table.name}` : `${t('guests.table_prefix')} #${table.number}`}
+                            </span>
+                            <span className="table-group-count">{tableGuests.length} / {table.size}</span>
+                        </div>
+                        {tableGuests.map((g) => (
+                            <div key={g.id} className={`table-group-row ${g.companion_id !== null ? 'table-group-row--child' : ''}`}>
+                                {g.companion_id !== null && <BsArrowReturnRight />}
+                                <span>{g.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+
+                {unassigned.length > 0 && (
+                    <div className="table-group-card">
+                        <div
+                            className="table-group-header"
+                        >
+                            <span>{t('guests.no_table_assigned')}</span>
+                            <Button
+                                onClick={() => sethandleTables(true)}
+                                style={{ borderRadius: 99 }}
+                                icon={<TbLocationFilled />}
+                            >
+                                {t('guests.view_map')}
+                            </Button>
+                        </div>
+                        {unassigned.map((g) => (
+                            <div key={g.id} className={`table-group-row ${g.companion_id !== null ? 'table-group-row--child' : ''}`}>
+                                {g.companion_id !== null && <BsArrowReturnRight />}
+                                <span>{g.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const items = useMemo(() => ([
+        {
+            label: screens.xs ? <Clock size={14} /> : `${t('guests.tab_waiting')} (${countGuestRows(createdData)})`,
+            key: "creado",
+            children: (
+                <Spin spinning={isLoading}>
+                    <div className="guests-card-list-scroll">
+                        {hasActiveFilters
+                            ? renderFlatRows(flatFilteredGuests(createdData), tableProps.columns)
+                            : renderGroupedCards(filteredGuests(createdData), tableProps.columns)}
+                    </div>
+                </Spin>
+            ),
+        },
+        {
+            label: screens.xs ? <Send size={14} /> : `${t('guests.tab_sent')} (${countGuestRows(waitingData)})`,
+            key: "esperando",
+            children: (
+                <Spin spinning={isLoading}>
+                    <div className="guests-card-list-scroll guests-card-list-scroll--sent">
+                        {hasActiveFilters
+                            ? renderFlatRows(flatFilteredGuests(waitingData), tableProps.columns)
+                            : renderGroupedCards(filteredGuests(waitingData), tableProps.columns)}
+                    </div>
+                </Spin>
+            ),
+        },
+        {
+            label: screens.xs ? <CheckCheck size={14} /> : `${t('guests.tab_confirmed')} (${filteredGuests(confirmedFlatData).length})`,
+            key: "confirmado",
+            children:
+                confirmedView === 'table' ? (
+                    renderConfirmedByTable()
+                ) : (
+                    <Spin spinning={isLoading}>
+                        <div className="guests-card-list-scroll">
+                            {confirmedView === 'individual' || hasActiveFilters
+                                ? renderFlatRows(flatFilteredGuests(confirmedData), tableProps.columns)
+                                : renderGroupedCards(filteredGuests(confirmedData), tableProps.columns)}
+                        </div>
+                    </Spin>
+                ),
+        },
+        {
+            label: screens.xs ? <X size={14} /> : `${t('guests.tab_rejected')} (${countGuestRows(callededData)})`,
+            key: "rechazado",
+            children: (
+                <Spin spinning={isLoading}>
+                    <div className="guests-card-list-scroll">
+                        {hasActiveFilters
+                            ? renderFlatRows(flatFilteredGuests(callededData), tableProps.columns)
+                            : renderGroupedCards(filteredGuests(callededData), tableProps.columns)}
+                    </div>
+                </Spin>
+            ),
+        },
+    ]), [
+        createdData,
+        waitingData,
+        confirmedData,
+        confirmedFlatData,
+        confirmedView,
+        tables,
+        callededData,
+        tableProps,
+        isLoading,
+        screens,
+        searchUser,
+        filterTag,
+        filterTable,
+        filterTier,
+        filterType,
+        filterSide,
+        hasActiveFilters
+    ]);
 
 
 
@@ -1969,6 +2178,33 @@ export default function GuestsPage() {
                             <div className='gst-buttons-container' >
 
 
+
+                                {
+                                    !screens.xs &&
+                                    // <Tooltip title={t('guests.send_issues_btn')}>
+                                        <Dropdown
+                                            trigger={['click']}
+                                            placement="bottomRight"
+                                            popupRender={() => (
+                                                <div className="send-issues-popover">
+                                                    <strong className="send-issues-popover-title">{t('guests.send_issues_title')}</strong>
+                                                    <p className="send-issues-popover-text">{t('guests.send_issues_intro')}</p>
+                                                    <ul className="send-issues-popover-list">
+                                                        <li>{t('guests.send_issues_reason_1')}</li>
+                                                        <li>{t('guests.send_issues_reason_2')}</li>
+                                                        <li>{t('guests.send_issues_reason_3')}</li>
+                                                        <li>{t('guests.send_issues_reason_4')}</li>
+                                                    </ul>
+                                                    <p className="send-issues-popover-text">{t('guests.send_issues_footer')}</p>
+                                                </div>
+                                            )}
+                                        >
+                                            <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}>
+                                                {t('guests.send_issues_btn')}
+                                            </Button>
+                                        </Dropdown>
+                                    // </Tooltip>
+                                }
 
                                 {
                                     !screens.xs &&
@@ -2244,7 +2480,7 @@ export default function GuestsPage() {
                                         </div>
                                     )}
                                 >
-                                    <Button className='primarybutton' icon={<Tickets size={14} />}>
+                                    <Button style={{display:'none'}} className='primarybutton' icon={<Tickets size={14} />}>
 
                                     </Button>
                                 </Dropdown>}
@@ -2296,8 +2532,31 @@ export default function GuestsPage() {
                                     <span style={{ fontFamily: 'Poppins', fontSize: '20px', fontWeight: 600 }}>{t('guests.my_guests')}</span>
 
                                     <div style={{
-                                        display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                                     }}>
+                                        <Tooltip title={t('guests.send_issues_btn')}>
+                                            <Dropdown
+                                                trigger={['click']}
+                                                placement="bottomRight"
+                                                popupRender={() => (
+                                                    <div className="send-issues-popover">
+                                                        <strong className="send-issues-popover-title">{t('guests.send_issues_title')}</strong>
+                                                        <p className="send-issues-popover-text">{t('guests.send_issues_intro')}</p>
+                                                        <ul className="send-issues-popover-list">
+                                                            <li>{t('guests.send_issues_reason_1')}</li>
+                                                            <li>{t('guests.send_issues_reason_2')}</li>
+                                                            <li>{t('guests.send_issues_reason_3')}</li>
+                                                            <li>{t('guests.send_issues_reason_4')}</li>
+                                                        </ul>
+                                                        <p className="send-issues-popover-text">{t('guests.send_issues_footer')}</p>
+                                                    </div>
+                                                )}
+                                            >
+                                                <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', transition: 'all 0.55s ease',}}>
+                                                    
+                                                </Button>
+                                            </Dropdown>
+                                        </Tooltip>
                                         <Dropdown
                                             popupRender={() => (
                                                 <div className="items_list_guests">
@@ -2508,6 +2767,18 @@ export default function GuestsPage() {
                                     placeholder={t('guests.search_placeholder')}
                                     style={{ width: '100%', borderRadius: '99px', height: '40px' }}
                                 />
+
+                                {activeKey === 'confirmado' && (
+                                    <Segmented
+                                        block
+                                        value={confirmedView}
+                                        onChange={setConfirmedView}
+                                        options={[
+                                            { label: t('guests.view_group'), value: 'group', icon: <Users size={14} /> },
+                                            { label: t('guests.view_individual'), value: 'individual', icon: <List size={14} /> },
+                                        ]}
+                                    />
+                                )}
                             </div>
                         )}
 
@@ -2524,13 +2795,17 @@ export default function GuestsPage() {
                                     style={{ borderRadius: '12px', marginBottom: '12px', height: '40px' }}
                                     onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                                 >{t('guests.btn_new')}</Button> :
-                                    <Segmented
-                                        options={[
-                                            { label: t('guests.seg_individual'), value: 'individual' },
-                                            { label: t('guests.seg_group'), value: 'group' },
-                                        ]}
-                                        onChange={(e) => setOnGroupTable(e === 'group')}
-                                    />
+                                    activeKey === 'confirmado' ? (
+                                        <Segmented
+                                            value={confirmedView}
+                                            onChange={setConfirmedView}
+                                            style={{marginBottom:'8px'}}
+                                            options={[
+                                                { label: t('guests.view_group'), value: 'group' },
+                                                { label: t('guests.view_individual'), value: 'individual' },
+                                            ]}
+                                        />
+                                    ) : null
                             }
                         />
 

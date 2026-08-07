@@ -85,6 +85,7 @@ export const DashboardRealtimeProvider = ({ children }) => {
         const channel = WATCHED_TABLES.reduce(
             (ch, table) =>
                 ch.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+                    console.log(`[DashboardRealtime] event on ${table}:`, payload.eventType, payload.new || payload.old)
                     listenersRef.current[table]?.forEach(cb => {
                         try { cb(payload) } catch (e) {
                             console.error(`[DashboardRealtime] callback error on ${table}:`, e)

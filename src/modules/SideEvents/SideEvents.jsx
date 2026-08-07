@@ -468,6 +468,16 @@ export const SideEvents = () => {
             return
         }
 
+        if (!guest?.name?.trim()) {
+            message.warning(t('side_events.warning_guest_no_name'))
+            return
+        }
+
+        if (!data?.name?.trim()) {
+            message.warning(t('side_events.warning_event_no_name'))
+            return
+        }
+
         if (data) {
             setCreditSending()
             try {
@@ -1302,7 +1312,7 @@ export const SideEvents = () => {
                                                                         <Row style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row' }}>
                                                                             <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
                                                                                 <span style={{ color: '#FFF' }} className='gc-content-label'>{t('side_events.font_opacity')}</span>
-                                                                                <Slider style={{ width: '95%' }} min={0.1} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current.body.title?.opacity ?? 1} />
+                                                                                <Slider style={{ width: '95%' }} min={0} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current.body.title?.opacity ?? 1} />
                                                                             </Col>
                                                                             <Col style={{ width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column' }}>
                                                                                 <span style={{ color: '#FFF' }} className='gc-content-label'>{t('side_events.font_weight')}</span>
@@ -1519,7 +1529,7 @@ export const SideEvents = () => {
                         <Row style={{ width: '100%', gap: '16px' }}>
                             <Col flex={1}>
                                 <span style={{color:'#FFF'}}  className='gc-content-label'>{t('side_events.font_opacity')}</span>
-                                <Slider min={0.1} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current?.body?.title?.opacity ?? 1} />
+                                <Slider min={0} max={1} step={0.01} onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, title: { ...prev.body.title, opacity: e } } }))} value={current?.body?.title?.opacity ?? 1} />
                             </Col>
                             <Col flex={1}>
                                 <span style={{color:'#FFF'}}  className='gc-content-label'>{t('side_events.font_weight')}</span>
