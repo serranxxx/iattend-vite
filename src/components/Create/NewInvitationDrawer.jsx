@@ -1,10 +1,11 @@
-import { Button, Drawer, Grid, message, Steps } from 'antd'
+import { Button, Drawer, Grid, message, Select, Steps } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { invitationsTypes } from '../../helpers/invitation/invitation-types'
 import { supabase } from '../../lib/supabase'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { FaPlus } from 'react-icons/fa6'
 import { fetchPrices, handleCheckoutInvitation, handleCreateFree, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
+import { PHONE_CODE_OPTIONS } from '../../helpers/assets/phoneCodes'
 import { ChevronsLeft, ChevronsRight, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -316,11 +317,13 @@ const Dominio = ({ load, dominios, setAvailableNext, dominio, setDominio, setCur
 
                     <div className='dominio-form-row'>
                         <div className='dominio-flag-prefix'>
-                            <span className='dominio-flag'>🇲🇽</span>
-                            <input
-                                className='dominio-code-input'
+                            <Select
                                 value={code}
-                                onChange={(e) => setCode(e.target.value)}
+                                onChange={setCode}
+                                options={PHONE_CODE_OPTIONS}
+                                variant='borderless'
+                                popupMatchSelectWidth={false}
+                                style={{ width: 88 }}
                             />
                         </div>
                         <input

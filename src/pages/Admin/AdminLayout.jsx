@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Badge, Dropdown, Layout, Menu, message } from 'antd'
 import { useSearchParams } from 'react-router-dom'
-import { Calendar, FlaskConical, Landmark, MessageCircle, Sparkles, Users, Wrench } from 'lucide-react'
+import { Calendar, FlaskConical, Landmark, MessageCircle, Sparkles, Star, Users, Wrench } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { HeaderBuild } from '../../modules/Header/Header'
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer'
@@ -10,16 +10,18 @@ import { EventosSection } from './sections/EventosSection'
 import { UsuariosSection } from './sections/UsuariosSection'
 import { VentasSection } from './sections/VentasSection'
 import { HerramientasSection } from './sections/HerramientasSection'
+import { FeedbackAdminPage } from './FeedbackAdminPage'
 
 const { Sider, Content } = Layout
 
-const SECTION_KEYS = ['eventos', 'usuarios', 'ventas', 'herramientas']
+const SECTION_KEYS = ['eventos', 'usuarios', 'ventas', 'feedback', 'herramientas']
 const VENTAS_ALLOWED_EMAIL = 'albserrano8@gmail.com'
 
 const MENU_ITEMS = [
     { key: 'eventos', icon: <Calendar size={16} />, label: 'Eventos' },
     { key: 'usuarios', icon: <Users size={16} />, label: 'Usuarios' },
     { key: 'ventas', icon: <Landmark size={16} />, label: 'Ventas' },
+    { key: 'feedback', icon: <Star size={16} />, label: 'Feedback' },
     { key: 'herramientas', icon: <FlaskConical size={16} />, label: 'Laboratorio' },
 ]
 
@@ -150,6 +152,8 @@ export const AdminLayout = () => {
                 )
             case 'ventas':
                 return canSeeVentas ? <VentasSection /> : null
+            case 'feedback':
+                return <FeedbackAdminPage />
             case 'herramientas':
                 return <HerramientasSection />
             case 'eventos':

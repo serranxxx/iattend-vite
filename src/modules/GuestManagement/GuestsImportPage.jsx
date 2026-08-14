@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
-import { PHONE_CODES, buildPhoneNumberSafe } from '../../helpers/assets/functions'
+import { PHONE_CODE_OPTIONS, buildPhoneNumberSafe, findPhoneCodeByDigits } from '../../helpers/assets/phoneCodes'
 import './guests-import.css'
 
 // A diferencia de splitPhoneNumber (usada por GuestsCRUD sobre datos ya
@@ -19,8 +19,8 @@ function splitPhoneForImport(raw) {
 
     const number = digits.slice(-10)
     const ladaDigits = digits.slice(0, -10)
-    const match = PHONE_CODES.find((pc) => pc.value.replace('+', '') === ladaDigits)
-    return { code: match ? match.value : null, number }
+    const match = findPhoneCodeByDigits(ladaDigits)
+    return { code: match ? match.code : null, number }
 }
 
 const API = import.meta.env.VITE_API_URL
@@ -203,7 +203,7 @@ const GuestsImportPage = () => {
                                 status={codeHasError ? 'warning' : undefined}
                                 placeholder="Lada"
                                 style={{ width: 90 }}
-                                options={PHONE_CODES}
+                                options={PHONE_CODE_OPTIONS}
                                 onChange={(v) => updateRow(index, 'phone_code', v)}
                             />
                         </Tooltip>

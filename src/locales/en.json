@@ -624,6 +624,8 @@
     "col_access": "Access",
     "col_tag": "Tag",
     "col_actions": "Actions",
+    "col_priority": "Priority",
+    "companion_tag": "Companion",
     "tooltip_open": "Open",
     "magic_link": "Magic link",
     "msg_processing": "Processing",
@@ -683,7 +685,8 @@
     "btn_back": "Go back",
     "tooltip_preview": "Preview",
     "tooltip_hide_weather": "Hide weather",
-    "tooltip_show_weather": "Show weather"
+    "tooltip_show_weather": "Show weather",
+    "no_guests": "No guests in this list"
   },
   "tables": {
     "title": "Table Organization",
@@ -976,7 +979,7 @@
     "dropdown_title": "Image storage"
   },
   "dashboard_header": {
-    "help": "Need help?",
+    "help": "Help",
     "publish": "Publish",
     "publish_tooltip": "Publish changes",
     "write": "Write",
@@ -994,6 +997,14 @@
     "label_texture": "Texture",
     "btn_photo": "Photo",
     "btn_song": "Song"
+  },
+  "feedback_prompt": {
+    "button_cta": "Help us improve",
+    "modal_title": "Help us improve",
+    "modal_subtitle": "You've been using I attend for a while — tell us how your experience has been so far.",
+    "comment_placeholder": "Tell us what you liked and what we could improve (optional)",
+    "submit": "Send",
+    "thanks_title": "Thanks for your feedback!"
   },
   "sales": {
     "login": {

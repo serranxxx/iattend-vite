@@ -357,22 +357,6 @@
     margin-right: 10px;
 }
 
-.dominio-flag {
-    font-size: 18px;
-    line-height: 1;
-}
-
-.dominio-code-input {
-    border: none;
-    outline: none;
-    background: transparent;
-    width: 36px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #555;
-    font-family: 'Poppins';
-}
-
 .dominio-field-error {
     font-size: 12px;
     color: #ff4d4f;

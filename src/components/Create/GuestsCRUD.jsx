@@ -16,7 +16,8 @@ import { useTranslation } from 'react-i18next'
 import './guests-crud.css'
 import { supabase } from '../../lib/supabase'
 import { FaCheck } from 'react-icons/fa'
-import { generateSimpleId, PHONE_CODES, splitPhoneNumber, buildPhoneNumberSafe } from '../../helpers/assets/functions'
+import { generateSimpleId } from '../../helpers/assets/functions'
+import { PHONE_CODE_OPTIONS, splitPhoneNumber, buildPhoneNumberSafe } from '../../helpers/assets/phoneCodes'
 import { IoMdAdd } from 'react-icons/io'
 import { FiMinus } from 'react-icons/fi'
 import { CalculateTier } from './CalculateTier/CalculateTier'
@@ -535,7 +536,7 @@ export const GuestsCRUD = ({
                     value={data.phone_code}
                     onChange={(value) => onChange('phone_code', value)}
                     style={{ width: '100px' }}
-                    options={PHONE_CODES}
+                    options={PHONE_CODE_OPTIONS}
                 />
                 <Input
                     type="tel"

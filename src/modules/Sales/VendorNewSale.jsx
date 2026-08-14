@@ -12,24 +12,12 @@ import {
     fetchConfiguracionPagos,
 } from './salesApi'
 // import { buildBankMessage } from './paymentUtils'
+import { PHONE_CODE_OPTIONS } from '../../helpers/assets/phoneCodes'
 import styles from './VendorNewSale.module.css'
 
 const PLANS = ['PRO', 'Lite']
 const DEFAULT_PRICE = { PRO: 3999, Lite: 2899 }
 const DISCOUNT_OPTIONS = [0, 5, 10, 15, 20]
-
-const LADAS = [
-    { value: '+52', label: '🇲🇽 +52' },
-    { value: '+1', label: '🇺🇸 +1' },
-    { value: '+34', label: '🇪🇸 +34' },
-    { value: '+57', label: '🇨🇴 +57' },
-    { value: '+51', label: '🇵🇪 +51' },
-    { value: '+56', label: '🇨🇱 +56' },
-    { value: '+54', label: '🇦🇷 +54' },
-    { value: '+503', label: '🇸🇻 +503' },
-    { value: '+502', label: '🇬🇹 +502' },
-    { value: '+504', label: '🇭🇳 +504' },
-]
 
 const formatCurrency = (value) =>
     `$${Number(value || 0).toLocaleString('es-MX', { maximumFractionDigits: 0 })}`
@@ -372,7 +360,7 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
                                 style={{ width: 110 }}
                                 value={lada}
                                 onChange={setLada}
-                                options={LADAS}
+                                options={PHONE_CODE_OPTIONS}
                             />
                             <Input
                                 className={styles.input}

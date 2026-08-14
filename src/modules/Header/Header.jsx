@@ -10,12 +10,16 @@ import { LuArrowLeft, LuBadgeHelp, LuCheck, LuClipboard, LuClipboardCheck, LuFol
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { ChevronDown, Menu, MessageCircle, Share, Sparkles } from "lucide-react";
+import { ChevronDown, CircleQuestionMark, Menu, MessageCircle, Share, Sparkles } from "lucide-react";
 import { appContext } from '../../context';
 import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
 import { CreditController } from "../../components/Payment/CreditController/CreditController"
 import { useDashboardRealtime } from "../../context/DashboardRealtimeContext";
+import { useFeedbackTrigger } from "../../components/FeedbackPrompt/useFeedbackTrigger";
+import { FeedbackButton } from "../../components/FeedbackPrompt/FeedbackButton";
+import { FeedbackModal } from "../../components/FeedbackPrompt/FeedbackModal";
+import { PHONE_CODE_OPTIONS } from "../../helpers/assets/phoneCodes";
 
 const baseProd = "https://www.iattend.events"
 
@@ -227,6 +231,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const screens = useBreakpoint();
     const [urlImage, setUrlImage] = useState(null)
     const [name, setName] = useState(null)
+    const [createdAt, setCreatedAt] = useState(null)
 
     // Pending info — DB values (for badge count)
     const [invOwners, setInvOwners] = useState([])
@@ -256,7 +261,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const getInvitation = async () => {
         const { data, error } = await supabase
             .from("invitations")
-            .select("data, plan, name, url_image, owners, label, phone_number")
+            .select("data, plan, name, url_image, owners, label, phone_number, created_at")
             .eq("id", id)
             .maybeSingle();
 
@@ -269,6 +274,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             setInvOwners(data.owners ?? [])
             setInvLabel(data.label ?? null)
             setInvPhone(data.phone_number ?? null)
+            setCreatedAt(data.created_at ?? null)
         }
     }
 
@@ -496,6 +502,14 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         }
     }, [id])
 
+    const {
+        visible: feedbackVisible,
+        modalOpen: feedbackModalOpen,
+        openModal: openFeedbackModal,
+        closeModal: closeFeedbackModal,
+        submit: submitFeedback,
+    } = useFeedbackTrigger(id, createdAt)
+
     const { subscribe } = useDashboardRealtime()
 
     useEffect(() => {
@@ -567,6 +581,9 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                         {/* {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />} */}
 
                         {screens.xs && !isEditing && <CreditController id={id} mobile={true} />}
+
+                        {!screens.xs && feedbackVisible && <FeedbackButton onClick={openFeedbackModal} />}
+                        {screens.xs && !isEditing && feedbackVisible && <FeedbackButton onClick={openFeedbackModal} compact />}
 
                         {!screens.xs && (
                             <Dropdown
@@ -694,13 +711,21 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                             <div>
                                                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Número de WhatsApp</div>
                                                 <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Asocia un número celular para que tus invitados puedan contactarte.</div>
-                                                <div style={{ border: '1px solid #d9d9d9', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                    <span>🇲🇽</span>
-                                                    <input style={{ width: 44, border: 'none', outline: 'none', fontSize: 13 }} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} />
-                                                    <div style={{ width: 1, height: 16, background: '#d9d9d9' }} />
-                                                    <input style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13 }} placeholder='1234567890' maxLength={10} value={phoneDigits} onChange={e => setPhoneDigits(e.target.value)} />
-                                                    {phoneDigits.length === 10 && <LuCheck size={14} style={{ color: '#25D366' }} />}
-                                                </div>
+                                                <Space.Compact style={{ width: '100%' }}>
+                                                    <Select
+                                                        value={phoneCode}
+                                                        onChange={setPhoneCode}
+                                                        options={PHONE_CODE_OPTIONS}
+                                                        style={{ width: 110 }}
+                                                    />
+                                                    <Input
+                                                        placeholder='1234567890'
+                                                        maxLength={10}
+                                                        value={phoneDigits}
+                                                        onChange={e => setPhoneDigits(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                                        suffix={phoneDigits.length === 10 ? <LuCheck size={14} style={{ color: '#25D366' }} /> : null}
+                                                    />
+                                                </Space.Compact>
                                             </div>
                                         )}
 
@@ -841,13 +866,21 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                             <div>
                                                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Número de WhatsApp</div>
                                                 <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Asocia un número celular para que tus invitados puedan contactarte.</div>
-                                                <div style={{ border: '1px solid #d9d9d9', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                    <span>🇲🇽</span>
-                                                    <input style={{ width: 44, border: 'none', outline: 'none', fontSize: 13 }} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} />
-                                                    <div style={{ width: 1, height: 16, background: '#d9d9d9' }} />
-                                                    <input style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13 }} placeholder='1234567890' maxLength={10} value={phoneDigits} onChange={e => setPhoneDigits(e.target.value)} />
-                                                    {phoneDigits.length === 10 && <LuCheck size={14} style={{ color: '#25D366' }} />}
-                                                </div>
+                                                <Space.Compact style={{ width: '100%' }}>
+                                                    <Select
+                                                        value={phoneCode}
+                                                        onChange={setPhoneCode}
+                                                        options={PHONE_CODE_OPTIONS}
+                                                        style={{ width: 110 }}
+                                                    />
+                                                    <Input
+                                                        placeholder='1234567890'
+                                                        maxLength={10}
+                                                        value={phoneDigits}
+                                                        onChange={e => setPhoneDigits(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                                        suffix={phoneDigits.length === 10 ? <LuCheck size={14} style={{ color: '#25D366' }} /> : null}
+                                                    />
+                                                </Space.Compact>
                                             </div>
                                         )}
 
@@ -899,7 +932,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                         {
                             !screens.xs &&
                             <Link to="https://wa.me/6145338500" target="_blank">
-                                <Button style={{ borderRadius: '99px' }} icon={<LuBadgeHelp style={{ marginTop: '4px' }} size={16} />}>
+                                <Button style={{ borderRadius: '99px' }} icon={<CircleQuestionMark size={14} style={{ marginTop: '4px' }} size={16} />}>
                                     {t('dashboard_header.help')}
                                 </Button>
                             </Link>
@@ -936,6 +969,12 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                     </div>
                 </div>
             </div>
+
+            <FeedbackModal
+                open={feedbackModalOpen}
+                onClose={closeFeedbackModal}
+                onSubmit={submitFeedback}
+            />
         </>
     );
 };

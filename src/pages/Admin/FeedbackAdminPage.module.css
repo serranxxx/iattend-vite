@@ -1,0 +1,95 @@
+.page {
+  padding: 24px 0px;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-family: 'Denver-Serial', 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mid-blue-500);
+}
+
+.subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: var(--gray-color);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.statCard {
+  background: var(--sc-color);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.statLabel {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  color: var(--gray-color);
+}
+
+.statValue {
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--mid-blue-500);
+  margin-top: 4px;
+}
+
+.statSub {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  color: var(--success-color-600);
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.chartTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.chartWrapper {
+  position: relative;
+  height: 220px;
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid var(--borders);
+  padding: 16px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
+
+.filtersRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.noComment {
+  color: var(--gray-color);
+}

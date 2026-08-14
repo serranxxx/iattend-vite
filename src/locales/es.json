@@ -624,6 +624,8 @@
     "col_access": "Accesos",
     "col_tag": "Etiqueta",
     "col_actions": "Acciones",
+    "col_priority": "Prioridad",
+    "companion_tag": "Acompañante",
     "tooltip_open": "Abrir",
     "magic_link": "Link mágico",
     "msg_processing": "Procesando",
@@ -683,7 +685,8 @@
     "btn_back": "Regresar",
     "tooltip_preview": "Previsualizar",
     "tooltip_hide_weather": "Ocultar clima",
-    "tooltip_show_weather": "Mostrar clima"
+    "tooltip_show_weather": "Mostrar clima",
+    "no_guests": "No hay invitados en esta lista"
   },
   "tables": {
     "title": "Organización por mesas",
@@ -976,7 +979,7 @@
     "dropdown_title": "Almacenamiento de imágenes"
   },
   "dashboard_header": {
-    "help": "¿Necesitas ayuda?",
+    "help": "Ayuda",
     "publish": "Publicar",
     "publish_tooltip": "Publicar cambios",
     "write": "Escribir",
@@ -994,6 +997,14 @@
     "label_texture": "Textura",
     "btn_photo": "Foto",
     "btn_song": "Canción"
+  },
+  "feedback_prompt": {
+    "button_cta": "Ayúdanos a mejorar",
+    "modal_title": "Ayúdanos a mejorar",
+    "modal_subtitle": "Llevas un tiempo usando I attend — cuéntanos qué tal ha sido tu experiencia hasta ahora.",
+    "comment_placeholder": "Cuéntanos qué te gustó y qué podríamos mejorar (opcional)",
+    "submit": "Enviar",
+    "thanks_title": "¡Gracias por tu feedback!"
   },
   "sales": {
     "login": {

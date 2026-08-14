@@ -1,10 +1,11 @@
-import { Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Popconfirm, Progress, Row, Select, Slider, Spin, Table, Tabs, Tooltip, Upload } from 'antd'
+import { Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Popconfirm, Progress, Row, Select, Slider, Spin, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
 import dayjs from 'dayjs'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
+import { BsArrowReturnRight } from 'react-icons/bs'
 import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
@@ -17,7 +18,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { Check, CheckCheck, ChevronLeft, ChevronRight, Cloud, CloudOff, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Check, CheckCheck, ChevronLeft, ChevronRight, Cloud, CloudOff, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -52,6 +53,16 @@ export const SideEvents = () => {
     const [readyToAdd, setReadyToAdd] = useState([])
     const [searchMain, setSearchMain] = useState("")
     const [messagesDispatch, setMessagesDispatch] = useState([])
+    const [createdData, setCreatedData] = useState([])
+    const [waitingData, setWaitingData] = useState([])
+    const [confirmedData, setConfirmedData] = useState([])
+    // Sort de encabezado por tab (no filtra filas, solo cambia el orden): un solo
+    // { column, dir } activo por tab — dir cicla inactivo -> 'asc' -> 'desc' -> inactivo.
+    const [activeSort, setActiveSort] = useState({
+        creado: { column: null, dir: null },
+        esperando: { column: null, dir: null },
+        confirmado: { column: null, dir: null },
+    })
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
     const [invName, setInvName] = useState(null)
@@ -107,6 +118,64 @@ export const SideEvents = () => {
         return val;
     };
 
+    // Sorts de columna (no filtran filas): un botón en el header cicla
+    // inactivo -> asc -> desc -> inactivo. Solo una columna puede estar activa
+    // por tab (activar una desactiva cualquier otra del mismo tab).
+    const cycleTabSort = (tabKey, column) => {
+        setActiveSort((prev) => {
+            const current = prev[tabKey] || { column: null, dir: null };
+            const nextDir = current.column !== column
+                ? 'asc'
+                : current.dir === 'asc' ? 'desc' : current.dir === 'desc' ? null : 'asc';
+            return {
+                ...prev,
+                [tabKey]: { column: nextDir ? column : null, dir: nextDir },
+            };
+        });
+    };
+
+    const renderSortableHeader = (label, dir, onToggle) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <span>{label}</span>
+            <Button
+                type="text"
+                size="small"
+                onClick={onToggle}
+                icon={
+                    dir === 'asc' ? <ArrowUp size={14} /> :
+                        dir === 'desc' ? <ArrowDown size={14} /> :
+                            <ArrowUpDown size={14} />
+                }
+                className={`sort-header-btn ${dir ? 'sort-header-btn--active' : ''}`}
+                style={{ padding: 0, minWidth: 20, height: 20 }}
+            />
+        </div>
+    );
+
+    const TIER_SORT_ORDER = { A: 1, B: 2, C: 3, D: 4 };
+    const MESSAGE_STATUS_SORT_ORDER = { failed: 0, undefined: 1, processing: 2, sent: 3, delivered: 4, read: 5 };
+
+    const compareByTier = (a, b) => (TIER_SORT_ORDER[a.tier] ?? 99) - (TIER_SORT_ORDER[b.tier] ?? 99);
+
+    const compareByStatus = (a, b) =>
+        (MESSAGE_STATUS_SORT_ORDER[dispatchMap[a.id]?.status ?? 'undefined'] ?? 1) - (MESSAGE_STATUS_SORT_ORDER[dispatchMap[b.id]?.status ?? 'undefined'] ?? 1);
+
+    const applySortDir = (data, dir, comparator) => {
+        if (!dir) return data;
+        const sorted = [...data].sort(comparator);
+        return dir === 'desc' ? sorted.reverse() : sorted;
+    };
+
+    // Sin mesas para side events por ahora — solo hay sort de tier y estado.
+    const SORT_COMPARATORS = { tier: compareByTier, estado: compareByStatus };
+
+    const sortForTab = (tabKey, data) => {
+        const sort = activeSort[tabKey];
+        const comparator = sort?.column && SORT_COMPARATORS[sort.column];
+        if (!comparator) return data;
+        return applySortDir(data, sort.dir, comparator);
+    };
+
     const columns = useMemo(() => ([
         {
             title: t('side_events.col_name'),
@@ -115,28 +184,21 @@ export const SideEvents = () => {
             fixed: "left",
             width: 160,
             render: (value, record) => {
+                const isChild = record.__isGroupChild;
+
+                if (isChild) {
+                    return (
+                        <div style={{ paddingLeft: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', minWidth: 0 }}>
+                            <BsArrowReturnRight style={{ flexShrink: 0 }} /> <span className="guest-name-text">{value}</span>
+                        </div>
+                    );
+                }
+
                 return (
-                    <div style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px'
-                    }}>
-                        <Tooltip title={t('side_events.tooltip_open')}>
-                            <Button
-                                onClick={() =>
-                                    setDrawerState({
-                                        currentGuest: record,
-                                        onEditGuest: true,
-                                        companions: handleCompanions(record.id),
-                                        visible: true,
-                                    })
-                                }
-                                className="primarybutton"
-                                icon={<FiArrowUpRight size={14} style={{ marginTop: 2 }} />}
-                                style={{ maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
-                            />
-                        </Tooltip>
-                        <span>{value}</span>
+                    <div className="tag-container" style={{ justifyContent: "flex-start", width: "100%", paddingLeft: 32 }}>
+                        <span className="guest-name-text" style={{ textAlign: "left" }}>{value}</span>
                     </div>
-                )
+                );
             }
         },
 
@@ -213,12 +275,45 @@ export const SideEvents = () => {
         },
 
         {
+            title: t('side_events.col_priority'),
+            dataIndex: "tier",
+            key: "tier",
+            width: 100,
+            render: (value) => (
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="tag-container" style={{ width: '80%' }}>
+                        <span
+                            style={{ width: "100%", justifyContent: "center" }}
+                            className={`new-table-tag tier-${value}`}
+                        >
+                            {value ?? "-"}
+                        </span>
+                    </div>
+                </div>
+            ),
+        },
+
+        {
             title: t('side_events.col_actions'),
             key: "send",
-            width: 120,
+            width: 140,
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
                 const { state, phone_number } = record;
+                const isChild = record.__isGroupChild;
+
+                if (isChild) {
+                    if (state === "esperando") {
+                        return (
+                            <div className="tag-container">
+                                <span className="new-table-tag companion-tag">
+                                    {t('side_events.companion_tag')}
+                                </span>
+                            </div>
+                        );
+                    }
+                    return null;
+                }
 
                 if (state === "creado") {
                     return (
@@ -267,71 +362,135 @@ export const SideEvents = () => {
                     );
                 }
 
-                if (state === "confirmado" || state === 'rechazado') {
-                    return (
-                        <></>
-
-                    );
-                }
-
                 return null;
             },
         },
     ]), [current, rawData, screens.xs, messagesDispatch]);
 
-    const tableProps = useMemo(() => ({
-        rowKey: "id",
-        columns,
-        pagination: false,
-        scroll: {
-            x: 'max-content',
-            y: screens.xs ? undefined : '84vh',
-        },
-    }), [columns, screens.xs]);
+    // Cada tab de estado necesita su propia variante de columnas: "Acciones"
+    // gana un header ordenable por estado en Enviadas, y "tier" siempre gana
+    // un header ordenable. Sin mesas para side events por ahora, Confirmados
+    // no tiene sort propio en Acciones (esa columna no muestra nada ahí).
+    const getTabColumns = (baseColumns, state) => {
+        const sort = activeSort[state] || { column: null, dir: null };
+        const dirFor = (column) => (sort.column === column ? sort.dir : null);
+        const withTierSort = (cols) => cols.map((col) => (
+            col.key === "tier"
+                ? { ...col, title: renderSortableHeader(t('side_events.col_priority'), dirFor('tier'), () => cycleTabSort(state, 'tier')) }
+                : col
+        ));
 
-    const items = useMemo(() => ([
-        {
-            label: screens.xs ? <Plus size={14} /> : t('side_events.tab_created'),
-            key: "creado",
-            children: (
-                <Table
-                    style={{
-                        maxWidth: '100%'
-                    }}
-                    size='small'
-                    {...tableProps}
-                    dataSource={rawData.filter((i) => i.state === 'creado')}
-                />
-            ),
-        },
-        {
-            label: screens.xs ? <Send size={14} /> : t('side_events.tab_sent'),
-            key: "esperando",
-            children: (
-                <Table
-                    size='small'
-                    {...tableProps}
-                    dataSource={rawData.filter((i) => i.state === 'esperando')}
-                />
-            ),
-        },
-        {
-            label: screens.xs ? <CheckCheck size={14} /> : t('side_events.tab_confirmed'),
-            key: "confirmado",
-            children: (
-                <Table
-                    size='small'
-                    {...tableProps}
-                    dataSource={rawData.filter((i) => i.state === 'confirmado' || i.state === 'rechazado')}
-                />
-            ),
-        },
+        switch (state) {
+            case "esperando":
+                return withTierSort(baseColumns
+                    .map((col) => (col.key === "send" ? { ...col, title: renderSortableHeader(t('side_events.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
+            default:
+                return withTierSort(baseColumns);
+        }
+    };
 
-    ]), [
-        tableProps,
-        rawData,
-        screens.xs,
-    ]);
+    // Agrupa por familia (companion_id) solo entre quienes comparten alguno de
+    // los `states` pedidos — igual convención que GuestsPage, para que un
+    // acompañante que cambie de estado se re-agrupe con quien sí comparta su
+    // nuevo estado en vez de quedar atrapado en el grupo original.
+    const groupByFamilyForStates = (data, states) => {
+        const relevant = data.filter((g) => states.includes(g.state));
+        const clusters = new Map();
+
+        relevant.forEach((g) => {
+            const familyKey = g.companion_id === null ? g.id : Number(g.companion_id);
+            if (!clusters.has(familyKey)) clusters.set(familyKey, []);
+            clusters.get(familyKey).push(g);
+        });
+
+        return Array.from(clusters.values()).map((members) => {
+            const principal = members.find((m) => m.companion_id === null);
+            const leader = principal ?? members[0];
+            const children = members.filter((m) => m.id !== leader.id);
+            return {
+                ...leader,
+                __isGroupChild: false,
+                children: children.map((c) => ({ ...c, __isGroupChild: true })),
+            };
+        });
+    };
+
+    // "name" queda fijo a la izquierda y "send" (Acciones) fijo a la derecha
+    // dentro de cada tarjeta con scroll horizontal.
+    const stickyClassFor = (colKey) => {
+        if (colKey === 'name') return 'guests-card-cell--sticky-left';
+        if (colKey === 'send' && !screens.xs) return 'guests-card-cell--sticky-right';
+        return '';
+    };
+
+    // Renderiza una fila de invitado reutilizando exactamente las mismas
+    // columnas/render de la tabla, fuera de un <table> para envolver cada
+    // grupo (líder + acompañantes) en su propia tarjeta con bordes.
+    const renderGuestCardRow = (record, cols, extraClassName = '') => {
+        const isChildRow = extraClassName === 'guests-card-row--child';
+
+        return (
+            <div key={record.id} className={`guests-card-row ${extraClassName}`}>
+                {cols.map((col) => (
+                    <div
+                        key={col.key}
+                        className={`guests-card-cell ${stickyClassFor(col.key)}`}
+                        style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
+                    >
+                        {col.render ? col.render(record[col.dataIndex], record) : record[col.dataIndex]}
+
+                        {!isChildRow && stickyClassFor(col.key) === 'guests-card-cell--sticky-left' && (
+                            <Tooltip title={t('side_events.tooltip_open')}>
+                                <Button
+                                    onClick={() =>
+                                        setDrawerState({
+                                            currentGuest: record,
+                                            onEditGuest: true,
+                                            companions: handleCompanions(record.id),
+                                            visible: true,
+                                        })
+                                    }
+                                    className="primarybutton"
+                                    icon={<FiArrowUpRight size={12} style={{ marginTop: 2 }} />}
+                                    style={{ position: 'absolute', top: 16, left: 12, maxWidth: 20, maxHeight: 20, borderRadius: 99, zIndex: 99 }}
+                                />
+                            </Tooltip>
+                        )}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    // Cada grupo (líder + acompañantes) se ve siempre desplegado, envuelto en
+    // su propia tarjeta con borde redondeado.
+    const renderGroupedCards = (data, cols) => {
+        if (!data || data.length === 0) {
+            return <div className="table-group-empty">{t('side_events.no_guests')}</div>;
+        }
+
+        return (
+            <div className="guests-card-list">
+                <div className="guests-card-list-header">
+                    {cols.map((col) => (
+                        <div
+                            key={col.key}
+                            className={`guests-card-header-cell ${stickyClassFor(col.key)}`}
+                            style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
+                        >
+                            {col.title}
+                        </div>
+                    ))}
+                </div>
+                {data.map((group) => (
+                    <div key={group.id} className="guests-group-card">
+                        {renderGuestCardRow(group, cols)}
+                        {group.children?.map((child) => renderGuestCardRow(child, cols, 'guests-card-row--child'))}
+                    </div>
+                ))}
+            </div>
+        );
+    };
 
     const handleCompanions = (id) => {
         const comps = rawData?.filter((row) => row.companion_id === id.toString())
@@ -347,6 +506,45 @@ export const SideEvents = () => {
 
         return map;
     }, [messagesDispatch]);
+
+    const items = useMemo(() => ([
+        {
+            label: screens.xs ? <Plus size={14} /> : t('side_events.tab_created'),
+            key: "creado",
+            children: (
+                <div className="guests-card-list-scroll">
+                    {renderGroupedCards(sortForTab('creado', createdData), getTabColumns(columns, 'creado'))}
+                </div>
+            ),
+        },
+        {
+            label: screens.xs ? <Send size={14} /> : t('side_events.tab_sent'),
+            key: "esperando",
+            children: (
+                <div className="guests-card-list-scroll guests-card-list-scroll--sent">
+                    {renderGroupedCards(sortForTab('esperando', waitingData), getTabColumns(columns, 'esperando'))}
+                </div>
+            ),
+        },
+        {
+            label: screens.xs ? <CheckCheck size={14} /> : t('side_events.tab_confirmed'),
+            key: "confirmado",
+            children: (
+                <div className="guests-card-list-scroll">
+                    {renderGroupedCards(sortForTab('confirmado', confirmedData), getTabColumns(columns, 'confirmado'))}
+                </div>
+            ),
+        },
+
+    ]), [
+        columns,
+        createdData,
+        waitingData,
+        confirmedData,
+        screens.xs,
+        activeSort,
+        dispatchMap,
+    ]);
 
     const getMessagesUpdates = async () => {
 
@@ -914,6 +1112,12 @@ export const SideEvents = () => {
         if (current)
             getGuests()
     }, [current])
+
+    useEffect(() => {
+        setCreatedData(groupByFamilyForStates(rawData, ['creado']))
+        setWaitingData(groupByFamilyForStates(rawData, ['esperando']))
+        setConfirmedData(groupByFamilyForStates(rawData, ['confirmado', 'rechazado']))
+    }, [rawData])
 
     useEffect(() => {
         currentRef.current = current;

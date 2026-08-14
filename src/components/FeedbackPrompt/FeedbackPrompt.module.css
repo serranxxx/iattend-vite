@@ -1,0 +1,120 @@
+@keyframes gentlePulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--light-purple-500-40); }
+  50% { box-shadow: 0 0 0 6px var(--light-purple-500-00, rgba(210, 191, 221, 0)); }
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 99px;
+  background: var(--light-purple-500);
+  color: #4a2f57;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  animation: gentlePulse 2.4s ease-in-out infinite;
+}
+
+.button:hover {
+  background: var(--light-purple-400);
+}
+
+.buttonCompact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 99px;
+  background: var(--light-purple-500);
+  color: #4a2f57;
+  cursor: pointer;
+  animation: gentlePulse 2.4s ease-in-out infinite;
+}
+
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: var(--gray-color);
+  margin-top: -8px;
+}
+
+.stars {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.star {
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.star:hover {
+  transform: scale(1.12);
+}
+
+.textarea {
+  border-radius: 12px;
+  resize: none;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.submitBtn {
+  border-radius: 99px;
+  background: var(--light-purple-500);
+  color: #4a2f57;
+  border: none;
+  font-weight: 600;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--light-purple-400);
+}
+
+.thankYou {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.thankYouEmoji {
+  font-size: 36px;
+}
+
+.thankYouTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color);
+}
