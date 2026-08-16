@@ -176,6 +176,90 @@ export const SideEvents = () => {
         return applySortDir(data, sort.dir, comparator);
     };
 
+    const renderTag = (value) => {
+        if (value == null) return "-";
+        if (typeof value === "object") return "-"; // o JSON.stringify(value)
+        return String(value);
+    };
+
+    // Definido antes de `columns`/`items`: `items` renderiza sus tarjetas de
+    // forma inmediata (no perezosa) dentro del useMemo, así que cualquier
+    // función usada por columns.render debe existir ya en ese punto del
+    // cuerpo del componente para evitar un ReferenceError de TDZ en cada
+    // render con invitados en estado "esperando".
+    const handleMessageStatus = (record, status) => {
+        switch (status) {
+            case 'processing':
+
+                return (
+                    <div className='dispatch_message_tag' style={{ maxHeight: '24px', padding: '0px 12px' }}>
+                        {t('side_events.msg_processing')}
+                    </div>
+                )
+
+            case 'sent':
+
+                return (
+                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
+                        <Send size={16} />
+                        {t('side_events.msg_sent')}
+                    </div>
+                )
+
+            case 'delivered':
+
+                return (
+                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
+                        <Check size={16} />
+                        {t('side_events.msg_delivered')}
+                    </div>
+                )
+
+
+            case 'read':
+
+                return (
+                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
+                        <CheckCheck size={16} />
+                        {t('side_events.msg_read')}
+                    </div>
+                )
+
+            case 'failed':
+
+                return (
+
+                    <Tooltip placement='topRight'
+
+                        title={t('side_events.msg_retry_hint')} color="var(--brand-color-500)">
+                        <Button
+                            disabled={
+                                !/^\+52\d+/.test(record.phone_number) || credits <= 0
+                            }
+                            onClick={() => onSedingInvitation(current, record)}
+                            className="primarybutton--active"
+                            icon={<MailWarning size={16} />}
+                            style={{ flex: 1, maxHeight: 30, width: '136px' }}
+                        >
+                            {t('side_events.msg_retry')}
+                        </Button>
+                    </Tooltip>
+                    // <div className='dispatch_message_tag'>
+
+                    //     <MailWarning size={16}/>
+                    //     Reintentar
+                    // </div>
+                )
+
+            default:
+                return (
+                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
+                        {t('side_events.msg_waiting')}
+                    </div>
+                )
+        }
+    }
+
     const columns = useMemo(() => ([
         {
             title: t('side_events.col_name'),
@@ -563,79 +647,6 @@ export const SideEvents = () => {
         }
     }
 
-    const handleMessageStatus = (record, status) => {
-        switch (status) {
-            case 'processing':
-
-                return (
-                    <div className='dispatch_message_tag' style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        {t('side_events.msg_processing')}
-                    </div>
-                )
-
-            case 'sent':
-
-                return (
-                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        <Send size={16} />
-                        {t('side_events.msg_sent')}
-                    </div>
-                )
-
-            case 'delivered':
-
-                return (
-                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        <Check size={16} />
-                        {t('side_events.msg_delivered')}
-                    </div>
-                )
-
-
-            case 'read':
-
-                return (
-                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        <CheckCheck size={16} />
-                        {t('side_events.msg_read')}
-                    </div>
-                )
-
-            case 'failed':
-
-                return (
-
-                    <Tooltip placement='topRight'
-
-                        title={t('side_events.msg_retry_hint')} color="var(--brand-color-500)">
-                        <Button
-                            disabled={
-                                !/^\+52\d+/.test(record.phone_number) || credits <= 0
-                            }
-                            onClick={() => onSedingInvitation(current, record)}
-                            className="primarybutton--active"
-                            icon={<MailWarning size={16} />}
-                            style={{ flex: 1, maxHeight: 30, width: '136px' }}
-                        >
-                            {t('side_events.msg_retry')}
-                        </Button>
-                    </Tooltip>
-                    // <div className='dispatch_message_tag'>
-
-                    //     <MailWarning size={16}/>
-                    //     Reintentar
-                    // </div>
-                )
-
-            default:
-                return (
-                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        {t('side_events.msg_waiting')}
-                    </div>
-                )
-        }
-    }
-
     const onSendInvitation = async (guest) => {
 
         const guestPatch = {
@@ -794,13 +805,6 @@ export const SideEvents = () => {
         setInvPhone(data.phone_number ?? null)
         setInvOwners(data.owners ?? [])
     }
-
-    const renderTag = (value) => {
-        if (value == null) return "-";
-        if (typeof value === "object") return "-"; // o JSON.stringify(value)
-        return String(value);
-    };
-
 
     dayjs.locale('es');
 
