@@ -1,4 +1,4 @@
-import { Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Popconfirm, Progress, Row, Select, Slider, Spin, Tabs, Tooltip, Upload } from 'antd'
+import { Badge, Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
@@ -10,7 +10,7 @@ import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
-import { dayjsToWallClock, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
+import { dayjsToWallClock, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts } from '../../helpers/assets/fonts'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
 import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
@@ -18,7 +18,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowUp, ArrowUpDown, Check, CheckCheck, ChevronLeft, ChevronRight, Cloud, CloudOff, Copy, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, BellRing, Check, CheckCheck, ChevronLeft, ChevronRight, Cloud, CloudOff, Copy, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight, X } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -26,6 +26,7 @@ import { CustomLink } from '../../components/CustomLink/CustomLink'
 import { FooterApp } from '../Footer/FooterApp'
 import { useTranslation } from 'react-i18next'
 import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
+import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 
 
 const { Option } = Select;
@@ -56,12 +57,14 @@ export const SideEvents = () => {
     const [createdData, setCreatedData] = useState([])
     const [waitingData, setWaitingData] = useState([])
     const [confirmedData, setConfirmedData] = useState([])
+    const [rejectedData, setRejectedData] = useState([])
     // Sort de encabezado por tab (no filtra filas, solo cambia el orden): un solo
     // { column, dir } activo por tab — dir cicla inactivo -> 'asc' -> 'desc' -> inactivo.
     const [activeSort, setActiveSort] = useState({
         creado: { column: null, dir: null },
         esperando: { column: null, dir: null },
         confirmado: { column: null, dir: null },
+        rechazado: { column: null, dir: null },
     })
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
@@ -71,6 +74,14 @@ export const SideEvents = () => {
     const [invOwners, setInvOwners] = useState([])
 
     const hasPendingInfo = !invName || !invLabel || !invPhone || !invOwners?.length
+    const [buyCreditsOpen, setBuyCreditsOpen] = useState(false)
+    // Bulk shipment (espejo de GuestsPage): modo "Crear envío" + selección por
+    // bloques + lote en backend con isla de progreso
+    const [sendMode, setSendMode] = useState(false)
+    const [bulkSelected, setBulkSelected] = useState(() => new Set())
+    const [bulkSending, setBulkSending] = useState(false)
+    const [activeBatch, setActiveBatch] = useState(null)
+    const [activeKey, setActiveKey] = useState('creado')
     const [addressOpen, setAddressOpen] = useState(false)
     const [datePickerOpen, setDatePickerOpen] = useState(false)
     const [colorDrawerOpen, setColorDrawerOpen] = useState(false)
@@ -236,10 +247,10 @@ export const SideEvents = () => {
                             disabled={
                                 !/^\+52\d+/.test(record.phone_number) || credits <= 0
                             }
-                            onClick={() => onSedingInvitation(current, record)}
+                            onClick={() => onSedingInvitation(current, record, true)}
                             className="primarybutton--active"
                             icon={<MailWarning size={16} />}
-                            style={{ flex: 1, maxHeight: 30, width: '136px' }}
+                            style={{ maxHeight: 30, width: 120 }}
                         >
                             {t('side_events.msg_retry')}
                         </Button>
@@ -383,73 +394,67 @@ export const SideEvents = () => {
             width: 140,
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
-                const { state, phone_number } = record;
+                const { state } = record;
                 const isChild = record.__isGroupChild;
 
                 if (isChild) {
-                    if (state === "esperando") {
-                        return (
-                            <div className="tag-container">
-                                <span className="new-table-tag companion-tag">
-                                    {t('side_events.companion_tag')}
-                                </span>
-                            </div>
-                        );
-                    }
+                    // Acompañantes en Enviadas: celda vacía — el estado del envío
+                    // y el recordatorio viven solo en el principal.
                     return null;
                 }
 
                 if (state === "creado") {
-                    return (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "flex-start",
-                                gap: 6,
-                                width: "100%",
-                                paddingRight: '12px', boxSizing: 'border-box'
-                            }}
-                        >
-                            <Tooltip placement='topRight' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaPaperPlane size={12} /><span>{t('side_events.tooltip_send')}</span></div>} color="var(--brand-color-500)">
-                                <Button
-                                    type='primary'
-                                    disabled={!phone_number || !credits > 0}
-                                    // disabled={t!phone_number}
-                                    // onMouseEnter={() => setActiveIcon(true)} onMouseLeave={() => setActiveIcon(false)}
-                                    onClick={() => onSedingInvitation(current, record)}
-                                    // className="primarybutton--active"
-                                    icon={<LuSend size={12} />}
-                                    style={{ flex: 1, maxHeight: 30, borderRadius: 99 }}
-                                >
-                                    {t('side_events.btn_invite')}
-                                </Button>
-                            </Tooltip>
+                    if (record.companion_id !== null && record.companion_id !== undefined) {
+                        return null;
+                    }
 
-                            <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('side_events.tooltip_mark')}</span></div>} color="var(--brand-color-500)">
+                    const sendable = isSendableGuest(record);
+
+                    // Modo envío: checkbox solo en enviables (los demás van atenuados)
+                    if (sendMode) {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
+                                {sendable && renderBulkCheck(record)}
+                            </div>
+                        );
+                    }
+
+                    // Estado normal: flecha para marcar como invitado a mano
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
+                            <Tooltip placement='topRight' title={t('guests.mark_arrow_tooltip')} color="var(--brand-color-500)">
                                 <Button
                                     onClick={() => onSendInvitation(record)}
-                                    className="primarybutton"
-                                    icon={<LuCheck size={12} />}
-                                    style={{ minWidth: 30, maxWidth: 30, maxHeight: 30 }}
+                                    className='primarybutton'
+                                    icon={<ArrowRight size={14} style={{ marginTop: 2 }} />}
+                                    style={{ minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99 }}
                                 />
                             </Tooltip>
-
-                            {/* <Tooltip title="Eliminar"> <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<LuUserMinus style={{ marginLeft: '2px' }} />} onClick={() => removeGuest(record.id)}></Button></Tooltip> */}
                         </div>
                     );
                 }
 
                 if (state === "esperando") {
                     return (
-                        handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 6,
+                                width: "100%",
+                            }}
+                        >
+                            {handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')}
+                            {renderReminderButton(record)}
+                        </div>
                     );
                 }
 
                 return null;
             },
         },
-    ]), [current, rawData, screens.xs, messagesDispatch]);
+    ]), [current, rawData, screens.xs, messagesDispatch, credits, sendMode, bulkSelected]);
 
     // Cada tab de estado necesita su propia variante de columnas: "Acciones"
     // gana un header ordenable por estado en Enviadas, y "tier" siempre gana
@@ -466,8 +471,18 @@ export const SideEvents = () => {
 
         switch (state) {
             case "esperando":
+                // width extra: además del chip de estado, la celda lleva el botón de recordatorio
                 return withTierSort(baseColumns
-                    .map((col) => (col.key === "send" ? { ...col, title: renderSortableHeader(t('side_events.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
+                    .map((col) => (col.key === "send" ? { ...col, width: 200, minWidth: 200, title: renderSortableHeader(t('side_events.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
+            case "creado":
+                // La columna de acciones lleva el checkbox del bulk; el header,
+                // el botón "Soltar" cuando el modo envío está activo
+                return withTierSort(baseColumns
+                    .map((col) => (col.key === "send" ? { ...col, title: renderBulkHeaderCheck(), width: 100, minWidth: 100 } : col)));
+            case "confirmado":
+            case "rechazado":
+                // Sin mesas en side events — la columna de acciones no muestra nada aquí
+                return withTierSort(baseColumns.filter((col) => col.key !== "send"));
             default:
                 return withTierSort(baseColumns);
         }
@@ -566,12 +581,26 @@ export const SideEvents = () => {
                         </div>
                     ))}
                 </div>
-                {data.map((group) => (
-                    <div key={group.id} className="guests-group-card">
+                {data.map((group) => {
+                    // Modo envío: solo bloques enviables son clickeables; los
+                    // no-enviables se atenúan (mismo patrón que GuestsPage)
+                    const groupSelectable = sendMode && group.state === 'creado' && isSendableGuest(group)
+                    const groupDimmed = sendMode && group.state === 'creado' && !isSendableGuest(group)
+                    return (
+                    <div
+                        key={group.id}
+                        className={`guests-group-card ${bulkSelected.has(group.id) ? 'bulk-row-selected' : ''} ${groupDimmed ? 'bulk-row-disabled' : ''}`}
+                        onClick={groupSelectable ? (e) => {
+                            if (e.target.closest('button, input, a, .ant-dropdown')) return
+                            toggleBulkSelect(group.id, !bulkSelected.has(group.id))
+                        } : undefined}
+                        style={groupSelectable ? { cursor: 'pointer' } : undefined}
+                    >
                         {renderGuestCardRow(group, cols)}
                         {group.children?.map((child) => renderGuestCardRow(child, cols, 'guests-card-row--child'))}
                     </div>
-                ))}
+                    )
+                })}
             </div>
         );
     };
@@ -591,9 +620,437 @@ export const SideEvents = () => {
         return map;
     }, [messagesDispatch]);
 
+    // ── Recordatorios manuales de WhatsApp por side event ────────────────────
+    // Espejo del flujo de GuestsPage. Definido ANTES del useMemo de `items`
+    // porque items ejecuta columns.render de inmediato (ver nota de TDZ arriba).
+
+    const hasSentSideReminders = rawData.some((g) => (g.reminder_count ?? 0) > 0)
+
+    // Guarda side_events.rsvp_deadline con UPDATE directo. Fecha absoluta
+    // 'YYYY-MM-DD', sin timezone.
+    const onSaveRsvpDeadline = async (dateValue) => {
+        if (!dateValue || !current?.id) return
+        const newDeadline = dateValue.format('YYYY-MM-DD')
+
+        const { error } = await supabase
+            .from('side_events')
+            .update({ rsvp_deadline: newDeadline })
+            .eq('id', current.id)
+
+        if (error) {
+            console.error('Error al guardar rsvp_deadline:', error)
+            message.error(t('guests.rsvp_deadline_error'))
+            return
+        }
+
+        if (current.rsvp_deadline && newDeadline !== current.rsvp_deadline && hasSentSideReminders) {
+            message.warning(t('guests.rsvp_deadline_changed_warning'))
+        } else if (dateValue.diff(dayjs().startOf('day'), 'day') < 5) {
+            message.warning(t('guests.rsvp_deadline_soon_warning'))
+        } else {
+            message.success(t('guests.rsvp_deadline_saved'))
+        }
+
+        setCurrent((prev) => ({ ...prev, rsvp_deadline: newDeadline }))
+        setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, rsvp_deadline: newDeadline } : se))
+    }
+
+    const rsvpDisabledDate = (d) => {
+        if (!d) return false
+        if (!d.isAfter(dayjs().startOf('day'), 'day')) return true // debe ser futura
+        // Tope: la fecha del side event (body.hour es string wall-clock)
+        if (current?.body?.hour && d.isAfter(dayjs(current.body.hour), 'day')) return true
+        return false
+    }
+
+    // Motivo por el que un invitado del side event no puede recibir
+    // recordatorio (null = elegible). Límite de 1/día POR side event: los
+    // contadores viven en side_events_guests, una fila por evento.
+    const reminderBlockReason = (record) => {
+        if (!current?.rsvp_deadline) return { key: 'deadline', label: t('guests.reminder_no_deadline') }
+        if (!/^\+52\d+/.test(record.phone_number)) return { key: 'phone', label: t('guests.tooltip_national_only') }
+        if (record.last_reminder_at && dayjs(record.last_reminder_at).isSame(dayjs(), 'day')) return { key: 'daily', label: t('guests.reminder_daily_limit') }
+        if (credits < 1) return { key: 'credits', label: t('guests.reminder_no_credits') }
+        return null
+    }
+
+    const onSendReminder = async (guest) => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return
+        }
+
+        if (!current?.name?.trim()) {
+            message.warning(t('side_events.warning_event_no_name'))
+            return
+        }
+
+        if (!current?.rsvp_deadline) return
+
+        setCreditSending(t('guests.reminder_sending_label'))
+        try {
+            const payload = {
+                invitationId: id,
+                guestId: guest.id,
+                guestName: guest.name,
+                guestPhone: guest.phone_number.replace(/^\+/, ""),
+                sideEventId: current.id,
+
+                messaging_product: "whatsapp",
+                to: guest.phone_number.replace(/^\+/, ""),
+                type: "template",
+                template: {
+                    name: "reminder",
+                    language: {
+                        code: "es_MX",
+                    },
+                    components: [
+                        {
+                            type: "body",
+                            parameters: [
+                                {
+                                    type: "text",
+                                    text: guest.name,
+                                },
+                                {
+                                    type: "text",
+                                    text: `${current.name}`.replace(/[\n\r]/g, " "),
+                                },
+                                {
+                                    type: "text",
+                                    text: formatAbsoluteDateEs(current.rsvp_deadline),
+                                },
+                            ],
+                        },
+                        {
+                            type: "button",
+                            sub_type: "url",
+                            index: "0",
+                            parameters: [
+                                {
+                                    type: "text",
+                                    text: `side-event/${current?.id}?password=${guest.password}`,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            };
+
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/whats/reminders`,
+                payload
+            );
+
+            if (response.data.ok) {
+                // Cobrar solo tras éxito; el backend ya actualizó los contadores
+                // en side_events_guests.
+                onUpdateCredits()
+                setCreditSuccess()
+                getGuests()
+            }
+        } catch (error) {
+            clearCreditState()
+            message.error(t('guests.reminder_sent_error'))
+            console.log(error.response?.data || error.message);
+        }
+    };
+
+    // Botón de recordatorio: solo principales, oculto en failed (ahí vive
+    // Reintentar) y en envío manual. Si el único bloqueo es el saldo, el click
+    // abre la compra de créditos (CTA).
+    const renderReminderButton = (record) => {
+        if (record.companion_id !== null && record.companion_id !== undefined) return null
+
+        const status = dispatchMap[record.id]?.status ?? 'undefined'
+        if (status === 'failed' || status === 'undefined') return null
+
+        const reason = reminderBlockReason(record)
+        const count = record.reminder_count ?? 0
+        const disabled = !!reason && reason.key !== 'credits'
+
+        const button = (
+            <Button
+                disabled={disabled}
+                onClick={() => {
+                    if (reason?.key === 'credits') {
+                        setBuyCreditsOpen(true)
+                    } else if (!reason) {
+                        onSendReminder(record)
+                    }
+                }}
+                icon={<BellRing size={14} style={{ marginTop: 4, color: disabled ? '#dbdbdb' : undefined }} />}
+                style={{
+                    minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99,
+                    background: 'linear-gradient(145deg, var(--orange-color), var(--orange-color))', color: '#FFFF', border: '1px solid var(--orange-color)',
+                    // el disabled default de antd deja el botón blanco y el ícono no se ve
+                    ...(disabled && { background: '#F1F1F1', border: '1px solid #EBEBEB', color: '#787878' }),
+                }}
+            />
+        )
+
+        return (
+            <Tooltip
+                placement='topRight'
+                color="var(--orange-bg)"
+                title={<span style={{ color: 'var(--orange-color)', fontWeight: 600, textAlign: 'center' }}>{reason ? reason.label : count > 0 ? `${t('guests.reminder_count_tooltip')}: ${count}` : t('guests.reminder_btn_tooltip')}</span>}
+            >
+                {disabled ? button : (
+                    <Badge count={count} size="small" color="var(--brand-color-500)" title="" offset={[-2, 2]}>
+                        {button}
+                    </Badge>
+                )}
+            </Tooltip>
+        )
+    }
+
+    // Barra de fecha límite del side event actual: empty state que invita a
+    // definirla mientras es null; campo editable permanente una vez definida.
+    const renderRsvpDeadlineBar = () => (
+        <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
+            padding: '10px 16px', marginBottom: 12, borderRadius: 16, boxSizing: 'border-box', width: '100%',
+            border: `1px solid ${current?.rsvp_deadline ? '#EBEBEB' : 'var(--light-purple-500-20)'}`,
+            background: current?.rsvp_deadline ? '#FFFFFF' : 'var(--light-purple-100-40)',
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <BellRing size={16} style={{ flexShrink: 0, color: current?.rsvp_deadline ? 'var(--brand-color-500)' : 'var(--light-purple-700)' }} />
+                <span style={{ fontSize: 13, color: current?.rsvp_deadline ? undefined : 'var(--light-purple-700)' }}>
+                    {current?.rsvp_deadline
+                        ? `${t('guests.rsvp_deadline_label')}: ${formatAbsoluteDateEs(current.rsvp_deadline)}`
+                        : t('guests.rsvp_deadline_empty')}
+                </span>
+            </div>
+            <DatePicker
+                value={current?.rsvp_deadline ? dayjs(current.rsvp_deadline) : null}
+                onChange={onSaveRsvpDeadline}
+                disabledDate={rsvpDisabledDate}
+                allowClear={false}
+                placeholder={t('guests.rsvp_deadline_placeholder')}
+                getPopupContainer={() => document.body}
+                style={{ borderRadius: 99 }}
+            />
+        </div>
+    )
+
+    // ── Bulk shipment por side event (espejo de GuestsPage) ─────────────────
+    // Definido antes del useMemo de `items` (TDZ: items ejecuta los renders de
+    // las columnas de inmediato).
+
+    const isSendableGuest = (g) => /^\+52\d+/.test(g.phone_number)
+
+    const bulkSelectedGuests = rawData.filter((g) => bulkSelected.has(g.id) && g.state === 'creado')
+    const bulkEligibleGuests = bulkSelectedGuests.filter(isSendableGuest)
+
+    const toggleBulkSelect = (guestId, checked) => {
+        setBulkSelected((prev) => {
+            const next = new Set(prev)
+            if (checked) next.add(guestId)
+            else next.delete(guestId)
+            return next
+        })
+    }
+
+    const exitSendMode = () => {
+        setSendMode(false)
+        setBulkSelected(new Set())
+    }
+
+    // Payload de Graph API del envío inicial de side events (misma lógica de
+    // templates que onSedingInvitation). Duplicado a propósito: el flujo
+    // individual no se toca.
+    const buildSideInvitationPayload = (guest) => ({
+        messaging_product: "whatsapp",
+        to: guest?.phone_number?.replace(/^\+/, ""),
+        type: "template",
+        template: {
+            name: current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
+            language: { code: "es_MX" },
+            components: [
+                {
+                    type: "header",
+                    parameters: [
+                        { type: "image", image: { link: current?.url_image ?? current?.body?.image } },
+                    ],
+                },
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: `${current?.name}`.replace(/[\n\r]/g, " ") },
+                        { type: "text", text: guest?.name },
+                        ...(current?.rsvp_deadline ? [{ type: "text", text: formatAbsoluteDateEs(current.rsvp_deadline) }] : []),
+                    ],
+                },
+                {
+                    type: "button",
+                    sub_type: "url",
+                    index: "0",
+                    parameters: [
+                        { type: "text", text: `side-event/${current?.id}?password=${guest.password}` },
+                    ],
+                },
+            ],
+        },
+    })
+
+    // Reserva de créditos del lote en un solo UPDATE; el backend reembolsa los
+    // fallidos al cerrar el lote.
+    const onReserveCredits = async (amount) => {
+        const { data, error } = await supabase
+            .from('invitations')
+            .select('credits')
+            .eq('id', id)
+            .maybeSingle()
+
+        if (error || !data) {
+            console.error('Error al reservar créditos:', error)
+            return
+        }
+
+        const newCredits = Math.max((data.credits ?? 0) - amount, 0)
+        const { error: updateError } = await supabase
+            .from('invitations')
+            .update({ credits: newCredits })
+            .eq('id', id)
+
+        if (updateError) {
+            console.error('Error al reservar créditos:', updateError)
+            return
+        }
+        setCredits(newCredits)
+    }
+
+    const onBulkSend = async () => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return
+        }
+        if (!current?.name?.trim()) {
+            message.warning(t('side_events.warning_event_no_name'))
+            return
+        }
+        const targets = bulkEligibleGuests
+        if (targets.length === 0) return
+        if (credits < targets.length) {
+            setBuyCreditsOpen(true)
+            return
+        }
+
+        setBulkSending(true)
+        try {
+            const items = targets.map((g) => ({
+                guestId: g.id,
+                guestName: g.name,
+                guestPhone: g.phone_number.replace(/^\+/, ""),
+                payload: buildSideInvitationPayload(g),
+            }))
+
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/whats/bulk`,
+                { invitationId: id, sideEventId: current.id, items }
+            )
+
+            if (response.data.ok) {
+                await onReserveCredits(items.length)
+                setActiveBatch({
+                    id: response.data.data.batchId,
+                    total: items.length,
+                    sent: 0,
+                    failed: 0,
+                    status: 'processing',
+                })
+                exitSendMode()
+            }
+        } catch (error) {
+            message.error(t('guests.bulk_error'))
+            console.log(error.response?.data || error.message)
+        } finally {
+            setBulkSending(false)
+        }
+    }
+
+    // Checkbox manual circular (misma clase global que GuestsPage)
+    const renderBulkCheck = (record) => {
+        const checked = bulkSelected.has(record.id)
+        return (
+            <button
+                type='button'
+                role='checkbox'
+                aria-checked={checked}
+                onClick={() => toggleBulkSelect(record.id, !checked)}
+                className={`bulk-check-circle ${checked ? 'bulk-check-circle--checked' : ''}`}
+            >
+                {checked && <Check size={14} strokeWidth={3} />}
+            </button>
+        )
+    }
+
+    const renderBulkHeaderCheck = () => {
+        if (!sendMode) return t('side_events.col_actions')
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <Button
+                    size='small'
+                    disabled={bulkSelected.size === 0}
+                    onClick={() => setBulkSelected(new Set())}
+                    className='secondarybutton'
+                    style={{ borderRadius: 99, height: 32, flex: 1, width: '100%' }}
+                >
+                    {t('guests.bulk_release')}
+                </Button>
+            </div>
+        )
+    }
+
+    const renderBulkActionsBar = () => {
+        if (!sendMode) {
+            return (
+                <Button
+                    disabled={plan !== 'pro'}
+                    onClick={() => setSendMode(true)}
+                    icon={<Send size={14} />}
+                    className='bulk-send-btn'
+                    style={{ borderRadius: 99 }}
+                >
+                    {t('guests.bulk_create')}
+                </Button>
+            )
+        }
+
+        const eligibleCount = bulkEligibleGuests.length
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', flexShrink: 0, justifyContent: 'flex-end' }}>
+                <Button
+                    loading={bulkSending}
+                    disabled={eligibleCount === 0}
+                    onClick={onBulkSend}
+                    icon={<Send size={14} />}
+                    className='bulk-send-btn'
+                    style={{ borderRadius: 99, flexShrink: 0 }}
+                >
+                    {`${t('guests.bulk_send_all')} (${eligibleCount})`}
+                </Button>
+
+                <Button
+                    disabled={bulkSending}
+                    onClick={exitSendMode}
+                    className='secondarybutton'
+                    style={{ borderRadius: 99, flexShrink: 0 }}
+                >
+                    {t('guests.bulk_cancel')}
+                </Button>
+            </div>
+        )
+    }
+
+    // Conteo de personas (líder + acompañantes) para el label de cada tab,
+    // igual que en GuestsPage.
+    const countGuestRows = (groupedData = []) =>
+        groupedData.reduce((acc, g) => acc + 1 + (g.children?.length ?? 0), 0);
+
     const items = useMemo(() => ([
         {
-            label: screens.xs ? <Plus size={14} /> : t('side_events.tab_created'),
+            label: screens.xs ? <Plus size={14} /> : `${t('guests.tab_waiting')} (${countGuestRows(createdData)})`,
             key: "creado",
             children: (
                 <div className="guests-card-list-scroll">
@@ -602,7 +1059,7 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: screens.xs ? <Send size={14} /> : t('side_events.tab_sent'),
+            label: screens.xs ? <Send size={14} /> : `${t('guests.tab_sent')} (${countGuestRows(waitingData)})`,
             key: "esperando",
             children: (
                 <div className="guests-card-list-scroll guests-card-list-scroll--sent">
@@ -611,11 +1068,20 @@ export const SideEvents = () => {
             ),
         },
         {
-            label: screens.xs ? <CheckCheck size={14} /> : t('side_events.tab_confirmed'),
+            label: screens.xs ? <CheckCheck size={14} /> : `${t('guests.tab_confirmed')} (${countGuestRows(confirmedData)})`,
             key: "confirmado",
             children: (
                 <div className="guests-card-list-scroll">
                     {renderGroupedCards(sortForTab('confirmado', confirmedData), getTabColumns(columns, 'confirmado'))}
+                </div>
+            ),
+        },
+        {
+            label: screens.xs ? <LuX size={14} /> : `${t('guests.tab_rejected')} (${countGuestRows(rejectedData)})`,
+            key: "rechazado",
+            children: (
+                <div className="guests-card-list-scroll">
+                    {renderGroupedCards(sortForTab('rechazado', rejectedData), getTabColumns(columns, 'rechazado'))}
                 </div>
             ),
         },
@@ -625,9 +1091,13 @@ export const SideEvents = () => {
         createdData,
         waitingData,
         confirmedData,
+        rejectedData,
         screens.xs,
         activeSort,
         dispatchMap,
+        sendMode,
+        bulkSelected,
+        bulkSending,
     ]);
 
     const getMessagesUpdates = async () => {
@@ -671,7 +1141,7 @@ export const SideEvents = () => {
 
     }
 
-    const onSedingInvitation = async (data, guest) => {
+    const onSedingInvitation = async (data, guest, retry = false) => {
         if (hasPendingInfo) {
             message.warning('Completa la información pendiente de tu invitación antes de enviar.')
             return
@@ -700,8 +1170,12 @@ export const SideEvents = () => {
                     messaging_product: "whatsapp",
                     to: guest?.phone_number?.replace(/^\+/, ""),
                     type: "template",
+                    // Tres variantes sobre el mismo endpoint/registro (igual que
+                    // GuestsPage): retry → invitation_retry; con rsvp_deadline del
+                    // side event → invitation_deadline ({{3}} = fecha límite);
+                    // sin fecha → invitation_v2.
                     template: {
-                        name: "invitation_v2",
+                        name: retry ? "invitation_retry" : current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
                         language: {
                             code: "es_MX",
                         },
@@ -719,16 +1193,29 @@ export const SideEvents = () => {
                             },
                             {
                                 type: "body",
-                                parameters: [
-                                    {
-                                        type: "text",
-                                        text: `${data?.name}`.replace(/[\n\r]/g, " "),
-                                    },
-                                    {
-                                        type: "text",
-                                        text: guest?.name,
-                                    },
-                                ],
+                                parameters: retry
+                                    ? [
+                                        {
+                                            type: "text",
+                                            text: `${data?.name}`.replace(/[\n\r]/g, " "),
+                                        },
+                                    ]
+                                    : [
+                                        {
+                                            type: "text",
+                                            text: `${data?.name}`.replace(/[\n\r]/g, " "),
+                                        },
+                                        {
+                                            type: "text",
+                                            text: guest?.name,
+                                        },
+                                        // invitation_deadline agrega {{3}}: la fecha límite,
+                                        // mismo formato que los reminders
+                                        ...(current?.rsvp_deadline ? [{
+                                            type: "text",
+                                            text: formatAbsoluteDateEs(current.rsvp_deadline),
+                                        }] : []),
+                                    ],
                             },
                             {
                                 type: "button",
@@ -754,7 +1241,10 @@ export const SideEvents = () => {
                     payload
                 );
                 if (response.data.ok) {
-                    onUpdateCredits()
+                    // Un reintento no consume créditos (igual que en GuestsPage)
+                    if (!retry) {
+                        onUpdateCredits()
+                    }
                     setCreditSuccess()
                     onSendInvitation(guest)
 
@@ -1112,15 +1602,69 @@ export const SideEvents = () => {
     }, [id])
 
 
+    // Si hay un lote de envío masivo en curso para este side event (p. ej. tras
+    // recargar o cambiar de evento), revivir la isla de progreso.
+    const getActiveBatch = async (sideEventId) => {
+        if (!sideEventId) return
+        const { data } = await supabase
+            .from('invitation_send_batches')
+            .select('id, total, sent_count, failed_count, status')
+            .eq('side_event_id', sideEventId)
+            .eq('status', 'processing')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        if (data) {
+            setActiveBatch({ id: data.id, total: data.total, sent: data.sent_count, failed: data.failed_count, status: data.status })
+        }
+    }
+
+    // Polling del lote activo cada 2.5s — al completarse refresca créditos
+    // (por el reembolso de fallidos).
     useEffect(() => {
-        if (current)
+        if (!activeBatch || activeBatch.status !== 'processing') return
+
+        const timer = setInterval(async () => {
+            const { data } = await supabase
+                .from('invitation_send_batches')
+                .select('total, sent_count, failed_count, status')
+                .eq('id', activeBatch.id)
+                .maybeSingle()
+
+            if (!data) return
+            setActiveBatch((prev) => prev ? { ...prev, total: data.total, sent: data.sent_count, failed: data.failed_count, status: data.status } : prev)
+            if (data.status === 'completed') {
+                getCredits()
+            }
+        }, 2500)
+
+        return () => clearInterval(timer)
+    }, [activeBatch?.id, activeBatch?.status])
+
+    useEffect(() => {
+        if (current) {
             getGuests()
-    }, [current])
+            // Al cambiar de side event: salir del modo envío y buscar su lote activo
+            setSendMode(false)
+            setBulkSelected(new Set())
+            setActiveBatch(null)
+            getActiveBatch(current.id)
+        }
+    }, [current?.id])
 
     useEffect(() => {
         setCreatedData(groupByFamilyForStates(rawData, ['creado']))
         setWaitingData(groupByFamilyForStates(rawData, ['esperando']))
-        setConfirmedData(groupByFamilyForStates(rawData, ['confirmado', 'rechazado']))
+        setConfirmedData(groupByFamilyForStates(rawData, ['confirmado']))
+        setRejectedData(groupByFamilyForStates(rawData, ['rechazado']))
+        // Poda la selección bulk: si un guest ya no está en 'creado', sale solo
+        setBulkSelected((prev) => {
+            if (prev.size === 0) return prev
+            const stillCreated = new Set(rawData.filter((g) => g.state === 'creado').map((g) => g.id))
+            const next = new Set([...prev].filter((sid) => stillCreated.has(sid)))
+            return next.size === prev.size ? prev : next
+        })
     }, [rawData])
 
     useEffect(() => {
@@ -1295,7 +1839,7 @@ export const SideEvents = () => {
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', width: '100%' }}>
                                                         {
                                                             !current?.body?.image &&
-                                                            <div className='add_image_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }}>
+                                                            <div className='add_image_cont'>
                                                                 <LuImage style={{ color: '#FFF' }} />
                                                             </div>
                                                         }
@@ -1303,7 +1847,7 @@ export const SideEvents = () => {
                                                         <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'} />
                                                     </div>
 
-                                                    <div className='side_info_cont' style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40`, overflow: addressOpen ? 'visible' : 'hidden' }}>
+                                                    <div className='side_info_cont' style={{ overflow: addressOpen ? 'visible' : 'hidden' }}>
                                                         <TextArea
                                                             key={`
                                             ${current?.body?.title?.size}-
@@ -1464,26 +2008,25 @@ export const SideEvents = () => {
 
                                             {!handlePreview
                                                 ? <Button onClick={saveSideEvent} icon={<LuUpload />} className={'save_button_sidee'}>{t('side_events.btn_save')}</Button>
-                                                : <Button icon={<LuCornerUpLeft />} onClick={() => setHandlePreview(false)}>{t('side_events.btn_back')}</Button>
+                                                : <Button icon={<LuCornerUpLeft />} onClick={() => setHandlePreview(false)} className={'save_button_sidee'}>{t('side_events.btn_back')}</Button>
                                             }
 
                                             {!handlePreview && (
                                                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px' }}>
                                                     <Tooltip title={t('side_events.tooltip_preview')}>
-                                                        <Button icon={<LuPlay />} onClick={() => setHandlePreview(true)} style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' />
+                                                        <Button icon={<LuPlay />} onClick={() => setHandlePreview(true)} className='preview_button_sidee' />
                                                     </Tooltip>
 
                                                     <Tooltip title={current?.body?.hideWeather ? t('side_events.tooltip_show_weather') : t('side_events.tooltip_hide_weather')}>
                                                         <Button
                                                             icon={current?.body?.hideWeather ? <CloudOff size={16} /> : <Cloud size={16} />}
                                                             onClick={() => setCurrent((prev) => ({ ...prev, body: { ...prev.body, hideWeather: !prev.body?.hideWeather } }))}
-                                                            style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }}
                                                             className='preview_button_sidee'
                                                         />
                                                     </Tooltip>
 
                                                     {screens.xs ? (
-                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuPalette />} onClick={() => setColorDrawerOpen(true)} />
+                                                        <Button className='preview_button_sidee' icon={<LuPalette />} onClick={() => setColorDrawerOpen(true)} />
                                                     ) : (
                                                         <Dropdown
                                                             placement='bottomLeft'
@@ -1494,12 +2037,12 @@ export const SideEvents = () => {
                                                                 </div>
                                                             )}
                                                         >
-                                                            <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuPalette />} />
+                                                            <Button className='preview_button_sidee' icon={<LuPalette />} />
                                                         </Dropdown>
                                                     )}
 
                                                     {screens.xs ? (
-                                                        <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuType />} onClick={() => setFontDrawerOpen(true)} />
+                                                        <Button className='preview_button_sidee' icon={<LuType />} onClick={() => setFontDrawerOpen(true)} />
                                                     ) : (
                                                         <Dropdown
                                                             trigger={['click']}
@@ -1531,7 +2074,7 @@ export const SideEvents = () => {
                                                                 </div>
                                                             )}
                                                         >
-                                                            <Button style={{ backgroundColor: `${current?.body?.color ?? "#000000"}40` }} className='preview_button_sidee' icon={<LuType />} />
+                                                            <Button className='preview_button_sidee' icon={<LuType />} />
                                                         </Dropdown>
                                                     )}
                                                 </div>
@@ -1550,20 +2093,46 @@ export const SideEvents = () => {
                                             <span style={{ fontFamily: 'Poppins', fontSize: '18px', fontWeight: 600, display: 'block', marginBottom: '12px' }}>{t('side_events.mobile_guests')}</span>
                                         )}
 
+                                        {/* En modo envío el bloque se tiñe de azul con las instrucciones */}
+                                        <div style={{
+                                            marginBottom: 12, boxSizing: 'border-box', transition: 'background 0.3s ease, border 0.3s ease',
+                                            borderRadius: 16,
+                                            ...(sendMode && {
+                                                background: 'var(--blue-bg-40)',
+                                                border: '1px solid var(--blue-color-20)',
+                                                padding: 12,
+                                            }),
+                                        }}>
+                                            {renderRsvpDeadlineBar()}
+                                            {sendMode && (
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 10 }}>
+                                                    <Info size={14} style={{ flexShrink: 0, color: 'var(--blue-color)', marginTop: 2 }} />
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue-color)' }}>
+                                                            {t('guests.bulk_mode_title')}
+                                                        </span>
+                                                        <span style={{ fontSize: 12, color: '#787878' }}>
+                                                            {t('guests.bulk_mode_instructions')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <Tabs
                                             className="side-tabs"
+                                            activeKey={activeKey}
+                                            onChange={setActiveKey}
                                             style={screens.xs ? { overflow: 'visible' } : undefined}
                                             type="card"
                                             items={items}
                                             tabBarExtraContent={
                                                 <div className='single_row' style={{ marginBottom: '12px', }}>
 
-                                                    {
-                                                        !screens.xs &&
-
-                                                        <CustomLink backuImage={current?.body?.image} urlImage={current?.url_image} url={`https://www.iattend.events/side-event/${current?.id}`} id={id} handleImage={updateURLimage} name={current?.name} />
-                                                    }
-                                                    <Dropdown
+                                                    {/* Bulk shipment: Crear envío / Enviar todos + Cancelar */}
+                                                    {activeKey === 'creado' && renderBulkActionsBar()}
+                                                    {/* El botón de agregar se oculta durante el modo envío */}
+                                                    {!sendMode && <Dropdown
                                                         key={0}
                                                         trigger={['click']}
                                                         placement='bottomRight'
@@ -1644,7 +2213,7 @@ export const SideEvents = () => {
                                                         )}
                                                     >
                                                         <Button className='primarybutton--active' icon={<Plus size={14} />} >{t('side_events.btn_add')}</Button>
-                                                    </Dropdown>
+                                                    </Dropdown>}
 
 
                                                     {/* <Button onClick={() => setOpen(false)} className='primarybutton' icon={<LuX />}></Button> */}
@@ -1750,6 +2319,64 @@ export const SideEvents = () => {
                 </Layout >
 
                 <GuestsCRUD rowData={rawData} invitationID={id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} />
+
+                {/* Isla de progreso del envío masivo (estilo dynamic island) */}
+                {activeBatch && (
+                    <div style={{
+                        position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+                        zIndex: 1200, backgroundColor: '#0c171b', color: '#FFFFFF',
+                        borderRadius: 99, padding: '10px 20px',
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        boxShadow: '0 0 12px rgba(0, 0, 0, 0.35)',
+                        minWidth: 320, maxWidth: '90vw', boxSizing: 'border-box',
+                    }}>
+                        {activeBatch.status === 'processing'
+                            ? <Send size={16} style={{ flexShrink: 0, color: 'var(--blue-color)' }} />
+                            : <Check size={16} style={{ flexShrink: 0, color: '#43B75D' }} />}
+
+                        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 4, minWidth: 0 }}>
+                            <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                                {activeBatch.status === 'processing' ? t('guests.bulk_island_sending') : t('guests.bulk_island_done')}
+                                {` · ${activeBatch.sent + activeBatch.failed}/${activeBatch.total}`}
+                                {activeBatch.failed > 0 && ` · ${activeBatch.failed} ${t('guests.bulk_island_failed')}`}
+                            </span>
+                            <Progress
+                                percent={Math.round(((activeBatch.sent + activeBatch.failed) / Math.max(activeBatch.total, 1)) * 100)}
+                                showInfo={false}
+                                size={[undefined, 6]}
+                                strokeColor='var(--blue-color)'
+                                railColor='#FFFFFF20'
+                                style={{ margin: 0, lineHeight: 0 }}
+                            />
+                        </div>
+
+                        {activeBatch.status !== 'processing' && (
+                            <Button
+                                type='text'
+                                size='small'
+                                icon={<X size={14} style={{ color: '#FFFFFF' }} />}
+                                onClick={() => setActiveBatch(null)}
+                                style={{ flexShrink: 0 }}
+                            />
+                        )}
+                    </div>
+                )}
+
+                {/* Saldo insuficiente para recordatorios: CTA directo a la compra de créditos. */}
+                <Modal
+                    open={buyCreditsOpen}
+                    onCancel={() => setBuyCreditsOpen(false)}
+                    footer={null}
+                    title={t('guests.reminder_buy_credits_title')}
+                    style={{ borderRadius: 24 }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
+                        <span style={{ fontSize: 13, color: '#787878' }}>
+                            {t('guests.reminder_buy_credits_body', { credits })}
+                        </span>
+                        <CreditsComponent invitationID={id} creditsDisplay={credits} />
+                    </div>
+                </Modal>
                 <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />
                 <FooterApp></FooterApp>
             </Layout >

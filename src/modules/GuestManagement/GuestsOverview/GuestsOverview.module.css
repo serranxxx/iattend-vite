@@ -1,0 +1,863 @@
+/* Dashboard de invitados — rediseño de Claude Design.
+   Paleta y tipografía propias del rediseño: papel cálido, acento violeta,
+   Plus Jakarta Sans para texto y JetBrains Mono para cifras. */
+
+.wrapper {
+    --ink: #14131A;
+    --card: #FFFFFF;
+    --border: #E7E4DD;
+    --border-soft: #EFEDE7;
+    --accent: #5B2EE5;
+    --accent-soft: #F1ECFF;
+    --accent-pale: #C9BDFF;
+    --muted: #8C8898;
+    --muted-2: #6E6B7B;
+    --sand: #9A9689;
+    --rail: #F1EFE9;
+    --beige: #FAF9F6;
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 40px;
+    font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+.wrapper * {
+    box-sizing: border-box;
+}
+
+.topGrid,
+.bottomGrid {
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap: 18px;
+    width: 100%;
+}
+
+.topGrid {
+    align-items: stretch;
+}
+
+.bottomGrid {
+    align-items: start;
+}
+
+/* Con Lia oculta (SHOW_LIA = false) el hero ocupa todo el ancho */
+.topGridSolo {
+    grid-template-columns: 1fr;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+/* ── Hero de confirmados ──────────────────────────────────────────────── */
+
+.heroCard {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+}
+
+.heroTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.heroFigure {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--sand);
+}
+
+.bigRow {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.big {
+    font-size: 62px;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.9;
+}
+
+.bigOf {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sand);
+    letter-spacing: -0.02em;
+}
+
+.heroAside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    text-align: right;
+}
+
+.deadlineChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #FDF1E4;
+    color: #A8600A;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.deadlineChip i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #E08A16;
+    display: inline-block;
+}
+
+.asideNote {
+    font-size: 12.5px;
+    color: var(--muted-2);
+}
+
+.asideNote b {
+    color: var(--ink);
+}
+
+/* ── Barra de capacidad ───────────────────────────────────────────────── */
+
+.progressBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.rail {
+    height: 12px;
+    border-radius: 999px;
+    background: var(--border-soft);
+    overflow: hidden;
+    display: flex;
+}
+
+.railFill {
+    background: var(--accent);
+}
+
+.railProj {
+    background: var(--accent-pale);
+}
+
+.progressLegend {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--muted-2);
+    flex-wrap: wrap;
+}
+
+.progressLegend b {
+    color: var(--ink);
+}
+
+/* ── Cuadrícula de métricas ───────────────────────────────────────────── */
+
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.statCell {
+    background: var(--card);
+    padding: 14px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.statLabel {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.statValueRow {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.statValue {
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.statDelta {
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.toneWarn { color: #A8600A; }
+.toneMuted { color: var(--muted); }
+.toneGood { color: #1F9D6B; }
+
+/* ── Tarjeta de Lia ───────────────────────────────────────────────────── */
+
+.liaCard {
+    background: var(--ink);
+    background-image: radial-gradient(120% 90% at 100% 0%, #2A1D57 0%, #14131A 62%);
+    border-radius: 20px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 22px;
+    color: #F3F2EE;
+    min-width: 0;
+}
+
+.liaHead {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.liaBrand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.liaSpark {
+    color: var(--accent-pale);
+    font-size: 14px;
+}
+
+.liaKicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: #9B93BE;
+}
+
+.liaTitle {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+}
+
+.liaText {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #A7A2BB;
+}
+
+.liaActions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.liaCta {
+    width: 100%;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent-pale);
+    color: #1B1233;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.liaCta:hover {
+    background: #DDD2FF;
+}
+
+.liaLink {
+    text-align: center;
+    font-size: 12px;
+    color: #8B86A3;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.liaLink:hover {
+    color: var(--accent-pale);
+}
+
+/* ── Tarjetas ─────────────────────────────────────────────────────────── */
+
+.card,
+.cardBeige {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.cardBeige {
+    background: var(--beige);
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cardTitle {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.cardMeta {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.cardFoot {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    border-top: 1px solid var(--rail);
+    padding-top: 12px;
+}
+
+.cardFootPlain {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.monoBold {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+/* ── Casos ────────────────────────────────────────────────────────────── */
+
+.caseList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.caseRow,
+.caseRowDashed {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 16px;
+    border-radius: 14px;
+    flex-wrap: wrap;
+}
+
+.caseRow {
+    border: 1px solid var(--border);
+    background: var(--card);
+}
+
+.caseDanger {
+    background: #FEF4F3;
+    border-color: #F6DAD7;
+}
+
+.caseDanger .caseIcon {
+    background: #FBE2DF;
+    color: #C4392F;
+}
+
+.caseWarn {
+    background: #FEF8EF;
+    border-color: #F3E3CA;
+}
+
+.caseWarn .caseIcon {
+    background: #FAEBD4;
+    color: #A8600A;
+}
+
+.caseRowDashed {
+    border: 1px dashed #DDD9D0;
+    background: var(--beige);
+}
+
+.caseIcon,
+.caseIconMuted {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.caseIconMuted {
+    background: var(--border-soft);
+    color: var(--muted-2);
+    font-size: 14px;
+}
+
+.caseTexts {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.caseTitle {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+.casePeople {
+    font-size: 12.5px;
+    color: #7C7889;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.caseActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.btnGhost,
+.btnLia,
+.btnDark {
+    height: 36px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btnGhost {
+    padding: 0 16px;
+    border: 1px solid #DDD9D0;
+    background: var(--card);
+    color: var(--ink);
+}
+
+.btnGhost:hover {
+    border-color: var(--ink);
+}
+
+.btnLia {
+    padding: 0 14px;
+    border: none;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btnLia:hover {
+    background: #E4DBFF;
+}
+
+.btnDark {
+    height: 44px;
+    padding: 0 22px;
+    border: none;
+    background: var(--ink);
+    color: #fff;
+    font-size: 13px;
+    border-radius: 12px;
+}
+
+.btnDark:hover {
+    background: #2B2837;
+}
+
+.sectionRule {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+.ruleLine {
+    height: 1px;
+    flex: 1;
+    background: var(--border-soft);
+}
+
+.ruleLabel {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--sand);
+    text-align: center;
+}
+
+.allClear {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted-2);
+}
+
+/* ── Gráfica de avance ────────────────────────────────────────────────── */
+
+.plotWrap {
+    position: relative;
+}
+
+.plot {
+    display: block;
+    overflow: visible;
+}
+
+.badgeToday,
+.badgeProj {
+    position: absolute;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+.badgeToday {
+    left: 52%;
+    top: 6px;
+    background: var(--ink);
+    color: #fff;
+}
+
+.badgeProj {
+    right: 0;
+    top: -6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--sand);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Embudo ───────────────────────────────────────────────────────────── */
+
+.funnel {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.funnelRow {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.funnelHead {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    gap: 8px;
+}
+
+.funnelLabel {
+    font-weight: 600;
+    color: #3C3949;
+}
+
+.funnelRail {
+    height: 9px;
+    border-radius: 999px;
+    background: var(--rail);
+    overflow: hidden;
+}
+
+.funnelFill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+/* ── Salud de los envíos ──────────────────────────────────────────────── */
+
+.healthRow {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.donut {
+    width: 118px;
+    height: 118px;
+    flex: 0 0 118px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.donutHole {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+}
+
+.donutPct {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.donutLabel {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.healthLegend {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.healthItem {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.healthLabel {
+    flex: 1;
+    color: #3C3949;
+    font-weight: 500;
+}
+
+/* ── Etiquetas ────────────────────────────────────────────────────────── */
+
+.tagList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tagRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tagLabel {
+    width: 62px;
+    flex: 0 0 62px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #3C3949;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.tagRail {
+    flex: 1;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--rail);
+    overflow: hidden;
+}
+
+.tagFill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+}
+
+.tagPct {
+    width: 34px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+/* ── Recordatorios ────────────────────────────────────────────────────── */
+
+.remindRow {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.remindBig {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.remindOf {
+    font-size: 13px;
+    color: var(--muted-2);
+    line-height: 1.4;
+}
+
+.remindEmpty {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted-2);
+}
+
+/* ── Estados tempranos ────────────────────────────────────────────────── */
+
+.blankState {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 56px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.blankKicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--sand);
+}
+
+.blankTitle {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+}
+
+.blankText {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--muted-2);
+    max-width: 460px;
+}
+
+.blankState .btnDark {
+    margin-top: 8px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 1180px) {
+    .topGrid,
+    .bottomGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 750px) {
+    .heroCard,
+    .card,
+    .cardBeige,
+    .liaCard {
+        padding: 20px 18px;
+    }
+
+    .big {
+        font-size: 48px;
+    }
+
+    .statGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

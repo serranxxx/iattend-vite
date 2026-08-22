@@ -89,7 +89,7 @@
 
 .side_invitation_cont {
     flex: 1;
-    max-width: 370px;
+    max-width: 345px;
     min-width: 370px;
     height: 88vh;
     background-image: linear-gradient(to top, #EEE, #CCC);
@@ -205,6 +205,8 @@
     position: relative;
 }
 
+/* liquid glass (variante oscura): mismos parámetros que el LanguageToggle de
+   iattend-events pero con cuerpo ahumado, para conservar íconos/texto blancos */
 .add_image_cont {
     display: flex;
     align-items: center;
@@ -212,11 +214,18 @@
     border-radius: 99px;
     width: 40px;
     height: 40px;
-    background-color: #00000040;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background-color: rgba(0, 0, 0, 0.38);
     color: #FFFFFF;
     font-size: 18px;
     z-index: 2;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .side_info_cont {
@@ -225,13 +234,39 @@
     justify-content: center;
     flex-direction: column;
     width: 100%;
-    background-color: #00000040;
+    /* liquid glass oscuro — ver nota en .add_image_cont */
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background-color: rgba(0, 0, 0, 0.38);
     color: #FFFFFF;
     padding: 0px;
     border-radius: 16px;
     overflow: hidden;
     z-index: 3;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Trigger del selector de imágenes (StorageImages) dentro del editor de side
+   events: receta blanca del LanguageToggle, igual que la toolbar. Scoped para
+   no afectar el .full-screen-button del builder de invitación. */
+.side_invitation_cont .full-screen-button,
+.side_invitation_cont .full-screen-button:hover,
+.side_invitation_cont .full-screen-button:focus {
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.42) !important;
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.65),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+    color: #111 !important;
 }
 
 .side_title_input {
@@ -376,11 +411,19 @@
     min-height: 34px;
     border-radius: 99px;
     min-width: 34px;
-    /* background-color: #00000040 !important; */
-    backdrop-filter: blur(10px);
-    border: none;
-    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
-    color: #FFFFFF !important;
+    /* liquid glass — misma receta que el LanguageToggle de iattend-events
+       (language-toggle.module.css .trigger): vidrio blanco con ícono oscuro,
+       legible sobre fondos claros y oscuros */
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.42) !important;
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.65),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+    color: #111 !important;
     transition: all 0.3s ease;
 }
 
@@ -390,13 +433,9 @@
     transform: scale(1.05);
 }
 
-.save_button_sidee {
-    background-color: #FFFFFF80 !important;
-    color: #000 !important;
-}
-
 .preview_close_button_sidee {
-    background-color: #00000080 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    color: #FFFFFF !important;
 }
 
 

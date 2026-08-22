@@ -1,4 +1,5 @@
-import { Badge, Button, Dropdown, Input, Layout, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Spin } from 'antd'
+import { Badge, Button, DatePicker, Dropdown, Input, Layout, Modal, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Spin } from 'antd'
+import dayjs from 'dayjs'
 import React, { useEffect, useMemo, useState } from 'react'
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { Pie } from 'react-chartjs-2';
@@ -26,7 +27,9 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, List, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Tag, TextAlignJustify, Tickets, Users, X } from 'lucide-react';
+import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, List, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Sparkles, Tag, TextAlignJustify, Tickets, Users, X } from 'lucide-react';
+import { WHATS_NEW_OPEN_EVENT } from '../../components/WhatsNewBanners/WhatsNewBanners';
+import { GuestsOverview } from './GuestsOverview/GuestsOverview';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { GuestAddTiles } from './GuestAddTiles';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +37,7 @@ import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
 import { useLia } from '../../context/LiaContext';
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext';
 import { POPULAR_LANGUAGES, flagForLanguage } from '../../helpers/services/languageFlags';
+import { formatAbsoluteDateEs } from '../../helpers/assets/eventDateTime';
 
 const { useBreakpoint } = Grid;
 
@@ -41,6 +45,16 @@ const { useBreakpoint } = Grid;
 
 
 ChartJS.register(ArcElement, Legend);
+
+// ── Envío masivo oculto para la primera versión en producción ─────────────
+// Poner en true para restaurar: botón "Crear envío" (desktop y mobile), el modo
+// de selección por bloques y su checkbox. Con el flag apagado, cada bloque
+// vuelve a tener su botón de "Enviar" individual.
+const SHOW_BULK_SEND = false;
+
+// ── Distribución (gráfica de pastel) del control de pases ─────────────────
+// Poner en true para restaurar el bloque "DISTRIBUCIÓN" del dropdown de pases.
+const SHOW_TICKETS_DISTRIBUTION = false;
 
 export default function GuestsPage() {
 
@@ -84,7 +98,7 @@ export default function GuestsPage() {
     const [tables, setTables] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [credits, setCredits] = useState(0)
-    const [activeKey, setActiveKey] = useState('confirmado');
+    const [activeKey, setActiveKey] = useState('seguimiento');
     const [invitation, setInvitation] = useState(null)
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -117,6 +131,21 @@ export default function GuestsPage() {
     const [plan, setPlan] = useState(null)
     const [invLabel, setInvLabel] = useState(null)
     const [invPhone, setInvPhone] = useState(null)
+    // Recordatorios manuales de WhatsApp (Fase 1): fecha límite de confirmación
+    // (columna top-level invitations.rsvp_deadline, tipo date) y estado del modal.
+    const [rsvpDeadline, setRsvpDeadline] = useState(null)
+    const [eventDate, setEventDate] = useState(null)
+    // Mobile: el banner de deadline es colapsable (texto + chevron)
+    const [rsvpBarOpen, setRsvpBarOpen] = useState(false)
+    const [buyCreditsOpen, setBuyCreditsOpen] = useState(false)
+    // Bulk shipment (tab Lista de espera): "Crear envío" activa el modo envío —
+    // solo entonces aparecen los checkboxes (únicamente en bloques enviables).
+    // bulkSelected guarda ids de PRINCIPALES; se seleccionan bloques completos.
+    const [sendMode, setSendMode] = useState(false)
+    const [bulkSelected, setBulkSelected] = useState(() => new Set())
+    const [bulkSending, setBulkSending] = useState(false)
+    // Lote activo de envío masivo (isla de progreso): { id, total, sent, failed, status }
+    const [activeBatch, setActiveBatch] = useState(null)
 
     const hasPendingInfo = !name || !owners?.length || !invLabel || !invPhone
 
@@ -501,7 +530,7 @@ export default function GuestsPage() {
             dataIndex: "name",
             key: "name",
             fixed: "left",
-            width: screens.xs ? 190 : 260,
+            width: screens.xs ? 140 : 260,
             render: (value, record) => {
                 const isChild = record.__isGroupChild;
 
@@ -520,8 +549,6 @@ export default function GuestsPage() {
                         className="tag-container"
                         style={{ justifyContent: "flex-start", width: "100%", paddingLeft: 32 }}
                     >
-
-
                         <span className="guest-name-text" style={{ textAlign: "left" }}>{value}</span>
                     </div>
                 );
@@ -690,18 +717,14 @@ export default function GuestsPage() {
             minWidth: plan !== 'pro' ? 180 : 160,
             fixed: screens.xs ? undefined : "right",
             render: (_, record) => {
-                const { state, table, phone_number } = record;
+                const { state, table } = record;
                 const isChild = record.__isGroupChild;
 
                 if (isChild) {
+                    // Acompañantes en Enviadas: celda vacía — el estado del envío
+                    // y el recordatorio viven solo en el principal.
                     if (state === "esperando") {
-                        return (
-                            <div className="tag-container">
-                                <span className="new-table-tag companion-tag">
-                                    {t('guests.companion_tag')}
-                                </span>
-                            </div>
-                        );
+                        return null;
                     }
                     if (!(state === "confirmado" || state === "asistente")) {
                         return null;
@@ -710,59 +733,68 @@ export default function GuestsPage() {
                 }
 
                 if (state === "creado") {
-                    return (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 6,
-                                width: "100%",
-                            }}
-                        >
-                            <Tooltip placement='topRight'
+                    if (record.companion_id !== null && record.companion_id !== undefined) {
+                        return null;
+                    }
 
-                                title={plan !== 'pro' ? '' : !/^\+52\d+/.test(phone_number) ? t('guests.tooltip_national_only') : ""} color="var(--brand-color-500)">
-                                {enabledExtraLanguages.length === 0 ? (
-                                    <Button
-                                        disabled={
-                                            !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
-                                        }
-                                        onClick={() => onSedingInvitation(record, false)}
-                                        className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active'}`}
-                                        icon={<Send size={14} />}
-                                        style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
-                                    >
-                                        {t('guests.btn_send')}
-                                    </Button>
-                                ) : (
-                                    <Dropdown
-                                        trigger={['click']}
-                                        disabled={
-                                            !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
-                                        }
-                                        popupRender={() => renderSendLanguagePopup(record, false)}
-                                    >
+                    // Modo envío masivo: checkbox solo en enviables
+                    if (SHOW_BULK_SEND && sendMode) {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
+                                {isSendableGuest(record) && renderBulkCheck(record)}
+                            </div>
+                        );
+                    }
+
+                    const sendDisabled = !/^\+52\d+/.test(record.phone_number) || credits <= 0 || plan !== 'pro';
+                    const sendBtnClass = plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active';
+                    const sendBtnStyle = { flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 };
+
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
+                            {/* Envío individual por bloque */}
+                            {!SHOW_BULK_SEND && (
+                                <Tooltip
+                                    placement='topRight'
+                                    title={plan !== 'pro' ? '' : !/^\+52\d+/.test(record.phone_number) ? t('guests.tooltip_national_only') : ''}
+                                    color="var(--brand-color-500)"
+                                >
+                                    {enabledExtraLanguages.length === 0 ? (
                                         <Button
-                                            disabled={
-                                                !/^\+52\d+/.test(phone_number) || credits <= 0 || plan !== 'pro'
-                                            }
-                                            className={`${plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active'}`}
+                                            disabled={sendDisabled}
+                                            onClick={() => onSedingInvitation(record, false)}
+                                            className={sendBtnClass}
                                             icon={<Send size={14} />}
-                                            style={{ flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 }}
+                                            style={sendBtnStyle}
                                         >
                                             {t('guests.btn_send')}
                                         </Button>
-                                    </Dropdown>
-                                )}
-                            </Tooltip>
+                                    ) : (
+                                        <Dropdown
+                                            trigger={['click']}
+                                            disabled={sendDisabled}
+                                            popupRender={() => renderSendLanguagePopup(record, false)}
+                                        >
+                                            <Button
+                                                disabled={sendDisabled}
+                                                className={sendBtnClass}
+                                                icon={<Send size={14} />}
+                                                style={sendBtnStyle}
+                                            >
+                                                {t('guests.btn_send')}
+                                            </Button>
+                                        </Dropdown>
+                                    )}
+                                </Tooltip>
+                            )}
 
-                            <Tooltip placement='bottomLeft' title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><FaCheck size={12} /><span>{t('guests.tooltip_mark_invited')}</span></div>} color="var(--brand-color-500)">
+                            {/* Marcar como invitado a mano, sin WhatsApp */}
+                            <Tooltip placement='topRight' title={t('guests.mark_arrow_tooltip')} color="var(--brand-color-500)">
                                 <Button
                                     onClick={() => onSendInvitation(record)}
-                                    className="primarybutton--active"
-                                    icon={<Check size={14} style={{ marginTop: '2px' }} />}
-                                    style={{ minWidth: 30, maxWidth: 30, maxHeight: 30 }}
+                                    className='primarybutton'
+                                    icon={<ArrowRight size={14} style={{ marginTop: 2 }} />}
+                                    style={{ minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99 }}
                                 />
                             </Tooltip>
                         </div>
@@ -770,6 +802,11 @@ export default function GuestsPage() {
                 }
 
                 if (state === "esperando") {
+                    // En vista plana/filtrada los acompañantes llegan aquí sin
+                    // __isGroupChild — misma regla: celda vacía para acompañantes.
+                    if (record.companion_id !== null && record.companion_id !== undefined) {
+                        return null;
+                    }
                     return (
                         <div
                             style={{
@@ -781,6 +818,7 @@ export default function GuestsPage() {
                             }}
                         >
                             {handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')}
+                            {renderReminderButton(record)}
                         </div>
 
                     );
@@ -908,7 +946,7 @@ export default function GuestsPage() {
                 return null;
             },
         },
-    ]), [rowData, name, messagesDispatch, tables]);
+    ]), [rowData, name, messagesDispatch, tables, credits, rsvpDeadline, bulkSelected, sendMode]);
 
     const tableProps = useMemo(() => ({
         rowKey: "id",
@@ -932,11 +970,16 @@ export default function GuestsPage() {
 
         switch (state) {
             case "creado":
-                return withTierSort(baseColumns.filter((col) => col.key !== "table"));
-            case "esperando":
+                // Con envío masivo activo la columna de acciones es el checkbox
+                // de selección; con el flag apagado conserva título y ancho base
                 return withTierSort(baseColumns
                     .filter((col) => col.key !== "table")
-                    .map((col) => (col.key === "send" ? { ...col, title: renderSortableHeader(t('guests.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
+                    .map((col) => (col.key === "send" && SHOW_BULK_SEND ? { ...col, title: renderBulkHeaderCheck(), width: 100, minWidth: 100 } : col)));
+            case "esperando":
+                // width extra: además del chip de estado, la celda lleva el botón de recordatorio
+                return withTierSort(baseColumns
+                    .filter((col) => col.key !== "table")
+                    .map((col) => (col.key === "send" ? { ...col, width: 210, minWidth: 210, title: renderSortableHeader(t('guests.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
             case "confirmado":
                 return withTierSort(baseColumns
                     .filter((col) => col.key !== "table")
@@ -1081,7 +1124,7 @@ export default function GuestsPage() {
                                 onClick={() => onSedingInvitation(record, true)}
                                 className="primarybutton--active"
                                 icon={<MailWarning size={16} />}
-                                style={{ flex: 1, maxHeight: 30 }}
+                                style={{ width: 155, maxHeight: 30 }}
                             >
                                 {t('guests.msg_retry')}
                             </Button>
@@ -1099,7 +1142,7 @@ export default function GuestsPage() {
                                     }
                                     className="primarybutton--active"
                                     icon={<MailWarning size={16} />}
-                                    style={{ flex: 1, maxHeight: 30 }}
+                                    style={{ width: 155, maxHeight: 30 }}
                                 >
                                     {t('guests.msg_retry')}
                                 </Button>
@@ -1115,7 +1158,7 @@ export default function GuestsPage() {
 
             default:
                 return (
-                    <div className={`new-table-tag manual-sent-tag dispatch_message_tag`}>
+                    <div style={{ flex: 1, maxWidth: '155px' }} className={`new-table-tag manual-sent-tag dispatch_message_tag`}>
                         {t('guests.msg_manual')}
                     </div>
                 )
@@ -1367,7 +1410,7 @@ export default function GuestsPage() {
     const getType = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('type, credits, name, tags, owners, url_image, plan, label, phone_number')
+            .select('type, credits, name, tags, owners, url_image, plan, label, phone_number, rsvp_deadline, event_date')
             .eq('id', id)
             .maybeSingle()
 
@@ -1378,6 +1421,8 @@ export default function GuestsPage() {
 
 
         setCredits(data.credits)
+        setRsvpDeadline(data.rsvp_deadline ?? null)
+        setEventDate(data.event_date ?? null)
         setName(data.name)
         setOpenCard(data.type === 'open' ? true : false)
         getGuests()
@@ -1587,8 +1632,13 @@ export default function GuestsPage() {
                 messaging_product: "whatsapp",
                 to: guest.phone_number.replace(/^\+/, ""),
                 type: "template",
+                // Tres variantes sobre el mismo endpoint/registro:
+                //  - retry → invitation_retry (utility, body solo con el título)
+                //  - con rsvp_deadline → invitation_deadline (igual que v2 + {{3}}
+                //    con la fecha límite, mismo formato que los reminders)
+                //  - sin fecha → invitation_v2
                 template: {
-                    name: "invitation_v2",
+                    name: retry ? "invitation_retry" : rsvpDeadline ? "invitation_deadline" : "invitation_v2",
                     language: {
                         code: "es_MX",
                     },
@@ -1606,16 +1656,29 @@ export default function GuestsPage() {
                         },
                         {
                             type: "body",
-                            parameters: [
-                                {
-                                    type: "text",
-                                    text: `${invitation.cover.title.text.value} - ${formatAbsoluteDate(invitation.cover.date.value)}`,
-                                },
-                                {
-                                    type: "text",
-                                    text: guest.name,
-                                },
-                            ],
+                            parameters: retry
+                                ? [
+                                    {
+                                        type: "text",
+                                        text: invitation.cover.title.text.value,
+                                    },
+                                ]
+                                : [
+                                    {
+                                        type: "text",
+                                        text: `${invitation.cover.title.text.value} - ${formatAbsoluteDate(invitation.cover.date.value)}`,
+                                    },
+                                    {
+                                        type: "text",
+                                        text: guest.name,
+                                    },
+                                    // invitation_deadline agrega {{3}}: la fecha límite,
+                                    // mismo formato que los reminders
+                                    ...(rsvpDeadline ? [{
+                                        type: "text",
+                                        text: formatAbsoluteDateEs(rsvpDeadline),
+                                    }] : []),
+                                ],
                         },
                         {
                             type: "button",
@@ -1703,6 +1766,244 @@ export default function GuestsPage() {
         setCredits(updateCredits?.[0]?.credits ?? newCredits)
 
         // console.log('Créditos actualizados correctamente:', newCredits)
+    }
+
+    // ── Recordatorios manuales de WhatsApp (Fase 1) ──────────────────────────
+
+    // formatAbsoluteDateEs (mes en español, para el {{3}} del template y las
+    // barras de fecha límite) vive en helpers/assets/eventDateTime — compartido
+    // con SideEvents.
+
+    const hasSentReminders = rowData.some((g) => (g.reminder_count ?? 0) > 0)
+
+    // Guarda rsvp_deadline como UPDATE directo a la columna top-level — nunca
+    // vía publish_invitation, para no generar una fila en invitation_versions
+    // (contaminaría la señal del sistema de reviews). Fecha absoluta sin
+    // timezone: se persiste como 'YYYY-MM-DD'.
+    const onSaveRsvpDeadline = async (dateValue) => {
+        if (!dateValue) return
+        const newDeadline = dateValue.format('YYYY-MM-DD')
+
+        const { error } = await supabase
+            .from('invitations')
+            .update({ rsvp_deadline: newDeadline })
+            .eq('id', id)
+
+        if (error) {
+            console.error('Error al guardar rsvp_deadline:', error)
+            message.error(t('guests.rsvp_deadline_error'))
+            return
+        }
+
+        if (rsvpDeadline && newDeadline !== rsvpDeadline && hasSentReminders) {
+            // No bloquea: los invitados ya recibieron recordatorios con la fecha anterior
+            message.warning(t('guests.rsvp_deadline_changed_warning'))
+        } else if (dateValue.diff(dayjs().startOf('day'), 'day') < 5) {
+            message.warning(t('guests.rsvp_deadline_soon_warning'))
+        } else {
+            message.success(t('guests.rsvp_deadline_saved'))
+        }
+
+        setRsvpDeadline(newDeadline)
+    }
+
+    const rsvpDisabledDate = (d) => {
+        if (!d) return false
+        if (!d.isAfter(dayjs().startOf('day'), 'day')) return true // debe ser futura
+        if (eventDate && d.isAfter(dayjs(eventDate), 'day')) return true // <= fecha del evento
+        return false
+    }
+
+    // Motivo por el que un grupo no puede recibir recordatorio (null = elegible).
+    // El botón se muestra deshabilitado con el motivo visible, nunca se oculta.
+    const reminderBlockReason = (record) => {
+        if (!rsvpDeadline) return { key: 'deadline', label: t('guests.reminder_no_deadline') }
+        // Nota: no se valida invitation_sent_at — el botón solo se renderiza
+        // cuando hay dispatch por API (processing/sent/delivered/read), lo que
+        // ya garantiza que la invitación se envió, incluso en registros viejos
+        // con invitation_sent_at en null.
+        // Lada por PREFIJO +52 (no por longitud): hay números válidos con el
+        // '1' de móvil intercalado (+521...) que una longitud exacta rechazaría.
+        if (!/^\+52\d+/.test(record.phone_number)) return { key: 'phone', label: t('guests.tooltip_national_only') }
+        // Máximo un recordatorio por día por invitado (last_reminder_at lo
+        // escribe el backend tras cada envío exitoso).
+        if (record.last_reminder_at && dayjs(record.last_reminder_at).isSame(dayjs(), 'day')) return { key: 'daily', label: t('guests.reminder_daily_limit') }
+        if (credits < 1) return { key: 'credits', label: t('guests.reminder_no_credits') }
+        return null
+    }
+
+    const onSendReminder = async (guest, lang = 'es') => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return
+        }
+
+        if (!invitation?.cover?.title?.text?.value?.trim()) {
+            message.warning(t('guests.warning_no_title'))
+            return
+        }
+
+        if (!rsvpDeadline) return
+
+        setCreditSending(t('guests.reminder_sending_label'))
+        try {
+            const payload = {
+                invitationId: id,
+                guestId: guest.id,
+                guestName: guest.name,
+                guestPhone: guest.phone_number.replace(/^\+/, ""),
+
+                messaging_product: "whatsapp",
+                to: guest.phone_number.replace(/^\+/, ""),
+                type: "template",
+                template: {
+                    name: "reminder",
+                    language: {
+                        code: "es_MX",
+                    },
+                    components: [
+                        {
+                            type: "body",
+                            parameters: [
+                                {
+                                    type: "text",
+                                    text: guest.name,
+                                },
+                                {
+                                    type: "text",
+                                    text: invitation.cover.title.text.value,
+                                },
+                                {
+                                    type: "text",
+                                    text: formatAbsoluteDateEs(rsvpDeadline),
+                                },
+                            ],
+                        },
+                        {
+                            type: "button",
+                            sub_type: "url",
+                            index: "0",
+                            parameters: [
+                                {
+                                    type: "text",
+                                    text: `${invitation?.generals?.event?.label}/${name}?password=${guest?.password}${lang && lang !== 'es' ? `&lang=${lang}` : ''}`,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            };
+
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/whats/reminders`,
+                payload
+            );
+
+            if (response.data.ok) {
+                // Cobrar solo tras éxito: si el envío falla, no se descuenta.
+                onUpdateCredits()
+                setCreditSuccess()
+                // El backend ya incrementó reminder_count/last_reminder_at en el
+                // principal — refrescar guests para ver el contador actualizado.
+                getGuests()
+            }
+        } catch (error) {
+            clearCreditState()
+            message.error(t('guests.reminder_sent_error'))
+            console.log(error.response?.data || error.message);
+        }
+    };
+
+    // Copia del patrón de renderSendLanguagePopup (envío inicial), pero
+    // disparando el recordatorio: un botón real por idioma disponible.
+    const renderReminderLanguagePopup = (guest) => (
+        <div style={{
+            background: '#fff', borderRadius: '12px', padding: '6px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '190px',
+        }}>
+            <Button
+                className='primarybutton'
+                style={{ justifyContent: 'space-between' }}
+                onClick={() => onSendReminder(guest, 'es')}
+            >
+                <span>{flagForLanguage('es')} Enviar en español</span>
+                <ArrowRight size={14} />
+            </Button>
+            {enabledExtraLanguages.map((code) => (
+                <Button
+                    key={code}
+                    className='primarybutton'
+                    style={{ justifyContent: 'space-between' }}
+                    onClick={() => onSendReminder(guest, code)}
+                >
+                    <span>{flagForLanguage(code)} Enviar en {labelForSendLangCode(code)}</span>
+                    <ArrowRight size={14} />
+                </Button>
+            ))}
+        </div>
+    )
+
+    // Botón de recordatorio por grupo: solo en filas de principales (el
+    // destinatario real). Mismo patrón que el envío del tab de creado: sin
+    // idiomas extra el click envía directo; con idiomas, Dropdown y al elegir
+    // uno se envía. Si el único bloqueo es el saldo, el click abre la compra
+    // de créditos en vez de deshabilitarse (CTA).
+    const renderReminderButton = (record) => {
+        if (record.companion_id !== null && record.companion_id !== undefined) return null
+
+        // Sin botón cuando el último envío falló (ahí vive el "Reintentar") o
+        // cuando fue envío manual (no hay dispatch de invitación por API).
+        const status = effectiveMessageStatus(record)
+        if (status === 'failed' || status === 'undefined') return null
+
+        const reason = reminderBlockReason(record)
+        const count = record.reminder_count ?? 0
+        const disabled = !!reason && reason.key !== 'credits'
+
+        const button = (
+            <Button
+                disabled={disabled}
+                onClick={() => {
+                    if (reason?.key === 'credits') {
+                        setBuyCreditsOpen(true)
+                    } else if (!reason && enabledExtraLanguages.length === 0) {
+                        onSendReminder(record, 'es')
+                    }
+                }}
+                // className="primarybutton--active"
+                icon={<BellRing size={14} style={{ marginTop: 4, color: disabled ? '#dbdbdb' : undefined }} />}
+                style={{
+                    minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99,
+                    background: 'linear-gradient(145deg, var(--orange-color), var(--orange-color))', color: '#FFFF', border: '1px solid var(--orange-color)',
+                    // el disabled default de antd deja el botón blanco y el ícono no se ve
+                    ...(disabled && { background: '#F1F1F1', border: '1px solid #EBEBEB', color: '#787878' }),
+                }}
+            />
+        )
+
+        const content = !reason && enabledExtraLanguages.length > 0 ? (
+            <Dropdown
+                trigger={['click']}
+                popupRender={() => renderReminderLanguagePopup(record)}
+            >
+                {button}
+            </Dropdown>
+        ) : button
+
+        return (
+            <Tooltip
+                placement='topRight'
+                color="var(--orange-bg)"
+                title={<span style={{ color: 'var(--orange-color)', fontWeight: 600, textAlign: 'center' }}>{reason ? reason.label : count > 0 ? `${t('guests.reminder_count_tooltip')}: ${count}` : t('guests.reminder_btn_tooltip')}</span>}
+            >
+                {disabled ? content : (
+                    <Badge count={count} size="small" color="var(--brand-color-500)" title="" offset={[-2, 2]}>
+                        {content}
+                    </Badge>
+                )}
+            </Tooltip>
+        )
     }
 
 
@@ -1805,6 +2106,14 @@ export default function GuestsPage() {
         setConfirmedData(groupByFamilyForStates(rowData, ['confirmado', 'asistente']))
         setCallededData(groupByFamilyForStates(rowData, ['rechazado']))
         setIsLoading(false)
+        // Poda la selección bulk: si un guest ya no está en 'creado' (se envió
+        // o se marcó como invitado), sale de la selección solo.
+        setBulkSelected((prev) => {
+            if (prev.size === 0) return prev
+            const stillCreated = new Set(rowData.filter((g) => g.state === 'creado').map((g) => g.id))
+            const next = new Set([...prev].filter((id) => stillCreated.has(id)))
+            return next.size === prev.size ? prev : next
+        })
     }, [rowData])
 
     useEffect(() => {
@@ -1817,6 +2126,46 @@ export default function GuestsPage() {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
+    // Si hay un lote de envío masivo en curso para esta invitación (p. ej. tras
+    // recargar la página), revivir la isla de progreso.
+    const getActiveBatch = async () => {
+        const { data } = await supabase
+            .from('invitation_send_batches')
+            .select('id, total, sent_count, failed_count, status')
+            .eq('invitation_id', id)
+            .is('side_event_id', null)
+            .eq('status', 'processing')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        if (data) {
+            setActiveBatch({ id: data.id, total: data.total, sent: data.sent_count, failed: data.failed_count, status: data.status })
+        }
+    }
+
+    // Polling del lote activo cada 2.5s — al completarse se refrescan créditos
+    // (por el reembolso de fallidos) y se deja la isla en estado final.
+    useEffect(() => {
+        if (!activeBatch || activeBatch.status !== 'processing') return
+
+        const timer = setInterval(async () => {
+            const { data } = await supabase
+                .from('invitation_send_batches')
+                .select('total, sent_count, failed_count, status')
+                .eq('id', activeBatch.id)
+                .maybeSingle()
+
+            if (!data) return
+            setActiveBatch((prev) => prev ? { ...prev, total: data.total, sent: data.sent_count, failed: data.failed_count, status: data.status } : prev)
+            if (data.status === 'completed') {
+                getType()
+            }
+        }, 2500)
+
+        return () => clearInterval(timer)
+    }, [activeBatch?.id, activeBatch?.status])
+
     useEffect(() => {
         if (id) {
             setIsLoading(false)
@@ -1825,6 +2174,7 @@ export default function GuestsPage() {
             getType()
             getTables()
             getMessagesUpdates()
+            getActiveBatch()
         }
     }, [id])
 
@@ -1873,9 +2223,23 @@ export default function GuestsPage() {
     // para poder envolver cada grupo en su propia tarjeta con bordes.
     const renderGuestCardRow = (record, cols, extraClassName = '') => {
         const isChildRow = extraClassName === 'guests-card-row--child';
+        // Highlight y click-para-seleccionar en vista plana (en agrupada los
+        // maneja la tarjeta del grupo)
+        const isFlatRow = extraClassName === 'guests-card-row--flat';
+        const isFlatPrincipal = isFlatRow && record.state === 'creado' && (record.companion_id === null || record.companion_id === undefined);
+        const isBulkSelectedFlat = isFlatRow && bulkSelected.has(record.id);
+        const isFlatSelectable = sendMode && isFlatPrincipal && isSendableGuest(record);
+        const isFlatDimmed = sendMode && isFlatPrincipal && !isSendableGuest(record);
 
         return (
-            <div key={record.id} className={`guests-card-row ${extraClassName}`}>
+            <div
+                key={record.id}
+                className={`guests-card-row ${extraClassName} ${isBulkSelectedFlat ? 'bulk-row-selected' : ''} ${isFlatDimmed ? 'bulk-row-disabled' : ''}`}
+                onClick={isFlatSelectable ? (e) => {
+                    if (e.target.closest('button, input, a, .ant-dropdown')) return
+                    toggleBulkSelect(record.id, !bulkSelected.has(record.id))
+                } : undefined}
+                style={isFlatSelectable ? { cursor: 'pointer' } : undefined}>
                 {cols.map((col) => (
                     <div
                         key={col.key}
@@ -1897,7 +2261,7 @@ export default function GuestsPage() {
                                     }
                                     className="primarybutton"
                                     icon={<FiArrowUpRight size={12} style={{ marginTop: 2 }} />}
-                                    style={{ position: 'absolute', top: 16, left: 12, maxWidth: 20, maxHeight: 20, borderRadius: 99, zIndex:99 }}
+                                    style={{ position: 'absolute', top: 16, left: 12, maxWidth: 20, maxHeight: 20, borderRadius: 99, zIndex: 99 }}
                                 />
                             </Tooltip>
                         )}
@@ -1928,12 +2292,26 @@ export default function GuestsPage() {
                         </div>
                     ))}
                 </div>
-                {data.map((group) => (
-                    <div key={group.id} className="guests-group-card">
+                {data.map((group) => {
+                    // Modo envío: solo bloques enviables son clickeables; los
+                    // no-enviables se atenúan con su motivo visible en la fila.
+                    const groupSelectable = sendMode && group.state === 'creado' && isSendableGuest(group)
+                    const groupDimmed = sendMode && group.state === 'creado' && !isSendableGuest(group)
+                    return (
+                    <div
+                        key={group.id}
+                        className={`guests-group-card ${bulkSelected.has(group.id) ? 'bulk-row-selected' : ''} ${groupDimmed ? 'bulk-row-disabled' : ''}`}
+                        onClick={groupSelectable ? (e) => {
+                            if (e.target.closest('button, input, a, .ant-dropdown')) return
+                            toggleBulkSelect(group.id, !bulkSelected.has(group.id))
+                        } : undefined}
+                        style={groupSelectable ? { cursor: 'pointer' } : undefined}
+                    >
                         {renderGuestCardRow(group, cols)}
                         {group.children?.map((child) => renderGuestCardRow(child, cols, 'guests-card-row--child'))}
                     </div>
-                ))}
+                    )
+                })}
             </div>
         );
     };
@@ -1967,6 +2345,280 @@ export default function GuestsPage() {
             </div>
         );
     };
+
+    // Barra de fecha límite de confirmación (rsvp_deadline), solo en el tab de
+    // Enviadas: empty state que invita a definirla mientras es null; una vez
+    // definida queda como campo editable permanente. Sin fecha límite no se
+    // puede enviar ningún recordatorio ({{3}} del template es obligatorio).
+    // En mobile el banner es colapsable: solo texto + chevron; al tocarlo se
+    // despliega el DatePicker. En desktop siempre expandido (texto + picker).
+    const renderRsvpDeadlineBar = () => {
+        const expanded = !screens.xs || rsvpBarOpen
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: screens.xs ? 'column' : 'row',
+                alignItems: screens.xs ? 'stretch' : 'center',
+                justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
+                padding: '10px 16px', borderRadius: 16, boxSizing: 'border-box', width: '100%',
+                border: `1px solid ${rsvpDeadline ? '#EBEBEB' : 'var(--light-purple-500-20)'}`,
+                background: rsvpDeadline ? '#FFFFFF' : 'var(--light-purple-100-40)',
+            }}>
+                <div
+                    onClick={screens.xs ? () => setRsvpBarOpen((o) => !o) : undefined}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, cursor: screens.xs ? 'pointer' : undefined }}
+                >
+                    <BellRing size={16} style={{ flexShrink: 0, color: rsvpDeadline ? 'var(--brand-color-500)' : 'var(--light-purple-700)' }} />
+                    <span style={{ fontSize: 13, color: rsvpDeadline ? undefined : 'var(--light-purple-700)' }}>
+                        {rsvpDeadline
+                            ? `${t('guests.rsvp_deadline_label')}: ${formatAbsoluteDateEs(rsvpDeadline)}`
+                            : t('guests.rsvp_deadline_empty')}
+                    </span>
+                    {screens.xs && (
+                        <GoChevronDown
+                            size={16}
+                            style={{
+                                flexShrink: 0, marginLeft: 'auto',
+                                color: rsvpDeadline ? 'var(--brand-color-500)' : 'var(--light-purple-700)',
+                                transform: rsvpBarOpen ? 'rotate(180deg)' : 'none',
+                                transition: 'transform 0.2s ease',
+                            }}
+                        />
+                    )}
+                </div>
+                {expanded && (
+                    <DatePicker
+                        value={rsvpDeadline ? dayjs(rsvpDeadline) : null}
+                        onChange={onSaveRsvpDeadline}
+                        disabledDate={rsvpDisabledDate}
+                        allowClear={false}
+                        placeholder={t('guests.rsvp_deadline_placeholder')}
+                        getPopupContainer={() => document.body}
+                        style={{ borderRadius: 99 }}
+                    />
+                )}
+            </div>
+        )
+    }
+
+    // ── Bulk shipment (tab Lista de espera) ─────────────────────────────────
+
+    const toggleBulkSelect = (guestId, checked) => {
+        setBulkSelected((prev) => {
+            const next = new Set(prev)
+            if (checked) next.add(guestId)
+            else next.delete(guestId)
+            return next
+        })
+    }
+
+    // Enviable = con número y lada +52. En modo envío solo estos bloques se
+    // pueden seleccionar; el resto se atenúa con su motivo visible.
+    const isSendableGuest = (g) => /^\+52\d+/.test(g.phone_number)
+
+    const bulkSelectedGuests = rowData.filter((g) => bulkSelected.has(g.id) && g.state === 'creado')
+    const bulkEligibleGuests = bulkSelectedGuests.filter(isSendableGuest)
+
+    const exitSendMode = () => {
+        setSendMode(false)
+        setBulkSelected(new Set())
+    }
+
+    // Payload de Graph API para el envío inicial (misma lógica de templates que
+    // onSedingInvitation: con rsvp_deadline → invitation_deadline, sin fecha →
+    // invitation_v2). Duplicado a propósito: el flujo individual no se toca.
+    const buildInvitationTemplatePayload = (guest, lang = 'es') => ({
+        messaging_product: "whatsapp",
+        to: guest.phone_number.replace(/^\+/, ""),
+        type: "template",
+        template: {
+            name: rsvpDeadline ? "invitation_deadline" : "invitation_v2",
+            language: { code: "es_MX" },
+            components: [
+                {
+                    type: "header",
+                    parameters: [
+                        { type: "image", image: { link: url_image ?? toFirstString(invitation.cover.image.prod) } },
+                    ],
+                },
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: `${invitation.cover.title.text.value} - ${formatAbsoluteDate(invitation.cover.date.value)}` },
+                        { type: "text", text: guest.name },
+                        ...(rsvpDeadline ? [{ type: "text", text: formatAbsoluteDateEs(rsvpDeadline) }] : []),
+                    ],
+                },
+                {
+                    type: "button",
+                    sub_type: "url",
+                    index: "0",
+                    parameters: [
+                        { type: "text", text: `${invitation?.generals?.event?.label}/${name}?password=${guest?.password}${lang && lang !== 'es' ? `&lang=${lang}` : ''}` },
+                    ],
+                },
+            ],
+        },
+    })
+
+    // Reserva de créditos del lote: un solo UPDATE (leer y restar N), en vez de
+    // N descuentos. El backend reembolsa los fallidos al cerrar el lote.
+    const onReserveCredits = async (amount) => {
+        const { data, error } = await supabase
+            .from('invitations')
+            .select('credits')
+            .eq('id', id)
+            .maybeSingle()
+
+        if (error || !data) {
+            console.error('Error al reservar créditos:', error)
+            return
+        }
+
+        const newCredits = Math.max((data.credits ?? 0) - amount, 0)
+        const { error: updateError } = await supabase
+            .from('invitations')
+            .update({ credits: newCredits })
+            .eq('id', id)
+
+        if (updateError) {
+            console.error('Error al reservar créditos:', updateError)
+            return
+        }
+        setCredits(newCredits)
+    }
+
+    // Crea el lote en el backend (202 inmediato — la cola se procesa allá) y
+    // reserva los créditos. El progreso llega por polling a la tabla del lote.
+    const onBulkSend = async () => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return
+        }
+        if (!invitation?.cover?.title?.text?.value?.trim()) {
+            message.warning(t('guests.warning_no_title'))
+            return
+        }
+        const targets = bulkEligibleGuests
+        if (targets.length === 0) return
+        if (credits < targets.length) {
+            setBuyCreditsOpen(true)
+            return
+        }
+
+        setBulkSending(true)
+        try {
+            const items = targets.map((g) => ({
+                guestId: g.id,
+                guestName: g.name,
+                guestPhone: g.phone_number.replace(/^\+/, ""),
+                payload: buildInvitationTemplatePayload(g),
+            }))
+
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/whats/bulk`,
+                { invitationId: id, items }
+            )
+
+            if (response.data.ok) {
+                await onReserveCredits(items.length)
+                setActiveBatch({
+                    id: response.data.data.batchId,
+                    total: items.length,
+                    sent: 0,
+                    failed: 0,
+                    status: 'processing',
+                })
+                exitSendMode()
+            }
+        } catch (error) {
+            message.error(t('guests.bulk_error'))
+            console.log(error.response?.data || error.message)
+        } finally {
+            setBulkSending(false)
+        }
+    }
+
+    // Checkbox manual del bulk: círculo grande con los tokens azules del tab
+    // de creado. El check aparece solo cuando el bloque está seleccionado.
+    const renderBulkCheck = (record) => {
+        const checked = bulkSelected.has(record.id)
+        return (
+            <button
+                type='button'
+                role='checkbox'
+                aria-checked={checked}
+                onClick={() => toggleBulkSelect(record.id, !checked)}
+                className={`bulk-check-circle ${checked ? 'bulk-check-circle--checked' : ''}`}
+            >
+                {checked && <Check size={14} strokeWidth={3} />}
+            </button>
+        )
+    }
+
+    // Header de la columna: en modo envío, botón "Soltar" para limpiar la
+    // selección; fuera del modo, el título normal de acciones.
+    const renderBulkHeaderCheck = () => {
+        if (!sendMode) return t('guests.col_actions')
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <Button
+                    size='small'
+                    disabled={bulkSelected.size === 0}
+                    onClick={() => setBulkSelected(new Set())}
+                    className='secondarybutton'
+                    style={{ borderRadius: 99, height: 32, flex: 1, width: '100%' }}
+                >
+                    {t('guests.bulk_release')}
+                </Button>
+            </div>
+        )
+    }
+
+    // Vive en el tabBarExtraContent del tab de Lista de espera: fuera del modo,
+    // "Crear envío" (entra al modo); dentro, "Enviar todos (n)" + "Cancelar".
+    // Tamaño normal de botón de antd.
+    const renderBulkActionsBar = () => {
+        if (!SHOW_BULK_SEND) return null;
+        if (!sendMode) {
+            return (
+                <Button
+                    disabled={plan !== 'pro'}
+                    onClick={() => setSendMode(true)}
+                    icon={<Send size={14} />}
+                    className='bulk-send-btn'
+                    style={{ borderRadius: 99 }}
+                >
+                    {t('guests.bulk_create')}
+                </Button>
+            )
+        }
+
+        const eligibleCount = bulkEligibleGuests.length
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', flexShrink: 0, justifyContent: 'flex-end' }}>
+                <Button
+                    loading={bulkSending}
+                    disabled={eligibleCount === 0}
+                    onClick={onBulkSend}
+                    icon={<Send size={14} />}
+                    className='bulk-send-btn'
+                    style={{ borderRadius: 99, flexShrink: 0 }}
+                >
+                    {`${t('guests.bulk_send_all')} (${eligibleCount})`}
+                </Button>
+
+                <Button
+                    disabled={bulkSending}
+                    onClick={exitSendMode}
+                    className='secondarybutton'
+                    style={{ borderRadius: 99, flexShrink: 0 }}
+                >
+                    {t('guests.bulk_cancel')}
+                </Button>
+            </div>
+        )
+    }
 
     // Vista "individual" de Asistencia confirmada: un renglón plano por persona,
     // sin agrupar por familia (líder y acompañantes por igual).
@@ -2039,10 +2691,55 @@ export default function GuestsPage() {
 
     const items = useMemo(() => ([
         {
+            label: screens.xs ? <Sparkles size={14} /> : t('guests_overview.tab'),
+            key: "seguimiento",
+            children: (
+                <Spin spinning={isLoading}>
+                    <GuestsOverview
+                        rowData={rowData}
+                        dispatchMap={dispatchMap}
+                        tickets={tickets}
+                        rsvpDeadline={rsvpDeadline}
+                        onGoToTab={setActiveKey}
+                        onAddGuests={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
+                        onCreateSend={() => { setActiveKey('creado'); if (SHOW_BULK_SEND) setSendMode(true); }}
+                        onLiaCta={() => message.info(t('guests_overview.lia_soon'))}
+                    />
+                </Spin>
+            ),
+        },
+        {
             label: screens.xs ? <Clock size={14} /> : `${t('guests.tab_waiting')} (${countGuestRows(createdData)})`,
             key: "creado",
             children: (
                 <Spin spinning={isLoading}>
+                    {/* Banner a ancho completo. En modo envío se tiñe de azul y
+                        muestra las instrucciones — el cambio de modo se siente.
+                        Los botones viven en el tabBarExtraContent de las Tabs. */}
+                    <div style={{
+                        marginBottom: 12, boxSizing: 'border-box', transition: 'background 0.3s ease, border 0.3s ease',
+                        borderRadius: 16,
+                        ...(sendMode && {
+                            background: 'var(--blue-bg-40)',
+                            border: '1px solid var(--blue-color-20)',
+                            padding: 12,
+                        }),
+                    }}>
+                        {renderRsvpDeadlineBar()}
+                        {sendMode && (
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 10 }}>
+                                <Info size={14} style={{ flexShrink: 0, color: 'var(--blue-color)', marginTop: 2 }} />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue-color)' }}>
+                                        {t('guests.bulk_mode_title')}
+                                    </span>
+                                    <span style={{ fontSize: 12, color: '#787878' }}>
+                                        {t('guests.bulk_mode_instructions')}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <div className="guests-card-list-scroll">
                         {hasActiveFilters
                             ? renderFlatRows(sortForTab('creado', flatFilteredGuests(createdData)), getTabColumns(tableProps.columns, 'creado'))
@@ -2056,6 +2753,9 @@ export default function GuestsPage() {
             key: "esperando",
             children: (
                 <Spin spinning={isLoading}>
+                    <div style={{ marginBottom: 12 }}>
+                        {renderRsvpDeadlineBar()}
+                    </div>
                     <div className="guests-card-list-scroll guests-card-list-scroll--sent">
                         {hasActiveFilters
                             ? renderFlatRows(sortForTab('esperando', flatFilteredGuests(waitingData)), getTabColumns(tableProps.columns, 'esperando'))
@@ -2113,7 +2813,15 @@ export default function GuestsPage() {
         hasActiveFilters,
         activeSort,
         dispatchMap,
-        pendingApiSends
+        pendingApiSends,
+        rsvpDeadline,
+        eventDate,
+        credits,
+        bulkSelected,
+        bulkSending,
+        sendMode,
+        rowData,
+        tickets
     ]);
 
 
@@ -2145,9 +2853,9 @@ export default function GuestsPage() {
                     }}></div>
 
 
-                    <div className='guests-info-container' style={{ padding: screens.xs ? '8px' : '16px' }}>
+                    <div className='guests-info-container' style={{ padding: screens.xs ? '8px' : '16px', paddingTop: screens.xs ? '8px' : (activeKey === 'seguimiento' ? '16px' : '64px') }}>
 
-                        <div className='title-buttons-container'  >
+                        <div className='title-buttons-container' style={activeKey === 'seguimiento' ? { display: 'none' } : undefined} >
 
                             <div />
 
@@ -2325,8 +3033,23 @@ export default function GuestsPage() {
 
 
                                 {
+                                    // Oculto en modo envío: sin él, "Enviar todos"/"Cancelar"
+                                    // caben en la fila sin romper el layout
+                                    !screens.xs && !sendMode &&
+                                    <Button
+                                        className='primarybutton_transparent'
+                                        icon={<Sparkles size={14} />}
+                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                        onClick={() => window.dispatchEvent(new Event(WHATS_NEW_OPEN_EVENT))}
+                                    >
+                                        {t('whats_new.button')}
+                                    </Button>
+                                }
+
+                                {
                                     !screens.xs &&
                                     // <Tooltip title={t('guests.send_issues_btn')}>
+                                    <Tooltip title={t('guests.send_issues_btn')}>
                                         <Dropdown
                                             trigger={['click']}
                                             placement="bottomRight"
@@ -2344,11 +3067,11 @@ export default function GuestsPage() {
                                                 </div>
                                             )}
                                         >
-                                            <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}>
-                                                {t('guests.send_issues_btn')}
+                                            <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', minWidth: '40px', transition: 'all 0.55s ease' }}>
+                                                {/* {t('guests.send_issues_btn')} */}
                                             </Button>
                                         </Dropdown>
-                                    // </Tooltip>
+                                    </Tooltip>
                                 }
 
                                 {
@@ -2596,7 +3319,7 @@ export default function GuestsPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className='edit-tickets-dash'>
+                                                {SHOW_TICKETS_DISTRIBUTION && <div className='edit-tickets-dash'>
                                                     <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_distribution')}</span>
                                                     <div className='dash-row-pie'>
                                                         <div className='pie_cont'>
@@ -2619,19 +3342,26 @@ export default function GuestsPage() {
                                                             }
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </div>}
 
                                             </div>
                                         </div>
                                     )}
                                 >
-                                    <Button style={{display:'none'}} className='primarybutton' icon={<Tickets size={14} />}>
-
-                                    </Button>
+                                    <Tooltip title={t('guests.control_tickets_tooltip')}>
+                                        <Button
+                                            className='primarybutton_transparent'
+                                            icon={<Tickets size={14} />}
+                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                        >
+                                            {tickets ?? 0}
+                                        </Button>
+                                    </Tooltip>
                                 </Dropdown>}
 
                                 {
-                                    !screens.xs &&
+                                    // El botón de agregar se oculta durante el modo envío
+                                    !screens.xs && !sendMode &&
 
                                     <Dropdown
                                         // trigger={['click']}
@@ -2656,6 +3386,15 @@ export default function GuestsPage() {
                                     </Dropdown>
 
                                 }
+
+                                {/* Bulk shipment: separador + Crear envío / Enviar
+                                    todos + Cancelar, solo en Lista de espera */}
+                                {!screens.xs && activeKey === 'creado' && (
+                                    <>
+                                        <div style={{ width: 1, alignSelf: 'stretch', minHeight: 28, backgroundColor: 'var(--borders)' }} />
+                                        {renderBulkActionsBar()}
+                                    </>
+                                )}
 
 
 
@@ -2697,8 +3436,8 @@ export default function GuestsPage() {
                                                     </div>
                                                 )}
                                             >
-                                                <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', transition: 'all 0.55s ease',}}>
-                                                    
+                                                <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', transition: 'all 0.55s ease', }}>
+
                                                 </Button>
                                             </Dropdown>
                                         </Tooltip>
@@ -2928,13 +3667,56 @@ export default function GuestsPage() {
                         )}
 
                         <Tabs
-                            style={{ width: '100%', marginTop: '16px', }}
+                            className='guests-main-tabs'
+                            style={{ width: '100%', }}
                             type="card"
                             activeKey={activeKey}
                             onChange={setActiveKey}
                             items={items}
                             tabBarExtraContent={
-                                openCard || screens.xs ? <Button
+                                screens.xs ? (
+                                    // Mobile: icon buttons — [+] nuevo invitado y [avión] crear
+                                    // envío (en modo envío: [avión (n)] enviar + [X] cancelar)
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '12px' }}>
+                                        {!sendMode && (
+                                            <Button
+                                                icon={<Plus size={14} />}
+                                                type='primary'
+                                                style={{ borderRadius: 99, height: 40, minWidth: 40, maxWidth: 40 }}
+                                                onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
+                                            />
+                                        )}
+                                        {SHOW_BULK_SEND && activeKey === 'creado' && (!sendMode ? (
+                                            <Button
+                                                icon={<Send size={14} />}
+                                                className='bulk-send-btn'
+                                                disabled={plan !== 'pro'}
+                                                style={{ borderRadius: 99, height: 40, minWidth: 40, maxWidth: 40 }}
+                                                onClick={() => setSendMode(true)}
+                                            />
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    icon={<Send size={14} />}
+                                                    className='bulk-send-btn'
+                                                    loading={bulkSending}
+                                                    disabled={bulkEligibleGuests.length === 0}
+                                                    style={{ borderRadius: 99, height: 40 }}
+                                                    onClick={onBulkSend}
+                                                >
+                                                    {bulkEligibleGuests.length}
+                                                </Button>
+                                                <Button
+                                                    icon={<X size={14} />}
+                                                    className='secondarybutton'
+                                                    disabled={bulkSending}
+                                                    style={{ borderRadius: 99, height: 40, minWidth: 40, maxWidth: 40 }}
+                                                    onClick={exitSendMode}
+                                                />
+                                            </>
+                                        ))}
+                                    </div>
+                                ) : openCard ? <Button
                                     icon={<Plus size={14} />}
                                     type='primary'
                                     style={{ borderRadius: '12px', marginBottom: '12px', height: '40px' }}
@@ -2944,7 +3726,7 @@ export default function GuestsPage() {
                                         <Segmented
                                             value={confirmedView}
                                             onChange={setConfirmedView}
-                                            style={{marginBottom:'8px'}}
+                                            style={{ marginBottom: '8px' }}
                                             options={[
                                                 { label: t('guests.view_group'), value: 'group' },
                                                 { label: t('guests.view_individual'), value: 'individual' },
@@ -3031,6 +3813,66 @@ export default function GuestsPage() {
             </Drawer>
 
             <GuestsCRUD rowData={rowData} invitationID={id} setDrawerState={setDrawerState} refreshPage={refreshPage} drawerState={drawerState} />
+
+            {/* Isla de progreso del envío masivo (estilo dynamic island): fija
+                abajo al centro, visible mientras el lote se procesa y hasta que
+                el usuario la cierre al completarse. */}
+            {activeBatch && (
+                <div style={{
+                    position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+                    zIndex: 1200, backgroundColor: '#0c171b', color: '#FFFFFF',
+                    borderRadius: 99, padding: '10px 20px',
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    boxShadow: '0 0 12px rgba(0, 0, 0, 0.35)',
+                    minWidth: 320, maxWidth: '90vw', boxSizing: 'border-box',
+                }}>
+                    {activeBatch.status === 'processing'
+                        ? <Send size={16} style={{ flexShrink: 0, color: 'var(--blue-color)' }} />
+                        : <Check size={16} style={{ flexShrink: 0, color: '#43B75D' }} />}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 4, minWidth: 0 }}>
+                        <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                            {activeBatch.status === 'processing' ? t('guests.bulk_island_sending') : t('guests.bulk_island_done')}
+                            {` · ${activeBatch.sent + activeBatch.failed}/${activeBatch.total}`}
+                            {activeBatch.failed > 0 && ` · ${activeBatch.failed} ${t('guests.bulk_island_failed')}`}
+                        </span>
+                        <Progress
+                            percent={Math.round(((activeBatch.sent + activeBatch.failed) / Math.max(activeBatch.total, 1)) * 100)}
+                            showInfo={false}
+                            size={[undefined, 6]}
+                            strokeColor='var(--blue-color)'
+                            railColor='#FFFFFF20'
+                            style={{ margin: 0, lineHeight: 0 }}
+                        />
+                    </div>
+
+                    {activeBatch.status !== 'processing' && (
+                        <Button
+                            type='text'
+                            size='small'
+                            icon={<X size={14} style={{ color: '#FFFFFF' }} />}
+                            onClick={() => setActiveBatch(null)}
+                            style={{ flexShrink: 0 }}
+                        />
+                    )}
+                </div>
+            )}
+
+            {/* Saldo insuficiente: CTA directo a la compra de créditos. */}
+            <Modal
+                open={buyCreditsOpen}
+                onCancel={() => setBuyCreditsOpen(false)}
+                footer={null}
+                title={t('guests.reminder_buy_credits_title')}
+                style={{ borderRadius: 24 }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
+                    <span style={{ fontSize: 13, color: '#787878' }}>
+                        {t('guests.reminder_buy_credits_body', { credits })}
+                    </span>
+                    <CreditsComponent invitationID={id} creditsDisplay={credits} />
+                </div>
+            </Modal>
         </>
     )
 }

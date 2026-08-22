@@ -95,3 +95,12 @@ export function dayjsToWallClock(value) {
   if (!value) return null;
   return value.format("YYYY-MM-DD HH:mm:00");
 }
+
+// Fecha "absoluta" en español (día en UTC, sin conversión de timezone) — para
+// el {{3}} del template `reminder` de WhatsApp y las barras de fecha límite.
+// Contraparte en inglés: formatAbsoluteDate, inline en GuestsPage (envío inicial).
+export function formatAbsoluteDateEs(isoString) {
+  const d = new Date(isoString);
+  const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  return `${d.getUTCDate()} de ${months[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
+}

@@ -1808,3 +1808,117 @@
         border-radius: 8px;
     }
 }
+/* Checkbox manual del bulk shipment (Lista de espera): círculo grande con los
+   tokens azules del tab de creado. El check (--blue-color) solo aparece al
+   seleccionar. */
+.bulk-check-circle {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 99px;
+    /* estado inicial: blanco con borde neutro; al seleccionar pasa a los azules */
+    background-color: #FFFFFF;
+    border: 1px solid #EBEBEB;
+    color: var(--blue-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.bulk-check-circle--checked {
+    background-color: var(--blue-bg);
+    border-color: var(--blue-color-20);
+}
+
+.bulk-check-circle:hover {
+    border-color: var(--blue-color);
+    transform: scale(1.05);
+}
+
+/* Highlight del bloque/fila seleccionado */
+.bulk-row-selected {
+    background-color: var(--blue-bg-40);
+    box-shadow: 0px 0px 12px var(--blue-color-40);
+    outline: 1px solid var(--blue-color-40);
+}
+
+/* Acompañantes dentro de un bloque seleccionado: su fondo propio (#FAFAFA)
+   tapaba el highlight — se sustituye por el azul más presente */
+.bulk-row-selected .guests-card-row--child {
+    background-color: var(--blue-bg-80);
+}
+
+.bulk-row-selected .guests-card-row--child .guests-card-cell--sticky-left,
+.bulk-row-selected .guests-card-row--child .guests-card-cell--sticky-right {
+    background-image: linear-gradient(var(--blue-bg-80), var(--blue-bg-80));
+}
+
+/* Las celdas sticky (name y actions) tienen fondo propio para el scroll
+   horizontal — dentro de un bloque seleccionado también llevan el highlight:
+   misma mezcla (fondo base + --blue-bg-40 encima) pero opaca, para que sigan
+   tapando el contenido que scrollea debajo. */
+.bulk-row-selected .guests-card-cell--sticky-left,
+.bulk-row-selected .guests-card-cell--sticky-right {
+    background-image: linear-gradient(var(--blue-bg-40), var(--blue-bg-40));
+}
+
+/* Botón "Enviar todos" del bulk: gradiente azul sin borde; en hover el
+   gradiente se desplaza (background-size ampliado + cambio de posición). */
+.bulk-send-btn,
+.bulk-send-btn:focus {
+    background: linear-gradient(145deg, var(--blue-color), var(--blue-color-80), var(--blue-color)) !important;
+    background-size: 220% 220% !important;
+    background-position: 0% 0% !important;
+    border: none !important;
+    color: #FFFFFF !important;
+    transition: background-position 0.45s ease, transform 0.2s ease !important;
+}
+
+.bulk-send-btn:hover {
+    background-position: 100% 100% !important;
+    color: #FFFFFF !important;
+}
+
+.bulk-send-btn:disabled {
+    background: #F1F1F1 !important;
+    color: #ABABAB !important;
+}
+
+/* Modo envío: bloques sin envío automático (sin número / lada extranjera) */
+.bulk-row-disabled {
+    opacity: 0.55;
+    box-shadow: none;
+}
+
+/* Header de GuestsPage (buscador + filtros + Nuevo invitado + botones de
+   envío) sticky: siempre visible al scrollear. Requiere que
+   .build-invitation-layout no sea scroll-container en esta página (su
+   overflow:auto + overflow-y:hidden anclaba el sticky a un contenedor que
+   nunca scrollea) — se libera solo dentro de .guests_main. */
+.guests_main .build-invitation-layout {
+    overflow: visible;
+}
+
+.guests_main .title-buttons-container {
+    position: fixed;
+    width: 100%;
+    max-width: 1450px;
+    top: 64px;
+    z-index: 110;
+    padding: 16px 12px;
+    box-sizing: border-box;
+    background-color: #FFFFFF80;
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+}
+
+/* En mobile la fila del buscador no se renderiza: la barra fija quedaría como
+   una franja de vidrio vacía que además bloquearía taps (es fixed full-width) */
+@media (max-width: 750px) {
+    .guests_main .title-buttons-container {
+        display: none;
+    }
+}

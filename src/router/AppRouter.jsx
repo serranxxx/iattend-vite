@@ -3,6 +3,7 @@ import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Grid } from 'antd'
 import { ChatContainer } from '../components/ChatContainer/ChatContainer'
 import { DashboardRealtimeProvider } from '../context/DashboardRealtimeContext'
+import { WhatsNewBanners } from '../components/WhatsNewBanners/WhatsNewBanners'
 
 const DashboardChat = () => {
   const { pathname } = useLocation()
@@ -15,6 +16,8 @@ const DashboardChat = () => {
 
 const DashboardLayout = () => (
   <DashboardRealtimeProvider>
+    {/* Novedades: overlay visible en todas las rutas /dashboard/* hasta cerrarse */}
+    <WhatsNewBanners />
     <Outlet />
   </DashboardRealtimeProvider>
 )
