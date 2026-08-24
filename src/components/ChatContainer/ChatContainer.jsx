@@ -13,6 +13,10 @@ const PILL_DURATION = 4000
 const MOBILE_BP = 480
 const POS_STORAGE_KEY = 'lia_chat_pos'
 
+// El chat maneja su propio `open`, así que para abrirlo desde fuera (el botón
+// flotante de mobile) se usa un evento de ventana, igual que WhatsNewBanners.
+export const LIA_CHAT_OPEN_EVENT = 'lia:open-chat'
+
 function loadSavedPos() {
     try {
         const saved = JSON.parse(localStorage.getItem(POS_STORAGE_KEY))
@@ -68,6 +72,14 @@ export const ChatContainer = () => {
     const [searchParams] = useSearchParams()
     const id = searchParams.get('id')
     const { notifications, dismissAll } = useLia()
+
+    const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth <= MOBILE_BP)
+
+    useEffect(() => {
+        const onResize = () => setIsMobileViewport(window.innerWidth <= MOBILE_BP)
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [])
 
     const [pos, setPos] = useState(() => {
         const saved = loadSavedPos()
@@ -214,6 +226,15 @@ export const ChatContainer = () => {
         }
     }, [])
 
+    // Apertura desde fuera (el botón flotante de mobile). Se delega en
+    // handleToggle: además de `open`, monta el panel, sincroniza openRef y
+    // recalcula la posición para el tamaño abierto.
+    useEffect(() => {
+        const onOpen = () => { if (!openRef.current) handleToggle() }
+        window.addEventListener(LIA_CHAT_OPEN_EVENT, onOpen)
+        return () => window.removeEventListener(LIA_CHAT_OPEN_EVENT, onOpen)
+    }, [handleToggle])
+
     useEffect(() => {
         if (!open) return
         const onClickOutside = (e) => {
@@ -242,6 +263,11 @@ export const ChatContainer = () => {
     }, [open])
 
     if (!id) return null
+
+    // En mobile la entrada a Lia es el botón flotante del header, así que el
+    // círculo propio del chat solo aparece cuando ya está abierto — si no,
+    // habría dos botones flotantes peleándose la misma esquina.
+    if (!open && isMobileViewport) return null
 
     const latestNotif = notifications[notifications.length - 1]
 

@@ -1,5 +1,7 @@
-import { Badge, Button, DatePicker, Dropdown, Input, Layout, Modal, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Segmented, Spin } from 'antd'
+import { Badge, Button, DatePicker, Dropdown, Input, Layout, Modal, Popconfirm, message, Tooltip, Tabs, Progress, Drawer, Spin } from 'antd'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/es'
 import React, { useEffect, useMemo, useState } from 'react'
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { Pie } from 'react-chartjs-2';
@@ -21,13 +23,12 @@ import { BsArrowReturnRight } from 'react-icons/bs';
 import { LuSettings2 } from 'react-icons/lu';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { type } from '@testing-library/user-event/dist/type';
 import { Grid } from "antd";
 import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, List, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, Pin, Plus, PlusCircle, QrCode, Search, Send, Sparkles, Tag, TextAlignJustify, Tickets, Users, X } from 'lucide-react';
+import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, Search, Send, Sparkles, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
 import { WHATS_NEW_OPEN_EVENT } from '../../components/WhatsNewBanners/WhatsNewBanners';
 import { GuestsOverview } from './GuestsOverview/GuestsOverview';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
@@ -38,11 +39,14 @@ import { useLia } from '../../context/LiaContext';
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext';
 import { POPULAR_LANGUAGES, flagForLanguage } from '../../helpers/services/languageFlags';
 import { formatAbsoluteDateEs } from '../../helpers/assets/eventDateTime';
+import './guests-redesign.css';
 
 const { useBreakpoint } = Grid;
 
 
 
+
+dayjs.extend(relativeTime)
 
 ChartJS.register(ArcElement, Legend);
 
@@ -56,17 +60,16 @@ const SHOW_BULK_SEND = false;
 // Poner en true para restaurar el bloque "DISTRIBUCIÓN" del dropdown de pases.
 const SHOW_TICKETS_DISTRIBUTION = false;
 
+// ── Control de pases ──────────────────────────────────────────────────────
+// El menú "⋯" del rediseño solo lleva descargables, mapa de mesas, evento
+// privado y lector de pases. Poner en true para volver a mostrar ahí el
+// editor de la capacidad total del evento.
+const SHOW_TICKETS_CONTROL = false;
+
 export default function GuestsPage() {
 
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
 
-    const translateState = (value) => ({
-        creado: t('guests.state_creado'),
-        esperando: t('guests.state_esperando'),
-        confirmado: t('guests.state_confirmado'),
-        asistente: t('guests.state_asistente'),
-        rechazado: t('guests.state_rechazado'),
-    })[value] ?? value
 
     const screens = useBreakpoint();
     const [confirmed, setConfirmed] = useState(0)
@@ -88,7 +91,6 @@ export default function GuestsPage() {
     const [copyTickets, setCopyTickets] = useState(null)
     const [handleTables, sethandleTables] = useState(false)
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 750)
-    const [confirmedView, setConfirmedView] = useState('group')
     const [rowData, setRowData] = useState([]);
     const [waitingData, setWaitingData] = useState([])
     const [confirmedData, setConfirmedData] = useState([])
@@ -110,13 +112,15 @@ export default function GuestsPage() {
     // muestre "envío manual" (el fallback de handleMessageStatus) por error.
     const [pendingApiSends, setPendingApiSends] = useState(() => new Set())
     const [searchUser, setSearchUser] = useState(null)
-    const [activeSearcher, setActiveSearcher] = useState(false)
     const [localTags, setLocalTags] = useState([])
     const [filterTag, setFilterTag] = useState(null)
     const [filterTable, setFilterTable] = useState(null)
     const [filterTier, setFilterTier] = useState(null)
     const [filterType, setFilterType] = useState(null)
     const [filterSide, setfilterSide] = useState(null)
+    // Filtro rápido "Sin entregar" del tab Esperando respuesta: se apoya en el
+    // estado del dispatch, no en una columna de guests.
+    const [filterDelivery, setFilterDelivery] = useState(null)
     // Sort de encabezado por tab (no filtra filas, solo cambia el orden): un solo
     // { column, dir } activo por tab — activar una columna desactiva cualquier otra
     // del mismo tab. dir cicla inactivo -> 'asc' -> 'desc' -> inactivo.
@@ -135,8 +139,12 @@ export default function GuestsPage() {
     // (columna top-level invitations.rsvp_deadline, tipo date) y estado del modal.
     const [rsvpDeadline, setRsvpDeadline] = useState(null)
     const [eventDate, setEventDate] = useState(null)
-    // Mobile: el banner de deadline es colapsable (texto + chevron)
-    const [rsvpBarOpen, setRsvpBarOpen] = useState(false)
+    // Qué picker de fecha límite está abierto (id de slot, o null). NO es un
+    // booleano a propósito: la línea/alerta se renderiza en varios tabs y antd
+    // los mantiene montados, así que un flag compartido abría los dos popups a
+    // la vez y el del tab oculto disparaba onOpenChange(false) al instante,
+    // dejando el calendario muerto.
+    const [rsvpPickerSlot, setRsvpPickerSlot] = useState(null)
     const [buyCreditsOpen, setBuyCreditsOpen] = useState(false)
     // Bulk shipment (tab Lista de espera): "Crear envío" activa el modo envío —
     // solo entonces aparecen los checkboxes (únicamente en bloques enviables).
@@ -157,7 +165,6 @@ export default function GuestsPage() {
         switch (uiAction.type) {
             case 'filter_guests':
                 setSearchUser(uiAction.payload?.query ?? '')
-                setActiveSearcher(true)
                 break
             case 'filter_by_state':
                 setActiveKey(uiAction.value)
@@ -196,24 +203,6 @@ export default function GuestsPage() {
             };
         });
     };
-
-    const renderSortableHeader = (label, dir, onToggle) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            <span>{label}</span>
-            <Button
-                type="text"
-                size="small"
-                onClick={onToggle}
-                icon={
-                    dir === 'asc' ? <ArrowUp size={14} /> :
-                        dir === 'desc' ? <ArrowDown size={14} /> :
-                            <ArrowUpDown size={14} />
-                }
-                className={`sort-header-btn ${dir ? 'sort-header-btn--active' : ''}`}
-                style={{ padding: 0, minWidth: 20, height: 20 }}
-            />
-        </div>
-    );
 
     const TIER_SORT_ORDER = { A: 1, B: 2, C: 3, D: 4 };
     const MESSAGE_STATUS_SORT_ORDER = { failed: 0, undefined: 1, processing: 2, sent: 3, delivered: 4, read: 5 };
@@ -254,742 +243,82 @@ export default function GuestsPage() {
         return applySortDir(data, sort.dir, comparator);
     };
 
-    const openColumns = useMemo(() => ([
-        {
-            title: t('guests.col_name'),
-            dataIndex: "name",
-            key: "name",
-            fixed: "left",
-            render: (value, record) => {
-                const isChild = record.__isGroupChild;
+    // Las columnas de la antigua tabla (columns / openColumns / tableProps /
+    // getTabColumns) se eliminaron con el rediseño: cada tarjeta arma su propia
+    // fila y su propia acción — ver renderGuestCard.
 
-                if (isChild) {
-                    // ✅ HIJO: sin botones + indent
-                    return (
-                        <div style={{ paddingLeft: 28, lineHeight: "30px" }}>
-                            <span className="guest-name-text">{value}</span>
-                        </div>
-                    );
-                }
+    // Panel para asignar mesa a un invitado confirmado. Vive en un solo
+    // lugar porque lo usan las columnas viejas y las tarjetas del rediseño.
+    const renderTablePickerPopup = (record) => (
+        <div style={{ position: "static" }} className="on-transfer-container">
+            <span className="on-transfer-label">{t('guests.select_table')}</span>
 
-                // ✅ PADRE: botón de abrir, en absolute dentro de la fila
-                return (
+            <div className="transfer-mesas-cont scroll-invitation" style={{ maxHeight: '360px' }}>
+                {tables.map((tb, index) => (
                     <div
-                        className="tag-container"
-                        style={{ justifyContent: "flex-start", width: "100%", paddingLeft: 32 }}
+                        onClick={() => addGuestToTable(tb, record)}
+                        key={index}
+                        className="table-transfer-item"
+
                     >
-                        <Tooltip title={t('guests.tooltip_open')}>
-                            <Button
-                                onClick={() =>
-                                    setDrawerState({
-                                        currentGuest: record,
-                                        onEditGuest: true,
-                                        companions: handleCompanions(record.id),
-                                        visible: true,
-                                    })
-                                }
-                                className="primarybutton"
-                                icon={<FiArrowUpRight size={14} style={{ marginTop: 2 }} />}
-                                style={{ position: 'absolute', top: 4, left: 0, maxWidth: 24, maxHeight: 24, borderRadius: 99 }}
-                            />
-                        </Tooltip>
-
-                        <span className="guest-name-text" style={{ textAlign: "left" }}>{value}</span>
-                    </div>
-                );
-            },
-        }
-        ,
-
-
-        {
-            title: t('guests.col_contact'),
-            dataIndex: "phone_number",
-            key: "phone_number",
-            width: 160,
-            render: (value) => phoneFormatter(value),
-        },
-
-        {
-            title: t('guests.col_state'),
-            dataIndex: "state",
-            key: "state",
-            render: (value) => (
-                <div className="tag-container">
-                    <span className={`new-table-tag state-${value}`}>
-                        {translateState(value)}
-                    </span>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_tag'),
-            dataIndex: "tag",
-            key: "tag",
-            width: 160,
-            render: (value) => (
-                <div className="tag-container">
-                    <Tooltip>
-                        <span className={`new-table-tag`}>
-                            {renderTag(value)}
-                        </span>
-                    </Tooltip>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_table'),
-            dataIndex: "table",
-            key: "table",
-            width: 180,
-            render: (value) => (
-                <div className="tag-container">
-                    <span>{value ? value : "-"}</span>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_priority'),
-            dataIndex: "tier",
-            key: "tier",
-            width: 140,
-            fixed: "right",
-            render: (value) => (
-                <div className="tag-container">
-                    <span
-                        style={{ width: "100%", justifyContent: "center" }}
-                        className={`new-table-tag tier-${value}`}
-                    >
-                        {value}
-                    </span>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_actions'),
-            key: "send",
-            // width: 140,
-            fixed: "right",
-            render: (_, record) => {
-                const { state, table } = record;
-
-                // if (state === "creado") {
-                //     return (
-                //         <div
-                //             style={{
-                //                 display: "flex",
-                //                 alignItems: "center",
-                //                 justifyContent: "flex-start",
-                //                 gap: 6,
-                //                 width: "100%",
-                //             }}
-                //         >
-                //             {/* <Button
-                //                 disabled={!phone_number || !credits > 0 }
-                //                 onMouseEnter={() => setActiveIcon(true)} onMouseLeave={() => setActiveIcon(false)}
-                //                 onClick={() => onSedingInvitation(record)}
-                //                 className="primarybutton--active"
-                //                 icon={<FaPaperPlane className={activeIcon ? 'paper_flight' : ''} size={12} />}
-                //                 style={{ flex: 1, maxHeight: 30 }}
-                //             >
-                //                 Enviar
-                //             </Button> */}
-
-                //             <Tooltip title="Marcar como enviado" color="var(--brand-color-500)">
-                //                 <Button
-                //                     onClick={() => onSendInvitation(record)}
-                //                     className="primarybutton--active"
-                //                     icon={<FaCheck size={12} />}
-                //                     style={{ minWidth: 30,  maxHeight: 30 }}
-                //                 >Marcar como enviado</Button>
-                //             </Tooltip>
-                //         </div>
-                //     );
-                // }
-
-                // if (state === "esperando") {
-                //     return (
-                //         <Button
-                //             className="primarybutton"
-                //             disabled
-                //             icon={<FaRegClock size={14} style={{ marginTop: 2 }} />}
-                //             style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
-                //         >
-                //             Esperando
-                //         </Button>
-                //     );
-                // }
-
-                if ((state === "confirmado" || state === "asistente") && !table) {
-                    return (
-                        <Dropdown
-                            trigger={["click"]}
-                            placement="topRight"
-                            popupRender={() => (
-                                <div style={{ position: "static" }} className="on-transfer-container">
-                                    <span className="on-transfer-label">{t('guests.select_table')}</span>
-
-                                    <div className="transfer-mesas-cont">
-                                        {tables.map((tb, index) => (
-                                            <div
-                                                onClick={() => addGuestToTable(tb, record)}
-                                                key={index}
-                                                className="table-transfer-item"
-                                            >
-                                                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
-                                                    <span>
-                                                        {tb.name ? `#${tb.number} - ${tb.name}` : `${t('guests.table_prefix')} #${tb.number}`}
-                                                    </span>
-                                                </div>
-
-                                                <div
-                                                    style={{
-                                                        alignSelf: "stretch",
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "flex-start",
-                                                        gap: 12,
-                                                    }}
-                                                >
-                                                    <Progress
-                                                        style={{ flex: 1 }}
-                                                        size={[undefined, 12]}
-                                                        className="progress-tables"
-                                                        strokeColor={"var(--brand-color-500)"}
-                                                        status="active"
-                                                        showInfo={false}
-                                                        percent={
-                                                            (confirmedData?.filter((g) => g.table === tb.id).length * 100) /
-                                                            tb.size
-                                                        }
-                                                    />
-                                                    <span className="occupied-places-tab-mob">
-                                                        {`${confirmedData?.filter((g) => g.table === tb.id).length} / ${tb.size}`}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            width: "100%",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            height: 65,
-                                        }}
-                                    >
-                                        <Button
-                                            onClick={() => sethandleTables(true)}
-                                            style={{ borderRadius: 99 }}
-                                            icon={<TbLocationFilled />}
-                                        >
-                                            {t('guests.view_map')}
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        >
-                            <Button
-                                className="primarybutton--active"
-                                icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
-                                style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
-                            >
-                                {t('guests.btn_assign')}
-                            </Button>
-                        </Dropdown>
-                    );
-                }
-
-                if ((state === "confirmado" || state === "asistente") && table) {
-                    const assignedTable = tables?.find((tb) => tb.id === table);
-                    return (
-                        <div className="tag-container">
-                            <Tooltip title={assignedTable?.name || ''}>
-                                <span className="new-table-tag new-table-tag--compact">
-                                    {assignedTable ? `#${assignedTable.number}` : "-"}
-                                </span>
-                            </Tooltip>
-                        </div>
-                    );
-                }
-
-                return null;
-            },
-        },
-    ]), [rowData, tables]);
-
-    const columns = useMemo(() => ([
-        {
-            title: t('guests.col_name'),
-            dataIndex: "name",
-            key: "name",
-            fixed: "left",
-            width: screens.xs ? 140 : 260,
-            render: (value, record) => {
-                const isChild = record.__isGroupChild;
-
-                if (isChild) {
-                    // ✅ HIJO: sin botones + indent
-                    return (
-                        <div style={{ paddingLeft: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', minWidth: 0 }}>
-                            <BsArrowReturnRight style={{ flexShrink: 0 }} /> <span className="guest-name-text">{value}</span>
-                        </div>
-                    );
-                }
-
-                // ✅ PADRE: botón de abrir, en absolute dentro de la fila
-                return (
-                    <div
-                        className="tag-container"
-                        style={{ justifyContent: "flex-start", width: "100%", paddingLeft: 32 }}
-                    >
-                        <span className="guest-name-text" style={{ textAlign: "left" }}>{value}</span>
-                    </div>
-                );
-            },
-        },
-
-
-        {
-            title: t('guests.col_contact'),
-            dataIndex: "phone_number",
-            key: "phone_number",
-            width: 160,
-            render: (value) => phoneFormatter(value),
-        },
-
-        {
-            title: t('guests.col_state'),
-            dataIndex: "state",
-            key: "state",
-            width: 120,
-            render: (value) => (
-                <div className="tag-container">
-                    <span className={`new-table-tag state-${value}`}>
-                        {/* {handleIcon(value)}  */}
-                        {translateState(value)}
-                    </span>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_password'),
-            dataIndex: "password",
-            key: "password",
-            width: 120,
-            render: (value, record) => (
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "100%",
-                        gap: '2px'
-                    }}
-                >
-                    <span>{value}</span>
-                    <Tooltip title={t('guests.tooltip_copy_password')}>
-                        <Button
-                            onClick={() => copyToClipboard(value)}
-                            type='text'
-                            // className="primarybutton"
-                            // style={{ maxHeight: 26 }}
-                            icon={<FaRegCopy size={14} style={{ color: linkColor(record.state) }} />}
-                        />
-                    </Tooltip>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_magic_link'),
-            key: "link",
-            width: 140,
-            render: (_, record) => {
-                const url = `https://www.iattend.events/${invitation?.generals?.event?.label}/${name}?password=${record.password}`;
-                return (
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center", gap: '2px',
-                            width: "100%",
-                        }}
-                    >
-                        <span >
-                            www.iatt...
-                        </span>
-                        <Tooltip title={t('guests.tooltip_copy_magic_link')}>
-                            <Button
-                                onClick={() => handleShare(url)}
-                                type='text'
-                                // className="primarybutton"
-                                // style={{ maxHeight: 26 }}
-                                icon={<FaRegCopy size={14} style={{ color: linkColor(record.state) }} />}
-                            />
-                        </Tooltip>
-
-                    </div>
-                );
-            },
-        },
-
-        {
-            title: t('guests.col_tag'),
-            dataIndex: "tag",
-            key: "tag",
-            width: 140,
-            render: (value) => (
-                <div className="tag-container">
-                    <Tooltip title={isTagLong(value) ? renderTagFull(value) : ''}>
-                        <span className={`new-table-tag`}>
-                            {renderTag(value)}
-                        </span>
-                    </Tooltip>
-
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_table'),
-            dataIndex: "table",
-            key: "table",
-            width: 140,
-            render: (value) => (
-                <div className="tag-container">
-                    <span className="new-table-tag">
-                        {value ? tables?.find((tb) => tb.id === value)?.name ?? "-" : "-"}
-                    </span>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_category'),
-            dataIndex: "type",
-            key: "type",
-            width: 120,
-            render: (value) => (
-                <div className="tag-container">
-                    <span className="new-table-tag">
-                        {value ? handleTypes(value) : "-"}
-                    </span>
-                </div>
-            ),
-        },
-
-        {
-            title: t('guests.col_priority'),
-            dataIndex: "tier",
-            key: "tier",
-            width: 100,
-            // fixed: screens.xs ? undefined : "right",
-            render: (value) => (
-                <div style={{
-                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                    <Tooltip title={handlePriority(value)}>
-                        <div className="tag-container" style={{ width: '80%' }}>
-                            <span
-                                style={{ width: "100%", justifyContent: "center" }}
-                                className={`new-table-tag tier-${value}`}
-                            >
-                                {value ?? "-"}
+                        <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+                            <span>
+                                {tb.name ? `#${tb.number} - ${tb.name}` : `${t('guests.table_prefix')} #${tb.number}`}
                             </span>
                         </div>
-                    </Tooltip>
-                </div>
-            ),
-        },
 
-        {
-            title: t('guests.col_actions'),
-            key: "send",
-            width: plan !== 'pro' ? 180 : 160,
-            minWidth: plan !== 'pro' ? 180 : 160,
-            fixed: screens.xs ? undefined : "right",
-            render: (_, record) => {
-                const { state, table } = record;
-                const isChild = record.__isGroupChild;
-
-                if (isChild) {
-                    // Acompañantes en Enviadas: celda vacía — el estado del envío
-                    // y el recordatorio viven solo en el principal.
-                    if (state === "esperando") {
-                        return null;
-                    }
-                    if (!(state === "confirmado" || state === "asistente")) {
-                        return null;
-                    }
-                    // acompañante confirmado (con o sin mesa): cae al bloque de abajo para mostrar/asignar mesa
-                }
-
-                if (state === "creado") {
-                    if (record.companion_id !== null && record.companion_id !== undefined) {
-                        return null;
-                    }
-
-                    // Modo envío masivo: checkbox solo en enviables
-                    if (SHOW_BULK_SEND && sendMode) {
-                        return (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
-                                {isSendableGuest(record) && renderBulkCheck(record)}
-                            </div>
-                        );
-                    }
-
-                    const sendDisabled = !/^\+52\d+/.test(record.phone_number) || credits <= 0 || plan !== 'pro';
-                    const sendBtnClass = plan !== 'pro' ? 'primarybutton--transparent pro_badge' : 'primarybutton--active';
-                    const sendBtnStyle = { flex: plan !== 'pro' ? 1 : 0, maxHeight: 30, justifyContent: 'flex-start', borderRadius: 99 };
-
-                    return (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
-                            {/* Envío individual por bloque */}
-                            {!SHOW_BULK_SEND && (
-                                <Tooltip
-                                    placement='topRight'
-                                    title={plan !== 'pro' ? '' : !/^\+52\d+/.test(record.phone_number) ? t('guests.tooltip_national_only') : ''}
-                                    color="var(--brand-color-500)"
-                                >
-                                    {enabledExtraLanguages.length === 0 ? (
-                                        <Button
-                                            disabled={sendDisabled}
-                                            onClick={() => onSedingInvitation(record, false)}
-                                            className={sendBtnClass}
-                                            icon={<Send size={14} />}
-                                            style={sendBtnStyle}
-                                        >
-                                            {t('guests.btn_send')}
-                                        </Button>
-                                    ) : (
-                                        <Dropdown
-                                            trigger={['click']}
-                                            disabled={sendDisabled}
-                                            popupRender={() => renderSendLanguagePopup(record, false)}
-                                        >
-                                            <Button
-                                                disabled={sendDisabled}
-                                                className={sendBtnClass}
-                                                icon={<Send size={14} />}
-                                                style={sendBtnStyle}
-                                            >
-                                                {t('guests.btn_send')}
-                                            </Button>
-                                        </Dropdown>
-                                    )}
-                                </Tooltip>
-                            )}
-
-                            {/* Marcar como invitado a mano, sin WhatsApp */}
-                            <Tooltip placement='topRight' title={t('guests.mark_arrow_tooltip')} color="var(--brand-color-500)">
-                                <Button
-                                    onClick={() => onSendInvitation(record)}
-                                    className='primarybutton'
-                                    icon={<ArrowRight size={14} style={{ marginTop: 2 }} />}
-                                    style={{ minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99 }}
-                                />
-                            </Tooltip>
-                        </div>
-                    );
-                }
-
-                if (state === "esperando") {
-                    // En vista plana/filtrada los acompañantes llegan aquí sin
-                    // __isGroupChild — misma regla: celda vacía para acompañantes.
-                    if (record.companion_id !== null && record.companion_id !== undefined) {
-                        return null;
-                    }
-                    return (
                         <div
                             style={{
+                                alignSelf: "stretch",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "center",
-                                gap: 6,
-                                width: "100%",
+                                justifyContent: "flex-start",
+                                gap: 12,
                             }}
                         >
-                            {handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')}
-                            {renderReminderButton(record)}
+                            <Progress
+                                style={{ flex: 1 }}
+                                size={[undefined, 12]}
+                                className="progress-tables"
+                                strokeColor={"var(--brand-color-500)"}
+                                status="active"
+                                showInfo={false}
+                                percent={
+                                    (confirmedData?.filter((g) => g.table === tb.id).length * 100) /
+                                    tb.size
+                                }
+                            />
+                            <span className="occupied-places-tab-mob">
+                                {`${confirmedData?.filter((g) => g.table === tb.id).length} / ${tb.size}`}
+                            </span>
                         </div>
+                    </div>
+                ))}
+            </div>
 
-                    );
-                }
+            <div
+                style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: 65,
+                }}
+            >
+                <Button
+                    onClick={() => sethandleTables(true)}
+                    style={{ borderRadius: 99 }}
+                    icon={<TbLocationFilled />}
+                >
+                    {t('guests.view_map')}
+                </Button>
+            </div>
+        </div>
+    )
 
-                if ((state === "confirmado" || state === 'asistente') && !table) {
-                    return (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 6,
-                                width: "100%",
-                            }}
-                        >
-                            <Dropdown
-                                trigger={["click"]}
-                                placement="topRight"
-                                popupRender={() => (
-                                    <div style={{ position: "static" }} className="on-transfer-container">
-                                        <span className="on-transfer-label">{t('guests.select_table')}</span>
 
-                                        <div className="transfer-mesas-cont scroll-invitation" style={{ maxHeight: '360px' }}>
-                                            {tables.map((tb, index) => (
-                                                <div
-                                                    onClick={() => addGuestToTable(tb, record)}
-                                                    key={index}
-                                                    className="table-transfer-item"
 
-                                                >
-                                                    <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
-                                                        <span>
-                                                            {tb.name ? `#${tb.number} - ${tb.name}` : `${t('guests.table_prefix')} #${tb.number}`}
-                                                        </span>
-                                                    </div>
-
-                                                    <div
-                                                        style={{
-                                                            alignSelf: "stretch",
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "flex-start",
-                                                            gap: 12,
-                                                        }}
-                                                    >
-                                                        <Progress
-                                                            style={{ flex: 1 }}
-                                                            size={[undefined, 12]}
-                                                            className="progress-tables"
-                                                            strokeColor={"var(--brand-color-500)"}
-                                                            status="active"
-                                                            showInfo={false}
-                                                            percent={
-                                                                (confirmedData?.filter((g) => g.table === tb.id).length * 100) /
-                                                                tb.size
-                                                            }
-                                                        />
-                                                        <span className="occupied-places-tab-mob">
-                                                            {`${confirmedData?.filter((g) => g.table === tb.id).length} / ${tb.size}`}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div
-                                            style={{
-                                                width: "100%",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                height: 65,
-                                            }}
-                                        >
-                                            <Button
-                                                onClick={() => sethandleTables(true)}
-                                                style={{ borderRadius: 99 }}
-                                                icon={<TbLocationFilled />}
-                                            >
-                                                {t('guests.view_map')}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
-                            >
-                                <Button
-                                    className="primarybutton--active"
-                                    icon={<RiArrowRightDoubleLine size={16} style={{ marginTop: 2 }} />}
-                                    style={{ flex: 1, maxWidth: '120px', maxHeight: 30, borderRadius: 99 }}
-                                >
-                                    {t('guests.btn_assign')}
-                                </Button>
-                            </Dropdown>
-                        </div>
-
-                    );
-                }
-
-                if ((state === "confirmado" || state === "asistente") && table) {
-                    const assignedTable = tables?.find((tb) => tb.id === table);
-                    return (
-                        <div className="tag-container">
-                            <Tooltip title={assignedTable?.name || ''}>
-                                <span className="new-table-tag new-table-tag--compact">
-                                    {assignedTable ? `#${assignedTable.number}` : "-"}
-                                </span>
-                            </Tooltip>
-                        </div>
-                    );
-                }
-
-                // if (state === "rechazado") {
-                //     return (
-                //         <Button
-                //             className="primarybutton"
-                //             icon={<MdDelete style={{ marginTop: 2 }} />}
-                //             style={{ width: "100%", maxHeight: 30, borderRadius: 99 }}
-                //         >
-                //             Eliminar
-                //         </Button>
-                //     );
-                // }
-
-                return null;
-            },
-        },
-    ]), [rowData, name, messagesDispatch, tables, credits, rsvpDeadline, bulkSelected, sendMode]);
-
-    const tableProps = useMemo(() => ({
-        rowKey: "id",
-        columns: openCard ? openColumns : columns,
-        pagination: false,
-        scroll: { x: 1400 },
-    }), [columns, openColumns, openCard]);
-
-    // Cada tab de estado necesita su propia variante de columnas: "mesa" se
-    // oculta salvo en confirmado (donde se fusiona dentro de "Acciones"), y
-    // "Acciones" cambia de título/desaparece según el estado. El sort activo
-    // se lee de activeSort[state] y se decora aquí, ya que depende del tab.
-    const getTabColumns = (baseColumns, state) => {
-        const sort = activeSort[state] || { column: null, dir: null };
-        const dirFor = (column) => (sort.column === column ? sort.dir : null);
-        const withTierSort = (cols) => cols.map((col) => (
-            col.key === "tier"
-                ? { ...col, title: renderSortableHeader(t('guests.col_priority'), dirFor('tier'), () => cycleTabSort(state, 'tier')) }
-                : col
-        ));
-
-        switch (state) {
-            case "creado":
-                // Con envío masivo activo la columna de acciones es el checkbox
-                // de selección; con el flag apagado conserva título y ancho base
-                return withTierSort(baseColumns
-                    .filter((col) => col.key !== "table")
-                    .map((col) => (col.key === "send" && SHOW_BULK_SEND ? { ...col, title: renderBulkHeaderCheck(), width: 100, minWidth: 100 } : col)));
-            case "esperando":
-                // width extra: además del chip de estado, la celda lleva el botón de recordatorio
-                return withTierSort(baseColumns
-                    .filter((col) => col.key !== "table")
-                    .map((col) => (col.key === "send" ? { ...col, width: 210, minWidth: 210, title: renderSortableHeader(t('guests.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
-            case "confirmado":
-                return withTierSort(baseColumns
-                    .filter((col) => col.key !== "table")
-                    .map((col) => (col.key === "send" ? { ...col, title: renderSortableHeader(t('guests.col_table'), dirFor('mesa'), () => cycleTabSort(state, 'mesa')) } : col)));
-            case "rechazado":
-                return withTierSort(baseColumns.filter((col) => col.key !== "table" && col.key !== "send"));
-            default:
-                return baseColumns;
-        }
-    };
+    // getTabColumns se eliminó con la tabla: cada tarjeta arma su propia acción.
 
     const filteredGuests = (data = []) => {
         return data.filter((guest) => {
@@ -1026,7 +355,11 @@ export default function GuestsPage() {
                 guest.type === filterType;
 
 
-            return matchesSearch && matchesTag && matchesTable && matchesTier && matchesType && matchesSide;
+            const matchesDelivery =
+                !filterDelivery ||
+                effectiveMessageStatus(guest) === filterDelivery;
+
+            return matchesSearch && matchesTag && matchesTable && matchesTier && matchesType && matchesSide && matchesDelivery;
         });
     };
 
@@ -1046,11 +379,9 @@ export default function GuestsPage() {
     const flatFilteredGuests = (groupedData = []) =>
         filteredGuests(flattenGroups(groupedData));
 
-    // activeSearcher también queda en true cuando el panel de filtros está
-    // simplemente abierto sin ningún valor elegido — para decidir si se
-    // muestran las tarjetas agrupadas o las filas individuales necesitamos
-    // saber si hay un filtro/búsqueda realmente aplicado, no solo el panel abierto.
-    const hasActiveFilters = Boolean(searchUser || filterTag || filterTable || filterTier || filterType || filterSide);
+    // Con búsqueda o filtro activo la lista se aplana (cada coincidencia como su
+    // propia tarjeta) en vez de agruparse por familia.
+    const hasActiveFilters = Boolean(searchUser || filterTag || filterTable || filterTier || filterType || filterSide || filterDelivery);
 
     // (renderGuestCardRow, renderGroupedCards, confirmedFlatData, renderConfirmedByTable
     // e items viven más abajo, después de todos los helpers que sus columnas invocan —
@@ -1067,117 +398,8 @@ export default function GuestsPage() {
     }
 
 
-    const handleMessageStatus = (record, status) => {
-        // Sin dispatch todavía pero enviado por WhatsApp API en esta sesión:
-        // se ve como "procesando", nunca como "envío manual".
-        const effectiveStatus = status === 'undefined' && pendingApiSends.has(record.id) ? 'processing' : status;
-
-        switch (effectiveStatus) {
-            case 'processing':
-
-                return (
-                    <div className='dispatch_message_tag'>
-                        {t('guests.msg_processing')}
-                    </div>
-                )
-
-            case 'sent':
-
-                return (
-                    <div className={`new-table-tag state-confirmado dispatch_message_tag`}>
-                        <Send size={16} />
-                        {t('guests.msg_sent')}
-                    </div>
-                )
-
-            case 'delivered':
-
-                return (
-                    <div className={`new-table-tag state-creado dispatch_message_tag`}>
-                        <Check size={16} />
-                        {t('guests.msg_delivered')}
-                    </div>
-                )
 
 
-            case 'read':
-
-                return (
-                    <div className={`new-table-tag state-esperando dispatch_message_tag`}>
-                        <CheckCheck size={16} />
-                        {t('guests.msg_read')}
-                    </div>
-                )
-
-            case 'failed':
-
-                return (
-
-                    <Tooltip placement='topRight'
-
-                        title={t('guests.msg_retry_tooltip')} color="var(--brand-color-500)">
-                        {enabledExtraLanguages.length === 0 ? (
-                            <Button
-                                disabled={
-                                    !/^\+52\d+/.test(record.phone_number) || credits <= 0
-                                }
-                                onClick={() => onSedingInvitation(record, true)}
-                                className="primarybutton--active"
-                                icon={<MailWarning size={16} />}
-                                style={{ width: 155, maxHeight: 30 }}
-                            >
-                                {t('guests.msg_retry')}
-                            </Button>
-                        ) : (
-                            <Dropdown
-                                trigger={['click']}
-                                disabled={
-                                    !/^\+52\d+/.test(record.phone_number) || credits <= 0
-                                }
-                                popupRender={() => renderSendLanguagePopup(record, true)}
-                            >
-                                <Button
-                                    disabled={
-                                        !/^\+52\d+/.test(record.phone_number) || credits <= 0
-                                    }
-                                    className="primarybutton--active"
-                                    icon={<MailWarning size={16} />}
-                                    style={{ width: 155, maxHeight: 30 }}
-                                >
-                                    {t('guests.msg_retry')}
-                                </Button>
-                            </Dropdown>
-                        )}
-                    </Tooltip>
-                    // <div className='dispatch_message_tag'>
-
-                    //     <MailWarning size={16}/>
-                    //     Reintentar
-                    // </div>
-                )
-
-            default:
-                return (
-                    <div style={{ flex: 1, maxWidth: '155px' }} className={`new-table-tag manual-sent-tag dispatch_message_tag`}>
-                        {t('guests.msg_manual')}
-                    </div>
-                )
-        }
-    }
-
-
-    const linkColor = (state) => {
-        switch (state) {
-            case 'creado': return '#008DFF'
-            case 'esperando': return '#E6961F'
-            case 'confirmado': return '#6D3CFA'
-            case 'asistente': return '#6D3CFA'
-            case 'rechazado': return '#000000'
-
-            default:
-                break;
-        }
-    }
 
     const handlePriority = (tier) => {
         switch (tier) {
@@ -1944,67 +1166,6 @@ export default function GuestsPage() {
         </div>
     )
 
-    // Botón de recordatorio por grupo: solo en filas de principales (el
-    // destinatario real). Mismo patrón que el envío del tab de creado: sin
-    // idiomas extra el click envía directo; con idiomas, Dropdown y al elegir
-    // uno se envía. Si el único bloqueo es el saldo, el click abre la compra
-    // de créditos en vez de deshabilitarse (CTA).
-    const renderReminderButton = (record) => {
-        if (record.companion_id !== null && record.companion_id !== undefined) return null
-
-        // Sin botón cuando el último envío falló (ahí vive el "Reintentar") o
-        // cuando fue envío manual (no hay dispatch de invitación por API).
-        const status = effectiveMessageStatus(record)
-        if (status === 'failed' || status === 'undefined') return null
-
-        const reason = reminderBlockReason(record)
-        const count = record.reminder_count ?? 0
-        const disabled = !!reason && reason.key !== 'credits'
-
-        const button = (
-            <Button
-                disabled={disabled}
-                onClick={() => {
-                    if (reason?.key === 'credits') {
-                        setBuyCreditsOpen(true)
-                    } else if (!reason && enabledExtraLanguages.length === 0) {
-                        onSendReminder(record, 'es')
-                    }
-                }}
-                // className="primarybutton--active"
-                icon={<BellRing size={14} style={{ marginTop: 4, color: disabled ? '#dbdbdb' : undefined }} />}
-                style={{
-                    minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99,
-                    background: 'linear-gradient(145deg, var(--orange-color), var(--orange-color))', color: '#FFFF', border: '1px solid var(--orange-color)',
-                    // el disabled default de antd deja el botón blanco y el ícono no se ve
-                    ...(disabled && { background: '#F1F1F1', border: '1px solid #EBEBEB', color: '#787878' }),
-                }}
-            />
-        )
-
-        const content = !reason && enabledExtraLanguages.length > 0 ? (
-            <Dropdown
-                trigger={['click']}
-                popupRender={() => renderReminderLanguagePopup(record)}
-            >
-                {button}
-            </Dropdown>
-        ) : button
-
-        return (
-            <Tooltip
-                placement='topRight'
-                color="var(--orange-bg)"
-                title={<span style={{ color: 'var(--orange-color)', fontWeight: 600, textAlign: 'center' }}>{reason ? reason.label : count > 0 ? `${t('guests.reminder_count_tooltip')}: ${count}` : t('guests.reminder_btn_tooltip')}</span>}
-            >
-                {disabled ? content : (
-                    <Badge count={count} size="small" color="var(--brand-color-500)" title="" offset={[-2, 2]}>
-                        {content}
-                    </Badge>
-                )}
-            </Tooltip>
-        )
-    }
 
 
     const addGuestToTable = async (table, guest) => {
@@ -2195,208 +1356,75 @@ export default function GuestsPage() {
     }, [onShare])
 
 
-    useEffect(() => {
-        if (!filterTable && !filterTag && !filterTier && !searchUser && !filterType && !filterSide) {
-            setActiveSearcher(false)
-        } else {
-            setActiveSearcher(true)
-        }
-    }, [filterTable, filterTag, filterTier, searchUser, filterType, filterSide])
-
     // A partir de aquí: helpers que invocan columns/openColumns.render(...) de forma
     // síncrona (no vía <Table>, que difiere su propio render a después de que este
     // componente termine de ejecutarse). Por eso deben declararse después de TODOS
     // los helpers que esas columnas puedan llamar (phoneFormatter, handleMessageStatus,
     // onSendInvitation, etc.) — si no, revientan con "Cannot access ... before initialization".
 
-    // "name" queda fijo a la izquierda y "send" (Acciones) fijo a la derecha,
-    // igual que el fixed:"left"/"right" que tenían las columnas en el <Table>.
-    const stickyClassFor = (colKey) => {
-        if (colKey === 'name') return 'guests-card-cell--sticky-left';
-        // En mobile no hay espacio para 2 columnas sticky — solo "name" se queda fija.
-        if (colKey === 'send' && !screens.xs) return 'guests-card-cell--sticky-right';
-        return '';
-    };
+    // Nota: el rediseño reemplazó la lista tipo tabla (encabezado + celdas
+    // de ancho fijo) por tarjetas fluidas — ver renderGuestCard más abajo.
 
-    // Renderiza una fila de invitado reutilizando exactamente las mismas
-    // columnas/render de la tabla (misma información), fuera de un <table>
-    // para poder envolver cada grupo en su propia tarjeta con bordes.
-    const renderGuestCardRow = (record, cols, extraClassName = '') => {
-        const isChildRow = extraClassName === 'guests-card-row--child';
-        // Highlight y click-para-seleccionar en vista plana (en agrupada los
-        // maneja la tarjeta del grupo)
-        const isFlatRow = extraClassName === 'guests-card-row--flat';
-        const isFlatPrincipal = isFlatRow && record.state === 'creado' && (record.companion_id === null || record.companion_id === undefined);
-        const isBulkSelectedFlat = isFlatRow && bulkSelected.has(record.id);
-        const isFlatSelectable = sendMode && isFlatPrincipal && isSendableGuest(record);
-        const isFlatDimmed = sendMode && isFlatPrincipal && !isSendableGuest(record);
+    // Fecha límite de confirmación (rsvp_deadline). El rediseño la baja de
+    // banner a una línea de texto bajo el toolbar: etiqueta, fecha y un enlace
+    // "Cambiar" que abre el DatePicker (que vive oculto, solo como ancla del
+    // popup). Sin fecha límite no se puede enviar ningún recordatorio ({{3}}
+    // del template es obligatorio), así que el empty state invita a definirla.
+    // El DatePicker de la fecha límite no tiene disparador visible propio: vive
+    // oculto y lo abre el enlace / botón que lo acompaña.
+    const renderRsvpPicker = (slot) => (
+        <DatePicker
+            open={rsvpPickerSlot === slot}
+            onOpenChange={(next) => setRsvpPickerSlot(next ? slot : null)}
+            value={rsvpDeadline ? dayjs(rsvpDeadline) : null}
+            onChange={onSaveRsvpDeadline}
+            disabledDate={rsvpDisabledDate}
+            allowClear={false}
+            placeholder={t('guests.rsvp_deadline_placeholder')}
+            getPopupContainer={() => document.body}
+            className="gx-deadline-picker"
+        />
+    )
 
+    // Sin fecha definida no se puede enviar ningún recordatorio ({{3}} del
+    // template es obligatorio). Se anuncia como alerta y va ARRIBA del buscador,
+    // para que no se pase por alto.
+    const renderRsvpDeadlineAlert = (slot) => {
+        if (rsvpDeadline) return null
         return (
-            <div
-                key={record.id}
-                className={`guests-card-row ${extraClassName} ${isBulkSelectedFlat ? 'bulk-row-selected' : ''} ${isFlatDimmed ? 'bulk-row-disabled' : ''}`}
-                onClick={isFlatSelectable ? (e) => {
-                    if (e.target.closest('button, input, a, .ant-dropdown')) return
-                    toggleBulkSelect(record.id, !bulkSelected.has(record.id))
-                } : undefined}
-                style={isFlatSelectable ? { cursor: 'pointer' } : undefined}>
-                {cols.map((col) => (
-                    <div
-                        key={col.key}
-                        className={`guests-card-cell ${stickyClassFor(col.key)}`}
-                        style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
+            <div className="gx-alert gx-alert--accent gx-deadline-alert">
+                <div className="gx-alert-badge"><BellRing size={16} /></div>
+                <div className="gx-alert-texts">
+                    <div className="gx-alert-title">{t('guests.rsvp_deadline_alert_title')}</div>
+                    <div className="gx-alert-text">{t('guests.rsvp_deadline_alert_text')}</div>
+                </div>
+                <span className="gx-deadline-anchor">
+                    <button
+                        type="button"
+                        className="gx-btn gx-btn--accent gx-btn--sm"
+                        onClick={() => setRsvpPickerSlot(slot)}
                     >
-                        {col.render ? col.render(record[col.dataIndex], record) : record[col.dataIndex]}
-
-                        {!isChildRow && stickyClassFor(col.key) === 'guests-card-cell--sticky-left' && (
-                            <Tooltip title={t('guests.tooltip_open')}>
-                                <Button
-                                    onClick={() =>
-                                        setDrawerState({
-                                            currentGuest: record,
-                                            onEditGuest: true,
-                                            companions: handleCompanions(record.id),
-                                            visible: true,
-                                        })
-                                    }
-                                    className="primarybutton"
-                                    icon={<FiArrowUpRight size={12} style={{ marginTop: 2 }} />}
-                                    style={{ position: 'absolute', top: 16, left: 12, maxWidth: 20, maxHeight: 20, borderRadius: 99, zIndex: 99 }}
-                                />
-                            </Tooltip>
-                        )}
-                    </div>
-                ))}
+                        {t('guests.rsvp_deadline_define')}
+                    </button>
+                    {renderRsvpPicker(slot)}
+                </span>
             </div>
-        );
-    };
+        )
+    }
 
-    // Reemplaza el antiguo expand/collapse por chevron: cada grupo (líder +
-    // acompañantes) se ve siempre desplegado, envuelto en su propia tarjeta
-    // con borde redondeado, para que sea claro dónde empieza y termina.
-    const renderGroupedCards = (data, cols) => {
-        if (!data || data.length === 0) {
-            return <div className="table-group-empty">{t('guests.no_guests')}</div>;
-        }
-
+    // Ya definida: línea de texto discreta DEBAJO del buscador.
+    const renderRsvpDeadlineLine = (slot) => {
+        if (!rsvpDeadline) return null
         return (
-            <div className="guests-card-list" >
-                <div className="guests-card-list-header">
-                    {cols.map((col) => (
-                        <div
-                            key={col.key}
-                            className={`guests-card-header-cell ${stickyClassFor(col.key)}`}
-                            style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
-                        >
-                            {col.title}
-                        </div>
-                    ))}
-                </div>
-                {data.map((group) => {
-                    // Modo envío: solo bloques enviables son clickeables; los
-                    // no-enviables se atenúan con su motivo visible en la fila.
-                    const groupSelectable = sendMode && group.state === 'creado' && isSendableGuest(group)
-                    const groupDimmed = sendMode && group.state === 'creado' && !isSendableGuest(group)
-                    return (
-                    <div
-                        key={group.id}
-                        className={`guests-group-card ${bulkSelected.has(group.id) ? 'bulk-row-selected' : ''} ${groupDimmed ? 'bulk-row-disabled' : ''}`}
-                        onClick={groupSelectable ? (e) => {
-                            if (e.target.closest('button, input, a, .ant-dropdown')) return
-                            toggleBulkSelect(group.id, !bulkSelected.has(group.id))
-                        } : undefined}
-                        style={groupSelectable ? { cursor: 'pointer' } : undefined}
-                    >
-                        {renderGuestCardRow(group, cols)}
-                        {group.children?.map((child) => renderGuestCardRow(child, cols, 'guests-card-row--child'))}
-                    </div>
-                    )
-                })}
-            </div>
-        );
-    };
-
-    // Vista sin agrupar: cada invitado (líder o acompañante) en su propia
-    // fila/tarjeta, sin jerarquía de familia — se usa mientras hay una
-    // búsqueda/filtro activo, para que cualquier coincidencia sea visible.
-    const renderFlatRows = (data, cols) => {
-        if (!data || data.length === 0) {
-            return <div className="table-group-empty">{t('guests.no_guests')}</div>;
-        }
-
-        return (
-            <div className="guests-card-list guests-card-list--flat">
-                <div className="guests-card-list-header">
-                    {cols.map((col) => (
-                        <div
-                            key={col.key}
-                            className={`guests-card-header-cell ${stickyClassFor(col.key)}`}
-                            style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
-                        >
-                            {col.title}
-                        </div>
-                    ))}
-                </div>
-                {data.map((guest) =>
-                    // __isGroupChild se apaga para que la columna "name" no dibuje
-                    // el indent/ícono de acompañante — en lista plana todos son iguales.
-                    renderGuestCardRow({ ...guest, __isGroupChild: false }, cols, 'guests-card-row--flat')
-                )}
-            </div>
-        );
-    };
-
-    // Barra de fecha límite de confirmación (rsvp_deadline), solo en el tab de
-    // Enviadas: empty state que invita a definirla mientras es null; una vez
-    // definida queda como campo editable permanente. Sin fecha límite no se
-    // puede enviar ningún recordatorio ({{3}} del template es obligatorio).
-    // En mobile el banner es colapsable: solo texto + chevron; al tocarlo se
-    // despliega el DatePicker. En desktop siempre expandido (texto + picker).
-    const renderRsvpDeadlineBar = () => {
-        const expanded = !screens.xs || rsvpBarOpen
-        return (
-            <div style={{
-                display: 'flex',
-                flexDirection: screens.xs ? 'column' : 'row',
-                alignItems: screens.xs ? 'stretch' : 'center',
-                justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
-                padding: '10px 16px', borderRadius: 16, boxSizing: 'border-box', width: '100%',
-                border: `1px solid ${rsvpDeadline ? '#EBEBEB' : 'var(--light-purple-500-20)'}`,
-                background: rsvpDeadline ? '#FFFFFF' : 'var(--light-purple-100-40)',
-            }}>
-                <div
-                    onClick={screens.xs ? () => setRsvpBarOpen((o) => !o) : undefined}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, cursor: screens.xs ? 'pointer' : undefined }}
-                >
-                    <BellRing size={16} style={{ flexShrink: 0, color: rsvpDeadline ? 'var(--brand-color-500)' : 'var(--light-purple-700)' }} />
-                    <span style={{ fontSize: 13, color: rsvpDeadline ? undefined : 'var(--light-purple-700)' }}>
-                        {rsvpDeadline
-                            ? `${t('guests.rsvp_deadline_label')}: ${formatAbsoluteDateEs(rsvpDeadline)}`
-                            : t('guests.rsvp_deadline_empty')}
-                    </span>
-                    {screens.xs && (
-                        <GoChevronDown
-                            size={16}
-                            style={{
-                                flexShrink: 0, marginLeft: 'auto',
-                                color: rsvpDeadline ? 'var(--brand-color-500)' : 'var(--light-purple-700)',
-                                transform: rsvpBarOpen ? 'rotate(180deg)' : 'none',
-                                transition: 'transform 0.2s ease',
-                            }}
-                        />
-                    )}
-                </div>
-                {expanded && (
-                    <DatePicker
-                        value={rsvpDeadline ? dayjs(rsvpDeadline) : null}
-                        onChange={onSaveRsvpDeadline}
-                        disabledDate={rsvpDisabledDate}
-                        allowClear={false}
-                        placeholder={t('guests.rsvp_deadline_placeholder')}
-                        getPopupContainer={() => document.body}
-                        style={{ borderRadius: 99 }}
-                    />
-                )}
+            <div className="gx-deadline">
+                <span className="gx-deadline-label">{t('guests.rsvp_deadline_label')}</span>
+                <span className="gx-deadline-value">{formatAbsoluteDateEs(rsvpDeadline)}</span>
+                <span className="gx-deadline-anchor">
+                    <button type="button" className="gx-deadline-link" onClick={() => setRsvpPickerSlot(slot)}>
+                        {t('guests.rsvp_deadline_change')}
+                    </button>
+                    {renderRsvpPicker(slot)}
+                </span>
             </div>
         )
     }
@@ -2556,24 +1584,6 @@ export default function GuestsPage() {
         )
     }
 
-    // Header de la columna: en modo envío, botón "Soltar" para limpiar la
-    // selección; fuera del modo, el título normal de acciones.
-    const renderBulkHeaderCheck = () => {
-        if (!sendMode) return t('guests.col_actions')
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <Button
-                    size='small'
-                    disabled={bulkSelected.size === 0}
-                    onClick={() => setBulkSelected(new Set())}
-                    className='secondarybutton'
-                    style={{ borderRadius: 99, height: 32, flex: 1, width: '100%' }}
-                >
-                    {t('guests.bulk_release')}
-                </Button>
-            </div>
-        )
-    }
 
     // Vive en el tabBarExtraContent del tab de Lista de espera: fuera del modo,
     // "Crear envío" (entra al modo); dentro, "Enviar todos (n)" + "Cancelar".
@@ -2627,67 +1637,1073 @@ export default function GuestsPage() {
         [rowData]
     );
 
-    // Vista "por mesa" de Asistencia confirmada: solo lectura, agrupada por
-    // número de mesa. La asignación/reasignación real sigue viviendo en el
-    // mapa de mesas (Drawer de TablesPage).
-    const renderConfirmedByTable = () => {
-        const guests = filteredGuests(confirmedFlatData);
-        const grouped = tables
-            .map((tb) => ({
-                table: tb,
-                guests: guests.filter((g) => g.table === tb.id),
-            }))
-            .filter((group) => group.guests.length > 0);
-        const unassigned = guests.filter((g) => !g.table);
+    // La vista "por mesa" de confirmados se retiró junto con el toggle
+    // Por grupo / Individual: ya no había control que la activara.
 
-        if (grouped.length === 0 && unassigned.length === 0) {
-            return <div className="table-group-empty">{t('guests.no_confirmed_guests')}</div>;
+    // ─────────────────────────────────────────────────────────────────────
+    // Rediseño "Gestion de invitados" (Claude Design)
+    //
+    // La lista deja de ser una tabla con encabezado y columnas de ancho fijo:
+    // cada bloque (titular + acompañantes) es una tarjeta fluida. Los botones
+    // de acción se siguen tomando de la columna "send" para no duplicar la
+    // lógica de envío / recordatorio / asignación de mesa, que vive ahí.
+    // ─────────────────────────────────────────────────────────────────────
+
+    const initialsOf = (value = '') => {
+        const parts = String(value).trim().split(/\s+/)
+        return (((parts[0] || '')[0] || '') + ((parts[1] || '')[0] || '')) || '?'
+    }
+
+    const relativeWhen = (iso) => {
+        if (!iso) return null
+        const d = dayjs(iso)
+        if (!d.isValid()) return null
+        return d.locale(i18n.language?.startsWith('en') ? 'en' : 'es').fromNow()
+    }
+
+    const magicLinkFor = (record) =>
+        `https://www.iattend.events/${invitation?.generals?.event?.label}/${name}?password=${record.password}`
+
+    // Estado de entrega del tab "Esperando respuesta": etiqueta ya traducida,
+    // color del punto y tono que hereda el borde de la tarjeta.
+    // `badge` elige la paleta de estado de index.css (--{color}-color / --{color}-bg);
+    // `tone` es lo que tiñe el borde de la tarjeta.
+    const sendStatusInfo = (record) => {
+        const status = effectiveMessageStatus(record)
+        const when = relativeWhen(record.invitation_sent_at || record.last_update_date)
+
+        switch (status) {
+            case 'failed':
+                return { label: t('guests.msg_failed'), badge: 'red', tone: 'failed', when }
+            case 'read':
+                return { label: t('guests.msg_read_full'), badge: 'yellow', tone: 'read', when }
+            case 'delivered':
+                return { label: t('guests.msg_delivered'), badge: 'blue', tone: null, when }
+            case 'sent':
+                return { label: t('guests.msg_sent'), badge: 'blue', tone: null, when }
+            case 'processing':
+                return { label: t('guests.msg_processing'), badge: 'gray', tone: null, when }
+            // Envío manual: no hay dispatch por API, así que no sabemos nada de
+            // la entrega — neutro.
+            default:
+                return { label: t('guests.msg_manual'), badge: 'gray', tone: 'muted', when }
+        }
+    }
+
+    // Etiqueta de mesa del tab Confirmados.
+    const tableLabelFor = (record) => {
+        const assigned = tables?.find((tb) => tb.id === record.table)
+        if (!assigned) return t('guests.card_no_table')
+        return `${t('guests.table_prefix')} ${assigned.number}`
+    }
+
+    // Acción del tab Por invitar: píldora morada "Enviar invitación" (WhatsApp)
+    // y, a su derecha, un botón de check para marcarlo como invitado a mano.
+    // El envío se deshabilita sin lada nacional, sin créditos o sin plan Pro;
+    // el check siempre está disponible.
+    const renderCreatedAction = (record) => {
+        if (record.companion_id !== null && record.companion_id !== undefined) return null
+
+        // Modo envío masivo: la acción es el checkbox de selección
+        if (SHOW_BULK_SEND && sendMode) {
+            return isSendableGuest(record) ? renderBulkCheck(record) : null
+        }
+
+        const isNational = /^\+52\d+/.test(record.phone_number)
+        const blocked = !isNational || credits <= 0 || plan !== 'pro'
+        const blockReason = plan !== 'pro'
+            ? ''
+            : !isNational
+                ? t('guests.tooltip_national_only')
+                : credits <= 0
+                    ? t('guests.reminder_no_credits')
+                    : ''
+
+        const sendBtn = (
+            <button
+                type="button"
+                className={`gx-btn gx-btn--accent gx-btn--sm ${plan !== 'pro' ? 'pro_badge' : ''}`}
+                aria-disabled={blocked}
+                onClick={() => {
+                    if (blocked) return
+                    if (enabledExtraLanguages.length === 0) onSedingInvitation(record, false)
+                }}
+            >
+                {t('guests.btn_send_invitation')}
+            </button>
+        )
+
+        return (
+            <>
+                {!SHOW_BULK_SEND && (
+                    <Tooltip placement="topRight" color="var(--brand-color-500)" title={blockReason}>
+                        {!blocked && enabledExtraLanguages.length > 0 ? (
+                            <Dropdown trigger={['click']} popupRender={() => renderSendLanguagePopup(record, false)}>
+                                {sendBtn}
+                            </Dropdown>
+                        ) : sendBtn}
+                    </Tooltip>
+                )}
+
+                <Tooltip placement="topRight" color="var(--brand-color-500)" title={t('guests.mark_arrow_tooltip')}>
+                    <button
+                        type="button"
+                        className="gx-icon-btn gx-icon-btn--primary"
+                        onClick={() => onSendInvitation(record)}
+                        aria-label={t('guests.mark_arrow_tooltip')}
+                    >
+                        <Check size={15} />
+                    </button>
+                </Tooltip>
+            </>
+        )
+    }
+
+    // Acción del tab Esperando respuesta. El chip de estado ya no vive aquí —
+    // se muestra al inicio de la tarjeta (.gx-status) — así que el slot queda
+    // solo con el botón: "Reintentar" en morado cuando el envío falló y
+    // "Recordar" en blanco para el resto.
+    //
+    // Nota: los botones usan aria-disabled en vez de disabled. Un <button>
+    // deshabilitado no emite eventos de mouse y el Tooltip con el motivo del
+    // bloqueo (sin fecha límite, sin créditos, lada no mexicana...) nunca se
+    // vería.
+    const renderSentAction = (record) => {
+        if (record.companion_id !== null && record.companion_id !== undefined) return null
+
+        const status = effectiveMessageStatus(record)
+
+        // Envío manual (sin dispatch por API): no hay recordatorio que mandar.
+        if (status === 'undefined') return null
+
+        if (status === 'failed') {
+            const blocked = !/^\+52\d+/.test(record.phone_number) || credits <= 0
+            const retryBtn = (
+                <button
+                    type="button"
+                    className="gx-btn gx-btn--accent gx-btn--sm"
+                    aria-disabled={blocked}
+                    onClick={() => {
+                        if (blocked) return
+                        if (enabledExtraLanguages.length === 0) onSedingInvitation(record, true)
+                    }}
+                >
+                    {t('guests.msg_retry')}
+                </button>
+            )
+            return (
+                <Tooltip placement="topRight" color="var(--brand-color-500)" title={t('guests.msg_retry_tooltip')}>
+                    {!blocked && enabledExtraLanguages.length > 0 ? (
+                        <Dropdown trigger={['click']} popupRender={() => renderSendLanguagePopup(record, true)}>
+                            {retryBtn}
+                        </Dropdown>
+                    ) : retryBtn}
+                </Tooltip>
+            )
+        }
+
+        const reason = reminderBlockReason(record)
+        const count = record.reminder_count ?? 0
+        const blocked = !!reason && reason.key !== 'credits'
+
+        const remindBtn = (
+            <button
+                type="button"
+                className="gx-btn gx-btn--ghost gx-btn--sm"
+                aria-disabled={blocked}
+                onClick={() => {
+                    if (blocked) return
+                    if (reason?.key === 'credits') setBuyCreditsOpen(true)
+                    else if (!reason && enabledExtraLanguages.length === 0) onSendReminder(record, 'es')
+                }}
+            >
+                {t('guests.hero_sent_remind')}
+            </button>
+        )
+
+        const content = !reason && enabledExtraLanguages.length > 0 ? (
+            <Dropdown trigger={['click']} popupRender={() => renderReminderLanguagePopup(record)}>
+                {remindBtn}
+            </Dropdown>
+        ) : remindBtn
+
+        return (
+            <Tooltip
+                placement="topRight"
+                color="var(--orange-bg)"
+                title={
+                    <span style={{ color: 'var(--orange-color)', fontWeight: 600, textAlign: 'center' }}>
+                        {reason
+                            ? reason.label
+                            : count > 0
+                                ? `${t('guests.reminder_count_tooltip')}: ${count}`
+                                : t('guests.reminder_btn_tooltip')}
+                    </span>
+                }
+            >
+                {blocked ? content : (
+                    <Badge count={count} size="small" color="var(--brand-color-500)" title="" offset={[-6, 2]}>
+                        {content}
+                    </Badge>
+                )}
+            </Tooltip>
+        )
+    }
+
+    // Acción de mesa del tab Confirmados: píldora morada para asignar y píldora
+    // blanca con la mesa ya asignada. Reemplaza el render de la columna "send"
+    // (que sigue vivo para las columnas viejas del modo lista abierta).
+    const renderTableAction = (record) => {
+        const assigned = tables?.find((tb) => tb.id === record.table)
+
+        if (assigned) {
+            return (
+                <Tooltip title={assigned.name || ''}>
+                    <span className="gx-table-pill">{tableLabelFor(record)}</span>
+                </Tooltip>
+            )
         }
 
         return (
-            <div className="confirmed-by-table-container">
-                {grouped.map(({ table, guests: tableGuests }) => (
-                    <div key={table.id} className="table-group-card">
-                        <div className="table-group-header">
-                            <span>
-                                {table.name ? `#${table.number} - ${table.name}` : `${t('guests.table_prefix')} #${table.number}`}
-                            </span>
-                            <span className="table-group-count">{tableGuests.length} / {table.size}</span>
-                        </div>
-                        {tableGuests.map((g) => (
-                            <div key={g.id} className={`table-group-row ${g.companion_id !== null ? 'table-group-row--child' : ''}`}>
-                                {g.companion_id !== null && <BsArrowReturnRight />}
-                                <span>{g.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                ))}
+            <Dropdown
+                trigger={['click']}
+                placement="bottomRight"
+                popupRender={() => renderTablePickerPopup(record)}
+            >
+                <button type="button" className="gx-btn gx-btn--accent gx-btn--sm">
+                    {t('guests.btn_assign_table')}
+                </button>
+            </Dropdown>
+        )
+    }
 
-                {unassigned.length > 0 && (
-                    <div className="table-group-card">
-                        <div
-                            className="table-group-header"
+    const openGuestDrawer = (record) => setDrawerState({
+        currentGuest: record,
+        onEditGuest: true,
+        companions: handleCompanions(record.id),
+        visible: true,
+    })
+
+    const renderCopyLink = (record, small = false) => (
+        <Tooltip title={t('guests.tooltip_copy_magic_link')}>
+            <button
+                type="button"
+                className={`gx-pill ${small ? 'gx-pill--sm' : ''}`}
+                onClick={(e) => { e.stopPropagation(); handleShare(magicLinkFor(record)) }}
+            >
+                <Link2 size={small ? 13 : 14} />
+                <span>{t('guests.card_copy_link')}</span>
+            </button>
+        </Tooltip>
+    )
+
+    // Los chips del bloque: etiqueta libre, categoría y prioridad.
+    // Columna: una fila con los badges (estado de envío, etiqueta, prioridad) y,
+    // debajo, la fecha del envío / último cambio de estado.
+    const renderCardChips = (record, muted = false, status = null) => (
+        <div className="gx-chips-col">
+            <div className="gx-chips">
+                {status && (
+                    <span className="gx-status-badge" data-tone={status.badge}>{status.label}</span>
+                )}
+                {record.tag && (
+                    <Tooltip title={isTagLong(record.tag) ? renderTagFull(record.tag) : ''}>
+                        <span className={`gx-chip ${muted ? 'gx-chip--muted' : ''}`}>{renderTag(record.tag)}</span>
+                    </Tooltip>
+                )}
+                {record.tier && !muted && (
+                    <Tooltip title={handlePriority(record.tier)}>
+                        <span className={`gx-chip gx-chip--tier-${record.tier}`}>{record.tier}</span>
+                    </Tooltip>
+                )}
+            </div>
+            {status?.when && <span className="gx-status-when">{status.when}</span>}
+        </div>
+    )
+
+    // Una tarjeta = un bloque. `children` son los acompañantes; en vista plana
+    // llega vacío y cada invitado se dibuja por separado.
+    const renderGuestCard = (record, tabKey, children = []) => {
+        const actionNode = tabKey === 'confirmado'
+            ? renderTableAction(record)
+            : tabKey === 'esperando'
+                ? renderSentAction(record)
+                : tabKey === 'creado'
+                    ? renderCreatedAction(record)
+                    : null
+        const status = tabKey === 'esperando' ? sendStatusInfo(record) : null
+        const isRejected = tabKey === 'rechazado'
+        const isConfirmed = tabKey === 'confirmado'
+
+        const selectable = sendMode && record.state === 'creado' && isSendableGuest(record)
+        const dimmed = sendMode && record.state === 'creado' && !isSendableGuest(record)
+        const tone = isRejected ? 'muted' : status?.tone ?? null
+
+        return (
+            <div
+                key={record.id}
+                className="gx-card"
+                data-tone={tone || undefined}
+                data-selected={bulkSelected.has(record.id) || undefined}
+                data-dimmed={dimmed || undefined}
+                onClick={selectable ? (e) => {
+                    if (e.target.closest('button, input, a, .ant-dropdown')) return
+                    toggleBulkSelect(record.id, !bulkSelected.has(record.id))
+                } : undefined}
+                style={selectable ? { cursor: 'pointer' } : undefined}
+            >
+                <div className="gx-row">
+                    <div className={`gx-avatar ${isConfirmed ? 'gx-avatar--accent' : ''} ${isRejected ? 'gx-avatar--muted' : ''}`}>
+                        {initialsOf(record.name)}
+                    </div>
+
+                    <div className="gx-identity">
+                        <span className="gx-name" title={record.name}>{record.name}</span>
+                        <span className="gx-sub">
+                            <span>{record.phone_number ? phoneFormatter(record.phone_number) : t('guests.card_no_phone')}</span>
+                            {record.password && (
+                                <Tooltip title={t('guests.tooltip_copy_password')}>
+                                    <button
+                                        type="button"
+                                        className="gx-code"
+                                        onClick={(e) => { e.stopPropagation(); copyToClipboard(record.password) }}
+                                    >
+                                        · {record.password}
+                                    </button>
+                                </Tooltip>
+                            )}
+                        </span>
+                    </div>
+
+                    {renderCardChips(record, isRejected, status)}
+
+                    <div className="gx-spacer" />
+
+                    {!isRejected && renderCopyLink(record)}
+
+                    {isRejected && record.last_update_date && (
+                        <span className="gx-when">{relativeWhen(record.last_update_date)}</span>
+                    )}
+
+                    {actionNode && <div className="gx-action">{actionNode}</div>}
+
+                    <Tooltip title={t('guests.card_open')}>
+                        <button
+                            type="button"
+                            className="gx-chev"
+                            onClick={(e) => { e.stopPropagation(); openGuestDrawer(record) }}
                         >
-                            <span>{t('guests.no_table_assigned')}</span>
-                            <Button
-                                onClick={() => sethandleTables(true)}
-                                style={{ borderRadius: 99 }}
-                                icon={<TbLocationFilled />}
-                            >
-                                {t('guests.view_map')}
-                            </Button>
-                        </div>
-                        {unassigned.map((g) => (
-                            <div key={g.id} className={`table-group-row ${g.companion_id !== null ? 'table-group-row--child' : ''}`}>
-                                {g.companion_id !== null && <BsArrowReturnRight />}
-                                <span>{g.name}</span>
+                            <ChevronRight size={15} />
+                        </button>
+                    </Tooltip>
+                </div>
+
+                {children.length > 0 && (
+                    <div className="gx-companions">
+                        {children.map((child) => (
+                            <div key={child.id} className="gx-companion">
+                                <span className="gx-companion-name" title={child.name}>{child.name}</span>
+                                <div className="gx-spacer" />
+                                {!isRejected && renderCopyLink(child, true)}
+                                <span className="gx-companion-note">
+                                    {tabKey === 'creado'
+                                        ? t('guests.card_same_send')
+                                        : isConfirmed
+                                            ? ((child.table || record.table)
+                                                ? tableLabelFor(child.table ? child : record)
+                                                : t('guests.card_seats_with', { name: String(record.name).split(' ')[0] }))
+                                            : isRejected
+                                                ? ''
+                                                : t('guests.card_replies_with', { name: String(record.name).split(' ')[0] })}
+                                </span>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
-        );
-    };
+        )
+    }
+
+    const renderCardList = (data, tabKey) => {
+        if (!data || data.length === 0) {
+            return <div className="gx-empty">{t('guests.no_guests')}</div>
+        }
+        return (
+            <div className="gx-list">
+                {data.map((group) => renderGuestCard(group, tabKey, group.children ?? []))}
+            </div>
+        )
+    }
+
+    // Vista sin agrupar (hay búsqueda/filtro activo): cada coincidencia es su
+    // propia tarjeta, sin la jerarquía titular → acompañantes.
+    const renderFlatCardList = (data, tabKey) => {
+        if (!data || data.length === 0) {
+            return <div className="gx-empty">{t('guests.no_guests')}</div>
+        }
+        return (
+            <div className="gx-list">
+                {data.map((guest) => renderGuestCard({ ...guest, __isGroupChild: false }, tabKey, []))}
+            </div>
+        )
+    }
+
+    // ── Orden de la lista ────────────────────────────────────────────────
+    // El rediseño quita el encabezado de columnas, así que el sort que vivía
+    // ahí se mueve a esta fila de chips. Mismo ciclo: asc → desc → sin orden.
+
+    const SORT_OPTIONS = {
+        creado: [{ column: 'tier', label: 'guests.col_priority' }],
+        esperando: [
+            { column: 'tier', label: 'guests.col_priority' },
+            { column: 'estado', label: 'guests.col_state' },
+        ],
+        confirmado: [
+            { column: 'tier', label: 'guests.col_priority' },
+            { column: 'mesa', label: 'guests.col_table' },
+        ],
+        rechazado: [{ column: 'tier', label: 'guests.col_priority' }],
+    }
+
+    const renderSortBar = (tabKey) => {
+        const options = SORT_OPTIONS[tabKey] ?? []
+        if (options.length === 0) return null
+        const sort = activeSort[tabKey] || { column: null, dir: null }
+
+        return (
+            <div className="gx-sortbar">
+                <span className="gx-sortbar-label">{t('guests.sort_by')}</span>
+                {options.map((o) => {
+                    const dir = sort.column === o.column ? sort.dir : null
+                    return (
+                        <button
+                            key={o.column}
+                            type="button"
+                            className="gx-sort-chip"
+                            data-active={dir ? true : undefined}
+                            onClick={() => cycleTabSort(tabKey, o.column)}
+                        >
+                            <span>{t(o.label)}</span>
+                            {dir === 'asc' ? <ArrowUp size={13} />
+                                : dir === 'desc' ? <ArrowDown size={13} />
+                                    : <ArrowUpDown size={13} />}
+                        </button>
+                    )
+                })}
+
+                {tabKey === 'rechazado' && hasActiveFilters && (
+                    <button
+                        type="button"
+                        className="gx-sort-chip"
+                        onClick={() => { setSearchUser(null); clearAllFilters() }}
+                    >
+                        {t('guests.filters_clear')}
+                    </button>
+                )}
+            </div>
+        )
+    }
+
+    // ── Banner de cabecera de cada tab ───────────────────────────────────
+
+    const renderTabHero = (tabKey) => {
+        if (tabKey === 'creado') {
+            const pending = countGuestRows(createdData)
+            if (pending === 0) {
+                return (
+                    <div className="gx-hero gx-hero--plain">
+                        <div className="gx-hero-texts">
+                            <div className="gx-hero-title">{t('guests.hero_created_empty_title')}</div>
+                            <div className="gx-hero-text">{t('guests.hero_created_empty_text')}</div>
+                        </div>
+                    </div>
+                )
+            }
+            return (
+                <div className="gx-hero gx-hero--dark">
+                    <div className="gx-hero-texts">
+                        <div className="gx-hero-title">{t('guests.hero_created_title', { count: pending })}</div>
+                        <div className="gx-hero-text">{t('guests.hero_created_text')}</div>
+                    </div>
+                    {/* El CTA del mockup es el envío masivo. Con SHOW_BULK_SEND
+                        apagado el banner se queda solo con el mensaje: "Nuevo
+                        invitado" ya vive en el toolbar de la sección. */}
+                    {SHOW_BULK_SEND && (
+                        <button
+                            type="button"
+                            className="gx-btn gx-btn--lia"
+                            disabled={plan !== 'pro'}
+                            onClick={() => setSendMode(true)}
+                        >
+                            {t('guests.hero_created_send', { count: pending })}
+                        </button>
+                    )}
+                </div>
+            )
+        }
+
+        if (tabKey === 'esperando') {
+            const waitingFlat = rowData.filter((g) => g.state === 'esperando')
+            const failed = waitingFlat.filter((g) => effectiveMessageStatus(g) === 'failed')
+            const read = waitingFlat.filter((g) => effectiveMessageStatus(g) === 'read')
+            if (failed.length === 0 && read.length === 0) return null
+
+            return (
+                <div className="gx-alerts">
+                    {failed.length > 0 && (
+                        <div className="gx-alert gx-alert--danger">
+                            <div className="gx-alert-badge">!</div>
+                            <div className="gx-alert-texts">
+                                <div className="gx-alert-title">{t('guests.hero_sent_failed_title', { count: failed.length })}</div>
+                                <div className="gx-alert-text">{t('guests.hero_sent_failed_text')}</div>
+                            </div>
+                        </div>
+                    )}
+                    {read.length > 0 && (
+                        <div className="gx-alert gx-alert--warn">
+                            <div className="gx-alert-badge">{read.length}</div>
+                            <div className="gx-alert-texts">
+                                <div className="gx-alert-title">{t('guests.hero_sent_read_title')}</div>
+                                <div className="gx-alert-text">{t('guests.hero_sent_read_text', { count: read.length })}</div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )
+        }
+
+        if (tabKey === 'confirmado') {
+            const noTable = confirmedFlatData.filter((g) => !g.table).length
+            if (noTable === 0) {
+                return (
+                    <div className="gx-hero gx-hero--plain">
+                        <div className="gx-hero-texts">
+                            <div className="gx-hero-title">{t('guests.hero_confirmed_done_title')}</div>
+                            <div className="gx-hero-text">{t('guests.hero_confirmed_done_text')}</div>
+                        </div>
+                        <button type="button" className="gx-btn gx-btn--ghost" onClick={() => sethandleTables(true)}>
+                            {t('guests.hero_confirmed_map')}
+                        </button>
+                    </div>
+                )
+            }
+            return (
+                <div className="gx-hero gx-hero--dark">
+                    <div className="gx-hero-texts">
+                        <div className="gx-hero-title">{t('guests.hero_confirmed_title', { count: noTable })}</div>
+                        <div className="gx-hero-text">{t('guests.hero_confirmed_text')}</div>
+                    </div>
+                    <button type="button" className="gx-btn gx-btn--outline" onClick={() => sethandleTables(true)}>
+                        {t('guests.hero_confirmed_map')}
+                    </button>
+                    <button type="button" className="gx-btn gx-btn--lia" onClick={() => sethandleTables(true)}>
+                        {t('guests.hero_confirmed_assign')}
+                    </button>
+                </div>
+            )
+        }
+
+        if (tabKey === 'rechazado') {
+            const declined = countGuestRows(callededData)
+            if (declined === 0) return null
+            return (
+                <div className="gx-hero gx-hero--plain">
+                    <div className="gx-hero-texts">
+                        <div className="gx-hero-title">{t('guests.hero_rejected_title', { count: declined })}</div>
+                        <div className="gx-hero-text">{t('guests.hero_rejected_text', { count: declined })}</div>
+                    </div>
+                    <button type="button" className="gx-btn gx-btn--ghost" onClick={() => setActiveKey('creado')}>
+                        {t('guests.hero_rejected_cta')}
+                    </button>
+                </div>
+            )
+        }
+
+        return null
+    }
+
+    // ── Escalera de pasos (reemplaza la tab bar de Ant Design) ───────────
+
+    const STEP_DEFS = [
+        { key: 'seguimiento', step: 'step_resumen', label: 'step_label_seguimiento' },
+        { key: 'creado', step: 'step_one', label: 'step_label_creado' },
+        { key: 'esperando', step: 'step_two', label: 'step_label_esperando' },
+        { key: 'confirmado', step: 'step_three', label: 'step_label_confirmado' },
+        { key: 'rechazado', step: 'step_aside', label: 'step_label_rechazado' },
+    ]
+
+    const stepCounts = {
+        seguimiento: null,
+        creado: countGuestRows(createdData),
+        esperando: countGuestRows(waitingData),
+        confirmado: confirmedFlatData.length,
+        rechazado: countGuestRows(callededData),
+    }
+
+    const renderStepBar = () => (
+        <div className="gx gx-steps" role="tablist">
+            {STEP_DEFS.map((d) => (
+                <button
+                    key={d.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeKey === d.key}
+                    className="gx-step"
+                    onClick={() => setActiveKey(d.key)}
+                >
+                    <span className="gx-step-kicker">
+                        <span>{t(`guests.${d.step}`)}</span>
+                        <i />
+                    </span>
+                    <span className="gx-step-main">
+                        <span className="gx-step-label">{t(`guests.${d.label}`)}</span>
+                        {stepCounts[d.key] != null && (
+                            <span className="gx-step-count">{stepCounts[d.key]}</span>
+                        )}
+                    </span>
+                </button>
+            ))}
+        </div>
+    )
+
+    // ── Herramientas globales de la página ───────────────────────────────
+    // Antes vivían en la barra superior; el rediseño la quita, así que ahora
+    // se abren desde el botón "⋯" del toolbar de cada sección.
+    // ── Menú "⋯" de cada sección ─────────────────────────────────────────
+    // Descargables, mapa de mesas, evento público/privado y lector de pases.
+    // Es el contenido que antes colgaba del botón "≡" de la barra superior.
+    const renderGlobalTools = () => (
+        <div className="items_list_guests" style={{ minWidth: plan !== 'pro' ? '210px' : 0 }}>
+
+
+            <Dropdown
+                trigger={["click"]}
+                placement='topRight'
+                popupRender={() => (
+                    <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
+                        <span className="on-transfer-label">{t('guests.download_title')}</span>
+
+                        <div className="transfer-mesas-cont">
+                            <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                <span>
+                                    {t('guests.tab_waiting')}
+                                </span>
+
+                                <Button
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
+                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                    icon={<Download size={14} />} className="primarybutton">
+                                </Button>
+
+                            </div>
+
+                            <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                <span>
+                                    {t('guests.download_waiting')}
+                                </span>
+
+                                <Button
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
+                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                    icon={<Download size={14} />} className="primarybutton">
+                                </Button>
+
+                            </div>
+
+                            <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                <span>
+                                    {t('guests.download_confirmed')}
+                                </span>
+
+                                <Button
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
+                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                    icon={<Download size={14} />} className="primarybutton">
+                                </Button>
+
+                            </div>
+
+                            <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
+                                <span>
+                                    {t('guests.tab_rejected')}
+                                </span>
+
+                                <Button
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
+                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                                    icon={<Download size={14} />} className="primarybutton">
+                                </Button>
+
+                            </div>
+                        </div>
+
+                    </div>
+                )}
+            >
+                <Button
+                    style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                    icon={<Download size={14} />} className="primarybutton_transparent">
+                    {t('guests.btn_downloads')}
+                </Button>
+            </Dropdown>
+
+
+            <Button
+                onClick={() => sethandleTables(true)}
+                style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                icon={<Pin size={14} />} className="primarybutton_transparent">
+                {t('guests.table_map')}
+            </Button>
+
+
+            <Popconfirm
+                title={openCard ? t('guests.confirm_public_title') : t('guests.confirm_private_title')}
+                description={openCard ? t('guests.confirm_public_desc') : t('guests.confirm_private_desc')}
+                onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
+                placement="bottomLeft"
+                okText={t('guests.btn_continue')}
+                cancelText={t('guests.btn_cancel')}
+                style={{ width: '400px' }}
+                id="popup-confirm"
+            >
+                {
+                    openCard ?
+                        <Button
+                            style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                            icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
+                            {t('guests.btn_public')}
+                        </Button>
+                        : <Button
+                            style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                            icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
+                            {t('guests.btn_private')}
+                        </Button>
+                }
+
+            </Popconfirm>
+
+            <Dropdown
+                trigger={['click']}
+                popupRender={() => (
+                    <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >{t('guests.scanner_title')}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >{t('guests.scanner_subtitle')}</span>
+
+                        <div style={{
+                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
+
+                        }}>
+                            <div style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'flex-start', alignSelf: 'stretch',
+                                gap: '24px'
+
+                            }}>
+                                <div style={{
+                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                }}>
+                                    <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_user')}</span>
+                                    <Button
+                                        onClick={() => copyToClipboard(String(id).slice(0, 4))}
+                                        type='text'
+                                        icon={<Copy size={14} />}
+                                        style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                    >
+                                        {invitation?.generals?.event?.name}
+                                    </Button>
+                                </div>
+
+                                <div style={{
+                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                }}>
+
+                                    <div style={{
+                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
+
+                                    }}>
+                                        <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_password')}</span>
+                                        <Button
+                                            onClick={() => copyToClipboard(String(id).slice(0, 4))}
+                                            type='text'
+                                            icon={<Copy size={14} />}
+                                            style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                                        >
+                                            {String(id).slice(0, 4)}
+                                        </Button>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_link')}</span>
+                            <Button
+                                onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
+                                type='text'
+                                icon={<Copy size={16} />}
+                                style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
+                            >
+                                https://www.iattend.site/scanner
+                            </Button>
+                        </div>
+
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', borderTop: '1px solid #ebebeb', paddingTop: '12px', boxSizing: 'border-box' }} />
+
+                        <Button
+                            icon={<ArrowUpRight size={16} />}
+                            onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
+                            type='primary'
+                        >{t('guests.btn_access_scanner')}</Button>
+                    </div>
+                )}
+            >
+                <Button
+
+                    disabled={plan !== 'pro' ? true : false}
+                    style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
+                    icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
+                    {t('guests.btn_scanner')}
+                </Button>
+            </Dropdown>
+
+
+
+            {/* Control de pases (capacidad total del evento). Oculto: el menú
+                "⋯" del rediseño solo lleva descargables, mapa, privacidad y
+                lector. Poner SHOW_TICKETS_CONTROL en true para restaurarlo. */}
+            {SHOW_TICKETS_CONTROL && <Dropdown
+                trigger={['click']}
+                placement='bottomRight'
+                arrow
+                open={activeTickets}
+                onOpenChange={setActiveTickets}
+                popupRender={() => (
+                    <div className='active_tickets_cont'>
+                        <div className='edit-tickets-buttons-container'>
+
+                            <div className='edit-tickets-dash'>
+                                <div className='active_t_row' style={{ justifyContent: 'space-between' }}>
+                                    <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_total')}</span>
+                                </div>
+                                <div className='dash-row-pie' style={{ gap: '12px' }}>
+                                    <Input onChange={(e) => {
+                                        const onlyNumbers = e.target.value.replace(/\D/g, '')
+                                        setCopyTickets(Number(onlyNumbers))
+                                    }} value={copyTickets} style={{
+                                        maxWidth: '100%', maxHeight: '100px', borderRadius: '99px', flex: 1, textAlign: 'center', fontSize: '18px', fontWeight: 800,
+                                    }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0px' }}>
+                                        <Button onClick={() => setCopyTickets(copyTickets - 1)} icon={<FiMinus style={{ marginTop: '2px' }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '99px 0px 0px 99px', flex: '1' }}></Button>
+                                        <Button onClick={() => setCopyTickets(copyTickets + 1)} icon={<IoMdAdd style={{ marginTop: '2px' }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '0px 99px 99px 0px', flex: '1' }}></Button>
+                                        <Button onClick={() => onHandleTickets(copyTickets)} className="save_tickets" icon={<FaCheck size={10} style={{ color: '#FFF', marginBottom: '1px' }} />}
+                                            style={{ maxHeight: '32px', maxWidth: '32px', borderRadius: '99px', marginLeft: '6px', backgroundColor: '#6D3CFA' }}></Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {SHOW_TICKETS_DISTRIBUTION && <div className='edit-tickets-dash'>
+                                <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_distribution')}</span>
+                                <div className='dash-row-pie'>
+                                    <div className='pie_cont'>
+                                        <Pie data={chartData} options={options} />
+                                    </div>
+                                    <div className='pie_cols'>
+                                        <div className='pie_row'>
+                                            <div style={{ backgroundColor: '#6D3CFA' }} className='pie_dot'></div>
+                                            <span>{t('guests.control_confirmed')} ({confirmed})</span>
+                                        </div>
+                                        <div className='pie_row'>
+                                            <div style={{ backgroundColor: '#6D3CFA50' }} className='pie_dot'></div>
+                                            <span>{t('guests.control_waiting')} ({waiting})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>}
+
+                        </div>
+                    </div>
+                )}
+            >
+                <Tooltip title={t('guests.control_tickets_tooltip')}>
+                    <Button
+                        className='primarybutton_transparent'
+                        icon={<Tickets size={14} />}
+                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
+                    >
+                        {tickets ?? 0}
+                    </Button>
+                </Tooltip>
+            </Dropdown>}
+
+            {/* Envío masivo: null mientras SHOW_BULK_SEND esté apagado. */}
+            {SHOW_BULK_SEND && activeKey === 'creado' && renderBulkActionsBar()}
+        </div>
+    )
+
+    // ── Toolbar de cada sección ──────────────────────────────────────────
+    // El rediseño quita la barra superior de la página: cada tab trae su propio
+    // buscador, su filtro rápido, el panel de "Filtros" y el menú "⋯" con las
+    // herramientas globales.
+
+    const activeFilterCount = [filterTag, filterTable, filterTier, filterType, filterSide]
+        .filter(Boolean).length
+
+    const clearAllFilters = () => {
+        setFilterTag(null)
+        setFilterTable(null)
+        setFilterTier(null)
+        setFilterType(null)
+        setfilterSide(null)
+        setFilterDelivery(null)
+    }
+
+    const renderFilterGroup = (label, options, value, onPick) => {
+        if (options.length === 0) return null
+        return (
+            <div className="gx-filter-group">
+                <span className="gx-filter-label">{label}</span>
+                <div className="gx-filter-options">
+                    {options.map((o) => (
+                        <button
+                            key={String(o.value)}
+                            type="button"
+                            className="gx-filter-opt"
+                            data-active={value === o.value || undefined}
+                            onClick={() => onPick(value === o.value ? null : o.value)}
+                        >
+                            {o.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        )
+    }
+
+    const renderFiltersPanel = (tabKey) => (
+        <div className="gx-filters-panel">
+            {renderFilterGroup(
+                t('guests.filter_tag'),
+                localTags.filter((i) => i !== '' && i !== null).map((i) => ({ value: i, label: i })),
+                filterTag,
+                setFilterTag,
+            )}
+            {tabKey === 'confirmado' && renderFilterGroup(
+                t('guests.filter_table'),
+                [{ value: 'no-table', label: t('guests.no_table') }].concat(
+                    tables.map((tb) => ({ value: tb.id, label: tb.name ? `#${tb.number} · ${tb.name}` : `#${tb.number}` })),
+                ),
+                filterTable,
+                setFilterTable,
+            )}
+            {renderFilterGroup(
+                t('guests.filter_priority'),
+                ['A', 'B', 'C', 'D'].map((i) => ({ value: i, label: i })),
+                filterTier,
+                setFilterTier,
+            )}
+            {renderFilterGroup(
+                t('guests.filter_category'),
+                ['female', 'male', 'child', 'undefined'].map((i) => ({ value: i, label: handleTypes(i) })),
+                filterType,
+                setFilterType,
+            )}
+            {owners?.length > 1 && renderFilterGroup(
+                t('guests.filter_side'),
+                owners.map((i) => ({ value: i, label: i })),
+                filterSide,
+                setfilterSide,
+            )}
+            {activeFilterCount > 0 && (
+                <button type="button" className="gx-filters-clear" onClick={clearAllFilters}>
+                    {t('guests.filters_clear')}
+                </button>
+            )}
+        </div>
+    )
+
+    const renderTabToolbar = (tabKey) => {
+        const placeholder = tabKey === 'confirmado'
+            ? t('guests.search_placeholder_table')
+            : t('guests.search_placeholder')
+
+        return (
+            <div className="gx-toolbar">
+                <div className="gx-search">
+                    <Search size={16} />
+                    <input
+                        value={searchUser ?? ''}
+                        onChange={(e) => setSearchUser(e.target.value)}
+                        placeholder={placeholder}
+                    />
+                    {searchUser && (
+                        <button type="button" className="gx-search-clear" onClick={() => setSearchUser(null)}>
+                            <X size={14} />
+                        </button>
+                    )}
+                </div>
+
+                {/* Filtro rápido propio de cada sección */}
+                {tabKey === 'esperando' && (
+                    <button
+                        type="button"
+                        className="gx-tool"
+                        data-active={filterDelivery === 'failed' || undefined}
+                        onClick={() => setFilterDelivery((prev) => (prev === 'failed' ? null : 'failed'))}
+                    >
+                        {t('guests.quick_undelivered')}
+                    </button>
+                )}
+                {tabKey === 'confirmado' && (
+                    <button
+                        type="button"
+                        className="gx-tool"
+                        data-active={filterTable === 'no-table' || undefined}
+                        onClick={() => setFilterTable((prev) => (prev === 'no-table' ? null : 'no-table'))}
+                    >
+                        {t('guests.card_no_table')}
+                    </button>
+                )}
+
+                <Dropdown trigger={['click']} placement="bottomRight" popupRender={() => renderFiltersPanel(tabKey)}>
+                    <button type="button" className="gx-tool" data-active={activeFilterCount > 0 || undefined}>
+                        {t('guests.filters')}
+                        {activeFilterCount > 0 && <span className="gx-tool-count">{activeFilterCount}</span>}
+                    </button>
+                </Dropdown>
+
+                <Tooltip title={t('guests.more_tools')}>
+                    <Dropdown trigger={['click']} placement="bottomRight" popupRender={renderGlobalTools}>
+                        <button type="button" className="gx-tool gx-tool--icon">
+                            <MoreHorizontal size={16} />
+                        </button>
+                    </Dropdown>
+                </Tooltip>
+
+                {tabKey === 'creado' && !sendMode && (
+                    <Dropdown
+                        popupRender={() => (
+                            <GuestAddTiles
+                                plan={plan}
+                                onIndividual={() => setDrawerState({
+                                    currentGuest: null,
+                                    onEditGuest: false,
+                                    companions: [],
+                                    visible: true,
+                                })}
+                                onFile={(file) => navigate(`/dashboard/guests/import?id=${id}`, { state: { file } })}
+                            />
+                        )}
+                    >
+                        <button type="button" className="gx-tool gx-tool--primary">
+                            <Plus size={15} />
+                            <span>{t('guests.btn_new_guest')}</span>
+                        </button>
+                    </Dropdown>
+                )}
+            </div>
+        )
+    }
 
     const items = useMemo(() => ([
         {
@@ -2699,11 +2715,11 @@ export default function GuestsPage() {
                         rowData={rowData}
                         dispatchMap={dispatchMap}
                         tickets={tickets}
+                        tables={tables}
                         rsvpDeadline={rsvpDeadline}
                         onGoToTab={setActiveKey}
                         onAddGuests={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                         onCreateSend={() => { setActiveKey('creado'); if (SHOW_BULK_SEND) setSendMode(true); }}
-                        onLiaCta={() => message.info(t('guests_overview.lia_soon'))}
                     />
                 </Spin>
             ),
@@ -2713,21 +2729,19 @@ export default function GuestsPage() {
             key: "creado",
             children: (
                 <Spin spinning={isLoading}>
-                    {/* Banner a ancho completo. En modo envío se tiñe de azul y
-                        muestra las instrucciones — el cambio de modo se siente.
-                        Los botones viven en el tabBarExtraContent de las Tabs. */}
-                    <div style={{
-                        marginBottom: 12, boxSizing: 'border-box', transition: 'background 0.3s ease, border 0.3s ease',
-                        borderRadius: 16,
-                        ...(sendMode && {
-                            background: 'var(--blue-bg-40)',
-                            border: '1px solid var(--blue-color-20)',
-                            padding: 12,
-                        }),
-                    }}>
-                        {renderRsvpDeadlineBar()}
+                    <div className="gx">
+                        {renderTabHero('creado')}
+                        {renderRsvpDeadlineAlert('creado')}
+                        {renderTabToolbar('creado')}
+                        {renderRsvpDeadlineLine('creado')}
+                        {/* Modo envío masivo: instrucciones a ancho completo, para
+                            que el cambio de modo se sienta. */}
                         {sendMode && (
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 10 }}>
+                            <div style={{
+                                marginBottom: 12, boxSizing: 'border-box', borderRadius: 16,
+                                background: 'var(--blue-bg-40)', border: '1px solid var(--blue-color-20)', padding: 12,
+                                display: 'flex', alignItems: 'flex-start', gap: 6,
+                            }}>
                                 <Info size={14} style={{ flexShrink: 0, color: 'var(--blue-color)', marginTop: 2 }} />
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue-color)' }}>
@@ -2739,11 +2753,10 @@ export default function GuestsPage() {
                                 </div>
                             </div>
                         )}
-                    </div>
-                    <div className="guests-card-list-scroll">
+                        {renderSortBar('creado')}
                         {hasActiveFilters
-                            ? renderFlatRows(sortForTab('creado', flatFilteredGuests(createdData)), getTabColumns(tableProps.columns, 'creado'))
-                            : renderGroupedCards(sortForTab('creado', filteredGuests(createdData)), getTabColumns(tableProps.columns, 'creado'))}
+                            ? renderFlatCardList(sortForTab('creado', flatFilteredGuests(createdData)), 'creado')
+                            : renderCardList(sortForTab('creado', filteredGuests(createdData)), 'creado')}
                     </div>
                 </Spin>
             ),
@@ -2753,13 +2766,15 @@ export default function GuestsPage() {
             key: "esperando",
             children: (
                 <Spin spinning={isLoading}>
-                    <div style={{ marginBottom: 12 }}>
-                        {renderRsvpDeadlineBar()}
-                    </div>
-                    <div className="guests-card-list-scroll guests-card-list-scroll--sent">
+                    <div className="gx">
+                        {renderTabHero('esperando')}
+                        {renderRsvpDeadlineAlert('esperando')}
+                        {renderTabToolbar('esperando')}
+                        {renderRsvpDeadlineLine('esperando')}
+                        {renderSortBar('esperando')}
                         {hasActiveFilters
-                            ? renderFlatRows(sortForTab('esperando', flatFilteredGuests(waitingData)), getTabColumns(tableProps.columns, 'esperando'))
-                            : renderGroupedCards(sortForTab('esperando', filteredGuests(waitingData)), getTabColumns(tableProps.columns, 'esperando'))}
+                            ? renderFlatCardList(sortForTab('esperando', flatFilteredGuests(waitingData)), 'esperando')
+                            : renderCardList(sortForTab('esperando', filteredGuests(waitingData)), 'esperando')}
                     </div>
                 </Spin>
             ),
@@ -2767,41 +2782,45 @@ export default function GuestsPage() {
         {
             label: screens.xs ? <CheckCheck size={14} /> : `${t('guests.tab_confirmed')} (${filteredGuests(confirmedFlatData).length})`,
             key: "confirmado",
-            children:
-                confirmedView === 'table' ? (
-                    renderConfirmedByTable()
-                ) : (
-                    <Spin spinning={isLoading}>
-                        <div className="guests-card-list-scroll">
-                            {confirmedView === 'individual' || hasActiveFilters
-                                ? renderFlatRows(sortForTab('confirmado', flatFilteredGuests(confirmedData)), getTabColumns(tableProps.columns, 'confirmado'))
-                                : renderGroupedCards(sortForTab('confirmado', filteredGuests(confirmedData)), getTabColumns(tableProps.columns, 'confirmado'))}
-                        </div>
-                    </Spin>
-                ),
+            children: (
+                <Spin spinning={isLoading}>
+                    <div className="gx">
+                        {renderTabHero('confirmado')}
+                        {renderTabToolbar('confirmado')}
+                        {renderSortBar('confirmado')}
+                        {hasActiveFilters
+                            ? renderFlatCardList(sortForTab('confirmado', flatFilteredGuests(confirmedData)), 'confirmado')
+                            : renderCardList(sortForTab('confirmado', filteredGuests(confirmedData)), 'confirmado')}
+                    </div>
+                </Spin>
+            ),
         },
         {
             label: screens.xs ? <X size={14} /> : `${t('guests.tab_rejected')} (${countGuestRows(callededData)})`,
             key: "rechazado",
             children: (
                 <Spin spinning={isLoading}>
-                    <div className="guests-card-list-scroll">
+                    <div className="gx">
+                        {renderTabHero('rechazado')}
+                        {renderSortBar('rechazado')}
                         {hasActiveFilters
-                            ? renderFlatRows(sortForTab('rechazado', flatFilteredGuests(callededData)), getTabColumns(tableProps.columns, 'rechazado'))
-                            : renderGroupedCards(sortForTab('rechazado', filteredGuests(callededData)), getTabColumns(tableProps.columns, 'rechazado'))}
+                            ? renderFlatCardList(sortForTab('rechazado', flatFilteredGuests(callededData)), 'rechazado')
+                            : renderCardList(sortForTab('rechazado', filteredGuests(callededData)), 'rechazado')}
                     </div>
                 </Spin>
             ),
         },
+    // OJO: react-hooks/exhaustive-deps está desactivado en este repo, así que
+    // nadie avisa si falta una dependencia. Un estado que se lea dentro de los
+    // children y no esté aquí queda congelado: el componente re-renderiza pero
+    // los tabs siguen mostrando los elementos memoizados anteriores.
     ]), [
         createdData,
         waitingData,
         confirmedData,
         confirmedFlatData,
-        confirmedView,
         tables,
         callededData,
-        tableProps,
         isLoading,
         screens,
         searchUser,
@@ -2821,7 +2840,9 @@ export default function GuestsPage() {
         bulkSending,
         sendMode,
         rowData,
-        tickets
+        tickets,
+        plan,
+        rsvpPickerSlot
     ]);
 
 
@@ -2853,887 +2874,31 @@ export default function GuestsPage() {
                     }}></div>
 
 
-                    <div className='guests-info-container' style={{ padding: screens.xs ? '8px' : '16px', paddingTop: screens.xs ? '8px' : (activeKey === 'seguimiento' ? '16px' : '64px') }}>
+                    <div className='guests-info-container' style={{
+                        padding: screens.xs ? '8px' : '16px',
+                        // Aire extra arriba para que la escalera de pasos no quede
+                        // pegada al header
+                        paddingTop: screens.xs ? '28px' : '32px',
+                    }}>
 
-                        <div className='title-buttons-container' style={activeKey === 'seguimiento' ? { display: 'none' } : undefined} >
 
-                            <div />
-
-                            {
-                                !screens.xs &&
-                                <div className='col_main_search'>
-                                    <div className='search_main_row'>
-                                        <div onClick={() => setActiveSearcher((searchUser || filterTable || filterTag || filterTier) ? true : !activeSearcher)} className={`guests_filters_cont ${activeSearcher ? 'active_filter active_cont' : ''}`}>
-                                            <div className='icon_cont'>
-                                                <Search size={14} />
-                                            </div>
-                                            <Input onChange={(e) => setSearchUser(e.target.value)} value={searchUser} className='guests_searcher' placeholder={t('guests.search_placeholder')} />
-                                        </div>
-
-                                        <div className={`dots_container ${activeSearcher ? 'dots_cont_active' : ''}`}>
-                                            <Dropdown
-                                                disabled={!activeSearcher}
-                                                arrow
-                                                popupRender={() => (
-                                                    <div className="items_list_guests_tables" >
-                                                        {
-                                                            localTags.map(i => {
-                                                                if (i === "" || i === null)
-                                                                    return null
-
-                                                                return (
-                                                                    <div onClick={() => setFilterTag((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTag === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
-                                                                )
-                                                            })
-                                                        }
-                                                    </div>
-                                                )}
-                                            >
-                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTag ? 'acitve_filter_tag' : ''}`}>
-
-                                                    <div className="single_row" style={{ opacity: filterTag ? 1 : 0.3, fontSize: '12px' }}>
-                                                        <Tag size={14} />
-                                                        {
-                                                            activeSearcher &&
-                                                            <span>{filterTag ?? t('guests.filter_tag')}</span>
-                                                        }
-                                                    </div>
-
-                                                </div>
-                                            </Dropdown>
-
-
-                                            <Dropdown
-                                                disabled={!activeSearcher}
-                                                arrow
-                                                popupRender={() => (
-                                                    <div className="items_list_guests_tables">
-                                                        <div onClick={() => setFilterTable((prev) => prev === "no-table" ? null : "no-table")} className={`dot_list_item ${filterTable === "no-table" ? 'dot_list_item_active' : ''}`} >{t('guests.no_table')}</div>
-                                                        {
-                                                            tables.map(i => (
-                                                                <Tooltip key={i.id} title={i.name || ''}>
-                                                                    <div onClick={() => setFilterTable((prev) => prev === i.id ? null : i.id)} className={`dot_list_item ${filterTable === i.id ? 'dot_list_item_active' : ''}`}>{`#${i.number}`}</div>
-                                                                </Tooltip>
-                                                            ))
-                                                        }
-                                                    </div>
-                                                )}
-                                            >
-                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterTable ? 'acitve_filter_tag' : ''}`}>
-
-                                                    <div className="single_row" style={{ opacity: filterTable ? 1 : 0.3, fontSize: '12px' }}>
-                                                        <Pin size={14} />
-                                                        {
-                                                            activeSearcher &&
-                                                            <span>{tables?.find(tb => tb.id === filterTable)?.name ?? t('guests.filter_table')}</span>
-                                                        }
-                                                    </div>
-
-                                                </div>
-                                            </Dropdown>
-
-                                            <Dropdown
-                                                disabled={!activeSearcher}
-                                                arrow
-                                                popupRender={() => (
-                                                    <div className="items_list_guests">
-                                                        {
-                                                            ['A', 'B', 'C', 'D'].map(i => (
-                                                                <div onClick={() => setFilterTier((prev) => prev === i ? null : i)} className={`dot_list_item ${filterTier === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
-                                                            ))
-                                                        }
-                                                    </div>
-                                                )}
-                                            >
-                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} tier-${filterTier}`}
-                                                    style={{ minWidth: '80px' }}>
-                                                    <div className="single_row" style={{ opacity: filterTier ? 1 : 0.3, fontSize: '12px' }}>
-                                                        <AArrowUp size={16} />
-                                                        {
-                                                            activeSearcher &&
-                                                            <span>{filterTier ?? t('guests.filter_priority')}</span>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </Dropdown>
-
-                                            <Dropdown
-                                                disabled={!activeSearcher}
-                                                arrow
-                                                popupRender={() => (
-                                                    <div className="items_list_guests">
-                                                        {
-                                                            ['female', 'male', 'child', 'undefined'].map(i => (
-                                                                <div onClick={() => setFilterType((prev) => prev === i ? null : i)} className={`dot_list_item ${filterType === i ? 'dot_list_item_active' : ''}`} key={i}>{handleTypes(i)}</div>
-                                                            ))
-                                                        }
-                                                    </div>
-                                                )}
-                                            >
-                                                <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterType ? 'acitve_filter_tag' : ''}`}
-                                                    style={{ minWidth: '80px' }}>
-                                                    <div className="single_row" style={{ opacity: filterType ? 1 : 0.3, fontSize: '12px' }}>
-                                                        <CircleUserRound size={14} />
-                                                        {
-                                                            activeSearcher &&
-                                                            <span>{handleTypes(filterType) ?? t('guests.filter_category')}</span>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </Dropdown>
-
-                                            {
-                                                owners?.length > 1 &&
-                                                <Dropdown
-                                                    disabled={!activeSearcher}
-                                                    arrow
-                                                    popupRender={() => (
-                                                        <div className="items_list_guests">
-                                                            {
-                                                                owners?.map(i => (
-                                                                    <div onClick={() => setfilterSide((prev) => prev === i ? null : i)} className={`dot_list_item ${filterSide === i ? 'dot_list_item_active' : ''}`} key={i}>{i}</div>
-                                                                ))
-                                                            }
-                                                        </div>
-                                                    )}
-                                                >
-                                                    <div className={`search_dot ${activeSearcher ? 'active_filter' : ''} ${filterSide ? 'acitve_filter_tag' : ''}`}
-                                                        style={{ minWidth: '80px' }}>
-                                                        <div className="single_row" style={{ opacity: filterSide ? 1 : 0.3, fontSize: '12px' }}>
-                                                            <CircleUserRound size={14} />
-                                                            {
-                                                                activeSearcher &&
-                                                                <span>{filterSide ?? t('guests.filter_side')}</span>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </Dropdown>
-                                            }
-
-                                        </div>
-
-
-                                    </div>
-
-                                    <div className='guests_all_list_cont'>
-
-                                    </div>
-                                </div>
-                            }
-
-
-
-
-
-
-
-
-                            <div className='gst-buttons-container' >
-
-
-
-                                {
-                                    // Oculto en modo envío: sin él, "Enviar todos"/"Cancelar"
-                                    // caben en la fila sin romper el layout
-                                    !screens.xs && !sendMode &&
-                                    <Button
-                                        className='primarybutton_transparent'
-                                        icon={<Sparkles size={14} />}
-                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                        onClick={() => window.dispatchEvent(new Event(WHATS_NEW_OPEN_EVENT))}
-                                    >
-                                        {t('whats_new.button')}
-                                    </Button>
-                                }
-
-                                {
-                                    !screens.xs &&
-                                    // <Tooltip title={t('guests.send_issues_btn')}>
-                                    <Tooltip title={t('guests.send_issues_btn')}>
-                                        <Dropdown
-                                            trigger={['click']}
-                                            placement="bottomRight"
-                                            popupRender={() => (
-                                                <div className="send-issues-popover">
-                                                    <strong className="send-issues-popover-title">{t('guests.send_issues_title')}</strong>
-                                                    <p className="send-issues-popover-text">{t('guests.send_issues_intro')}</p>
-                                                    <ul className="send-issues-popover-list">
-                                                        <li>{t('guests.send_issues_reason_1')}</li>
-                                                        <li>{t('guests.send_issues_reason_2')}</li>
-                                                        <li>{t('guests.send_issues_reason_3')}</li>
-                                                        <li>{t('guests.send_issues_reason_4')}</li>
-                                                    </ul>
-                                                    <p className="send-issues-popover-text">{t('guests.send_issues_footer')}</p>
-                                                </div>
-                                            )}
-                                        >
-                                            <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', minWidth: '40px', transition: 'all 0.55s ease' }}>
-                                                {/* {t('guests.send_issues_btn')} */}
-                                            </Button>
-                                        </Dropdown>
-                                    </Tooltip>
-                                }
-
-                                {
-                                    !screens.xs &&
-
-                                    <Dropdown
-                                        placement='bottomRight'
-                                        popupRender={() => (
-                                            <div className="items_list_guests" style={{ minWidth: plan !== 'pro' ? '210px' : 0 }}>
-
-
-                                                <Dropdown
-                                                    trigger={["click"]}
-                                                    placement='topRight'
-                                                    popupRender={() => (
-                                                        <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
-                                                            <span className="on-transfer-label">{t('guests.download_title')}</span>
-
-                                                            <div className="transfer-mesas-cont">
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.tab_waiting')}
-                                                                    </span>
-
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
-
-                                                                </div>
-
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.download_waiting')}
-                                                                    </span>
-
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
-
-                                                                </div>
-
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.download_confirmed')}
-                                                                    </span>
-
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
-
-                                                                </div>
-
-                                                                <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                    <span>
-                                                                        {t('guests.tab_rejected')}
-                                                                    </span>
-
-                                                                    <Button
-                                                                        onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
-                                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                        icon={<Download size={14} />} className="primarybutton">
-                                                                    </Button>
-
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    )}
-                                                >
-                                                    <Button
-                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                        icon={<Download size={14} />} className="primarybutton_transparent">
-                                                        {t('guests.btn_downloads')}
-                                                    </Button>
-                                                </Dropdown>
-
-
-                                                <Button
-                                                    onClick={() => sethandleTables(true)}
-                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                    icon={<Pin size={14} />} className="primarybutton_transparent">
-                                                    {t('guests.table_map')}
-                                                </Button>
-
-
-                                                <Popconfirm
-                                                    title={openCard ? t('guests.confirm_public_title') : t('guests.confirm_private_title')}
-                                                    description={openCard ? t('guests.confirm_public_desc') : t('guests.confirm_private_desc')}
-                                                    onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
-                                                    placement="bottomLeft"
-                                                    okText={t('guests.btn_continue')}
-                                                    cancelText={t('guests.btn_cancel')}
-                                                    style={{ width: '400px' }}
-                                                    id="popup-confirm"
-                                                >
-                                                    {
-                                                        openCard ?
-                                                            <Button
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                                icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
-                                                                {t('guests.btn_public')}
-                                                            </Button>
-                                                            : <Button
-                                                                style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                                icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
-                                                                {t('guests.btn_private')}
-                                                            </Button>
-                                                    }
-
-                                                </Popconfirm>
-
-                                                <Dropdown
-                                                    trigger={['click']}
-                                                    popupRender={() => (
-                                                        <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
-                                                            <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >{t('guests.scanner_title')}</span>
-                                                            <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >{t('guests.scanner_subtitle')}</span>
-
-                                                            <div style={{
-                                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
-
-                                                            }}>
-                                                                <div style={{
-                                                                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start', alignSelf: 'stretch',
-                                                                    gap: '24px'
-
-                                                                }}>
-                                                                    <div style={{
-                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
-
-                                                                    }}>
-                                                                        <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_user')}</span>
-                                                                        <Button
-                                                                            onClick={() => copyToClipboard(String(id).slice(0, 4))}
-                                                                            type='text'
-                                                                            icon={<Copy size={14} />}
-                                                                            style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                        >
-                                                                            {invitation?.generals?.event?.name}
-                                                                        </Button>
-                                                                    </div>
-
-                                                                    <div style={{
-                                                                        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
-
-                                                                    }}>
-
-                                                                        <div style={{
-                                                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
-
-                                                                        }}>
-                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_password')}</span>
-                                                                            <Button
-                                                                                onClick={() => copyToClipboard(String(id).slice(0, 4))}
-                                                                                type='text'
-                                                                                icon={<Copy size={14} />}
-                                                                                style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                            >
-                                                                                {String(id).slice(0, 4)}
-                                                                            </Button>
-                                                                        </div>
-
-                                                                    </div>
-                                                                </div>
-
-                                                                <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>{t('guests.scanner_link')}</span>
-                                                                <Button
-                                                                    onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
-                                                                    type='text'
-                                                                    icon={<Copy size={16} />}
-                                                                    style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                >
-                                                                    https://www.iattend.site/scanner
-                                                                </Button>
-                                                            </div>
-
-
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', borderTop: '1px solid #ebebeb', paddingTop: '12px', boxSizing: 'border-box' }} />
-
-                                                            <Button
-                                                                icon={<ArrowUpRight size={16} />}
-                                                                onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
-                                                                type='primary'
-                                                            >{t('guests.btn_access_scanner')}</Button>
-                                                        </div>
-                                                    )}
-                                                >
-                                                    <Button
-
-                                                        disabled={plan !== 'pro' ? true : false}
-                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                        icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
-                                                        {t('guests.btn_scanner')}
-                                                    </Button>
-                                                </Dropdown>
-
-
-                                            </div>
-                                        )}
-                                    >
-                                        <Button style={{ minWidth: '32px' }} className='primarybutton' icon={<TextAlignJustify size={12} />}>
-
-                                        </Button>
-                                    </Dropdown>
-
-                                }
-
-
-
-
-
-                                {!screens.xs && <Dropdown
-                                    trigger={['click']}
-                                    placement='bottomRight'
-                                    arrow
-                                    open={activeTickets}
-                                    onOpenChange={setActiveTickets}
-                                    popupRender={() => (
-                                        <div className='active_tickets_cont'>
-                                            <div className='edit-tickets-buttons-container'>
-
-                                                <div className='edit-tickets-dash'>
-                                                    <div className='active_t_row' style={{ justifyContent: 'space-between' }}>
-                                                        <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_total')}</span>
-                                                    </div>
-                                                    <div className='dash-row-pie' style={{ gap: '12px' }}>
-                                                        <Input onChange={(e) => {
-                                                            const onlyNumbers = e.target.value.replace(/\D/g, '')
-                                                            setCopyTickets(Number(onlyNumbers))
-                                                        }} value={copyTickets} style={{
-                                                            maxWidth: '100%', maxHeight: '100px', borderRadius: '99px', flex: 1, textAlign: 'center', fontSize: '18px', fontWeight: 800,
-                                                        }} />
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0px' }}>
-                                                            <Button onClick={() => setCopyTickets(copyTickets - 1)} icon={<FiMinus style={{ marginTop: '2px' }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '99px 0px 0px 99px', flex: '1' }}></Button>
-                                                            <Button onClick={() => setCopyTickets(copyTickets + 1)} icon={<IoMdAdd style={{ marginTop: '2px' }} />} className='primarybutton' style={{ width: '40px', maxHeight: '32px', border: '1px solid #ebebeb', borderRadius: '0px 99px 99px 0px', flex: '1' }}></Button>
-                                                            <Button onClick={() => onHandleTickets(copyTickets)} className="save_tickets" icon={<FaCheck size={10} style={{ color: '#FFF', marginBottom: '1px' }} />}
-                                                                style={{ maxHeight: '32px', maxWidth: '32px', borderRadius: '99px', marginLeft: '6px', backgroundColor: '#6D3CFA' }}></Button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {SHOW_TICKETS_DISTRIBUTION && <div className='edit-tickets-dash'>
-                                                    <span style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('guests.control_distribution')}</span>
-                                                    <div className='dash-row-pie'>
-                                                        <div className='pie_cont'>
-                                                            <Pie data={chartData} options={options} />
-                                                        </div>
-                                                        <div className='pie_cols'>
-                                                            <div className='pie_row'>
-                                                                <div style={{ backgroundColor: '#6D3CFA' }} className='pie_dot'></div>
-                                                                <span>{t('guests.control_confirmed')} ({confirmed})</span>
-                                                            </div>
-                                                            <div className='pie_row'>
-                                                                <div style={{ backgroundColor: '#6D3CFA50' }} className='pie_dot'></div>
-                                                                <span>{t('guests.control_waiting')} ({waiting})</span>
-                                                            </div>
-                                                            {type === 'closed' &&
-                                                                <div className='pie_row'>
-                                                                    <div style={{ backgroundColor: '#6D3CFA20' }} className='pie_dot'></div>
-                                                                    <span>{t('guests.control_available')} ({tickets - (waiting + confirmed)})</span>
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </div>}
-
-                                            </div>
-                                        </div>
-                                    )}
-                                >
-                                    <Tooltip title={t('guests.control_tickets_tooltip')}>
-                                        <Button
-                                            className='primarybutton_transparent'
-                                            icon={<Tickets size={14} />}
-                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                        >
-                                            {tickets ?? 0}
-                                        </Button>
-                                    </Tooltip>
-                                </Dropdown>}
-
-                                {
-                                    // El botón de agregar se oculta durante el modo envío
-                                    !screens.xs && !sendMode &&
-
-                                    <Dropdown
-                                        // trigger={['click']}
-                                        popupRender={() => (
-                                            <GuestAddTiles
-                                                plan={plan}
-                                                onIndividual={() => setDrawerState({
-                                                    currentGuest: null,
-                                                    onEditGuest: false,
-                                                    companions: [],
-                                                    visible: true
-                                                })}
-                                                onFile={(file) => navigate(`/dashboard/guests/import?id=${id}`, { state: { file } })}
-                                            />
-                                        )}
-                                    >
-                                        <Button
-                                            icon={<Plus size={14} />}
-                                            className='primarybutton--active'>
-                                            {t('guests.btn_new_guest')}
-                                        </Button>
-                                    </Dropdown>
-
-                                }
-
-                                {/* Bulk shipment: separador + Crear envío / Enviar
-                                    todos + Cancelar, solo en Lista de espera */}
-                                {!screens.xs && activeKey === 'creado' && (
-                                    <>
-                                        <div style={{ width: 1, alignSelf: 'stretch', minHeight: 28, backgroundColor: 'var(--borders)' }} />
-                                        {renderBulkActionsBar()}
-                                    </>
-                                )}
-
-
-
-
-
-
-
-
-
-
-
-
-                            </div>
-                        </div>
-
-                        {screens.xs && (
-                            <div style={{ padding: '12px', boxSizing: 'border-box', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                    <span style={{ fontFamily: 'Poppins', fontSize: '20px', fontWeight: 600 }}>{t('guests.my_guests')}</span>
-
-                                    <div style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                                    }}>
-                                        <Tooltip title={t('guests.send_issues_btn')}>
-                                            <Dropdown
-                                                trigger={['click']}
-                                                placement="bottomRight"
-                                                popupRender={() => (
-                                                    <div className="send-issues-popover">
-                                                        <strong className="send-issues-popover-title">{t('guests.send_issues_title')}</strong>
-                                                        <p className="send-issues-popover-text">{t('guests.send_issues_intro')}</p>
-                                                        <ul className="send-issues-popover-list">
-                                                            <li>{t('guests.send_issues_reason_1')}</li>
-                                                            <li>{t('guests.send_issues_reason_2')}</li>
-                                                            <li>{t('guests.send_issues_reason_3')}</li>
-                                                            <li>{t('guests.send_issues_reason_4')}</li>
-                                                        </ul>
-                                                        <p className="send-issues-popover-text">{t('guests.send_issues_footer')}</p>
-                                                    </div>
-                                                )}
-                                            >
-                                                <Button className='primarybutton_transparent' icon={<MailWarning size={14} />} style={{ borderRadius: '99px', transition: 'all 0.55s ease', }}>
-
-                                                </Button>
-                                            </Dropdown>
-                                        </Tooltip>
-                                        <Dropdown
-                                            popupRender={() => (
-                                                <div className="items_list_guests">
-
-
-                                                    <Dropdown
-                                                        trigger={["click"]}
-                                                        placement='topRight'
-                                                        popupRender={() => (
-                                                            <div style={{ position: "static", width: '250px' }} className="on-transfer-container">
-                                                                <span className="on-transfer-label">{t('guests.download_title')}</span>
-
-                                                                <div className="transfer-mesas-cont">
-                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                        <span>
-                                                                            {t('guests.tab_waiting')}
-                                                                        </span>
-
-                                                                        <Button
-                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
-                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                            icon={<Download size={14} />} className="primarybutton">
-                                                                        </Button>
-
-                                                                    </div>
-
-                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                        <span>
-                                                                            {t('guests.download_waiting')}
-                                                                        </span>
-
-                                                                        <Button
-                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
-                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                            icon={<Download size={14} />} className="primarybutton">
-                                                                        </Button>
-
-                                                                    </div>
-
-                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                        <span>
-                                                                            {t('guests.download_confirmed')}
-                                                                        </span>
-
-                                                                        <Button
-                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
-                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                            icon={<Download size={14} />} className="primarybutton">
-                                                                        </Button>
-
-                                                                    </div>
-
-                                                                    <div className="table-transfer-item" style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
-                                                                        <span>
-                                                                            {t('guests.tab_rejected')}
-                                                                        </span>
-
-                                                                        <Button
-                                                                            onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
-                                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                            icon={<Download size={14} />} className="primarybutton">
-                                                                        </Button>
-
-                                                                    </div>
-                                                                </div>
-
-                                                            </div>
-                                                        )}
-                                                    >
-                                                        <Button
-                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                            icon={<Download size={14} />} className="primarybutton_transparent">
-                                                            {t('guests.btn_downloads')}
-                                                        </Button>
-                                                    </Dropdown>
-
-                                                    <Button
-                                                        onClick={() => sethandleTables(true)}
-                                                        style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                        icon={<Pin size={14} />} className="primarybutton_transparent">
-                                                        Mapa de mesas
-                                                    </Button>
-
-
-                                                    <Popconfirm
-                                                        title={openCard ? t('guests.confirm_public_title') : t('guests.confirm_private_title')}
-                                                        description={openCard ? t('guests.confirm_public_desc') : t('guests.confirm_private_desc')}
-                                                        onConfirm={openCard ? () => onSaveNewTickets('closed') : () => onSaveNewTickets('open')}
-                                                        placement="bottomLeft"
-                                                        okText={t('guests.btn_continue')}
-                                                        cancelText={t('guests.btn_cancel')}
-                                                        style={{ width: '400px' }}
-                                                        id="popup-confirm"
-                                                    >
-                                                        {
-                                                            openCard ?
-                                                                <Button
-                                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                    icon={<LockKeyholeOpen size={14} />} className="primarybutton_transparent">
-                                                                    {t('guests.btn_public')}
-                                                                </Button>
-                                                                : <Button
-                                                                    style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
-                                                                    icon={<LockKeyhole size={14} />} className="primarybutton_transparent">
-                                                                    {t('guests.btn_private')}
-                                                                </Button>
-                                                        }
-
-                                                    </Popconfirm>
-
-                                                    <Dropdown
-                                                        trigger={['click']}
-                                                        popupRender={() => (
-                                                            <div className="items_list_guests" style={{ minWidth: 280, padding: '18px' }}>
-                                                                <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.1 }} >Lector de pases</span>
-                                                                <span style={{ fontSize: '12px', fontWeight: 400, lineHeight: 1.1, marginTop: '8px', opacity: '0.6' }} >Compartir información</span>
-
-                                                                <div style={{
-                                                                    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '8px',
-
-                                                                }}>
-                                                                    <div style={{
-                                                                        display: 'flex', alignItems: 'center', justifyContent: 'flex-start', alignSelf: 'stretch',
-                                                                        gap: '24px'
-
-                                                                    }}>
-                                                                        <div style={{
-                                                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
-
-                                                                        }}>
-                                                                            <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Usuario</span>
-                                                                            <Button
-                                                                                onClick={() => copyToClipboard(String(id).slice(0, 4))}
-                                                                                type='text'
-                                                                                icon={<Copy size={14} />}
-                                                                                style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                            >
-                                                                                {invitation?.generals?.event?.name}
-                                                                            </Button>
-                                                                        </div>
-
-                                                                        <div style={{
-                                                                            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
-
-                                                                        }}>
-
-                                                                            <div style={{
-                                                                                display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column', gap: '2px',
-
-                                                                            }}>
-                                                                                <span style={{ fontSize: '10px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Contraseña</span>
-                                                                                <Button
-                                                                                    onClick={() => copyToClipboard(String(id).slice(0, 4))}
-                                                                                    type='text'
-                                                                                    icon={<Copy size={14} />}
-                                                                                    style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                                >
-                                                                                    {String(id).slice(0, 4)}
-                                                                                </Button>
-                                                                            </div>
-
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <span style={{ fontSize: '11px', fontWeight: 400, lineHeight: 1.1, opacity: '0.5' }}>Link de acceso</span>
-                                                                    <Button
-                                                                        onClick={() => copyToClipboard('https://www.iattend.site/scanner')}
-                                                                        type='text'
-                                                                        icon={<Copy size={16} />}
-                                                                        style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1, padding: 0 }}
-                                                                    >
-                                                                        https://www.iattend.site/scanner
-                                                                    </Button>
-                                                                </div>
-
-
-                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', borderTop: '1px solid #ebebeb', paddingTop: '12px', boxSizing: 'border-box' }} />
-
-                                                                <Button
-                                                                    icon={<ArrowUpRight size={16} />}
-                                                                    onClick={() => window.open(`https://www.iattend.site/scanner?id=${id}`, '_blank')}
-                                                                    type='primary'
-                                                                >Acceder al lector</Button>
-                                                            </div>
-                                                        )}
-                                                    >
-                                                        <Button
-
-                                                            disabled={plan !== 'pro' ? true : false}
-                                                            style={{ borderRadius: '99px', transition: 'all 0.55s ease', justifyContent: 'flex-start' }}
-                                                            icon={<QrCode size={14} />} className={`primarybutton_transparent ${plan !== 'pro' ? 'pro_badge' : ''}`}>
-                                                            Lector de pases
-                                                        </Button>
-                                                    </Dropdown>
-                                                </div>
-                                            )}
-                                        >
-                                            <Button className='primarybutton' icon={<TextAlignJustify size={12} />}>
-
-                                            </Button>
-                                        </Dropdown>
-                                    </div>
-                                </div>
-                                <Input
-                                    prefix={<Search size={14} style={{ opacity: 0.4 }} />}
-                                    onChange={(e) => setSearchUser(e.target.value)}
-                                    value={searchUser}
-                                    placeholder={t('guests.search_placeholder')}
-                                    style={{ width: '100%', borderRadius: '99px', height: '40px' }}
-                                />
-
-                                {activeKey === 'confirmado' && (
-                                    <Segmented
-                                        block
-                                        value={confirmedView}
-                                        onChange={setConfirmedView}
-                                        options={[
-                                            { label: t('guests.view_group'), value: 'group', icon: <Users size={14} /> },
-                                            { label: t('guests.view_individual'), value: 'individual', icon: <List size={14} /> },
-                                        ]}
-                                    />
-                                )}
-                            </div>
-                        )}
 
                         <Tabs
-                            className='guests-main-tabs'
+                            className='guests-main-tabs guests-main-tabs--steps'
                             style={{ width: '100%', }}
                             type="card"
                             activeKey={activeKey}
                             onChange={setActiveKey}
                             items={items}
-                            tabBarExtraContent={
-                                screens.xs ? (
-                                    // Mobile: icon buttons — [+] nuevo invitado y [avión] crear
-                                    // envío (en modo envío: [avión (n)] enviar + [X] cancelar)
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '12px' }}>
-                                        {!sendMode && (
-                                            <Button
-                                                icon={<Plus size={14} />}
-                                                type='primary'
-                                                style={{ borderRadius: 99, height: 40, minWidth: 40, maxWidth: 40 }}
-                                                onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
-                                            />
-                                        )}
-                                        {SHOW_BULK_SEND && activeKey === 'creado' && (!sendMode ? (
-                                            <Button
-                                                icon={<Send size={14} />}
-                                                className='bulk-send-btn'
-                                                disabled={plan !== 'pro'}
-                                                style={{ borderRadius: 99, height: 40, minWidth: 40, maxWidth: 40 }}
-                                                onClick={() => setSendMode(true)}
-                                            />
-                                        ) : (
-                                            <>
-                                                <Button
-                                                    icon={<Send size={14} />}
-                                                    className='bulk-send-btn'
-                                                    loading={bulkSending}
-                                                    disabled={bulkEligibleGuests.length === 0}
-                                                    style={{ borderRadius: 99, height: 40 }}
-                                                    onClick={onBulkSend}
-                                                >
-                                                    {bulkEligibleGuests.length}
-                                                </Button>
-                                                <Button
-                                                    icon={<X size={14} />}
-                                                    className='secondarybutton'
-                                                    disabled={bulkSending}
-                                                    style={{ borderRadius: 99, height: 40, minWidth: 40, maxWidth: 40 }}
-                                                    onClick={exitSendMode}
-                                                />
-                                            </>
-                                        ))}
-                                    </div>
-                                ) : openCard ? <Button
-                                    icon={<Plus size={14} />}
-                                    type='primary'
-                                    style={{ borderRadius: '12px', marginBottom: '12px', height: '40px' }}
-                                    onClick={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
-                                >{t('guests.btn_new')}</Button> :
-                                    activeKey === 'confirmado' ? (
-                                        <Segmented
-                                            value={confirmedView}
-                                            onChange={setConfirmedView}
-                                            style={{ marginBottom: '8px' }}
-                                            options={[
-                                                { label: t('guests.view_group'), value: 'group' },
-                                                { label: t('guests.view_individual'), value: 'individual' },
-                                            ]}
-                                        />
-                                    ) : null
-                            }
+                            /* Escalera de pasos del rediseño en vez de la tab bar
+                               de Ant Design. Lo que antes vivía en
+                               tabBarExtraContent está ahora en el toolbar de cada
+                               sección y en su menú "⋯". */
+                            renderTabBar={() => (
+                                <div className="gx guests-steps-bar">
+                                    {renderStepBar()}
+                                </div>
+                            )}
                         />
 
                     </div>

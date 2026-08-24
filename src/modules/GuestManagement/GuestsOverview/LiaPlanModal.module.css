@@ -1,0 +1,248 @@
+/* Modal del plan de Lia — se abre desde "Que Lia se encargue". */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(12, 23, 27, .55);
+    backdrop-filter: blur(4px);
+    animation: fade .18s ease;
+}
+
+@keyframes fade {
+    from { opacity: 0 }
+    to { opacity: 1 }
+}
+
+.modal {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 48px 48px 40px;
+    border-radius: 24px;
+    background: radial-gradient(120% 100% at 100% 0%, #2E2050 0%, #17161B 55%);
+    color: #fff;
+    text-align: center;
+    font-family: 'Work Sans', 'Plus Jakarta Sans', 'Poppins', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .45);
+    animation: rise .22s ease;
+}
+
+@keyframes rise {
+    from { opacity: 0; transform: translateY(12px) }
+    to { opacity: 1; transform: none }
+}
+
+.modal * {
+    box-sizing: border-box;
+}
+
+.close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .04);
+    color: rgba(255, 255, 255, .6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.close:hover {
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+}
+
+.mark {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .05);
+    color: var(--light-purple-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    line-height: 1;
+}
+
+.title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    margin: 26px auto 0;
+    max-width: 20ch;
+    text-wrap: pretty;
+}
+
+.sub {
+    font-size: 15px;
+    color: #9AA6AC;
+    margin: 14px 0 0;
+}
+
+/* ── Antes → Ahora ────────────────────────────────────────────────────── */
+
+.shift {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 30px;
+}
+
+.shiftBox {
+    flex: 1;
+    max-width: 220px;
+    padding: 18px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .07);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+}
+
+.shiftBoxAfter .shiftValue {
+    color: var(--light-purple-500);
+}
+
+.shiftKicker {
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #7C8B92;
+}
+
+.shiftValue {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-wrap: balance;
+}
+
+.shiftArrow {
+    align-self: center;
+    color: #7C8B92;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* ── Qué hace y qué no ────────────────────────────────────────────────── */
+
+.list {
+    list-style: none;
+    margin: 30px 0 0;
+    padding: 0;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 13px;
+    text-align: left;
+}
+
+.item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 15px;
+    color: #E4E9EB;
+    line-height: 1.4;
+}
+
+.itemNo {
+    color: #B9C2C7;
+}
+
+.yes,
+.no {
+    flex-shrink: 0;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.yes {
+    color: var(--green-color);
+}
+
+.no {
+    color: var(--yellow-color);
+}
+
+/* ── Cierre ───────────────────────────────────────────────────────────── */
+
+.cta {
+    margin-top: 34px;
+    padding: 15px 38px;
+    border-radius: 999px;
+    border: none;
+    background: var(--light-green-500);
+    color: var(--dark-blue-500);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.cta:hover {
+    background: var(--light-green-300);
+}
+
+@media (max-width: 750px) {
+    .overlay {
+        padding: 12px;
+        align-items: flex-end;
+    }
+
+    .modal {
+        padding: 36px 22px 28px;
+        border-radius: 22px;
+        max-height: calc(100vh - 24px);
+    }
+
+    .title {
+        font-size: 23px;
+        max-width: none;
+    }
+
+    .shift {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .shiftBox {
+        max-width: none;
+    }
+
+    .shiftArrow {
+        transform: rotate(90deg);
+    }
+
+    .list {
+        display: flex;
+    }
+
+    .cta {
+        width: 100%;
+    }
+}

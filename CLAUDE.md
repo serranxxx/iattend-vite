@@ -6,7 +6,7 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
 ## Stack técnico
 - **Framework:** React 19 + Vite 7
 - **Lenguaje:** JavaScript — componentes en `.jsx`, sin TypeScript (solo `@types/react` para autocompletado del editor)
-- **Estilos:** mixto — CSS Modules (`ComponentName.module.css`) para componentes nuevos, y hojas de estilo globales en `src/styles/**` importadas desde `src/styles/index.js` para páginas más antiguas (invitations, land-page, header, footer, create)
+- **Estilos:** mixto — CSS Modules (`ComponentName.module.css`) para componentes nuevos, y hojas de estilo globales en `src/styles/**` importadas desde `src/styles/index.js` para páginas más antiguas (invitations, land-page, header, footer, create). El rediseño de invitados agrega `src/modules/GuestManagement/guests-redesign.css`, global pero importado desde el propio módulo. Tipografías cargadas en `index.html`: Plus Jakarta Sans, Work Sans y JetBrains Mono
 - **Librería de UI base:** Ant Design v6 (`antd`) + Lucide React para iconos (20px estándar); `react-icons` aparece en código más antiguo (ej. `Payment/functions.js`)
 - **Otras dependencias clave:**
   - `@supabase/supabase-js` — cliente Supabase, usado directo desde el frontend
@@ -169,6 +169,12 @@ npm run lint
 - El puerto de dev está fijo en 3000 con `strictPort: true` (`vite.config.js`) — si el puerto está ocupado, Vite falla en vez de tomar otro.
 - `src/services/apiWeather.js` tiene una API key de OpenWeatherMap hardcodeada en el código fuente del frontend (queda expuesta en el bundle).
 - `dist/` está en `.gitignore` (no se commitea), pero puede existir localmente con un build viejo — no confundir con el código fuente.
+- Publicar la invitación va por el RPC `publish_invitation` (`BuildPage.jsx`), **no** por un UPDATE directo a `invitations.data` — eso es lo que genera la fila en `invitation_versions`. Los campos top-level que no son contenido (ej. `rsvp_deadline` en `GuestsPage.jsx`) se actualizan directo, a propósito, para no ensuciar el historial. Ver `docs/historial-versiones.md`.
+- Leer una tabla nueva desde el frontend con la anon key puede fallar con `permission denied for table` (42501) aunque tenga RLS y policy: es un error de **GRANT**, que Postgres revisa antes que las policies. Pasó con `invitation_versions`; el fix está al final de `supabase-event-feedback-migration.sql`. Ver `docs/reviews-feedback.md`.
+- `/dashboard/guests` ya **no** usa una tabla con columnas: `GuestsPage.jsx` dibuja tarjetas fluidas y cada tab arma su propia acción (`renderCreatedAction` / `renderSentAction` / `renderTableAction`). El sistema de `columns`/`getTabColumns`/`tableProps` se eliminó — no reintroducirlo. Ver `docs/rediseno-gestion-invitados.md`.
+- Los tokens `--gx-*` del rediseño de invitados viven en `:root` (`guests-redesign.css`), **no** en `.gx`: los popups de Ant Design se portalean a `<body>` y ahí las variables locales no resuelven.
+- Los botones deshabilitados del rediseño usan `aria-disabled`, no `disabled`: un `<button disabled>` no emite eventos de mouse y el Tooltip con el motivo del bloqueo nunca se vería.
+- `FloatButton` de Ant Design v6 no expone `size`, y posiciona su menú asumiendo un trigger de 40px más un `translateY(40px)` en reposo. `MobileActionsFab.module.css` compensa eso a mano — revisar esa regla al actualizar antd.
 - El sistema de traducciones de la invitación (DeepL + tablas Supabase `copy_bundles`/`copy_translations`/`invitation_translations`) **no vive en este repo** — vive enteramente en `iattend-events` (`src/lib/translation/`). Este repo no llama a DeepL ni lee esas tablas.
 
 ## Pendientes / deuda técnica conocida
@@ -176,3 +182,5 @@ npm run lint
 - API key de OpenWeatherMap expuesta en el frontend (`src/services/apiWeather.js`) — candidato a mover al backend.
 - Patrón legacy `operation` callback en `src/services/` (apiLogin.js, apiInvitation.js) sin usar de forma consistente — candidato a limpieza o eliminación si ya no se usa en ningún flujo activo.
 - Sin suite de tests (no hay `test` script ni framework de testing configurado, pese a tener `@testing-library/user-event` como dependencia).
+- `invitation_versions` acumula historial que no se puede ver ni restaurar desde la app — no hay UI. Ver `docs/historial-versiones.md`.
+- El flujo de "Ahora no" de las reviews está en el esquema (`status='skipped'`, `skip_count`, reintento a 3 días) pero no implementado en el frontend: el modal no tiene botón de descarte y nada escribe esos campos. Ver `docs/reviews-feedback.md`.

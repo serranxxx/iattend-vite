@@ -1,0 +1,49 @@
+/* Botón flotante de navegación en mobile. */
+
+/* Ant Design v6 renderiza el trigger como un <button class="ant-btn
+   ant-btn-primary">, no con la estructura .ant-float-btn-body de v5 — el color
+   de marca se aplica sobre el botón mismo. */
+.fab :global(.ant-float-btn-group-trigger.ant-btn-primary) {
+    background: var(--light-green-500);
+    border-color: var(--light-green-500);
+    color: var(--dark-blue-500);
+    box-shadow: 0 6px 16px rgba(12, 23, 27, .18);
+}
+
+.fab :global(.ant-float-btn-group-trigger.ant-btn-primary:hover),
+.fab :global(.ant-float-btn-group-trigger.ant-btn-primary:focus) {
+    background: var(--light-green-300);
+    border-color: var(--light-green-300);
+    color: var(--dark-blue-500);
+}
+
+/* Tamaño large: antd v6 no expone `size` en FloatButton, así que va por CSS.
+   56px el trigger (medida típica de FAB) y 48px los ítems del menú. */
+.fab :global(.ant-float-btn-group-trigger) {
+    width: 56px;
+    height: 56px;
+}
+
+.fab :global(.ant-float-btn:not(.ant-float-btn-group-trigger)) {
+    width: 48px;
+    height: 48px;
+}
+
+/* El contenedor del grupo se dimensiona con el botón más ancho */
+.fab {
+    width: 56px;
+}
+
+/* Ant Design posiciona la lista contando con un trigger de 40px y además le
+   aplica un translateY(40px) en reposo. Con el trigger en 56 hay que reponer
+   los tres tramos para que el último ítem no se encime. */
+.fab :global(.ant-float-btn-group-list) {
+    bottom: calc(56px + 16px + 40px);
+}
+
+/* El símbolo de Lia va como texto, no como ícono */
+.spark {
+    font-size: 22px;
+    line-height: 1;
+    display: block;
+}

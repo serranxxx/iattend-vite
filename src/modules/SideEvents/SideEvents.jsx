@@ -1,9 +1,12 @@
 import { Badge, Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
+import '../GuestManagement/guests-redesign.css'
 import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/es'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
 import { BsArrowReturnRight } from 'react-icons/bs'
 import axios from 'axios'
@@ -18,7 +21,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, BellRing, Check, CheckCheck, ChevronLeft, ChevronRight, Cloud, CloudOff, Copy, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Send, SquareArrowUpRight, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, BellRing, Check, CheckCheck, ChevronLeft, ChevronRight, Cloud, CloudOff, Copy, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, Plus, Search, Send, SquareArrowUpRight, X } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -33,19 +36,17 @@ const { Option } = Select;
 
 
 
+dayjs.extend(relativeTime)
+
+// ── Envío masivo oculto, igual que en GuestsPage ──────────────────────────
+// Poner en true para restaurar "Crear envío", el modo de selección por bloques
+// y su checkbox. Apagado, cada invitado se marca como enviado a mano.
+const SHOW_BULK_SEND = false;
+
 export const SideEvents = () => {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { setCreditSending, setCreditSuccess, clearCreditState } = useLia()
 
-    const translateState = (value) => {
-        const map = {
-            creado: t('guests.state_creado'),
-            esperando: t('guests.state_esperando'),
-            confirmado: t('guests.state_confirmado'),
-            rechazado: t('guests.state_rechazado'),
-        }
-        return map[value] ?? value
-    }
     const [sideEvent, setsideEvent] = useState(null)
     const [current, setCurrent] = useState(null)
     const [handlePreview, setHandlePreview] = useState(false)
@@ -78,6 +79,16 @@ export const SideEvents = () => {
     // Bulk shipment (espejo de GuestsPage): modo "Crear envío" + selección por
     // bloques + lote en backend con isla de progreso
     const [sendMode, setSendMode] = useState(false)
+    // Qué picker de fecha límite está abierto (id de slot, o null). NO es un
+    // booleano a propósito: la línea se renderiza en varios tabs y antd los
+    // mantiene montados, así que un flag compartido abría los dos popups a la
+    // vez y el del tab oculto disparaba onOpenChange(false) al instante,
+    // dejando el calendario muerto.
+    const [rsvpPickerSlot, setRsvpPickerSlot] = useState(null)
+    const [searchUser, setSearchUser] = useState(null)
+    const [filterTag, setFilterTag] = useState(null)
+    const [filterTier, setFilterTier] = useState(null)
+    const [filterDelivery, setFilterDelivery] = useState(null)
     const [bulkSelected, setBulkSelected] = useState(() => new Set())
     const [bulkSending, setBulkSending] = useState(false)
     const [activeBatch, setActiveBatch] = useState(null)
@@ -145,24 +156,6 @@ export const SideEvents = () => {
         });
     };
 
-    const renderSortableHeader = (label, dir, onToggle) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            <span>{label}</span>
-            <Button
-                type="text"
-                size="small"
-                onClick={onToggle}
-                icon={
-                    dir === 'asc' ? <ArrowUp size={14} /> :
-                        dir === 'desc' ? <ArrowDown size={14} /> :
-                            <ArrowUpDown size={14} />
-                }
-                className={`sort-header-btn ${dir ? 'sort-header-btn--active' : ''}`}
-                style={{ padding: 0, minWidth: 20, height: 20 }}
-            />
-        </div>
-    );
-
     const TIER_SORT_ORDER = { A: 1, B: 2, C: 3, D: 4 };
     const MESSAGE_STATUS_SORT_ORDER = { failed: 0, undefined: 1, processing: 2, sent: 3, delivered: 4, read: 5 };
 
@@ -193,300 +186,10 @@ export const SideEvents = () => {
         return String(value);
     };
 
-    // Definido antes de `columns`/`items`: `items` renderiza sus tarjetas de
-    // forma inmediata (no perezosa) dentro del useMemo, así que cualquier
-    // función usada por columns.render debe existir ya en ese punto del
-    // cuerpo del componente para evitar un ReferenceError de TDZ en cada
-    // render con invitados en estado "esperando".
-    const handleMessageStatus = (record, status) => {
-        switch (status) {
-            case 'processing':
 
-                return (
-                    <div className='dispatch_message_tag' style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        {t('side_events.msg_processing')}
-                    </div>
-                )
+    // Las columnas de la tabla se eliminaron con el rediseño: cada tarjeta
+    // arma su propia fila y su propia acción — ver renderGuestCard.
 
-            case 'sent':
-
-                return (
-                    <div className={`new-table-tag state-confirmado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        <Send size={16} />
-                        {t('side_events.msg_sent')}
-                    </div>
-                )
-
-            case 'delivered':
-
-                return (
-                    <div className={`new-table-tag state-creado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        <Check size={16} />
-                        {t('side_events.msg_delivered')}
-                    </div>
-                )
-
-
-            case 'read':
-
-                return (
-                    <div className={`new-table-tag state-esperando dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        <CheckCheck size={16} />
-                        {t('side_events.msg_read')}
-                    </div>
-                )
-
-            case 'failed':
-
-                return (
-
-                    <Tooltip placement='topRight'
-
-                        title={t('side_events.msg_retry_hint')} color="var(--brand-color-500)">
-                        <Button
-                            disabled={
-                                !/^\+52\d+/.test(record.phone_number) || credits <= 0
-                            }
-                            onClick={() => onSedingInvitation(current, record, true)}
-                            className="primarybutton--active"
-                            icon={<MailWarning size={16} />}
-                            style={{ maxHeight: 30, width: 120 }}
-                        >
-                            {t('side_events.msg_retry')}
-                        </Button>
-                    </Tooltip>
-                    // <div className='dispatch_message_tag'>
-
-                    //     <MailWarning size={16}/>
-                    //     Reintentar
-                    // </div>
-                )
-
-            default:
-                return (
-                    <div className={`new-table-tag state-rechazado dispatch_message_tag`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        {t('side_events.msg_waiting')}
-                    </div>
-                )
-        }
-    }
-
-    const columns = useMemo(() => ([
-        {
-            title: t('side_events.col_name'),
-            dataIndex: "name",
-            key: "name",
-            fixed: "left",
-            width: 160,
-            render: (value, record) => {
-                const isChild = record.__isGroupChild;
-
-                if (isChild) {
-                    return (
-                        <div style={{ paddingLeft: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', minWidth: 0 }}>
-                            <BsArrowReturnRight style={{ flexShrink: 0 }} /> <span className="guest-name-text">{value}</span>
-                        </div>
-                    );
-                }
-
-                return (
-                    <div className="tag-container" style={{ justifyContent: "flex-start", width: "100%", paddingLeft: 32 }}>
-                        <span className="guest-name-text" style={{ textAlign: "left" }}>{value}</span>
-                    </div>
-                );
-            }
-        },
-
-        {
-            title: t('side_events.col_contact'),
-            dataIndex: "phone_number",
-            key: "phone_number",
-            width: 160,
-
-
-              render: (value) => phoneFormatter(value),
-        },
-
-        {
-            title: t('side_events.col_state'),
-            dataIndex: "state",
-            key: "state",
-            width: 140,
-            render: (value) => (
-                <div className="tag-container">
-                    <span className={`new-table-tag state-${value}`} style={{ maxHeight: '24px', padding: '0px 12px' }}>
-                        {translateState(value)}
-                    </span>
-                </div>
-            ),
-        },
-
-        {
-            title: t('side_events.col_access'),
-            dataIndex: "password",
-            key: "password",
-            width: 140,
-            render: (value,) => (
-                <div className="tag-container">
-                    <Dropdown popupRender={() => (
-                        <div className='passwords_container_se'>
-                            <Button style={{ width: '100%' }} icon={<LuCopy size={14} />} onClick={() => copyToClipboard(value)} >{value}</Button>
-                            <Button
-                                style={{ width: '100%' }}
-                                onClick={() => handleShare(`https://www.iattend.events/side-event/${current?.id}?password=${value}`)}
-                                icon={<LuCopy size={14} />}
-                            >{t('side_events.magic_link')}</Button>
-                        </div>
-                    )}>
-                        <Button style={{ borderRadius: '99px', maxHeight: '24px' }} icon={<LuLock />}>••••••••</Button>
-                    </Dropdown>
-                </div>
-            ),
-        },
-
-        {
-            title: t('side_events.col_tag'),
-            dataIndex: "tag",
-            key: "tag",
-            width: 120,
-
-            render: (value) => {
-                const label = renderTag(value)
-                return (
-                    <div className="tag-container">
-                        <Tooltip title={label} placement="top">
-                            <span className={`new-table-tag state-${value}`} style={{
-                                maxHeight: '24px', padding: '0px 12px',
-                                maxWidth: '140px', overflow: 'hidden',
-                                whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                display: 'inline-block', textAlign: 'center'
-                            }}>
-                                {label}
-                            </span>
-                        </Tooltip>
-                    </div>
-                )
-            },
-        },
-
-        {
-            title: t('side_events.col_priority'),
-            dataIndex: "tier",
-            key: "tier",
-            width: 100,
-            render: (value) => (
-                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="tag-container" style={{ width: '80%' }}>
-                        <span
-                            style={{ width: "100%", justifyContent: "center" }}
-                            className={`new-table-tag tier-${value}`}
-                        >
-                            {value ?? "-"}
-                        </span>
-                    </div>
-                </div>
-            ),
-        },
-
-        {
-            title: t('side_events.col_actions'),
-            key: "send",
-            width: 140,
-            fixed: screens.xs ? undefined : "right",
-            render: (_, record) => {
-                const { state } = record;
-                const isChild = record.__isGroupChild;
-
-                if (isChild) {
-                    // Acompañantes en Enviadas: celda vacía — el estado del envío
-                    // y el recordatorio viven solo en el principal.
-                    return null;
-                }
-
-                if (state === "creado") {
-                    if (record.companion_id !== null && record.companion_id !== undefined) {
-                        return null;
-                    }
-
-                    const sendable = isSendableGuest(record);
-
-                    // Modo envío: checkbox solo en enviables (los demás van atenuados)
-                    if (sendMode) {
-                        return (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
-                                {sendable && renderBulkCheck(record)}
-                            </div>
-                        );
-                    }
-
-                    // Estado normal: flecha para marcar como invitado a mano
-                    return (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
-                            <Tooltip placement='topRight' title={t('guests.mark_arrow_tooltip')} color="var(--brand-color-500)">
-                                <Button
-                                    onClick={() => onSendInvitation(record)}
-                                    className='primarybutton'
-                                    icon={<ArrowRight size={14} style={{ marginTop: 2 }} />}
-                                    style={{ minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99 }}
-                                />
-                            </Tooltip>
-                        </div>
-                    );
-                }
-
-                if (state === "esperando") {
-                    return (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 6,
-                                width: "100%",
-                            }}
-                        >
-                            {handleMessageStatus(record, dispatchMap[record.id]?.status ?? 'undefined')}
-                            {renderReminderButton(record)}
-                        </div>
-                    );
-                }
-
-                return null;
-            },
-        },
-    ]), [current, rawData, screens.xs, messagesDispatch, credits, sendMode, bulkSelected]);
-
-    // Cada tab de estado necesita su propia variante de columnas: "Acciones"
-    // gana un header ordenable por estado en Enviadas, y "tier" siempre gana
-    // un header ordenable. Sin mesas para side events por ahora, Confirmados
-    // no tiene sort propio en Acciones (esa columna no muestra nada ahí).
-    const getTabColumns = (baseColumns, state) => {
-        const sort = activeSort[state] || { column: null, dir: null };
-        const dirFor = (column) => (sort.column === column ? sort.dir : null);
-        const withTierSort = (cols) => cols.map((col) => (
-            col.key === "tier"
-                ? { ...col, title: renderSortableHeader(t('side_events.col_priority'), dirFor('tier'), () => cycleTabSort(state, 'tier')) }
-                : col
-        ));
-
-        switch (state) {
-            case "esperando":
-                // width extra: además del chip de estado, la celda lleva el botón de recordatorio
-                return withTierSort(baseColumns
-                    .map((col) => (col.key === "send" ? { ...col, width: 200, minWidth: 200, title: renderSortableHeader(t('side_events.col_state'), dirFor('estado'), () => cycleTabSort(state, 'estado')) } : col)));
-            case "creado":
-                // La columna de acciones lleva el checkbox del bulk; el header,
-                // el botón "Soltar" cuando el modo envío está activo
-                return withTierSort(baseColumns
-                    .map((col) => (col.key === "send" ? { ...col, title: renderBulkHeaderCheck(), width: 100, minWidth: 100 } : col)));
-            case "confirmado":
-            case "rechazado":
-                // Sin mesas en side events — la columna de acciones no muestra nada aquí
-                return withTierSort(baseColumns.filter((col) => col.key !== "send"));
-            default:
-                return withTierSort(baseColumns);
-        }
-    };
 
     // Agrupa por familia (companion_id) solo entre quienes comparten alguno de
     // los `states` pedidos — igual convención que GuestsPage, para que un
@@ -514,96 +217,8 @@ export const SideEvents = () => {
         });
     };
 
-    // "name" queda fijo a la izquierda y "send" (Acciones) fijo a la derecha
-    // dentro de cada tarjeta con scroll horizontal.
-    const stickyClassFor = (colKey) => {
-        if (colKey === 'name') return 'guests-card-cell--sticky-left';
-        if (colKey === 'send' && !screens.xs) return 'guests-card-cell--sticky-right';
-        return '';
-    };
-
-    // Renderiza una fila de invitado reutilizando exactamente las mismas
-    // columnas/render de la tabla, fuera de un <table> para envolver cada
-    // grupo (líder + acompañantes) en su propia tarjeta con bordes.
-    const renderGuestCardRow = (record, cols, extraClassName = '') => {
-        const isChildRow = extraClassName === 'guests-card-row--child';
-
-        return (
-            <div key={record.id} className={`guests-card-row ${extraClassName}`}>
-                {cols.map((col) => (
-                    <div
-                        key={col.key}
-                        className={`guests-card-cell ${stickyClassFor(col.key)}`}
-                        style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
-                    >
-                        {col.render ? col.render(record[col.dataIndex], record) : record[col.dataIndex]}
-
-                        {!isChildRow && stickyClassFor(col.key) === 'guests-card-cell--sticky-left' && (
-                            <Tooltip title={t('side_events.tooltip_open')}>
-                                <Button
-                                    onClick={() =>
-                                        setDrawerState({
-                                            currentGuest: record,
-                                            onEditGuest: true,
-                                            companions: handleCompanions(record.id),
-                                            visible: true,
-                                        })
-                                    }
-                                    className="primarybutton"
-                                    icon={<FiArrowUpRight size={12} style={{ marginTop: 2 }} />}
-                                    style={{ position: 'absolute', top: 16, left: 12, maxWidth: 20, maxHeight: 20, borderRadius: 99, zIndex: 99 }}
-                                />
-                            </Tooltip>
-                        )}
-                    </div>
-                ))}
-            </div>
-        );
-    };
-
-    // Cada grupo (líder + acompañantes) se ve siempre desplegado, envuelto en
-    // su propia tarjeta con borde redondeado.
-    const renderGroupedCards = (data, cols) => {
-        if (!data || data.length === 0) {
-            return <div className="table-group-empty">{t('side_events.no_guests')}</div>;
-        }
-
-        return (
-            <div className="guests-card-list">
-                <div className="guests-card-list-header">
-                    {cols.map((col) => (
-                        <div
-                            key={col.key}
-                            className={`guests-card-header-cell ${stickyClassFor(col.key)}`}
-                            style={col.width ? { flex: `0 0 ${col.width}px`, width: col.width } : { flex: '1 1 0%', minWidth: 160 }}
-                        >
-                            {col.title}
-                        </div>
-                    ))}
-                </div>
-                {data.map((group) => {
-                    // Modo envío: solo bloques enviables son clickeables; los
-                    // no-enviables se atenúan (mismo patrón que GuestsPage)
-                    const groupSelectable = sendMode && group.state === 'creado' && isSendableGuest(group)
-                    const groupDimmed = sendMode && group.state === 'creado' && !isSendableGuest(group)
-                    return (
-                    <div
-                        key={group.id}
-                        className={`guests-group-card ${bulkSelected.has(group.id) ? 'bulk-row-selected' : ''} ${groupDimmed ? 'bulk-row-disabled' : ''}`}
-                        onClick={groupSelectable ? (e) => {
-                            if (e.target.closest('button, input, a, .ant-dropdown')) return
-                            toggleBulkSelect(group.id, !bulkSelected.has(group.id))
-                        } : undefined}
-                        style={groupSelectable ? { cursor: 'pointer' } : undefined}
-                    >
-                        {renderGuestCardRow(group, cols)}
-                        {group.children?.map((child) => renderGuestCardRow(child, cols, 'guests-card-row--child'))}
-                    </div>
-                    )
-                })}
-            </div>
-        );
-    };
+    // La lista tipo tabla se reemplazó por las tarjetas fluidas del rediseño
+    // — ver renderGuestCard más abajo.
 
     const handleCompanions = (id) => {
         const comps = rawData?.filter((row) => row.companion_id === id.toString())
@@ -769,24 +384,24 @@ export const SideEvents = () => {
         const count = record.reminder_count ?? 0
         const disabled = !!reason && reason.key !== 'credits'
 
+        // Mismo formato que /dashboard/guests: píldora blanca "Recordar", con
+        // aria-disabled (no `disabled`) para que el Tooltip del motivo se vea.
         const button = (
-            <Button
-                disabled={disabled}
+            <button
+                type="button"
+                className="gx-btn gx-btn--ghost gx-btn--sm"
+                aria-disabled={disabled}
                 onClick={() => {
+                    if (disabled) return
                     if (reason?.key === 'credits') {
                         setBuyCreditsOpen(true)
                     } else if (!reason) {
                         onSendReminder(record)
                     }
                 }}
-                icon={<BellRing size={14} style={{ marginTop: 4, color: disabled ? '#dbdbdb' : undefined }} />}
-                style={{
-                    minWidth: 30, maxWidth: 30, maxHeight: 30, borderRadius: 99,
-                    background: 'linear-gradient(145deg, var(--orange-color), var(--orange-color))', color: '#FFFF', border: '1px solid var(--orange-color)',
-                    // el disabled default de antd deja el botón blanco y el ícono no se ve
-                    ...(disabled && { background: '#F1F1F1', border: '1px solid #EBEBEB', color: '#787878' }),
-                }}
-            />
+            >
+                {t('guests.hero_sent_remind')}
+            </button>
         )
 
         return (
@@ -796,7 +411,7 @@ export const SideEvents = () => {
                 title={<span style={{ color: 'var(--orange-color)', fontWeight: 600, textAlign: 'center' }}>{reason ? reason.label : count > 0 ? `${t('guests.reminder_count_tooltip')}: ${count}` : t('guests.reminder_btn_tooltip')}</span>}
             >
                 {disabled ? button : (
-                    <Badge count={count} size="small" color="var(--brand-color-500)" title="" offset={[-2, 2]}>
+                    <Badge count={count} size="small" color="var(--brand-color-500)" title="" offset={[-6, 2]}>
                         {button}
                     </Badge>
                 )}
@@ -804,34 +419,58 @@ export const SideEvents = () => {
         )
     }
 
-    // Barra de fecha límite del side event actual: empty state que invita a
-    // definirla mientras es null; campo editable permanente una vez definida.
-    const renderRsvpDeadlineBar = () => (
-        <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
-            padding: '10px 16px', marginBottom: 12, borderRadius: 16, boxSizing: 'border-box', width: '100%',
-            border: `1px solid ${current?.rsvp_deadline ? '#EBEBEB' : 'var(--light-purple-500-20)'}`,
-            background: current?.rsvp_deadline ? '#FFFFFF' : 'var(--light-purple-100-40)',
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <BellRing size={16} style={{ flexShrink: 0, color: current?.rsvp_deadline ? 'var(--brand-color-500)' : 'var(--light-purple-700)' }} />
-                <span style={{ fontSize: 13, color: current?.rsvp_deadline ? undefined : 'var(--light-purple-700)' }}>
-                    {current?.rsvp_deadline
-                        ? `${t('guests.rsvp_deadline_label')}: ${formatAbsoluteDateEs(current.rsvp_deadline)}`
-                        : t('guests.rsvp_deadline_empty')}
+    // Fecha límite, mismo formato que /dashboard/guests: alerta morada mientras
+    // no está definida (sin ella no se pueden mandar recordatorios) y línea de
+    // texto discreta una vez definida. El DatePicker vive oculto y lo abre el
+    // enlace/botón de al lado.
+    const renderRsvpPicker = (slot) => (
+        <DatePicker
+            open={rsvpPickerSlot === slot}
+            onOpenChange={(next) => setRsvpPickerSlot(next ? slot : null)}
+            value={current?.rsvp_deadline ? dayjs(current.rsvp_deadline) : null}
+            onChange={onSaveRsvpDeadline}
+            disabledDate={rsvpDisabledDate}
+            allowClear={false}
+            placeholder={t('guests.rsvp_deadline_placeholder')}
+            getPopupContainer={() => document.body}
+            className="gx-deadline-picker"
+        />
+    )
+
+    const renderRsvpDeadlineAlert = (slot) => {
+        if (current?.rsvp_deadline) return null
+        return (
+            <div className="gx-alert gx-alert--accent gx-deadline-alert">
+                <div className="gx-alert-badge"><BellRing size={16} /></div>
+                <div className="gx-alert-texts">
+                    <div className="gx-alert-title">{t('guests.rsvp_deadline_alert_title')}</div>
+                    <div className="gx-alert-text">{t('guests.rsvp_deadline_alert_text')}</div>
+                </div>
+                <span className="gx-deadline-anchor">
+                    <button type="button" className="gx-btn gx-btn--accent gx-btn--sm" onClick={() => setRsvpPickerSlot(slot)}>
+                        {t('guests.rsvp_deadline_define')}
+                    </button>
+                    {renderRsvpPicker(slot)}
                 </span>
             </div>
-            <DatePicker
-                value={current?.rsvp_deadline ? dayjs(current.rsvp_deadline) : null}
-                onChange={onSaveRsvpDeadline}
-                disabledDate={rsvpDisabledDate}
-                allowClear={false}
-                placeholder={t('guests.rsvp_deadline_placeholder')}
-                getPopupContainer={() => document.body}
-                style={{ borderRadius: 99 }}
-            />
-        </div>
-    )
+        )
+    }
+
+    const renderRsvpDeadlineLine = (slot) => {
+        if (!current?.rsvp_deadline) return null
+        return (
+            <div className="gx-deadline">
+                <span className="gx-deadline-label">{t('guests.rsvp_deadline_label')}</span>
+                <span className="gx-deadline-value">{formatAbsoluteDateEs(current.rsvp_deadline)}</span>
+                <span className="gx-deadline-anchor">
+                    <button type="button" className="gx-deadline-link" onClick={() => setRsvpPickerSlot(slot)}>
+                        {t('guests.rsvp_deadline_change')}
+                    </button>
+                    {renderRsvpPicker(slot)}
+                </span>
+            </div>
+        )
+    }
 
     // ── Bulk shipment por side event (espejo de GuestsPage) ─────────────────
     // Definido antes del useMemo de `items` (TDZ: items ejecuta los renders de
@@ -985,24 +624,9 @@ export const SideEvents = () => {
         )
     }
 
-    const renderBulkHeaderCheck = () => {
-        if (!sendMode) return t('side_events.col_actions')
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <Button
-                    size='small'
-                    disabled={bulkSelected.size === 0}
-                    onClick={() => setBulkSelected(new Set())}
-                    className='secondarybutton'
-                    style={{ borderRadius: 99, height: 32, flex: 1, width: '100%' }}
-                >
-                    {t('guests.bulk_release')}
-                </Button>
-            </div>
-        )
-    }
 
     const renderBulkActionsBar = () => {
+        if (!SHOW_BULK_SEND) return null;
         if (!sendMode) {
             return (
                 <Button
@@ -1046,15 +670,617 @@ export const SideEvents = () => {
     // Conteo de personas (líder + acompañantes) para el label de cada tab,
     // igual que en GuestsPage.
     const countGuestRows = (groupedData = []) =>
-        groupedData.reduce((acc, g) => acc + 1 + (g.children?.length ?? 0), 0);
+        groupedData
+            .flatMap((g) => [g, ...(g.children || [])])
+            .filter((g) => matchesFilters(g))
+            .length;
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Rediseño de la lista de invitados (mismo formato que /dashboard/guests).
+    //
+    // Comparte los estilos globales de guests-redesign.css: escalera de pasos,
+    // tarjetas fluidas y fila de orden. Aquí no hay tab de Seguimiento ni
+    // mesas — los side events solo manejan los cuatro estados.
+    // ─────────────────────────────────────────────────────────────────────
+
+    const initialsOf = (value = '') => {
+        const parts = String(value).trim().split(/\s+/)
+        return (((parts[0] || '')[0] || '') + ((parts[1] || '')[0] || '')) || '?'
+    }
+
+    const relativeWhen = (iso) => {
+        if (!iso) return null
+        const d = dayjs(iso)
+        if (!d.isValid()) return null
+        return d.locale(i18n.language?.startsWith('en') ? 'en' : 'es').fromNow()
+    }
+
+    const sideLinkFor = (record) =>
+        `https://www.iattend.events/side-event/${current?.id}?password=${record.password}`
+
+    // Estado de entrega del tab "Esperando respuesta": etiqueta ya traducida y
+    // tono que hereda el borde de la tarjeta.
+    const sendStatusInfo = (record) => {
+        const status = dispatchMap[record.id]?.status ?? 'undefined'
+        const when = relativeWhen(record.invitation_sent_at || record.last_update_date)
+
+        switch (status) {
+            case 'failed':
+                return { label: t('guests.msg_failed'), badge: 'red', tone: 'failed', when }
+            case 'read':
+                return { label: t('guests.msg_read_full'), badge: 'yellow', tone: 'read', when }
+            case 'delivered':
+                return { label: t('side_events.msg_delivered'), badge: 'blue', tone: null, when }
+            case 'sent':
+                return { label: t('side_events.msg_sent'), badge: 'blue', tone: null, when }
+            case 'processing':
+                return { label: t('side_events.msg_processing'), badge: 'gray', tone: null, when }
+            default:
+                return { label: t('side_events.msg_waiting'), badge: 'gray', tone: 'muted', when }
+        }
+    }
+
+    const openGuestDrawer = (record) => setDrawerState({
+        currentGuest: record,
+        onEditGuest: true,
+        companions: handleCompanions(record.id),
+        visible: true,
+    })
+
+    const renderCopyLink = (record, small = false) => (
+        <Tooltip title={t('side_events.magic_link')}>
+            <button
+                type="button"
+                className={`gx-pill ${small ? 'gx-pill--sm' : ''}`}
+                onClick={(e) => { e.stopPropagation(); handleShare(sideLinkFor(record)) }}
+            >
+                <Link2 size={small ? 13 : 14} />
+                <span>{t('guests.card_copy_link')}</span>
+            </button>
+        </Tooltip>
+    )
+
+    const renderCardChips = (record, muted = false, status = null) => (
+        <div className="gx-chips-col">
+            <div className="gx-chips">
+                {status && (
+                    <span className="gx-status-badge" data-tone={status.badge}>{status.label}</span>
+                )}
+                {record.tag && (
+                    <Tooltip title={renderTag(record.tag)}>
+                        <span className={`gx-chip ${muted ? 'gx-chip--muted' : ''}`}>{renderTag(record.tag)}</span>
+                    </Tooltip>
+                )}
+                {record.tier && !muted && (
+                    <span className={`gx-chip gx-chip--tier-${record.tier}`}>{record.tier}</span>
+                )}
+            </div>
+            {status?.when && <span className="gx-status-when">{status.when}</span>}
+        </div>
+    )
+
+    // Acción del tab "Por invitar": marcar como invitado a mano. El envío por
+    // WhatsApp de un side event es siempre por lote (renderBulkActionsBar).
+    const renderCreatedAction = (record) => {
+        if (record.companion_id !== null && record.companion_id !== undefined) return null
+        if (SHOW_BULK_SEND && sendMode) return isSendableGuest(record) ? renderBulkCheck(record) : null
+
+        return (
+            <Tooltip placement="topRight" color="var(--brand-color-500)" title={t('guests.mark_arrow_tooltip')}>
+                <button
+                    type="button"
+                    className="gx-icon-btn gx-icon-btn--primary"
+                    onClick={() => onSendInvitation(record)}
+                    aria-label={t('guests.mark_arrow_tooltip')}
+                >
+                    <Check size={15} />
+                </button>
+            </Tooltip>
+        )
+    }
+
+    // Acción del tab "Esperando respuesta": el badge de estado vive al inicio de
+    // la tarjeta, así que aquí solo queda el botón.
+    const renderSentAction = (record) => {
+        if (record.companion_id !== null && record.companion_id !== undefined) return null
+
+        const status = dispatchMap[record.id]?.status ?? 'undefined'
+        if (status === 'undefined') return null
+
+        if (status === 'failed') {
+            const blocked = !/^\+52\d+/.test(record.phone_number) || credits <= 0
+            return (
+                <Tooltip placement="topRight" color="var(--brand-color-500)" title={t('side_events.msg_retry_hint')}>
+                    <button
+                        type="button"
+                        className="gx-btn gx-btn--accent gx-btn--sm"
+                        aria-disabled={blocked}
+                        onClick={() => { if (!blocked) onSedingInvitation(current, record, true) }}
+                    >
+                        {t('side_events.msg_retry')}
+                    </button>
+                </Tooltip>
+            )
+        }
+
+        return renderReminderButton(record)
+    }
+
+    const renderGuestCard = (record, tabKey, children = []) => {
+        const status = tabKey === 'esperando' ? sendStatusInfo(record) : null
+        const isRejected = tabKey === 'rechazado'
+        const isConfirmed = tabKey === 'confirmado'
+
+        const actionNode = tabKey === 'creado'
+            ? renderCreatedAction(record)
+            : tabKey === 'esperando'
+                ? renderSentAction(record)
+                : null
+
+        const selectable = SHOW_BULK_SEND && sendMode && record.state === 'creado' && isSendableGuest(record)
+        const dimmed = SHOW_BULK_SEND && sendMode && record.state === 'creado' && !isSendableGuest(record)
+        const tone = isRejected ? 'muted' : status?.tone ?? null
+
+        return (
+            <div
+                key={record.id}
+                className="gx-card"
+                data-tone={tone || undefined}
+                data-selected={bulkSelected.has(record.id) || undefined}
+                data-dimmed={dimmed || undefined}
+                onClick={selectable ? (e) => {
+                    if (e.target.closest('button, input, a, .ant-dropdown')) return
+                    toggleBulkSelect(record.id, !bulkSelected.has(record.id))
+                } : undefined}
+                style={selectable ? { cursor: 'pointer' } : undefined}
+            >
+                <div className="gx-row">
+                    <div className={`gx-avatar ${isConfirmed ? 'gx-avatar--accent' : ''} ${isRejected ? 'gx-avatar--muted' : ''}`}>
+                        {initialsOf(record.name)}
+                    </div>
+
+                    <div className="gx-identity">
+                        <span className="gx-name" title={record.name}>{record.name}</span>
+                        <span className="gx-sub">
+                            <span>{record.phone_number ? phoneFormatter(record.phone_number) : t('guests.card_no_phone')}</span>
+                            {record.password && (
+                                <Tooltip title={t('guests.tooltip_copy_password')}>
+                                    <button
+                                        type="button"
+                                        className="gx-code"
+                                        onClick={(e) => { e.stopPropagation(); copyToClipboard(record.password) }}
+                                    >
+                                        · {record.password}
+                                    </button>
+                                </Tooltip>
+                            )}
+                        </span>
+                    </div>
+
+                    {renderCardChips(record, isRejected, status)}
+
+                    <div className="gx-spacer" />
+
+                    {!isRejected && renderCopyLink(record)}
+
+                    {actionNode && <div className="gx-action">{actionNode}</div>}
+
+                    <Tooltip title={t('guests.card_open')}>
+                        <button
+                            type="button"
+                            className="gx-chev"
+                            onClick={(e) => { e.stopPropagation(); openGuestDrawer(record) }}
+                        >
+                            <ChevronRight size={15} />
+                        </button>
+                    </Tooltip>
+                </div>
+
+                {children.length > 0 && (
+                    <div className="gx-companions">
+                        {children.map((child) => (
+                            <div key={child.id} className="gx-companion">
+                                <span className="gx-companion-name" title={child.name}>{child.name}</span>
+                                <div className="gx-spacer" />
+                                {!isRejected && renderCopyLink(child, true)}
+                                <span className="gx-companion-note">
+                                    {tabKey === 'creado'
+                                        ? t('guests.card_same_send')
+                                        : isRejected
+                                            ? ''
+                                            : t('guests.card_replies_with', { name: String(record.name).split(' ')[0] })}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    const renderCardList = (data, tabKey) => {
+        if (!data || data.length === 0) {
+            return <div className="gx-empty">{t('guests.no_guests')}</div>
+        }
+        return (
+            <div className="gx-list">
+                {data.map((group) => renderGuestCard(group, tabKey, group.children ?? []))}
+            </div>
+        )
+    }
+
+    // Orden: el rediseño quita el encabezado de columnas, así que el sort pasa
+    // a esta fila de chips. Sin mesas, solo prioridad y estado de envío.
+    const SORT_OPTIONS = {
+        creado: [{ column: 'tier', label: 'side_events.col_priority' }],
+        esperando: [
+            { column: 'tier', label: 'side_events.col_priority' },
+            { column: 'estado', label: 'side_events.col_state' },
+        ],
+        confirmado: [{ column: 'tier', label: 'side_events.col_priority' }],
+        rechazado: [{ column: 'tier', label: 'side_events.col_priority' }],
+    }
+
+    const renderSortBar = (tabKey) => {
+        const options = SORT_OPTIONS[tabKey] ?? []
+        if (options.length === 0) return null
+        const sort = activeSort[tabKey] || { column: null, dir: null }
+
+        return (
+            <div className="gx-sortbar">
+                <span className="gx-sortbar-label">{t('guests.sort_by')}</span>
+                {options.map((o) => {
+                    const dir = sort.column === o.column ? sort.dir : null
+                    return (
+                        <button
+                            key={o.column}
+                            type="button"
+                            className="gx-sort-chip"
+                            data-active={dir ? true : undefined}
+                            onClick={() => cycleTabSort(tabKey, o.column)}
+                        >
+                            <span>{t(o.label)}</span>
+                            {dir === 'asc' ? <ArrowUp size={13} />
+                                : dir === 'desc' ? <ArrowDown size={13} />
+                                    : <ArrowUpDown size={13} />}
+                        </button>
+                    )
+                })}
+            </div>
+        )
+    }
+
+    // Escalera de pasos (sin Resumen: los side events no tienen ese tab)
+    const STEP_DEFS = [
+        { key: 'creado', step: 'step_one', label: 'step_label_creado' },
+        { key: 'esperando', step: 'step_two', label: 'step_label_esperando' },
+        { key: 'confirmado', step: 'step_three', label: 'step_label_confirmado' },
+        { key: 'rechazado', step: 'step_aside', label: 'step_label_rechazado' },
+    ]
+
+    const renderStepBar = () => {
+        const counts = {
+            creado: countGuestRows(createdData),
+            esperando: countGuestRows(waitingData),
+            confirmado: countGuestRows(confirmedData),
+            rechazado: countGuestRows(rejectedData),
+        }
+
+        return (
+            <div className="gx gx-steps" role="tablist">
+                {STEP_DEFS.map((d) => (
+                    <button
+                        key={d.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeKey === d.key}
+                        className="gx-step"
+                        onClick={() => setActiveKey(d.key)}
+                    >
+                        <span className="gx-step-kicker">
+                            <span>{t(`guests.${d.step}`)}</span>
+                            <i />
+                        </span>
+                        <span className="gx-step-main">
+                            <span className="gx-step-label">{t(`guests.${d.label}`)}</span>
+                            <span className="gx-step-count">{counts[d.key]}</span>
+                        </span>
+                    </button>
+                ))}
+            </div>
+        )
+    }
+
+    // ── Búsqueda y filtros ───────────────────────────────────────────────
+    // Mismo toolbar que /dashboard/guests. Side events no tiene mesas ni
+    // categoría/lado, así que el panel solo ofrece etiqueta y prioridad; las
+    // etiquetas salen de los propios invitados del side event.
+
+    const sideTags = useMemo(() => {
+        const set = new Set()
+        rawData.forEach((g) => {
+            const tag = (g.tag && String(g.tag).trim()) || null
+            if (tag) set.add(tag)
+        })
+        return [...set]
+    }, [rawData])
+
+    const hasActiveFilters = Boolean(searchUser || filterTag || filterTier || filterDelivery)
+    const activeFilterCount = [filterTag, filterTier].filter(Boolean).length
+
+    const clearAllFilters = () => {
+        setFilterTag(null)
+        setFilterTier(null)
+        setFilterDelivery(null)
+    }
+
+    const matchesFilters = (guest) => {
+        const name = guest.name?.toLowerCase() || ''
+        const phone = guest.phone_number?.toString() || ''
+        const search = searchUser?.toLowerCase() || ''
+
+        const matchesSearch = !search || name.includes(search) || phone.includes(searchUser)
+        const matchesTag = !filterTag || guest.tag === filterTag
+        const matchesTier = !filterTier || guest.tier === filterTier
+        const matchesDelivery = !filterDelivery
+            || (dispatchMap[guest.id]?.status ?? 'undefined') === filterDelivery
+
+        return matchesSearch && matchesTag && matchesTier && matchesDelivery
+    }
+
+    // Con filtro activo la lista se aplana: cada coincidencia es su propia
+    // tarjeta, para que un acompañante que coincida no quede escondido.
+    const flattenGroups = (grouped = []) => grouped.flatMap((g) => [g, ...(g.children || [])])
+
+    const visibleFor = (grouped = []) => (hasActiveFilters
+        ? flattenGroups(grouped).filter(matchesFilters).map((g) => ({ ...g, __isGroupChild: false, children: [] }))
+        : grouped)
+
+    const renderFilterGroup = (label, options, value, onPick) => {
+        if (options.length === 0) return null
+        return (
+            <div className="gx-filter-group">
+                <span className="gx-filter-label">{label}</span>
+                <div className="gx-filter-options">
+                    {options.map((o) => (
+                        <button
+                            key={String(o.value)}
+                            type="button"
+                            className="gx-filter-opt"
+                            data-active={value === o.value || undefined}
+                            onClick={() => onPick(value === o.value ? null : o.value)}
+                        >
+                            {o.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        )
+    }
+
+    const renderFiltersPanel = () => (
+        <div className="gx-filters-panel">
+            {renderFilterGroup(
+                t('guests.filter_tag'),
+                sideTags.map((i) => ({ value: i, label: i })),
+                filterTag,
+                setFilterTag,
+            )}
+            {renderFilterGroup(
+                t('guests.filter_priority'),
+                ['A', 'B', 'C', 'D'].map((i) => ({ value: i, label: i })),
+                filterTier,
+                setFilterTier,
+            )}
+            {activeFilterCount > 0 && (
+                <button type="button" className="gx-filters-clear" onClick={clearAllFilters}>
+                    {t('guests.filters_clear')}
+                </button>
+            )}
+        </div>
+    )
+
+    // Agregar invitado: vive en el toolbar del Paso 1. Su menú conserva el
+    // alta individual, la importación por archivo y el copiado de la lista
+    // principal del evento.
+    const renderAddGuestButton = () => (
+            <Dropdown
+                key={0}
+                trigger={['click']}
+                placement='bottomRight'
+                popupRender={() => (
+                    <GuestAddTiles
+                        plan={plan}
+                        // locked={plan !== 'pro'}
+                        onIndividual={() => setDrawerState({
+                            currentGuest: null,
+                            onEditGuest: false,
+                            companions: [],
+                            visible: true
+                        })}
+                        onFile={(file) => navigate(`/dashboard/guests/import?id=${id}&side_events_id=${current?.id}`, { state: { file } })}
+                        topExtra={
+                            <Dropdown
+                                key={1}
+                                trigger={['click']}
+                                placement='bottomLeft'
+                                popupRender={() => (
+                                    <div key={3} className='side_guest_list'>
+                                        <div className='single_row' style={{
+                                            alignSelf: 'stretch', justifyContent: 'space-between',
+                                            alignItems: 'flex-end'
+                                        }}>
+                                            <span><b>{t('side_events.import_title')}</b></span>
+                                            <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>{t('side_events.import_add')}</Button>
+                                        </div>
+                                        <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder={t('side_events.import_search')} style={{ borderRadius: '99px' }} />
+                                        <div className='single_col scroll-invitation' style={{
+                                            alignSelf: 'stretch', gap: '2px',
+                                            maxHeight: '480px', overflowY: 'auto', display:'flex',alignItems:'flex-start', justifyContent:'flex-start', flexDirection:'column'
+                                        }}>
+                                            {
+                                                mainGuests ? mainGuests?.filter(i =>
+                                                    i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
+                                                        <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
+                                                            alignSelf: 'stretch',
+                                                            padding: '8px'
+                                                        }}>
+                                                            {
+                                                                rawData.find(n => n.password === i.password)
+                                                                    ? <Checkbox disabled checked />
+                                                                    : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
+                                                            }
+
+                                                            <span style={{ minWidth: '130px', flex:1, }}>{truncate(i.name, 20)}</span>
+
+                                                            <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px', maxWidth:'60px' }}>
+                                                                <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
+                                                            </div>
+
+                                                            <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', maxWidth:'80px' }}>
+                                                                <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
+                                                            </div>
+
+                                                        </div>
+                                                    ))
+
+                                                    : <Spin />
+                                            }
+
+                                        </div>
+                                    </div>
+                                )}
+                            >
+                                <button type="button" onClick={getMainGuests} className="guest-add-tile guest-add-tile--individual">
+                                    <span className="guest-add-tile-icon">
+                                        <Copy size={14} />
+                                    </span>
+                                    <span className="guest-add-tile-text">
+                                        <span className="guest-add-tile-title">{t('side_events.btn_copy_list')}</span>
+                                    </span>
+                                </button>
+                            </Dropdown>
+                        }
+                    />
+                )}
+            >
+                <button type="button" className="gx-tool gx-tool--primary">
+                    <Plus size={15} />
+                    <span>{t('side_events.btn_add')}</span>
+                </button>
+            </Dropdown>
+    )
+
+    const renderTabToolbar = (tabKey) => (
+        <div className="gx-toolbar">
+            <div className="gx-search">
+                <Search size={16} />
+                <input
+                    value={searchUser ?? ''}
+                    onChange={(e) => setSearchUser(e.target.value)}
+                    placeholder={t('guests.search_placeholder')}
+                />
+                {searchUser && (
+                    <button type="button" className="gx-search-clear" onClick={() => setSearchUser(null)}>
+                        <X size={14} />
+                    </button>
+                )}
+            </div>
+
+            {tabKey === 'esperando' && (
+                <button
+                    type="button"
+                    className="gx-tool"
+                    data-active={filterDelivery === 'failed' || undefined}
+                    onClick={() => setFilterDelivery((prev) => (prev === 'failed' ? null : 'failed'))}
+                >
+                    {t('guests.quick_undelivered')}
+                </button>
+            )}
+
+            <Dropdown trigger={['click']} placement="bottomRight" popupRender={renderFiltersPanel}>
+                <button type="button" className="gx-tool" data-active={activeFilterCount > 0 || undefined}>
+                    {t('guests.filters')}
+                    {activeFilterCount > 0 && <span className="gx-tool-count">{activeFilterCount}</span>}
+                </button>
+            </Dropdown>
+
+            {/* El envío masivo sigue tras SHOW_BULK_SEND: hoy solo hay envío manual */}
+            {tabKey === 'creado' && renderBulkActionsBar()}
+            {tabKey === 'creado' && !sendMode && renderAddGuestButton()}
+        </div>
+    )
+
+    // ── Banner de cabecera ───────────────────────────────────────────────
+    // Solo en los dos tabs donde el mensaje aplica a un side event: Confirmados
+    // y No asistirán hablan de mesas y pases en /guests, y aquí no hay ninguno.
+    const renderTabHero = (tabKey) => {
+        if (tabKey === 'creado') {
+            const pending = countGuestRows(createdData)
+            if (pending === 0) {
+                return (
+                    <div className="gx-hero gx-hero--plain">
+                        <div className="gx-hero-texts">
+                            <div className="gx-hero-title">{t('guests.hero_created_empty_title')}</div>
+                            <div className="gx-hero-text">{t('guests.hero_created_empty_text')}</div>
+                        </div>
+                    </div>
+                )
+            }
+            return (
+                <div className="gx-hero gx-hero--dark">
+                    <div className="gx-hero-texts">
+                        <div className="gx-hero-title">{t('guests.hero_created_title', { count: pending })}</div>
+                        <div className="gx-hero-text">{t('guests.hero_created_text')}</div>
+                    </div>
+                </div>
+            )
+        }
+
+        if (tabKey === 'esperando') {
+            const waitingFlat = rawData.filter((g) => g.state === 'esperando')
+            const failed = waitingFlat.filter((g) => dispatchMap[g.id]?.status === 'failed')
+            const read = waitingFlat.filter((g) => dispatchMap[g.id]?.status === 'read')
+            if (failed.length === 0 && read.length === 0) return null
+
+            return (
+                <div className="gx-alerts">
+                    {failed.length > 0 && (
+                        <div className="gx-alert gx-alert--danger">
+                            <div className="gx-alert-badge">!</div>
+                            <div className="gx-alert-texts">
+                                <div className="gx-alert-title">{t('guests.hero_sent_failed_title', { count: failed.length })}</div>
+                                <div className="gx-alert-text">{t('guests.hero_sent_failed_text')}</div>
+                            </div>
+                        </div>
+                    )}
+                    {read.length > 0 && (
+                        <div className="gx-alert gx-alert--warn">
+                            <div className="gx-alert-badge">{read.length}</div>
+                            <div className="gx-alert-texts">
+                                <div className="gx-alert-title">{t('guests.hero_sent_read_title')}</div>
+                                <div className="gx-alert-text">{t('guests.hero_sent_read_text', { count: read.length })}</div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )
+        }
+
+        return null
+    }
 
     const items = useMemo(() => ([
         {
             label: screens.xs ? <Plus size={14} /> : `${t('guests.tab_waiting')} (${countGuestRows(createdData)})`,
             key: "creado",
             children: (
-                <div className="guests-card-list-scroll">
-                    {renderGroupedCards(sortForTab('creado', createdData), getTabColumns(columns, 'creado'))}
+                <div className="gx">
+                    {renderTabHero('creado')}
+                    {renderTabToolbar('creado')}
+                    {renderRsvpDeadlineLine('creado')}
+                    {renderSortBar('creado')}
+                    {renderCardList(sortForTab('creado', visibleFor(createdData)), 'creado')}
                 </div>
             ),
         },
@@ -1062,8 +1288,12 @@ export const SideEvents = () => {
             label: screens.xs ? <Send size={14} /> : `${t('guests.tab_sent')} (${countGuestRows(waitingData)})`,
             key: "esperando",
             children: (
-                <div className="guests-card-list-scroll guests-card-list-scroll--sent">
-                    {renderGroupedCards(sortForTab('esperando', waitingData), getTabColumns(columns, 'esperando'))}
+                <div className="gx">
+                    {renderTabHero('esperando')}
+                    {renderTabToolbar('esperando')}
+                    {renderRsvpDeadlineLine('esperando')}
+                    {renderSortBar('esperando')}
+                    {renderCardList(sortForTab('esperando', visibleFor(waitingData)), 'esperando')}
                 </div>
             ),
         },
@@ -1071,8 +1301,11 @@ export const SideEvents = () => {
             label: screens.xs ? <CheckCheck size={14} /> : `${t('guests.tab_confirmed')} (${countGuestRows(confirmedData)})`,
             key: "confirmado",
             children: (
-                <div className="guests-card-list-scroll">
-                    {renderGroupedCards(sortForTab('confirmado', confirmedData), getTabColumns(columns, 'confirmado'))}
+                <div className="gx">
+                    {renderTabHero('confirmado')}
+                    {renderTabToolbar('confirmado')}
+                    {renderSortBar('confirmado')}
+                    {renderCardList(sortForTab('confirmado', visibleFor(confirmedData)), 'confirmado')}
                 </div>
             ),
         },
@@ -1080,14 +1313,20 @@ export const SideEvents = () => {
             label: screens.xs ? <LuX size={14} /> : `${t('guests.tab_rejected')} (${countGuestRows(rejectedData)})`,
             key: "rechazado",
             children: (
-                <div className="guests-card-list-scroll">
-                    {renderGroupedCards(sortForTab('rechazado', rejectedData), getTabColumns(columns, 'rechazado'))}
+                <div className="gx">
+                    {renderTabHero('rechazado')}
+                    {renderTabToolbar('rechazado')}
+                    {renderSortBar('rechazado')}
+                    {renderCardList(sortForTab('rechazado', visibleFor(rejectedData)), 'rechazado')}
                 </div>
             ),
         },
 
+    // OJO: react-hooks/exhaustive-deps está desactivado en este repo, así que
+    // nadie avisa si falta una dependencia. Un estado que se lea dentro de los
+    // children y no esté aquí queda congelado: el componente re-renderiza pero
+    // los tabs siguen mostrando los elementos memoizados anteriores.
     ]), [
-        columns,
         createdData,
         waitingData,
         confirmedData,
@@ -1098,6 +1337,17 @@ export const SideEvents = () => {
         sendMode,
         bulkSelected,
         bulkSending,
+        current,
+        plan,
+        rawData,
+        sideTags,
+        mainGuests,
+        searchMain,
+        rsvpPickerSlot,
+        searchUser,
+        filterTag,
+        filterTier,
+        filterDelivery,
     ]);
 
     const getMessagesUpdates = async () => {
@@ -2093,19 +2343,14 @@ export const SideEvents = () => {
                                             <span style={{ fontFamily: 'Poppins', fontSize: '18px', fontWeight: 600, display: 'block', marginBottom: '12px' }}>{t('side_events.mobile_guests')}</span>
                                         )}
 
-                                        {/* En modo envío el bloque se tiñe de azul con las instrucciones */}
-                                        <div style={{
-                                            marginBottom: 12, boxSizing: 'border-box', transition: 'background 0.3s ease, border 0.3s ease',
-                                            borderRadius: 16,
-                                            ...(sendMode && {
-                                                background: 'var(--blue-bg-40)',
-                                                border: '1px solid var(--blue-color-20)',
-                                                padding: 12,
-                                            }),
-                                        }}>
-                                            {renderRsvpDeadlineBar()}
-                                            {sendMode && (
-                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 10 }}>
+                                        <div className="gx">
+                                            {renderRsvpDeadlineAlert('page')}
+                                            {SHOW_BULK_SEND && sendMode && (
+                                                <div style={{
+                                                    marginBottom: 12, boxSizing: 'border-box', borderRadius: 16,
+                                                    background: 'var(--blue-bg-40)', border: '1px solid var(--blue-color-20)', padding: 12,
+                                                    display: 'flex', alignItems: 'flex-start', gap: 6,
+                                                }}>
                                                     <Info size={14} style={{ flexShrink: 0, color: 'var(--blue-color)', marginTop: 2 }} />
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue-color)' }}>
@@ -2120,105 +2365,24 @@ export const SideEvents = () => {
                                         </div>
 
                                         <Tabs
-                                            className="side-tabs"
+                                            className="side-tabs side-tabs--steps"
                                             activeKey={activeKey}
                                             onChange={setActiveKey}
                                             style={screens.xs ? { overflow: 'visible' } : undefined}
                                             type="card"
                                             items={items}
-                                            tabBarExtraContent={
-                                                <div className='single_row' style={{ marginBottom: '12px', }}>
-
-                                                    {/* Bulk shipment: Crear envío / Enviar todos + Cancelar */}
-                                                    {activeKey === 'creado' && renderBulkActionsBar()}
-                                                    {/* El botón de agregar se oculta durante el modo envío */}
-                                                    {!sendMode && <Dropdown
-                                                        key={0}
-                                                        trigger={['click']}
-                                                        placement='bottomRight'
-                                                        popupRender={() => (
-                                                            <GuestAddTiles
-                                                                plan={plan}
-                                                                // locked={plan !== 'pro'}
-                                                                onIndividual={() => setDrawerState({
-                                                                    currentGuest: null,
-                                                                    onEditGuest: false,
-                                                                    companions: [],
-                                                                    visible: true
-                                                                })}
-                                                                onFile={(file) => navigate(`/dashboard/guests/import?id=${id}&side_events_id=${current?.id}`, { state: { file } })}
-                                                                topExtra={
-                                                                    <Dropdown
-                                                                        key={1}
-                                                                        trigger={['click']}
-                                                                        placement='bottomLeft'
-                                                                        popupRender={() => (
-                                                                            <div key={3} className='side_guest_list'>
-                                                                                <div className='single_row' style={{
-                                                                                    alignSelf: 'stretch', justifyContent: 'space-between',
-                                                                                    alignItems: 'flex-end'
-                                                                                }}>
-                                                                                    <span><b>{t('side_events.import_title')}</b></span>
-                                                                                    <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>{t('side_events.import_add')}</Button>
-                                                                                </div>
-                                                                                <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder={t('side_events.import_search')} style={{ borderRadius: '99px' }} />
-                                                                                <div className='single_col scroll-invitation' style={{
-                                                                                    alignSelf: 'stretch', gap: '2px',
-                                                                                    maxHeight: '480px', overflowY: 'auto', display:'flex',alignItems:'flex-start', justifyContent:'flex-start', flexDirection:'column'
-                                                                                }}>
-                                                                                    {
-                                                                                        mainGuests ? mainGuests?.filter(i =>
-                                                                                            i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
-                                                                                                <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
-                                                                                                    alignSelf: 'stretch',
-                                                                                                    padding: '8px'
-                                                                                                }}>
-                                                                                                    {
-                                                                                                        rawData.find(n => n.password === i.password)
-                                                                                                            ? <Checkbox disabled checked />
-                                                                                                            : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
-                                                                                                    }
-
-                                                                                                    <span style={{ minWidth: '130px', flex:1, }}>{truncate(i.name, 20)}</span>
-
-                                                                                                    <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px', maxWidth:'60px' }}>
-                                                                                                        <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
-                                                                                                    </div>
-
-                                                                                                    <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', maxWidth:'80px' }}>
-                                                                                                        <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
-                                                                                                    </div>
-
-                                                                                                </div>
-                                                                                            ))
-
-                                                                                            : <Spin />
-                                                                                    }
-
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-                                                                    >
-                                                                        <button type="button" onClick={getMainGuests} className="guest-add-tile guest-add-tile--individual">
-                                                                            <span className="guest-add-tile-icon">
-                                                                                <Copy size={14} />
-                                                                            </span>
-                                                                            <span className="guest-add-tile-text">
-                                                                                <span className="guest-add-tile-title">{t('side_events.btn_copy_list')}</span>
-                                                                            </span>
-                                                                        </button>
-                                                                    </Dropdown>
-                                                                }
-                                                            />
-                                                        )}
-                                                    >
-                                                        <Button className='primarybutton--active' icon={<Plus size={14} />} >{t('side_events.btn_add')}</Button>
-                                                    </Dropdown>}
-
-
-                                                    {/* <Button onClick={() => setOpen(false)} className='primarybutton' icon={<LuX />}></Button> */}
-                                                </div>
-                                            }
+                                            /* Escalera de pasos del rediseño; el contenido
+                                               extra (envío masivo, nuevo invitado) se dibuja
+                                               debajo. */
+                                            renderTabBar={(props) => {
+                                                const extra = props.extra?.right ?? (props.extra?.left ? null : props.extra)
+                                                return (
+                                                    <div className="gx guests-steps-bar">
+                                                        {renderStepBar()}
+                                                        {extra ? <div className="guests-steps-extra">{extra}</div> : null}
+                                                    </div>
+                                                )
+                                            }}
 
                                         />
                                     </div>

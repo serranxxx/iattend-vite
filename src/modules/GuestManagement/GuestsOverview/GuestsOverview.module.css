@@ -1,28 +1,25 @@
-/* Dashboard de invitados — rediseño de Claude Design.
-   Paleta y tipografía propias del rediseño: papel cálido, acento violeta,
-   Plus Jakarta Sans para texto y JetBrains Mono para cifras. */
+/* Dashboard de invitados — rediseño de Claude Design
+   ("Gestion de invitados.dc.html"). Paleta propia del rediseño: papel cálido,
+   acento violeta y tipografía Work Sans. */
 
 .wrapper {
-    --ink: #14131A;
+    --ink: #17161B;
     --card: #FFFFFF;
-    --border: #E7E4DD;
-    --border-soft: #EFEDE7;
-    --accent: #5B2EE5;
-    --accent-soft: #F1ECFF;
-    --accent-pale: #C9BDFF;
-    --muted: #8C8898;
-    --muted-2: #6E6B7B;
-    --sand: #9A9689;
-    --rail: #F1EFE9;
-    --beige: #FAF9F6;
+    --border: #E9E6E1;
+    --border-soft: #F0EDE8;
+    --accent: #5B2EE0;
+    --accent-pale: #C9B6FF;
+    --accent-mist: #DCCFFF;
+    --muted: #6E6A64;
+    --muted-2: #7C766E;
+    --sand: #8A857E;
+    --rail: #EDEAE5;
+    --beige: #FAF9F7;
 
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
     width: 100%;
     box-sizing: border-box;
     padding-bottom: 40px;
-    font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+    font-family: 'Work Sans', 'Plus Jakarta Sans', 'Poppins', sans-serif;
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
 }
@@ -31,584 +28,452 @@
     box-sizing: border-box;
 }
 
-.topGrid,
-.bottomGrid {
+.grid {
     display: grid;
-    grid-template-columns: 1.55fr 1fr;
-    gap: 18px;
-    width: 100%;
-}
-
-.topGrid {
-    align-items: stretch;
-}
-
-.bottomGrid {
+    grid-template-columns: 1.45fr 1fr;
+    gap: 20px;
     align-items: start;
-}
-
-/* Con Lia oculta (SHOW_LIA = false) el hero ocupa todo el ancho */
-.topGridSolo {
-    grid-template-columns: 1fr;
+    width: 100%;
 }
 
 .col {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
     min-width: 0;
 }
 
-/* ── Hero de confirmados ──────────────────────────────────────────────── */
+/* ── Tarjeta base ─────────────────────────────────────────────────────── */
 
-.heroCard {
+.card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 26px 28px;
+    padding: 26px 28px 28px;
     display: flex;
     flex-direction: column;
-    gap: 22px;
     min-width: 0;
 }
 
-.heroTop {
+.kicker {
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--sand);
+}
+
+.cardHead {
     display: flex;
-    align-items: flex-start;
+    align-items: baseline;
     justify-content: space-between;
-    gap: 20px;
+    gap: 12px;
+}
+
+.cardTitle {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -.005em;
+}
+
+.cardMeta {
+    font-size: 13px;
+    color: var(--sand);
+    white-space: nowrap;
+}
+
+/* ── Qué hacer hoy ────────────────────────────────────────────────────── */
+
+.headline {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    line-height: 1.2;
+    margin: 10px 0 0;
+    max-width: 34ch;
+    text-wrap: pretty;
+}
+
+.lede {
+    font-size: 15px;
+    color: var(--muted);
+    margin: 8px 0 0;
+    max-width: 52ch;
+    line-height: 1.45;
+    text-wrap: pretty;
+}
+
+.caseList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.caseRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--beige);
+}
+
+.caseDanger {
+    border-color: var(--red-color-20);
+    background: var(--red-bg-80);
+}
+
+.caseDanger .caseBadge {
+    background: var(--red-bg);
+    color: var(--red-color);
+    border: 1px solid var(--red-color-40);
+}
+
+.caseWarn {
+    border-color: var(--yellow-color-20);
+    background: var(--yellow-bg-80);
+}
+
+.caseWarn .caseBadge {
+    background: var(--yellow-bg);
+    color: var(--yellow-color);
+     border: 1px solid var(--yellow-color-40);
+}
+
+.caseMuted {
+    border-color: var(--gray-color-20);
+    background: var(--gray-bg-80);
+}
+
+.caseMuted .caseBadge {
+    background: var(--gray-bg);
+    color: var(--gray-color);
+     border: 1px solid var(--gray-color-40);
+}
+
+.caseBadge {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.caseTexts {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+}
+
+.caseTitle {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.casePeople {
+    font-size: 13px;
+    color: var(--muted-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.caseFoot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--sand);
     flex-wrap: wrap;
 }
 
-.heroFigure {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+/* ── Botones ──────────────────────────────────────────────────────────── */
+
+.btnPrimary,
+.btnRed,
+.btnYellow,
+.btnGhost,
+.btnDark {
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: inherit;
+    transition: filter .15s ease, background .15s ease;
+    /* color: #FFF !important; */
 }
 
-.kicker {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    color: var(--sand);
+.btnPrimary {
+    border: none;
+    background: var(--accent);
+    color: #fff;
 }
+
+.btnPrimary:hover {
+    filter: brightness(1.1);
+}
+
+.btnRed {
+    border: none;
+    background: var(--red-color);
+    color: var(--dark-blue-500);
+    color: #FFF;
+}
+
+.btnRed:hover {
+    filter: brightness(1.06);
+}
+
+.btnYellow {
+    border: none;
+    background: var(--yellow-color);
+    color: var(--dark-blue-500);
+    color: #FFF;
+}
+
+.btnYellow:hover {
+    filter: brightness(1.06);
+}
+
+.btnGhost {
+    border: 1px solid #DCD7CF;
+    background: #fff;
+    color: #2B2925;
+}
+
+.btnGhost:hover {
+    background: var(--beige);
+}
+
+.btnDark {
+    border: none;
+    background: var(--ink);
+    color: #fff;
+}
+
+.btnDark:hover {
+    filter: brightness(1.35);
+}
+
+.linkBtn {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.linkBtn:hover {
+    text-decoration: underline;
+}
+
+/* ── Avance de confirmaciones (barras) ────────────────────────────────── */
+
+.bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 132px;
+    margin-top: 22px;
+}
+
+.barCol {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 8px;
+    min-width: 0;
+}
+
+.barTrack {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+}
+
+.bar {
+    width: 100%;
+    border-radius: 6px 6px 3px 3px;
+    min-height: 2px;
+    transition: height .3s ease;
+}
+
+.barLabel {
+    font-size: 12px;
+    color: var(--muted-2);
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ── Lia ──────────────────────────────────────────────────────────────── */
+
+.liaCard {
+    border-radius: 20px;
+    padding: 26px 28px 24px;
+    background: radial-gradient(120% 100% at 100% 0%, #2E2050 0%, #17161B 55%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.liaBrand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-pale);
+}
+
+.liaBrand span {
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.liaTitle {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    line-height: 1.25;
+    margin-top: 12px;
+    text-wrap: pretty;
+}
+
+.liaText {
+    font-size: 14px;
+    color: #A9A3B8;
+    margin-top: 10px;
+    line-height: 1.55;
+    text-wrap: pretty;
+}
+
+.liaCta {
+    width: 100%;
+    margin-top: 22px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent-pale);
+    color: #221450;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: filter .15s ease;
+}
+
+.liaCta:hover {
+    filter: brightness(1.06);
+}
+
+.liaFoot {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.liaLink {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 13px;
+    color: #A9A3B8;
+    cursor: pointer;
+}
+
+.liaLink:hover {
+    color: #fff;
+}
+
+/* ── Confirmados ──────────────────────────────────────────────────────── */
 
 .bigRow {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 10px;
+    margin-top: 6px;
     flex-wrap: wrap;
 }
 
 .big {
-    font-size: 62px;
-    font-weight: 800;
-    letter-spacing: -0.045em;
-    line-height: 0.9;
+    font-size: 60px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+    line-height: 1;
 }
 
 .bigOf {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--sand);
-    letter-spacing: -0.02em;
-}
-
-.heroAside {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    text-align: right;
-}
-
-.deadlineChip {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: #FDF1E4;
-    color: #A8600A;
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.deadlineChip i {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #E08A16;
-    display: inline-block;
-}
-
-.asideNote {
-    font-size: 12.5px;
+    font-size: 19px;
     color: var(--muted-2);
-}
-
-.asideNote b {
-    color: var(--ink);
-}
-
-/* ── Barra de capacidad ───────────────────────────────────────────────── */
-
-.progressBlock {
-    display: flex;
-    flex-direction: column;
-    gap: 11px;
+    font-weight: 500;
 }
 
 .rail {
-    height: 12px;
-    border-radius: 999px;
-    background: var(--border-soft);
+    height: 9px;
+    border-radius: 99px;
+    background: var(--rail);
+    margin-top: 20px;
     overflow: hidden;
     display: flex;
 }
 
 .railFill {
     background: var(--accent);
+    transition: width .35s ease;
 }
 
-.railProj {
+.railSoft {
     background: var(--accent-pale);
+    transition: width .35s ease;
 }
 
-.progressLegend {
+.railLegend {
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    font-size: 12.5px;
-    color: var(--muted-2);
-    flex-wrap: wrap;
-}
-
-.progressLegend b {
-    color: var(--ink);
-}
-
-/* ── Cuadrícula de métricas ───────────────────────────────────────────── */
-
-.statGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--border-soft);
-    border: 1px solid var(--border-soft);
-    border-radius: 14px;
-    overflow: hidden;
-}
-
-.statCell {
-    background: var(--card);
-    padding: 14px 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-}
-
-.statLabel {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--muted);
-}
-
-.statValueRow {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.statValue {
-    font-size: 23px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-}
-
-.statDelta {
-    font-size: 11.5px;
-    font-weight: 600;
-}
-
-.toneWarn { color: #A8600A; }
-.toneMuted { color: var(--muted); }
-.toneGood { color: #1F9D6B; }
-
-/* ── Tarjeta de Lia ───────────────────────────────────────────────────── */
-
-.liaCard {
-    background: var(--ink);
-    background-image: radial-gradient(120% 90% at 100% 0%, #2A1D57 0%, #14131A 62%);
-    border-radius: 20px;
-    padding: 26px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 22px;
-    color: #F3F2EE;
-    min-width: 0;
-}
-
-.liaHead {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.liaBrand {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.liaSpark {
-    color: var(--accent-pale);
-    font-size: 14px;
-}
-
-.liaKicker {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    color: #9B93BE;
-}
-
-.liaTitle {
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.25;
-    letter-spacing: -0.025em;
-}
-
-.liaText {
+    margin-top: 12px;
     font-size: 13px;
-    line-height: 1.55;
-    color: #A7A2BB;
+    color: var(--muted);
+    flex-wrap: wrap;
 }
 
-.liaActions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.liaCta {
-    width: 100%;
-    height: 46px;
-    border-radius: 12px;
-    border: none;
+.legendDot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
     background: var(--accent-pale);
-    color: #1B1233;
-    font-family: inherit;
-    font-size: 13.5px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s ease;
+    margin-right: 6px;
 }
 
-.liaCta:hover {
-    background: #DDD2FF;
-}
-
-.liaLink {
-    text-align: center;
-    font-size: 12px;
-    color: #8B86A3;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.liaLink:hover {
-    color: var(--accent-pale);
-}
-
-/* ── Tarjetas ─────────────────────────────────────────────────────────── */
-
-.card,
-.cardBeige {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 22px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-width: 0;
-}
-
-.cardBeige {
-    background: var(--beige);
-    gap: 10px;
-    align-items: flex-start;
-}
-
-.cardHead {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.cardTitle {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-.cardMeta {
-    font-size: 12px;
-    color: var(--muted);
-}
-
-.cardFoot {
-    font-size: 11.5px;
-    line-height: 1.5;
-    color: var(--muted);
-    border-top: 1px solid var(--rail);
+.deadlineNote {
+    margin-top: 14px;
     padding-top: 12px;
-}
-
-.cardFootPlain {
-    font-size: 11.5px;
-    line-height: 1.5;
-    color: var(--muted);
-}
-
-.mono {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-}
-
-.monoBold {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-    font-weight: 600;
-}
-
-/* ── Casos ────────────────────────────────────────────────────────────── */
-
-.caseList {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.caseRow,
-.caseRowDashed {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 15px 16px;
-    border-radius: 14px;
-    flex-wrap: wrap;
-}
-
-.caseRow {
-    border: 1px solid var(--border);
-    background: var(--card);
-}
-
-.caseDanger {
-    background: #FEF4F3;
-    border-color: #F6DAD7;
-}
-
-.caseDanger .caseIcon {
-    background: #FBE2DF;
-    color: #C4392F;
-}
-
-.caseWarn {
-    background: #FEF8EF;
-    border-color: #F3E3CA;
-}
-
-.caseWarn .caseIcon {
-    background: #FAEBD4;
-    color: #A8600A;
-}
-
-.caseRowDashed {
-    border: 1px dashed #DDD9D0;
-    background: var(--beige);
-}
-
-.caseIcon,
-.caseIconMuted {
-    width: 34px;
-    height: 34px;
-    flex: 0 0 34px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    font-weight: 700;
-}
-
-.caseIconMuted {
-    background: var(--border-soft);
-    color: var(--muted-2);
-    font-size: 14px;
-}
-
-.caseTexts {
-    flex: 1;
-    min-width: 160px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.caseTitle {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-}
-
-.casePeople {
-    font-size: 12.5px;
-    color: #7C7889;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.caseActions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-}
-
-.btnGhost,
-.btnLia,
-.btnDark {
-    height: 36px;
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.btnGhost {
-    padding: 0 16px;
-    border: 1px solid #DDD9D0;
-    background: var(--card);
-    color: var(--ink);
-}
-
-.btnGhost:hover {
-    border-color: var(--ink);
-}
-
-.btnLia {
-    padding: 0 14px;
-    border: none;
-    background: var(--accent-soft);
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.btnLia:hover {
-    background: #E4DBFF;
-}
-
-.btnDark {
-    height: 44px;
-    padding: 0 22px;
-    border: none;
-    background: var(--ink);
-    color: #fff;
+    border-top: 1px solid var(--border-soft);
     font-size: 13px;
-    border-radius: 12px;
-}
-
-.btnDark:hover {
-    background: #2B2837;
-}
-
-.sectionRule {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-top: 4px;
-}
-
-.ruleLine {
-    height: 1px;
-    flex: 1;
-    background: var(--border-soft);
-}
-
-.ruleLabel {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
     color: var(--sand);
-    text-align: center;
-}
-
-.allClear {
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--muted-2);
-}
-
-/* ── Gráfica de avance ────────────────────────────────────────────────── */
-
-.plotWrap {
-    position: relative;
-}
-
-.plot {
-    display: block;
-    overflow: visible;
-}
-
-.badgeToday,
-.badgeProj {
-    position: absolute;
-    font-size: 11.5px;
-    font-weight: 700;
-    padding: 5px 10px;
-    border-radius: 8px;
-    white-space: nowrap;
-}
-
-.badgeToday {
-    left: 52%;
-    top: 6px;
-    background: var(--ink);
-    color: #fff;
-}
-
-.badgeProj {
-    right: 0;
-    top: -6px;
-    background: var(--accent-soft);
-    color: var(--accent);
-}
-
-.axis {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11.5px;
-    color: var(--sand);
-    font-family: 'JetBrains Mono', monospace;
 }
 
 /* ── Embudo ───────────────────────────────────────────────────────────── */
@@ -616,194 +481,64 @@
 .funnel {
     display: flex;
     flex-direction: column;
-    gap: 11px;
+    gap: 16px;
+    margin-top: 20px;
 }
 
 .funnelRow {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    min-width: 0;
 }
 
 .funnelHead {
     display: flex;
     justify-content: space-between;
-    font-size: 12.5px;
-    gap: 8px;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 14px;
 }
 
 .funnelLabel {
     font-weight: 600;
-    color: #3C3949;
+}
+
+.funnelValue {
+    color: var(--muted);
 }
 
 .funnelRail {
-    height: 9px;
-    border-radius: 999px;
+    height: 8px;
+    border-radius: 99px;
     background: var(--rail);
+    margin-top: 7px;
     overflow: hidden;
 }
 
 .funnelFill {
     height: 100%;
-    border-radius: 999px;
-    transition: width 0.4s ease;
+    border-radius: 99px;
+    transition: width .35s ease;
 }
 
-/* ── Salud de los envíos ──────────────────────────────────────────────── */
-
-.healthRow {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.donut {
-    width: 118px;
-    height: 118px;
-    flex: 0 0 118px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.donutHole {
-    width: 82px;
-    height: 82px;
-    border-radius: 50%;
-    background: var(--card);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1px;
-}
-
-.donutPct {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-}
-
-.donutLabel {
-    font-size: 10.5px;
-    color: var(--muted);
-    font-weight: 600;
-}
-
-.healthLegend {
-    flex: 1;
-    min-width: 140px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-}
-
-.healthItem {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    font-size: 12.5px;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.healthLabel {
-    flex: 1;
-    color: #3C3949;
-    font-weight: 500;
-}
-
-/* ── Etiquetas ────────────────────────────────────────────────────────── */
-
-.tagList {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.tagRow {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.tagLabel {
-    width: 62px;
-    flex: 0 0 62px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #3C3949;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.tagRail {
-    flex: 1;
-    height: 9px;
-    border-radius: 999px;
-    background: var(--rail);
-    overflow: hidden;
-}
-
-.tagFill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--accent);
-    transition: width 0.4s ease;
-}
-
-.tagPct {
-    width: 34px;
-    text-align: right;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-    font-weight: 600;
-}
-
-/* ── Recordatorios ────────────────────────────────────────────────────── */
-
-.remindRow {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-}
-
-.remindBig {
-    font-size: 44px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    color: var(--accent);
-    line-height: 1;
-}
-
-.remindOf {
+/* Nota al pie de la tarjeta, separada por una línea */
+.cardFoot {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
     font-size: 13px;
     color: var(--muted-2);
-    line-height: 1.4;
+    line-height: 1.45;
+    text-wrap: pretty;
 }
 
-.remindEmpty {
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--muted-2);
-}
-
-/* ── Estados tempranos ────────────────────────────────────────────────── */
+/* ── Escalera: sin invitados / listos para enviar ─────────────────────── */
 
 .blankState {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 56px 32px;
+    padding: 48px 32px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -812,52 +547,121 @@
 }
 
 .blankKicker {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.13em;
+    font-size: 12px;
+    letter-spacing: .08em;
     text-transform: uppercase;
+    font-weight: 600;
     color: var(--sand);
 }
 
 .blankTitle {
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.035em;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    max-width: 24ch;
+    text-wrap: pretty;
 }
 
 .blankText {
-    font-size: 13.5px;
-    line-height: 1.6;
-    color: var(--muted-2);
-    max-width: 460px;
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 48ch;
+    line-height: 1.45;
+    text-wrap: pretty;
 }
 
 .blankState .btnDark {
-    margin-top: 8px;
+    margin-top: 12px;
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 
-@media (max-width: 1180px) {
-    .topGrid,
-    .bottomGrid {
+@media (max-width: 1100px) {
+    .grid {
         grid-template-columns: 1fr;
     }
+
+    /* En una sola columna el orden ya no lo puede dar el DOM (las tarjetas
+       viven en dos .col distintas). Con display:contents las seis pasan a ser
+       hijas directas del grid y se pueden ordenar una por una. */
+    .col {
+        display: contents;
+    }
+
+    .cardConfirmed { order: 1 }
+    .cardToday { order: 2 }
+    .liaCard { order: 3 }
+    .cardPie { order: 4 }
+    .cardProgress { order: 5 }
+    .cardFunnel { order: 6 }
 }
 
 @media (max-width: 750px) {
-    .heroCard,
-    .card,
-    .cardBeige,
-    .liaCard {
-        padding: 20px 18px;
+    .wrapper {
+        padding-bottom: 24px;
+    }
+
+    .grid {
+        gap: 12px;
+    }
+
+    .col {
+        gap: 12px;
+    }
+
+    .card {
+        padding: 20px 18px 22px;
+        border-radius: 18px;
+    }
+
+    .headline {
+        font-size: 21px;
+    }
+
+    .lede {
+        font-size: 14px;
+    }
+
+    .caseRow {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .caseRow button {
+        width: 100%;
+    }
+
+    .casePeople {
+        white-space: normal;
     }
 
     .big {
-        font-size: 48px;
+        font-size: 46px;
     }
 
-    .statGrid {
-        grid-template-columns: repeat(2, 1fr);
+    .liaCard {
+        padding: 22px 18px 20px;
+        border-radius: 18px;
+    }
+
+    .liaTitle {
+        font-size: 19px;
+    }
+
+    .bars {
+        height: 108px;
+        gap: 4px;
+    }
+
+    .barLabel {
+        font-size: 10px;
+    }
+
+    .blankState {
+        padding: 32px 20px;
+    }
+
+    .blankTitle {
+        font-size: 21px;
     }
 }

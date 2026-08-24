@@ -16,10 +16,10 @@ import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMe
 import { useTranslation } from 'react-i18next';
 import { CreditController } from "../../components/Payment/CreditController/CreditController"
 import { useDashboardRealtime } from "../../context/DashboardRealtimeContext";
-import { useFeedbackTrigger } from "../../components/FeedbackPrompt/useFeedbackTrigger";
-import { FeedbackButton } from "../../components/FeedbackPrompt/FeedbackButton";
-import { FeedbackModal } from "../../components/FeedbackPrompt/FeedbackModal";
 import { PHONE_CODE_OPTIONS } from "../../helpers/assets/phoneCodes";
+import { PassesPill } from "./PassesPill";
+import { SupportTicketModal } from "./SupportTicketModal";
+import { MobileActionsFab } from "./MobileActionsFab";
 
 const baseProd = "https://www.iattend.events"
 
@@ -206,6 +206,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
     const [messageApi, contextHolder] = message.useMessage();
     const [invitation, setInvitation] = useState(null)
+    const [supportOpen, setSupportOpen] = useState(false)
 
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
@@ -231,7 +232,6 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const screens = useBreakpoint();
     const [urlImage, setUrlImage] = useState(null)
     const [name, setName] = useState(null)
-    const [createdAt, setCreatedAt] = useState(null)
 
     // Pending info — DB values (for badge count)
     const [invOwners, setInvOwners] = useState([])
@@ -261,7 +261,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const getInvitation = async () => {
         const { data, error } = await supabase
             .from("invitations")
-            .select("data, plan, name, url_image, owners, label, phone_number, created_at")
+            .select("data, plan, name, url_image, owners, label, phone_number")
             .eq("id", id)
             .maybeSingle();
 
@@ -274,7 +274,6 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             setInvOwners(data.owners ?? [])
             setInvLabel(data.label ?? null)
             setInvPhone(data.phone_number ?? null)
-            setCreatedAt(data.created_at ?? null)
         }
     }
 
@@ -502,14 +501,6 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         }
     }, [id])
 
-    const {
-        visible: feedbackVisible,
-        modalOpen: feedbackModalOpen,
-        openModal: openFeedbackModal,
-        closeModal: closeFeedbackModal,
-        submit: submitFeedback,
-    } = useFeedbackTrigger(id, createdAt)
-
     const { subscribe } = useDashboardRealtime()
 
     useEffect(() => {
@@ -528,6 +519,94 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     /* ========================
        RENDER
     ======================== */
+
+    const isBuildMobile = screens.xs && isEditing
+
+    const backButton = (
+        <Button
+            onClick={handleBack}
+            type="text"
+            className="hd-glass-btn"
+            icon={<LuArrowLeft size={16} />}
+        />
+    )
+
+    if (isBuildMobile) {
+        const isAdmin = session?.user?.role === 'Administration'
+        return (
+            <>
+                {contextHolder}
+
+                <div className="hd-build-floating">
+                    {hasUnsavedChanges ? (
+                        <Popconfirm
+                            title={t('dashboard_header.unsaved_title')}
+                            description={t('dashboard_header.unsaved_desc_short')}
+                            onConfirm={handleBack}
+                            okText={t('dashboard_header.exit')}
+                            cancelText={t('dashboard_header.cancel')}
+                        >
+                            <Button type="text" className="hd-glass-btn" icon={<LuArrowLeft size={16} />} />
+                        </Popconfirm>
+                    ) : backButton}
+
+                    <Button
+                        className="hd-glass-btn hd-glass-btn--cta"
+                        icon={isAdmin ? <LuSendHorizontal size={14} /> : <LuUpload size={14} />}
+                        onClick={isAdmin ? onWriteChanges : onSaveChanges}
+                    >
+                        {isAdmin ? t('dashboard_header.write') : t('dashboard_header.publish')}
+                        {!saved && <span className="hd-glass-dot" />}
+                    </Button>
+                </div>
+
+                <MobileActionsFab
+                    invitationId={id}
+                    unAnswer={unAnswer}
+                    // Justo encima de la barra de herramientas del editor
+                    bottomOffset={72}
+                    onOpenMessages={() => setMobileWaOpen(true)}
+                    onOpenHelp={() => setSupportOpen(true)}
+                />
+
+                <SupportTicketModal
+                    open={supportOpen}
+                    onClose={() => setSupportOpen(false)}
+                    invitationId={id}
+                    session={session}
+                    eventName={invitation?.cover?.title?.text?.value}
+                />
+
+                {mobileWaVisible && createPortal(
+                    <>
+                        <div
+                            onClick={() => setMobileWaOpen(false)}
+                            style={{
+                                position: 'fixed', inset: 0,
+                                background: 'rgba(0,0,0,0.4)',
+                                zIndex: 1299,
+                                opacity: mobileWaEntered ? 1 : 0,
+                                transition: 'opacity 0.24s ease',
+                            }}
+                        />
+                        <WhatsappMessages
+                            className="whatsapp_mobile"
+                            style={{
+                                transform: mobileWaEntered ? 'translateY(0)' : 'translateY(-32px)',
+                                opacity: mobileWaEntered ? 1 : 0,
+                                transition: 'transform 0.34s cubic-bezier(0.34,1.15,0.64,1), opacity 0.24s ease',
+                            }}
+                            id={id}
+                            conversations={conversations}
+                            guestsByPhone={guestsByPhone}
+                            onClose={() => setMobileWaOpen(false)}
+                        />
+                    </>,
+                    document.body
+                )}
+            </>
+        )
+    }
 
     return (
         <>
@@ -580,10 +659,8 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {/* {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />} */}
 
-                        {screens.xs && !isEditing && <CreditController id={id} mobile={true} />}
-
-                        {!screens.xs && feedbackVisible && <FeedbackButton onClick={openFeedbackModal} />}
-                        {screens.xs && !isEditing && feedbackVisible && <FeedbackButton onClick={openFeedbackModal} compact />}
+                        {/* Contador de pases: en el dashboard, no dentro del editor */}
+                        {!isEditing && <PassesPill invitationId={id} />}
 
                         {!screens.xs && (
                             <Dropdown
@@ -602,14 +679,6 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {screens.xs && !isEditing && (
                             <>
-                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-500)' size='large'>
-                                    <Button
-                                        style={{ borderRadius: '99px' }}
-                                        icon={<MessageCircle size={12} />}
-                                        onClick={() => setMobileWaOpen(true)}
-                                    />
-                                </Badge>
-
                                 {mobileWaVisible && createPortal(
                                     <>
                                         <div
@@ -640,133 +709,9 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             </>
                         )}
 
+                        {/* Información pendiente y compartir salieron del header de
+                            mobile: ahora solo lleva el nombre y el botón de regresar. */}
 
-                        {screens.xs && !isEditing && <CustomLink backuImage={invitation?.cover?.image?.prod} maxHeight={32} isSmall={true} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} icon={<Share size={14} />} setupRequired={pendingCount > 0} onSetupNeeded={openPendingInfo} />}
-
-                        {screens.xs && !isEditing && pendingCount > 0 && (
-                            <Dropdown
-                                open={pendingOpen}
-                                onOpenChange={async (open) => {
-                                    if (open) {
-                                        const { data } = await supabase.from('invitations').select('name').not('name', 'is', null)
-                                        setAllNames(data?.map(r => r.name).filter(Boolean) ?? [])
-                                        setShowSections({ name: !name && !invitation?.generals?.event?.name, label: !invLabel && !invitation?.generals?.event?.label, phone: !invPhone, owners: !invOwners?.length })
-                                        setDraftOwners([])
-                                        setNameSlug('')
-                                        setNameIsMatch(null)
-                                        setNameError(null)
-                                        setPhoneDigits('')
-                                    }
-                                    setPendingOpen(open)
-                                }}
-                                trigger={['click']}
-                                placement='bottomRight'
-                                overlayStyle={{ width: '90vw' }}
-                                popupRender={() => (
-                                    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-                                        {showSections.name && (
-                                            <div>
-                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Link personalizado</div>
-                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Para enviar tus invitaciones necesitas definir tu link único.</div>
-                                                <div style={{ border: '1px solid #d9d9d9', borderRadius: 10, padding: '8px 12px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                        <span style={{ color: '#aaa', whiteSpace: 'nowrap', fontSize: 12 }}>iattend.events/</span>
-                                                        <input
-                                                            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13 }}
-                                                            placeholder='paulina-y-luis'
-                                                            value={nameSlug}
-                                                            onChange={e => validateNameSlug(e.target.value)}
-                                                        />
-                                                        {nameSlug && (
-                                                            <span style={{ color: nameIsMatch ? '#52c41a' : '#ff4d4f' }}>
-                                                                {nameIsMatch ? <LuCheck size={14} /> : <LuX size={14} />}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {nameError && <div style={{ color: '#ff4d4f', fontSize: 11, marginTop: 3 }}>{nameError}</div>}
-                                                    {nameIsMatch && nameSlug && <div style={{ color: '#52c41a', fontSize: 11, marginTop: 3 }}>Disponible</div>}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {showSections.label && (
-                                            <div>
-                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Tipo de evento</div>
-                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Selecciona si tu evento es una boda o XV años.</div>
-                                                <Select
-                                                    style={{ width: '100%' }}
-                                                    value={invLabel || undefined}
-                                                    onChange={setInvLabel}
-                                                    placeholder="Selecciona el tipo"
-                                                    options={[
-                                                        { label: 'Boda', value: 'wedding' },
-                                                        { label: 'XV años', value: 'xv' },
-                                                    ]}
-                                                />
-                                            </div>
-                                        )}
-
-                                        {showSections.phone && (
-                                            <div>
-                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Número de WhatsApp</div>
-                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Asocia un número celular para que tus invitados puedan contactarte.</div>
-                                                <Space.Compact style={{ width: '100%' }}>
-                                                    <Select
-                                                        value={phoneCode}
-                                                        onChange={setPhoneCode}
-                                                        options={PHONE_CODE_OPTIONS}
-                                                        style={{ width: 110 }}
-                                                    />
-                                                    <Input
-                                                        placeholder='1234567890'
-                                                        maxLength={10}
-                                                        value={phoneDigits}
-                                                        onChange={e => setPhoneDigits(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                                        suffix={phoneDigits.length === 10 ? <LuCheck size={14} style={{ color: '#25D366' }} /> : null}
-                                                    />
-                                                </Space.Compact>
-                                            </div>
-                                        )}
-
-                                        {showSections.owners && (
-                                            <div>
-                                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>Nombres de la pareja</div>
-                                                <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>Agrega los nombres. Ej: Paulina y Luis</div>
-                                                {draftOwners.length > 0 && (
-                                                    <>
-                                                        {draftOwners.map((o, i) => (
-                                                            <div key={o} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, padding: '4px 8px', border: '1px solid #f0f0f0', borderRadius: 8 }}>
-                                                                <span style={{ fontSize: 13 }}>{o}</span>
-                                                                <Button size='small' onClick={() => removeOwner(i)} style={{ borderRadius: 99, width: 24, height: 24, minWidth: 24 }}>−</Button>
-                                                            </div>
-                                                        ))}
-                                                        <Divider style={{ margin: '6px 0' }} />
-                                                    </>
-                                                )}
-                                                <Space style={{ width: '100%' }}>
-                                                    <Input
-                                                        size='small'
-                                                        style={{ borderRadius: 99 }}
-                                                        placeholder='Ej: Paulina'
-                                                        value={ownerInput}
-                                                        onChange={e => setOwnerInput(e.target.value)}
-                                                        onKeyDown={e => e.key === 'Enter' && addOwner()}
-                                                    />
-                                                    <Button size='small' onClick={addOwner} className='primarybutton' icon={<LuPlus size={13} />} />
-                                                </Space>
-                                            </div>
-                                        )}
-
-                                        <Button onClick={savePendingInfo} loading={pendingSaving} className='primarybutton--active' style={{ width: '100%', borderRadius: 99 }}>
-                                            Guardar
-                                        </Button>
-                                    </div>
-                                )}
-                            >
-                                <Button style={{ borderRadius: '99px', width: 32, height: 32, minWidth: 32, padding: 0, background: '#FFF4E5', border: '1px solid #FFCC80', color: '#FF8C00', display: 'flex', alignItems: 'center', justifyContent: 'center' }} icon={<LuTriangleAlert size={14} />} />
-                            </Dropdown>
-                        )}
 
                         {isEditing && screens.xs && session?.user?.role !== "Administration" && (
                             <Button
@@ -931,11 +876,13 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {
                             !screens.xs &&
-                            <Link to="https://wa.me/6145338500" target="_blank">
-                                <Button style={{ borderRadius: '99px' }} icon={<CircleQuestionMark size={14} style={{ marginTop: '4px' }} size={16} />}>
-                                    {t('dashboard_header.help')}
-                                </Button>
-                            </Link>
+                            <Button
+                                style={{ borderRadius: '99px' }}
+                                icon={<CircleQuestionMark size={14} style={{ marginTop: '4px' }} />}
+                                onClick={() => setSupportOpen(true)}
+                            >
+                                {t('dashboard_header.help')}
+                            </Button>
                         }
 
 
@@ -970,11 +917,23 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                 </div>
             </div>
 
-            <FeedbackModal
-                open={feedbackModalOpen}
-                onClose={closeFeedbackModal}
-                onSubmit={submitFeedback}
+            {screens.xs && (
+                <MobileActionsFab
+                    invitationId={id}
+                    unAnswer={unAnswer}
+                    onOpenMessages={() => setMobileWaOpen(true)}
+                    onOpenHelp={() => setSupportOpen(true)}
+                />
+            )}
+
+            <SupportTicketModal
+                open={supportOpen}
+                onClose={() => setSupportOpen(false)}
+                invitationId={id}
+                session={session}
+                eventName={invitation?.cover?.title?.text?.value}
             />
+
         </>
     );
 };

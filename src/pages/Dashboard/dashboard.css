@@ -573,9 +573,15 @@
         padding-bottom: 48px;
     }
 
+    .dashboard_stack {
+        width: 100%;
+        align-items: stretch;
+    }
+
     .single_row_dashboard {
         flex-direction: column;
         gap: 16px;
+        width: 100%;
     }
 
     .single_col {
@@ -633,4 +639,29 @@
         
     }
 
+}
+/* .dashboard_body es un flex en fila; esta columna deja el banner de feedback
+   encima de las tarjetas en vez de a un lado. */
+.dashboard_stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    max-width: 100%;
+    min-width: 0;
+    z-index: 2;
+}
+
+/* Ancho de la fila de tarjetas: 260 (invitación) + 24 (gap) + 460 (columna) */
+.dashboard_feedback_banner {
+    width: 744px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .dashboard_feedback_banner {
+        width: 100%;
+    }
 }

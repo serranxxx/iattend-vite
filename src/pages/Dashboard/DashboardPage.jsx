@@ -14,6 +14,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Camera } from 'lucide-react'
 import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
+import { FeedbackBanner } from '../../components/FeedbackPrompt/FeedbackBanner'
+import { FeedbackModal } from '../../components/FeedbackPrompt/FeedbackModal'
+import { useFeedbackTrigger } from '../../components/FeedbackPrompt/useFeedbackTrigger'
 
 const { useBreakpoint } = Grid;
 
@@ -31,7 +34,17 @@ export const DashboardPage = () => {
     const [searchParams] = useSearchParams();
 
     const id = searchParams.get("id");
+    const [createdAt, setCreatedAt] = useState(null)
     const interBubbleRef = useRef(null)
+
+    // El feedback dejó de vivir en el header: ahora es un banner del dashboard.
+    const {
+        visible: feedbackVisible,
+        modalOpen: feedbackModalOpen,
+        openModal: openFeedbackModal,
+        closeModal: closeFeedbackModal,
+        submit: submitFeedback,
+    } = useFeedbackTrigger(id, createdAt)
 
     useEffect(() => {
         const el = interBubbleRef.current
@@ -81,7 +94,7 @@ export const DashboardPage = () => {
         // 1️⃣ Obtener invitación
         const { data: invitation, error } = await supabase
             .from("invitations")
-            .select("tickets, plan, data")
+            .select("tickets, plan, data, created_at")
             .eq("id", invitation_id)
             .single();
 
@@ -92,6 +105,7 @@ export const DashboardPage = () => {
 
         setPlan(invitation?.plan)
         setInvitation(invitation?.data);
+        setCreatedAt(invitation?.created_at ?? null);
 
         // 2️⃣ Obtener invitados
         const { data: guests, error: guestsError } = await supabase
@@ -150,117 +164,131 @@ export const DashboardPage = () => {
                         </div>
                     </div>
 
-                    <div className='single_row_dashboard' style={{ gap: '24px' }}>
+                    <div className='dashboard_stack'>
+                        {feedbackVisible && (
+                            <div className='dashboard_feedback_banner'>
+                                <FeedbackBanner onClick={openFeedbackModal} />
+                            </div>
+                        )}
 
-                        <div className='dashboard_invitation'>
-                            <div className='invitation_header_dash'>
-                                <span style={{ fontWeight: 600 }}>{t('dashboard.card_invitation')}</span>
-                                <Button onClick={() => handleMoode('build')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                        <div className='single_row_dashboard' style={{ gap: '24px' }}>
+
+                            <div className='dashboard_invitation'>
+                                <div className='invitation_header_dash'>
+                                    <span style={{ fontWeight: 600 }}>{t('dashboard.card_invitation')}</span>
+                                    <Button onClick={() => handleMoode('build')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                </div>
+
+                                <div className="dash_inv_cont">
+                                    <img src={toFirstString(invitation.cover.image.prod)} alt='' style={{ objectFit: 'cover', width: '100%', height: '100%', opacity: '0.8', backdropFilter: 'blur(10px)' }} />
+                                </div>
                             </div>
 
-                            <div className="dash_inv_cont">
-                                <img src={toFirstString(invitation.cover.image.prod)} alt='' style={{ objectFit: 'cover', width: '100%', height: '100%', opacity: '0.8', backdropFilter: 'blur(10px)' }} />
-                            </div>
-                        </div>
+                            {
+                                plan !== 'paperless' &&
+                                <div className='single_col'>
 
-                        {
-                            plan !== 'paperless' &&
-                            <div className='single_col'>
+                                    <div className='dashboard_guests'>
+                                        <div className='invitation_header_dash'>
+                                            <span style={{ fontWeight: 600 }}>{t('dashboard.card_guests')}</span>
+                                            <Button onClick={() => handleMoode('guests')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        </div>
 
-                                <div className='dashboard_guests'>
-                                    <div className='invitation_header_dash'>
-                                        <span style={{ fontWeight: 600 }}>{t('dashboard.card_guests')}</span>
-                                        <Button onClick={() => handleMoode('guests')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                        <div className='guests_dash_cont'>
+                                            <div className='guest_dash_row'>
+
+                                                {
+                                                    !screens.xs &&
+                                                    <div style={{ width: '140px', height: '140px' }}>
+                                                        <Pie data={chartData} options={options} />
+                                                    </div>
+                                                }
+
+                                                <div className='two_col_grid'>
+                                                    <div className='dash_col'>
+                                                        <span style={{ opacity: '0.4' }}>{t('dashboard.stat_confirmed')}</span>
+                                                        <div className='dash_row'>
+                                                            <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{confirmed}</span>
+                                                            <LuCalendarCheck2 size={28} style={{ color: '#BFBFBF' }} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className='dash_col'>
+                                                        <span style={{ opacity: '0.4' }}>{t('dashboard.stat_waiting')}</span>
+                                                        <div className='dash_row'>
+                                                            <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{waiting}</span>
+                                                            <LuCalendarClock size={28} style={{ color: '#BFBFBF' }} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className='dash_col'>
+                                                        <span style={{ opacity: '0.4' }}>{t('dashboard.stat_available')}</span>
+                                                        <div className='dash_row'>
+                                                            <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{available}</span>
+                                                            <LuCalendar size={28} style={{ color: '#BFBFBF' }} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className='guests_dash_cont'>
-                                        <div className='guest_dash_row'>
+                                    <div className='side_photowall_row'>
+
+                                        <div className='side_events_dash'>
+                                            <div className='invitation_header_dash'>
+                                                <span style={{ fontWeight: 600 }}>{t('dashboard.card_side_events')}</span>
+                                                <Button onClick={() => handleMoode('side')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
+                                            </div>
+                                            <div className="guests_dash_cont" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', gap: '4px', flexDirection: 'row' }}>
+                                                <img src="/images/stickers/calendar.png" alt='' style={{ width: '70px' }} />
+                                                <img src="/images/stickers/envelope.png" alt='' style={{ width: '70px' }} />
+                                                <img src="/images/stickers/laptop.png" alt='' style={{ width: '70px' }} />
+                                            </div>
+                                        </div>
+
+                                        <div style={{
+                                            pointerEvents: plan !== 'pro' && 'none'
+                                        }} className='dashboard_photowall' onClick={() => handleMoode('photowall')}>
+                                            <div className='invitation_header_dash'>
+                                                <span style={{ fontWeight: 600 }}>Photo Wall</span>
+                                                <Button
+                                                    disabled={plan !== 'pro'}
+                                                    onClick={(e) => { e.stopPropagation(); handleMoode('photowall') }}
+                                                    style={{ borderRadius: '99px' }}
+                                                    icon={<IoChevronForward />}
+                                                />
+                                            </div>
+                                            <div className='photowall_card_body'>
+                                                <img src="/images/stickers/camera.png" alt='' style={{ width: '80px' }} />
+                                            </div>
 
                                             {
-                                                !screens.xs &&
-                                                <div style={{ width: '140px', height: '140px' }}>
-                                                    <Pie data={chartData} options={options} />
+                                                plan !== 'pro' &&
+                                                <div className="pro_shadow pro_badge_">
+
                                                 </div>
                                             }
-
-                                            <div className='two_col_grid'>
-                                                <div className='dash_col'>
-                                                    <span style={{ opacity: '0.4' }}>{t('dashboard.stat_confirmed')}</span>
-                                                    <div className='dash_row'>
-                                                        <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{confirmed}</span>
-                                                        <LuCalendarCheck2 size={28} style={{ color: '#BFBFBF' }} />
-                                                    </div>
-                                                </div>
-
-                                                <div className='dash_col'>
-                                                    <span style={{ opacity: '0.4' }}>{t('dashboard.stat_waiting')}</span>
-                                                    <div className='dash_row'>
-                                                        <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{waiting}</span>
-                                                        <LuCalendarClock size={28} style={{ color: '#BFBFBF' }} />
-                                                    </div>
-                                                </div>
-
-                                                <div className='dash_col'>
-                                                    <span style={{ opacity: '0.4' }}>{t('dashboard.stat_available')}</span>
-                                                    <div className='dash_row'>
-                                                        <span style={{ fontSize: '42px', lineHeight: '1', fontWeight: 600 }}>{available}</span>
-                                                        <LuCalendar size={28} style={{ color: '#BFBFBF' }} />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className='side_photowall_row'>
-
-                                    <div className='side_events_dash'>
-                                        <div className='invitation_header_dash'>
-                                            <span style={{ fontWeight: 600 }}>{t('dashboard.card_side_events')}</span>
-                                            <Button onClick={() => handleMoode('side')} style={{ borderRadius: '99px' }} icon={<IoChevronForward />}></Button>
-                                        </div>
-                                        <div className="guests_dash_cont" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', gap: '4px', flexDirection: 'row' }}>
-                                            <img src="/images/stickers/calendar.png" alt='' style={{ width: '70px' }} />
-                                            <img src="/images/stickers/envelope.png" alt='' style={{ width: '70px' }} />
-                                            <img src="/images/stickers/laptop.png" alt='' style={{ width: '70px' }} />
-                                        </div>
-                                    </div>
-
-                                    <div style={{
-                                        pointerEvents: plan !== 'pro' && 'none'
-                                    }} className='dashboard_photowall' onClick={() => handleMoode('photowall')}>
-                                        <div className='invitation_header_dash'>
-                                            <span style={{ fontWeight: 600 }}>Photo Wall</span>
-                                            <Button
-                                                disabled={plan !== 'pro'}
-                                                onClick={(e) => { e.stopPropagation(); handleMoode('photowall') }}
-                                                style={{ borderRadius: '99px' }}
-                                                icon={<IoChevronForward />}
-                                            />
-                                        </div>
-                                        <div className='photowall_card_body'>
-                                            <img src="/images/stickers/camera.png" alt='' style={{ width: '80px' }} />
                                         </div>
 
-                                        {
-                                            plan !== 'pro' &&
-                                            <div className="pro_shadow pro_badge_">
-
-                                            </div>
-                                        }
                                     </div>
 
                                 </div>
+                            }
 
-                            </div>
-                        }
-
+                        </div>
                     </div>
 
                 </div>
 
                 <UpgradeBanner plan={plan} invitationId={id} />
+
+                <FeedbackModal
+                    open={feedbackModalOpen}
+                    onClose={closeFeedbackModal}
+                    onSubmit={submitFeedback}
+                />
 
                 <FooterApp />
             </div>

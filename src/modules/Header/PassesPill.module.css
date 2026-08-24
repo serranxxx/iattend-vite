@@ -1,0 +1,187 @@
+/* Contador de pases del header del dashboard. */
+
+/* Altura fija de 32px, como el resto de los botones del header: por eso la
+   etiqueta y el conteo van en una sola línea en vez de apilados. */
+.pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 32px;
+    max-height: 32px;
+    padding: 0 4px 0 14px;
+    border: 1px solid #E9E6E1;
+    border-radius: 999px;
+    background: #fff;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.pill * {
+    box-sizing: border-box;
+}
+
+.figure {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    line-height: 1;
+}
+
+.kicker {
+    font-size: 10px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #8A857E;
+}
+
+.count {
+    font-size: 13px;
+    color: #A9A49B;
+    white-space: nowrap;
+}
+
+.count b {
+    font-weight: 700;
+    color: var(--dark-blue-500);
+}
+
+.count b[data-over='true'] {
+    color: var(--red-color);
+}
+
+.rail {
+    width: 72px;
+    height: 5px;
+    border-radius: 99px;
+    background: #EDEAE5;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--light-purple-500);
+    transition: width .3s ease;
+}
+
+.fill[data-over='true'] {
+    background: var(--red-color);
+}
+
+.add {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: #F2F0EC;
+    color: #4A463F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.add:hover {
+    background: var(--light-purple-500);
+    color: var(--dark-blue-500);
+}
+
+/* ── Editor de capacidad ──────────────────────────────────────────────── */
+
+.editor {
+    background: #fff;
+    border: 1px solid #E9E6E1;
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(23, 22, 27, .14);
+    padding: 16px;
+    min-width: 260px;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.editorLabel {
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #8A857E;
+}
+
+.editorRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.editorInput {
+    flex: 1;
+    border-radius: 99px !important;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.step,
+.save {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #EBEBEB;
+    background: #fff;
+    color: #4A463F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.step:hover {
+    background: #F6F5F2;
+}
+
+.save {
+    border-color: var(--light-green-500);
+    background: var(--light-green-500);
+    color: var(--dark-blue-500);
+}
+
+.save:hover {
+    background: var(--light-green-300);
+    border-color: var(--light-green-300);
+}
+
+.save:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.editorHint {
+    font-size: 12px;
+    color: #8A857E;
+    line-height: 1.45;
+    text-wrap: pretty;
+}
+
+.editorHint b {
+    color: var(--dark-blue-500);
+    font-weight: 600;
+}
+
+@media (max-width: 900px) {
+    .pill {
+        gap: 10px;
+        padding-left: 14px;
+    }
+
+    .rail {
+        display: none;
+    }
+}

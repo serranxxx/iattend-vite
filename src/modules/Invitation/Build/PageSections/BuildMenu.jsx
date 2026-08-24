@@ -47,23 +47,26 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
     // el panel llegue hasta el borde superior real de la pantalla sin dejar hueco.
     const mobileHeight = expanded ? 'calc(100vh - 56px)' : '300px';
 
-    // Oculto = el panel se encoge a solo la fila de controles (chevrons/Guardar/CTA),
-    // que sigue siempre visible y tocable. El formulario queda clippeado por overflow:hidden
-    // (no por transform), así que no queda ninguna zona "fantasma" capturando touches
-    // encima del iframe de la invitación cuando el usuario quiere hacer scroll manual.
-    const CONTROLS_ROW_HEIGHT = 64;
+    // Oculto = el panel desaparece por completo, sin dejar la franja de controles:
+    // la invitación se ve entera y la fila de módulos (ButtonsMenu) es la que lo
+    // vuelve a abrir al seleccionar uno. El formulario queda clippeado por
+    // overflow:hidden (no por transform), así que no queda ninguna zona
+    // "fantasma" capturando touches encima del iframe de la invitación.
     const mobileWrapperStyle = screens.xs ? {
         position: 'fixed',
         bottom: '56px',
         left: 0,
         width: '100%',
-        height: onHide ? `${CONTROLS_ROW_HEIGHT}px` : mobileHeight,
+        height: onHide ? '0px' : mobileHeight,
         zIndex: 9998,
         transition: 'height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         backgroundColor: '#FFFFFF',
-        boxShadow: '0px -6px 12px rgba(0,0,0,0.2)',
+        // Sin alto no debe quedar ni la sombra ni el borde redondeado marcando
+        // una franja sobre la invitación.
+        boxShadow: onHide ? 'none' : '0px -6px 12px rgba(0,0,0,0.2)',
         borderRadius: '24px 24px 0px 0px',
         overflow: 'hidden',
+        pointerEvents: onHide ? 'none' : undefined,
     } : {};
 
     return (
