@@ -944,6 +944,7 @@
     "font_weight": "Weight",
     "address_label": "Location",
     "datetime_label": "Date and time",
+    "place_name_label": "Venue name (optional)",
     "address_zipcode": "Zip code",
     "address_street": "Street",
     "address_number": "Number",

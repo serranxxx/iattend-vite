@@ -944,6 +944,7 @@
     "font_weight": "Grosor",
     "address_label": "Ubicación",
     "datetime_label": "Fecha y hora",
+    "place_name_label": "Nombre del lugar (opcional)",
     "address_zipcode": "Código postal",
     "address_street": "Calle",
     "address_number": "Número",
