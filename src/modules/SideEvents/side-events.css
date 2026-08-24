@@ -341,6 +341,25 @@
     border: none;
 }
 
+.side_place_input,
+.side_place_input:hover,
+.side_place_input:focus,
+.side_place_input:active {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 0;
+    font-size: 16px;
+    width: 100%;
+}
+
+.side_place_input::placeholder {
+    color: #FFFFFF80;
+    font-size: 16px;
+}
+
 .date_inline_cont {
     align-self: stretch;
     display: flex;

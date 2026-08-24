@@ -1,7 +1,7 @@
 import { Badge, Button, Checkbox, Col, ColorPicker, DatePicker, Drawer, Dropdown, Grid, Input, Layout, message, Modal, Popconfirm, Progress, Row, Select, Slider, Spin, Tabs, Tooltip, Upload } from 'antd'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
-import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
+import { LuCalendarClock, LuCheck, LuClock, LuCoins, LuCopy, LuCornerUpLeft, LuFolderOpen, LuImage, LuImageOff, LuLandmark, LuLock, LuMapPin, LuPalette, LuPlay, LuPlus, LuSend, LuShoppingCart, LuType, LuUpload, LuUserMinus, LuX } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
 import dayjs from 'dayjs'
 import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
@@ -1319,6 +1319,7 @@ export const SideEvents = () => {
                     },
                     hour: null,
                     timezone: null,
+                    place_name: null,
                     image: null,
                     title: {
                         font: 'Poppins',
@@ -1914,6 +1915,17 @@ export const SideEvents = () => {
                                                                 </div>
                                                             </Dropdown>
                                                         )}
+
+                                                        <div className='side_date_time' style={{ cursor: 'default' }}>
+                                                            <LuLandmark size={20} style={{ color: '#FFF' }} />
+                                                            <Input
+                                                                value={current?.body?.place_name ?? ''}
+                                                                onChange={(e) => setCurrent(prev => ({ ...prev, body: { ...prev.body, place_name: e.target.value } }))}
+                                                                placeholder={t('side_events.place_name_label')}
+                                                                variant='borderless'
+                                                                className='side_place_input'
+                                                            />
+                                                        </div>
 
                                                         {addressOpen ? (
                                                             <div className='address_inline_form'>
