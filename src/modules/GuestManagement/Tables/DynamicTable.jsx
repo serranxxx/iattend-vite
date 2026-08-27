@@ -1,30 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './dynamic-table.css'
 import { Button } from 'antd'
+import { Lock } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-
-const CANVAS_WIDTH = 3500
-const CANVAS_HEIGHT = 1800
-
-const getTableFootprint = (shape) => {
-    if (shape === 'dance') return { width: 800, height: 600 }
-    if (shape === 'rectangle') return { width: 400, height: 200 }
-    return { width: 200, height: 200 }
-}
-
-const clampToCanvas = (x, y, shape) => {
-    const { width, height } = getTableFootprint(shape)
-    return {
-        x: Math.min(Math.max(x, 0), CANVAS_WIDTH - width),
-        y: Math.min(Math.max(y, 0), CANVAS_HEIGHT - height),
-    }
-}
+import { clampToCanvas, getTableFootprint } from './seatingGeometry'
 
 export const DynamicTable = ({
     onSelectedTable,
     setOnSelectedTable,
     table,
-    setTables,
     onMoving,
     setSelectedTable,
     onEditPosition,
@@ -36,9 +20,20 @@ export const DynamicTable = ({
     zoomLevel = 1,
     onDelete,
     isRepeated = false,
+    onDragCommit,
+    onMoved,
+    // Selección múltiple: si esta mesa forma parte de ella, el arrastre lo
+    // coordina el padre para que todas se muevan juntas.
+    isMultiSelected = false,
+    groupOffset = null,
+    onGroupDragStart,
+    onGroupDragMove,
+    onGroupDragEnd,
+    onToggleSelect,
 }) => {
     const [chairs, setChairs] = useState([])
-    const [mapPosition, setMapPosition] = useState({ x: table.x, y: table.y })
+    // Posición durante el arrastre propio; null en reposo (se usa table.x/y).
+    const [dragPos, setDragPos] = useState(null)
     const [isDragging, setIsDragging] = useState(false)
     const [showDanceMenu, setShowDanceMenu] = useState(false)
 
@@ -47,13 +42,13 @@ export const DynamicTable = ({
     const startPosRef = useRef({ x: 0, y: 0 })
     const hasDraggedRef = useRef(false)
     const wasDragRef = useRef(false)
+    const dragOriginRef = useRef({ x: table.x, y: table.y })
     const mapContainerRef = useRef(null)
 
     const DRAG_THRESHOLD = 5
 
-    useEffect(() => {
-        positionRef.current = mapPosition
-    }, [mapPosition])
+    const mapPosition = dragPos ?? { x: table.x, y: table.y }
+    useEffect(() => { positionRef.current = mapPosition })
 
     useEffect(() => {
         const containerWidth =
@@ -239,11 +234,19 @@ export const DynamicTable = ({
 
     const startDrag = (event) => {
         if (onGrab) return // cuando onGrab está activo, el evento sube al canvas para hacer pan
+        // Frenar SIEMPRE la burbuja: si sube al fondo, el mapa arranca un
+        // marquee de 0px que limpia la selección al soltar.
         event.stopPropagation()
+        // Shift/Cmd-clic es selección, no arrastre: iniciar un drag aquí deja
+        // un listener fantasma que luego mueve esta mesa con el cursor ajeno.
+        if (event.shiftKey || event.metaKey || event.ctrlKey) return
         const pos = event.touches ? event.touches[0] : event
         lastMouseRef.current = { x: pos.clientX, y: pos.clientY }
         startPosRef.current = { x: pos.clientX, y: pos.clientY }
+        dragOriginRef.current = { x: table.x, y: table.y }
         hasDraggedRef.current = false
+        document.body.classList.add('seating-dragging')
+        if (isMultiSelected) onGroupDragStart?.()
         setIsDragging(true)
     }
 
@@ -261,9 +264,20 @@ export const DynamicTable = ({
 
             if (hasDraggedRef.current) {
                 if (event.cancelable) event.preventDefault()
-                const deltaX = (pos.clientX - lastMouseRef.current.x) / zoomLevel
-                const deltaY = (pos.clientY - lastMouseRef.current.y) / zoomLevel
-                setMapPosition(prev => clampToCanvas(prev.x + deltaX, prev.y + deltaY, shape))
+
+                // El destino sale del desplazamiento TOTAL del cursor desde que
+                // empezó el arrastre, no de sumar deltas frame a frame: si la
+                // mesa topa un momento, así vuelve a alcanzar al cursor en
+                // cuanto hay hueco en vez de quedarse rezagada para siempre.
+                const totalX = dx / zoomLevel
+                const totalY = dy / zoomLevel
+
+                if (isMultiSelected) {
+                    onGroupDragMove?.({ x: totalX, y: totalY })
+                } else {
+                    const origin = dragOriginRef.current
+                    setDragPos(clampToCanvas(origin.x + totalX, origin.y + totalY, shape, vertical))
+                }
             }
 
             lastMouseRef.current = { x: pos.clientX, y: pos.clientY }
@@ -271,15 +285,30 @@ export const DynamicTable = ({
 
         const onStop = async () => {
             setIsDragging(false)
-            if (hasDraggedRef.current) {
-                wasDragRef.current = true
-                const pos = positionRef.current
-                const { error } = await supabase
-                    .from('tables')
-                    .update({ x: pos.x, y: pos.y })
-                    .eq('id', table.id)
-                if (error) console.error('Error moviendo mesa:', error.message)
+            document.body.classList.remove('seating-dragging')
+            if (!hasDraggedRef.current) { setDragPos(null); return }
+
+            wasDragRef.current = true
+
+            if (isMultiSelected) {
+                onGroupDragEnd?.()
+                return
             }
+
+            const { x, y } = positionRef.current
+
+            // El historial guarda el mapa como estaba ANTES de soltar.
+            onDragCommit?.()
+            // El padre primero y el override después, en el mismo tick: así el
+            // render de reposo ya trae la posición nueva y no hay brinco.
+            onMoved?.(table.id, x, y)
+            setDragPos(null)
+
+            const { error } = await supabase
+                .from('tables')
+                .update({ x, y })
+                .eq('id', table.id)
+            if (error) console.error('Error moviendo mesa:', error.message)
         }
 
         document.addEventListener('mousemove', onMove)
@@ -293,7 +322,7 @@ export const DynamicTable = ({
             document.removeEventListener('touchmove', onMove)
             document.removeEventListener('touchend', onStop)
         }
-    }, [isDragging, zoomLevel, table.id])
+    }, [isDragging, zoomLevel, table.id, shape, vertical, onDragCommit, isMultiSelected, onGroupDragMove, onGroupDragEnd])
 
     const selectTable = () => {
         setSelectedTable(table)
@@ -301,12 +330,22 @@ export const DynamicTable = ({
         setOnSelectedTable(onSelectedTable === table.id ? null : table.id)
     }
 
-    const handleClick = () => {
+    const handleClick = (event) => {
         if (wasDragRef.current) {
             wasDragRef.current = false
             return
         }
         if (onGrab) return
+        // Shift/Cmd-clic agrega o quita de la selección múltiple, como en
+        // Figma. La pista no entra: no es una mesa alineable.
+        if ((event.shiftKey || event.metaKey || event.ctrlKey) && shape !== 'dance') {
+            onToggleSelect?.(table.id)
+            return
+        }
+        if (isMultiSelected) {
+            onToggleSelect?.(table.id)
+            return
+        }
         if (shape === 'dance') {
             setShowDanceMenu(prev => !prev)
             return
@@ -333,25 +372,9 @@ export const DynamicTable = ({
         }
     }, [showDanceMenu])
 
-    useEffect(() => {
-        setTables((prevTables) =>
-            prevTables?.map((tab) =>
-                tab.id === table.id
-                    ? { ...tab, position: mapPosition }
-                    : tab
-            )
-        )
-    }, [mapPosition, table, setTables])
-
-    useEffect(() => {
-        setMapPosition({
-            x: table.x,
-            y: table.y
-        })
-    }, [table])
-
     const isSelected = onSelectedTable === table.id
     const isFull = table.size === occupiedChairs
+    const footprint = getTableFootprint(shape)
 
     const tableShapeClass =
         shape === 'square'
@@ -404,21 +427,64 @@ export const DynamicTable = ({
         )
     }
 
+    // La rotación se aplica solo a la mesa, no al contenedor: si el rótulo
+    // vive dentro de lo rotado, en una rectangular vertical acaba a la
+    // izquierda en vez de debajo.
+    const visualHeight = (vertical ? footprint.width : footprint.height) * 0.7
+    const captionTop = (vertical ? footprint.width : footprint.height) / 2 + visualHeight / 2 + 10
+
+    const groupDx = isMultiSelected && groupOffset ? groupOffset.x : 0
+    const groupDy = isMultiSelected && groupOffset ? groupOffset.y : 0
+
+    // La caja del DOM debe medir lo que la mesa OCUPA de verdad. Una vertical
+    // gira 90° alrededor de su centro, así que su caja es el footprint con los
+    // lados intercambiados y desplazada para conservar ese centro; sin esto,
+    // una vertical arrastraba una caja horizontal de 400px que generaba huecos
+    // sin sentido al alinear y al chocar.
+    const boundW = vertical ? footprint.height : footprint.width
+    const boundH = vertical ? footprint.width : footprint.height
+    const boundOffsetX = (footprint.width - boundW) / 2
+    const boundOffsetY = (footprint.height - boundH) / 2
+
     return (
             <div
                 onClick={handleClick}
                 onMouseDown={startDrag}
                 onTouchStart={startDrag}
                 ref={mapContainerRef}
+                data-table-id={table.id}
                 style={{
-                    top: `${mapPosition.y}px`,
-                    left: `${mapPosition.x}px`,
+                    top: `${mapPosition.y + groupDy + boundOffsetY}px`,
+                    left: `${mapPosition.x + groupDx + boundOffsetX}px`,
+                    width: `${boundW}px`,
+                    height: `${boundH}px`,
                     cursor: isDragging ? 'grabbing' : 'pointer',
-                    transform: `scale(0.7) ${vertical ? 'rotate(90deg)' : ''}`
+                    // Suaviza alinear/acomodar/deshacer; en arrastre va directo
+                    // para no rezagarse del cursor.
+                    transition: dragPos || (isMultiSelected && groupOffset)
+                        ? 'none'
+                        : 'top 0.3s ease, left 0.3s ease',
                 }}
-                className="dynamic-container"
+                className={`dynamic-container ${isMultiSelected ? 'multi-selected' : ''}`}
             >
-                <div className={`container ${containerShapeClass} ${onMoving ? 'moving-container' : ''}`}>
+                <div
+                    className='table-rotor'
+                    style={{
+                        width: `${footprint.width}px`,
+                        height: `${footprint.height}px`,
+                        marginLeft: `${-footprint.width / 2}px`,
+                        marginTop: `${-footprint.height / 2}px`,
+                        transform: `scale(0.7) ${vertical ? 'rotate(90deg)' : ''}`,
+                    }}
+                >
+                <div
+                    className={`container ${containerShapeClass} ${onMoving ? 'moving-container' : ''}`}
+                    /* El tamaño sale del MISMO footprint que usa la detección de
+                       colisiones. Dejarlo en manos del CSS permitía que el
+                       dibujo y la zona segura divergieran, y ahí es donde se
+                       colaban las mesas encimadas. */
+                    style={{ width: `${footprint.width}px`, height: `${footprint.height}px` }}
+                >
                     <div
                         className={`table ${tableShapeClass} ${onMoving ? 'moving-table' : ''}`}
                         style={{
@@ -427,8 +493,8 @@ export const DynamicTable = ({
                                 : isSelected
                                     ? 'var(--brand-color-100)'
                                     : isFull
-                                        ? 'var(--sc-color)'
-                                        : 'var(--brand-color-300)',
+                                        ? 'var(--brand-color-300)'
+                                        : 'var(--sc-color)',
                             border: isRepeated
                                 ? '2px solid #ff4d4f'
                                 : isSelected
@@ -455,6 +521,23 @@ export const DynamicTable = ({
                             <span style={{ transform: `${vertical ? 'rotate(-90deg)' : ''}` }}>{chair.id}</span>
                         </div>
                     ))}
+
+                    {/* El candado va sobre el contenedor, no bajo la mesa, para
+                        que se lea igual con la mesa rotada. */}
+                    {table.locked && (
+                        <div className='table-lock-badge' style={{ transform: vertical ? 'rotate(-90deg)' : undefined }}>
+                            <Lock size={13} />
+                        </div>
+                    )}
+                </div>
+                </div>
+
+                {/* El nombre existía en la tabla y no se usaba: sin él, el mapa
+                    solo dice "#N" y no comunica ni capacidad ni de quién es.
+                    Queda fuera del rotor para caer siempre debajo de la mesa. */}
+                <div className='table-caption' style={{ top: `${captionTop}px` }}>
+                    <span className='table-caption-name'>{table.name || 'Sin nombre'}</span>
+                    <span className='table-caption-count'>{occupiedChairs}/{table.size}</span>
                 </div>
             </div>
     )

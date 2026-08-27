@@ -5,35 +5,76 @@ import { BsArrowsMove, BsSliders } from 'react-icons/bs'
 import { IoClose } from 'react-icons/io5'
 import { FaAngleDoubleRight, FaList, FaMinus, FaPlus } from 'react-icons/fa'
 import { DynamicTable } from './DynamicTable'
+import { TablesList } from './TablesList'
+import { LayoutElement } from './LayoutElement'
+import { GuestPanel } from './GuestPanel'
+import { TablePanel } from './TablePanel'
+import {
+    clampToCanvas,
+    findFreeSpot,
+    fitsWithoutOverlap,
+    getTableFootprint,
+    rectOfElement,
+    rectOfTable,
+} from './seatingGeometry'
+import { AutoLayoutModal } from './AutoLayoutModal'
+import { AddGuestsPicker } from './AddGuestsPicker'
+import { Onboarding } from './Onboarding'
+import { buildLayout, suggestLayout } from './autoLayout'
+import { useTableHistory } from './useTableHistory'
+import { AddMenu, ProgressStrip } from './SeatingChrome'
+import chrome from './SeatingChrome.module.css'
 import { supabase } from '../../../lib/supabase'
 import { PiHandGrabbing } from 'react-icons/pi'
 import { TbLocation } from 'react-icons/tb'
 import { IoMdAdd, IoMdHelp } from 'react-icons/io'
 import { LuShuffle } from 'react-icons/lu'
 import { RiDeleteBack2Line } from 'react-icons/ri'
-import { formatDate } from '../../../helpers/assets/functions'
-import { ChevronDown, Circle, List, MoveHorizontal, MoveVertical, PartyPopper, Plus, RectangleHorizontal, Square } from 'lucide-react'
+import { AlignEndHorizontal, AlignEndVertical, AlignHorizontalJustifyCenter, AlignStartHorizontal, AlignStartVertical, AlignVerticalJustifyCenter, ChevronDown, Circle, Crosshair, LayoutGrid, List, MoveHorizontal, MoveVertical, PartyPopper, Plus, RectangleHorizontal, Redo2, Square, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 const CANVAS_WIDTH = 3500
-const CANVAS_HEIGHT = 1800
+const CANVAS_HEIGHT = 3500
+const WORK_CANVAS_SIZE = 3500
+// Zoom al que "Centrar" devuelve la vista: entra el salón completo.
+const CENTER_ZOOM = 0.45
+// La isla de alineación queda oculta mientras se afina la alineación.
+const SHOW_ALIGN_ISLAND = false
+// Píxeles de tablero que el paneo siempre deja dentro del visor.
+const PAN_KEEP_VISIBLE = 220
+// Zoom al que se aterriza sobre un elemento recién creado.
+const NEW_ELEMENT_ZOOM = 0.6
+const CONFIRMED_STATES = ['confirmado', 'asistente']
+
+// Isla de alineación (aparece con 2+ mesas seleccionadas), como la de Figma.
+const ALIGN_ACTIONS = [
+    { edge: 'left', title: 'Alinear a la izquierda', Icon: AlignStartVertical },
+    { edge: 'centerX', title: 'Centrar en horizontal', Icon: AlignHorizontalJustifyCenter },
+    { edge: 'right', title: 'Alinear a la derecha', Icon: AlignEndVertical },
+    { edge: 'top', title: 'Alinear arriba', Icon: AlignStartHorizontal },
+    { edge: 'centerY', title: 'Centrar en vertical', Icon: AlignVerticalJustifyCenter },
+    { edge: 'bottom', title: 'Alinear abajo', Icon: AlignEndHorizontal },
+]
+
+// Convención de color de sillas: ocupado = lila relleno, libre = contorno.
+const LEGEND_DOT = { width: '8px', height: '8px', borderRadius: '99px', boxSizing: 'border-box', flexShrink: 0 }
+const LEGEND_DOT_FREE = { backgroundColor: 'transparent', border: '1px solid var(--borders)' }
+
+// Sillas por defecto al crear desde "+ Agregar", dentro del rango de cada forma.
+const DEFAULT_SEATS = { round: 10, square: 12, rectangle: 14 }
+const SHAPE_MAX_SEATS = { round: 12, square: 16, rectangle: 18 }
+const SHAPE_NAMES = { round: 'redonda', square: 'cuadrada', rectangle: 'rectangular' }
+
+// Footprint por defecto de cada elemento del salón, en coordenadas de canvas.
+const ELEMENT_DEFAULTS = {
+    entrance: { label: 'Entrada', width: 220, height: 70 },
+    restroom: { label: 'Baños', width: 180, height: 160 },
+    bar: { label: 'Barra', width: 300, height: 70 },
+    dj: { label: 'DJ o grupo', width: 240, height: 120 },
+}
 const COLUMN_STEP = 140
 const ROW_STEP = 220
 const ROW_START_X = 100
-
-const getTableFootprint = (shape) => {
-    if (shape === 'dance') return { width: 800, height: 600 }
-    if (shape === 'rectangle') return { width: 400, height: 200 }
-    return { width: 200, height: 200 }
-}
-
-const clampToCanvas = (x, y, shape) => {
-    const { width, height } = getTableFootprint(shape)
-    return {
-        x: Math.min(Math.max(x, 0), CANVAS_WIDTH - width),
-        y: Math.min(Math.max(y, 0), CANVAS_HEIGHT - height),
-    }
-}
 
 const getNextPosition = (latestTable, shape) => {
     if (!latestTable) return clampToCanvas(1484, 546, shape)
@@ -50,7 +91,7 @@ const getNextPosition = (latestTable, shape) => {
     return clampToCanvas(nextX, nextY, shape)
 }
 
-export const TablesPage = ({ invitationID }) => {
+export const TablesPage = ({ invitationID, onClose }) => {
     const { t } = useTranslation()
 
     const [checkedChairs, setCheckedChairs] = useState({});
@@ -58,16 +99,16 @@ export const TablesPage = ({ invitationID }) => {
     const [onFilter, setOnFilter] = useState(false)
     const [onAddingGuests, setOnAddingGuests] = useState(false)
     const [onModal, setOnModal] = useState(false)
-    const [aboutMyGuest, setAboutMyGuest] = useState(null)
-    const [onExtendedWhos, setOnExtendedWhos] = useState(false)
+    const [aboutMyGuest] = useState(null)
+    const [, setOnExtendedWhos] = useState(false)
     const [onMoving] = useState(false)
     const [onEditPosition] = useState(false)
     const [zoomLevel, setZoomLevel] = useState(0.7 );
     const [mapPosition, setMapPosition] = useState({ x: -1300, y: -600 });
     const [isDragging, setIsDragging] = useState(false);
     const lastCanvasMouseRef = useRef({ x: 0, y: 0 });
-    const [newShape, setNewShape] = useState('round')
-    const [newVertical, setNewVertical] = useState(false)
+    const [newShape] = useState('round')
+    const [newVertical] = useState(false)
     const [totalChairs, setTotalChairs] = useState(10)
     const [ocuppiedChairs, setOcuppiedChairs] = useState([])
     const [tablesName, setTablesName] = useState(null)
@@ -75,28 +116,81 @@ export const TablesPage = ({ invitationID }) => {
     const [onSelectedTable, setOnSelectedTable] = useState(false)
     const [selectedTable, setSelectedTable] = useState(null)
     const [onViewTable, setOnViewTable] = useState(false)
-    const [onEditingTable, setonEditingTable] = useState(false)
-    const [editingNumber, setEditingNumber] = useState(null)
     const [availableSeats, setAvailableSeats] = useState(null)
-    const [currentGuest, setCurrentGuest] = useState(null)
-    const [onTransfer, setOnTransfer] = useState(false)
-    const [tabToMove, setTabToMove] = useState(null)
+    const [, setCurrentGuest] = useState(null)
+    const [, setOnTransfer] = useState(false)
     const [onGrab, setOnGrab] = useState(false)
-    const [available, setAvailable] = useState(null)
-    const [taken, setTaken] = useState(null)
-    const [tables, setTables] = useState()
     const [mobileList, setMobileList] = useState(false)
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 750)
     const [transferSheet, setTransferSheet] = useState(null)
+    // 'guests' solo existe en móvil: ahí la lista de confirmados es la tercera
+    // pestaña en vez de la columna derecha, que no cabe.
+    const [leftView, setLeftView] = useState('map') // 'map' | 'list' | 'guests'
+    const [sortBy, setSortBy] = useState('number')  // 'number' | 'emptiest' | 'space'
+    const [addMenuOpen, setAddMenuOpen] = useState(false)
+    const [layoutElements, setLayoutElements] = useState([])
+    const [autoLayoutOpen, setAutoLayoutOpen] = useState(false)
+    const [addGuestsFor, setAddGuestsFor] = useState(null)
+    // "Empezar en blanco" descarta el onboarding sin crear nada.
+    const [onboardingSkipped, setOnboardingSkipped] = useState(false)
+    const [pendingCenter, setPendingCenter] = useState(null)
+    // Selección múltiple (marquee o Shift/Cmd-clic): habilita alinear y mover
+    // en grupo.
+    const [selectedIds, setSelectedIds] = useState(() => new Set())
+    const [groupOffset, setGroupOffset] = useState(null)
+    // Rectángulo de selección en px del visor, como el cuadro azul de Figma.
+    const [marquee, setMarquee] = useState(null)
+    const workAreaRef = useRef(null)
+    const tablesRef = useRef([])
 
     const [tables_, setTables_] = useState(null)
     const [confirmedGuests_, setconfirmedGuests_] = useState(null)
     const [filterByName, setFilterByName] = useState(null)
-    const [newTableType, setNewTableType] = useState(null); // null | 'mesa'
     const zoomStep = 0.01;
     const minZoom = 0.2;
     const maxZoom = 1.8;
     const mapContainerRef = useRef(null);
+    // Sin ninguna mesa creada, el panel izquierdo muestra el onboarding.
+    // Se declara aquí arriba porque varios efectos dependen de él.
+    const showOnboarding =
+        tables_ !== null &&
+        tables_.filter(t => t.shape !== 'dance').length === 0 &&
+        !onboardingSkipped
+
+    // Topes del paneo: basta con que siga viéndose un trozo del tablero.
+    //
+    // Antes se exigía que el tablero CUBRIERA el visor, y cuando el tablero
+    // escalado era más chico que el visor (zoom bajo con el panel de invitados
+    // colapsado) el rango salía negativo: el mapa quedaba pegado a la derecha
+    // y no se podía recorrer a la izquierda.
+    const clampPan = (x, y) => {
+        const container = mapContainerRef.current
+        if (!container) return { x, y }
+
+        const zoom = zoomRef.current
+        const half = WORK_CANVAS_SIZE / 2
+        const scaledHalf = half * zoom
+        const viewW = container.clientWidth
+        const viewH = container.clientHeight
+
+        // Trozo de tablero que siempre queda dentro del visor.
+        const keepX = Math.min(PAN_KEEP_VISIBLE, scaledHalf * 2)
+        const keepY = Math.min(PAN_KEEP_VISIBLE, scaledHalf * 2)
+
+        // borde derecho del tablero >= keep  y  borde izquierdo <= viewW - keep
+        const minX = keepX - half - scaledHalf
+        const maxX = viewW - keepX - half + scaledHalf
+        const minY = keepY - half - scaledHalf
+        const maxY = viewH - keepY - half + scaledHalf
+
+        return {
+            x: Math.min(Math.max(x, minX), maxX),
+            y: Math.min(Math.max(y, minY), maxY),
+        }
+    }
+
+    const zoomRef = useRef(zoomLevel)
+    zoomRef.current = zoomLevel
     const [modalPosition, setModalPosition] = useState({ x: 36, y: 36 })
     const [isModalDragging, setIsModalDragging] = useState(false)
     const lastModalMouseRef = useRef({ x: 0, y: 0 })
@@ -114,11 +208,103 @@ export const TablesPage = ({ invitationID }) => {
         "#FFF9C4"  // Crema pastel
     ];
 
+    useEffect(() => { tablesRef.current = tables_ ?? [] }, [tables_])
+
+    // Ciclo de vida del marquee: se dibuja en px del visor y selecciona en
+    // vivo todo lo que toca, convirtiendo sus esquinas a coordenadas de canvas.
+    useEffect(() => {
+        if (!marquee) return
+
+        const toCanvas = (clientX, clientY) => {
+            const wr = workAreaRef.current?.getBoundingClientRect()
+            const zoom = zoomRef.current
+            if (!wr) return { x: 0, y: 0 }
+            return { x: (clientX - wr.left) / zoom, y: (clientY - wr.top) / zoom }
+        }
+
+        const onMove = (event) => {
+            const rect = mapContainerRef.current?.getBoundingClientRect()
+            if (!rect) return
+            const x2 = event.clientX - rect.left
+            const y2 = event.clientY - rect.top
+
+            setMarquee(prev => prev && { ...prev, x2, y2 })
+
+            // Selección en vivo: rectángulo del marquee en canvas vs caja
+            // visual de cada mesa.
+            const a = toCanvas(rect.left + Math.min(marquee.x1, x2), rect.top + Math.min(marquee.y1, y2))
+            const b = toCanvas(rect.left + Math.max(marquee.x1, x2), rect.top + Math.max(marquee.y1, y2))
+            const hits = new Set(
+                tablesRef.current
+                    .filter(t => t.shape !== 'dance')
+                    .filter(t => {
+                        const r = rectOfTable(t)
+                        return r.left < b.x && r.right > a.x && r.top < b.y && r.bottom > a.y
+                    })
+                    .map(t => t.id)
+            )
+            setSelectedIds(hits)
+        }
+
+        const onUp = () => {
+            document.body.classList.remove('seating-dragging')
+            setMarquee(prev => {
+                // Un clic seco (sin arrastre real) limpia la selección.
+                if (prev && Math.abs(prev.x2 - prev.x1) < 4 && Math.abs(prev.y2 - prev.y1) < 4) {
+                    setSelectedIds(new Set())
+                }
+                return null
+            })
+        }
+
+        document.addEventListener('mousemove', onMove)
+        document.addEventListener('mouseup', onUp)
+        return () => {
+            document.removeEventListener('mousemove', onMove)
+            document.removeEventListener('mouseup', onUp)
+        }
+    }, [marquee])
+
+    // Escape limpia la selección; Cmd/Ctrl+Z deshace y con Shift rehace.
+    // historyRef se llena más abajo, después de declarar el hook: leerlo aquí
+    // directamente sería una TDZ.
+    const historyRef = useRef(null)
+    useEffect(() => {
+        const isTyping = (t) => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
+        const onKey = (e) => {
+            if (e.key === 'Escape') { clearSelection(); return }
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !isTyping(e.target)) {
+                e.preventDefault()
+                const h = historyRef.current
+                if (e.shiftKey) { if (h.canRedo && !h.busy) h.redo(tablesRef.current) }
+                else if (h.canUndo && !h.busy) h.undo(tablesRef.current)
+            }
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [])
+
     const startDrag = (event) => {
         if (onMoving) return
         if (event.touches?.length === 2) return // pinch zoom, manejado por su propio listener
         const isTouch = !!event.touches
-        if (!isTouch && !onGrab) return
+        if (!isTouch && !onGrab) {
+            // Sin la mano activa, arrastrar sobre el fondo dibuja el cuadro de
+            // selección, como en Figma. Las mesas frenan el evento con
+            // stopPropagation; los controles que flotan sobre el mapa (isla de
+            // alineación, zoom, mano, deshacer) hay que excluirlos aquí, o su
+            // propio clic dispara un marquee de 0px que borra la selección
+            // antes de que el botón reciba el click.
+            if (event.button !== 0) return
+            if (event.target.closest('.align-island, .tools-map-menu-container, .selected-table-hover-container, button, input, .ant-slider')) return
+            const rect = mapContainerRef.current?.getBoundingClientRect()
+            if (!rect) return
+            const x = event.clientX - rect.left
+            const y = event.clientY - rect.top
+            setMarquee({ x1: x, y1: y, x2: x, y2: y })
+            document.body.classList.add('seating-dragging')
+            return
+        }
         const pos = isTouch ? event.touches[0] : event
         lastCanvasMouseRef.current = { x: pos.clientX, y: pos.clientY }
         setIsDragging(true)
@@ -133,13 +319,7 @@ export const TablesPage = ({ invitationID }) => {
             const deltaX = pos.clientX - lastCanvasMouseRef.current.x
             const deltaY = pos.clientY - lastCanvasMouseRef.current.y
             lastCanvasMouseRef.current = { x: pos.clientX, y: pos.clientY }
-            setMapPosition((prev) => {
-                const minX = -1550, maxX = 550, minY = -1500, maxY = 150
-                return {
-                    x: Math.min(Math.max(prev.x + deltaX, minX), maxX),
-                    y: Math.min(Math.max(prev.y + deltaY, minY), maxY),
-                }
-            })
+            setMapPosition((prev) => clampPan(prev.x + deltaX, prev.y + deltaY))
         }
 
         const onStop = () => setIsDragging(false)
@@ -157,7 +337,12 @@ export const TablesPage = ({ invitationID }) => {
         }
     }, [isDragging]);
 
-    const addNewTable = async () => {
+    // `shape` llega del menú "+ Agregar"; si no viene, se usa el del modal viejo.
+    const addNewTable = async (shape) => {
+
+        const tableShape = typeof shape === 'string' ? shape : newShape
+        const tableSize = typeof shape === 'string' ? DEFAULT_SEATS[shape] : totalChairs
+        const tableName = typeof shape === 'string' ? null : tablesName
 
         let newTable = {}
 
@@ -183,17 +368,17 @@ export const TablesPage = ({ invitationID }) => {
                 return
             }
 
-            const nextPosition = getNextPosition(latestTable, newShape)
+            const nextPosition = getNextPosition(latestTable, tableShape)
 
             newTable = {
                 created_at: new Date(),
                 last_update_at: new Date(),
                 invitation_id: invitationID,
-                shape: newShape,
+                shape: tableShape,
                 vertical: newVertical,
-                name: tablesName,
+                name: tableName,
                 number: latestTable ? Number(latestTable.number) + 1 : 1,
-                size: totalChairs,
+                size: tableSize,
                 x: nextPosition.x,
                 y: nextPosition.y,
             }
@@ -201,15 +386,16 @@ export const TablesPage = ({ invitationID }) => {
         }
 
         else {
-            const nextPosition = getNextPosition(null, newShape)
+            const nextPosition = getNextPosition(null, tableShape)
 
             newTable = {
                 created_at: new Date(),
                 last_update_at: new Date(),
                 invitation_id: invitationID,
-                name: tablesName,
+                shape: tableShape,
+                name: tableName,
                 number: 1,
-                size: totalChairs,
+                size: tableSize,
                 x: nextPosition.x,
                 y: nextPosition.y,
             }
@@ -226,7 +412,13 @@ export const TablesPage = ({ invitationID }) => {
                 console.error("Error al insertar:", error.message);
                 return null;
             }
-            // console.log(data.id)
+
+            // Aterrizar sobre la mesa recién creada, para no tener que buscarla.
+            const created = getTableFootprint(tableShape)
+            requestCenter(
+                newTable.x + created.width / 2,
+                newTable.y + created.height / 2
+            )
 
             if (ocuppiedChairs && ocuppiedChairs.length > 0) {
                 // OJO: asumimos que `ocuppiedChairs` es un arreglo de IDs de guests
@@ -320,8 +512,83 @@ export const TablesPage = ({ invitationID }) => {
 
         if (insertError) { console.error('Error al insertar pista:', insertError.message); return }
 
-        setNewTableType(null)
+        const size = getTableFootprint('dance')
+        requestCenter(x + size.width / 2, y + size.height / 2)
         getTables()
+    }
+
+    const history = useTableHistory({ onApplied: () => getTables() })
+    historyRef.current = history
+
+    // Ref para que cada mesa registre el estado previo sin re-suscribir su
+    // listener de arrastre en cada render.
+    const dragCommitRef = useRef(() => {})
+    dragCommitRef.current = () => history.record(tables_ ?? [])
+
+    // Una mesa soltada actualiza el estado local de inmediato; la escritura a
+    // la base corre aparte en el propio hijo.
+    const handleTableMoved = (tableId, x, y) => {
+        setTables_(prev => prev?.map(t => (t.id === tableId ? { ...t, x, y } : t)))
+    }
+
+    const getLayoutElements = async () => {
+        if (!invitationID) return
+        const { data, error } = await supabase
+            .from('layout_elements')
+            .select('*')
+            .eq('invitation_id', invitationID)
+
+        if (error) {
+            console.error('Error al obtener elementos del salón:', error.message)
+            return
+        }
+        setLayoutElements(data ?? [])
+    }
+
+    const addLayoutElement = async (type) => {
+        // La pista sigue viviendo en `tables` como shape='dance'. Migrarla a
+        // layout_elements toca datos existentes y quedó pendiente de decisión,
+        // así que se mantiene su ruta vieja para no duplicar el concepto.
+        if (type === 'dancefloor') return addDanceFloor()
+
+        const preset = ELEMENT_DEFAULTS[type]
+        if (!preset) return
+
+        const { error } = await supabase.from('layout_elements').insert([{
+            invitation_id: invitationID,
+            type,
+            label: preset.label,
+            x: 140,
+            y: 140,
+            width: preset.width,
+            height: preset.height,
+        }])
+
+        if (error) {
+            console.error('Error al crear elemento del salón:', error.message)
+            message.error('No se pudo crear el elemento')
+            return
+        }
+
+        requestCenter(140 + preset.width / 2, 140 + preset.height / 2)
+        getLayoutElements()
+    }
+
+    const updateLayoutElement = async (id, patch) => {
+        const { error } = await supabase
+            .from('layout_elements')
+            .update({ ...patch, last_update_at: new Date() })
+            .eq('id', id)
+        if (error) console.error('Error moviendo elemento:', error.message)
+    }
+
+    const deleteLayoutElement = async (id) => {
+        const { error } = await supabase.from('layout_elements').delete().eq('id', id)
+        if (error) {
+            console.error('Error eliminando elemento:', error.message)
+            return
+        }
+        getLayoutElements()
     }
 
     const getTables = async () => {
@@ -356,13 +623,16 @@ export const TablesPage = ({ invitationID }) => {
         } else {
 
             // console.log('guests: ', data)
-            setconfirmedGuests_(data.filter(c => c.state === 'confirmado'))
+            // 'asistente' es equivalente a 'confirmado': si se excluye, esos invitados
+            // desaparecen del panel y no hay forma de sentarlos desde el mapa.
+            setconfirmedGuests_(data.filter(c => CONFIRMED_STATES.includes(c.state)))
         }
     }
 
     useEffect(() => {
         getTables()
         getGuests()
+        getLayoutElements()
     }, [invitationID])
 
     useEffect(() => {
@@ -396,22 +666,6 @@ export const TablesPage = ({ invitationID }) => {
     }, [onAddingGuests])
 
     useEffect(() => {
-        let totales = 0
-        let ocupados = confirmedGuests_?.filter(g => g.table).length ?? 0
-
-        tables_?.forEach((tbl) => {
-            totales += tbl.size
-        })
-
-        let disponibles = totales - ocupados
-
-        setTaken(ocupados)
-        setAvailable(disponibles)
-
-    }, [tables_, confirmedGuests_])
-
-
-    useEffect(() => {
         if (onSelectedTable) {
             const currentTable = tables_.find((table) => table.id === onSelectedTable)
             setSelectedTable(currentTable)
@@ -439,37 +693,6 @@ export const TablesPage = ({ invitationID }) => {
         }
 
 
-        if (onTransfer && currentGuest && tabToMove) {
-
-            setTables(prevTables => {
-                const newTables = prevTables.map(t => ({
-                    ...t,
-                    occupiedChairs: t.occupiedChairs.map(chair => Object.keys(chair).length > 0 ? { ...chair } : {})
-                }));
-
-                const updatedGuest = { ...currentGuest, place: tabToMove.id };
-
-                const targetTableIndex = newTables.findIndex(t => t.id === tabToMove.id);
-                if (targetTableIndex !== -1) {
-                    const emptyChairIndex = newTables[targetTableIndex].occupiedChairs.findIndex(chair => Object.keys(chair).length === 0);
-                    if (emptyChairIndex !== -1) {
-                        newTables[targetTableIndex].occupiedChairs[emptyChairIndex] = updatedGuest;
-                    } else {
-                        console.warn('No hay lugar vacío en la mesa destino');
-                    }
-                } else {
-                    console.warn('Mesa destino no encontrada');
-                }
-
-                return newTables;
-            });
-
-            setOnTransfer(false)
-            setCurrentGuest(null)
-            setTabToMove(null)
-            message.success(t('tables.transferred_success'))
-        }
-
     }, [ocuppiedChairs])
 
 
@@ -485,7 +708,6 @@ export const TablesPage = ({ invitationID }) => {
     }, [totalChairs]);
 
     useEffect(() => {
-        setonEditingTable(false)
         if (onViewTable) {
             setOnModal(true)
             setModalPosition({ x: 36, y: 36 })
@@ -516,104 +738,6 @@ export const TablesPage = ({ invitationID }) => {
 
 
 
-    const hasDuplicateNumber = editingNumber != null &&
-        tables_?.some(t => t.id !== selectedTable?.id && Number(t.number) === Number(editingNumber))
-
-    const selectedTableIsRepeated = selectedTable != null &&
-        tables_?.filter(t => Number(t.number) === Number(selectedTable.number)).length > 1
-
-    const updateTable = async () => {
-
-        const updatedTable = {
-            last_update_at: new Date(),
-            name: tablesName,
-            size: totalChairs,
-            shape: selectedTable.shape,
-            vertical: selectedTable.vertical,
-            number: editingNumber ?? selectedTable.number,
-        };
-
-        try {
-            // 1) Editar mesa (solo name y size)
-            const { data: tableData, error: tableError } = await supabase
-                .from("tables")
-                .update(updatedTable)
-                .eq("id", selectedTable.id)
-                .select()
-                .maybeSingle();
-
-            if (tableError) {
-                console.error("Error al editar mesa:", tableError.message);
-                return null;
-            }
-
-            // console.log("Mesa editada ✅", tableData.id);
-
-            // 2) Guests actuales en esta mesa
-            const { data: currentGuests, error: currentError } = await supabase
-                .from("guests")
-                .select("id")
-                .eq("table", selectedTable.id);
-
-            if (currentError) {
-                console.error("Error obteniendo guests actuales:", currentError.message);
-                return tableData; // la mesa sí se editó
-            }
-
-            const currentIds = currentGuests.map(g => g.id);
-            const newIds = (ocuppiedChairs ?? []).map(g => g.id);
-
-            // 3) Comparar para saber a quién quitar y a quién poner
-            const toRemove = currentIds.filter(id => !newIds.includes(id));
-            const toAdd = newIds.filter(id => !currentIds.includes(id));
-
-            // 4) Quitar mesa a los que ya no van ahí
-            if (toRemove.length) {
-                const { error: removeError } = await supabase
-                    .from("guests")
-                    .update({ table: null, last_action_by: 'admin' })
-                    .in("id", toRemove);
-
-                if (removeError) {
-                    console.error("Error quitando mesa a guests:", removeError.message);
-                }
-            }
-
-            // 5) Asignar mesa a los nuevos
-            if (toAdd.length) {
-                const { error: addError } = await supabase
-                    .from("guests")
-                    .update({ table: selectedTable.id, last_action_by: 'admin'  })
-                    .in("id", toAdd);
-
-                if (addError) {
-                    console.error("Error asignando mesa a guests:", addError.message);
-                }
-            }
-
-            // console.log("Guests sincronizados ✅", { toAdd, toRemove });
-            getTables()
-            getGuests()
-            setOnAddingGuests(false)
-            setonEditingTable(false)
-
-            return tableData;
-
-        } catch (err) {
-            console.error("Error inesperado:", err);
-            return null;
-        }
-
-    }
-
-    const editTable = () => {
-        setOnAddingGuests(true)
-        setonEditingTable(true)
-        setTablesName(selectedTable.name)
-        setTotalChairs(selectedTable.size)
-        setEditingNumber(selectedTable.number)
-    }
-
     const updateChair = (guest, e) => {
 
 
@@ -640,19 +764,8 @@ export const TablesPage = ({ invitationID }) => {
 
     };
 
-    const handleAddingGuests = (state) => {
-        setOnAddingGuests(state)
-        if (state && isMobile) setMobileList(true)
-    }
-
-    const handleNewTable = () => {
-        setSelectedTable(null)
-        setOnSelectedTable(false)
-        // setOnModal(true)
-        setOcuppiedChairs([])
-    }
-
     const onClosingModal = () => {
+        setAddGuestsFor(null)
         setOnModal(false)
         setOnViewTable(false)
         setSelectedTable(null)
@@ -661,6 +774,369 @@ export const TablesPage = ({ invitationID }) => {
         setCurrentGuest(null)
         setOnTransfer(false)
 
+    }
+
+    /* ── Selección múltiple y arrastre en grupo ────────────────────────── */
+
+    const toggleSelect = (tableId) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            if (next.has(tableId)) next.delete(tableId)
+            else next.add(tableId)
+            return next
+        })
+    }
+
+    const clearSelection = () => {
+        setSelectedIds(new Set())
+        setGroupOffset(null)
+    }
+
+    // Al arrastrar cualquier mesa seleccionada, TODAS siguen el mismo delta.
+    // El delta es visual (groupOffset); las posiciones reales se escriben al
+    // soltar, de una sola vez.
+    const groupDragStart = () => {
+        history.record(tables_ ?? [])
+    }
+
+    const groupDragMove = (delta) => {
+        setGroupOffset({ x: delta.x, y: delta.y })
+    }
+
+    const groupDragEnd = async () => {
+        const offset = groupOffset
+        if (!offset || (offset.x === 0 && offset.y === 0)) {
+            setGroupOffset(null)
+            return
+        }
+
+        const moving = (tables_ ?? []).filter(t => selectedIds.has(t.id))
+        const updates = moving.map(t => {
+            const p = clampToCanvas(t.x + offset.x, t.y + offset.y, t.shape, t.vertical)
+            return { id: t.id, x: Math.round(p.x), y: Math.round(p.y) }
+        })
+
+        // El estado optimista y el offset se sueltan en el MISMO tick: si el
+        // offset cae primero, las mesas brincan a su posición vieja y luego
+        // se deslizan a la nueva — el "movimiento tardío" que desajustaba.
+        const write = applyPositions(updates)
+        setGroupOffset(null)
+        await write
+    }
+
+    // Alinea SOLO la selección contra un borde común, como Figma. Los bordes
+    // son los de la caja VISUAL (la que se ve), no los del footprint guardado:
+    // en una rectangular vertical difieren y generaban huecos sin sentido.
+    const alignSelection = async (edge) => {
+        const all = tables_ ?? []
+        const moving = all.filter(t => selectedIds.has(t.id) && !t.locked)
+        if (moving.length < 2) return
+
+        const horizontal = edge === 'left' || edge === 'right' || edge === 'centerX'
+        const edgeOf = (t) => {
+            const r = rectOfTable(t)
+            switch (edge) {
+                case 'left': return r.left
+                case 'right': return r.right
+                case 'top': return r.top
+                case 'bottom': return r.bottom
+                case 'centerX': return (r.left + r.right) / 2
+                default: return (r.top + r.bottom) / 2
+            }
+        }
+
+        const values = moving.map(edgeOf)
+        let target
+        if (edge === 'left' || edge === 'top') target = Math.min(...values)
+        else if (edge === 'right' || edge === 'bottom') target = Math.max(...values)
+        else target = values.reduce((a, v) => a + v, 0) / values.length
+
+        const aligned = moving.map(t => {
+            const delta = target - edgeOf(t)
+            const p = horizontal
+                ? clampToCanvas(t.x + delta, t.y, t.shape, t.vertical)
+                : clampToCanvas(t.x, t.y + delta, t.shape, t.vertical)
+            return { ...t, x: p.x, y: p.y }
+        })
+
+        const updates = aligned
+            .map(t => ({ id: t.id, x: Math.round(t.x), y: Math.round(t.y) }))
+            .filter(u => {
+                const orig = moving.find(m => m.id === u.id)
+                return Math.round(orig.x) !== u.x || Math.round(orig.y) !== u.y
+            })
+
+        if (!updates.length) return
+
+        history.record(all)
+        await applyPositions(updates)
+    }
+
+    /* ── Reacomodo del mapa ────────────────────────────────────────────── */
+
+    // Escribe posiciones nuevas conservando el `id` de cada mesa: nunca
+    // DELETE + INSERT, o los invitados quedarían apuntando a mesas que ya no
+    // existen.
+    const applyPositions = async (updates) => {
+        if (!updates.length) return true
+
+        // Primero el estado local, después la escritura. El refetch remontaba
+        // las mesas (van con key por índice y Supabase no garantiza el orden),
+        // y ese remontaje era el parpadeo al alinear.
+        setTables_(prev => prev?.map(t => {
+            const u = updates.find(u => u.id === t.id)
+            return u ? { ...t, x: u.x, y: u.y } : t
+        }))
+
+        const results = await Promise.all(updates.map(u =>
+            supabase.from('tables')
+                .update({ x: u.x, y: u.y, last_update_at: new Date() })
+                .eq('id', u.id)
+        ))
+        const failed = results.find(r => r.error)
+        if (failed) {
+            console.error('Error reacomodando mesas:', failed.error.message)
+            message.error('No se pudieron mover todas las mesas')
+            await getTables()
+            return false
+        }
+        return true
+    }
+
+    const applyAutoLayout = async (layoutKey) => {
+        const all = tables_ ?? []
+        const movable = all.filter(t => !t.locked && t.shape !== 'dance')
+        const dance = all.find(t => t.shape === 'dance')
+
+        const result = buildLayout(layoutKey, movable, dance)
+        const updates = [...result.tables]
+        if (result.dance && dance && !dance.locked) {
+            updates.push({ id: dance.id, x: result.dance.x, y: result.dance.y })
+        }
+
+        setAutoLayoutOpen(false)
+        history.record(all)
+        const ok = await applyPositions(updates)
+        if (!ok) return
+
+        // La pista queda al centro del tablero: llevar la vista ahí.
+        requestCenter(WORK_CANVAS_SIZE / 2, WORK_CANVAS_SIZE / 2, CENTER_ZOOM)
+
+        const locked = all.filter(t => t.locked).length
+        message.success(
+            `Mapa reacomodado.` +
+            (locked ? ` ${locked} ${locked === 1 ? 'mesa bloqueada se quedó' : 'mesas bloqueadas se quedaron'} en su lugar.` : '')
+        )
+        if (result.unplaced > 0) {
+            message.warning(`${result.unplaced} mesas no cupieron en este acomodo y no se movieron.`)
+        }
+    }
+
+    /* ── Acciones del panel de mesa (§5.4) ─────────────────────────────── */
+
+    const patchTable = async (tableId, patch) => {
+        const { error } = await supabase
+            .from('tables')
+            .update({ ...patch, last_update_at: new Date() })
+            .eq('id', tableId)
+
+        if (error) {
+            console.error('Error al actualizar mesa:', error.message)
+            message.error('No se pudo actualizar la mesa')
+            return false
+        }
+        await getTables()
+        return true
+    }
+
+    const renameTable = (table, name) => patchTable(table.id, { name })
+
+    const toggleTableLock = async (table) => {
+        const ok = await patchTable(table.id, { locked: !table.locked })
+        if (ok) setSelectedTable(prev => prev && { ...prev, locked: !table.locked })
+    }
+
+    const changeTableSize = async (table, size) => {
+        const ok = await patchTable(table.id, { size })
+        if (ok) setSelectedTable(prev => prev && { ...prev, size })
+    }
+
+    // Cambiar de forma puede agrandar el footprint (redonda 200 → rectangular
+    // 400) e invadir a la vecina. Si el nuevo tamaño no cabe donde está, se
+    // reubica en el primer hueco libre en vez de dejar el layout encimado.
+    const changeTableShape = async (table, shape) => {
+        if (shape === table.shape) return
+
+        const maxSeats = SHAPE_MAX_SEATS[shape] ?? 12
+        const seated = confirmedGuests_?.filter(g => g.table === table.id).length ?? 0
+        const size = Math.min(table.size ?? 0, maxSeats)
+
+        if (size < seated) {
+            message.warning(
+                `Una mesa ${SHAPE_NAMES[shape]} admite ${maxSeats} lugares y aquí hay ${seated} invitados. Saca a ${seated - maxSeats} antes de cambiar la forma.`
+            )
+            return
+        }
+
+        const obstacles = [
+            ...(tables_ ?? []).filter(t => t.id !== table.id).map(t => rectOfTable(t)),
+            ...layoutElements.map(rectOfElement),
+        ]
+
+        const vertical = shape === 'rectangle' ? !!table.vertical : false
+        const candidate = { ...table, shape, vertical }
+        let { x, y } = table
+        let moved = false
+
+        if (!fitsWithoutOverlap(rectOfTable(candidate, { x, y }), obstacles)) {
+            const spot = findFreeSpot(candidate, obstacles)
+            if (!spot) {
+                message.error('No hay espacio en el mapa para esa forma. Mueve o quita alguna mesa primero.')
+                return
+            }
+            x = spot.x
+            y = spot.y
+            moved = true
+        }
+
+        const ok = await patchTable(table.id, { shape, size, x, y, vertical })
+        if (!ok) return
+
+        setSelectedTable(prev => prev && { ...prev, shape, size, x, y, vertical })
+        if (moved) message.info(`La mesa #${table.number} se movió: en su lugar anterior no cabía.`)
+    }
+
+    const toggleTableVertical = async (table) => {
+        const vertical = !table.vertical
+
+        const obstacles = [
+            ...(tables_ ?? []).filter(t => t.id !== table.id).map(t => rectOfTable(t)),
+            ...layoutElements.map(rectOfElement),
+        ]
+
+        const candidate = { ...table, vertical }
+        let { x, y } = table
+        let moved = false
+
+        if (!fitsWithoutOverlap(rectOfTable(candidate, { x, y }), obstacles)) {
+            const spot = findFreeSpot(candidate, obstacles)
+            if (!spot) {
+                message.error('No hay espacio para girar la mesa. Mueve o quita alguna mesa primero.')
+                return
+            }
+            x = spot.x
+            y = spot.y
+            moved = true
+        }
+
+        const ok = await patchTable(table.id, { vertical, x, y })
+        if (!ok) return
+
+        setSelectedTable(prev => prev && { ...prev, vertical, x, y })
+        if (moved) message.info(`La mesa #${table.number} se movió: girada no cabía donde estaba.`)
+    }
+
+    const removeGuestFromTable = async (guest) => {
+        const { error } = await supabase
+            .from('guests')
+            .update({ table: null, last_action_by: 'admin' })
+            .eq('id', guest.id)
+
+        if (error) {
+            console.error('Error quitando de la mesa:', error.message)
+            message.error('No se pudo quitar de la mesa')
+            return
+        }
+        message.success(`${guest.name} quedó sin mesa`)
+        getGuests()
+    }
+
+    const moveAllGuests = async (table, target) => {
+        const ids = (confirmedGuests_ ?? []).filter(g => g.table === table.id).map(g => g.id)
+        if (!ids.length) return
+
+        const { error } = await supabase
+            .from('guests')
+            .update({ table: target.id, last_action_by: 'admin' })
+            .in('id', ids)
+
+        if (error) {
+            console.error('Error moviendo invitados:', error.message)
+            message.error('No se pudo mover a los invitados')
+            return
+        }
+        message.success(`${ids.length} invitados se movieron a la mesa #${target.number}`)
+        getGuests()
+    }
+
+    const emptyTable = async (table) => {
+        const ids = (confirmedGuests_ ?? []).filter(g => g.table === table.id).map(g => g.id)
+        if (!ids.length) return
+
+        const { error } = await supabase
+            .from('guests')
+            .update({ table: null, last_action_by: 'admin' })
+            .in('id', ids)
+
+        if (error) {
+            console.error('Error vaciando la mesa:', error.message)
+            message.error('No se pudo vaciar la mesa')
+            return
+        }
+        message.success(`La mesa #${table.number} quedó vacía`)
+        getGuests()
+    }
+
+    // Sentar a varios invitados de una vez en la misma mesa.
+    const assignGuestsToTable = async (guests, table) => {
+        const ids = (guests ?? []).map(g => g.id)
+        if (!ids.length) return
+
+        const { error } = await supabase
+            .from('guests')
+            .update({
+                table: table.id,
+                last_update_date: new Date().toISOString(),
+                last_action_by: 'admin',
+            })
+            .in('id', ids)
+
+        if (error) {
+            console.error('Error asignando mesa:', error.message)
+            message.error('No se pudieron asignar los invitados')
+            return
+        }
+
+        message.success(
+            ids.length === 1
+                ? `${guests[0].name} quedó en la mesa #${table.number}`
+                : `${ids.length} invitados quedaron en la mesa #${table.number}`
+        )
+        getTables()
+        getGuests()
+    }
+
+    // Asignación desde el panel de invitados: sirve tanto para sentar a alguien
+    // sin mesa como para moverlo de una mesa a otra.
+    const assignGuestToTable = async (guest, table) => {
+        const { error } = await supabase
+            .from('guests')
+            .update({
+                table: table.id,
+                last_update_date: new Date().toISOString(),
+                last_action_by: 'admin',
+            })
+            .eq('id', guest.id)
+
+        if (error) {
+            console.error('Error asignando mesa:', error.message)
+            message.error('No se pudo asignar la mesa')
+            return
+        }
+
+        message.success(`${guest.name} quedó en la mesa #${table.number}`)
+        getTables()
+        getGuests()
     }
 
     const transferGuest = async (table, guest) => {
@@ -749,10 +1225,6 @@ export const TablesPage = ({ invitationID }) => {
 
     };
 
-    const handleSelectTable = (table) => {
-        setSelectedTable(table)
-        setOnSelectedTable(table.id)
-    }
 
 
     useEffect(() => {
@@ -798,16 +1270,21 @@ export const TablesPage = ({ invitationID }) => {
         if (!container) return
 
         const handleWheel = (e) => {
-            if (!e.ctrlKey) return
             e.preventDefault()
-            // deltaMode 0 = pixels (trackpad), 1 = lines (rueda de ratón)
-            const delta = e.deltaY * (e.deltaMode === 1 ? -0.1 : -0.003)
-            setZoomLevel(prev => Math.min(Math.max(prev + delta, minZoom), maxZoom))
+            if (e.ctrlKey) {
+                // deltaMode 0 = pixels (trackpad), 1 = lines (rueda de ratón)
+                const delta = e.deltaY * (e.deltaMode === 1 ? -0.1 : -0.003)
+                setZoomLevel(prev => Math.min(Math.max(prev + delta, minZoom), maxZoom))
+                return
+            }
+            // Sin Ctrl, el scroll panea el tablero, como en Figma: sin esto el
+            // trackpad no movía nada y el mapa se sentía atorado.
+            setMapPosition(prev => clampPan(prev.x - e.deltaX, prev.y - e.deltaY))
         }
 
         container.addEventListener('wheel', handleWheel, { passive: false })
         return () => container.removeEventListener('wheel', handleWheel)
-    }, [minZoom, maxZoom])
+    }, [minZoom, maxZoom, showOnboarding, leftView])
 
     useEffect(() => {
         const isTypingTarget = (target) => {
@@ -879,7 +1356,7 @@ export const TablesPage = ({ invitationID }) => {
             container.removeEventListener('touchmove', onTouchMove)
             container.removeEventListener('touchend', onTouchEnd)
         }
-    }, [minZoom, maxZoom])
+    }, [minZoom, maxZoom, showOnboarding, leftView])
 
     const groupColorMap = useMemo(() => {
         const map = new Map();
@@ -972,137 +1449,294 @@ export const TablesPage = ({ invitationID }) => {
         console.log(selectedTable)
     }, [selectedTable])
 
-    const handleShapes = (shape) => {
-        switch (shape) {
-            case 'round': return t('tables.shape_round')
-            case 'square': return t('tables.shape_square')
-            case 'rectangle': return t('tables.shape_rectangle')
-            default: return ''
+    // Lleva la vista sobre un punto del tablero. Se difiere al efecto de
+    // arriba para cubrir el caso de que el mapa no esté montado todavía.
+    const requestCenter = (focusX, focusY, zoom = NEW_ELEMENT_ZOOM) => {
+        setLeftView('map')
+        setPendingCenter({ focusX, focusY, zoom })
+    }
+
+    // Al abrir la pantalla, la vista arranca sobre la pista de baile.
+    const didInitialCenter = useRef(false)
+    useEffect(() => {
+        if (didInitialCenter.current || !tables_?.length) return
+        didInitialCenter.current = true
+        const focus = centerFocus()
+        setPendingCenter({ focusX: focus.x, focusY: focus.y, zoom: CENTER_ZOOM })
+    }, [tables_])
+
+    // Aplica el centrado pendiente en cuanto el mapa está montado y visible:
+    // al crear algo desde el onboarding o desde la lista, el canvas todavía no
+    // existe cuando se pide el centrado.
+    useEffect(() => {
+        if (!pendingCenter || showOnboarding || leftView !== 'map') return
+        const container = mapContainerRef.current
+        if (!container) return
+
+        const { focusX, focusY, zoom } = pendingCenter
+        const half = WORK_CANVAS_SIZE / 2
+        setZoomLevel(zoom)
+        setMapPosition({
+            x: container.clientWidth / 2 - half - (focusX - half) * zoom,
+            y: container.clientHeight / 2 - half - (focusY - half) * zoom,
+        })
+        setPendingCenter(null)
+    }, [pendingCenter, showOnboarding, leftView])
+
+    // Alimenta la franja de avance. La pista de baile no es una mesa: no
+    // aporta capacidad y no cuenta para "N mesas".
+    const seatingStats = useMemo(() => {
+        const realTables = (tables_ ?? []).filter(t => t.shape !== 'dance')
+        const totalConfirmed = confirmedGuests_?.length ?? 0
+        const seated = confirmedGuests_?.filter(g => g.table).length ?? 0
+        const capacity = realTables.reduce((sum, t) => sum + (t.size ?? 0), 0)
+
+        return {
+            totalConfirmed,
+            seated,
+            unseated: totalConfirmed - seated,
+            capacity,
+            tableCount: realTables.length,
+            // Lo que va a sobrar aunque se siente todo el mundo.
+            surplus: Math.max(capacity - totalConfirmed, 0),
+        }
+    }, [tables_, confirmedGuests_])
+
+    // Cuántos grupos de acompañantes siguen sin mesa. Sentarlos no es lo mismo
+    // que sentar N personas sueltas: hay que dejarles lugares contiguos, y esa
+    // es la advertencia que da la barra de móvil.
+    const unseatedGroups = useMemo(() => {
+        const groups = new Map()
+        ;(confirmedGuests_ ?? [])
+            .filter(g => !g.table)
+            .forEach(g => {
+                const key = String(g.companion_id ?? g.id)
+                groups.set(key, (groups.get(key) ?? 0) + 1)
+            })
+        return [...groups.values()].filter(n => n > 1).length
+    }, [confirmedGuests_])
+
+    // "Centrar": vuelve al zoom base con la pista de baile en medio del
+    // visor. Se centra sobre el centroide de lo que hay dibujado y no sobre el
+    // centro geométrico del canvas — las mesas viven en la mitad superior de
+    // los 3500px, así que el centro geométrico deja la vista en zona vacía.
+    // Punto que "Centrar" toma como ancla: la pista si existe, y si no el
+    // centro de todo lo dibujado.
+    const centerFocus = () => {
+        const dance = (tables_ ?? []).find(t => t.shape === 'dance')
+        if (dance) {
+            const size = getTableFootprint('dance')
+            return { x: dance.x + size.width / 2, y: dance.y + size.height / 2 }
+        }
+        const boxes = [
+            ...(tables_ ?? []).map(tbl => ({ ...getTableFootprint(tbl.shape), x: tbl.x, y: tbl.y })),
+            ...layoutElements.map(el => ({ width: el.width, height: el.height, x: el.x, y: el.y })),
+        ]
+        if (!boxes.length) return { x: WORK_CANVAS_SIZE / 2, y: WORK_CANVAS_SIZE / 2 }
+        return {
+            x: (Math.min(...boxes.map(b => b.x)) + Math.max(...boxes.map(b => b.x + b.width))) / 2,
+            y: (Math.min(...boxes.map(b => b.y)) + Math.max(...boxes.map(b => b.y + b.height))) / 2,
         }
     }
 
+    const centerMap = () => {
+        const focus = centerFocus()
+        requestCenter(focus.x, focus.y, CENTER_ZOOM)
+    }
 
     return (
         <div className="table-organization-main-container">
+            {/* El título, el CTA y la franja de avance cruzan todo el drawer:
+                describen el evento entero, no solo la columna del mapa. */}
+            <div className='seating-topbar'>
+                <div className='tab-map-header-cont'>
+                    {/* En móvil el cierre vive aquí, junto al título corto: el
+                        drawer ya no dibuja su propia barra. */}
+                    {isMobile && (
+                        <Button
+                            icon={<IoClose size={17} />}
+                            onClick={onClose}
+                            className={chrome.closeButton}
+                            aria-label='Cerrar' />
+                    )}
+
+                    <span className='table-org-section-header'>
+                        {isMobile ? 'Mesas' : t('tables.title')}
+                    </span>
+
+                    <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px'
+                    }}>
+
+                        <Button
+                            icon={<FaAngleDoubleRight size={12} style={{
+                                transform: !onGuestList && 'rotate(180deg)',
+                                marginTop: '3px'
+                            }} />}
+                            style={{ borderRadius: '99px' }}
+                            onClick={() => setOnGuestList(!onGuestList)} className={`button-web primarybutton--${onGuestList ? 'black' : 'active'}`}>
+                        </Button>
+
+                        <Dropdown
+                            trigger={['click']}
+                            placement='bottomRight'
+                            disabled={showOnboarding}
+                            open={addMenuOpen}
+                            onOpenChange={setAddMenuOpen}
+                            popupRender={() => (
+                                <AddMenu
+                                    onAddTable={(shape) => { setAddMenuOpen(false); addNewTable(shape) }}
+                                    onAddElement={(type) => { setAddMenuOpen(false); addLayoutElement(type) }}
+                                    onAutoLayout={isMobile ? () => { setAddMenuOpen(false); setAutoLayoutOpen(true) } : undefined}
+                                />
+                            )}
+                        >
+                            <Button
+                                icon={<Plus size={isMobile ? 20 : 16} style={{ marginTop: '3px' }} />}
+                                className={`${chrome.addButton} ${isMobile ? chrome.addButtonRound : ''}`}
+                                aria-disabled={showOnboarding}
+                                aria-label={isMobile ? 'Agregar' : undefined}
+                                style={{ opacity: showOnboarding ? 0.4 : 1 }}>
+                                {!isMobile && 'Agregar'}
+                            </Button>
+                        </Dropdown>
+
+                    </div>
+                </div>
+
+                {!showOnboarding && (
+                    <ProgressStrip
+                        seated={seatingStats.seated}
+                        totalConfirmed={seatingStats.totalConfirmed}
+                        unseated={seatingStats.unseated}
+                        surplus={seatingStats.surplus}
+                        tableCount={seatingStats.tableCount}
+                        onReview={() => setLeftView('list')}
+                    />
+                )}
+            </div>
+
             <div className='table-org-general-container'>
                 <div className='table-map-container'>
-                    <div className='tab-map-header-cont'>
-                        <span className='table-org-section-header button-web' style={{ padding: '0px' }}>{t('tables.title')}</span>
-
-                        {/* Mobile: ocupados/disponibles inline en el header */}
-                        <div className='button-mobile' style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <div style={{ width: '8px', height: '8px', borderRadius: '99px', backgroundColor: 'var(--sc-color)', flexShrink: 0 }} />
-                                <span style={{ fontSize: '12px', color: 'var(--text-color)' }}>Ocupados: <b>{taken}</b></span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <div style={{ width: '8px', height: '8px', borderRadius: '99px', backgroundColor: 'var(--brand-color-500)', flexShrink: 0 }} />
-                                <span style={{ fontSize: '12px', color: 'var(--text-color)' }}>Disp: <b>{available}</b></span>
-                            </div>
+                    {/* El panel derecho no cambia entre vistas; lo que alterna es este lado.
+                        El mapa contesta "¿cómo se ve mi salón?", la lista "¿quién está dónde". */}
+                    {!showOnboarding && (
+                    <div className={chrome.switchRow}>
+                        <div className='view-switch'>
+                            <button
+                                type='button'
+                                className={`view-switch-option ${leftView === 'map' ? 'view-switch-active' : ''}`}
+                                onClick={() => setLeftView('map')}>
+                                Mapa
+                            </button>
+                            <button
+                                type='button'
+                                className={`view-switch-option ${leftView === 'list' ? 'view-switch-active' : ''}`}
+                                onClick={() => setLeftView('list')}>
+                                {isMobile ? 'Mesas' : 'Lista de mesas'}
+                            </button>
+                            {/* Tercera pestaña solo en móvil: sustituye a la
+                                columna derecha de confirmados, que no cabe. */}
+                            {isMobile && (
+                                <button
+                                    type='button'
+                                    className={`view-switch-option ${leftView === 'guests' ? 'view-switch-active' : ''}`}
+                                    onClick={() => setLeftView('guests')}>
+                                    Invitados
+                                    {seatingStats.unseated > 0 && (
+                                        <span className='view-switch-badge'>{seatingStats.unseated}</span>
+                                    )}
+                                </button>
+                            )}
                         </div>
 
-                        <div style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px'
-                        }}>
+                        <div className={chrome.switchRight}>
+                            {/* En móvil el mapa se maneja con los controles que
+                                flotan sobre el propio lienzo; esta fila solo
+                                lleva los criterios de orden de la lista. */}
+                            {leftView === 'map' ? (!isMobile && (
+                                <>
 
-                            <Button
-                                icon={<FaAngleDoubleRight size={12} style={{
-                                    transform: !onGuestList && 'rotate(180deg)',
-                                    marginTop: '3px'
-                                }} />}
-                                style={{ borderRadius: '99px' }}
-                                onClick={() => setOnGuestList(!onGuestList)} className={`button-web primarybutton--${onGuestList ? 'black' : 'active'}`}>
-                            </Button>
+                                    <Tooltip title='Reacomoda todas las mesas con uno de los tres arreglos'>
+                                        <Button
+                                            icon={<LayoutGrid size={15} style={{ marginTop: '3px' }} />}
+                                            style={{ borderRadius: '99px' }}
+                                            className='primarybutton'
+                                            onClick={() => setAutoLayoutOpen(true)}>
+                                            Auto acomodo
+                                        </Button>
+                                    </Tooltip>
 
-                            <Button
-                                icon={<List size={16} />}
-                                style={{ borderRadius: '99px' }}
-                                onClick={() => setMobileList(true)}
-                                className='button-mobile primarybutton'>
-                            </Button>
-
-                            <Dropdown
-                                trigger={['click']}
-                                placement='bottomRight'
-                                arrow
-                                popupRender={() => (
-                                    <div className='modal-main-menu-container' onClick={(e) => e.stopPropagation()}>
-                                        <div className='modal-main-container'>
-                                            {newTableType === null ? (
-                                                <div className='shapes_cont'>
-                                                    <Button icon={<Circle size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={() => { setNewShape('round'); setNewTableType('mesa') }}>{t('tables.shape_round')}</Button>
-                                                    <Button icon={<RectangleHorizontal size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={() => { setNewShape('rectangle'); setNewTableType('mesa') }}>{t('tables.shape_rectangle')}</Button>
-                                                    <Button icon={<Square size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={() => { setNewShape('square'); setNewTableType('mesa') }}>{t('tables.shape_square')}</Button>
-                                                    <Button icon={<PartyPopper size={16} />} style={{ width: '100%' }} className='primarybutton' onClick={addDanceFloor}>Pista de baile</Button>
-                                                </div>
-                                            ) : (
-                                                <div className='new-table-modal'>
-                                                    <div className='modal-header-sect'>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                            <FaPlus style={{ color: 'var(--brand-color-500)' }} />
-                                                            <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none' }}>{t('tables.modal_new_title')}</span>
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                            <Button style={{ borderRadius: '99px' }} className='primarybutton' onClick={(e) => { e.stopPropagation(); setNewTableType(null); setOnAddingGuests(false); }}>{t('tables.btn_cancel')}</Button>
-                                                            <Button style={{ borderRadius: '99px' }} type='primary' onClick={addNewTable}>{t('tables.btn_create')}</Button>
-                                                        </div>
-                                                    </div>
-                                                    <div className='modal-content-sect'>
-                                                        <div className='org-small-col'>
-                                                            <span className='single-label'>{t('tables.label_name')}</span>
-                                                            <Input style={{ minHeight: '30px', borderRadius: '99px', backgroundColor: 'var(--ft-color)' }} placeholder={t('tables.placeholder_name')} value={tablesName} onChange={(e) => setTablesName(e.target.value)} className='tab-org-input' />
-                                                        </div>
-                                                        <div className='org-small-col'>
-                                                            <span className='single-label'>{t('tables.label_seats')}</span>
-                                                            <InputNumber style={{ minHeight: '30px', width: '100%', backgroundColor: 'var(--ft-color)', borderRadius: '99px' }} value={totalChairs} onChange={(e) => setTotalChairs(e)} className='tab-org-input' />
-                                                        </div>
-                                                    </div>
-                                                    <div className='modal-content-sect'>
-                                                        <Dropdown arrow popupRender={() => (
-                                                            <div className='shapes_cont'>
-                                                                <Button onClick={() => setNewShape('round')} style={{ width: '100%' }} className='primarybutton'>{t('tables.shape_round')}</Button>
-                                                                <Button onClick={() => setNewShape('square')} style={{ width: '100%' }} className='primarybutton'>{t('tables.shape_square')}</Button>
-                                                                <Button onClick={() => setNewShape('rectangle')} style={{ width: '100%' }} className='primarybutton'>{t('tables.shape_rectangle')}</Button>
-                                                            </div>
-                                                        )}>
-                                                            <Button icon={<ChevronDown size={14} />} className='primarybutton'>{t('tables.table_prefix')} {handleShapes(newShape)}</Button>
-                                                        </Dropdown>
-                                                        {newShape === 'rectangle' && <Button icon={newVertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />} className='primarybutton' onClick={() => setNewVertical(!newVertical)}>{newVertical ? t('tables.orientation_vertical') : t('tables.orientation_horizontal')}</Button>}
-                                                    </div>
-                                                    <div className='org-tab-card-row'>
-                                                        {onAddingGuests ? (
-                                                            <div className='org-small-col' style={{ gap: '12px' }}>
-                                                                <span className='single-label'>{t('tables.select_guests_hint')}</span>
-                                                                <div className='modal-content-sect' style={{ padding: '0px' }}>
-                                                                    <Progress size={[undefined, 20]} style={{ flex: 1, minWidth: '70%' }} strokeColor={'var(--brand-color-500)'} showInfo={false} status="active" percent={((ocuppiedChairs.length ?? 0) * 100) / totalChairs} />
-                                                                    <span className='on-transfer-label'>{(ocuppiedChairs.length ?? 0)} / {totalChairs}</span>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <Button style={{ borderRadius: '99px', margin: '16px 0px' }} className='primarybutton--active' onClick={() => handleAddingGuests(!onAddingGuests)}>{t('tables.btn_add_guests')}</Button>
-                                                        )}
-                                                    </div>
-                                                    <div className='popup-available-spaces-list' style={{ display: onAddingGuests ? 'flex' : 'none' }}>
-                                                        {ocuppiedChairs.map((chair, index) => (
-                                                            <div key={index} className='popup-available-spaces-item'>
-                                                                <span className='single-label'>{index + 1}.</span>
-                                                                <span className='single-label'>{chair.name}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            >
-                                <Button disabled={onEditPosition} icon={<IoMdAdd style={{ marginTop: '3px' }} />} style={{ borderRadius: '99px' }} onClick={handleNewTable} className={`primarybutton${!onEditPosition ? '--active' : ''}`}>
-                                    {t('tables.btn_new_table')}
-                                </Button>
-                            </Dropdown>
-
+                                    <Tooltip title='Vuelve al centro del mapa con el zoom original'>
+                                        <Button
+                                            icon={<Crosshair size={15} style={{ marginTop: '3px' }} />}
+                                            style={{ borderRadius: '99px' }}
+                                            className='primarybutton'
+                                            onClick={centerMap}>
+                                            Centrar
+                                        </Button>
+                                    </Tooltip>
+                                </>
+                            )) : leftView === 'list' ? (
+                                <>
+                                    <Button
+                                        style={{ borderRadius: '99px' }}
+                                        className={sortBy === 'number' ? 'primarybutton--active' : 'primarybutton'}
+                                        onClick={() => setSortBy('number')}>
+                                        Orden: número
+                                    </Button>
+                                    <Button
+                                        style={{ borderRadius: '99px' }}
+                                        className={sortBy === 'emptiest' ? 'primarybutton--active' : 'primarybutton'}
+                                        onClick={() => setSortBy('emptiest')}>
+                                        {isMobile ? 'Más vacías' : 'Más vacías primero'}
+                                    </Button>
+                                    <Button
+                                        style={{ borderRadius: '99px' }}
+                                        className={sortBy === 'space' ? 'primarybutton--active' : 'primarybutton'}
+                                        onClick={() => setSortBy('space')}>
+                                        Con espacio
+                                    </Button>
+                                </>
+                            ) : null}
                         </div>
                     </div>
+                    )}
+
+                    {showOnboarding ? (
+                        <Onboarding
+                            invitationID={invitationID}
+                            onSkip={() => setOnboardingSkipped(true)}
+                            onCreated={async () => {
+                                await getTables()
+                                // El mapa todavía no está montado (el onboarding
+                                // lo reemplaza): el centrado corre en cuanto
+                                // exista, vía el efecto de pendingCenter.
+                                requestCenter(WORK_CANVAS_SIZE / 2, WORK_CANVAS_SIZE / 2, CENTER_ZOOM)
+                            }}
+                        />
+                    ) : leftView === 'guests' ? (
+                        <div className='mobile-guests-tab'>
+                            <GuestPanel
+                                guests={confirmedGuests_ ?? []}
+                                tables={tables_ ?? []}
+                                onAssign={assignGuestToTable}
+                            />
+                        </div>
+                    ) : leftView === 'list' ? (
+                        <TablesList
+                            tables={tables_ ?? []}
+                            guests={confirmedGuests_ ?? []}
+                            sortBy={sortBy}
+                            onRefresh={() => { getTables(); getGuests(); }}
+                            onOpenTable={(table) => {
+                                setLeftView('map')
+                                setSelectedTable(table)
+                                setOnSelectedTable(table.id)
+                                setOnViewTable(true)
+                            }}
+                        />
+                    ) : (
                     <div
                         onMouseDown={startDrag}
                         onTouchStart={startDrag}
@@ -1110,6 +1744,7 @@ export const TablesPage = ({ invitationID }) => {
                         style={{ cursor: isDragging ? 'grabbing' : onGrab ? 'grab' : undefined }}
                         className={`org-map-container ${onMoving ? 'org-map-rule' : ''}`}>
                         <div
+                            ref={workAreaRef}
                             className='org-map-work-container'
                             style={{
                                 top: `${mapPosition.y}px`,
@@ -1123,6 +1758,18 @@ export const TablesPage = ({ invitationID }) => {
                                 overflow: 'hidden'
                             }}>
                                 {
+                                    layoutElements.map((element) => (
+                                        <LayoutElement
+                                            key={`el-${element.id}`}
+                                            element={element}
+                                            zoomLevel={zoomLevel}
+                                            onMove={updateLayoutElement}
+                                            onDelete={deleteLayoutElement}
+                                        />
+                                    ))
+                                }
+
+                                {
                                     tables_?.map((table, index) => (
 
                                         <DynamicTable
@@ -1131,7 +1778,16 @@ export const TablesPage = ({ invitationID }) => {
                                             key={index} table={table} occupiedChairs={confirmedGuests_?.filter(g => g.table === table.id).length}
                                             onEditPosition={onEditPosition} setSelectedTable={setSelectedTable}
                                             setOnSelectedTable={setOnSelectedTable} onSelectedTable={onSelectedTable} setOnViewTable={setOnViewTable}
-                                            setTables={setTables} tables={tables_} onMoving={onMoving} onGrab={onGrab} zoomLevel={zoomLevel} onDelete={deleteTableAndAdjust}
+                                            tables={tables_} onMoving={onMoving} onGrab={onGrab} zoomLevel={zoomLevel} onDelete={deleteTableAndAdjust}
+                                            layoutElements={layoutElements}
+                                            onDragCommit={dragCommitRef.current}
+                                            onMoved={handleTableMoved}
+                                            isMultiSelected={selectedIds.has(table.id)}
+                                            groupOffset={groupOffset}
+                                            onGroupDragStart={groupDragStart}
+                                            onGroupDragMove={groupDragMove}
+                                            onGroupDragEnd={groupDragEnd}
+                                            onToggleSelect={toggleSelect}
                                             isRepeated={tables_.filter(t => Number(t.number) === Number(table.number)).length > 1} />
                                     ))
                                 }
@@ -1139,6 +1795,37 @@ export const TablesPage = ({ invitationID }) => {
                             </div>
 
                         </div>
+
+                        {SHOW_ALIGN_ISLAND && selectedIds.size >= 2 && (
+                            <div className='align-island'>
+                                {ALIGN_ACTIONS.map((action, i) => (
+                                    <React.Fragment key={action.edge}>
+                                        {i === 3 && <span className='align-island-divider' />}
+                                        <Tooltip title={action.title} placement='bottom'>
+                                            <button
+                                                type='button'
+                                                className='align-island-btn'
+                                                onClick={() => alignSelection(action.edge)}
+                                            >
+                                                {React.createElement(action.Icon, { size: 17 })}
+                                            </button>
+                                        </Tooltip>
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        )}
+
+                        {marquee && (
+                            <div
+                                className='marquee-box'
+                                style={{
+                                    left: `${Math.min(marquee.x1, marquee.x2)}px`,
+                                    top: `${Math.min(marquee.y1, marquee.y2)}px`,
+                                    width: `${Math.abs(marquee.x2 - marquee.x1)}px`,
+                                    height: `${Math.abs(marquee.y2 - marquee.y1)}px`,
+                                }}
+                            />
+                        )}
 
                         <div className='tools-map-menu-container'>
 
@@ -1156,9 +1843,32 @@ export const TablesPage = ({ invitationID }) => {
                                 <FaMinus size={12} />
                             </div>
 
+                            {/* En móvil el slider vertical no se puede arrastrar
+                                con el pulgar sin mover el mapa: el zoom pasa a
+                                dos botones, como en el diseño. */}
+                            {isMobile && (
+                                <div className='map-tool-group'>
+                                    <Button
+                                        className='full-screen-button'
+                                        aria-label='Acercar'
+                                        onClick={() => setZoomLevel(z => Math.min(maxZoom, +(z + zoomStep).toFixed(2)))}
+                                        icon={<FaPlus size={13} />} />
+                                    <Button
+                                        className='full-screen-button'
+                                        aria-label='Alejar'
+                                        onClick={() => setZoomLevel(z => Math.max(minZoom, +(z - zoomStep).toFixed(2)))}
+                                        icon={<FaMinus size={13} />} />
+                                    <Button
+                                        className='full-screen-button'
+                                        aria-label='Centrar'
+                                        onClick={centerMap}
+                                        icon={<Crosshair size={16} />} />
+                                </div>
+                            )}
+
                             <Tooltip
                                 title={t('tables.tooltip_space_move')}
-                                placement="top"
+                                placement="left"
                             >
                                 <Button
                                     disabled={onMoving}
@@ -1167,6 +1877,27 @@ export const TablesPage = ({ invitationID }) => {
                                     onClick={() => setOnGrab(!onGrab)}
                                     id="expandedbutton" icon={<PiHandGrabbing size={18} />} />
                             </Tooltip>
+
+                            {/* Deshacer y rehacer viven en el plano, junto al zoom
+                                y la mano: son herramientas del lienzo. */}
+                            <div className='map-tool-group'>
+                                <Tooltip title={history.canUndo ? 'Deshacer' : 'Nada que deshacer'} placement='left'>
+                                    <Button
+                                        className='full-screen-button'
+                                        style={{ height: '35px', minWidth: '35px' }}
+                                        aria-disabled={!history.canUndo || history.busy}
+                                        onClick={() => { if (history.canUndo && !history.busy) history.undo(tables_) }}
+                                        icon={<Undo2 size={16} />} />
+                                </Tooltip>
+                                <Tooltip title={history.canRedo ? 'Rehacer' : 'Nada que rehacer'} placement='left'>
+                                    <Button
+                                        className='full-screen-button'
+                                        style={{ height: '35px', minWidth: '35px' }}
+                                        aria-disabled={!history.canRedo || history.busy}
+                                        onClick={() => { if (history.canRedo && !history.busy) history.redo(tables_) }}
+                                        icon={<Redo2 size={16} />} />
+                                </Tooltip>
+                            </div>
 
                         </div>
 
@@ -1179,310 +1910,119 @@ export const TablesPage = ({ invitationID }) => {
                                 display: isMobile ? 'none' : undefined,
                             }}
                         >
+                            {/* Leyenda de la convención de color, no de conteos:
+                                los números viven ahora en la franja de avance. */}
                             <div className='org-single-row'>
-                                <div style={{
-                                    backgroundColor: 'var(--sc-color)'
-                                }} className='tabs-dot-space'></div>
-                                <span className='single-label button-web'>{t('tables.seats_taken')} <b style={{ marginLeft: '6px' }}>{taken}</b></span>
-                                <span className='single-label button-mobile'>{t('tables.seats_taken_mobile')} <b style={{ marginLeft: '6px' }}>{taken}</b></span>
+                                <div style={{ ...LEGEND_DOT, backgroundColor: 'var(--brand-color-300)' }} />
+                                <span className='single-label'>Lugar ocupado</span>
                             </div>
 
                             <div className='org-single-row'>
-                                <div style={{
-                                    backgroundColor: 'var(--brand-color-500)'
-                                }} className='tabs-dot-space'></div>
-                                <span className='single-label button-web'>{t('tables.seats_available')} <b style={{ marginLeft: '6px' }}>{available}</b></span>
-                                <span className='single-label button-mobile'>{t('tables.seats_available_mobile')} <b style={{ marginLeft: '6px' }}>{available}</b></span>
+                                <div style={{ ...LEGEND_DOT, ...LEGEND_DOT_FREE }} />
+                                <span className='single-label'>Lugar disponible</span>
                             </div>
 
+                            <div className='org-single-row'>
+                                <div style={{ ...LEGEND_DOT, backgroundColor: 'var(--text-color)' }} />
+                                <span className='single-label'>Mesa bloqueada</span>
+                            </div>
 
                         </div>
 
-                    </div>
+                        {/* Barra fija de móvil: en una pantalla donde el mapa se
+                            ve por pedazos, es lo único que recuerda cuánta gente
+                            queda por sentar y da el camino para hacerlo. */}
+                        {isMobile && seatingStats.unseated > 0 && !onModal && addGuestsFor == null && (
+                            <div className='mobile-unseated-dock'>
+                                <div className='mobile-unseated-text'>
+                                    <span className='mobile-unseated-title'>
+                                        {seatingStats.unseated} confirmado{seatingStats.unseated === 1 ? '' : 's'} sin mesa
+                                    </span>
+                                    {unseatedGroups > 0 && (
+                                        <span className='mobile-unseated-sub'>
+                                            Incluye {unseatedGroups} grupo{unseatedGroups === 1 ? '' : 's'} que no se separan
+                                        </span>
+                                    )}
+                                </div>
+                                <button
+                                    type='button'
+                                    className='mobile-unseated-cta'
+                                    onClick={() => setLeftView('guests')}>
+                                    Sentarlos
+                                </button>
+                            </div>
+                        )}
 
-                    {
-                        onModal &&
+                    </div>
+                    )}
+
+                    <AutoLayoutModal
+                        open={autoLayoutOpen}
+                        tableCount={(tables_ ?? []).filter(t => t.shape !== 'dance' && !t.locked).length}
+                        suggested={suggestLayout((tables_ ?? []).filter(t => t.shape !== 'dance'))}
+                        onCancel={() => setAutoLayoutOpen(false)}
+                        onApply={applyAutoLayout}
+                    />
+
+                    {addGuestsFor != null && (() => {
+                        const target = (tables_ ?? []).find(t => t.id === addGuestsFor)
+                        if (!target) return null
+                        const seated = (confirmedGuests_ ?? []).filter(g => g.table === target.id)
+                        const free = (confirmedGuests_ ?? []).filter(g => !g.table)
+                        return (
+                            <div className='add-guests-anchor'>
+                                <AddGuestsPicker
+                                    table={target}
+                                    occupants={seated}
+                                    candidates={free}
+                                    onClose={() => setAddGuestsFor(null)}
+                                    onAdd={(chosen) => {
+                                        setAddGuestsFor(null)
+                                        assignGuestsToTable(chosen, target)
+                                    }}
+                                />
+                            </div>
+                        )
+                    })()}
+
+                    {/* Panel de edición de la mesa seleccionada (§5.4). */}
+                    {onModal && selectedTable && (
                         <>
                             <div onClick={onClosingModal} style={{ position: 'absolute', inset: 0, zIndex: 9998 }} />
                             <div
-                                onClick={(e) => { setOnTransfer(false); e.stopPropagation(); }}
-                                onMouseDown={(e) => {
-                                    if (isMobile) return
-                                    if (e.target.closest('button, input, select, textarea, .ant-select, .ant-input-number')) return
-                                    lastModalMouseRef.current = { x: e.clientX, y: e.clientY }
-                                    setIsModalDragging(true)
-                                }}
-                                className='modal-main-menu-container'
+                                className={`table-panel-anchor ${isModalDragging ? 'table-panel-dragging' : ''}`}
                                 style={{
-                                    position: 'absolute',
-                                    left: isMobile ? '5%' : `${modalPosition.x}px`,
-                                    top: isMobile ? '2.5%' : `${modalPosition.y}px`,
-                                    width: isMobile ? '90%' : undefined,
-                                    borderRadius: isMobile ? '16px' : undefined,
-                                    zIndex: 9999,
-                                    userSelect: isModalDragging ? 'none' : undefined,
-                                    cursor: !isMobile ? (isModalDragging ? 'grabbing' : 'default') : undefined,
-                                }}>
-
-                                {
-                                    tables && selectedTable && !isMobile &&
-
-                                    <div className='modal-tables-container' style={{
-                                        width: onEditingTable && '5px'
-                                    }}>
-                                        {
-                                            !onEditingTable &&
-                                            tables_.map((tab, index) => (
-                                                <div
-                                                    key={index}
-                                                    onClick={() => handleSelectTable(tab)}
-                                                    className={`modal-sider-tab-item ${selectedTable.id === tab.id ? 'modal-sider-selected-tab' : ''}`}
-                                                >
-                                                    <span className='single-label' style={{ fontWeight: 400, fontSize: '12px' }}>{tab.number}</span>
-                                                </div>
-                                            ))
-                                        }
-                                    </div>
-                                }
-
-                                <div className='modal-main-container'>
-                                    {
-
-                                        onViewTable && selectedTable &&
-                                        <div className='new-table-modal'>
-                                            <div className='modal-header-sect '>
-
-                                                {onEditingTable ? (
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <Select
-                                                            value={editingNumber}
-                                                            onChange={setEditingNumber}
-                                                            status={hasDuplicateNumber ? 'error' : ''}
-                                                            style={{ width: '100px' }}
-                                                            popupMatchSelectWidth={false}
-                                                        >
-                                                            {Array.from({ length: 100 }, (_, i) => (
-                                                                <Select.Option key={i} value={i}>{i}</Select.Option>
-                                                            ))}
-                                                        </Select>
-                                                        {hasDuplicateNumber && (
-                                                            <span style={{ fontSize: '11px', color: '#ff4d4f' }}>
-                                                                Dos mesas tienen el mismo número
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <span className='table-org-section-header' style={{ padding: '0px', pointerEvents: 'none', lineHeight: '1' }}>{t('tables.modal_table_header', { number: selectedTable.number })}</span>
-                                                        {selectedTableIsRepeated && (
-                                                            <span style={{ fontSize: '11px', color: '#ff4d4f' }}>
-                                                                Dos mesas tienen el mismo número
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-
-
-
-
-                                                <div style={{
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '6px'
-                                                }}>
-
-
-                                                    <Button
-                                                        style={{ borderRadius: '99px' }}
-                                                        className={`button-web primarybutton${!onEditingTable ? '' : ''}--active`} onClick={onEditingTable ? updateTable : editTable}>
-                                                        {onEditingTable ? t('tables.btn_done') : t('tables.btn_edit')}
-                                                    </Button>
-                                                    {/* Selector de forma — solo desktop */}
-                                                    {onEditingTable && !isMobile && (
-                                                        <Dropdown
-                                                            arrow
-                                                            popupRender={() => (
-                                                                <div className='shapes_cont'>
-                                                                    <Button onClick={() => setSelectedTable((prev) => ({ ...prev, shape: 'round' }))} style={{ width: '100%' }} className='primarybutton'>{t('tables.shape_round')}</Button>
-                                                                    <Button onClick={() => setSelectedTable((prev) => ({ ...prev, shape: 'square' }))} style={{ width: '100%' }} className='primarybutton'>{t('tables.shape_square')}</Button>
-                                                                    <Button onClick={() => setSelectedTable((prev) => ({ ...prev, shape: 'rectangle' }))} style={{ width: '100%' }} className='primarybutton'>{t('tables.shape_rectangle')}</Button>
-                                                                </div>
-                                                            )}
-                                                        >
-                                                            <Button icon={<ChevronDown size={14} />} className='primarybutton'>{handleShapes(selectedTable?.shape)}</Button>
-                                                        </Dropdown>
-                                                    )}
-
-                                                    {onEditingTable && selectedTable.shape === 'rectangle' && !isMobile && (
-                                                        <Tooltip title={selectedTable.vertical ? 'Mesa vertical' : 'Mesa horizontal'}>
-                                                            <Button className='primarybutton' onClick={() => setSelectedTable((prev) => ({ ...prev, vertical: !prev.vertical }))} style={{ width: '100%' }}>{selectedTable.vertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />}</Button>
-                                                        </Tooltip>
-                                                    )}
-
-                                                    {/* Mobile: botón directo para agregar invitados */}
-                                                    {onEditingTable && isMobile && (
-                                                        <Button
-                                                            style={{ borderRadius: '99px' }}
-                                                            className='primarybutton--active'
-                                                            onClick={() => { handleAddingGuests(true); setMobileList(true); }}>
-                                                            Agregar
-                                                        </Button>
-                                                    )}
-
-
-
-                                                </div>
-
-                                            </div>
-
-                                            <div className='modal-content-sect'>
-
-                                                <div className='org-small-col'>
-                                                    <span className='single-label'>{t('tables.label_table_name')}</span>
-                                                    {
-                                                        onEditingTable ?
-                                                            <Input
-                                                                style={{ minHeight: '30px', borderRadius: '99px', backgroundColor: 'var(--ft-color)' }}
-                                                                placeholder={t('tables.placeholder_name')}
-                                                                value={tablesName}
-                                                                onChange={(e) => setTablesName(e.target.value)}
-                                                                // onChange={onFilterbyName}
-                                                                className='tab-org-input' />
-                                                            :
-                                                            <span style={{ fontSize: '14px', color: 'var(--text-color)', fontWeight: 600 }}>{selectedTable.name}</span>
-                                                    }
-                                                </div>
-
-                                                <div className='org-small-col'>
-                                                    <span className='single-label'>{t('tables.label_seats')}</span>
-                                                    {
-                                                        onEditingTable ?
-                                                            <InputNumber
-                                                                style={{
-                                                                    minHeight: '30px', width: '100%',
-                                                                    backgroundColor: 'var(--ft-color)', borderRadius: '99px'
-                                                                }}
-                                                                value={totalChairs}
-                                                                onChange={(e) => setTotalChairs(e)}
-                                                                className='tab-org-input' />
-                                                            : <span style={{ fontSize: '14px', color: 'var(--text-color)', fontWeight: 600 }}>{t('tables.seats_display', { count: selectedTable.size })}</span>
-                                                    }
-                                                </div>
-
-
-                                            </div>
-
-
-                                            <div className='modal-content-sect'>
-
-                                                <div className='org-small-col' style={{ gap: '12px' }}>
-                                                    {
-                                                        onEditingTable &&
-                                                        <span className='single-label'>
-                                                            Selecciona en la lista de la derecha los invitados que deseas agregar a tu mesa
-                                                        </span>
-                                                    }
-
-                                                    <div className='modal-content-sect' style={{
-                                                        padding: '0px', paddingTop: !onEditingTable && '0px'
-                                                    }}>
-                                                        <Progress
-                                                            size={[isMobile ? 240 : 240, 15]}
-                                                            style={{ flex: isMobile ? '0 0 auto' : 1, minWidth: '70%' }}
-                                                            strokeColor={"var(--brand-color-500)"}
-                                                            showInfo={false}
-                                                            status="active"
-                                                            percent={((ocuppiedChairs?.length ?? 0) * 100) / totalChairs} />
-                                                        <span className='on-transfer-label' style={{ color: 'var(--text-color)' }}>
-                                                            {(ocuppiedChairs?.length ?? 0)} / {totalChairs}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-
-
-                                            </div>
-
-
-                                            <div className='popup-available-spaces-list' >
-                                                {
-                                                    ocuppiedChairs.map((chair, index) => (
-                                                        <div key={index} className='popup-available-spaces-item' style={{
-                                                            alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: onEditingTable ? 'space-between' : 'flex-start'
-                                                        }}>
-                                                            <div style={{
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px'
-                                                            }}>
-                                                                <span className='single-label'>{index + 1}.</span>
-                                                                <span className='single-label'>{chair.name}</span>
-                                                            </div>
-                                                            {
-                                                                onEditingTable && chair.name &&
-                                                                <div className="org-single-row">
-                                                                    {isMobile ? (
-                                                                        <Button
-                                                                            icon={<LuShuffle size={16} style={{ marginTop: '3px' }} />}
-                                                                            style={{ borderRadius: '99px' }} className='primarybutton'
-                                                                            onClick={() => setTransferSheet(chair)}>{t('tables.btn_transfer')}</Button>
-                                                                    ) : (
-                                                                        <Dropdown
-                                                                            placement='toRight'
-                                                                            trigger={['click']}
-                                                                            popupRender={() => (
-                                                                                <div className='on-transfer-container'>
-                                                                                    <span className='on-transfer-label'>{t('tables.select_table')}</span>
-                                                                                    <div className='transfer-mesas-cont'>
-                                                                                        {tables_.map((table) => (
-                                                                                            (chair.table !== table.id) && (confirmedGuests_?.filter(g => g.table === table.id).length !== table.size) &&
-                                                                                            <div key={table.id} className='table-transfer-item' onClick={() => transferGuest(table, chair)}>
-                                                                                                <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center' }}>
-                                                                                                    <span>{table.name ? `#${table.number} - ${table.name}` : `${t('tables.table_prefix')} #${table.number}`}</span>
-                                                                                                </div>
-                                                                                                <div style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                                                                    <Progress style={{ flex: 1, minWidth: '70%' }} className='progress-tables' strokeColor={'var(--brand-color-500)'} status="active" showInfo={false} percent={(confirmedGuests_?.filter(g => g.table === table.id).length * 100) / table.size} />
-                                                                                                    <span className='occupied-places-tab-mob'>{confirmedGuests_?.filter(g => g.table === table.id).length} / {table.size}</span>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                </div>
-                                                                            )}
-                                                                        >
-                                                                            <Button icon={<LuShuffle size={16} style={{ marginTop: '3px' }} />} style={{ borderRadius: '99px' }} className='primarybutton'>{t('tables.btn_transfer')}</Button>
-                                                                        </Dropdown>
-                                                                    )}
-                                                                    <Button
-                                                                        style={{ borderRadius: '99px' }}
-                                                                        className='primarybutton' icon={<RiDeleteBack2Line size={16} style={{ marginTop: '3px' }} />} onClick={() => updateChair(chair)} ></Button>
-
-                                                                </div>
-
-                                                            }
-
-                                                        </div>
-
-                                                    ))
-                                                }
-
-
-                                                {
-                                                    onEditingTable &&
-                                                    <Button
-                                                        onClick={() => deleteTableAndAdjust(selectedTable.id)}
-                                                        className={'primarybutton'} style={{ borderRadius: '99px', margin: '16px 0px' }}>{t('tables.btn_delete')}</Button>
-                                                }
-
-                                            </div>
-
-
-                                        </div>
-
-                                    }
-
-
-
-                                </div>
+                                    left: isMobile ? 0 : `${modalPosition.x}px`,
+                                    top: isMobile ? 'auto' : `${modalPosition.y}px`,
+                                    bottom: isMobile ? 0 : 'auto',
+                                    right: isMobile ? 0 : 'auto',
+                                }}
+                            >
+                                <TablePanel
+                                    table={selectedTable}
+                                    onDragStart={(e) => {
+                                        if (isMobile) return
+                                        lastModalMouseRef.current = { x: e.clientX, y: e.clientY }
+                                        setIsModalDragging(true)
+                                    }}
+                                    guests={confirmedGuests_ ?? []}
+                                    tables={tables_ ?? []}
+                                    onClose={onClosingModal}
+                                    onRename={renameTable}
+                                    onChangeShape={changeTableShape}
+                                    onToggleVertical={toggleTableVertical}
+                                    onChangeSize={changeTableSize}
+                                    onToggleLock={toggleTableLock}
+                                    onAssignGuest={assignGuestToTable}
+                                    onRequestAddGuests={(t) => setAddGuestsFor(t.id)}
+                                    onRemoveGuest={removeGuestFromTable}
+                                    onMoveAll={moveAllGuests}
+                                    onEmpty={emptyTable}
+                                    onDelete={deleteTableAndAdjust}
+                                />
                             </div>
                         </>
-                    }
+                    )}
 
                     {/* Overlay de transferir invitado (solo mobile) */}
                     {isMobile && transferSheet && (
@@ -1523,380 +2063,14 @@ export const TablesPage = ({ invitationID }) => {
                         onClick={() => setMobileList(!mobileList)}
                         icon={<FaList size={16} />}
                         className='button-mobile confirmedlistvutton primarybutton--active'></Button>
-                    {
-                        onGuestList &&
-                        <>
-                            <div style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0px 20px', alignSelf: 'stretch'
-                            }}>
-                                <span className='table-org-section-header button-web'>{t('tables.confirmed_guests', { count: confirmedGuests_?.length ?? 0 })}</span>
-                                <span className='table-org-section-header button-mobile'>{t('tables.confirmed_guests_mobile', { count: confirmedGuests_?.length ?? 0 })}</span>
-                            </div>
 
-                            <div className='tab-org-filter-cont'>
-                                <Input
-                                    placeholder={t('tables.search_placeholder')}
-                                    value={filterByName}
-                                    onChange={(e) => setFilterByName(e.target.value)}
-                                    className='tab-org-input' />
-                                {
-                                    !onAddingGuests &&
-                                    <Button
-                                        onClick={() => setOnFilter(!onFilter)}
-                                        icon={<BsSliders size={14} />}
-                                        className={!onFilter ? 'filtering-button' : 'filtering-button-active'} />
-                                }
-                                {
-                                    onFilter &&
-                                    <div className='filters-popup'>
-                                        <div className='filters-popup-row'>
-                                            <span
-                                                style={{ cursor: onAddingGuests && 'not-allowed' }}
-                                                onClick={() => setCurrentFilter('all')} className={`filter-item ${currentFilter === 'all' && !onAddingGuests && 'filter-item-active'}`}>{t('tables.filter_all')}</span>
-                                            <span onClick={() => setCurrentFilter('non-assigned')} className={`filter-item full-item-w ${currentFilter === 'non-assigned' && 'filter-item-active'}`}>{t('tables.filter_unassigned')}</span>
-                                        </div>
-                                        <div className='filters-popup-row'>
-                                            <span onClick={() => setCurrentFilter('compained')} className={`filter-item full-item-w ${currentFilter === 'compained' && 'filter-item-active'}`}>{t('tables.filter_accompanied')}</span>
-                                            <span onClick={() => setCurrentFilter('alone')} className={`filter-item ${currentFilter === 'alone' && 'filter-item-active'}`}>{t('tables.filter_alone')}</span>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                            <div style={{ display: onAddingGuests ? 'flex' : 'none' }} className='padding-container'>
-                                <div className='tag-disclaimer'>
-
-                                    {
-                                        availableSeats < 1 ? t('tables.disclaimer_full') :
-                                            confirmedGuests_?.filter((guest) => guest.table === null).length < 1 ?
-                                                t('tables.disclaimer_no_guests')
-                                                : t('tables.disclaimer_pre_assigned')
-                                    }
-
-                                </div>
-                            </div>
-
-                            <div className='org-guests-table-container'
-                                style={{
-                                    maxHeight: onAddingGuests && 'calc(75vh - 90px)'
-                                }}
-                            >
-                                {
-                                    onAddingGuests ?
-                                        confirmedGuests_
-                                            ?.filter(c => {
-                                                if (!selectedTable) return c.table === null;
-                                                else return !ocuppiedChairs.includes(c)
-                                            })
-                                            ?.filter(c => {
-                                                if (!filterByName) return true;
-
-                                                const name = c.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-                                                const search = filterByName.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-
-                                                return name.includes(search);
-                                            })
-                                            .map((guest, index) => (
-
-                                                <div key={index} className='org-tab-item'>
-                                                    <div className="org-single-row">
-                                                        {
-                                                            !selectedTable && checkedChairs &&
-                                                            <Checkbox onChange={(e) => updateChair(guest, e)}
-                                                                disabled={!availableSeats >= 1 && !checkedChairs[guest.name]} />
-                                                        }
-
-                                                        <span className='org-tab-name'>{guest.name}</span>
-                                                    </div>
-
-
-
-                                                    <div className="org-single-row">
-                                                        {
-                                                            availableSeats >= 1 && selectedTable &&
-                                                            <Button
-                                                                style={{ fontWeight: 600 }}
-                                                                icon={<IoMdAdd size={16} style={{ marginTop: '2px' }} />}
-                                                                className='orgtabbutton' onClick={() => updateChair(guest)}>{t('tables.btn_add_to_table')}</Button>
-                                                        }
-
-                                                        <Dropdown
-                                                            popupRender={() => (
-                                                                <div className='who-is-main-container'>
-
-                                                                    {/** SI TIENE COMPANION */}
-                                                                    {guest.companion_id ? (
-                                                                        <>
-                                                                            <div className='who-is-container'>
-
-                                                                                <span>
-                                                                                    <b>{guest?.name}</b> {t('tables.whois_companion_of')}{" "}
-                                                                                    <b
-                                                                                        onClick={() => setOnExtendedWhos(!onExtendedWhos)}
-                                                                                        className='parent-label-whois'
-                                                                                    >
-                                                                                        {confirmedGuests_?.find(g => g.id === guest.companion_id)?.name}
-                                                                                    </b>
-                                                                                </span>
-                                                                            </div>
-
-                                                                            {onExtendedWhos && (
-                                                                                <>
-                                                                                    <div className='whos-connector' />
-
-                                                                                    <div className='who-is-container'>
-                                                                                        {(() => {
-                                                                                            const parent = confirmedGuests_?.find(
-                                                                                                g => g.id.toString() === guest.companion_id
-                                                                                            );
-                                                                                            const companions = confirmedGuests_?.filter(
-                                                                                                g => g.companion_id === parent?.id
-                                                                                            );
-
-                                                                                            return (
-                                                                                                <>
-                                                                                                    <span>
-                                                                                                        {t('tables.whois_added_on')} <b>{parent?.name}</b> {t('tables.whois_on_date')}{" "}
-                                                                                                        <b>{formatDate(parent?.created_at)}</b> {t('tables.whois_confirmed_on')}{" "}
-                                                                                                        <b>{formatDate(parent?.last_update_date)}</b>
-                                                                                                    </span>
-
-                                                                                                    {companions?.length > 0 && (
-                                                                                                        <>
-                                                                                                            <span>{t('tables.whois_accompanied_by')}</span>
-                                                                                                            <ul>
-                                                                                                                {companions.map((c, i) => (
-                                                                                                                    <li key={i}>{c.name}</li>
-                                                                                                                ))}
-                                                                                                            </ul>
-                                                                                                        </>
-                                                                                                    )}
-                                                                                                </>
-                                                                                            );
-                                                                                        })()}
-                                                                                    </div>
-                                                                                </>
-                                                                            )}
-                                                                        </>
-                                                                    ) : (
-                                                                        /** SI NO TIENE COMPANION */
-                                                                        <div className='who-is-container'>
-
-                                                                            <span>
-                                                                                {t('tables.whois_added_on')} <b>{guest?.name}</b> {t('tables.whois_on_date')}{" "}
-                                                                                <b>{formatDate(guest?.created_at)}</b> {t('tables.whois_confirmed_on')}{" "}
-                                                                                <b>{formatDate(guest?.last_update_date)}</b>
-                                                                            </span>
-
-                                                                            {(() => {
-                                                                                const companions = confirmedGuests_?.filter(
-                                                                                    c => c.companion_id === guest.id
-                                                                                );
-
-                                                                                return companions?.length > 0 ? (
-                                                                                    <>
-                                                                                        <span>{t('tables.whois_accompanied_by')}</span>
-                                                                                        <ul>
-                                                                                            {companions.map((c, index) => (
-                                                                                                <li key={index}>{c?.name}</li>
-                                                                                            ))}
-                                                                                        </ul>
-                                                                                    </>
-                                                                                ) : (
-                                                                                    <span className='no-companions-special-label'>
-                                                                                        {t('tables.whois_no_companions')}
-                                                                                    </span>
-                                                                                );
-                                                                            })()}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        >
-                                                            <Button
-                                                                icon={<IoMdHelp size={16} style={{ marginTop: '2px' }} />}
-                                                                onClick={() => setAboutMyGuest(guest)}
-                                                                style={{
-                                                                    background:
-                                                                        currentFilter === "compained" &&
-                                                                        backgroundColors[guest.color_id],
-                                                                }}
-                                                                className="orgtabbutton"
-                                                            />
-                                                        </Dropdown>
-
-
-                                                    </div>
-
-                                                </div>
-                                            ))
-                                        :
-                                        guestsSorted.map((guest, index) => (
-
-                                            <div key={index} className='org-tab-item' style={{
-                                                backgroundColor: currentFilter === "compained" && getGroupColor(guest)
-                                                    ? `${getGroupColor(guest)}40`
-                                                    : undefined,
-                                                borderBottom: currentFilter === "compained" && getGroupColor(guest)
-                                                    ? "1px solid var(--ft-color)"
-                                                    : undefined,
-                                            }}>
-                                                <span className='org-tab-name'>{guest.name}</span>
-                                                <div className="org-single-row">
-
-                                                    {/* {
-                                                        guest.tag &&
-                                                        <div className={`org-place-tag`} style={{
-                                                            width: 'auto', minWidth: '20px',
-                                                            padding: '0px 12px',
-                                                            backgroundColor: currentFilter === "compained" ? getGroupColor(guest) : undefined
-                                                        }}>
-                                                            {`${guest.tag ?? "-"}`}
-
-                                                        </div>
-                                                    } */}
-
-
-                                                    <div className={`org-place-tag ${!guest.table && 'non-assigned-tag'}`} style={{
-                                                        backgroundColor: !guest.table
-                                                            ? "var(--ft-color)"
-                                                            : currentFilter === "compained" && getGroupColor(guest)
-                                                                ? getGroupColor(guest)
-                                                                : undefined,
-                                                        border: guest.table
-                                                            ? "1px solid var(--borders)"
-                                                            : currentFilter === "compained" && getGroupColor(guest)
-                                                                ? `1px solid ${getGroupColor(guest)}99`
-                                                                : undefined,
-                                                        color: !guest.table
-                                                            && currentFilter === "compained" && '#000',
-
-                                                        fontWeight: guest.table && 500,
-                                                    }}>
-                                                        {guest.table ? `${t('tables.table_prefix')} #${tables_?.find(tbl => tbl.id === guest.table)?.number ?? "-"}` : t('tables.table_no_assigned')}
-                                                    </div>
-
-
-
-                                                    <Dropdown
-                                                        trigger={['click']}
-                                                        popupRender={() => (
-                                                            <div className='who-is-main-container'>
-
-                                                                {/** SI TIENE COMPANION */}
-                                                                {guest.companion_id ? (
-                                                                    <>
-                                                                        <div className='who-is-container'>
-
-                                                                            <span>
-                                                                                <b>{guest?.name}</b> {t('tables.whois_companion_of')}{" "}
-                                                                                <b
-                                                                                    onClick={() => setOnExtendedWhos(!onExtendedWhos)}
-                                                                                    className='parent-label-whois'
-                                                                                >
-                                                                                    {confirmedGuests_?.find(g => g.id === guest.companion_id)?.name}
-                                                                                </b>
-                                                                            </span>
-                                                                        </div>
-
-                                                                        {onExtendedWhos && (
-                                                                            <>
-                                                                                <div className='whos-connector' />
-
-                                                                                <div className='who-is-container'>
-                                                                                    {(() => {
-                                                                                        const parent = confirmedGuests_?.find(
-                                                                                            g => g.id.toString() === guest.companion_id
-                                                                                        );
-                                                                                        const companions = confirmedGuests_?.filter(
-                                                                                            g => g.companion_id === parent?.id
-                                                                                        );
-
-                                                                                        return (
-                                                                                            <>
-                                                                                                <span>
-                                                                                                    Agregaste a <b>{parent?.name}</b> el{" "}
-                                                                                                    <b>{formatDate(parent?.created_at)}</b> y confirmó el{" "}
-                                                                                                    <b>{formatDate(parent?.last_update_date)}</b>
-                                                                                                </span>
-
-                                                                                                {companions?.length > 0 && (
-                                                                                                    <>
-                                                                                                        <span>{t('tables.whois_accompanied_by')}</span>
-                                                                                                        <ul>
-                                                                                                            {companions.map((c, i) => (
-                                                                                                                <li key={i}>{c.name}</li>
-                                                                                                            ))}
-                                                                                                        </ul>
-                                                                                                    </>
-                                                                                                )}
-                                                                                            </>
-                                                                                        );
-                                                                                    })()}
-                                                                                </div>
-                                                                            </>
-                                                                        )}
-                                                                    </>
-                                                                ) : (
-                                                                    /** SI NO TIENE COMPANION */
-                                                                    <div className='who-is-container'>
-
-                                                                        <span>
-                                                                            Agregaste a <b>{guest?.name}</b> el{" "}
-                                                                            <b>{formatDate(guest?.created_at)}</b> y confirmó el{" "}
-                                                                            <b>{formatDate(guest?.last_update_date)}</b>
-                                                                        </span>
-
-                                                                        {(() => {
-                                                                            const companions = confirmedGuests_?.filter(
-                                                                                c => c.companion_id === guest.id
-                                                                            );
-
-                                                                            return companions?.length > 0 ? (
-                                                                                <>
-                                                                                    <span>{t('tables.whois_accompanied_by')}</span>
-                                                                                    <ul>
-                                                                                        {companions.map((c, index) => (
-                                                                                            <li key={index}>{c?.name}</li>
-                                                                                        ))}
-                                                                                    </ul>
-                                                                                </>
-                                                                            ) : (
-                                                                                <span className='no-companions-special-label'>
-                                                                                    *No lleva acompañantes*
-                                                                                </span>
-                                                                            );
-                                                                        })()}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    >
-                                                        <Button
-                                                            icon={<IoMdHelp size={16} style={{ marginTop: '2px' }} />}
-                                                            onClick={() => setAboutMyGuest(guest)}
-                                                            style={{
-                                                                background:
-                                                                    currentFilter === "compained" && getGroupColor(guest)
-                                                                        ? getGroupColor(guest)
-                                                                        : undefined,
-                                                            }}
-                                                            className="orgtabbutton"
-                                                        />
-                                                    </Dropdown>
-
-
-                                                </div>
-                                            </div>
-
-                                        ))
-                                }
-                            </div>
-
-                        </>
-                    }
-
-
-
+                    {onGuestList && (
+                        <GuestPanel
+                            guests={confirmedGuests_ ?? []}
+                            tables={tables_ ?? []}
+                            onAssign={assignGuestToTable}
+                        />
+                    )}
                 </div>
 
 

@@ -590,10 +590,13 @@
 
     .cardConfirmed { order: 1 }
     .cardToday { order: 2 }
+    /* Lia va antes que el acomodo: primero lo que se puede delegar sobre las
+       confirmaciones que faltan, y ya después el mapa de mesas. */
     .liaCard { order: 3 }
-    .cardPie { order: 4 }
-    .cardProgress { order: 5 }
-    .cardFunnel { order: 6 }
+    .cardMesas { order: 4 }
+    .cardPie { order: 5 }
+    .cardProgress { order: 6 }
+    .cardFunnel { order: 7 }
 }
 
 @media (max-width: 750px) {

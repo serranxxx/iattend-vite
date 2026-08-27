@@ -5,6 +5,7 @@ import 'dayjs/locale/es'
 import { useTranslation } from 'react-i18next'
 import { Sparkles } from 'lucide-react'
 import { GuestsPie } from './GuestsPie'
+import { MesasWidget } from './MesasWidget'
 import { LiaPlanModal } from './LiaPlanModal'
 import styles from './GuestsOverview.module.css'
 
@@ -35,9 +36,11 @@ export const GuestsOverview = ({
   tickets = 0,
   tables = [],
   rsvpDeadline = null,
+  invitationID = null,
   onGoToTab,
   onAddGuests,
   onCreateSend,
+  onOpenTables,
 }) => {
   const { t } = useTranslation()
   // "Que Lia se encargue" y los enlaces al plan abren el mismo modal.
@@ -294,8 +297,8 @@ export const GuestsOverview = ({
           {SHOW_LIA && (
             <section className={styles.liaCard}>
               <div className={styles.liaBrand}>
-                <Sparkles size={14} />
-                <span>Lia</span>
+                {/* <Sparkles size={14} /> */}
+                <span>✦ Lia</span>
               </div>
               <div className={styles.liaTitle}>
                 {liaSolvable > 0
@@ -347,6 +350,12 @@ export const GuestsOverview = ({
               </div>
             )}
           </section>
+
+          <MesasWidget
+            className={styles.cardMesas}
+            invitationID={invitationID}
+            onOpenTables={onOpenTables}
+          />
 
           <section className={`${styles.card} ${styles.cardFunnel}`}>
             <span className={styles.cardTitle}>{t('guests_overview.rd_funnel_title')}</span>

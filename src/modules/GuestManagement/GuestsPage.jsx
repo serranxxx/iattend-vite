@@ -91,6 +91,14 @@ export default function GuestsPage() {
     const [copyTickets, setCopyTickets] = useState(null)
     const [handleTables, sethandleTables] = useState(false)
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 750)
+
+    // El FAB del header es fijo al viewport y se monta fuera de este árbol: con
+    // el mapa de mesas abierto queda encima de sus acciones. Se marca el body
+    // para que el CSS del módulo lo esconda mientras dure el drawer.
+    useEffect(() => {
+        document.body.classList.toggle('seating-drawer-open', handleTables)
+        return () => document.body.classList.remove('seating-drawer-open')
+    }, [handleTables])
     const [rowData, setRowData] = useState([]);
     const [waitingData, setWaitingData] = useState([])
     const [confirmedData, setConfirmedData] = useState([])
@@ -2717,7 +2725,9 @@ export default function GuestsPage() {
                         tickets={tickets}
                         tables={tables}
                         rsvpDeadline={rsvpDeadline}
+                        invitationID={id}
                         onGoToTab={setActiveKey}
+                        onOpenTables={() => sethandleTables(true)}
                         onAddGuests={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                         onCreateSend={() => { setActiveKey('creado'); if (SHOW_BULK_SEND) setSendMode(true); }}
                     />
@@ -2948,25 +2958,12 @@ export default function GuestsPage() {
                 placement='left'
                 width={isMobile ? '100%' : '95%'}
                 height="100%"
-                title={isMobile ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Button
-                            icon={<X size={14} />}
-                            onClick={() => sethandleTables(false)}
-                            style={{ borderRadius: '99px', minWidth: 32, height: 32, padding: 0 }}
-                            className='secondarybutton'
-                        />
-                        <span style={{ fontSize: 15, fontWeight: 500 }}>Mapa de mesas</span>
-                    </div>
-                ) : null}
+                title={null}
                 closable={false}
                 push={false}
                 style={{ borderRadius: isMobile ? '0px' : '0px 24px 24px 0px', maxWidth: isMobile ? 'none' : '1450px' }}
                 styles={{
-                    header: {
-                        display: isMobile ? 'flex' : 'none',
-                        padding: '12px 16px',
-                    },
+                    header: { display: 'none' },
                     body: {
                         padding: 0,
                         height: '100%',
@@ -2974,7 +2971,10 @@ export default function GuestsPage() {
                     }
                 }}
             >
-                <TablesPage invitationID={id} />
+                {/* En móvil el cierre vive dentro de TablesPage, en el header de
+                    la propia pantalla: el drawer no dibuja el suyo para no
+                    apilar dos barras de título. */}
+                <TablesPage invitationID={id} onClose={() => sethandleTables(false)} />
             </Drawer>
 
             <GuestsCRUD rowData={rowData} invitationID={id} setDrawerState={setDrawerState} refreshPage={refreshPage} drawerState={drawerState} />

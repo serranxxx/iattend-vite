@@ -10,19 +10,38 @@
     position: relative;
 }
 
+.table-organization-main-container {
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Franja superior a todo el ancho del drawer: el título, el CTA y el avance
+   describen el evento completo, no la columna del mapa. */
+.seating-topbar {
+    width: 100%;
+    max-width: 1450px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 30px 30px 0;
+    flex-shrink: 0;
+}
+
 .table-org-general-container {
     width: 100%;
     max-width: 1450px;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
-    height: 100vh;
+    flex: 1;
+    min-height: 0;
 }
 
 .table-org-section-header {
     color: var(--text-color);
     font-weight: 600;
-    font-size: 16px;
+    font-size: 22px;
     line-height: 1.1;
 }
 
@@ -36,17 +55,25 @@
     flex-direction: column;
     position: relative;
     box-sizing: border-box;
-    gap: 24px;
-    padding: 30px;
+    gap: 16px;
+    padding: 16px 30px 30px;
+    min-height: 0;
 }
 
-.table-map-container { flex: 1; }
+.table-map-container { flex: 1; min-width: 0; }
 
+/* Tarjeta propia, no una columna con borde: así se lee como el bloque
+   independiente que es, igual que en el mockup. */
 .table-list-container {
     width: 450px;
+    flex-shrink: 0;
     align-self: stretch;
-    padding: 30px 0;
-    border-left: 1px solid var(--borders);
+    padding: 20px 0;
+    margin: 16px 30px 30px 0;
+    border: 1px solid var(--borders);
+    border-radius: 24px;
+    background-color: var(--ft-color);
+    overflow: hidden;
     transition: all 0.3s ease;
 }
 
@@ -55,6 +82,155 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
+}
+
+/* Toggle Mapa ↔ Lista de mesas del panel izquierdo. */
+.view-switch {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    flex-shrink: 0;
+}
+
+.view-switch-option {
+    border: none;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 99px;
+    background-color: transparent;
+    color: var(--gray-color);
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.view-switch-option:hover {
+    color: var(--text-color);
+}
+
+.view-switch-active,
+.view-switch-active:hover {
+    background-color: var(--ft-color);
+    color: var(--text-color);
+    font-weight: 600;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Ancla del panel de edición de mesa: popover flotante en escritorio,
+   hoja inferior en móvil. */
+.table-panel-anchor {
+    position: absolute;
+    z-index: 9999;
+    animation: table-panel-in 0.22s ease;
+}
+
+@keyframes table-panel-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* Mientras se arrastra, sin animación de entrada ni selección de texto. */
+.table-panel-dragging {
+    animation: none;
+    user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .table-panel-anchor { animation: none; }
+}
+
+/* Isla de alineación: aparece centrada arriba del plano con 2+ mesas
+   seleccionadas, con el look del panel de Figma. */
+.align-island {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 14px;
+    background-color: var(--text-color);
+    box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.25);
+    animation: align-island-in 0.18s ease;
+}
+
+@keyframes align-island-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+    to   { opacity: 1; transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .align-island { animation: none; }
+}
+
+.align-island-btn {
+    width: 38px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 9px;
+    background-color: transparent;
+    color: #FFFFFFD9;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.align-island-btn:hover {
+    background-color: #FFFFFF1F;
+    color: #FFFFFF;
+}
+
+.align-island-divider {
+    width: 1px;
+    height: 20px;
+    margin: 0 4px;
+    background-color: #FFFFFF2E;
+}
+
+/* Selector de invitados: siempre abajo a la derecha del mapa.
+   El ancla se posiciona contra .table-map-container, que lleva 30px de
+   padding, así que hay que sumarlo para caer dentro del lienzo. */
+.add-guests-anchor {
+    position: absolute;
+    right: calc(30px + 20px);
+    bottom: calc(30px + 20px);
+    z-index: 10000;
+    animation: add-guests-in 0.18s ease;
+}
+
+@keyframes add-guests-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .add-guests-anchor { animation: none; }
+}
+
+/* Cuadro de selección, como el de Figma pero en el verde de la marca. */
+.marquee-box {
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+    border: 1px solid var(--light-green-500);
+    background-color: #AAC18722;
+}
+
+/* Durante cualquier arrastre del mapa, el navegador no debe marcar texto. */
+.seating-dragging,
+.seating-dragging * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 /* ── Mapa ─────────────────────────────────────────────── */
@@ -63,7 +239,7 @@
     align-self: stretch;
     border: 1px solid var(--borders);
     border-radius: 8px;
-    background-color: white;
+    background-color: #F5F5F580;
     background-image: radial-gradient(#CECECE99 1px, transparent 1px);
     background-size: 20px 20px;
     position: relative;
@@ -82,7 +258,7 @@
 }
 
 .org-map-work-container {
-    height: 1800px;
+    height: 3500px;
     width: 3500px;
     display: flex;
     align-items: center;
@@ -104,6 +280,18 @@
     flex-direction: column;
     gap: 12px;
     z-index: 2;
+}
+
+/* Deshacer/rehacer agrupados bajo la mano, mismo lenguaje visual. */
+.map-tool-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.map-tool-group .full-screen-button[aria-disabled='true'] {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .grab-active-button {
@@ -568,6 +756,7 @@
         max-width: 100vw;
         overflow: hidden;
         height: 100%;
+        margin-top: 12px;
     }
 
     .modal-main-menu-container {
@@ -606,12 +795,9 @@
         min-height: 0;
     }
 
-    .tools-map-menu-container {
-        top: 40%;
-        transform: translate(-50%);
-        left: 30px;
-    }
-
+    /* El contenedor de herramientas se queda arriba a la derecha del lienzo,
+       como en escritorio: es el único borde del mapa que no tapan ni la barra
+       de pestañas ni la de invitados sin mesa. */
     .slider-container { display: none; }
 
     .selected-table-hover-container {
@@ -623,4 +809,165 @@
     .occupied-places-tab-mob { min-width: 50px; }
 
     .ant-progress.ant-progress-line { max-width: 220px; }
+
+    /* ── Encabezado ─────────────────────────────────────
+       Un solo header: cerrar, título corto y el "+" en disco. El drawer ya no
+       dibuja el suyo, así que esta barra es la única. */
+    .seating-topbar {
+        gap: 12px;
+        padding: 14px 16px 0;
+    }
+
+    .tab-map-header-cont {
+        gap: 10px;
+        padding: 0;
+        position: static;
+        border-bottom: none;
+        background: transparent;
+    }
+
+    .table-org-section-header {
+        font-size: 19px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* ── Pestañas ───────────────────────────────────────
+       Tres, a todo el ancho: en móvil los confirmados son una pestaña más y no
+       la columna derecha, que aquí no cabe. */
+    .view-switch {
+        align-self: stretch;
+    }
+
+    .view-switch-option {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    /* ── Mapa ───────────────────────────────────────────
+       Los controles quedan pegados al borde, sin el margen de escritorio. */
+    .tools-map-menu-container {
+        top: 12px;
+        right: 12px;
+        gap: 8px;
+    }
+
+    /* ── Pestaña de invitados ───────────────────────────── */
+    .mobile-guests-tab {
+        align-self: stretch;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0 16px 16px;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+}
+
+/* El selector de mesa destino se ancla abajo en móvil, pero antd lo mete en un
+   popup con transform propio, y un `position: fixed` dentro de un ancestro
+   transformado se resuelve contra ese ancestro, no contra la pantalla. Se
+   neutraliza el popup para que la hoja quede realmente pegada al viewport.
+   El wrapper no recibe clics: así antd sigue leyendo "clic fuera" y cierra. */
+@media (max-width: 750px) {
+    .ant-dropdown:has(.transfer-sheet) {
+        position: fixed !important;
+        inset: 0 !important;
+        transform: none !important;
+        pointer-events: none;
+        background-color: #00000030;
+    }
+
+    .ant-dropdown:has(.transfer-sheet) .transfer-sheet {
+        pointer-events: auto;
+    }
+}
+
+/* El FAB del header vive fuera de este árbol y es fijo al viewport: con el
+   mapa abierto se encima a la barra de invitados sin mesa. */
+body.seating-drawer-open .ant-float-btn-group {
+    display: none;
+}
+
+/* Contador de confirmados sin mesa dentro de la pestaña. */
+.view-switch-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 99px;
+    background-color: var(--brand-color-300);
+    color: var(--text-color);
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.view-switch-active .view-switch-badge {
+    background-color: var(--brand-color-300);
+}
+
+/* ── Barra fija de invitados sin mesa (móvil) ───────────
+   En una pantalla donde el mapa se ve por pedazos, es lo único que sostiene
+   la pregunta pendiente: a quién falta sentar y por dónde seguir. */
+.mobile-unseated-dock {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 14px 14px 18px;
+    box-sizing: border-box;
+    border-radius: 18px;
+    background-color: var(--text-color);
+    box-shadow: 0px 6px 24px rgba(0, 0, 0, 0.18);
+}
+
+.mobile-unseated-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.mobile-unseated-title {
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ft-color);
+    line-height: 1.25;
+}
+
+.mobile-unseated-sub {
+    font-family: var(--font-family);
+    font-size: 11.5px;
+    color: #FFFFFFA0;
+    line-height: 1.3;
+}
+
+.mobile-unseated-cta {
+    border: none;
+    cursor: pointer;
+    padding: 10px 18px;
+    border-radius: 99px;
+    background-color: var(--brand-color-300);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
 }

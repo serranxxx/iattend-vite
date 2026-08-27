@@ -1,3 +1,12 @@
+/* Nada del contenido de una mesa es texto seleccionable: al arrastrarla, el
+   navegador marcaba los números de silla y el rótulo con el resalte azul. */
+.dynamic-container,
+.dynamic-container * {
+    user-select: none;
+    -webkit-user-select: none;
+    /* border: 1px solid red; */
+}
+
 .dynamic-container {
     position: absolute;
 }
@@ -71,6 +80,7 @@
 
 .chair {
     position: absolute;
+    box-sizing: border-box;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -86,13 +96,76 @@
 }
 
 .occupied {
-    background-color: var(--sc-color);
-    color: var(--text-color-500);
+    background-color: var(--brand-color-300);
+    color: var(--text-color);
 }
 
 .available {
-    background-color: var(--brand-color-300);
+    background-color: transparent;
+    border: 1px solid var(--borders);
+    color: var(--gray-color);
+}
+
+/* Solo la mesa rota; el rótulo queda fuera para caer siempre debajo. */
+.table-rotor {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+
+/* Nombre y ocupación debajo de cada mesa. `top` lo calcula el componente a
+   partir de la altura visual, que cambia si la mesa está en vertical. */
+.table-caption {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Mesa dentro de la selección múltiple: aro morado, como en Figma. */
+.multi-selected .container {
+    outline: 2px solid var(--brand-color-500) !important;
+    outline-offset: 4px;
+    box-shadow: 0px 0px 24px var(--brand-color-500-40) !important;
+}
+
+.table-caption-name {
+    font-family: var(--font-family);
+    font-size: 15px;
+    font-weight: 500;
     color: var(--text-color);
+    max-width: 200px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table-caption-count {
+    font-family: var(--font-family);
+    font-size: 14px;
+    color: var(--gray-color);
+}
+
+.table-lock-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 26px;
+    height: 26px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 99px;
+    background-color: var(--text-color);
+    color: var(--ft-color);
+    pointer-events: none;
 }
 
 .dance-container {

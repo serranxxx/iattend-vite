@@ -1,0 +1,304 @@
+/* Panel derecho del drawer: lista de invitados confirmados (§5.5).
+   No cambia entre vistas ni desaparece — es el lado estable del drawer. */
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    flex: 1;
+    min-height: 0;
+    gap: 12px;
+}
+
+/* ── Encabezado ────────────────────────────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 20px;
+}
+
+.headerText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.title {
+    font-family: var(--font-family);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--gray-color);
+    line-height: 1.2;
+}
+
+.count {
+    font-family: var(--font-family);
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1;
+}
+
+/* ── Buscador y filtros ────────────────────────────────────────────────── */
+
+.searchRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px;
+}
+
+/* Los filtros son chips visibles, no un icono que esconde el estado. */
+.chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 0 20px;
+}
+
+.chip {
+    border: 1px solid var(--borders);
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.chip:hover {
+    border-color: var(--brand-color-500);
+}
+
+.chipActive,
+.chipActive:hover {
+    background-color: var(--text-color);
+    border-color: var(--text-color);
+    color: var(--ft-color);
+}
+
+/* ── Lista ─────────────────────────────────────────────────────────────── */
+
+.list {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.groupLabel {
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+    padding: 14px 20px 6px;
+    background-color: var(--ft-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Filas a sangre: sin padding lateral en el contenedor, para que la barra de
+   color del grupo toque el borde del panel. */
+.row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 20px 10px 20px;
+    border-bottom: 1px solid var(--borders);
+}
+
+.row:last-of-type {
+    border-bottom: none;
+}
+
+/* Barra vertical de 4px del tono del grupo, pegada al borde. */
+.groupBar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.rowInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.nameLine {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.name {
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.groupBadge {
+    padding: 1px 8px;
+    border-radius: 99px;
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.meta {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rowActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Sin mesa: acción. Con mesa: dato. Por eso una es botón y la otra pastilla. */
+.assignBtn {
+    border: none;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 99px;
+    background-color: var(--brand-color-500);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: filter 0.15s ease;
+}
+
+.assignBtn:hover {
+    filter: brightness(0.95);
+}
+
+.tablePill {
+    border: 1px solid var(--brand-color-300);
+    cursor: pointer;
+    padding: 5px 14px;
+    border-radius: 99px;
+    background-color: var(--ft-color);
+    color: var(--brand-color-800);
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+.tablePill:hover {
+    background-color: var(--brand-color-100);
+}
+
+.helpBtn {
+    width: 26px;
+    height: 26px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--brand-color-300);
+    cursor: pointer;
+    border-radius: 99px;
+    background-color: var(--ft-color);
+    color: var(--brand-color-800);
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+}
+
+.helpBtn:hover {
+    background-color: var(--brand-color-100);
+}
+
+/* ── Tooltip de contexto ───────────────────────────────────────────────── */
+/* Fondo navy: el lila con texto oscuro tenía muy poco contraste. Se ancla
+   arriba y a la izquierda del botón — abajo tapaba las dos filas siguientes. */
+
+.tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 300px;
+    max-width: 80vw;
+    padding: 14px 16px;
+    box-sizing: border-box;
+    border-radius: 16px;
+    background-color: var(--text-color);
+    box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.22);
+}
+
+.tooltipText {
+    font-family: var(--font-family);
+    font-size: 13px;
+    color: var(--ft-color);
+    line-height: 1.45;
+}
+
+.tooltipMuted {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: #FFFFFFB0;
+    line-height: 1.4;
+}
+
+.tooltipList {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.tooltipList li {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: #FFFFFFD0;
+    line-height: 1.5;
+}
+
+.empty {
+    padding: 40px 20px;
+    text-align: center;
+    font-family: var(--font-family);
+    font-size: 13px;
+    color: var(--gray-color);
+}
