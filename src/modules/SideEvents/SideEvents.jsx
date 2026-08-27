@@ -1444,9 +1444,50 @@ export const SideEvents = () => {
         }
     }
 
+    // Id del "lider" de familia de un invitado de la lista principal:
+    // null si el propio invitado es el lider (sin companion_id).
+    const parentIdOf = (guest) => (
+        guest?.companion_id === null || guest?.companion_id === undefined
+            ? null
+            : Number(guest.companion_id)
+    )
+
+    // La lista principal se muestra agrupada por familia (lider + acompanantes)
+    // para poder importar el grupo completo con un solo check o cada integrante
+    // por separado. El filtro de busqueda conserva el grupo entero cuando
+    // coincide cualquiera de sus integrantes.
+    const mainGuestGroups = useMemo(() => {
+        if (!mainGuests) return null
+
+        const clusters = new Map()
+
+        mainGuests.forEach((g) => {
+            const familyKey = parentIdOf(g) ?? g.id
+            if (!clusters.has(familyKey)) clusters.set(familyKey, [])
+            clusters.get(familyKey).push(g)
+        })
+
+        const query = (searchMain || '').toLowerCase()
+
+        return Array.from(clusters.values())
+            .map((members) => {
+                const leader = members.find((m) => parentIdOf(m) === null) ?? members[0]
+                return {
+                    leader,
+                    companions: members.filter((m) => m.id !== leader.id),
+                }
+            })
+            .filter(({ leader, companions }) => (
+                !query || [leader, ...companions].some((m) => m.name?.toLowerCase().includes(query))
+            ))
+    }, [mainGuests, searchMain])
+
+    const isAlreadyInSide = (guest) => rawData?.some((n) => n.password === guest.password)
+    const isReadyToAdd = (guest) => readyToAdd.some((i) => i.id === guest.id)
+
     const handleImport = (state, item) => {
         if (state) {
-            setReadyToAdd((prev) => [...prev, item])
+            setReadyToAdd((prev) => (prev.some(i => i.id === item.id) ? prev : [...prev, item]))
         }
 
         if (!state) {
@@ -1454,8 +1495,72 @@ export const SideEvents = () => {
         }
     }
 
+    // Check del grupo: solo mueve a los integrantes que aun no estan en el
+    // side event, para no pelearse con los checks deshabilitados.
+    const handleImportGroup = (state, group) => {
+        const members = [group.leader, ...group.companions].filter((m) => !isAlreadyInSide(m))
+
+        if (state) {
+            setReadyToAdd((prev) => {
+                const next = [...prev]
+                members.forEach((m) => { if (!next.some(i => i.id === m.id)) next.push(m) })
+                return next
+            })
+            return
+        }
+
+        const ids = new Set(members.map((m) => m.id))
+        setReadyToAdd((prev) => prev.filter(i => !ids.has(i.id)))
+    }
+
+    // Fila de invitado de la lista principal dentro del popup de importacion.
+    // `isChild` solo la indenta: el check sigue siendo individual.
+    const renderImportRow = (guest, isChild = false) => {
+        const alreadyAdded = isAlreadyInSide(guest)
+
+        return (
+            <div
+                key={guest.id}
+                className={`single_row import_list_row ${isChild ? 'import_list_row--child' : ''} ${alreadyAdded ? 'row_active' : ''}`}
+                style={{ alignSelf: 'stretch', padding: '8px' }}
+            >
+                {
+                    alreadyAdded
+                        ? <Checkbox disabled checked />
+                        : <Checkbox checked={isReadyToAdd(guest)} onChange={(e) => handleImport(e.target.checked, guest)} />
+                }
+
+                {isChild && <BsArrowReturnRight size={12} style={{ color: '#787878', flexShrink: 0 }} />}
+
+                <span style={{ minWidth: '130px', flex: 1, }}>{truncate(guest.name, 20)}</span>
+
+                <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px', maxWidth: '60px' }}>
+                    <span style={{ fontSize: '12px' }}>{guest.tag ?? "-"}</span>
+                </div>
+
+                <div className={`new-table-tag state-${guest.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', maxWidth: '80px' }}>
+                    <span style={{ fontSize: '12px' }}>{guest.state ?? "-"}</span>
+                </div>
+
+            </div>
+        )
+    }
+
+    const groupSelectionState = (group) => {
+        const members = [group.leader, ...group.companions].filter((m) => !isAlreadyInSide(m))
+        const selected = members.filter(isReadyToAdd).length
+
+        return {
+            selectable: members.length,
+            checked: members.length > 0 && selected === members.length,
+            indeterminate: selected > 0 && selected < members.length,
+        }
+    }
+
     const handleSideGuests = async () => {
-        const list = readyToAdd.map(i => ({
+        if (!readyToAdd.length) return
+
+        const buildRow = (i, companionId, hasCompanion) => ({
             side_events_id: current?.id,
             password: i.password,
             phone_number: i.phone_number,
@@ -1467,22 +1572,95 @@ export const SideEvents = () => {
             last_action: 'creado',
             notes: i.notes,
             meal: null,
-            companion_id: null,
+            companion_id: companionId,
             ticket: true,
-            has_companion: i.has_companion,
+            has_companion: hasCompanion,
             last_action_by: true,
-        }))
+        })
 
-        // console.log(list)
+        const selectedIds = new Set(readyToAdd.map(i => i.id))
+        const passwordById = new Map((mainGuests ?? []).map(g => [g.id, g.password]))
+        // Lideres que ya viven en el side event (importados antes), para poder
+        // colgarles un acompanante nuevo en vez de meterlo como individual.
+        const existingIdByPassword = new Map((rawData ?? []).map(r => [r.password, r.id]))
 
-        const { error: guestError } = await supabase
-            .from('side_events_guests')
-            .insert(list)
-            .select('*');
+        const leaders = []
+        const companionsByLeaderId = new Map()   // lider seleccionado en este lote
+        const companionsByExistingId = new Map() // lider ya presente en el side event
 
-        if (guestError) {
-            console.error('Error al insertar guest:', guestError);
-            return;
+        readyToAdd.forEach((i) => {
+            const parentId = parentIdOf(i)
+
+            if (parentId !== null && selectedIds.has(parentId)) {
+                if (!companionsByLeaderId.has(parentId)) companionsByLeaderId.set(parentId, [])
+                companionsByLeaderId.get(parentId).push(i)
+                return
+            }
+
+            const existingLeaderId = parentId !== null
+                ? existingIdByPassword.get(passwordById.get(parentId))
+                : undefined
+
+            if (existingLeaderId) {
+                if (!companionsByExistingId.has(existingLeaderId)) companionsByExistingId.set(existingLeaderId, [])
+                companionsByExistingId.get(existingLeaderId).push(i)
+                return
+            }
+
+            leaders.push(i)
+        })
+
+        let insertedLeaders = []
+
+        if (leaders.length) {
+            const { data, error: guestError } = await supabase
+                .from('side_events_guests')
+                .insert(leaders.map(l => buildRow(l, null, (companionsByLeaderId.get(l.id) ?? []).length > 0)))
+                .select('*');
+
+            if (guestError) {
+                console.error('Error al insertar guest:', guestError);
+                return;
+            }
+
+            insertedLeaders = data ?? []
+        }
+
+        // El id del side event es nuevo, asi que la relacion lider-acompanante
+        // se reconstruye emparejando por password (unico por invitado).
+        const newIdByPassword = new Map(insertedLeaders.map(r => [r.password, r.id]))
+        const companionRows = []
+
+        leaders.forEach((l) => {
+            const newLeaderId = newIdByPassword.get(l.password)
+            if (!newLeaderId) return
+            ;(companionsByLeaderId.get(l.id) ?? []).forEach((c) => companionRows.push(buildRow(c, newLeaderId, false)))
+        })
+
+        companionsByExistingId.forEach((companions, existingLeaderId) => {
+            companions.forEach((c) => companionRows.push(buildRow(c, existingLeaderId, false)))
+        })
+
+        if (companionRows.length) {
+            const { error: companionsError } = await supabase
+                .from('side_events_guests')
+                .insert(companionRows)
+
+            if (companionsError) {
+                console.error('Error al insertar companions:', companionsError);
+                return;
+            }
+
+            const existingLeaderIds = Array.from(companionsByExistingId.keys())
+
+            if (existingLeaderIds.length) {
+                const { error: updateError } = await supabase
+                    .from('side_events_guests')
+                    .update({ has_companion: true })
+                    .in('id', existingLeaderIds)
+
+                if (updateError) console.error('Error al actualizar has_companion:', updateError)
+            }
         }
 
         setReadyToAdd([])
@@ -2171,7 +2349,7 @@ export const SideEvents = () => {
                                                                                     alignItems: 'flex-end'
                                                                                 }}>
                                                                                     <span><b>{t('side_events.import_title')}</b></span>
-                                                                                    <Button onClick={handleSideGuests} className='primarybutton--active' icon={<LuPlus />}>{t('side_events.import_add')}</Button>
+                                                                                    <Button onClick={handleSideGuests} disabled={!readyToAdd.length} className='primarybutton--active' icon={<LuPlus />}>{`${t('side_events.import_add')}${readyToAdd.length ? ` (${readyToAdd.length})` : ''}`}</Button>
                                                                                 </div>
                                                                                 <Input value={searchMain} onChange={(e) => setSearchMain(e.target.value)} placeholder={t('side_events.import_search')} style={{ borderRadius: '99px' }} />
                                                                                 <div className='single_col scroll-invitation' style={{
@@ -2179,31 +2357,35 @@ export const SideEvents = () => {
                                                                                     maxHeight: '480px', overflowY: 'auto', display:'flex',alignItems:'flex-start', justifyContent:'flex-start', flexDirection:'column'
                                                                                 }}>
                                                                                     {
-                                                                                        mainGuests ? mainGuests?.filter(i =>
-                                                                                            i.name?.toLowerCase().includes(searchMain?.toLowerCase() || '')).map((i, index) => (
-                                                                                                <div key={`${i.id}-${index}`} className={`single_row import_list_row ${rawData.find(n => n.password === i.password) ? 'row_active' : ''}`} style={{
-                                                                                                    alignSelf: 'stretch',
-                                                                                                    padding: '8px'
-                                                                                                }}>
-                                                                                                    {
-                                                                                                        rawData.find(n => n.password === i.password)
-                                                                                                            ? <Checkbox disabled checked />
-                                                                                                            : <Checkbox onChange={(e) => handleImport(e.target.checked, i)} />
-                                                                                                    }
+                                                                                        mainGuestGroups
+                                                                                            ? mainGuestGroups.map((group) => {
+                                                                                                const { leader, companions } = group
 
-                                                                                                    <span style={{ minWidth: '130px', flex:1, }}>{truncate(i.name, 20)}</span>
+                                                                                                if (!companions.length) {
+                                                                                                    return renderImportRow(leader)
+                                                                                                }
 
-                                                                                                    <div className='new-table-tag' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px', maxWidth:'60px' }}>
-                                                                                                        <span style={{ fontSize: '12px' }}>{i.tag ?? "-"}</span>
+                                                                                                const { selectable, checked, indeterminate } = groupSelectionState(group)
+
+                                                                                                return (
+                                                                                                    <div key={`group-${leader.id}`} className='import_group_card'>
+                                                                                                        <div className='single_row import_group_header' style={{ alignSelf: 'stretch', padding: '4px 8px' }}>
+                                                                                                            <Checkbox
+                                                                                                                disabled={selectable === 0}
+                                                                                                                checked={selectable === 0 ? true : checked}
+                                                                                                                indeterminate={indeterminate}
+                                                                                                                onChange={(e) => handleImportGroup(e.target.checked, group)}
+                                                                                                            />
+                                                                                                            <span style={{ fontSize: '12px', color: '#787878', flex: 1 }}>
+                                                                                                                {t('side_events.import_group_label', { total: companions.length + 1 })}
+                                                                                                            </span>
+                                                                                                        </div>
+
+                                                                                                        {renderImportRow(leader)}
+                                                                                                        {companions.map((c) => renderImportRow(c, true))}
                                                                                                     </div>
-
-                                                                                                    <div className={`new-table-tag state-${i.state}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '80px', maxWidth:'80px' }}>
-                                                                                                        <span style={{ fontSize: '12px' }}>{i.state ?? "-"}</span>
-                                                                                                    </div>
-
-                                                                                                </div>
-                                                                                            ))
-
+                                                                                                )
+                                                                                            })
                                                                                             : <Spin />
                                                                                     }
 

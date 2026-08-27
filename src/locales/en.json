@@ -803,6 +803,7 @@
     "import_title": "Main list",
     "import_add": "Add",
     "import_search": "Search guest",
+    "import_group_label": "Group · {{total}} people",
     "btn_copy_list": "Copy from another list",
     "btn_new_guest": "New guest",
     "btn_add": "Add",

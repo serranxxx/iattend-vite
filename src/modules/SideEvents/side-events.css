@@ -639,3 +639,22 @@
     }
 
 }
+/* Popup de importacion desde la lista principal: cada familia se envuelve en
+   su propia tarjeta para distinguir el check de grupo del individual. */
+.import_group_card {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #F5F3F2;
+    border-radius: 12px;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.import_group_header {
+    border-bottom: 1px solid #F5F3F2;
+}
+
+.import_list_row--child {
+    padding-left: 20px !important;
+}

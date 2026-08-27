@@ -803,6 +803,7 @@
     "import_title": "Lista principal",
     "import_add": "Agregar",
     "import_search": "Búscar invitado",
+    "import_group_label": "Grupo · {{total}} personas",
     "btn_copy_list": "Copiar de otra lista",
     "btn_new_guest": "Nuevo invitado",
     "btn_add": "Agregar",
