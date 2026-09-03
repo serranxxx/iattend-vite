@@ -1,21 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Dropdown, Table, Tag, Tooltip, Tabs, message } from 'antd'
-import { ArrowRight, FlaskConical, MoreVertical, Sparkles } from 'lucide-react'
+import { Button, Dropdown, Segmented, Table, Tag, Tooltip, Tabs, message } from 'antd'
+import { ArrowRight, FlaskConical, MoreVertical, Sparkles, Users } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { fetchAdminFonts, updateAdminFont } from '../fontsAdminApi'
+import { CatalogoInvitaciones } from '../CatalogoInvitaciones/CatalogoInvitaciones'
 import styles from '../SalesAdminPage.module.css'
+import catalogoStyles from '../CatalogoInvitaciones/CatalogoInvitaciones.module.css'
 
-const SUBTAB_KEYS = ['texturas', 'fonts', 'imagenes']
+const SUBTAB_KEYS = ['texturas', 'fonts', 'catalogo']
 
-const ComingSoon = ({ label }) => (
-    <div className={styles.subtitle} style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '200px', fontSize: '13px',
-    }}>
-        {label} — Próximamente
-    </div>
-)
+const CATALOGO_TIPOS = [
+    { label: 'Clientes', value: 'reales', icon: <Users size={14} /> },
+    { label: 'Tests', value: 'pruebas', icon: <FlaskConical size={14} /> },
+]
 
 export const HerramientasSection = () => {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -25,6 +23,7 @@ export const HerramientasSection = () => {
     const [fonts, setFonts] = useState([])
     const [fontsLoading, setFontsLoading] = useState(false)
     const [activeKey, setActiveKey] = useState(initialSubtab)
+    const [catalogoTipo, setCatalogoTipo] = useState('reales')
 
     const handleTabChange = (key) => {
         setActiveKey(key)
@@ -194,9 +193,9 @@ export const HerramientasSection = () => {
             ),
         },
         {
-            label: 'Imágenes',
-            key: 'imagenes',
-            children: <ComingSoon label='Imágenes' />,
+            label: 'Catálogo',
+            key: 'catalogo',
+            children: <CatalogoInvitaciones tipo={catalogoTipo} />,
         },
     ]
 
@@ -207,11 +206,13 @@ export const HerramientasSection = () => {
                     <div className={styles.title}>Laboratorio</div>
                     <div className={styles.subtitle}>Panel interno — solo admin</div>
                 </div>
-                <div className={styles.headerControls}>
-                    <Link to={activeKey === 'fonts' ? '/admin/font-lab' : '/admin/texture-lab'}>
-                        <Button className='primarybutton--active' icon={<Sparkles size={14} />}>Crear</Button>
-                    </Link>
-                </div>
+                {activeKey !== 'catalogo' && (
+                    <div className={styles.headerControls}>
+                        <Link to={activeKey === 'fonts' ? '/admin/font-lab' : '/admin/texture-lab'}>
+                            <Button className='primarybutton--active' icon={<Sparkles size={14} />}>Crear</Button>
+                        </Link>
+                    </div>
+                )}
             </div>
             <Tabs
                 style={{ width: '100%' }}
@@ -219,6 +220,16 @@ export const HerramientasSection = () => {
                 activeKey={activeKey}
                 onChange={handleTabChange}
                 items={items}
+                tabBarExtraContent={activeKey === 'catalogo' ? (
+                    <Segmented
+                        shape='round'
+                        className={catalogoStyles.roundSegmented}
+                        style={{ marginBottom: 8 }}
+                        options={CATALOGO_TIPOS}
+                        value={catalogoTipo}
+                        onChange={setCatalogoTipo}
+                    />
+                ) : null}
             />
         </div>
     )
