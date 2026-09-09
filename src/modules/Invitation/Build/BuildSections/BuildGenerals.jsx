@@ -13,39 +13,7 @@ import { ArrowUpRight, ChevronDown, ChevronUp, Maximize2, Paintbrush, Palette, U
 import { colorCollection } from '../../../../helpers/services/colorPalette';
 import { SiSpotify } from 'react-icons/si';
 import { uploadSongAudio } from '../../../../helpers/services/uploadAudio';
-
-const _spotifyTokenCache = { token: null, expiry: 0 };
-
-async function getSpotifyToken() {
-    if (_spotifyTokenCache.token && Date.now() < _spotifyTokenCache.expiry) {
-        return _spotifyTokenCache.token;
-    }
-    const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-    const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
-    const res = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Authorization: 'Basic ' + btoa(`${clientId}:${clientSecret}`),
-        },
-        body: 'grant_type=client_credentials',
-    });
-    const data = await res.json();
-    _spotifyTokenCache.token = data.access_token;
-    _spotifyTokenCache.expiry = Date.now() + (data.expires_in - 60) * 1000;
-    return data.access_token;
-}
-
-async function searchSpotifyTracks(query) {
-    const token = await getSpotifyToken();
-    const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=5`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const data = await res.json();
-    return data.tracks?.items ?? [];
-}
-
+import { searchSpotifyTracks } from '../../../../helpers/services/spotify';
 
 const { Option } = Select;
 const { useBreakpoint } = Grid;

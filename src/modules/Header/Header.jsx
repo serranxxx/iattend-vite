@@ -449,6 +449,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             guests: "Guest management",
             "on-dashboard-guests": "Mis invitados",
             photowall: "Photo Wall",
+            savethedate: "Save the Date",
         };
 
         if (modeMap[mode]) {

@@ -14,6 +14,7 @@ const WATCHED_TABLES = [
     'whatsapp_freetext_dispatches',
     'side_events_guests',
     'invitations',
+    'save_the_date_reactions',
 ]
 
 export const DashboardRealtimeProvider = ({ children }) => {
@@ -109,8 +110,14 @@ export const DashboardRealtimeProvider = ({ children }) => {
     )
 }
 
-export const useDashboardRealtime = () => {
+// Fuera del provider no hay a qué suscribirse: `optional` permite que una
+// pantalla pública (p. ej. el Save the Date de demo) reuse componentes del
+// dashboard sin reventar. Sin `optional` sigue avisando del error.
+const NO_REALTIME = { subscribe: () => () => { } }
+
+export const useDashboardRealtime = ({ optional = false } = {}) => {
     const ctx = useContext(DashboardRealtimeContext)
+    if (!ctx && optional) return NO_REALTIME
     if (!ctx) throw new Error('useDashboardRealtime must be used inside DashboardRealtimeProvider')
     return ctx
 }

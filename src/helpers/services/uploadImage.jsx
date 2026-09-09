@@ -107,7 +107,14 @@ export const getImagesFromSupabase = async (invitationID, setImages) => {
         return;
     }
 
-    const images = data.map((file) => {
+    // Las subcarpetas (`audio`, `video`) también vienen en el listado y sin
+    // filtrarlas se dibujan como tiles roros; los medios que no son imagen
+    // no deben aparecer en un picker de imágenes.
+    const onlyImages = data.filter((file) => (
+        file.id !== null && !/\.(mp4|webm|mov|m4v|mp3|wav|m4a|aac|ogg)$/i.test(file.name)
+    ));
+
+    const images = onlyImages.map((file) => {
         const path = `${invitationID}/${file.name}`;
 
         const { data: urlData } = supabase.storage
@@ -141,6 +148,19 @@ const containsString = (obj, target) => {
 
 export const deleteImageFromSupabase = async (path, invitationID, setImages) => {
     try {
+        // Carpeta temporal del Save the Date gratis: todavía no hay evento
+        // contra el que validar el uso, así que se borra directo.
+        if (String(invitationID).startsWith('temp/')) {
+            const { error } = await supabase.storage.from('user_images').remove([path]);
+            if (error) {
+                message.error('No se pudo borrar la imagen.');
+                return;
+            }
+            message.success('Imagen eliminada correctamente.');
+            getImagesFromSupabase(invitationID, setImages);
+            return;
+        }
+
         const longpath = `https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/${path}`;
 
         /* ─────────────── Invitación ─────────────── */
@@ -274,6 +294,104 @@ export const getDresscodesFromSupabase = async (setImages) => {
     setImages([blackTie, cocktail, formal]);
 };
 
+/* ── Video del Save the Date ──────────────────────────────────────────────
+   Vive en `{invitationID}/video/` por la misma razón que el audio: el listado
+   de imágenes lee solo la raíz de la carpeta, así que los pickers de solo
+   imagen no lo muestran. Sin compresión: browser-image-compression es solo
+   para imágenes. */
 
+const MAX_VIDEO_MB = 25;
 
+export const uploadEventVideo = async ({ file, invitationID, setVideos }) => {
+    if (file.size > MAX_VIDEO_MB * 1024 * 1024) {
+        message.warning(`El video pesa más de ${MAX_VIDEO_MB} MB. Sube un clip más corto o comprímelo.`);
+        return null;
+    }
+
+    const filePath = `${invitationID}/video/${Date.now()}-${file.name}`;
+
+    const { error } = await supabase.storage
+        .from('user_images')
+        .upload(filePath, file, {
+            upsert: true,
+            contentType: file.type,
+        });
+
+    if (error) throw error;
+
+    if (setVideos) getVideosFromSupabase(invitationID, setVideos);
+
+    const { data } = supabase.storage
+        .from('user_images')
+        .getPublicUrl(filePath);
+
+    return data.publicUrl;
+};
+
+export const getVideosFromSupabase = async (invitationID, setVideos) => {
+    if (!invitationID) return;
+
+    const { data, error } = await supabase.storage
+        .from('user_images')
+        .list(`${invitationID}/video`, {
+            limit: 100,
+            sortBy: { column: 'created_at', order: 'desc' },
+        });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    const videos = (data ?? []).map((file) => {
+        const path = `${invitationID}/video/${file.name}`;
+        const { data: urlData } = supabase.storage
+            .from('user_images')
+            .getPublicUrl(path);
+        return { path, url: urlData.publicUrl };
+    });
+
+    setVideos(videos);
+};
+
+export const deleteVideoFromSupabase = async (path, invitationID, setVideos) => {
+    try {
+        const longpath = `https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/${path}`;
+
+        /* ─── ¿lo está usando el Save the Date? ─── */
+        const { data: std, error: stdError } = await supabase
+            .from("save_the_dates")
+            .select("cover")
+            .eq("invitation_id", invitationID)
+            .maybeSingle();
+
+        if (stdError) {
+            console.error("Error al obtener save the date:", stdError.message);
+            return;
+        }
+
+        if (std?.cover && containsString(std.cover, longpath)) {
+            message.error("El video está siendo usado en tu Save the Date.");
+            return;
+        }
+
+        /* ─── Eliminar ─── */
+        const { error: removeError } = await supabase.storage
+            .from("user_images")
+            .remove([path]);
+
+        if (removeError) {
+            console.error("Error eliminando video:", removeError);
+            message.error("Ocurrió un error al eliminar el video.");
+            return;
+        }
+
+        getVideosFromSupabase(invitationID, setVideos);
+        message.success("Video eliminado correctamente.");
+
+    } catch (err) {
+        console.error("Error inesperado:", err);
+        message.error("Error inesperado al eliminar el video.");
+    }
+};
 

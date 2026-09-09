@@ -39,6 +39,7 @@ import { BuildPage } from '../modules/Invitation/Build/PageSections/BuildPage'
 import GuestsPage from '../modules/GuestManagement/GuestsPage'
 import GuestsImportPage from '../modules/GuestManagement/GuestsImportPage'
 import { SideEvents } from '../modules/SideEvents/SideEvents'
+import { SaveTheDatePage } from '../modules/SaveTheDate/SaveTheDatePage'
 import { Login } from '../components/Auth/Login'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
 import Lia from '../pages/Lia/Lia'
@@ -66,6 +67,7 @@ export const AppRouter = () => {
         <Route path="/dashboard/guests" element={<GuestsPage />} />
         <Route path="/dashboard/guests/import" element={<GuestsImportPage />} />
         <Route path="/dashboard/side" element={<SideEvents />} />
+        <Route path="/dashboard/savethedate" element={<SaveTheDatePage />} />
         <Route path="/dashboard/photowall" element={<PhotoWallPage />} />
         <Route path="/dashboard/success" element={<Success />} />
       </Route>
@@ -76,6 +78,8 @@ export const AppRouter = () => {
       <Route path="/legal" element={<LegalPage />} />
       <Route path="/luma" element={<Lia />} />
       <Route path="/preview" element={<PreviewMoodPage />} />
+      {/* Save the Date gratis, sin cuenta: mismo editor en modo demo */}
+      <Route path="/save-the-date" element={<SaveTheDatePage demo />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/*" element={<PageNotFound />} />
 
