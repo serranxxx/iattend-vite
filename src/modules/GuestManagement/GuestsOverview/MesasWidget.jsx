@@ -118,7 +118,7 @@ export const MesasWidget = ({ invitationID, className = '', onOpenTables }) => {
 
     if (count === 0) {
         return (
-            <section className={`${styles.card} ${className}`}>
+            <section className={`${styles.card} ${className}`} data-tour="ov-mesas">
                 <header className={styles.head}>
                     <span className={styles.eyebrow}>Acomodo de mesas</span>
                 </header>
@@ -157,7 +157,7 @@ export const MesasWidget = ({ invitationID, className = '', onOpenTables }) => {
     /* ── A · estado normal ─────────────────────────────────────────────── */
 
     return (
-        <section className={`${styles.card} ${className}`}>
+        <section className={`${styles.card} ${className}`} data-tour="ov-mesas">
             <header className={styles.head}>
                 <span className={styles.eyebrow}>Acomodo de mesas</span>
                 <button type="button" className={styles.linkBtn} onClick={onOpenTables}>

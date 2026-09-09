@@ -28,9 +28,10 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, Search, Send, Sparkles, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
+import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CircleHelp, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, Search, Send, Sparkles, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
 import { WHATS_NEW_OPEN_EVENT } from '../../components/WhatsNewBanners/WhatsNewBanners';
 import { GuestsOverview } from './GuestsOverview/GuestsOverview';
+import { GuestsTour, GUESTS_TOUR_STORAGE_KEY } from './GuestsTour';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { GuestAddTiles } from './GuestAddTiles';
 import { useTranslation } from 'react-i18next';
@@ -162,6 +163,24 @@ export default function GuestsPage() {
     const [bulkSending, setBulkSending] = useState(false)
     // Lote activo de envío masivo (isla de progreso): { id, total, sent, failed, status }
     const [activeBatch, setActiveBatch] = useState(null)
+    // Tour del rediseño (GuestsTour): se abre solo la primera vez que el
+    // usuario entra a la página nueva y se puede relanzar desde el "?" de la
+    // escalera de pasos.
+    const [tourOpen, setTourOpen] = useState(false)
+
+    useEffect(() => {
+        if (!invitation || isLoading) return
+        if (localStorage.getItem(GUESTS_TOUR_STORAGE_KEY)) return
+        // Pequeña espera para que las tarjetas ya estén pintadas cuando el
+        // primer paso resuelva su anclaje.
+        const timer = setTimeout(() => setTourOpen(true), 800)
+        return () => clearTimeout(timer)
+    }, [invitation, isLoading])
+
+    const closeTour = () => {
+        localStorage.setItem(GUESTS_TOUR_STORAGE_KEY, '1')
+        setTourOpen(false)
+    }
 
     const hasPendingInfo = !name || !owners?.length || !invLabel || !invPhone
 
@@ -1400,7 +1419,7 @@ export default function GuestsPage() {
     const renderRsvpDeadlineAlert = (slot) => {
         if (rsvpDeadline) return null
         return (
-            <div className="gx-alert gx-alert--accent gx-deadline-alert">
+            <div className="gx-alert gx-alert--accent gx-deadline-alert" data-tour="rsvp-deadline">
                 <div className="gx-alert-badge"><BellRing size={16} /></div>
                 <div className="gx-alert-texts">
                     <div className="gx-alert-title">{t('guests.rsvp_deadline_alert_title')}</div>
@@ -1424,7 +1443,7 @@ export default function GuestsPage() {
     const renderRsvpDeadlineLine = (slot) => {
         if (!rsvpDeadline) return null
         return (
-            <div className="gx-deadline">
+            <div className="gx-deadline" data-tour="rsvp-deadline">
                 <span className="gx-deadline-label">{t('guests.rsvp_deadline_label')}</span>
                 <span className="gx-deadline-value">{formatAbsoluteDateEs(rsvpDeadline)}</span>
                 <span className="gx-deadline-anchor">
@@ -1731,6 +1750,7 @@ export default function GuestsPage() {
             <button
                 type="button"
                 className={`gx-btn gx-btn--accent gx-btn--sm ${plan !== 'pro' ? 'pro_badge' : ''}`}
+                data-tour="send-invitation"
                 aria-disabled={blocked}
                 onClick={() => {
                     if (blocked) return
@@ -1790,6 +1810,7 @@ export default function GuestsPage() {
                 <button
                     type="button"
                     className="gx-btn gx-btn--accent gx-btn--sm"
+                    data-tour="retry"
                     aria-disabled={blocked}
                     onClick={() => {
                         if (blocked) return
@@ -1818,6 +1839,7 @@ export default function GuestsPage() {
             <button
                 type="button"
                 className="gx-btn gx-btn--ghost gx-btn--sm"
+                data-tour="remind"
                 aria-disabled={blocked}
                 onClick={() => {
                     if (blocked) return
@@ -1867,7 +1889,7 @@ export default function GuestsPage() {
         if (assigned) {
             return (
                 <Tooltip title={assigned.name || ''}>
-                    <span className="gx-table-pill">{tableLabelFor(record)}</span>
+                    <span className="gx-table-pill" data-tour="table-action">{tableLabelFor(record)}</span>
                 </Tooltip>
             )
         }
@@ -1878,7 +1900,7 @@ export default function GuestsPage() {
                 placement="bottomRight"
                 popupRender={() => renderTablePickerPopup(record)}
             >
-                <button type="button" className="gx-btn gx-btn--accent gx-btn--sm">
+                <button type="button" className="gx-btn gx-btn--accent gx-btn--sm" data-tour="table-action">
                     {t('guests.btn_assign_table')}
                 </button>
             </Dropdown>
@@ -1897,6 +1919,7 @@ export default function GuestsPage() {
             <button
                 type="button"
                 className={`gx-pill ${small ? 'gx-pill--sm' : ''}`}
+                data-tour="copy-link"
                 onClick={(e) => { e.stopPropagation(); handleShare(magicLinkFor(record)) }}
             >
                 <Link2 size={small ? 13 : 14} />
@@ -2112,6 +2135,84 @@ export default function GuestsPage() {
         )
     }
 
+    // ── Elementos de ejemplo para el tour ────────────────────────────────
+    // Si la invitación no tiene el caso que un paso del tour explica (no hay
+    // envíos fallidos, no hay confirmados sin mesa...), se renderiza una
+    // versión de ejemplo SOLO mientras el tour está abierto, para que el paso
+    // siempre tenga algo real que señalar.
+
+    const tourWaitingFlat = rowData.filter((g) => g.state === 'esperando')
+    const tourDemo = {
+        created: countGuestRows(createdData) === 0,
+        failed: !tourWaitingFlat.some((g) => effectiveMessageStatus(g) === 'failed'),
+        read: !tourWaitingFlat.some((g) => effectiveMessageStatus(g) === 'read'),
+        remind: !tourWaitingFlat.some((g) => {
+            const s = effectiveMessageStatus(g)
+            return s !== 'failed' && s !== 'undefined'
+        }),
+        confirmed: confirmedFlatData.length === 0,
+    }
+
+    const renderDemoTourCard = (variant) => (
+        <div className="gx-card gx-card--demo" data-tone={variant === 'retry' ? 'danger' : undefined}>
+            <div className="gx-row">
+                <div className={`gx-avatar ${variant === 'confirmado' ? 'gx-avatar--accent' : ''}`}>
+                    {initialsOf(t('guests_tour.demo_name'))}
+                </div>
+                <div className="gx-identity">
+                    <span className="gx-name">{t('guests_tour.demo_name')}</span>
+                    <span className="gx-sub"><span>+52 (614) 123 4567</span></span>
+                </div>
+                <div className="gx-chips-col">
+                    <div className="gx-chips">
+                        {variant === 'retry' && (
+                            <span className="gx-status-badge" data-tone="red">{t('guests.msg_failed')}</span>
+                        )}
+                        {variant === 'remind' && (
+                            <span className="gx-status-badge" data-tone="green">{t('guests.msg_read')}</span>
+                        )}
+                        <span className="gx-chip gx-demo-chip">{t('guests_tour.demo_chip')}</span>
+                    </div>
+                </div>
+                <div className="gx-spacer" />
+                {variant === 'creado' && (
+                    <>
+                        <button type="button" className="gx-pill" data-tour="copy-link" aria-disabled="true">
+                            <Link2 size={14} />
+                            <span>{t('guests.card_copy_link')}</span>
+                        </button>
+                        <div className="gx-action">
+                            <button type="button" className="gx-btn gx-btn--accent gx-btn--sm" data-tour="send-invitation" aria-disabled="true">
+                                {t('guests.btn_send_invitation')}
+                            </button>
+                        </div>
+                    </>
+                )}
+                {variant === 'retry' && (
+                    <div className="gx-action">
+                        <button type="button" className="gx-btn gx-btn--accent gx-btn--sm" data-tour="retry" aria-disabled="true">
+                            {t('guests.msg_retry')}
+                        </button>
+                    </div>
+                )}
+                {variant === 'remind' && (
+                    <div className="gx-action">
+                        <button type="button" className="gx-btn gx-btn--ghost gx-btn--sm" data-tour="remind" aria-disabled="true">
+                            {t('guests.hero_sent_remind')}
+                        </button>
+                    </div>
+                )}
+                {variant === 'confirmado' && (
+                    <div className="gx-action">
+                        <button type="button" className="gx-btn gx-btn--accent gx-btn--sm" data-tour="table-action" aria-disabled="true">
+                            {t('guests.btn_assign_table')}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+
     // ── Banner de cabecera de cada tab ───────────────────────────────────
 
     const renderTabHero = (tabKey) => {
@@ -2154,25 +2255,35 @@ export default function GuestsPage() {
             const waitingFlat = rowData.filter((g) => g.state === 'esperando')
             const failed = waitingFlat.filter((g) => effectiveMessageStatus(g) === 'failed')
             const read = waitingFlat.filter((g) => effectiveMessageStatus(g) === 'read')
-            if (failed.length === 0 && read.length === 0) return null
+            // Con el tour abierto, los banners que falten se muestran de
+            // ejemplo para que sus pasos tengan qué señalar.
+            const demoFailed = tourOpen && failed.length === 0
+            const demoRead = tourOpen && read.length === 0
+            if (failed.length === 0 && read.length === 0 && !tourOpen) return null
 
             return (
                 <div className="gx-alerts">
-                    {failed.length > 0 && (
-                        <div className="gx-alert gx-alert--danger">
+                    {(failed.length > 0 || demoFailed) && (
+                        <div className="gx-alert gx-alert--danger" data-tour="alert-failed">
                             <div className="gx-alert-badge">!</div>
                             <div className="gx-alert-texts">
-                                <div className="gx-alert-title">{t('guests.hero_sent_failed_title', { count: failed.length })}</div>
+                                <div className="gx-alert-title">
+                                    {t('guests.hero_sent_failed_title', { count: demoFailed ? 1 : failed.length })}
+                                    {demoFailed && <span className="gx-demo-chip">{t('guests_tour.demo_chip')}</span>}
+                                </div>
                                 <div className="gx-alert-text">{t('guests.hero_sent_failed_text')}</div>
                             </div>
                         </div>
                     )}
-                    {read.length > 0 && (
-                        <div className="gx-alert gx-alert--warn">
-                            <div className="gx-alert-badge">{read.length}</div>
+                    {(read.length > 0 || demoRead) && (
+                        <div className="gx-alert gx-alert--warn" data-tour="alert-read">
+                            <div className="gx-alert-badge">{demoRead ? 3 : read.length}</div>
                             <div className="gx-alert-texts">
-                                <div className="gx-alert-title">{t('guests.hero_sent_read_title')}</div>
-                                <div className="gx-alert-text">{t('guests.hero_sent_read_text', { count: read.length })}</div>
+                                <div className="gx-alert-title">
+                                    {t('guests.hero_sent_read_title')}
+                                    {demoRead && <span className="gx-demo-chip">{t('guests_tour.demo_chip')}</span>}
+                                </div>
+                                <div className="gx-alert-text">{t('guests.hero_sent_read_text', { count: demoRead ? 3 : read.length })}</div>
                             </div>
                         </div>
                     )}
@@ -2249,7 +2360,7 @@ export default function GuestsPage() {
     }
 
     const renderStepBar = () => (
-        <div className="gx gx-steps" role="tablist">
+        <div className="gx gx-steps" role="tablist" data-tour="steps">
             {STEP_DEFS.map((d) => (
                 <button
                     key={d.key}
@@ -2257,6 +2368,7 @@ export default function GuestsPage() {
                     role="tab"
                     aria-selected={activeKey === d.key}
                     className="gx-step"
+                    data-tour={`step-${d.key}`}
                     onClick={() => setActiveKey(d.key)}
                 >
                     <span className="gx-step-kicker">
@@ -2271,6 +2383,17 @@ export default function GuestsPage() {
                     </span>
                 </button>
             ))}
+            <Tooltip title={t('guests_tour.replay')}>
+                <button
+                    type="button"
+                    className="gx-tour-btn"
+                    data-tour="tour-replay"
+                    aria-label={t('guests_tour.replay')}
+                    onClick={() => setTourOpen(true)}
+                >
+                    <CircleHelp size={16} />
+                </button>
+            </Tooltip>
         </div>
     )
 
@@ -2637,7 +2760,7 @@ export default function GuestsPage() {
 
         return (
             <div className="gx-toolbar">
-                <div className="gx-search">
+                <div className="gx-search" data-tour="toolbar-search">
                     <Search size={16} />
                     <input
                         value={searchUser ?? ''}
@@ -2666,6 +2789,7 @@ export default function GuestsPage() {
                     <button
                         type="button"
                         className="gx-tool"
+                        data-tour="quick-no-table"
                         data-active={filterTable === 'no-table' || undefined}
                         onClick={() => setFilterTable((prev) => (prev === 'no-table' ? null : 'no-table'))}
                     >
@@ -2674,7 +2798,7 @@ export default function GuestsPage() {
                 )}
 
                 <Dropdown trigger={['click']} placement="bottomRight" popupRender={() => renderFiltersPanel(tabKey)}>
-                    <button type="button" className="gx-tool" data-active={activeFilterCount > 0 || undefined}>
+                    <button type="button" className="gx-tool" data-tour="filters" data-active={activeFilterCount > 0 || undefined}>
                         {t('guests.filters')}
                         {activeFilterCount > 0 && <span className="gx-tool-count">{activeFilterCount}</span>}
                     </button>
@@ -2682,7 +2806,7 @@ export default function GuestsPage() {
 
                 <Tooltip title={t('guests.more_tools')}>
                     <Dropdown trigger={['click']} placement="bottomRight" popupRender={renderGlobalTools}>
-                        <button type="button" className="gx-tool gx-tool--icon">
+                        <button type="button" className="gx-tool gx-tool--icon" data-tour="more-tools">
                             <MoreHorizontal size={16} />
                         </button>
                     </Dropdown>
@@ -2703,7 +2827,7 @@ export default function GuestsPage() {
                             />
                         )}
                     >
-                        <button type="button" className="gx-tool gx-tool--primary">
+                        <button type="button" className="gx-tool gx-tool--primary" data-tour="new-guest">
                             <Plus size={15} />
                             <span>{t('guests.btn_new_guest')}</span>
                         </button>
@@ -2764,6 +2888,7 @@ export default function GuestsPage() {
                             </div>
                         )}
                         {renderSortBar('creado')}
+                        {tourOpen && tourDemo.created && renderDemoTourCard('creado')}
                         {hasActiveFilters
                             ? renderFlatCardList(sortForTab('creado', flatFilteredGuests(createdData)), 'creado')
                             : renderCardList(sortForTab('creado', filteredGuests(createdData)), 'creado')}
@@ -2782,6 +2907,8 @@ export default function GuestsPage() {
                         {renderTabToolbar('esperando')}
                         {renderRsvpDeadlineLine('esperando')}
                         {renderSortBar('esperando')}
+                        {tourOpen && tourDemo.failed && renderDemoTourCard('retry')}
+                        {tourOpen && tourDemo.remind && renderDemoTourCard('remind')}
                         {hasActiveFilters
                             ? renderFlatCardList(sortForTab('esperando', flatFilteredGuests(waitingData)), 'esperando')
                             : renderCardList(sortForTab('esperando', filteredGuests(waitingData)), 'esperando')}
@@ -2798,6 +2925,7 @@ export default function GuestsPage() {
                         {renderTabHero('confirmado')}
                         {renderTabToolbar('confirmado')}
                         {renderSortBar('confirmado')}
+                        {tourOpen && tourDemo.confirmed && renderDemoTourCard('confirmado')}
                         {hasActiveFilters
                             ? renderFlatCardList(sortForTab('confirmado', flatFilteredGuests(confirmedData)), 'confirmado')
                             : renderCardList(sortForTab('confirmado', filteredGuests(confirmedData)), 'confirmado')}
@@ -2852,7 +2980,9 @@ export default function GuestsPage() {
         rowData,
         tickets,
         plan,
-        rsvpPickerSlot
+        rsvpPickerSlot,
+        // El tour renderiza banners y tarjetas de ejemplo dentro de los tabs.
+        tourOpen
     ]);
 
 
@@ -2978,6 +3108,10 @@ export default function GuestsPage() {
             </Drawer>
 
             <GuestsCRUD rowData={rowData} invitationID={id} setDrawerState={setDrawerState} refreshPage={refreshPage} drawerState={drawerState} />
+
+            {/* Tour del rediseño: recorre Seguimiento, Por invitar, Esperando
+                respuesta y Confirmados cambiando el tab activo por paso. */}
+            <GuestsTour open={tourOpen} onClose={closeTour} setActiveKey={setActiveKey} />
 
             {/* Isla de progreso del envío masivo (estilo dynamic island): fija
                 abajo al centro, visible mientras el lote se procesa y hasta que

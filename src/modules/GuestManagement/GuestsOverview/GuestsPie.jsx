@@ -232,7 +232,7 @@ export const GuestsPie = ({ rowData = [], dispatchMap = {}, tables = [], classNa
   })
 
   return (
-    <section className={`${styles.card} ${className}`}>
+    <section className={`${styles.card} ${className}`} data-tour="ov-pie">
       <div className={styles.head}>
         <span className={styles.title}>{t('guests_overview.pie_title')}</span>
         <span className={styles.meta}>{t('guests_overview.pie_hint')}</span>

@@ -218,7 +218,7 @@ export const GuestsOverview = ({
         {/* ── Columna izquierda ────────────────────────────────────────── */}
         <div className={styles.col}>
 
-          <section className={`${styles.card} ${styles.cardToday}`}>
+          <section className={`${styles.card} ${styles.cardToday}`} data-tour="ov-today">
             <span className={styles.kicker}>{t('guests_overview.rd_today_title')}</span>
             <h2 className={styles.headline}>
               {stuck > 0
@@ -262,7 +262,7 @@ export const GuestsOverview = ({
 
           <GuestsPie className={styles.cardPie} rowData={rowData} dispatchMap={dispatchMap} tables={tables} />
 
-          <section className={`${styles.card} ${styles.cardProgress}`}>
+          <section className={`${styles.card} ${styles.cardProgress}`} data-tour="ov-progress">
             <div className={styles.cardHead}>
               <span className={styles.cardTitle}>{t('guests_overview.chart_progress')}</span>
               <span className={styles.cardMeta}>
@@ -295,7 +295,7 @@ export const GuestsOverview = ({
         <div className={styles.col}>
 
           {SHOW_LIA && (
-            <section className={styles.liaCard}>
+            <section className={styles.liaCard} data-tour="ov-lia">
               <div className={styles.liaBrand}>
                 {/* <Sparkles size={14} /> */}
                 <span>✦ Lia</span>
@@ -321,7 +321,7 @@ export const GuestsOverview = ({
             </section>
           )}
 
-          <section className={`${styles.card} ${styles.cardConfirmed}`}>
+          <section className={`${styles.card} ${styles.cardConfirmed}`} data-tour="ov-confirmed">
             <span className={styles.kicker}>{t('guests_overview.rd_confirmed')}</span>
             <div className={styles.bigRow}>
               <span className={styles.big}>{stats.confirmed}</span>
@@ -357,7 +357,7 @@ export const GuestsOverview = ({
             onOpenTables={onOpenTables}
           />
 
-          <section className={`${styles.card} ${styles.cardFunnel}`}>
+          <section className={`${styles.card} ${styles.cardFunnel}`} data-tour="ov-funnel">
             <span className={styles.cardTitle}>{t('guests_overview.rd_funnel_title')}</span>
             <div className={styles.funnel}>
               {funnel.map((f) => (

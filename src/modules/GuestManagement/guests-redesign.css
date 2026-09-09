@@ -59,6 +59,94 @@
     display: none;
 }
 
+/* Botón "?" al final de la escalera: relanza el tour del rediseño. */
+.gx-tour-btn {
+    flex: 0 0 auto;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0 6px;
+    padding: 0;
+    border: 1px solid var(--gx-border);
+    border-radius: 99px;
+    background: var(--gx-beige);
+    color: var(--gx-muted);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.gx-tour-btn:hover {
+    color: var(--gx-accent);
+    border-color: var(--gx-accent-pale);
+}
+
+/* ── Tour del rediseño ──────────────────────────────────────────────────
+   El popover del Tour se portalea a <body>, por eso estas clases usan los
+   tokens --gx-* de :root. */
+
+/* Texto del paso: los saltos de línea vienen del JSON de traducciones. */
+.gx-tour-text {
+    white-space: pre-line;
+    line-height: 1.5;
+}
+
+/* "Saltar a <bloque>": brinca el resto de los puntos del bloque actual. */
+.gx-tour-skip {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 12px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--gx-accent);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.gx-tour-skip:hover {
+    text-decoration: underline;
+}
+
+/* Contador "n / total" en lugar de los puntitos del Tour. */
+.gx-tour-count {
+    font-size: 12px;
+    color: var(--gx-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Chip "Ejemplo": marca banners y tarjetas que solo existen durante el tour
+   porque la invitación no tiene ese caso todavía. */
+.gx-demo-chip {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px dashed var(--gx-accent-pale);
+    background: transparent;
+    color: var(--gx-accent);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
+/* Tarjeta de invitado de ejemplo (inerte, solo durante el tour). */
+.gx-card--demo {
+    border: 1.5px dashed var(--gx-accent-pale);
+}
+
+.gx-card--demo .gx-btn,
+.gx-card--demo .gx-pill {
+    pointer-events: none;
+}
+
 .gx-step {
     flex: 1;
     min-width: 0;
