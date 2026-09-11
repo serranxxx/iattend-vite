@@ -438,36 +438,6 @@
     min-height: 120px;
 }
 
-.dashboard_photowall {
-    cursor: pointer;
-    width: 260px;
-    position: relative;
-}
-
-.pro_shadow {
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    position: absolute;
-    left: 0;
-    top: 0;
-    backdrop-filter: blur(1px);
-}
-
-.pro_badge_::after {
-    content: "PRO";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%,-50%);
-    padding: 2px 8px;
-    background-color: var(--light-green-500);
-    color: #F8F4F9;
-    font-weight: 800;
-    border-radius: 99px;
-    z-index: 99;
-}
-
 .photowall_card_body {
     flex: 1;
     width: 100%;
@@ -1001,6 +971,18 @@
     box-sizing: border-box;
 }
 
+.bento_polaroid--a {
+    left: -2%;
+    bottom: -14px;
+    transform: rotate(-7deg);
+}
+
+.bento_polaroid--b {
+    right: -4%;
+    bottom: -6px;
+    transform: rotate(6deg);
+}
+
 .bento_polaroid > div {
     aspect-ratio: 1;
     background: #F1F1F1;
@@ -1012,6 +994,223 @@
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+/* ── Módulo no contratado ──
+   La tarjeta se ve completa y a todo color, con contenido de muestra
+   (`LOCKED_DEMO` en DashboardPage): así se ve lo que se está comprando en vez
+   de una tarjeta vacía. Lo único que comunica el bloqueo es la barra del pie. */
+/* Velo sobre el contenido. Va en z-index 2 y la barra en 3, así el botón de
+   desbloquear queda nítido por encima. */
+.bento_card.bento_locked::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    /* --dark-blue-500 al 50%; no hay token con esa alpha (existen -40 y -60). */
+    background: rgba(12, 23, 27, .5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    pointer-events: none;
+}
+
+/* La hoja de invitados se ancla arriba en vez de asomar desde abajo: lo que
+   sobra se recorta por el pie y no se come la barra de progreso por arriba. */
+.bento_locked .bento_sheet {
+    inset: 0 0 auto 0;
+    border-radius: 18px;
+}
+
+/* Las polaroids se achican y se encinan para que la barra no las parta. */
+.bento_locked .bento_polaroid {
+    width: 46%;
+}
+
+.bento_locked .bento_polaroid--a {
+    left: 8%;
+    bottom: -34px;
+}
+
+.bento_locked .bento_polaroid--b {
+    right: 6%;
+    bottom: -22px;
+}
+
+/* ── Barra de acción ── */
+.bento_lock_bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+    /* Ajustada para que la frase completa quepa en las tarjetas de una sola
+       columna (Invitación y Photo Wall), que son las más angostas. */
+    padding: 13px 12px;
+    background: #1c3249;
+}
+
+.bento_lock_bar_label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #eeeadf;
+}
+
+.bento_lock_bar_label > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bento_lock_bar_label svg {
+    flex-shrink: 0;
+    color: var(--light-green-500);
+}
+
+.bento_lock_bar_cta {
+    flex-shrink: 0;
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--light-green-500);
+    color: #16323d;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.bento_card.bento_locked:hover .bento_lock_bar_cta {
+    background: var(--light-green-400);
+}
+
+/* Invitación y Photo Wall ocupan una sola columna: la frase y el botón no caben
+   a 12px. Bajan un punto ahí en vez de apilarse, para no alterar el alto de las
+   filas —que es el mismo de pro. */
+@media (min-width: 901px) {
+    .bento_inv .bento_lock_bar,
+    .bento_wall .bento_lock_bar {
+        padding: 13px 10px;
+        gap: 7px;
+    }
+
+    .bento_inv .bento_lock_bar_label,
+    .bento_wall .bento_lock_bar_label {
+        font-size: 11px;
+        gap: 5px;
+    }
+
+    .bento_inv .bento_lock_bar_cta,
+    .bento_wall .bento_lock_bar_cta {
+        padding: 0 10px;
+        font-size: 11px;
+    }
+}
+
+/* Contrata I attend / Cámbiate a PRO — misma tarjeta, distinto plan. Se colocan
+   con estilo inline en la celda que en pro ocupa el card de feedback. */
+.bento_pro,
+.bento_hire {
+    background: linear-gradient(155deg, #1c3249 0%, #16323d 100%);
+    color: #fff;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 24px;
+}
+
+/* Glow verde de la esquina; el overflow hidden de .bento_card lo recorta. */
+.bento_pro::after,
+.bento_hire::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    right: -80px;
+    top: -80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(170, 193, 135, .5) 0%, rgba(170, 193, 135, 0) 70%);
+    pointer-events: none;
+}
+
+.bento_pro > *,
+.bento_hire > * {
+    position: relative;
+    z-index: 1;
+}
+
+.bento_pro_badge {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--light-green-500);
+    color: #16323d;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.bento_pro .bento_title,
+.bento_hire .bento_title {
+    color: #fff;
+    font-size: 26px;
+    margin-top: auto;
+}
+
+.bento_pro_caption {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #eeeadf;
+}
+
+.bento_pro_cta {
+    height: 42px;
+    border: none;
+    border-radius: 999px;
+    background: var(--light-green-500);
+    color: #16323d;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.bento_pro_cta:hover {
+    background: var(--light-green-400);
+}
+
+/* Fila 3 con CTA (free y lite): deja de ser dos celdas de la rejilla para poder
+   repartirse con flex — Save the Date crece y el CTA se topa en 360px. */
+.bento_row3 {
+    grid-column: 1 / span 4;
+    grid-row: 3;
+    display: flex;
+    gap: 18px;
+    min-width: 0;
+}
+
+.bento_row3 > .bento_std {
+    flex: 1;
+    min-width: 0;
+}
+
+.bento_row3 > .bento_hire,
+.bento_row3 > .bento_pro {
+    flex: 1;
+    max-width: 360px;
+    min-width: 0;
 }
 
 /* Save the Date — foto full-bleed */
@@ -1136,9 +1335,20 @@
         grid-auto-rows: auto;
     }
 
-    .bento_grid > .bento_card {
+    .bento_grid > .bento_card,
+    .bento_row3 {
         grid-column: auto !important;
         grid-row: auto !important;
+    }
+
+    /* Apilada, la fila 3 se comporta como el resto del bento. */
+    .bento_row3 {
+        flex-direction: column;
+    }
+
+    .bento_row3 > .bento_hire,
+    .bento_row3 > .bento_pro {
+        max-width: none;
     }
 
     .bento_guests,
@@ -1158,3 +1368,4 @@
         min-height: 180px;
     }
 }
+

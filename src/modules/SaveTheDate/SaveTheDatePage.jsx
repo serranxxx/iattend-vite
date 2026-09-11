@@ -16,6 +16,7 @@ import { uploadSongAudio } from '../../helpers/services/uploadAudio'
 import { fonts } from '../../helpers/assets/fonts'
 import SaveTheDateHost from '../../components/Host/SaveTheDateHost'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
+import WhenToSend from '../../components/WhenToSend/WhenToSend'
 import StdCanvas from './StdCanvas'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { AuthModal } from '../../pages/PreviewMood/AuthModal'
@@ -2114,14 +2115,14 @@ export const SaveTheDatePage = ({ demo = false }) => {
                             className={`${styles.hTab} ${activeTab === 'edicion' ? styles.hTabOn : ''}`}
                             onClick={() => setActiveTab('edicion')}
                         >
-                            {t('savethedate.tab_edit')}
+                            {t('savethedate.tab_edit_short')}
                         </button>
                         {!demo &&
                             <button
                                 className={`${styles.hTab} ${activeTab === 'reacciones' ? styles.hTabOn : ''}`}
                                 onClick={() => setActiveTab('reacciones')}
                             >
-                                {t('savethedate.tab_reactions')}
+                                {t('savethedate.tab_reactions_short')}
                             </button>
                         }
                     </div>
@@ -2137,6 +2138,8 @@ export const SaveTheDatePage = ({ demo = false }) => {
                                 <Eye size={17} />
                             </button>
                         }
+
+                        <WhenToSend compact className={styles.hBtn} />
 
                         <button className={styles.hBtn} onClick={handleCopyLink} aria-label={t('savethedate.copy_link')}>
                             <Link2 size={17} />
@@ -2256,6 +2259,8 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 />
 
                 <div className={styles.actionsBar}>
+                    <WhenToSend />
+
                     {activeTab === 'edicion' &&
                         <button
                             className={`${styles.livePill} ${live ? styles.livePillOn : ''}`}

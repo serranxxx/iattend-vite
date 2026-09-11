@@ -799,7 +799,54 @@
     "bento_std_caption": "Avisa la fecha antes que nadie, con estilo.",
     "bento_passes": "pases",
     "bento_status_ok": "Confirmado",
-    "bento_status_wait": "Pendiente"
+    "bento_status_wait": "Pendiente",
+    "bento_pro_title": "Cámbiate a PRO",
+    "bento_pro_caption": "Photo Wall, Lia, WhatsApp y más.",
+    "bento_pro_cta": "Ver PRO",
+    "bento_wall_locked": "Disponible con PRO",
+    "bento_locked_free": "Disponible con I attend",
+    "bento_unlock": "Desbloquear",
+    "bento_hire_title": "Contrata I attend",
+    "bento_hire_caption": "Desbloquea la invitación, los invitados y todo lo demás.",
+    "bento_hire_cta": "Ver planes"
+  },
+  "advisor": {
+    "cta": "Contacta a tu asesor I attend",
+    "text_plans": "Hola, quiero contratar I attend para mi evento.",
+    "text_pro": "Hola, tengo el plan Lite y quiero cambiarme a PRO."
+  },
+  "plan_activation": {
+    "activating_title": "Estamos activando tu plan",
+    "activating_text": "Tu pago se confirmó. Esto toma unos segundos.",
+    "done_eyebrow": "Pago confirmado",
+    "done_title": "Ya tienes {{plan}}",
+    "done_text": "Tu invitación quedó desbloqueada. Todo lo que contrataste ya está en tu tablero.",
+    "done_cta": "Empezar",
+    "timeout_title": "Tu pago se registró",
+    "timeout_text": "La activación está tardando más de lo normal. Se aplica sola en unos minutos; si no, escríbenos.",
+    "timeout_cta": "Volver a revisar",
+    "close": "Cerrar",
+    "canceled": "Cancelaste el pago. Tu plan no cambió."
+  },
+  "plans_modal": {
+    "eyebrow": "Planes",
+    "title": "Contrata I attend para este evento",
+    "subtitle": "Un pago único. Tu invitación queda activa hasta el día de tu evento.",
+    "close": "Cerrar",
+    "recommended": "Recomendado",
+    "plan_paperless": "Plan Paperless",
+    "plan_lite": "Plan Lite",
+    "plan_pro": "Plan Pro",
+    "one_time": "pago único",
+    "choose": "Elegir este plan",
+    "loading_price": "Cargando precio…",
+    "price_error": "No pudimos cargar los precios. Inténtalo de nuevo."
+  },
+  "pro_modal": {
+    "eyebrow": "Plan PRO",
+    "title": "Que todo fluya el día de tu evento",
+    "cta": "Cámbiate a PRO",
+    "close": "Cerrar"
   },
   "plan_features": {
     "digital_invitation": "Invitación Paperless",
@@ -813,7 +860,9 @@
     "auto_sends": "Envíos automáticos",
     "digital_passes": "Pases digitales",
     "side_events_3": "3 Side events",
-    "side_events_1": "1 Side event"
+    "side_events_1": "1 Side event",
+    "photo_wall": "Photo Wall",
+    "lia": "Lia · asistente IA"
   },
   "calculate_tier": {
     "title": "Conoce la prioridad del invitado",
@@ -1526,7 +1575,10 @@
     "all_taken_title": "Todos tus eventos ya tienen Save the Date",
     "all_taken_text": "Cada evento puede tener uno. Abre el evento donde lo quieras cambiar y edítalo desde ahí, o crea un evento nuevo desde tus eventos.",
     "all_taken_stay": "Seguir aquí",
-    "all_taken_go": "Ir a mis eventos"
+    "all_taken_go": "Ir a mis eventos",
+    "when_to_send": "¿Cuándo enviar?",
+    "tab_edit_short": "Crear",
+    "tab_reactions_short": "Resp"
   },
   "guests_tour": {
     "replay": "Ver el tour de la página",

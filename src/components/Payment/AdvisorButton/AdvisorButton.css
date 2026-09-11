@@ -1,0 +1,40 @@
+/* Salida al asesor por WhatsApp dentro de los modales de venta. Secundaria a
+   propósito: contorno sobre el navy, para no competir con el CTA verde. */
+
+.advisor-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    height: 46px;
+    padding: 0 20px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(238, 234, 223, .28);
+    background: transparent;
+    color: #eeeadf;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.advisor-button:hover {
+    background: rgba(238, 234, 223, .1);
+    border-color: rgba(238, 234, 223, .45);
+    color: #fff;
+}
+
+.advisor-button svg {
+    flex-shrink: 0;
+    color: #7dd47f;
+}
+
+@media (max-width: 860px) {
+    .advisor-button {
+        width: 100%;
+        font-size: 13px;
+    }
+}

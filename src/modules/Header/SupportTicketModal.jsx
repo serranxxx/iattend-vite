@@ -5,9 +5,8 @@ import { Check, MessageCircle } from 'lucide-react'
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
 import styles from './SupportTicketModal.module.css'
+import { advisorWhatsappUrl, SUPPORT_EMAIL } from '../../helpers/contact'
 
-const SUPPORT_EMAIL = 'contacto.iattend@gmail.com'
-const SUPPORT_WHATSAPP = '+526143681307'
 
 const TOPICS = ['help', 'improvement', 'question']
 
@@ -156,7 +155,7 @@ export const SupportTicketModal = ({ open, onClose, invitationId, session, event
                             <div className={styles.actions}>
                                 <a
                                     className={styles.whatsapp}
-                                    href={`https://wa.me/${SUPPORT_WHATSAPP.replace(/\D/g, '')}`}
+                                    href={advisorWhatsappUrl()}
                                     target="_blank"
                                     rel="noreferrer"
                                 >

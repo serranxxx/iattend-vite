@@ -1,11 +1,92 @@
 import { useState } from 'react'
 import { Button, Modal } from 'antd'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { FEATURE_SLIDES } from '../../../pages/PreviewMood/featureSlides'
-import { handleCheckout, PRICE_IDS } from '../functions'
+import { handleCheckout, markPendingPlan, PRICE_IDS } from '../functions'
+import { AdvisorButton } from '../AdvisorButton/AdvisorButton'
 import './UpgradeBanner.css'
 
 const PRO_SLIDES = FEATURE_SLIDES.filter(s => s.id !== 'guests')
+
+/**
+ * Modal de venta del plan PRO. Vive aparte del banner porque el dashboard lo
+ * abre desde dos lugares distintos (la tarjeta PRO del bento y el Photo Wall
+ * bloqueado), sin renderizar el banner.
+ *
+ * El fondo y el acento verde son los mismos de la tarjeta PRO del bento
+ * (`.bento_pro`), para que abrir el modal se lea como una continuación de la
+ * tarjeta y no como otra pantalla.
+ */
+export const ProModal = ({ open, onClose, invitationId }) => {
+    const { t } = useTranslation()
+
+    return (
+        <Modal
+            open={open}
+            onCancel={onClose}
+            footer={null}
+            width='min(1040px, 92vw)'
+            centered
+            closable={false}
+            // antd v6 renombró `.ant-modal-content` a `.ant-modal-container`: la key
+            // `content` se ignora. El contenedor se transparenta porque el fondo
+            // real (navy + glow) lo pinta `.upgrade-modal`.
+            styles={{
+                body: { padding: 0 },
+                container: { padding: 0, background: 'transparent', boxShadow: 'none', borderRadius: 28 },
+            }}
+        >
+            <div className='upgrade-modal'>
+                <div className='upgrade-modal-header'>
+                    <div>
+                        <span className='upgrade-modal-eyebrow'>
+                            <Sparkles size={12} strokeWidth={2.6} />
+                            {t('pro_modal.eyebrow')}
+                        </span>
+                        <h3 className='upgrade-modal-title'>{t('pro_modal.title')}</h3>
+                    </div>
+                    <button
+                        type='button'
+                        className='upgrade-modal-close'
+                        onClick={onClose}
+                        aria-label={t('pro_modal.close')}
+                    >
+                        <X size={18} strokeWidth={2.4} />
+                    </button>
+                </div>
+
+                <div className='upgrade-modal-cards'>
+                    {PRO_SLIDES.map(slide => (
+                        <div key={slide.id} className='upgrade-card'>
+                            <img src={slide.img} alt='' className='upgrade-card-img' />
+                            <div className='upgrade-card-overlay' />
+                            <div className='upgrade-card-content'>
+                                <span className='upgrade-card-product'>{slide.product}</span>
+                                <p className='upgrade-card-headline'>{slide.headline}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className='upgrade-modal-footer'>
+                    <AdvisorButton context='pro' />
+                    <button
+                        type='button'
+                        className='upgrade-modal-cta'
+                        onClick={() => {
+                            markPendingPlan(invitationId, 'pro')
+                            handleCheckout(invitationId, PRICE_IDS.UPGRADE_TO_PRO)
+                        }}
+                    >
+                        {t('pro_modal.cta')}
+                        <Sparkles size={14} strokeWidth={2.6} />
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    )
+}
 
 export const UpgradeBanner = ({ plan, invitationId, floating = true, hideOnMobile = false }) => {
     const [modalOpen, setModalOpen] = useState(false)
@@ -37,43 +118,8 @@ export const UpgradeBanner = ({ plan, invitationId, floating = true, hideOnMobil
                 </Button>
             </div>
 
-            <Modal
-                open={modalOpen}
-                onCancel={() => setModalOpen(false)}
-                footer={null}
-                width='80%'
-                centered
-                closable={false}
-                styles={{ body: { padding: 0 }, content: { borderRadius: 16, overflow: 'hidden', padding: 0 } }}
-            >
-                {/* Header */}
-                <div className='upgrade-modal-header'>
-                    <div>
-                        <span className='upgrade-modal-eyebrow'>Plan Pro</span>
-                        <h3 className='upgrade-modal-title'>Que todo fluya el día de tu evento</h3>
-                    </div>
-                    <Button
-                        style={{ borderRadius: 99, height: 40, paddingInline: 24, fontWeight: 600, fontSize: 15, flexShrink: 0, backgroundColor: 'var(--light-purple-400)', color: 'var(--dark-blue-600)', border: 'none' }}
-                        onClick={() => handleCheckout(invitationId, PRICE_IDS.UPGRADE_TO_PRO)}
-                    >
-                        Cámbiate a PRO ✦
-                    </Button>
-                </div>
+            <ProModal open={modalOpen} onClose={() => setModalOpen(false)} invitationId={invitationId} />
 
-                {/* Cards */}
-                <div className='upgrade-modal-cards'>
-                    {PRO_SLIDES.map(slide => (
-                        <div key={slide.id} className='upgrade-card'>
-                            <img src={slide.img} alt='' className='upgrade-card-img' />
-                            <div className='upgrade-card-overlay' />
-                            <div className='upgrade-card-content'>
-                                <span className='upgrade-card-product'>{slide.product}</span>
-                                <p className='upgrade-card-headline'>{slide.headline}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </Modal>
         </>
     )
 }

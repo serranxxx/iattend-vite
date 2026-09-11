@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import styles from './BottomSheet.module.css'
 
@@ -8,6 +9,11 @@ import styles from './BottomSheet.module.css'
  * Sin máscara: el fondo se sigue viendo y se puede tocar sin que la hoja se
  * cierre —tocar la pieza cambia de panel, no la esconde—. Para cerrarla:
  * arrastrar hacia abajo, el botón de cerrar o Escape.
+ *
+ * Va en un portal al `body` a propósito: el editor móvil vive en un
+ * contenedor `position: fixed`, que crea su propio contexto de apilamiento y
+ * dejaba la hoja por debajo de las notificaciones de Lia (z-index 1150) —se
+ * veía, pero las tarjetas se comían los toques del contenido.
  */
 
 const CLOSE_DISTANCE = 90   // px arrastrados para que se cierre
@@ -79,7 +85,7 @@ export const BottomSheet = ({
         setDragY(0)
     }
 
-    return (
+    return createPortal(
         <div
             ref={sheetRef}
             className={`${styles.sheet} ${open ? styles.open : ''}`}
@@ -116,7 +122,8 @@ export const BottomSheet = ({
             <div className={`${styles.body} ${bodyClass} scroll-invitation`}>
                 {children}
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
 

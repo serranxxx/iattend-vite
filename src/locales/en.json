@@ -799,7 +799,54 @@
     "bento_std_caption": "Announce your date before anyone else, in style.",
     "bento_passes": "passes",
     "bento_status_ok": "Confirmed",
-    "bento_status_wait": "Pending"
+    "bento_status_wait": "Pending",
+    "bento_pro_title": "Upgrade to PRO",
+    "bento_pro_caption": "Photo Wall, Lia, WhatsApp and more.",
+    "bento_pro_cta": "See PRO",
+    "bento_wall_locked": "Available with PRO",
+    "bento_locked_free": "Available with I attend",
+    "bento_unlock": "Unlock",
+    "bento_hire_title": "Get I attend",
+    "bento_hire_caption": "Unlock the invitation, the guest list and everything else.",
+    "bento_hire_cta": "See plans"
+  },
+  "advisor": {
+    "cta": "Talk to your I attend advisor",
+    "text_plans": "Hi, I’d like to get I attend for my event.",
+    "text_pro": "Hi, I’m on the Lite plan and want to upgrade to PRO."
+  },
+  "plan_activation": {
+    "activating_title": "Activating your plan",
+    "activating_text": "Your payment went through. This takes a few seconds.",
+    "done_eyebrow": "Payment confirmed",
+    "done_title": "You now have {{plan}}",
+    "done_text": "Your invitation is unlocked. Everything you bought is already on your board.",
+    "done_cta": "Get started",
+    "timeout_title": "Your payment was recorded",
+    "timeout_text": "Activation is taking longer than usual. It applies on its own within a few minutes — if it doesn’t, reach out to us.",
+    "timeout_cta": "Check again",
+    "close": "Close",
+    "canceled": "You canceled the payment. Your plan didn’t change."
+  },
+  "plans_modal": {
+    "eyebrow": "Plans",
+    "title": "Get I attend for this event",
+    "subtitle": "A single payment. Your invitation stays active until your event day.",
+    "close": "Close",
+    "recommended": "Recommended",
+    "plan_paperless": "Paperless plan",
+    "plan_lite": "Lite plan",
+    "plan_pro": "Pro plan",
+    "one_time": "one-time payment",
+    "choose": "Choose this plan",
+    "loading_price": "Loading price…",
+    "price_error": "We couldn’t load the prices. Please try again."
+  },
+  "pro_modal": {
+    "eyebrow": "PRO plan",
+    "title": "Let everything flow on your big day",
+    "cta": "Upgrade to PRO",
+    "close": "Close"
   },
   "plan_features": {
     "digital_invitation": "Paperless Invitation",
@@ -813,7 +860,9 @@
     "auto_sends": "Automatic sends",
     "digital_passes": "Digital passes",
     "side_events_3": "3 Side events",
-    "side_events_1": "1 Side event"
+    "side_events_1": "1 Side event",
+    "photo_wall": "Photo Wall",
+    "lia": "Lia · AI assistant"
   },
   "calculate_tier": {
     "title": "Find out the guest's priority",
@@ -1526,7 +1575,10 @@
     "all_taken_title": "All your events already have a Save the Date",
     "all_taken_text": "Each event can have one. Open the event you want to change and edit it there, or create a new event from your events list.",
     "all_taken_stay": "Stay here",
-    "all_taken_go": "Go to my events"
+    "all_taken_go": "Go to my events",
+    "when_to_send": "When to send?",
+    "tab_edit_short": "Create",
+    "tab_reactions_short": "Replies"
   },
   "guests_tour": {
     "replay": "See the page tour",

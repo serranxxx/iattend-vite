@@ -1,0 +1,117 @@
+.wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+/* Botón de escritorio, al tono de las acciones del header */
+.trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: none;
+    background: #FFFFFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+}
+
+.trigger svg {
+    color: #787878;
+}
+
+.trigger:hover svg {
+    color: #16323d;
+}
+
+/* Popover anclado al botón */
+.panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 40;
+    width: min(430px, calc(100vw - 32px));
+    display: flex;
+    flex-direction: column;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #FFFFFF;
+    box-shadow: 0 18px 48px rgba(12, 23, 27, 0.18);
+    animation: panelIn 0.2s ease;
+}
+
+@keyframes panelIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.panelHead {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #EBEBEB;
+    flex-shrink: 0;
+}
+
+.panelTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.close {
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    border: none;
+    background: #F1EFEA;
+    color: #787878;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.close:hover {
+    background: #E6E2DA;
+    color: #29262D;
+}
+
+.frame {
+    width: 100%;
+    height: 520px;
+    border: none;
+    display: block;
+    background: #EEEADF;
+}
+
+/* Móvil: la herramienta llena la hoja inferior */
+.iconBtn {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.sheetBody {
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+.sheetBody .frame {
+    height: 70vh;
+    border-radius: 0;
+}
