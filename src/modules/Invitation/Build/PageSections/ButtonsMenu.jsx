@@ -45,7 +45,7 @@ export const ButtonsMenu = ({
     return (
         <div className={'tools-main-container'} style={{
         }}>
-            <div className={'tools-container'}>
+            <div className={'tools-container'} data-tour="modules-bar">
 
                 {
                     sortButtons(buttons, invitation.generals.positions).map((item, index) => {
@@ -53,6 +53,7 @@ export const ButtonsMenu = ({
                             <div
                                 key={index}
                                 style={{ position: 'relative' }}
+                                data-tour={`mod-${item.type}`}
                                 className={`single-button${currentSection === item.value ? '--selected' : ''} tag-button-tools`}
                                 onClick={() => handleActions(item)} >
                                 {item.icon}

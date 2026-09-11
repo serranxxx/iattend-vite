@@ -13,3 +13,32 @@
   .ant-color-picker-trigger .css-dev-only-do-not-override-m4timi .ant-popover-open .ant-color-picker-trigger-active {
     border-color: var(--brand-color-500);
   }
+/* ── Tour (antd v6) ─────────────────────────────────────────────────────
+   Los popovers del Tour se portalean a <body>, así que estos ajustes viven
+   aquí (global) y aplican a los dos tours de la app: el de invitados
+   (GuestsTour) y el del editor (BuildTour). Por defecto el contenido queda
+   muy pegado a los bordes y el panel casi cuadrado.
+
+   Los selectores van encadenados (panel > section > pieza) a propósito: los
+   estilos de antd se inyectan en <head> en runtime, después de esta hoja, así
+   que con la misma especificidad ganarían ellos. */
+.ant-tour .ant-tour-panel .ant-tour-section {
+  border-radius: 20px;
+}
+
+.ant-tour .ant-tour-panel .ant-tour-section .ant-tour-header {
+  padding: 20px 24px 10px;
+}
+
+.ant-tour .ant-tour-panel .ant-tour-section .ant-tour-description {
+  padding: 0 24px;
+}
+
+.ant-tour .ant-tour-panel .ant-tour-section .ant-tour-footer {
+  padding: 14px 24px 20px;
+}
+
+.ant-tour .ant-tour-panel .ant-tour-section .ant-tour-close {
+  top: 18px;
+  inset-inline-end: 18px;
+}

@@ -693,3 +693,237 @@
         text-align: center;
     }
 }
+/* ─────────────────────────────────────────────────────────────
+   iPhone 17 Pro · Safari a pantalla completa (iOS 26)
+   Variante nueva del mockup, usada solo por BuildContent. Las clases
+   `inv-device-*` siguen intactas porque las comparten otras seis pantallas
+   (SideEvents, LinkTree, OnboardingWizard, SaveTheDate, BuildCover,
+   DiscoverPage) con el mismo DOM.
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Chasis: riel de titanio ── */
+.ios26-device {
+    position: relative;
+    padding: 7px;
+    border-radius: 70px;
+    background: linear-gradient(155deg,
+            #9A9AA0 0%,
+            #5A5A60 12%,
+            #2E2E33 32%,
+            #1B1B1F 52%,
+            #3C3C42 74%,
+            #86868C 92%,
+            #55555B 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, .22),
+        inset 0 1px 1px rgba(255, 255, 255, .35),
+        0 26px 60px rgba(0, 0, 0, .5);
+    cursor: grab;
+    margin-left: -40px;
+}
+
+/* ── Bisel negro entre el riel y la pantalla ── */
+.ios26-screen {
+    position: relative;
+    z-index: 1;
+    width: 357px;
+    height: 763px;
+    border: 5px solid #060608;
+    border-radius: 63px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+/* ── Contenido con zonas de seguridad ──
+   El contenido es un iframe de otro origen, así que no puede leer
+   `env(safe-area-inset-*)`: los márgenes se aplican desde fuera para que la
+   isla no se coma el título ni el nav tape el botón de confirmar. */
+.ios26-content {
+    position: absolute;
+    top: 52px;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    background-color: var(--text-color);
+}
+
+/* ── Botones físicos ──
+   Sobresalen del riel: botón de acción y volumen a la izquierda, encendido a
+   la derecha. */
+.ios26-buttons {
+    position: absolute;
+    top: 124px;
+    left: -5px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 10;
+}
+
+.ios26-buttons span,
+.ios26-power {
+    display: block;
+    width: 5px;
+    height: 60px;
+    border-radius: 3px 1px 1px 3px;
+    background: linear-gradient(90deg, #B4B4BA 0%, #6E6E75 35%, #2E2E33 100%);
+    box-shadow:
+        -1px 0 2px rgba(0, 0, 0, .45),
+        inset 1px 0 0 rgba(255, 255, 255, .3);
+}
+
+/* Botón de acción: más corto y separado del volumen */
+.ios26-buttons span:first-child {
+    height: 30px;
+    margin-bottom: 12px;
+}
+
+.ios26-power {
+    position: absolute;
+    top: 196px;
+    right: -5px;
+    height: 98px;
+    border-radius: 1px 3px 3px 1px;
+    background: linear-gradient(270deg, #B4B4BA 0%, #6E6E75 35%, #2E2E33 100%);
+    box-shadow:
+        1px 0 2px rgba(0, 0, 0, .45),
+        inset -1px 0 0 rgba(255, 255, 255, .3);
+    z-index: 10;
+}
+
+/* ── Dynamic Island ── */
+.ios26-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 104px;
+    height: 32px;
+    border-radius: 20px;
+    background: #000;
+    z-index: 4;
+}
+
+/* ── Status bar ── */
+.ios26-status {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    padding: 0 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.ios26-status span {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.ios26-status img {
+    height: 12px;
+    object-fit: contain;
+}
+
+/* ── Barra de navegación flotante (liquid glass) ── */
+.ios26-nav {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 26px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+}
+
+.ios26-nav-round,
+.ios26-nav-pill {
+    background: rgba(255, 255, 255, .16);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: .5px solid rgba(255, 255, 255, .4);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, .22),
+        inset 0 1px 0 rgba(255, 255, 255, .45),
+        inset 0 -1px 0 rgba(255, 255, 255, .12);
+    color: #fff;
+}
+
+.ios26-nav-round {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+}
+
+.ios26-nav-pill {
+    flex: 1;
+    min-width: 0;
+    height: 46px;
+    border-radius: 23px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+}
+
+.ios26-nav-pill span {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, .92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ios26-nav-pill svg,
+.ios26-nav-round svg {
+    flex-shrink: 0;
+    opacity: .9;
+}
+
+/* Indicador de home */
+.ios26-home {
+    position: absolute;
+    left: 50%;
+    bottom: 9px;
+    transform: translateX(-50%);
+    width: 132px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .55);
+    z-index: 5;
+}
+
+/* ── Tour del editor (BuildTour) ────────────────────────────────────────
+   El popover del Tour se portalea a <body>, así que estas clases no pueden
+   depender de variables locales de la página. */
+
+/* Texto del paso: los saltos de línea vienen del JSON de traducciones. */
+.bt-tour-text {
+    white-space: pre-line;
+    line-height: 1.5;
+}
+
+/* Contador "n / total" en lugar de los puntitos del Tour. */
+.bt-tour-count {
+    font-size: 12px;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}

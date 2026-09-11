@@ -27,15 +27,19 @@ const pageTarget = (name) => () => document.querySelector(`[data-tour="${name}"]
 // Si un anclaje no existe, GuestsPage renderiza un elemento de ejemplo
 // mientras el tour está abierto (banners y tarjetas demo), así que los pasos
 // siempre tienen algo real que señalar.
+// Las tarjetas del resumen ocupan casi toda la altura de la pantalla: con el
+// `placement` por defecto (bottom) no cabe el popover y antd lo acaba montando
+// ENCIMA de la tarjeta que está señalando. Se abren al costado — a la derecha
+// las de la columna izquierda, a la izquierda las de la derecha.
 const BLOCKS = [
     {
         key: 'seguimiento', tab: 'seguimiento', steps: [
             { key: 'welcome', target: pageTarget('steps') },
-            { key: 'ov_today', target: paneTarget('ov-today') },
-            { key: 'ov_pie', target: paneTarget('ov-pie') },
-            { key: 'ov_progress', target: paneTarget('ov-progress') },
-            { key: 'ov_mesas', target: paneTarget('ov-mesas') },
-            { key: 'ov_funnel', target: paneTarget('ov-funnel') },
+            { key: 'ov_today', target: paneTarget('ov-today'), placement: 'right' },
+            { key: 'ov_pie', target: paneTarget('ov-pie'), placement: 'right' },
+            { key: 'ov_progress', target: paneTarget('ov-progress'), placement: 'right' },
+            { key: 'ov_mesas', target: paneTarget('ov-mesas'), placement: 'left' },
+            { key: 'ov_funnel', target: paneTarget('ov-funnel'), placement: 'left' },
         ],
     },
     {
@@ -49,6 +53,7 @@ const BLOCKS = [
             { key: 'more_tools', target: paneTarget('more-tools') },
             { key: 'copy_link', target: paneTarget('copy-link') },
             { key: 'send_invitation', target: paneTarget('send-invitation') },
+            { key: 'mark_sent', target: paneTarget('mark-sent') },
         ],
     },
     {
@@ -125,6 +130,7 @@ export const GuestsTour = ({ open, onClose, setActiveKey }) => {
                 </div>
             ),
             target: s.target,
+            placement: s.placement,
         }
     })
 

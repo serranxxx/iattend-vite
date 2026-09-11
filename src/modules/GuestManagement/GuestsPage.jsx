@@ -180,6 +180,9 @@ export default function GuestsPage() {
     const closeTour = () => {
         localStorage.setItem(GUESTS_TOUR_STORAGE_KEY, '1')
         setTourOpen(false)
+        // El tour deja al usuario en el último bloque que visitó (No asistirán);
+        // se regresa a Seguimiento, que es la vista de inicio de la página.
+        setActiveKey('seguimiento')
     }
 
     const hasPendingInfo = !name || !owners?.length || !invLabel || !invPhone
@@ -1777,6 +1780,7 @@ export default function GuestsPage() {
                     <button
                         type="button"
                         className="gx-icon-btn gx-icon-btn--primary"
+                        data-tour="mark-sent"
                         onClick={() => onSendInvitation(record)}
                         aria-label={t('guests.mark_arrow_tooltip')}
                     >
@@ -2186,6 +2190,15 @@ export default function GuestsPage() {
                                 {t('guests.btn_send_invitation')}
                             </button>
                         </div>
+                        <button
+                            type="button"
+                            className="gx-icon-btn gx-icon-btn--primary"
+                            data-tour="mark-sent"
+                            aria-disabled="true"
+                            aria-label={t('guests.mark_arrow_tooltip')}
+                        >
+                            <Check size={15} />
+                        </button>
                     </>
                 )}
                 {variant === 'retry' && (

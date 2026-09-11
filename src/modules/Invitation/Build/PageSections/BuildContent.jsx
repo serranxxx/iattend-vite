@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, } from 'react'
-import { Button, Dropdown, Grid, Slider } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { Button, Dropdown, Grid, Slider, Tooltip } from 'antd';
 import 'react-resizable/css/styles.css';
 
 const { useBreakpoint } = Grid;
@@ -7,6 +8,7 @@ import ios_settings from '../../../../assets/images/iphone-settings.svg'
 import android_settings from '../../../../assets/images/android-settings.png'
 import ReactHost from '../../../../components/Host/ReactHost';
 import { LuArrowLeft, LuMinus, LuMonitorSmartphone, LuPlus, LuRedo2, LuUndo2 } from 'react-icons/lu';
+import { ChevronLeft, CircleHelp, Ellipsis, Mic, Search } from 'lucide-react';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { LanguageSelector } from '../../../../components/LanguageSelector/LanguageSelector';
 
@@ -29,7 +31,7 @@ const devices = [
 export const BuildContent = ({
     positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride, fontOverride,
     languages, disabledLanguages, activeLang, onActiveLangChange, onAddLanguage, onToggleLanguageEnabled, onRetranslate, translating, minimalControls = false, onBack,
-    onUndo, onRedo, canUndo, canRedo
+    onUndo, onRedo, canUndo, canRedo, onReplayTour, tourOpen
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -39,6 +41,7 @@ export const BuildContent = ({
     const mapContainerRef = useRef(null);
     const scrollableContentRef = useRef(null);
     const screens = useBreakpoint();
+    const { t } = useTranslation();
 
     const zoomStep = 0.01;
     const minZoom = 0.5;
@@ -100,15 +103,18 @@ export const BuildContent = ({
                             <Button
                                 className='full-screen-button'
                                 id="undobutton"
+                                data-tour="undo"
                                 disabled={!canUndo}
                                 onClick={onUndo}
                                 icon={<LuUndo2 size={16} style={{ marginTop: '2px' }} />} />
                         )}
 
-                        {onRedo && canRedo && (
+                        {onRedo && (canRedo || tourOpen) && (
                             <Button
                                 className='full-screen-button'
                                 id="redobutton"
+                                data-tour="redo"
+                                disabled={!canRedo}
                                 onClick={onRedo}
                                 icon={<LuRedo2 size={16} style={{ marginTop: '2px' }} />} />
                         )}
@@ -130,12 +136,16 @@ export const BuildContent = ({
                             >
                                 <Button
                                     className='full-screen-button'
+                                    data-tour="devices"
                                     id="expandedbutton" icon={<LuMonitorSmartphone size={16} style={{ marginTop: '2px' }} />} />
 
                             </Dropdown>
 
-                            <StorageImages invitationID={invitationID}/>
+                            <div data-tour="images" style={{ display: 'flex' }}>
+                                <StorageImages invitationID={invitationID}/>
+                            </div>
 
+                            <div data-tour="translate" style={{ display: 'flex' }}>
                             <LanguageSelector
                                 languages={languages}
                                 disabledLanguages={disabledLanguages}
@@ -146,6 +156,7 @@ export const BuildContent = ({
                                 onRetranslate={onRetranslate}
                                 translating={translating}
                             />
+                            </div>
                         </>}
 
                         {minimalControls && onBack && (
@@ -156,7 +167,7 @@ export const BuildContent = ({
                                 icon={<LuArrowLeft size={16} />} />
                         )}
 
-                        <div className='slider-container'>
+                        <div className='slider-container' data-tour="zoom">
                             <LuPlus />
                             <Slider
                                 vertical
@@ -168,6 +179,18 @@ export const BuildContent = ({
                             />
                             <LuMinus />
                         </div>
+
+                        {/* Relanza el tour del editor (BuildTour). */}
+                        {onReplayTour && (
+                            <Tooltip placement='left' title={t('build_tour.replay')}>
+                                <Button
+                                    className='full-screen-button'
+                                    data-tour="tour-replay"
+                                    aria-label={t('build_tour.replay')}
+                                    onClick={onReplayTour}
+                                    icon={<CircleHelp size={16} style={{ marginTop: '2px' }} />} />
+                            </Tooltip>
+                        )}
 
                     </div>
 
@@ -195,32 +218,74 @@ export const BuildContent = ({
                             top: `${mapPosition.y}px`,
                             left: `${mapPosition.x}px`,
                         }}>
-                        <div className={`inv-device-main-container-${currentDevice}`} >
-                            <div className={`device-buttons-container-${currentDevice}`}>
-                                <div className={`device-button-${currentDevice}`} />
-                                <div className={`device-button-${currentDevice}`} />
-                                <div className={`device-button-${currentDevice}`} />
-                            </div>
-                            <div className={`device-power-button-${currentDevice}`} />
-                            <div className={`inv-device-container-${currentDevice} scroll-invitation`}>
+                        {currentDevice === 'ios' ? (
+                            /* iPhone 17 Pro · Safari a pantalla completa: el contenido ocupa
+                               toda la pantalla y la isla, el status y el nav flotan encima. */
+                            <div className='ios26-device' data-tour="preview">
+                                <div className='ios26-buttons'>
+                                    <span />
+                                    <span />
+                                    <span />
+                                </div>
+                                <div className='ios26-power' />
 
-                                <div className={`inv-black-space-${currentDevice}`}>
-                                    <span>5:15</span>
-                                    <div className={`camera-${currentDevice}`} />
-                                    <div>
-                                        <img alt='' src={currentDevice === 'ios' ? ios_settings : android_settings} style={{
-                                            height: '100%', objectFit: 'cover'
-                                        }} />
+                                <div className='ios26-screen'>
+                                    <div ref={scrollableContentRef} className='scroll-invitation ios26-content'>
+                                        <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />
                                     </div>
-                                </div>
 
-                                <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
-                                    <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />
+                                    <div className='ios26-island' />
 
+                                    <div className='ios26-status'>
+                                        <span>9:41</span>
+                                        <img alt='' src={ios_settings} />
+                                    </div>
+
+                                    <div className='ios26-nav'>
+                                        <div className='ios26-nav-round'>
+                                            <ChevronLeft size={20} strokeWidth={2.4} />
+                                        </div>
+                                        <div className='ios26-nav-pill'>
+                                            <Search size={16} strokeWidth={2.4} />
+                                            <span>iattend.mx</span>
+                                            <Mic size={16} strokeWidth={2.4} />
+                                        </div>
+                                        <div className='ios26-nav-round'>
+                                            <Ellipsis size={20} strokeWidth={2.4} />
+                                        </div>
+                                    </div>
+
+                                    <div className='ios26-home' />
                                 </div>
-                                <div className={`inv-light-space-${currentDevice}`} />
                             </div>
-                        </div>
+                        ) : (
+                            <div className={`inv-device-main-container-${currentDevice}`} data-tour="preview" >
+                                <div className={`device-buttons-container-${currentDevice}`}>
+                                    <div className={`device-button-${currentDevice}`} />
+                                    <div className={`device-button-${currentDevice}`} />
+                                    <div className={`device-button-${currentDevice}`} />
+                                </div>
+                                <div className={`device-power-button-${currentDevice}`} />
+                                <div className={`inv-device-container-${currentDevice} scroll-invitation`}>
+
+                                    <div className={`inv-black-space-${currentDevice}`}>
+                                        <span>5:15</span>
+                                        <div className={`camera-${currentDevice}`} />
+                                        <div>
+                                            <img alt='' src={android_settings} style={{
+                                                height: '100%', objectFit: 'cover'
+                                            }} />
+                                        </div>
+                                    </div>
+
+                                    <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
+                                        <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />
+
+                                    </div>
+                                    <div className={`inv-light-space-${currentDevice}`} />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                 </div >

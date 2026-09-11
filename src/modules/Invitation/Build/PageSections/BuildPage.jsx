@@ -8,6 +8,7 @@ import { HeaderDashboard } from '../../../Header/Header'
 import { ButtonsMenu } from './ButtonsMenu'
 import { BuildMenu } from './BuildMenu'
 import { BuildContent } from './BuildContent'
+import { BuildTour, BUILD_TOUR_STORAGE_KEY } from './BuildTour'
 import { load } from '../../../../helpers/assets/images'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
@@ -299,6 +300,15 @@ export const BuildPage = () => {
     const [undoStack, setUndoStack] = useState([])
     const [redoStack, setRedoStack] = useState([])
 
+    // Tour del editor (BuildTour): se abre solo la primera vez que el usuario
+    // entra a construir y se puede relanzar desde el "?" de la columna de
+    // herramientas.
+    const [tourOpen, setTourOpen] = useState(false)
+    // Candado del sync de secciones del preview (ver closeTour). Se levanta en
+    // cuanto el usuario vuelve a tocar el teléfono o elige un módulo.
+    const previewSyncLocked = useRef(false)
+    const unlockPreviewSync = () => { previewSyncLocked.current = false }
+
     const lastSavedTextsRef = useRef(null)
     const pendingSaveRef = useRef(null) // 'write' | 'save'
 
@@ -541,15 +551,73 @@ export const BuildPage = () => {
     }, []);
 
     const handleClick = (item) => {
+        unlockPreviewSync()
         setCurrentSection(item.value)
         setPositionY(item.type)
     }
 
-    const handleSectionChange = (type) => {
+    // El tour se abre solo la PRIMERA vez que se edita la invitación; el
+    // resto del tiempo se lanza a mano desde el "?" de la columna de
+    // herramientas. "Primera vez" = nunca se ha publicado, o sea que no tiene
+    // ninguna fila en invitation_versions (las escribe el RPC publish_invitation).
+    useEffect(() => {
+        if (!copy || !id) return
+        if (localStorage.getItem(BUILD_TOUR_STORAGE_KEY)) return
+
+        let cancelled = false
+        let timer = null
+
+        supabase
+            .from('invitation_versions')
+            .select('id')
+            .eq('invitation_id', id)
+            .limit(1)
+            .then(({ data, error }) => {
+                if (cancelled) return
+                // Falla cerrado: si la consulta truena, no abrimos nada — el
+                // botón "?" sigue estando ahí.
+                if (error || (data?.length ?? 0) > 0) return
+                // Pequeña espera para que la invitación ya esté pintada cuando
+                // el primer paso resuelva su anclaje.
+                timer = setTimeout(() => setTourOpen(true), 800)
+            })
+
+        return () => {
+            cancelled = true
+            if (timer) clearTimeout(timer)
+        }
+    }, [copy, id])
+
+    const closeTour = () => {
+        localStorage.setItem(BUILD_TOUR_STORAGE_KEY, '1')
+        setTourOpen(false)
+        // El tour deja seleccionado el último módulo que recorrió; el menú
+        // regresa a Generales, con el que abre el editor.
+        //
+        // Solo cambia el módulo, no positionY: "generals" no es una sección real
+        // de la invitación, así que mandar el preview ahí deja el teléfono en
+        // una posición vacía. El teléfono se queda donde el tour lo dejó.
+        //
+        // Su scroll, eso sí, sigue corriendo un buen rato después del último
+        // paso y va reportando las secciones por las que pasa — cualquiera de
+        // esos avisos regresaría el menú a otro módulo. Queda trabado en
+        // Generales hasta que el usuario vuelva a tocar el preview o elija otro
+        // módulo de la barra.
+        previewSyncLocked.current = true
+        setCurrentSection(1)
+    }
+
+    const selectSection = (type) => {
         const item = buttons.find((b) => b.type === type)
         if (!item) return
         setCurrentSection(item.value)
         setPositionY(item.type)
+    }
+
+    // El preview avisa qué sección está visible y el menú la sigue.
+    const handleSectionChange = (type) => {
+        if (previewSyncLocked.current) return
+        selectSection(type)
     }
 
     // Tras guardar el español, propaga los campos no-texto a todas las traducciones
@@ -880,16 +948,28 @@ export const BuildPage = () => {
 
                             </div>
 
+                            <div
+                                style={{ display: 'contents' }}
+                                onWheelCapture={unlockPreviewSync}
+                                onTouchMoveCapture={unlockPreviewSync}
+                                onMouseDownCapture={unlockPreviewSync}
+                            >
                             <BuildContent invitationID={id} onHide={onHide} setOnHide={setOnHide}
                                 setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={getActiveInvitation()} onSectionChange={handleSectionChange}
                                 languages={copy?.generals?.languages ?? []} disabledLanguages={copy?.generals?.disabledLanguages ?? []} activeLang={activeLang} onActiveLangChange={setActiveLang}
                                 onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating}
-                                onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0} />
+                                onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0}
+                                onReplayTour={() => setTourOpen(true)} tourOpen={tourOpen} />
+                            </div>
 
                         </div>
 
 
                         <UpgradeBanner plan={plan} invitationId={id} floating={false} hideOnMobile />
+
+                        {/* Tour del editor: recorre la barra de módulos explicando
+                            qué vive en cada uno (Generales, Portada, Bienvenida...). */}
+                        <BuildTour open={tourOpen} onClose={closeTour} onSelectSection={selectSection} />
                     </Layout >
                     : <div className='build-loading-container'>
                         <img alt='' src={load} style={{

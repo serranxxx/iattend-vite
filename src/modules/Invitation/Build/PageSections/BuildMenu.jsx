@@ -131,6 +131,7 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
             )}
             <div
                 className='build-content-modules-main-container scroll-invitation'
+                data-tour="editor-panel"
                 style={{
                     display: screens.xs ? 'block' : undefined,
                     width: screens.xs ? '100%' : (onHide ? '0px' : '370px'),
