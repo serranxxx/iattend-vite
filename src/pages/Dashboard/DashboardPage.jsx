@@ -16,6 +16,7 @@ import { clearPendingPlan, readPendingPlan } from '../../components/Payment/func
 import { FeedbackModal } from '../../components/FeedbackPrompt/FeedbackModal'
 import { useFeedbackTrigger } from '../../components/FeedbackPrompt/useFeedbackTrigger'
 import { CountUp } from './CountUp'
+import { DashboardMobile } from './DashboardMobile'
 
 
 const LANDING = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing';
@@ -46,6 +47,14 @@ export const DashboardPage = () => {
     const [saveTheDate, setSaveTheDate] = useState(null)
     const [guestsSample, setGuestsSample] = useState([])
     const [sideNames, setSideNames] = useState([])
+    // Móvil: el tablero no reflowa el bento, monta otra pantalla (ver
+    // DashboardMobile). Corta en 767px; de tablet para arriba vuelve el bento.
+    const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches)
+    // Datos que solo pide la pantalla móvil.
+    const [slug, setSlug] = useState(null)
+    const [eventType, setEventType] = useState(null)
+    const [published, setPublished] = useState(false)
+    const [wall, setWall] = useState({ count: 0, thumbs: [] })
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -65,6 +74,13 @@ export const DashboardPage = () => {
         closeModal: closeFeedbackModal,
         submit: submitFeedback,
     } = useFeedbackTrigger(id, createdAt)
+
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 767px)')
+        const onChange = (e) => setIsMobile(e.matches)
+        mq.addEventListener('change', onChange)
+        return () => mq.removeEventListener('change', onChange)
+    }, [])
 
     useEffect(() => {
         const el = interBubbleRef.current
@@ -88,7 +104,7 @@ export const DashboardPage = () => {
         // 1️⃣ Obtener invitación
         const { data: invitation, error } = await supabase
             .from("invitations")
-            .select("tickets, plan, data, created_at")
+            .select("tickets, plan, data, created_at, name, type")
             .eq("id", invitation_id)
             .single();
 
@@ -100,6 +116,28 @@ export const DashboardPage = () => {
         setPlan(invitation?.plan)
         setInvitation(invitation?.data);
         setCreatedAt(invitation?.created_at ?? null);
+        setSlug(invitation?.name ?? null);
+        setEventType(invitation?.type ?? null);
+
+        // "Publicada" = ya existe al menos una versión, que es lo que escribe
+        // el RPC publish_invitation. No hay columna de estado en invitations.
+        const { count: versions } = await supabase
+            .from("invitation_versions")
+            .select("id", { count: "exact", head: true })
+            .eq("invitation_id", invitation_id);
+        setPublished((versions ?? 0) > 0);
+
+        // Muro: el conteo para el carril y las dos últimas para las polaroids.
+        const { data: photos, count: photoCount } = await supabase
+            .from("event_photos")
+            .select("public_url", { count: "exact" })
+            .eq("event_id", invitation_id)
+            .order("uploaded_at", { ascending: false })
+            .limit(2);
+        setWall({
+            count: photoCount ?? 0,
+            thumbs: (photos ?? []).map((p) => p.public_url).filter(Boolean),
+        });
 
         // Save the Date (quinto producto): la tarjeta cambia según exista o no la fila
         const { data: std } = await supabase
@@ -340,6 +378,21 @@ export const DashboardPage = () => {
             </div>
         ) : null;
 
+    // Link público de la invitación: el mismo que redirige vercel.json a
+    // iattend.events. Sin slug o sin tipo no hay nada que compartir todavía.
+    const publicUrl = slug && eventType ? `https://iattend.events/${eventType}/${slug}` : null;
+
+    const shareInvitation = async () => {
+        if (!publicUrl) { handleMoode('build'); return }
+        if (navigator.share) {
+            // El usuario puede cancelar la hoja nativa: eso no es un error.
+            try { await navigator.share({ title: coverTitle || 'I attend', url: publicUrl }) } catch { /* cancelado */ }
+            return
+        }
+        await navigator.clipboard?.writeText(publicUrl)
+        message.success(t('dashboard.mob_share_copied'))
+    };
+
     const stdCard = (
         <div className='bento_card bento_std' style={hasCta ? undefined : stdGridStyle} onClick={() => handleMoode('savethedate')}>
             <div className='bento_std_bg'>
@@ -374,7 +427,7 @@ export const DashboardPage = () => {
 
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1' /> */}
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1_1' /> */}
-                <div className='dashboard_body'>
+                <div className={`dashboard_body${isMobile ? ' dashboard_body--mobile' : ''}`}>
 
                     {/* ── Gradient background ── */}
                     <div className="gradient-bg">
@@ -391,7 +444,30 @@ export const DashboardPage = () => {
 
                     <div className='dashboard_stack'>
 
-                        <div className='bento_grid'>
+                        {isMobile ? <DashboardMobile
+                            coverTitle={coverTitle}
+                            coverChip={coverChip}
+                            coverImg={isFree ? LOCKED_DEMO.cover : realCoverImg}
+                            published={published}
+                            stats={stats}
+                            /* "137 de 150": enviados contra el cupo del plan */
+                            totalPasses={stats.confirmed + stats.waiting}
+                            passesCap={totalPasses}
+                            guests={shownGuests}
+                            avatarBgs={AVATAR_BGS}
+                            isConfirmed={isConfirmedState}
+                            sideCount={sideNames.length}
+                            photoCount={wall.count}
+                            /* Siempre dos polaroids: con una sola foto real la
+                               segunda la pone el asset de la landing. */
+                            wallThumbs={[...wall.thumbs, `${LANDING}/wall-1.jpg`, `${LANDING}/wall-2.jpg`].slice(0, 2)}
+                            stdImg={stdImg}
+                            stdChip={stdChip}
+                            feedbackVisible={feedbackVisible}
+                            onOpenFeedback={openFeedbackModal}
+                            onShare={shareInvitation}
+                            onOpen={openSection}
+                        /> : <div className='bento_grid'>
 
                             {/* ── Invitación Paperless — lila, alta ── */}
                             <div
@@ -529,7 +605,7 @@ export const DashboardPage = () => {
                                 </div>
                             }
 
-                        </div>
+                        </div>}
                     </div>
 
                 </div>

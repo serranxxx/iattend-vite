@@ -778,6 +778,15 @@
     gap: 16px;
 }
 
+/* El tablero móvil mide su propio canal de 16px desde el borde de la
+   pantalla, así que el cuerpo le cede el suyo (24px) y el colchón de abajo,
+   que ahí lo pone la página para la tab bar. */
+.dashboard_body--mobile {
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+}
+
 .bento_stats {
     display: flex;
     gap: 22px;

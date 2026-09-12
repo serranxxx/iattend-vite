@@ -1,0 +1,641 @@
+/* ═══════════════════════════════════════════════════════════════
+   Tablero del evento en móvil — handoff "1b · Hero + carriles".
+
+   No es el bento de escritorio reflowado: la invitación pasa a ser un
+   hero horizontal, los pases se resumen en una tira de tres, la lista
+   de invitados se muestra de verdad y los módulos secundarios viven en
+   un carril horizontal. El header sigue siendo `HeaderDashboard`; lo
+   que sí es de esta pantalla es la tab bar de abajo.
+
+   La serif es Young Serif —la que ya usa el tablero— y no la Playfair
+   del prototipo: el handoff pide usar la serif de marca del codebase
+   si existe.
+   ═══════════════════════════════════════════════════════════════ */
+
+.page {
+    --ink: #2E3A4F;
+    --ink-2: #5C6373;
+    --ink-3: #98A0AF;
+    --lav: #DCD0EC;
+    --lav-soft: #F4F2F8;
+    --lav-pale: #EDEAF2;
+    --lav-accent: #6B5A8E;
+    --sage: #C6C9AC;
+    --sand: #EDE7DC;
+    --divider: #F1EFEA;
+
+    width: 100%;
+    box-sizing: border-box;
+    background: #FBFAF6;
+    font-family: Poppins, sans-serif;
+    /* Aire bajo la tarjeta de feedback, que es el último bloque. */
+    padding-bottom: 28px;
+}
+
+/* Entrada en cascada. El escalonado se reparte con `--i` desde el JSX
+   para no escribir un nth-child por bloque. */
+.rise {
+    animation: rise 0.22s ease-out both;
+    animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ── Hero: la invitación ── */
+.hero {
+    display: flex;
+    gap: 14px;
+    margin: 0 16px;
+    padding: 18px 16px 16px;
+    box-sizing: border-box;
+    border-radius: 26px;
+    background: var(--lav);
+    cursor: pointer;
+    text-align: left;
+    border: none;
+    width: calc(100% - 32px);
+    font-family: inherit;
+}
+
+.heroThumb {
+    flex: none;
+    padding: 6px 6px 8px;
+    border-radius: 12px;
+    background: #FFFFFF;
+    box-shadow: 0 8px 18px rgba(46, 58, 79, 0.16);
+    align-self: flex-start;
+}
+
+.heroThumb img,
+.heroThumbEmpty {
+    display: block;
+    width: 88px;
+    aspect-ratio: 0.56;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.heroThumbEmpty {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, #EFEBDC, #DCD0EC);
+    color: rgba(46, 58, 79, 0.45);
+}
+
+.heroThumbName {
+    margin-top: 6px;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 10px;
+    color: var(--ink);
+    text-align: center;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.heroCol {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.heroDate {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--lav-accent);
+}
+
+.heroTitle {
+    margin: 6px 0 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 26px;
+    line-height: 1.05;
+    font-weight: 400;
+    color: var(--ink);
+}
+
+.heroMeta {
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #5C5470;
+}
+
+.heroActions {
+    display: flex;
+    gap: 7px;
+    margin-top: auto;
+    padding-top: 14px;
+}
+
+.heroEdit {
+    flex: 1;
+    height: 36px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.heroShare {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 999px;
+    background: #FFFFFF;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+/* ── Tira de métricas ── */
+.metrics {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px 0;
+}
+
+.metric {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 12px 11px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 18px;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.metricNum {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 28px;
+    line-height: 0.9;
+    color: var(--ink);
+}
+
+.metricLabel {
+    margin-top: 5px;
+    font-size: 10px;
+}
+
+.metricConfirmed {
+    background: var(--sage);
+}
+
+.metricConfirmed .metricLabel {
+    color: #4C5568;
+}
+
+.metricWaiting {
+    background: var(--sand);
+}
+
+.metricWaiting .metricLabel {
+    color: #5C6373;
+}
+
+.metricAvailable {
+    background: var(--lav-pale);
+}
+
+.metricAvailable .metricLabel {
+    color: #5C5470;
+}
+
+/* ── Encabezado de sección ── */
+.sectionHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 16px 10px;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--ink);
+}
+
+.sectionLink {
+    flex: none;
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--lav-accent);
+    cursor: pointer;
+}
+
+/* ── Lista de invitados ── */
+.guestCard {
+    margin: 0 16px;
+    border-radius: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(46, 58, 79, 0.1);
+    overflow: hidden;
+}
+
+.guestRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 13px;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid var(--divider);
+    background: none;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.guestRow:last-child {
+    border-bottom: none;
+}
+
+.guestAvatar {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.guestText {
+    flex: 1;
+    min-width: 0;
+}
+
+.guestName {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.guestSub {
+    display: block;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.guestBadge {
+    flex: none;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.badgeWait {
+    background: var(--lav-soft);
+    color: #5B4B7C;
+}
+
+.badgeOk {
+    background: #E7EDE1;
+    color: #4A6042;
+}
+
+/* Sin invitados todavía */
+.guestEmpty {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.guestEmptyTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.guestEmptyBtn {
+    height: 40px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ── Carril de módulos ── */
+.rail {
+    display: flex;
+    gap: 10px;
+    padding: 0 16px 4px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-left: 16px;
+    scrollbar-width: none;
+    align-items: stretch;
+}
+
+.rail::-webkit-scrollbar {
+    display: none;
+}
+
+.railCard {
+    flex: none;
+    position: relative;
+    width: 168px;
+    min-height: 132px;
+    padding: 13px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+}
+
+.railTitle {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.1;
+}
+
+.railSub {
+    margin-top: 2px;
+    font-size: 10px;
+}
+
+/* Photo Wall */
+.railWall {
+    background: var(--ink);
+}
+
+.railWall .railTitle {
+    color: #FFFFFF;
+}
+
+.railWall .railSub {
+    color: #B9C0CE;
+}
+
+.wallScene {
+    display: flex;
+    align-items: flex-end;
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.polaroid {
+    flex: none;
+    padding: 3px 3px 8px;
+    background: #FFFFFF;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+}
+
+.polaroid img {
+    display: block;
+    width: 48px;
+    height: 46px;
+    object-fit: cover;
+}
+
+.polaroid:first-child {
+    transform: rotate(-6deg);
+}
+
+.polaroid:last-child {
+    transform: rotate(5deg);
+    margin-left: -8px;
+}
+
+/* Side events */
+.railSide {
+    background: var(--sand);
+}
+
+.railSide .railTitle {
+    color: var(--ink);
+}
+
+.railSide .railSub {
+    color: #5C6373;
+}
+
+.envScene {
+    position: relative;
+    height: 66px;
+    margin-top: auto;
+}
+
+/* Medidas del handoff, en px: los porcentajes del bento de escritorio se
+   quedaban en nada dentro de un contenedor de 66px. */
+.env {
+    position: absolute;
+    border-radius: 6px;
+}
+
+.env:nth-child(1) {
+    left: 0;
+    top: 14px;
+    width: 58px;
+    height: 40px;
+    background: #2E3A4F;
+    transform: rotate(-12deg);
+}
+
+.env:nth-child(2) {
+    left: 30px;
+    top: 2px;
+    width: 60px;
+    height: 42px;
+    background: #CDBCE4;
+    transform: rotate(8deg);
+}
+
+.env:nth-child(3) {
+    left: 22px;
+    top: 24px;
+    width: 60px;
+    height: 42px;
+    background: #C6C9AC;
+    transform: rotate(-3deg);
+}
+
+/* Save the Date: imagen a sangre con el texto anclado abajo */
+.railStd {
+    padding: 0;
+    background: var(--ink);
+    justify-content: flex-end;
+}
+
+.railStdBg {
+    position: absolute;
+    inset: 0;
+}
+
+.railStdBg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.railStdGrad {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(28, 12, 14, 0.15), rgba(28, 12, 14, 0.8));
+}
+
+.railStdText {
+    position: relative;
+    padding: 0 13px 12px;
+}
+
+.railStd .railTitle {
+    color: #FFFFFF;
+}
+
+.railStd .railSub {
+    color: #EFE7E5;
+}
+
+/* ── Tarjeta de feedback ── */
+.feedback {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: calc(100% - 32px);
+    margin: 18px 16px 0;
+    padding: 13px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 20px;
+    background: var(--lav-soft);
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.feedbackIcon {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: #FFFFFF;
+    color: #5B4B7C;
+}
+
+.feedbackText {
+    flex: 1;
+    min-width: 0;
+}
+
+.feedbackTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.feedbackSub {
+    font-size: 10.5px;
+    color: #7C8496;
+}
+
+.feedbackCta {
+    flex: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--lav-accent);
+}
+
+/* ── Táctil: no hay hover, el feedback es el press ── */
+.hero:active,
+.metric:active,
+.guestRow:active,
+.railCard:active,
+.feedback:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+.hero,
+.metric,
+.guestRow,
+.railCard,
+.feedback {
+    transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 120ms ease;
+}
+
+.hero:focus-visible,
+.metric:focus-visible,
+.guestRow:focus-visible,
+.railCard:focus-visible,
+.feedback:focus-visible,
+.sectionLink:focus-visible,
+.heroEdit:focus-visible,
+.heroShare:focus-visible {
+    outline: 2px solid var(--lav-accent);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .rise {
+        animation: none;
+    }
+
+    .hero:active,
+    .metric:active,
+    .guestRow:active,
+    .railCard:active,
+    .feedback:active {
+        transform: none;
+    }
+}
