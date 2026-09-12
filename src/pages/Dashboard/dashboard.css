@@ -784,6 +784,38 @@
     flex-wrap: wrap;
 }
 
+/* Los números cuentan hasta su valor (CountUp); el bloque, además, entra
+   escalonado para que la fila no aparezca de un frame a otro. */
+.bento_stats > div {
+    animation: bento_stat_in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bento_stats > div:nth-child(2) {
+    animation-delay: 0.07s;
+}
+
+.bento_stats > div:nth-child(3) {
+    animation-delay: 0.14s;
+}
+
+@keyframes bento_stat_in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bento_stats > div {
+        animation: none;
+    }
+}
+
 .bento_stat_num {
     font-family: 'Young Serif', Georgia, serif;
     font-size: 40px;

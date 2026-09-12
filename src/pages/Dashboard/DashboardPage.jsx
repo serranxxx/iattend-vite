@@ -15,6 +15,7 @@ import { PlanActivationModal } from '../../components/Payment/PlanActivation/Pla
 import { clearPendingPlan, readPendingPlan } from '../../components/Payment/functions'
 import { FeedbackModal } from '../../components/FeedbackPrompt/FeedbackModal'
 import { useFeedbackTrigger } from '../../components/FeedbackPrompt/useFeedbackTrigger'
+import { CountUp } from './CountUp'
 
 
 const LANDING = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing';
@@ -422,9 +423,9 @@ export const DashboardPage = () => {
                                             <div className='bento_caption' style={{ marginTop: '10px' }}>{t('dashboard.bento_guests_caption')}</div>
                                         </div>
                                         <div className='bento_stats'>
-                                            <div><div className='bento_stat_num'>{stats.confirmed}</div><div className='bento_stat_label'>{t('dashboard.stat_confirmed')}</div></div>
-                                            <div><div className='bento_stat_num'>{stats.waiting}</div><div className='bento_stat_label'>{t('dashboard.stat_waiting')}</div></div>
-                                            <div><div className='bento_stat_num'>{stats.available}</div><div className='bento_stat_label'>{t('dashboard.stat_available')}</div></div>
+                                            <div><CountUp className='bento_stat_num' value={stats.confirmed} /><div className='bento_stat_label'>{t('dashboard.stat_confirmed')}</div></div>
+                                            <div><CountUp className='bento_stat_num' value={stats.waiting} /><div className='bento_stat_label'>{t('dashboard.stat_waiting')}</div></div>
+                                            <div><CountUp className='bento_stat_num' value={stats.available} /><div className='bento_stat_label'>{t('dashboard.stat_available')}</div></div>
                                         </div>
                                     </div>
                                     <div className='bento_sheet_wrap'>
