@@ -1532,6 +1532,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 <span className={styles.fieldLabel}>{t('savethedate.font')}</span>
                 <div className={styles.fieldRow}>
                     <Select
+                        rootClassName='sheet-pop'
                         style={{ flex: 1, minWidth: 0 }}
                         showSearch
                         value={cover.title.text.typeFace}
@@ -1539,6 +1540,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                         onChange={(v) => updateCover((c) => { c.title.text.typeFace = v; return c })}
                     />
                     <ColorPicker
+                        rootClassName='sheet-pop'
                         value={cover.title.text.color}
                         onChange={(color) => updateCover((c) => { c.title.text.color = color.toHexString(); return c })}
                     />
@@ -1591,6 +1593,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
             {blockHead(<CalendarDays size={16} />, t('savethedate.event_date'), t('savethedate.date_hint'))}
 
             <DatePicker
+                rootClassName='sheet-pop'
                 style={{ width: '100%' }}
                 format='DD/MM/YYYY'
                 value={eventDate ? dayjs(eventDate.slice(0, 10)) : null}
@@ -1601,6 +1604,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 <span className={styles.fieldLabel}>{t('savethedate.countdown_font')}</span>
                 <div className={styles.fieldRow}>
                     <Select
+                        rootClassName='sheet-pop'
                         style={{ flex: 1, minWidth: 0 }}
                         showSearch
                         value={cover.date.typeFace ?? 'Poppins'}
@@ -1608,6 +1612,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                         onChange={(v) => updateCover((c) => { c.date.typeFace = v; return c })}
                     />
                     <ColorPicker
+                        rootClassName='sheet-pop'
                         value={cover.date.color ?? '#FFFFFF'}
                         onChange={(color) => updateCover((c) => { c.date.color = color.toHexString(); return c })}
                     />
@@ -1631,6 +1636,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                     Save the date
                 </span>
                 <ColorPicker
+                    rootClassName='sheet-pop'
                     value={btnColor}
                     onChange={(color) => updateCover((c) => {
                         c.button = { ...(c.button ?? {}), color: color.toRgbString() }

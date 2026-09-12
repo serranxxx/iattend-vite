@@ -2572,6 +2572,7 @@ export const SideEvents = () => {
             <div className={ed.fieldRow}>
                 <span className={ed.fieldLabel}>{t('side_events.panel_color_pick')}</span>
                 <ColorPicker
+                    rootClassName='sheet-pop'
                     value={current?.body?.color ?? '#000000'}
                     onChange={(e) => setBody({ color: colorFactoryToHex(e) })}
                 />
@@ -2599,6 +2600,7 @@ export const SideEvents = () => {
             <div className={ed.fieldStack}>
                 <span className={ed.fieldLabel}>{t('side_events.font_type')}</span>
                 <Select
+                    rootClassName='sheet-pop'
                     style={{ width: '100%' }}
                     showSearch
                     value={current?.body?.title?.font ?? 'Poppins'}
@@ -2636,6 +2638,7 @@ export const SideEvents = () => {
             {/* Hora de pared: lo que se ve en el picker es lo que se guarda,
                 sin conversión de timezone (helpers/assets/eventDateTime.js) */}
             <DatePicker
+                rootClassName='sheet-pop'
                 style={{ width: '100%' }}
                 showTime={{ format: 'HH:mm' }}
                 format='DD/MM/YYYY HH:mm'
