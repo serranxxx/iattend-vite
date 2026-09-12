@@ -50,12 +50,3 @@
 .se-tour .ant-tour-panel {
   max-width: 360px;
 }
-
-/* ── Popups abiertos desde la hoja inferior de los editores ──
-   Select, ColorPicker y DatePicker se portalean a <body> con z-index 1050;
-   el BottomSheet vive en 1200, así que sus desplegables se abrían por detrás
-   de la hoja. El `!important` es necesario porque antd escribe el z-index
-   inline en el nodo del popup. */
-.sheet-pop {
-    z-index: 1300 !important;
-}

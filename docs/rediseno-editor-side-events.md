@@ -212,6 +212,30 @@ con `/dashboard/guests`**: esa página cambió igual.
   (`min(52vh, 420px)`, `min(54vh, 420px)` en móvil) y `align={{ overflow: { adjustX, adjustY,
   shiftX, shiftY } }}`, que hace que antd lo **deslice** para dejarlo dentro en vez de voltearlo.
 
+## En móvil, los paneles no usan popups de antd
+
+`Select`, `ColorPicker` y `DatePicker` se portalean a `<body>` y flotan anclados a su trigger. Dentro
+de la hoja inferior eso no funciona: el popup se posiciona una vez y la hoja se mueve, se abre donde
+puede en 400px (el `DatePicker` con hora mide 401px y quedaba mordido), y el scroll de su lista pelea
+con el de la pieza. Primero se intentó subirles el `z-index` por encima de la hoja (1200 → 1300): los
+hacía visibles, pero seguían siendo inoperables con el dedo.
+
+La solución es no usarlos ahí. Bajo `isMobile` los paneles montan los campos de
+[`components/MobileFields`](../src/components/MobileFields/MobileFields.jsx); en escritorio siguen
+con antd, que ahí va bien.
+
+- **`FontPicker`** — la lista de tipografías **inline**, dentro de la hoja, con cada opción en su
+  propia fuente y `overscroll-behavior: contain` para que su scroll no se le escape a la hoja. La
+  elegida entra a la vista al montar.
+- **`ColorField`** — una muestra que abre el **selector nativo** del teléfono (`<input type=color>`
+  invisible encima). El nativo solo entiende `#rrggbb`: con `alpha` agrega un deslizador de opacidad
+  y devuelve `rgba(...)` — es el caso del botón del Save the Date, que es translúcido a propósito.
+- **`DateField`** — `<input type=date>` o `datetime-local` nativos. `datetime-local` entrega
+  `YYYY-MM-DDTHH:mm` **sin zona horaria**: es exactamente la hora de pared que guardan los side
+  events, así que la única transformación es cambiar la `T` por un espacio. Cero conversión de
+  timezone posible.
+- Los inputs nativos van a **16px**: por debajo, iOS hace zoom al enfocar.
+
 ## Los tours son solo de escritorio
 
 Los cinco tours (`SideEventsTour`, `GuestsTour`, `TablesTour`, `SaveTheDateTour` y `BuildTour`) se

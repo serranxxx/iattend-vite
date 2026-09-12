@@ -1596,6 +1596,7 @@
     "send_pro_cta": "Get PRO",
     "button_section": "Button",
     "button_color": "Button color",
+    "color": "Color",
     "background": "Background",
     "media_images": "Images",
     "media_video": "Video",
@@ -1872,5 +1873,10 @@
     "zoom_desc": "Zoom the preview in or out. You can also drag the phone to move it around.",
     "preview_title": "📱 Your invitation, live",
     "preview_desc": "This is how it looks live on your guest's phone: every change shows up instantly.\n\nWhen you like it, publish it from the button above. Done! 🎉"
+  },
+  "mobile_fields": {
+    "font": "Typeface",
+    "color": "Color",
+    "opacity": "Opacity"
   }
 }

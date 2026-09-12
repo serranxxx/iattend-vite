@@ -173,6 +173,16 @@ de puntitos y `disabledInteraction`.
   initialization` y quedaba en blanco. El cuerpo del efecto sí puede referirse a lo que venga
   después; el array de dependencias no.
 
+## Campos móviles sin popups
+
+Los paneles de la hoja inferior no usan `Select`, `ColorPicker` ni `DatePicker` de antd en móvil: sus
+popups flotan anclados al trigger y dentro de una hoja que se mueve, en 400px y con el dedo, son
+inoperables. Bajo `isMobile` montan `FontPicker`, `ColorField` y `DateField` de
+[`components/MobileFields`](../src/components/MobileFields/MobileFields.jsx) — lista de fuentes
+inline y controles nativos del teléfono. El color del botón es translúcido, así que su `ColorField`
+va con `alpha` (deslizador de opacidad → `rgba`). El porqué completo está en
+[rediseno-editor-side-events.md](./rediseno-editor-side-events.md#en-móvil-los-paneles-no-usan-popups-de-antd).
+
 ## Gotchas nuevos
 
 - **El preview del editor apunta a prod por default**: hasta que

@@ -32,6 +32,7 @@ import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import SideCanvas from './SideCanvas'
+import { ColorField, DateField, FontPicker } from '../../components/MobileFields/MobileFields'
 import { SideEventsTour, SIDE_TOUR_STORAGE_KEY } from './SideEventsTour'
 import ed from './SideEventEditor.module.css'
 import sl from './SideEventsList.module.css'
@@ -2571,11 +2572,19 @@ export const SideEvents = () => {
 
             <div className={ed.fieldRow}>
                 <span className={ed.fieldLabel}>{t('side_events.panel_color_pick')}</span>
-                <ColorPicker
-                    rootClassName='sheet-pop'
-                    value={current?.body?.color ?? '#000000'}
-                    onChange={(e) => setBody({ color: colorFactoryToHex(e) })}
-                />
+                {/* En móvil, controles nativos en vez de popups de antd: dentro
+                    de la hoja los popups se abren donde pueden y su scroll pelea
+                    con el de la pieza (ver components/MobileFields). */}
+                {isMobile
+                    ? <ColorField
+                        value={current?.body?.color ?? '#000000'}
+                        onChange={(hex) => setBody({ color: hex })}
+                    />
+                    : <ColorPicker
+                        value={current?.body?.color ?? '#000000'}
+                        onChange={(e) => setBody({ color: colorFactoryToHex(e) })}
+                    />
+                }
             </div>
 
             <div className={ed.swatchRow}>
@@ -2599,14 +2608,20 @@ export const SideEvents = () => {
 
             <div className={ed.fieldStack}>
                 <span className={ed.fieldLabel}>{t('side_events.font_type')}</span>
-                <Select
-                    rootClassName='sheet-pop'
-                    style={{ width: '100%' }}
-                    showSearch
-                    value={current?.body?.title?.font ?? 'Poppins'}
-                    options={fonts.map((f) => ({ value: f, label: <span style={{ fontFamily: f }}>{f}</span> }))}
-                    onChange={(v) => setTitleProp({ font: v })}
-                />
+                {isMobile
+                    ? <FontPicker
+                        fonts={fonts}
+                        value={current?.body?.title?.font ?? 'Poppins'}
+                        onChange={(v) => setTitleProp({ font: v })}
+                    />
+                    : <Select
+                        style={{ width: '100%' }}
+                        showSearch
+                        value={current?.body?.title?.font ?? 'Poppins'}
+                        options={fonts.map((f) => ({ value: f, label: <span style={{ fontFamily: f }}>{f}</span> }))}
+                        onChange={(v) => setTitleProp({ font: v })}
+                    />
+                }
             </div>
 
             <div className={ed.fieldStack}>
@@ -2637,14 +2652,22 @@ export const SideEvents = () => {
 
             {/* Hora de pared: lo que se ve en el picker es lo que se guarda,
                 sin conversión de timezone (helpers/assets/eventDateTime.js) */}
-            <DatePicker
-                rootClassName='sheet-pop'
-                style={{ width: '100%' }}
-                showTime={{ format: 'HH:mm' }}
-                format='DD/MM/YYYY HH:mm'
-                value={wallClockToDayjs(current?.body?.hour)}
-                onChange={(e) => setBody({ hour: dayjsToWallClock(e) })}
-            />
+            {isMobile
+                ? <DateField
+                    type="datetime-local"
+                    /* `datetime-local` entrega YYYY-MM-DDTHH:mm sin zona: es la
+                       misma hora de pared que se guarda, solo cambia el separador */
+                    value={wallClockToDayjs(current?.body?.hour)?.format('YYYY-MM-DDTHH:mm') ?? ''}
+                    onChange={(v) => setBody({ hour: v ? `${v.replace('T', ' ')}:00` : null })}
+                />
+                : <DatePicker
+                    style={{ width: '100%' }}
+                    showTime={{ format: 'HH:mm' }}
+                    format='DD/MM/YYYY HH:mm'
+                    value={wallClockToDayjs(current?.body?.hour)}
+                    onChange={(e) => setBody({ hour: dayjsToWallClock(e) })}
+                />
+            }
 
             {current?.body?.hour && !wallClockToDayjs(current.body.hour) &&
                 <span className={ed.hint}>

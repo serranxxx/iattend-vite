@@ -1596,6 +1596,7 @@
     "send_pro_cta": "Contratar PRO",
     "button_section": "Botón",
     "button_color": "Color del botón",
+    "color": "Color",
     "background": "Fondo",
     "media_images": "Imágenes",
     "media_video": "Video",
@@ -1872,5 +1873,10 @@
     "zoom_desc": "Acerca o aleja el preview. También puedes arrastrar el teléfono para moverlo de lugar.",
     "preview_title": "📱 Tu invitación en vivo",
     "preview_desc": "Así se ve en vivo en el celular de tu invitado: cada cambio que haces aparece al instante.\n\nCuando te guste, publícala desde el botón de arriba. ¡Listo! 🎉"
+  },
+  "mobile_fields": {
+    "font": "Tipografía",
+    "color": "Color",
+    "opacity": "Opacidad"
   }
 }

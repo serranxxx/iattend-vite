@@ -19,6 +19,7 @@ import SaveTheDateHost from '../../components/Host/SaveTheDateHost'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import WhenToSend from '../../components/WhenToSend/WhenToSend'
 import StdCanvas from './StdCanvas'
+import { ColorField, DateField, FontPicker } from '../../components/MobileFields/MobileFields'
 import { SaveTheDateTour, STD_TOUR_STORAGE_KEY } from './SaveTheDateTour'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { AuthModal } from '../../pages/PreviewMood/AuthModal'
@@ -1530,21 +1531,37 @@ export const SaveTheDatePage = ({ demo = false }) => {
 
             <div className={styles.fieldStack}>
                 <span className={styles.fieldLabel}>{t('savethedate.font')}</span>
-                <div className={styles.fieldRow}>
-                    <Select
-                        rootClassName='sheet-pop'
-                        style={{ flex: 1, minWidth: 0 }}
-                        showSearch
-                        value={cover.title.text.typeFace}
-                        options={fonts.map((f) => ({ value: f, label: <span style={{ fontFamily: f }}>{f}</span> }))}
-                        onChange={(v) => updateCover((c) => { c.title.text.typeFace = v; return c })}
-                    />
-                    <ColorPicker
-                        rootClassName='sheet-pop'
-                        value={cover.title.text.color}
-                        onChange={(color) => updateCover((c) => { c.title.text.color = color.toHexString(); return c })}
-                    />
-                </div>
+                {/* En móvil, controles nativos en vez de popups de antd: dentro
+                    de la hoja los popups se abren donde pueden y su scroll pelea
+                    con el de la pieza (ver components/MobileFields). La lista de
+                    fuentes es alta, así que va apilada y no en fila. */}
+                {isMobile
+                    ? <>
+                        <FontPicker
+                            fonts={fonts}
+                            value={cover.title.text.typeFace}
+                            onChange={(v) => updateCover((c) => { c.title.text.typeFace = v; return c })}
+                        />
+                        <ColorField
+                            value={cover.title.text.color}
+                            hint={t('savethedate.color')}
+                            onChange={(hex) => updateCover((c) => { c.title.text.color = hex; return c })}
+                        />
+                    </>
+                    : <div className={styles.fieldRow}>
+                        <Select
+                            style={{ flex: 1, minWidth: 0 }}
+                            showSearch
+                            value={cover.title.text.typeFace}
+                            options={fonts.map((f) => ({ value: f, label: <span style={{ fontFamily: f }}>{f}</span> }))}
+                            onChange={(v) => updateCover((c) => { c.title.text.typeFace = v; return c })}
+                        />
+                        <ColorPicker
+                            value={cover.title.text.color}
+                            onChange={(color) => updateCover((c) => { c.title.text.color = color.toHexString(); return c })}
+                        />
+                    </div>
+                }
             </div>
 
             <div className={styles.fieldStack}>
@@ -1592,31 +1609,49 @@ export const SaveTheDatePage = ({ demo = false }) => {
         <>
             {blockHead(<CalendarDays size={16} />, t('savethedate.event_date'), t('savethedate.date_hint'))}
 
-            <DatePicker
-                rootClassName='sheet-pop'
-                style={{ width: '100%' }}
-                format='DD/MM/YYYY'
-                value={eventDate ? dayjs(eventDate.slice(0, 10)) : null}
-                onChange={(d) => { setEventDate(d ? `${d.format('YYYY-MM-DD')}T00:00:00Z` : null); setDirty(true) }}
-            />
+            {isMobile
+                ? <DateField
+                    type="date"
+                    value={eventDate ? eventDate.slice(0, 10) : ''}
+                    onChange={(v) => { setEventDate(v ? `${v}T00:00:00Z` : null); setDirty(true) }}
+                />
+                : <DatePicker
+                    style={{ width: '100%' }}
+                    format='DD/MM/YYYY'
+                    value={eventDate ? dayjs(eventDate.slice(0, 10)) : null}
+                    onChange={(d) => { setEventDate(d ? `${d.format('YYYY-MM-DD')}T00:00:00Z` : null); setDirty(true) }}
+                />
+            }
 
             <div className={styles.fieldStack}>
                 <span className={styles.fieldLabel}>{t('savethedate.countdown_font')}</span>
-                <div className={styles.fieldRow}>
-                    <Select
-                        rootClassName='sheet-pop'
-                        style={{ flex: 1, minWidth: 0 }}
-                        showSearch
-                        value={cover.date.typeFace ?? 'Poppins'}
-                        options={fonts.map((f) => ({ value: f, label: <span style={{ fontFamily: f }}>{f}</span> }))}
-                        onChange={(v) => updateCover((c) => { c.date.typeFace = v; return c })}
-                    />
-                    <ColorPicker
-                        rootClassName='sheet-pop'
-                        value={cover.date.color ?? '#FFFFFF'}
-                        onChange={(color) => updateCover((c) => { c.date.color = color.toHexString(); return c })}
-                    />
-                </div>
+                {isMobile
+                    ? <>
+                        <FontPicker
+                            fonts={fonts}
+                            value={cover.date.typeFace ?? 'Poppins'}
+                            onChange={(v) => updateCover((c) => { c.date.typeFace = v; return c })}
+                        />
+                        <ColorField
+                            value={cover.date.color ?? '#FFFFFF'}
+                            hint={t('savethedate.color')}
+                            onChange={(hex) => updateCover((c) => { c.date.color = hex; return c })}
+                        />
+                    </>
+                    : <div className={styles.fieldRow}>
+                        <Select
+                            style={{ flex: 1, minWidth: 0 }}
+                            showSearch
+                            value={cover.date.typeFace ?? 'Poppins'}
+                            options={fonts.map((f) => ({ value: f, label: <span style={{ fontFamily: f }}>{f}</span> }))}
+                            onChange={(v) => updateCover((c) => { c.date.typeFace = v; return c })}
+                        />
+                        <ColorPicker
+                            value={cover.date.color ?? '#FFFFFF'}
+                            onChange={(color) => updateCover((c) => { c.date.color = color.toHexString(); return c })}
+                        />
+                    </div>
+                }
             </div>
         </>
     )
@@ -1635,15 +1670,30 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 >
                     Save the date
                 </span>
-                <ColorPicker
-                    rootClassName='sheet-pop'
+                {!isMobile && (
+                    <ColorPicker
+                        value={btnColor}
+                        onChange={(color) => updateCover((c) => {
+                            c.button = { ...(c.button ?? {}), color: color.toRgbString() }
+                            return c
+                        })}
+                    />
+                )}
+            </div>
+
+            {/* El color del botón es translúcido a propósito: en móvil el
+                selector nativo no maneja alpha, así que va aparte con su
+                deslizador de opacidad. */}
+            {isMobile && (
+                <ColorField
+                    alpha
                     value={btnColor}
-                    onChange={(color) => updateCover((c) => {
-                        c.button = { ...(c.button ?? {}), color: color.toRgbString() }
+                    onChange={(rgba) => updateCover((c) => {
+                        c.button = { ...(c.button ?? {}), color: rgba }
                         return c
                     })}
                 />
-            </div>
+            )}
 
             <div className={styles.swatchRow}>
                 {BUTTON_SWATCHES.map((c) => (
