@@ -1,0 +1,380 @@
+/* Cabecera compartida del drawer: franja de avance, menú "+ Agregar" y
+   la fila de toggle Mapa ↔ Lista. Vive encima de las dos vistas. */
+
+/* ── Franja de avance (§5.2) ───────────────────────────────────────────── */
+/* Reemplaza la leyenda del pie del mapa: dice de un vistazo cuánta gente
+   falta por sentar y si sobra capacidad. */
+
+.strip {
+    align-self: stretch;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0;
+    box-sizing: border-box;
+    border-radius: 16px;
+    background-color: var(--sc-color);
+    overflow: hidden;
+}
+
+.stripMain {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    min-width: 0;
+    padding: 12px 18px;
+}
+
+.stripText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.stripTitle {
+    font-family: var(--font-family);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.stripSub {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--gray-color);
+    line-height: 1.2;
+}
+
+.stripBar {
+    position: relative;
+    height: 8px;
+    flex: 1;
+    min-width: 90px;
+    max-width: 240px;
+    border-radius: 99px;
+    background-color: var(--ft-color);
+    overflow: hidden;
+}
+
+.stripBarFill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 99px;
+    background-color: var(--brand-color-500);
+    transition: width 0.3s ease;
+}
+
+/* Señal de capacidad sobrante: el dato más accionable de la pantalla,
+   y hoy no se ve en ningún lado. Va a sangre contra el borde derecho de la
+   franja — el radio lo recorta el overflow del contenedor. */
+.surplus {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 12px 22px;
+    background-color: var(--warning-color-50);
+    flex-shrink: 0;
+}
+
+.surplusText {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.surplusTitle {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--warning-color-700);
+    line-height: 1.2;
+}
+
+.surplusSub {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--warning-color-700);
+    opacity: 0.8;
+    line-height: 1.2;
+}
+
+.surplusAction {
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    padding: 0;
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--warning-color-700);
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+/* ── Fila del toggle ───────────────────────────────────────────────────── */
+
+.switchRow {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.switchRight {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Menú "+ Agregar" ──────────────────────────────────────────────────── */
+
+/* El primario de antd es lila claro y aquí se pierde: este es el único CTA
+   del header, así que va en navy como el resto de acciones fuertes del módulo. */
+.addButton {
+    border: none !important;
+    border-radius: 99px !important;
+    background-color: var(--text-color) !important;
+    color: var(--ft-color) !important;
+    font-weight: 500;
+    box-shadow: none !important;
+}
+
+.addButton:hover {
+    background-color: var(--brand-color-900) !important;
+    color: var(--ft-color) !important;
+}
+
+/* En móvil el CTA pierde la palabra y queda como disco, igual que el cierre. */
+.addButtonRound {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+}
+
+.closeButton {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 99px !important;
+    background-color: var(--sc-color) !important;
+    color: var(--gray-color) !important;
+    box-shadow: none !important;
+}
+
+.closeButton:hover {
+    background-color: var(--gray-bg) !important;
+    color: var(--text-color) !important;
+}
+
+.addMenu {
+    display: flex;
+    flex-direction: column;
+    width: 250px;
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 24px;
+    background-color: var(--ft-color);
+    box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.14);
+}
+
+.addSection {
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+    padding: 8px 10px 6px;
+}
+
+.addDivider {
+    height: 1px;
+    margin: 6px 4px;
+    background-color: var(--borders);
+}
+
+.addItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.addItem:hover {
+    background-color: var(--sc-color);
+}
+
+.addItemText {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.addItemName {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.addItemHint {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+    line-height: 1.2;
+}
+
+/* Miniaturas de forma: el mismo lila de una mesa en el mapa. */
+.shapeIcon {
+    background-color: var(--brand-color-300);
+    border: 1px solid var(--brand-color-500);
+    flex-shrink: 0;
+}
+
+.shapeRound {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.shapeSquare {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+}
+
+.shapeRect {
+    width: 28px;
+    height: 16px;
+    border-radius: 5px;
+}
+
+/* Los elementos del salón se dibujan punteados, igual que en el mapa. */
+.elementIcon {
+    width: 26px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px dashed var(--gray-color);
+    background-color: transparent;
+    flex-shrink: 0;
+}
+
+/* Solo se usa en móvil; en escritorio manda la frase completa. */
+.surplusCompact {
+    display: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+}
+
+.surplusCompactNum {
+    font-family: var(--font-family);
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--warning-color-700);
+}
+
+.surplusCompactLabel {
+    font-family: var(--font-family);
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--warning-color-700);
+    opacity: 0.85;
+}
+
+/* ── Móvil ─────────────────────────────────────────────────────────────── */
+/* La franja pasa a una sola línea: título y barra apilados a la izquierda,
+   la sobra reducida a su cifra a la derecha. Apilarla en columna, como estaba,
+   se comía un tercio de la pantalla antes de que se viera una sola mesa. */
+@media (max-width: 750px) {
+    .strip {
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        border-radius: 14px;
+    }
+
+    .stripMain {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 0;
+    }
+
+    .stripText {
+        flex-shrink: 1;
+    }
+
+    /* La cuenta de quién falta ya la da la barra fija sobre el mapa. */
+    .stripSub {
+        display: none;
+    }
+
+    /* Sobre el gris de la franja el blanco de escritorio no se distingue: el
+       riel necesita un tono más para leerse como barra. */
+    /* En columna el `flex: 1` de escritorio resuelve a base 0 y la barra
+       desaparece: aquí manda la altura fija. */
+    .stripBar {
+        flex: 0 0 6px;
+        max-width: none;
+        height: 6px;
+        background-color: var(--borders);
+    }
+
+    .surplus {
+        padding: 0;
+        background-color: transparent;
+    }
+
+    .surplusText,
+    .surplusAction {
+        display: none;
+    }
+
+    .surplusCompact {
+        display: flex;
+    }
+
+    /* Las pestañas ocupan su propia línea a todo el ancho; los criterios de
+       orden bajan debajo y se deslizan en horizontal si no caben. */
+    .switchRow {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 0 16px;
+    }
+
+    .switchRight {
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+
+    .switchRight::-webkit-scrollbar {
+        display: none;
+    }
+
+    .switchRight > * {
+        flex-shrink: 0;
+    }
+}

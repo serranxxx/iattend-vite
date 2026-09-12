@@ -1,0 +1,332 @@
+/* ═══════════════════════════════════════════════════════════════
+   Tarjeta de edición del Save the Date: fondo real + tarjetas
+   translúcidas apiladas, cada zona seleccionable.
+   ═══════════════════════════════════════════════════════════════ */
+.card {
+    position: relative;
+    width: 390px;
+    height: 700px;
+    border-radius: 28px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    padding: 14px;
+    background: #16323d;
+    box-shadow: 0 24px 60px rgba(12, 23, 27, 0.28), 0 2px 8px rgba(12, 23, 27, 0.12);
+    font-family: Poppins, sans-serif;
+    user-select: none;
+}
+
+/* ── Zonas seleccionables ── */
+.pickable {
+    outline: 1.5px solid transparent;
+    outline-offset: 3px;
+    transition: outline-color 0.15s ease, background 0.2s ease;
+    cursor: pointer;
+}
+
+.pickable:hover {
+    outline-color: rgba(255, 255, 255, 0.45);
+}
+
+.picked {
+    outline-color: #FFFFFF;
+}
+
+/* ── Fondo ── */
+.bgLayer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    outline-offset: -6px;
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.9s ease;
+}
+
+.mediaFill {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Sin fondo elegido: degradado de marca como lienzo de arranque */
+.bgPlaceholder {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #D1BEDD 0%, #8C7FA6 34%, #3F5A6B 68%, #0C171B 100%);
+}
+
+.scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(to top, rgba(12, 23, 27, 0.72), rgba(12, 23, 27, 0.12) 55%, transparent);
+}
+
+.scrimStrong {
+    background: linear-gradient(to top, rgba(12, 23, 27, 0.9), rgba(12, 23, 27, 0.35) 60%, rgba(12, 23, 27, 0.08));
+}
+
+/* ── Fila superior: canción + fondo ── */
+.topRow {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    z-index: 5;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.topRowHidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.topRow {
+    transition: opacity 0.22s ease;
+}
+
+.chip,
+.bgBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 165px;
+    height: 32px;
+    padding: 0 12px 0 6px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(12, 23, 27, 0.42);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* Botón de fondo: centrado, justo arriba del contador. Solo selecciona la
+   sección — el picker de archivos vive en el panel de herramientas. */
+.bgBtn {
+    align-self: center;
+    max-width: 220px;
+    height: 34px;
+    padding: 0 14px;
+}
+
+/* CTA arriba a la derecha, igual que en la pieza */
+.ctaDock {
+    border-radius: 99px;
+    flex-shrink: 0;
+}
+
+.chipArt {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.chipIcon {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.chipLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Contenido ── */
+.content {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* misma curva y duración que la hoja inferior: suben como un solo gesto */
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ── Cuenta regresiva ── */
+.countdown {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 22px;
+    padding: 10px 8px;
+    border-radius: 18px;
+}
+
+.cdCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 44px;
+}
+
+.cdValue {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.35);
+}
+
+.cdUnit {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+/* ── Tarjetas translúcidas apiladas ── */
+.group {
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(12, 23, 27, 0.34);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.titleRow {
+    min-height: 104px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    outline-offset: -3px;
+    border-radius: 20px 20px 0 0;
+}
+
+.titleInput {
+    width: 100%;
+    line-height: 1.05;
+    word-break: break-word;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
+    outline: none;
+    user-select: text;
+    cursor: text;
+}
+
+.titleInput:empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.row {
+    min-height: 50px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    color: #FFFFFF;
+    font-size: 13.5px;
+    outline-offset: -3px;
+    box-sizing: border-box;
+}
+
+.row + .row {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rowLabel {
+    font-weight: 500;
+}
+
+/* ── CTA liquid glass ── */
+.glassWrap {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 99px;
+    overflow: hidden;
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.ctaLabel {
+    position: relative;
+    z-index: 3;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+/* ── Dots del carrusel ── */
+.dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-top: 2px;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    border: none;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dotActive {
+    background: #FFFFFF;
+    width: 20px;
+}
+
+/* Solo lectura (pestaña Respuestas): nada seleccionable ni editable */
+.cardReadOnly,
+.cardReadOnly .titleInput,
+.cardReadOnly button {
+    cursor: default;
+}
+
+/* ── Móvil: la pieza llena su marco (el header y el dock viven fuera) ── */
+.cardFull {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 16px;
+}
+
+.cardFull .titleRow {
+    min-height: 116px;
+}

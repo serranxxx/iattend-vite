@@ -1,0 +1,1223 @@
+/* ═══════════════════════════════════════════════════════════════
+   Editor del Save the Date: lienzo flotante al centro sobre un
+   tablero, barra mínima arriba y herramientas flotando a la izq.
+   ═══════════════════════════════════════════════════════════════ */
+.pageContainer {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #EDEAE3;
+    /* retícula de puntos del tablero */
+    background-image: radial-gradient(rgba(41, 38, 45, 0.11) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: -1px -1px;
+}
+
+/* ── Barra superior ── */
+.topBar {
+    position: sticky;
+    top: 0;
+    /* arriba de las notificaciones: el popover de "¿Cuándo enviar?" vive
+       dentro de esta barra y no debe quedar tapado */
+    z-index: 1200;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 24px;
+    box-sizing: border-box;
+}
+
+.topLeft {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+}
+
+.backBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 99px;
+    border: none;
+    background: #FFFFFF;
+    color: #29262D;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.backBtn:hover {
+    transform: translateX(-2px);
+}
+
+/* "?" de la barra: relanza el tour del editor */
+.helpBtn {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    border: none;
+    background: #FFFFFF;
+    color: #787878;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+    transition: color 0.2s;
+}
+
+.helpBtn:hover {
+    color: #16323d;
+}
+
+.crumb {
+    font-size: 14px;
+    color: #787878;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.crumb strong {
+    color: #29262D;
+    font-weight: 600;
+}
+
+/* Pestañas al centro */
+.tabs,
+.tabs :global(.ant-segmented-group) {
+    border-radius: 99px;
+    flex-shrink: 0;
+}
+
+.tabs :global(.ant-segmented-item),
+.tabs :global(.ant-segmented-thumb) {
+    border-radius: 99px;
+}
+
+.tabs :global(.ant-segmented-item-icon) svg,
+.segmentedPill :global(.ant-segmented-item-icon) svg {
+    margin-top: 2px;
+}
+
+.segmentedPill,
+.segmentedPill :global(.ant-segmented-group) {
+    border-radius: 99px;
+}
+
+.segmentedPill :global(.ant-segmented-item),
+.segmentedPill :global(.ant-segmented-thumb) {
+    border-radius: 99px;
+}
+
+.actionsBar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex: 1;
+}
+
+/* Switch "ver en vivo" con indicador */
+.livePill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: none;
+    background: #FFFFFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+    transition: background 0.2s, color 0.2s;
+}
+
+.liveDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: #C9C6C0;
+    transition: background 0.2s;
+}
+
+.livePillOn {
+    background: #16323d;
+    color: #FFFFFF;
+}
+
+.livePillOn .liveDot {
+    background: #43B75D;
+}
+
+/* ── Riel de elementos ── */
+.rail {
+    position: fixed;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 22px;
+    background: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.1);
+}
+
+.railBtn {
+    width: 38px;
+    height: 38px;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    color: #787878;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.railBtn:hover:not(:disabled) {
+    background: #F1EFEA;
+    color: #16323d;
+}
+
+.railBtnActive,
+.railBtnActive:hover:not(:disabled) {
+    background: #16323d;
+    color: #FFFFFF;
+}
+
+.railBtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ── Panel de herramientas del elemento seleccionado ── */
+.toolPanel {
+    position: fixed;
+    left: 82px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 26;
+    width: 282px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    box-sizing: border-box;
+    border-radius: 24px;
+    background: #FFFFFF;
+    box-shadow: 0 12px 40px rgba(12, 23, 27, 0.14);
+    animation: panelIn 0.22s ease;
+}
+
+@keyframes panelIn {
+    from { opacity: 0; transform: translate(-8px, -50%); }
+    to { opacity: 1; transform: translate(0, -50%); }
+}
+
+.toolClose {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 26px;
+    height: 26px;
+    border-radius: 99px;
+    border: none;
+    background: #F1EFEA;
+    color: #787878;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.toolClose:hover {
+    background: #E6E2DA;
+    color: #29262D;
+}
+
+/* ── Escenario: tarjeta al centro y, en Respuestas, su columna a la derecha ── */
+.stageRow {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Hueco que abre y cierra la columna: al animar su ancho, la pieza se
+   recentra sola en vez de saltar. La separación va dentro (margin del
+   contenido) para que en cerrado no quede aire. */
+.answersSlot {
+    width: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.answersSlotIn {
+    width: 364px;
+}
+
+/* Mientras el tour está abierto, la columna entra sin animación: antd mide el
+   objetivo en el mismo commit y con la transición corriendo el hueco de la
+   máscara quedaba desfasado —y no se vuelve a calcular. */
+.noAnim {
+    transition: none !important;
+}
+
+/* Columna de reacciones + respuestas */
+.answersCol {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 340px;
+    margin-left: 24px;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateX(14px);
+    transition: opacity 0.26s ease 0.06s, transform 0.28s ease 0.06s;
+}
+
+.answersColIn {
+    opacity: 1;
+    transform: none;
+}
+
+/* El bloque de mensajes ocupa el resto del alto y su lista scrollea dentro */
+.answersCol > section:last-child {
+    flex: 1;
+    min-height: 0;
+}
+
+.answersCol > section:last-child .blockBody {
+    flex: 1;
+    min-height: 0;
+}
+
+.answersCol .reactionsList {
+    max-height: none;
+    flex: 1;
+}
+
+/* ── Lienzo ── */
+.canvasWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 8px 24px 48px;
+}
+
+/* Reserva el tamaño ya escalado (el scale no afecta al layout) */
+.scaler {
+    position: relative;
+    flex-shrink: 0;
+    animation: stageIn 0.3s ease;
+}
+
+@keyframes stageIn {
+    from { opacity: 0; transform: scale(0.985); }
+    to { opacity: 1; transform: none; }
+}
+
+.scaler > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: max-content;
+}
+
+.canvasCaption {
+    font-size: 11px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: #9A968E;
+    text-align: center;
+}
+
+/* Contenedor de las pestañas que no son el lienzo */
+.tabWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 8px 24px 48px;
+    box-sizing: border-box;
+}
+
+/* ═══════════════════════ Campos de los paneles ═══════════════════════ */
+.fieldRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.fieldStack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fieldLabel {
+    font-size: 12px;
+    color: #787878;
+    flex-shrink: 0;
+}
+
+.hint {
+    font-size: 12px;
+    color: #787878;
+    line-height: 1.35;
+}
+
+.toggle {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid #EBEBEB;
+    border-radius: 16px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.toggleLabel {
+    font-size: 13px;
+    color: #29262D;
+}
+
+/* Cabecera de panel / bloque */
+.blockHead {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding-right: 30px;
+}
+
+.blockIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    background: #F5F3F2;
+    color: #16323d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.blockHeadText {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.blockTitle {
+    font-weight: 600;
+    font-size: 14px;
+    color: #29262D;
+    line-height: 1.3;
+}
+
+.blockHint {
+    font-size: 12px;
+    color: #787878;
+    line-height: 1.35;
+}
+
+.blockAction {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* ── Miniaturas de fondo ── */
+.thumbRow {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.thumb {
+    position: relative;
+    width: 72px;
+    height: 96px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #EBEBEB;
+    flex-shrink: 0;
+}
+
+.thumb img,
+.thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.thumbActions {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: rgba(12, 23, 27, 0.55);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.thumb:hover .thumbActions,
+.thumb:focus-within .thumbActions {
+    opacity: 1;
+}
+
+.addTile {
+    width: 72px;
+    height: 96px;
+    border-radius: 12px;
+    border: 1px dashed #D9D9D9;
+    background: #FAFAFA;
+    color: #787878;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.addTile:hover {
+    border-color: #16323d;
+    color: #16323d;
+    background: #F5F3F2;
+}
+
+/* ── Color del CTA ── */
+.btnPreview {
+    margin-left: auto;
+    border-radius: 99px;
+    padding: 6px 14px;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.swatchRow {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    border: 1px solid #EBEBEB;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.swatch:hover {
+    transform: scale(1.06);
+}
+
+.swatchActive {
+    box-shadow: 0 0 0 2px #16323d;
+}
+
+/* ── Selector de canción (mismo formato que el builder) ── */
+.songCard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: 1px solid #EBEBEB;
+    border-radius: 12px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+}
+
+.songArt {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.songName {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.songArtist {
+    font-size: 11px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.songResults {
+    border: 1px solid #EBEBEB;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.songResult {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #EBEBEB;
+}
+
+.songResult:last-child {
+    border-bottom: none;
+}
+
+.songResult:hover {
+    background: #F5F3F2;
+}
+
+.songResultArt {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* ═══════════════════ Respuestas y Compartir (bloques) ═══════════════════ */
+.blocks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 16px;
+    width: 100%;
+}
+
+.block {
+    background: #FFFFFF;
+    border-radius: 24px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.blockWide {
+    grid-column: 1 / -1;
+}
+
+.blockBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reactionsCount {
+    background: #F1F1F1;
+    border-radius: 99px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.emojiSummary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.emojiCount {
+    background: #F5F3F2;
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.reactionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.reactionMsg {
+    background: #F5F3F2;
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #29262D;
+}
+
+.reactionMeta {
+    font-size: 11px;
+    color: #787878;
+}
+
+/* Área de la lista de invitados (ancla del blur del CTA PRO) */
+.sendArea {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    min-height: 220px;
+}
+
+.proBlur {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 16px;
+}
+
+.proCta {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.proCtaTitle {
+    font-weight: 700;
+    font-size: 18px;
+    color: #16323d;
+}
+
+.proCtaText {
+    font-size: 14px;
+    color: #29262D;
+    max-width: 380px;
+}
+
+/* ── Angosto ── */
+@media (max-width: 1080px) {
+    .blocks {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1080px) {
+    .stageRow {
+        flex-wrap: wrap;
+    }
+
+    .answersSlotIn {
+        width: 100%;
+    }
+
+    .answersCol {
+        width: min(390px, 100%);
+        margin: 16px auto 0;
+        height: auto !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .topBar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .topLeft,
+    .actionsBar {
+        flex: 1 1 auto;
+    }
+
+    .tabs {
+        order: 3;
+        flex-basis: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* El riel pasa a ser una barra flotante abajo */
+    .rail {
+        left: 50%;
+        top: auto;
+        bottom: 16px;
+        transform: translateX(-50%);
+        flex-direction: row;
+        border-radius: 22px;
+    }
+
+    .toolPanel {
+        left: 50%;
+        top: auto;
+        bottom: 74px;
+        transform: translateX(-50%);
+        width: min(320px, calc(100vw - 32px));
+        max-height: 50vh;
+        animation: none;
+    }
+
+    .canvasWrap {
+        padding-bottom: 96px;
+    }
+}
+
+/* Punto rojo de "cambios sin guardar" sobre el botón Guardar */
+.saveWrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.saveDot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 99px;
+    background: #D32F2F;
+    border: 2px solid #EDEAE3;
+    pointer-events: none;
+}
+
+/* ═══════════════ Diálogo propio (sin Modal de antd) ═══════════════ */
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    /* por encima del modal de cuenta (antd, 1000) y de las notificaciones
+       de Lia (1150) */
+    z-index: 1250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background: rgba(12, 23, 27, 0.32);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+
+.modalBackdropIn {
+    opacity: 1;
+}
+
+.modalCard {
+    position: relative;
+    width: min(480px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px;
+    box-sizing: border-box;
+    border-radius: 24px;
+    background: #FFFFFF;
+    box-shadow: 0 24px 60px rgba(12, 23, 27, 0.24);
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    transition: opacity 0.22s ease, transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modalCardIn {
+    opacity: 1;
+    transform: none;
+}
+
+.modalClose {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    border: none;
+    background: #F1EFEA;
+    color: #787878;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.modalClose:hover {
+    background: #E6E2DA;
+    color: #29262D;
+}
+
+.modalTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #29262D;
+    padding-right: 36px;
+}
+
+.modalText {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #787878;
+}
+
+.modalActions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+/* Descartar se separa de las otras dos acciones */
+.modalActions > *:first-child {
+    margin-right: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Editor móvil: header y dock son superficies propias; la
+   invitación va enmarcada entre las dos.
+   ═══════════════════════════════════════════════════════════════ */
+.mobileRoot {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #14131A;
+}
+
+/* ── Header ── */
+.mobileHeader {
+    flex: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: max(12px, env(safe-area-inset-top)) 12px 10px;
+    padding: 5px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+}
+
+.hBtn {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 14px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.hBtn:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.hBtnOn,
+.hBtnOn:hover {
+    background: #FFFFFF;
+    color: #1B1A18;
+}
+
+/* Pestañas Crear / Respuestas */
+.hTabs {
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Iconos y Guardar, pegados a la derecha */
+.hRight {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.hTab {
+    flex: 0 1 auto;
+    min-width: 0;
+    height: 30px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.62);
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 0 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.hTabOn {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1B1A18;
+}
+
+.hSave {
+    height: 34px;
+    padding: 0 11px;
+    flex: none;
+    border-radius: 14px;
+    border: none;
+    background: #FFFFFF;
+    color: #1B1A18;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* ── La invitación, enmarcada ── */
+.mobileStage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    margin: 0 12px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #0F0E12;
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.6);
+}
+
+.mobileStage > iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+/* ── Dock de herramientas ── */
+.dock {
+    flex: none;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    margin: 10px 12px max(12px, env(safe-area-inset-bottom));
+    padding: 5px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+}
+
+.dockBtn {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: none;
+    border-radius: 16px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: inherit;
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.dockBtnOn {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1B1A18;
+}
+
+/* La hoja (BottomSheet) ya trae su cabecera: el panel no repite el título */
+.editorSheet .blockHead {
+    display: none;
+}
+
+/* ── Respuestas en móvil: encima de la pieza, dentro del marco ── */
+.mobileAnswers {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    overflow-y: auto;
+    background: rgba(12, 23, 27, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 14px;
+    box-sizing: border-box;
+}
+
+.mobileAnswers .answersCol {
+    width: 100%;
+    margin: 0;
+    height: auto !important;
+    opacity: 1;
+    transform: none;
+}
+
+/* ── Bienvenida de la versión gratis (/save-the-date) ── */
+.welcomeBadge {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: #D1BEDD;
+    color: #16323d;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.welcomeTitle {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #29262D;
+    padding-right: 36px;
+}
+
+.welcomeList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.welcomeList span {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    color: #29262D;
+}
+
+.welcomeList svg {
+    flex-shrink: 0;
+    color: #16323d;
+}
+
+/* ── Elegir a qué evento se cuelga el Save the Date ── */
+.eventList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.eventRow {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid #EBEBEB;
+    background: #FFFFFF;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.eventRow:hover:not(:disabled) {
+    border-color: #16323d;
+    background: #F5F3F2;
+}
+
+.eventRow:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.eventName {
+    font-size: 14px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.eventMeta {
+    font-size: 12px;
+    color: #787878;
+}
+
+/* Falta la imagen del link: el tile lo pide con color de aviso */
+.addTileAlert {
+    border-color: #D32F2F;
+    color: #D32F2F;
+    background: #FFF5F5;
+}
+
+.addTileAlert:hover {
+    border-color: #D32F2F;
+    color: #D32F2F;
+    background: #FFECEC;
+}

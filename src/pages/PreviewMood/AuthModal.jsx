@@ -10,9 +10,10 @@ const CONTEXT_COPY = {
     save: { title: 'Guarda tus cambios', sub: 'Crea una cuenta gratuita y tus cambios estarán listos cuando quieras publicar.' },
     publish: { title: 'Publica tu invitación', sub: 'Crea tu cuenta para elegir un plan y poner tu invitación en línea.' },
     image: { title: 'Sube tu foto de portada', sub: 'Crea una cuenta gratuita para guardar tu invitación y agregar tus fotos.' },
+    savethedate: { title: 'Guarda tu Save the Date', sub: 'Crea tu cuenta gratuita y tu Save the Date queda listo para compartir con tus invitados.' },
 }
 
-export const AuthModal = ({ open, onClose, onSuccess, context = 'save' }) => {
+export const AuthModal = ({ open, onClose, onSuccess, context = 'save', redirectTo = '/invitations' }) => {
     const { login } = useContext(appContext)
     const [mode, setMode] = useState('register') // 'login' | 'register'
     const [name, setName] = useState('')
@@ -59,9 +60,16 @@ export const AuthModal = ({ open, onClose, onSuccess, context = 'save' }) => {
                 { Name: name, Email: email, Password: password }
             )
             if (data.ok) {
-                messageApi.success('¡Cuenta creada! Inicia sesión.')
-                setMode('login')
-                reset()
+                // Entra directo: pedirle iniciar sesión aparte cortaba el flujo
+                const { data: session, error } = await supabase.auth.signInWithPassword({ email, password })
+                if (error || !session?.user) {
+                    messageApi.success('¡Cuenta creada! Inicia sesión.')
+                    setMode('login')
+                    reset()
+                    return
+                }
+                messageApi.success('¡Cuenta creada!')
+                getUser(session.user.id)
             }
         } catch (err) {
             const msg = err.response?.data?.msg
@@ -72,12 +80,12 @@ export const AuthModal = ({ open, onClose, onSuccess, context = 'save' }) => {
     /* ── OAuth ── */
     const handleGoogle = () => supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/invitations` },
+        options: { redirectTo: `${window.location.origin}${redirectTo}` },
     })
 
     const handleApple = () => supabase.auth.signInWithOAuth({
         provider: 'apple',
-        options: { redirectTo: `${window.location.origin}/invitations` },
+        options: { redirectTo: `${window.location.origin}${redirectTo}` },
     })
 
     return (

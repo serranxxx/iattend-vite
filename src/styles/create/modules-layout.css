@@ -667,8 +667,15 @@
         padding-bottom: 56px !important;
     }
 
+    /* Contenedor de scroll de la invitación en mobile. En block (no flex) el
+       overflow lo maneja el propio contenedor sin depender del tamaño del hijo
+       flex, y overscroll-behavior evita que el gesto se lo robe la página. */
     .mobile-devices {
-        display: flex !important;
+        display: block !important;
         height: calc(100vh - 56px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
     }
 }

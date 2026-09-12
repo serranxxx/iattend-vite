@@ -8,6 +8,7 @@ import { HeaderDashboard } from '../../../Header/Header'
 import { ButtonsMenu } from './ButtonsMenu'
 import { BuildMenu } from './BuildMenu'
 import { BuildContent } from './BuildContent'
+import { BuildTour, BUILD_TOUR_STORAGE_KEY } from './BuildTour'
 import { load } from '../../../../helpers/assets/images'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
@@ -276,6 +277,15 @@ export const BuildPage = () => {
     const [saved, setSaved] = useState(true);
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
+    // Catálogo de admin: carga en memoria una copia de otra invitación, sin
+    // guardarla — el usuario decide con "Guardar cambios". copyContent lista
+    // módulos a copiar tal cual (cover, greeting, ...) y copyStyles aspectos
+    // de estilo de generals (colors, fonts, texture, separator, positions)
+    // más la canción (cover.song). Sin esos params se copia todo.
+    const copyFrom = searchParams.get("copyFrom");
+    const copyContentParam = searchParams.get("copyContent");
+    const copyStylesParam = searchParams.get("copyStyles");
+    const copyFromAppliedRef = useRef(false);
 
     const [translations, setTranslations] = useState({}) // { [lang]: { content, section_hashes } }
     const [activeLang, setActiveLang] = useState(null) // null = idioma original (español)
@@ -289,6 +299,19 @@ export const BuildPage = () => {
     const UNDO_LIMIT = 20
     const [undoStack, setUndoStack] = useState([])
     const [redoStack, setRedoStack] = useState([])
+
+    // Tour del editor (BuildTour): se abre solo la primera vez que el usuario
+    // entra a construir y se puede relanzar desde el "?" de la columna de
+    // herramientas.
+    const [tourOpen, setTourOpen] = useState(false)
+    // Solo escritorio: en móvil la máscara de antd mide anclajes que viven en
+    // drawers y hojas, y la columna de herramientas —donde está el "?"— no se
+    // pinta. Ver docs/rediseno-editor-side-events.md.
+    const [tourAvailable, setTourAvailable] = useState(() => !window.matchMedia('(max-width: 750px)').matches)
+    // Candado del sync de secciones del preview (ver closeTour). Se levanta en
+    // cuanto el usuario vuelve a tocar el teléfono o elige un módulo.
+    const previewSyncLocked = useRef(false)
+    const unlockPreviewSync = () => { previewSyncLocked.current = false }
 
     const lastSavedTextsRef = useRef(null)
     const pendingSaveRef = useRef(null) // 'write' | 'save'
@@ -532,15 +555,80 @@ export const BuildPage = () => {
     }, []);
 
     const handleClick = (item) => {
+        unlockPreviewSync()
         setCurrentSection(item.value)
         setPositionY(item.type)
     }
 
-    const handleSectionChange = (type) => {
+    // El tour se abre solo la PRIMERA vez que se edita la invitación; el
+    // resto del tiempo se lanza a mano desde el "?" de la columna de
+    // herramientas. "Primera vez" = nunca se ha publicado, o sea que no tiene
+    // ninguna fila en invitation_versions (las escribe el RPC publish_invitation).
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 750px)')
+        const sync = () => setTourAvailable(!mq.matches)
+        mq.addEventListener('change', sync)
+        return () => mq.removeEventListener('change', sync)
+    }, [])
+
+    useEffect(() => {
+        if (!copy || !id || !tourAvailable) return
+        if (localStorage.getItem(BUILD_TOUR_STORAGE_KEY)) return
+
+        let cancelled = false
+        let timer = null
+
+        supabase
+            .from('invitation_versions')
+            .select('id')
+            .eq('invitation_id', id)
+            .limit(1)
+            .then(({ data, error }) => {
+                if (cancelled) return
+                // Falla cerrado: si la consulta truena, no abrimos nada — el
+                // botón "?" sigue estando ahí.
+                if (error || (data?.length ?? 0) > 0) return
+                // Pequeña espera para que la invitación ya esté pintada cuando
+                // el primer paso resuelva su anclaje.
+                timer = setTimeout(() => setTourOpen(true), 800)
+            })
+
+        return () => {
+            cancelled = true
+            if (timer) clearTimeout(timer)
+        }
+    }, [copy, id, tourAvailable])
+
+    const closeTour = () => {
+        localStorage.setItem(BUILD_TOUR_STORAGE_KEY, '1')
+        setTourOpen(false)
+        // El tour deja seleccionado el último módulo que recorrió; el menú
+        // regresa a Generales, con el que abre el editor.
+        //
+        // Solo cambia el módulo, no positionY: "generals" no es una sección real
+        // de la invitación, así que mandar el preview ahí deja el teléfono en
+        // una posición vacía. El teléfono se queda donde el tour lo dejó.
+        //
+        // Su scroll, eso sí, sigue corriendo un buen rato después del último
+        // paso y va reportando las secciones por las que pasa — cualquiera de
+        // esos avisos regresaría el menú a otro módulo. Queda trabado en
+        // Generales hasta que el usuario vuelva a tocar el preview o elija otro
+        // módulo de la barra.
+        previewSyncLocked.current = true
+        setCurrentSection(1)
+    }
+
+    const selectSection = (type) => {
         const item = buttons.find((b) => b.type === type)
         if (!item) return
         setCurrentSection(item.value)
         setPositionY(item.type)
+    }
+
+    // El preview avisa qué sección está visible y el menú la sigue.
+    const handleSectionChange = (type) => {
+        if (previewSyncLocked.current) return
+        selectSection(type)
     }
 
     // Tras guardar el español, propaga los campos no-texto a todas las traducciones
@@ -725,6 +813,72 @@ export const BuildPage = () => {
         }
     }, [invitation])
 
+    // ?copyFrom={id}: al terminar de cargar la invitación destino, trae el
+    // data de la origen y arma la copia de trabajo en memoria según la
+    // selección (módulos de contenido tal cual + aspectos de estilo).
+    // generals.event nunca se copia: es la identidad/URL pública del destino
+    // y copiarla dejaría el data inconsistente con las columnas label/name.
+    // No se persiste nada aquí — queda como cambio sin guardar.
+    useEffect(() => {
+        if (!copyFrom || !copy || copyFromAppliedRef.current) return
+        copyFromAppliedRef.current = true
+
+        supabase
+            .from('invitations')
+            .select('data')
+            .eq('id', copyFrom)
+            .maybeSingle()
+            .then(({ data, error }) => {
+                if (error || !data?.data) {
+                    messageApi.error('No se pudo cargar la invitación origen')
+                    return
+                }
+
+                const contentKeys = copyContentParam?.split(',').filter(Boolean)
+                const styleKeys = copyStylesParam?.split(',').filter(Boolean)
+
+                setCopy((prev) => {
+                    const src = withDevMirror(data.data)
+
+                    // Sin selección explícita → copia completa (compat)
+                    if (!contentKeys && !styleKeys) {
+                        return {
+                            ...src,
+                            generals: {
+                                ...src.generals,
+                                event: prev?.generals?.event ?? src.generals?.event,
+                            },
+                        }
+                    }
+
+                    const next = { ...prev };
+                    (contentKeys ?? []).forEach((key) => {
+                        if (src[key] !== undefined) next[key] = src[key]
+                    })
+
+                    const sk = styleKeys ?? []
+                    const sourceGenerals = data.data.generals ?? {}
+                    const generals = { ...prev.generals }
+                    if (sk.includes('colors') && sourceGenerals.colors) generals.colors = sourceGenerals.colors
+                    if (sk.includes('fonts') && sourceGenerals.fonts) generals.fonts = sourceGenerals.fonts
+                    if (sk.includes('texture') && sourceGenerals.texture !== undefined) generals.texture = sourceGenerals.texture
+                    if (sk.includes('separator') && sourceGenerals.separator !== undefined) generals.separator = sourceGenerals.separator
+                    if (sk.includes('positions') && sourceGenerals.positions) generals.positions = sourceGenerals.positions
+                    next.generals = generals
+
+                    // La canción vive en cover.song; si no se llevó la portada
+                    // completa, se transplanta solo la canción
+                    if (sk.includes('song') && data.data.cover?.song !== undefined && !(contentKeys ?? []).includes('cover')) {
+                        next.cover = { ...next.cover, song: data.data.cover.song }
+                    }
+
+                    return next
+                })
+                setSaved(false)
+                messageApi.info('Copia cargada sin guardar — usa "Guardar cambios" si quieres conservarla', 8)
+            })
+    }, [copyFrom, copy])
+
 
     useEffect(() => {
         if (coverUpdated) {
@@ -805,16 +959,28 @@ export const BuildPage = () => {
 
                             </div>
 
+                            <div
+                                style={{ display: 'contents' }}
+                                onWheelCapture={unlockPreviewSync}
+                                onTouchMoveCapture={unlockPreviewSync}
+                                onMouseDownCapture={unlockPreviewSync}
+                            >
                             <BuildContent invitationID={id} onHide={onHide} setOnHide={setOnHide}
                                 setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={getActiveInvitation()} onSectionChange={handleSectionChange}
                                 languages={copy?.generals?.languages ?? []} disabledLanguages={copy?.generals?.disabledLanguages ?? []} activeLang={activeLang} onActiveLangChange={setActiveLang}
                                 onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating}
-                                onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0} />
+                                onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0}
+                                onReplayTour={tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen} />
+                            </div>
 
                         </div>
 
 
                         <UpgradeBanner plan={plan} invitationId={id} floating={false} hideOnMobile />
+
+                        {/* Tour del editor: recorre la barra de módulos explicando
+                            qué vive en cada uno (Generales, Portada, Bienvenida...). */}
+                        <BuildTour open={tourOpen && tourAvailable} onClose={closeTour} onSelectSection={selectSection} />
                     </Layout >
                     : <div className='build-loading-container'>
                         <img alt='' src={load} style={{

@@ -1,16 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './storage-images.css'
-import { Button, Drawer, Dropdown, Empty, Tabs } from 'antd'
-import { LuImageOff, LuImagePlus, LuUpload, LuX } from 'react-icons/lu'
-import { deleteImageFromSupabase, getCoversFromSubapase, getDresscodesFromSupabase, getImagesFromSupabase, getQuotesFromSubapase, uploadImagesSupabase } from '../../helpers/services/uploadImage'
+import { Button, Dropdown, Empty, Tabs } from 'antd'
+import { LuImageOff, LuImagePlus, LuUpload } from 'react-icons/lu'
+import { deleteImageFromSupabase, deleteVideoFromSupabase, getCoversFromSubapase, getDresscodesFromSupabase, getImagesFromSupabase, getQuotesFromSubapase, getVideosFromSupabase, uploadEventVideo, uploadImagesSupabase } from '../../helpers/services/uploadImage'
 import { Sparkles } from 'lucide-react'
+import BottomSheet from '../BottomSheet/BottomSheet'
 
 
-export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small, hideUpload, customTrigger, hideMyImages, onRequestSaveForImage }) => {
+// `mediaType='video'` cambia el picker a videos: sube a `{id}/video/`, lista
+// solo esa carpeta y oculta la pestaña de ideas. Los pickers de imagen (el
+// default) no se ven afectados.
+export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small, hideUpload, customTrigger, hideMyImages, onRequestSaveForImage, mediaType = 'image' }) => {
 
     const { t } = useTranslation()
     const [images, setImages] = useState([])
+    const isVideoPicker = mediaType === 'video'
     const [selectedKey, setSelectedKey] = useState(hideMyImages ? 1 : 0)
     const [ideas, setIdeas] = useState([])
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -48,7 +53,11 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         if (!file || !resolvedIdRef.current) return
         e.target.value = ''
         try {
-            await uploadImagesSupabase({ file, invitationID: resolvedIdRef.current, setImages })
+            if (isVideoPicker) {
+                await uploadEventVideo({ file, invitationID: resolvedIdRef.current, setVideos: setImages })
+            } else {
+                await uploadImagesSupabase({ file, invitationID: resolvedIdRef.current, setImages })
+            }
         } catch (err) {
             console.error(err)
         }
@@ -85,7 +94,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
 
     const allItems = [
         {
-            label: t('storage.tab_my_images'),
+            label: isVideoPicker ? t('storage.tab_my_videos') : t('storage.tab_my_images'),
             key: 0,
             children: <>{
                 images.length > 0 ?
@@ -97,8 +106,20 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         }
                         {[...images].reverse()?.map((i, index) => (
                             <div onClick={selectImage(handleImage ? () => handleImage(i.url, index, id) : null)} className='storage_img' key={index}>
-                                <img src={i.url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                <Button onClick={(e) => { e.stopPropagation(); deleteImageFromSupabase(i.path, resolvedIdRef.current, setImages) }} className='storage_delete'>{t('storage.btn_delete')}</Button>
+                                {isVideoPicker
+                                    ? <video src={i.url} muted playsInline preload='metadata' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    : <img src={i.url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                }
+                                <Button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (isVideoPicker) deleteVideoFromSupabase(i.path, resolvedIdRef.current, setImages)
+                                        else deleteImageFromSupabase(i.path, resolvedIdRef.current, setImages)
+                                    }}
+                                    className='storage_delete'
+                                >
+                                    {t('storage.btn_delete')}
+                                </Button>
                             </div>
                         ))}
                     </div>
@@ -137,9 +158,12 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         },
     ]
 
-    const items = hideMyImages ? allItems.filter(i => i.key !== 0) : allItems
+    const items = isVideoPicker
+        ? allItems.filter(i => i.key === 0)
+        : hideMyImages ? allItems.filter(i => i.key !== 0) : allItems
 
     useEffect(() => {
+        if (isVideoPicker) return
         if (type) {
             switch (type) {
                 case 'dresscode': getDresscodesFromSupabase(setIdeas); break;
@@ -153,14 +177,14 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
 
     const uploadButton = (
         <>
-            <input ref={fileInputRef} type='file' accept='image/*' style={{ display: 'none' }} onChange={handleFileChange} />
+            <input ref={fileInputRef} type='file' accept={isVideoPicker ? 'video/*' : 'image/*'} style={{ display: 'none' }} onChange={handleFileChange} />
             <Button
                 style={{ marginBottom: '12px' }}
                 icon={<LuUpload />}
                 className='primarybutton'
                 onClick={() => handleUploadClick(fileInputRef)}
             >
-                {t('storage.btn_upload')}
+                {isVideoPicker ? t('storage.btn_upload_video') : t('storage.btn_upload')}
             </Button>
         </>
     )
@@ -176,9 +200,10 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
     )
 
     const handleOpen = useCallback(() => {
-        getImagesFromSupabase(invitationID, setImages)
+        if (isVideoPicker) getVideosFromSupabase(invitationID, setImages)
+        else getImagesFromSupabase(invitationID, setImages)
         if (isMobile) setDrawerOpen(true)
-    }, [isMobile, invitationID])
+    }, [isMobile, invitationID, isVideoPicker])
 
     const triggerButton = customTrigger
         ? React.cloneElement(customTrigger, { onClick: handleOpen })
@@ -197,49 +222,35 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
             {isMobile ? (
                 <>
                     {triggerButton}
-                    <Drawer
+                    {/* Hoja propia (no Drawer de antd): sin capa que oscurezca
+                        el fondo y se cierra arrastrando o tocando fuera */}
+                    <BottomSheet
                         open={drawerOpen}
                         onClose={() => setDrawerOpen(false)}
-                        placement="bottom"
-                        height="95%"
-                        closeIcon={false}
+                        maxHeight='92%'
                         title={
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Sparkles size={16} />
-                                    <span style={{ fontWeight: 600, fontSize: '16px' }}>{t('storage.drawer_title')}</span>
-                                </div>
-                            </div>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Sparkles size={16} />
+                                {isVideoPicker ? t('storage.title_files') : t('storage.drawer_title')}
+                            </span>
                         }
-                        styles={{
-                            header: { borderBottom: '1px solid #F0F0F0', padding: '12px 16px' },
-                            body: { padding: '0 16px 16px', overflow: 'auto' },
-                        }}
-                        style={{ borderRadius: '24px 24px 0 0' }}
-                        extra={
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom:'6px' }}>
-                                {isMobile && (
-                                    <>
-                                        <input ref={mobileFileInputRef} type='file' accept='image/*' style={{ display: 'none' }} onChange={handleFileChange} />
-                                        <Button
-                                            icon={<LuUpload />}
-                                            className='primarybutton--active'
-                                            onClick={() => handleUploadClick(mobileFileInputRef)}
-                                        >
-                                            {t('storage.btn_upload')}
-                                        </Button>
-                                    </>
-                                )}
+                        extra={!hideUpload &&
+                            <>
+                                <input ref={mobileFileInputRef} type='file' accept={isVideoPicker ? 'video/*' : 'image/*'} style={{ display: 'none' }} onChange={handleFileChange} />
                                 <Button
-                                    className='primarybutton'
-                                    icon={<LuX size={16} style={{marginTop:'2px'}}/>}
-                                    onClick={() => setDrawerOpen(false)}
-                                    style={{ borderRadius: '99px' }} />
-                            </div>
+                                    size='small'
+                                    icon={<LuUpload />}
+                                    className='primarybutton--active'
+                                    style={{ borderRadius: '99px' }}
+                                    onClick={() => handleUploadClick(mobileFileInputRef)}
+                                >
+                                    {isVideoPicker ? t('storage.btn_upload_video') : t('storage.btn_upload')}
+                                </Button>
+                            </>
                         }
                     >
                         {tabsContent}
-                    </Drawer>
+                    </BottomSheet>
                 </>
             ) : (
                 <Dropdown
@@ -250,7 +261,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         <div className='images_storage_cont'>
                             <div className='storage_row'>
                                 <Sparkles size={16} />
-                                <span style={{ fontSize: '16px' }}>{t('storage.dropdown_title')}</span>
+                                <span style={{ fontSize: '16px' }}>{isVideoPicker ? t('storage.title_files') : t('storage.dropdown_title')}</span>
                             </div>
                             {tabsContent}
                         </div>

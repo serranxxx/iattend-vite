@@ -1,0 +1,292 @@
+/* Selector para sentar invitados en una mesa. Angosto a propósito: es un
+   popover sobre el panel de mesa, no una pantalla. */
+
+.picker {
+    display: flex;
+    flex-direction: column;
+    width: 288px;
+    max-width: 90vw;
+    padding: 14px;
+    box-sizing: border-box;
+    border-radius: 20px;
+    background-color: var(--ft-color);
+    box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.16);
+}
+
+/* ── Llenado de la mesa ────────────────────────────────────────────────── */
+
+.fillHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.fillTitle {
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.fillRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.close {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    color: var(--gray-color);
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.close:hover {
+    background-color: var(--gray-bg);
+    color: var(--text-color);
+}
+
+.fillCount {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+}
+
+.fillCountOver {
+    color: var(--warning-color-700);
+    font-weight: 600;
+}
+
+/* Tira de asientos: ocupados, los que se van a sentar y los libres. */
+.strip {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.seat {
+    width: 10px;
+    height: 10px;
+    border-radius: 99px;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.seatTaken {
+    background-color: var(--brand-color-300);
+}
+
+/* Los que se agregarían con la selección actual. */
+.seatIncoming {
+    background-color: var(--brand-color-600);
+}
+
+.seatFree {
+    background-color: transparent;
+    border: 1px solid var(--borders);
+}
+
+/* Los que no caben: la mesa se puede sobrepasar, pero se avisa. */
+.seatOver {
+    background-color: var(--warning-color-500);
+}
+
+.overWarn {
+    font-family: var(--font-family);
+    font-size: 10.5px;
+    color: var(--warning-color-700);
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+/* ── Filtros ───────────────────────────────────────────────────────────── */
+
+.search {
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    margin-bottom: 8px;
+}
+
+.chips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.chip {
+    border: 1px solid var(--borders);
+    cursor: pointer;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background-color: var(--ft-color);
+    color: var(--gray-color);
+    font-family: var(--font-family);
+    font-size: 10.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.chip:hover {
+    border-color: var(--brand-color-500);
+}
+
+.chipActive,
+.chipActive:hover {
+    background-color: var(--text-color);
+    border-color: var(--text-color);
+    color: var(--ft-color);
+}
+
+/* ── Lista ─────────────────────────────────────────────────────────────── */
+
+.sectionLabel {
+    font-family: var(--font-family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+    padding: 8px 2px 4px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    max-height: 180px;
+    overflow-y: auto;
+    margin: 0 -4px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+    padding: 7px 8px;
+    border-radius: 10px;
+    transition: background-color 0.12s ease;
+}
+
+.row:hover {
+    background-color: var(--sc-color);
+}
+
+.rowActive {
+    background-color: var(--brand-color-100);
+}
+
+.rowInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+
+.name {
+    font-family: var(--font-family);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meta {
+    font-family: var(--font-family);
+    font-size: 10.5px;
+    color: var(--gray-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Marca por qué se sugiere: comparte etiqueta o va con alguien de la mesa. */
+.why {
+    padding: 1px 7px;
+    border-radius: 99px;
+    background-color: var(--brand-color-100);
+    color: var(--brand-color-800);
+    font-family: var(--font-family);
+    font-size: 9.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.empty {
+    padding: 20px 8px;
+    text-align: center;
+    font-family: var(--font-family);
+    font-size: 11.5px;
+    color: var(--gray-color);
+}
+
+/* ── Pie ───────────────────────────────────────────────────────────────── */
+
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--borders);
+}
+
+.addBtn {
+    flex: 1;
+    border: none;
+    cursor: pointer;
+    padding: 9px;
+    border-radius: 10px;
+    background-color: var(--text-color);
+    color: var(--ft-color);
+    font-family: var(--font-family);
+    font-size: 12.5px;
+    font-weight: 500;
+    transition: filter 0.15s ease;
+}
+
+.addBtn:hover {
+    filter: brightness(1.25);
+}
+
+.addBtn[aria-disabled='true'] {
+    background-color: var(--gray-bg);
+    color: var(--gray-color);
+    cursor: not-allowed;
+    filter: none;
+}
+
+.clearBtn {
+    border: 1px solid var(--borders);
+    cursor: pointer;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background-color: var(--ft-color);
+    color: var(--gray-color);
+    font-family: var(--font-family);
+    font-size: 12px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.clearBtn:hover {
+    border-color: var(--brand-color-500);
+    color: var(--text-color);
+}

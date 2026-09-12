@@ -1,0 +1,395 @@
+/* Vista "Lista de mesas" del drawer Organización por mesas — §5.3 del spec.
+   Complementa el mapa: el mapa contesta "¿cómo se ve mi salón?", esta lista
+   contesta "¿quién está dónde y dónde cabe?". */
+
+/* El contenedor padre (.table-map-container) ya aporta el padding de 30px. */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    align-self: stretch;
+    overflow-y: auto;
+    padding: 2px 2px 20px;
+    box-sizing: border-box;
+}
+
+/* ── Fila de mesa ──────────────────────────────────────────────────────── */
+
+.row {
+    border: 1px solid var(--borders);
+    border-radius: 16px;
+    background-color: var(--ft-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rowExpanded {
+    border-color: var(--brand-color-500);
+    box-shadow: 0px 0px 16px var(--brand-color-500-20);
+}
+
+.rowHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+}
+
+.numberBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 32px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border-radius: 99px;
+    background-color: var(--brand-color-100);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* La mesa llena se distingue en la lista igual que en el mapa: lila relleno. */
+.numberBadgeFull {
+    background-color: var(--text-color);
+    color: var(--ft-color);
+}
+
+.identity {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 0 1 auto;
+}
+
+.nameRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* El nombre pesa más que el número: "#53" no le dice nada a nadie. */
+.name {
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nameEmpty {
+    font-weight: 500;
+    color: var(--gray-color);
+    font-style: italic;
+}
+
+.meta {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+    white-space: nowrap;
+}
+
+.lockedTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 99px;
+    background-color: var(--gray-bg);
+    color: var(--gray-color);
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+/* ── Tira de asientos ──────────────────────────────────────────────────── */
+/* Un punto por lugar. Las 24 mesas caben de un jalón y la ocupación es
+   comparable de un vistazo entre filas — que es lo que una grilla de
+   tarjetas con chips truncados no lograba. */
+
+.seatStrip {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 80px;
+    padding: 0 8px;
+}
+
+.seat {
+    width: 9px;
+    height: 9px;
+    border-radius: 99px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* Misma convención que las sillas del mapa: ocupado = lila relleno. */
+.seatTaken {
+    background-color: var(--brand-color-300);
+}
+
+.seatFree {
+    background-color: transparent;
+    border: 1px solid var(--borders);
+}
+
+.counts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex-shrink: 0;
+    min-width: 58px;
+}
+
+.countMain {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.countSub {
+    font-family: var(--font-family);
+    font-size: 10px;
+    color: var(--gray-color);
+    line-height: 1.2;
+}
+
+.countFull {
+    color: var(--brand-color-800);
+}
+
+.rowActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* ── Contenido expandido ───────────────────────────────────────────────── */
+
+/* La fila se despliega animando la altura. El tope solo tiene que superar la
+   fila más alta posible: 18 invitados más las acciones del pie. */
+.expandWrap {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.expandWrapOpen {
+    max-height: 900px;
+}
+
+.expandInner {
+    min-height: 0;
+}
+
+.expanded {
+    border-top: 1px solid var(--borders);
+    padding: 6px 14px 14px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.2s ease 0.06s, transform 0.2s ease 0.06s;
+}
+
+.expandWrapOpen .expanded {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .expandWrap,
+    .expanded {
+        transition: none;
+    }
+}
+
+.guestRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--sc-color);
+}
+
+.guestRow:last-of-type {
+    border-bottom: none;
+}
+
+/* Nombre, badge de grupo y etiqueta · lado van en la MISMA línea. */
+.guestInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.guestName {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.guestMeta {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+}
+
+.groupBadge {
+    padding: 1px 8px;
+    border-radius: 99px;
+    background-color: var(--brand-color-100);
+    color: var(--brand-color-800);
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Menú "···" del invitado dentro de una fila expandida. */
+.guestMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 16px;
+    background-color: var(--ft-color);
+    box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.14);
+    min-width: 190px;
+}
+
+.guestMenuItem {
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background-color: transparent;
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 13px;
+    transition: background-color 0.15s ease;
+}
+
+.guestMenuItem:hover {
+    background-color: var(--sc-color);
+}
+
+.guestMenuDanger {
+    color: var(--red-color);
+}
+
+.emptyGuests {
+    padding: 14px 6px;
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--gray-color);
+}
+
+/* ── Acciones al pie de la fila expandida ──────────────────────────────── */
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px solid var(--borders);
+}
+
+.actionsSpacer {
+    flex: 1;
+}
+
+.actionsLabel {
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+}
+
+/* ── Barra de herramientas y estado vacío ──────────────────────────────── */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+    gap: 12px;
+    margin-top: -12px;
+}
+
+.sortGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    align-self: stretch;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.emptyTitle {
+    font-family: var(--font-family);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.emptyText {
+    font-family: var(--font-family);
+    font-size: 13px;
+    color: var(--gray-color);
+    max-width: 320px;
+}
+
+@media (max-width: 750px) {
+    .list {
+        padding: 4px 12px 20px;
+    }
+
+    /* Los puntos no caben como columna intermedia, pero son la lectura rápida
+       de qué tan llena está la mesa: bajan a su propio renglón. */
+    .seatStrip {
+        order: 10;
+        flex: 0 0 100%;
+        min-width: 0;
+        padding: 0;
+    }
+
+    .rowHeader {
+        flex-wrap: wrap;
+        row-gap: 8px;
+        padding: 10px;
+        gap: 8px;
+    }
+}

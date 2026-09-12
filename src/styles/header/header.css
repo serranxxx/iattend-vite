@@ -430,3 +430,62 @@
         background-color: transparent;
     }
 }
+/* ── /build en mobile: sin barra de header ────────────────────────────── */
+/* Solo un par flotante arriba a la derecha (regresar + publicar) sobre la
+   invitación, en vidrio, para no robarle alto a la vista. */
+
+.hd-build-floating {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hd-glass-btn.ant-btn {
+    height: 38px;
+    min-width: 38px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .45);
+    background: rgba(255, 255, 255, .55);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    box-shadow: 0 4px 16px rgba(12, 23, 27, .14), inset 0 1px 0 rgba(255, 255, 255, .7);
+    color: var(--dark-blue-500);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hd-glass-btn.ant-btn:hover,
+.hd-glass-btn.ant-btn:focus {
+    background: rgba(255, 255, 255, .72);
+    color: var(--dark-blue-500);
+    border-color: rgba(255, 255, 255, .6);
+}
+
+.hd-glass-btn--cta.ant-btn {
+    position: relative;
+    background: rgba(210, 191, 221, .78);
+    border-color: rgba(255, 255, 255, .55);
+}
+
+.hd-glass-btn--cta.ant-btn:hover,
+.hd-glass-btn--cta.ant-btn:focus {
+    background: rgba(210, 191, 221, .92);
+}
+
+/* Punto de "cambios sin guardar" */
+.hd-glass-dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    background: #A88AFF;
+}

@@ -1902,23 +1902,6 @@
     overflow: visible;
 }
 
-.guests_main .title-buttons-container {
-    position: fixed;
-    width: 100%;
-    max-width: 1450px;
-    top: 64px;
-    z-index: 110;
-    padding: 16px 12px;
-    box-sizing: border-box;
-    background-color: #FFFFFF80;
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-}
-
-/* En mobile la fila del buscador no se renderiza: la barra fija quedaría como
-   una franja de vidrio vacía que además bloquearía taps (es fixed full-width) */
-@media (max-width: 750px) {
-    .guests_main .title-buttons-container {
-        display: none;
-    }
-}
+/* La barra fija superior (.title-buttons-container) desapareció con el
+   rediseño: buscador, filtros y herramientas viven ahora en el toolbar de cada
+   sección — ver guests-redesign.css. */

@@ -1,0 +1,166 @@
+/* Confirmación al volver de Stripe. Mismo lenguaje que PlansModal y ProModal:
+   navy en degradado, glow verde y títulos en Young Serif. */
+
+.plan-activation {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    background: linear-gradient(155deg, #1c3249 0%, #16323d 100%);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, .45);
+    font-family: 'Manrope', sans-serif;
+    pointer-events: auto;
+    padding: 34px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+}
+
+.plan-activation::before {
+    content: '';
+    position: absolute;
+    width: 340px;
+    height: 340px;
+    right: -120px;
+    top: -170px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(170, 193, 135, .35) 0%, rgba(170, 193, 135, 0) 70%);
+    pointer-events: none;
+}
+
+.plan-activation > * {
+    position: relative;
+    z-index: 1;
+}
+
+.plan-activation-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    margin-bottom: 4px;
+}
+
+.plan-activation-icon--ok {
+    background: var(--light-green-500);
+    color: #16323d;
+}
+
+.plan-activation-icon--wait {
+    background: rgba(238, 234, 223, .14);
+    color: #eeeadf;
+}
+
+.plan-activation-eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--light-green-500);
+}
+
+.plan-activation-title {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 25px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: #fff;
+    margin: 0;
+}
+
+.plan-activation-text {
+    font-size: 14px;
+    line-height: 1.55;
+    color: #eeeadf;
+    opacity: .8;
+    margin: 0;
+    max-width: 34ch;
+}
+
+/* Barra indeterminada mientras se espera al webhook */
+.plan-activation-bar {
+    width: 180px;
+    height: 4px;
+    margin-top: 8px;
+    border-radius: 99px;
+    background: rgba(238, 234, 223, .14);
+    overflow: hidden;
+}
+
+.plan-activation-bar span {
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--light-green-500);
+    animation: plan-activation-slide 1.3s ease-in-out infinite;
+}
+
+@keyframes plan-activation-slide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .plan-activation-bar span {
+        animation: none;
+        width: 100%;
+        opacity: .6;
+    }
+}
+
+.plan-activation-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.plan-activation-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 46px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 999px;
+    background: var(--light-green-500);
+    color: #16323d;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.plan-activation-actions .plan-activation-cta {
+    margin-top: 0;
+}
+
+.plan-activation-cta:hover {
+    background: var(--light-green-400);
+}
+
+.plan-activation-ghost {
+    width: 100%;
+    height: 42px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #eeeadf;
+    opacity: .7;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s ease;
+}
+
+.plan-activation-ghost:hover {
+    opacity: 1;
+}

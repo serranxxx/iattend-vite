@@ -1,0 +1,467 @@
+/* Panel de edición de mesa (§5.4). Popover en escritorio, hoja inferior en
+   móvil. Toda mesa es editable desde aquí, se abra desde el mapa o la lista. */
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    width: 390px;
+    max-width: 92vw;
+    padding: 16px;
+    box-sizing: border-box;
+    border-radius: 24px;
+    background-color: var(--ft-color);
+    box-shadow: 0px 0px 32px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Encabezado ────────────────────────────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: grab;
+    user-select: none;
+}
+
+.header:active {
+    cursor: grabbing;
+}
+
+.dragHandle {
+    cursor: grab;
+}
+
+.numberBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border-radius: 99px;
+    background-color: var(--brand-color-500);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.nameField {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding: 6px 12px;
+    border: 1px solid var(--brand-color-500);
+    border-radius: 12px;
+}
+
+.nameInput {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.nameHint {
+    font-family: var(--font-family);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--brand-color-800);
+    flex-shrink: 0;
+}
+
+.closeBtn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    color: var(--gray-color);
+    flex-shrink: 0;
+}
+
+.closeBtn:hover {
+    background-color: var(--gray-bg);
+    color: var(--text-color);
+}
+
+.subhead {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+    padding: 8px 2px 0;
+}
+
+.subheadError {
+    color: var(--red-color);
+    font-weight: 500;
+}
+
+/* ── Controles: forma / sillas / bloquear ──────────────────────────────── */
+
+.controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    padding: 14px 2px;
+}
+
+.controlGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.controlLabel {
+    font-family: var(--font-family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+}
+
+.shapeRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shapeBtn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--borders);
+    cursor: pointer;
+    border-radius: 10px;
+    background-color: var(--ft-color);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.shapeBtn:hover {
+    border-color: var(--brand-color-500);
+}
+
+.shapeBtnActive {
+    border-color: var(--brand-color-500);
+    background-color: var(--brand-color-100);
+}
+
+.shapeGlyph {
+    background-color: var(--brand-color-300);
+}
+
+.glyphRound { width: 15px; height: 15px; border-radius: 50%; }
+.glyphSquare { width: 15px; height: 15px; border-radius: 4px; }
+.glyphRect { width: 21px; height: 12px; border-radius: 4px; }
+
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--borders);
+    border-radius: 99px;
+}
+
+.stepperBtn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 99px;
+    background-color: transparent;
+    color: var(--text-color);
+    transition: background-color 0.15s ease;
+}
+
+.stepperBtn:hover {
+    background-color: var(--sc-color);
+}
+
+/* aria-disabled y no disabled: un <button disabled> no emite eventos de mouse
+   y el Tooltip con el motivo del bloqueo nunca se vería. */
+.stepperBtn[aria-disabled='true'] {
+    color: var(--gray-color-40);
+    cursor: not-allowed;
+}
+
+.stepperBtn[aria-disabled='true']:hover {
+    background-color: transparent;
+}
+
+.stepperValue {
+    min-width: 26px;
+    text-align: center;
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* ── Invitados ─────────────────────────────────────────────────────────── */
+
+.guestsHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 2px 8px;
+    border-top: 1px solid var(--borders);
+    padding-top: 12px;
+}
+
+.guestsCount {
+    font-family: var(--font-family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+}
+
+.guestsFree {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+}
+
+.guestList {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--borders);
+    border-radius: 14px;
+    overflow: hidden;
+    max-height: 210px;
+    overflow-y: auto;
+}
+
+.guestRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--borders);
+    transition: background-color 0.15s ease;
+}
+
+.guestRow:last-child {
+    border-bottom: none;
+}
+
+.guestRow:hover {
+    background-color: var(--brand-color-100);
+}
+
+.guestInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.guestName {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.guestMeta {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+}
+
+.groupBadge {
+    padding: 1px 8px;
+    border-radius: 99px;
+    background-color: var(--brand-color-100);
+    color: var(--brand-color-800);
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.rowMenuBtn {
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--gray-color);
+    padding: 2px 4px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.rowMenuBtn:hover {
+    background-color: var(--ft-color);
+    color: var(--text-color);
+}
+
+.emptyGuests {
+    padding: 18px 10px;
+    text-align: center;
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--gray-color);
+}
+
+.addGuestBtn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 12px;
+    background-color: var(--brand-color-300);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    transition: filter 0.15s ease;
+}
+
+.addGuestBtn:hover {
+    filter: brightness(0.96);
+}
+
+.addGuestBtn[aria-disabled='true'] {
+    background-color: var(--gray-bg);
+    color: var(--gray-color);
+    cursor: not-allowed;
+    filter: none;
+}
+
+/* ── Pie ───────────────────────────────────────────────────────────────── */
+
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--borders);
+}
+
+.footerBtn {
+    flex: 1;
+    white-space: nowrap;
+    padding: 8px 6px;
+    border: 1px solid var(--borders);
+    cursor: pointer;
+    border-radius: 10px;
+    background-color: var(--ft-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 500;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.footerBtn:hover {
+    border-color: var(--brand-color-500);
+}
+
+.footerBtn[aria-disabled='true'] {
+    color: var(--gray-color-40);
+    cursor: not-allowed;
+    border-color: var(--borders);
+}
+
+.footerDanger {
+    color: var(--red-color);
+    border-color: transparent;
+}
+
+.footerDanger:hover {
+    border-color: var(--red-color);
+    color: var(--red-color);
+}
+
+/* ── Menú por invitado ─────────────────────────────────────────────────── */
+
+.guestMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 16px;
+    background-color: var(--ft-color);
+    box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.14);
+    min-width: 190px;
+}
+
+.guestMenuItem {
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background-color: transparent;
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 13px;
+    transition: background-color 0.15s ease;
+}
+
+.guestMenuItem:hover {
+    background-color: var(--sc-color);
+}
+
+.guestMenuDanger {
+    color: var(--red-color);
+}
+
+/* En móvil el panel es una hoja inferior con agarradera. */
+@media (max-width: 750px) {
+    .panel {
+        width: 100%;
+        max-width: none;
+        /* Anclada abajo: sin tope, una mesa de 18 lugares desborda por arriba
+           de la pantalla y el nombre queda fuera de alcance. */
+        max-height: 85vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border-radius: 24px 24px 0 0;
+        padding-top: 8px;
+    }
+
+    .grabber {
+        width: 44px;
+        height: 4px;
+        margin: 0 auto 12px;
+        border-radius: 99px;
+        background-color: var(--borders);
+    }
+}
+
+.grabber {
+    display: none;
+}
+
+@media (max-width: 750px) {
+    .grabber {
+        display: block;
+    }
+}

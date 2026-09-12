@@ -1,0 +1,648 @@
+/* Onboarding del mapa de mesas (§5.1). Es el estado vacío del panel izquierdo:
+   vive directo sobre el canvas punteado, sin tarjeta ni sombra encima. */
+
+.canvas {
+    flex: 1;
+    align-self: stretch;
+    min-height: 0;
+    overflow-y: auto;
+    border: 1px dashed var(--borders);
+    border-radius: 16px;
+    background-color: #F5F5F580;
+    background-image: radial-gradient(#CECECE99 1px, transparent 1px);
+    background-size: 20px 20px;
+    padding: 34px 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.inner {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+/* ── Encabezado ────────────────────────────────────────────────────────── */
+
+.eyebrow {
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+}
+
+.title {
+    font-family: var(--font-family);
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text-color);
+    text-align: center;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.subtitle {
+    font-family: var(--font-family);
+    font-size: 13px;
+    color: var(--gray-color);
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 560px;
+}
+
+.question {
+    font-family: var(--font-family);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-top: 10px;
+}
+
+/* ── Stepper de mesas ──────────────────────────────────────────────────── */
+
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 22px;
+    border-radius: 16px;
+    background-color: var(--sc-color);
+}
+
+.counterValue {
+    font-family: var(--font-family);
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-color);
+    min-width: 52px;
+    text-align: center;
+}
+
+.counterLabel {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.counterLabel b {
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.counterLabel span {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+}
+
+.stepBtn {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 99px;
+    background-color: var(--ft-color);
+    color: var(--text-color);
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.08);
+    transition: background-color 0.15s ease;
+}
+
+.stepBtn:hover {
+    background-color: var(--brand-color-100);
+}
+
+.stepBtn[aria-disabled='true'] {
+    color: var(--gray-color-40);
+    cursor: not-allowed;
+}
+
+/* ── Formas ────────────────────────────────────────────────────────────── */
+
+.shapes {
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    width: 100%;
+    justify-content: center;
+}
+
+.shapeCard {
+    flex: 1;
+    max-width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 14px 14px;
+    border: 1px solid var(--borders);
+    border-radius: 16px;
+    background-color: var(--ft-color);
+    transition: border-color 0.15s ease;
+}
+
+.shapeCardActive {
+    border-color: var(--brand-color-500);
+}
+
+.shapeName {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.glyph {
+    background-color: var(--brand-color-100);
+    border: 1px solid var(--brand-color-500);
+}
+
+.glyphRound { width: 34px; height: 34px; border-radius: 50%; }
+.glyphSquare { width: 30px; height: 30px; border-radius: 8px; }
+.glyphRect { width: 44px; height: 26px; border-radius: 8px; }
+
+.miniStepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+}
+
+.miniBtn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 99px;
+    background-color: var(--ft-color);
+    color: var(--text-color);
+    transition: background-color 0.15s ease;
+}
+
+.miniBtn:hover {
+    background-color: var(--brand-color-100);
+}
+
+.miniBtn[aria-disabled='true'] {
+    color: var(--gray-color-40);
+    cursor: not-allowed;
+}
+
+.miniValue {
+    font-family: var(--font-family);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 22px;
+    text-align: center;
+}
+
+/* ── Bloque de cálculo ─────────────────────────────────────────────────── */
+
+.calc {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    width: 100%;
+    padding: 16px 20px;
+    box-sizing: border-box;
+    border-radius: 16px;
+    background-color: var(--brand-color-100);
+}
+
+.calcText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.calcTotal {
+    font-family: var(--font-family);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--brand-color-800);
+}
+
+.calcDetail {
+    font-family: var(--font-family);
+    font-size: 11.5px;
+    color: var(--text-color-80);
+    line-height: 1.5;
+}
+
+.tickets {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.ticketsLabel {
+    font-family: var(--font-family);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--gray-color);
+}
+
+.ticketsInput {
+    width: 84px;
+    padding: 8px 6px;
+    text-align: center;
+    border: 1.5px solid var(--brand-color-800);
+    border-radius: 10px;
+    background-color: var(--ft-color);
+    font-family: var(--font-family);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-color);
+    outline: none;
+}
+
+.ticketsHint {
+    font-family: var(--font-family);
+    font-size: 10px;
+    color: var(--brand-color-800);
+}
+
+.note {
+    font-family: var(--font-family);
+    font-size: 11.5px;
+    color: var(--gray-color);
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── CTAs ──────────────────────────────────────────────────────────────── */
+
+.ctas {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.primary {
+    border: none;
+    cursor: pointer;
+    padding: 11px 22px;
+    border-radius: 12px;
+    background-color: var(--text-color);
+    color: var(--ft-color);
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    transition: filter 0.15s ease;
+}
+
+.primary:hover {
+    filter: brightness(1.25);
+}
+
+.primary[aria-disabled='true'] {
+    background-color: var(--gray-bg);
+    color: var(--gray-color);
+    cursor: not-allowed;
+    filter: none;
+}
+
+.secondary {
+    border: 1px solid var(--borders);
+    cursor: pointer;
+    padding: 11px 22px;
+    border-radius: 12px;
+    background-color: var(--ft-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    transition: border-color 0.15s ease;
+}
+
+.secondary:hover {
+    border-color: var(--brand-color-500);
+}
+
+/* ── Paso 2 ────────────────────────────────────────────────────────────── */
+
+.step2Head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.step2Title {
+    font-family: var(--font-family);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.step2Sub {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--gray-color);
+    margin: 3px 0 0;
+}
+
+.stepDots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+    white-space: nowrap;
+    padding-top: 4px;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 99px;
+    background-color: var(--borders);
+}
+
+.dotActive {
+    background-color: var(--brand-color-500);
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+/* Selección solo con fondo lila suave + borde morado: sin radios ni badges. */
+.option {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    text-align: left;
+    cursor: pointer;
+    padding: 16px;
+    border: 1px solid var(--borders);
+    border-radius: 16px;
+    background-color: var(--ft-color);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.option:hover {
+    border-color: var(--brand-color-500);
+}
+
+.optionActive,
+.optionActive:hover {
+    border-color: var(--brand-color-500);
+    background-color: var(--brand-color-100);
+}
+
+.optionText {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    flex: 1;
+}
+
+.optionName {
+    font-family: var(--font-family);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.optionDesc {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--gray-color);
+    line-height: 1.45;
+}
+
+.traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.trait {
+    padding: 2px 10px;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    color: var(--gray-color);
+    font-family: var(--font-family);
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.dataLine {
+    font-family: var(--font-family);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-color-80);
+    border-top: 1px solid var(--borders);
+    padding-top: 8px;
+}
+
+.step2Footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.footerNote {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+    text-align: right;
+    line-height: 1.45;
+    margin-left: auto;
+}
+
+/* ── Miniaturas ────────────────────────────────────────────────────────── */
+
+.thumb {
+    position: relative;
+    width: 150px;
+    height: 104px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background-color: var(--sc-color);
+    overflow: hidden;
+}
+
+.thumbTable {
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background-color: var(--brand-color-300);
+}
+
+.thumbFloor {
+    position: absolute;
+    border-radius: 6px;
+    border: 1px dashed var(--gray-color-40);
+    background-color: var(--ft-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-family);
+    font-size: 6px;
+    letter-spacing: 1px;
+    color: var(--gray-color);
+}
+
+.thumbStage {
+    position: absolute;
+    border-radius: 4px;
+    background-color: var(--text-color);
+}
+
+/* ── Móvil ─────────────────────────────────────────────────────────────── */
+/* En una columna de 430px el lienzo punteado y las tres tarjetas de forma en
+   fila dejan de ayudar: la pantalla pasa a una sola columna sobre fondo limpio,
+   con las acciones ancladas abajo para que no haya que hacer scroll de vuelta. */
+@media (max-width: 750px) {
+    .canvas {
+        border: none;
+        border-radius: 0;
+        background-color: var(--ft-color);
+        background-image: none;
+        padding: 18px 16px 0;
+    }
+
+    .inner {
+        align-items: stretch;
+        max-width: none;
+        gap: 12px;
+    }
+
+    /* Alineado a la izquierda: centrado, un título de tres líneas en 430px se
+       lee como cartel y no como el arranque de un formulario. */
+    .eyebrow,
+    .title,
+    .subtitle,
+    .question {
+        text-align: left;
+        align-self: stretch;
+    }
+
+    .title {
+        font-size: 26px;
+    }
+
+    /* Cada forma es un renglón: glifo, nombre y su contador a la derecha. */
+    .shapes {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .shapeCard {
+        flex-direction: row;
+        align-items: center;
+        max-width: none;
+        gap: 14px;
+        padding: 12px 14px;
+    }
+
+    .shapeName {
+        flex: 1;
+        text-align: left;
+    }
+
+    .calc {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .tickets {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Acciones ancladas: el contenido de arriba es largo y el CTA no puede
+       quedar fuera de vista al final del scroll. */
+    .ctas,
+    .step2Footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 3;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 12px 0 16px;
+        background-color: var(--ft-color);
+        box-shadow: 0 -12px 16px -8px var(--ft-color);
+    }
+
+    .primary,
+    .secondary {
+        width: 100%;
+        padding: 15px 22px;
+        text-align: center;
+    }
+
+    /* Apiladas, la acción principal va arriba: es la que se busca con el
+       pulgar. En el paso 2 el orden del DOM la deja debajo de "Atrás". */
+    .secondary {
+        order: 1;
+    }
+
+    .footerNote {
+        margin-left: 0;
+        text-align: center;
+        order: -1;
+    }
+
+    /* La miniatura pasa a ser la cabecera de la opción, a todo el ancho. */
+    .option {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .thumb {
+        width: 100%;
+        height: 150px;
+    }
+
+    .step2Head {
+        flex-direction: row;
+        align-items: baseline;
+    }
+}

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { LuArmchair, LuClipboardList, LuPalette, LuPartyPopper, LuPencilRuler, LuSend, LuSmartphone, LuTicket } from "react-icons/lu";
+import { LuArmchair, LuClipboardList, LuImages, LuPalette, LuPartyPopper, LuPencilRuler, LuSend, LuSmartphone, LuSparkles, LuTicket } from "react-icons/lu";
 
 export const fetchPrices = async (setPrices) => {
     const res = await axios.get(
@@ -7,6 +7,36 @@ export const fetchPrices = async (setPrices) => {
         // `http://localhost:4000/api/payment/prices`
     );
     setPrices(res.data);
+};
+
+// El webhook de Stripe corre por su cuenta y el navegador vuelve del checkout
+// antes de que termine de escribir. Se guarda el plan comprado para poder
+// sondear hasta que `invitations.plan` cambie de verdad.
+const PENDING_PLAN_KEY = 'iattend_pending_plan';
+
+export const markPendingPlan = (invitationId, plan) => {
+    try {
+        sessionStorage.setItem(PENDING_PLAN_KEY, JSON.stringify({ invitationId, plan }));
+    } catch {
+        // Modo privado o storage bloqueado: se sondea sin plan esperado.
+    }
+};
+
+export const readPendingPlan = (invitationId) => {
+    try {
+        const pending = JSON.parse(sessionStorage.getItem(PENDING_PLAN_KEY) ?? 'null');
+        return pending?.invitationId === invitationId ? pending.plan : null;
+    } catch {
+        return null;
+    }
+};
+
+export const clearPendingPlan = () => {
+    try {
+        sessionStorage.removeItem(PENDING_PLAN_KEY);
+    } catch {
+        // no-op
+    }
 };
 
 export const handleCheckout = async (invitationID, priceId, userId) => {
@@ -145,6 +175,8 @@ export const PRODUCTS = {
     { key: "plan_features.auto_sends", icon: LuSend },
     { key: "plan_features.digital_passes", icon: LuTicket },
     { key: "plan_features.side_events_3", icon: LuPartyPopper },
+    { key: "plan_features.photo_wall", icon: LuImages },
+    { key: "plan_features.lia", icon: LuSparkles },
   ];
 
   export const plan_lite = [

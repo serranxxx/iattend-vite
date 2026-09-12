@@ -651,7 +651,7 @@ export default function Lia({ id: idProp, onMinimize }) {
         <div className="lia-page">
             <div className="lia-main">
                 <header className="lia-chat-header">
-                    <span className="lia-header-title">Lia ✦</span>
+                    <span className="lia-header-title">✦ Lia</span>
                     <span className="lia-beta-badge">Beta</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
                         {onMinimize && (
@@ -679,7 +679,7 @@ export default function Lia({ id: idProp, onMinimize }) {
                             {/* <div className='lia_cont_img'>
                                 <img src="/images/lia/heart_3.png" className="lia-avatar" alt="Lia" />
                             </div> */}
-                            <span className="lia-header-title">Lia </span>
+                            <span className="lia-header-title">✦ Lia</span>
 
                         </div>
                         <span className="lia-beta-badge">Beta</span>

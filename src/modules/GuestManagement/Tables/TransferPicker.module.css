@@ -1,0 +1,199 @@
+/* Selector de mesa destino — §5.4 del spec. */
+
+.picker {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 320px;
+    max-width: 90vw;
+    padding: 14px;
+    box-sizing: border-box;
+    border-radius: 24px;
+    background-color: var(--ft-color);
+    box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.14);
+}
+
+.search {
+    border-radius: 99px;
+    background-color: var(--sc-color);
+}
+
+.filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.results {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.item:hover {
+    background-color: var(--brand-color-100);
+}
+
+/* Las mesas completas y bloqueadas se ven, pero no son destino válido.
+   Se usa aria-disabled y no el atributo disabled: esto no es un <button>,
+   y así el hint del motivo sigue siendo legible. */
+.itemDisabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.itemDisabled:hover {
+    background-color: transparent;
+}
+
+.itemNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 26px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    font-family: var(--font-family);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-color);
+    flex-shrink: 0;
+}
+
+.itemIdentity {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
+.itemName {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.itemMeta {
+    font-family: var(--font-family);
+    font-size: 10px;
+    color: var(--gray-color);
+}
+
+.itemFree {
+    padding: 2px 10px;
+    border-radius: 99px;
+    background-color: var(--brand-color-100);
+    color: var(--brand-color-800);
+    font-family: var(--font-family);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.itemFreeOff {
+    background-color: var(--gray-bg);
+    color: var(--gray-color);
+}
+
+.noResults,
+.hint {
+    font-family: var(--font-family);
+    font-size: 11px;
+    color: var(--gray-color);
+    line-height: 1.4;
+}
+
+.noResults {
+    padding: 12px 4px;
+}
+
+/* ── Cabecera (solo cuando se abre como hoja) ──────────────────────────── */
+
+.sheetHead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sheetText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sheetTitle {
+    font-family: var(--font-family);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.sheetSub {
+    font-family: var(--font-family);
+    font-size: 12px;
+    color: var(--gray-color);
+    line-height: 1.3;
+}
+
+.sheetClose {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 99px;
+    background-color: var(--sc-color);
+    color: var(--gray-color);
+    flex-shrink: 0;
+}
+
+/* ── Móvil ─────────────────────────────────────────────────────────────── */
+/* Un popover de 320px colgando de un menú es inmanejable con el pulgar: en
+   móvil el selector sale del flujo del dropdown y se ancla como hoja inferior
+   a todo el ancho. `position: fixed` lo saca del popup que lo contiene. */
+@media (max-width: 750px) {
+    .picker {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1100;
+        width: 100vw;
+        max-width: none;
+        max-height: 88vh;
+        padding: 16px 16px 20px;
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0px -6px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .results {
+        max-height: 46vh;
+    }
+}

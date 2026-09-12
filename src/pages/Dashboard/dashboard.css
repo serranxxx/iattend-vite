@@ -438,36 +438,6 @@
     min-height: 120px;
 }
 
-.dashboard_photowall {
-    cursor: pointer;
-    width: 260px;
-    position: relative;
-}
-
-.pro_shadow {
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    position: absolute;
-    left: 0;
-    top: 0;
-    backdrop-filter: blur(1px);
-}
-
-.pro_badge_::after {
-    content: "PRO";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%,-50%);
-    padding: 2px 8px;
-    background-color: var(--light-green-500);
-    color: #F8F4F9;
-    font-weight: 800;
-    border-radius: 99px;
-    z-index: 99;
-}
-
 .photowall_card_body {
     flex: 1;
     width: 100%;
@@ -573,9 +543,15 @@
         padding-bottom: 48px;
     }
 
+    .dashboard_stack {
+        width: 100%;
+        align-items: stretch;
+    }
+
     .single_row_dashboard {
         flex-direction: column;
         gap: 16px;
+        width: 100%;
     }
 
     .single_col {
@@ -634,3 +610,762 @@
     }
 
 }
+/* .dashboard_body es un flex en fila; esta columna deja el banner de feedback
+   encima de las tarjetas en vez de a un lado. */
+.dashboard_stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    max-width: 100%;
+    min-width: 0;
+    z-index: 2;
+}
+
+/* Ancho de la fila de tarjetas: 260 (invitación) + 24 (gap) + 460 (columna) */
+.dashboard_feedback_banner {
+    width: 744px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .dashboard_feedback_banner {
+        width: 100%;
+    }
+}
+
+/* ── Bento grid (rediseño Givingli-style, paleta I attend) ── */
+
+.bento_grid {
+    width: 100%;
+    max-width: 1160px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: minmax(200px, auto);
+    gap: 18px;
+    font-family: 'Manrope', sans-serif;
+    position: relative;
+    z-index: 2;
+}
+
+/* Escala al 80% en desktop. `zoom` escala también el layout (a diferencia de
+   transform: scale), así que queda centrado sin márgenes negativos a mano. */
+@media (min-width: 901px) {
+    .bento_grid {
+        zoom: 0.8;
+    }
+}
+
+.bento_card {
+    border-radius: 28px;
+    padding: 28px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #29262D;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+    transition: box-shadow 0.3s ease;
+}
+
+/* Hover: glow leve sin offset, estilo de la casa */
+.bento_card:hover {
+    box-shadow: 0 0 16px rgba(28, 50, 73, 0.18);
+}
+
+.bento_title {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 30px;
+    line-height: 1.1;
+    color: #1c3249;
+}
+
+.bento_caption {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1c3249;
+}
+
+/* Invitación Paperless — lila, alta */
+.bento_inv {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    background: rgba(209, 190, 221, 0.8);
+    gap: 18px;
+}
+
+.bento_inv_scene {
+    flex: 1;
+    position: relative;
+    min-height: 330px;
+}
+
+.bento_inv_minicard {
+    position: absolute;
+    left: 50%;
+    top: 6px;
+    bottom: 6px;
+    width: 94%;
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 12px 16px;
+    box-shadow: 0 18px 40px rgba(28, 50, 73, .22);
+    transform: translateX(-50%) rotate(-3deg);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+.bento_inv_photo {
+    flex: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #F1F1F1;
+    min-height: 0;
+}
+
+.bento_inv_photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.bento_inv_names {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 18px;
+    color: #1c3249;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bento_inv_date {
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #787878;
+    text-align: center;
+}
+
+
+
+
+
+
+/* Gestión de invitados — salvia, ancha */
+.bento_guests {
+    grid-column: 2 / span 3;
+    grid-row: 1;
+    background: rgba(185, 187, 166, 0.8);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 20px;
+}
+
+.bento_guests_left {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.bento_stats {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+}
+
+.bento_stat_num {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 40px;
+    line-height: 1;
+    color: #1c3249;
+}
+
+.bento_stat_label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1c3249;
+    opacity: .75;
+    margin-top: 4px;
+}
+
+.bento_sheet_wrap {
+    position: relative;
+    min-height: 200px;
+}
+
+.bento_sheet {
+    position: absolute;
+    inset: auto 0 -40px 0;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 16px;
+    box-shadow: 0 -10px 30px rgba(28, 50, 73, .15);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bento_sheet_head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #787878;
+    font-weight: 600;
+}
+
+.bento_progress {
+    height: 6px;
+    border-radius: 999px;
+    background: #F1F1F1;
+    overflow: hidden;
+    display: flex;
+}
+
+.bento_guest_row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #EBEBEB;
+}
+
+.bento_guest_row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.bento_avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1c3249;
+    flex-shrink: 0;
+}
+
+.bento_guest_name {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bento_guest_sub {
+    font-size: 10px;
+    color: #787878;
+}
+
+.bento_pill_ok {
+    font-size: 10px;
+    font-weight: 700;
+    color: #2f7a42;
+    background: rgba(67, 183, 93, .14);
+    border-radius: 999px;
+    padding: 4px 8px;
+    flex-shrink: 0;
+}
+
+.bento_pill_wait {
+    font-size: 10px;
+    font-weight: 700;
+    color: #787878;
+    background: #F1F1F1;
+    border-radius: 999px;
+    padding: 4px 8px;
+    flex-shrink: 0;
+}
+
+/* Side events — crema */
+.bento_side {
+    grid-column: 2 / span 2;
+    grid-row: 2;
+    background: rgba(238, 234, 223, 0.8);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.bento_side_left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.bento_env_scene {
+    position: relative;
+    min-height: 170px;
+}
+
+.bento_env {
+    position: absolute;
+    aspect-ratio: 1.5;
+    border-radius: 10px;
+    box-shadow: 0 12px 24px rgba(28, 50, 73, .2);
+    overflow: hidden;
+}
+
+.bento_env_flap {
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(0 0, 100% 0, 50% 55%);
+}
+
+.bento_env_name {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 12px;
+    max-width: calc(100% - 20px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Photo Wall — navy */
+.bento_wall {
+    grid-column: 4;
+    grid-row: 2;
+    background: rgba(28, 50, 73, 0.8);
+    color: #fff;
+}
+
+.bento_wall .bento_title {
+    color: #fff;
+}
+
+.bento_wall .bento_caption {
+    color: #eeeadf;
+}
+
+.bento_wall_scene {
+    flex: 1;
+    position: relative;
+    min-height: 120px;
+}
+
+.bento_polaroid {
+    position: absolute;
+    width: 56%;
+    background: #fff;
+    padding: 6px 6px 18px;
+    border-radius: 6px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .3);
+    box-sizing: border-box;
+}
+
+.bento_polaroid--a {
+    left: -2%;
+    bottom: -14px;
+    transform: rotate(-7deg);
+}
+
+.bento_polaroid--b {
+    right: -4%;
+    bottom: -6px;
+    transform: rotate(6deg);
+}
+
+.bento_polaroid > div {
+    aspect-ratio: 1;
+    background: #F1F1F1;
+    overflow: hidden;
+}
+
+.bento_polaroid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── Módulo no contratado ──
+   La tarjeta se ve completa y a todo color, con contenido de muestra
+   (`LOCKED_DEMO` en DashboardPage): así se ve lo que se está comprando en vez
+   de una tarjeta vacía. Lo único que comunica el bloqueo es la barra del pie. */
+/* Velo sobre el contenido. Va en z-index 2 y la barra en 3, así el botón de
+   desbloquear queda nítido por encima. */
+.bento_card.bento_locked::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    /* --dark-blue-500 al 50%; no hay token con esa alpha (existen -40 y -60). */
+    background: rgba(12, 23, 27, .5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    pointer-events: none;
+}
+
+/* La hoja de invitados se ancla arriba en vez de asomar desde abajo: lo que
+   sobra se recorta por el pie y no se come la barra de progreso por arriba. */
+.bento_locked .bento_sheet {
+    inset: 0 0 auto 0;
+    border-radius: 18px;
+}
+
+/* Las polaroids se achican y se encinan para que la barra no las parta. */
+.bento_locked .bento_polaroid {
+    width: 46%;
+}
+
+.bento_locked .bento_polaroid--a {
+    left: 8%;
+    bottom: -34px;
+}
+
+.bento_locked .bento_polaroid--b {
+    right: 6%;
+    bottom: -22px;
+}
+
+/* ── Barra de acción ── */
+.bento_lock_bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+    /* Ajustada para que la frase completa quepa en las tarjetas de una sola
+       columna (Invitación y Photo Wall), que son las más angostas. */
+    padding: 13px 12px;
+    background: #1c3249;
+}
+
+.bento_lock_bar_label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #eeeadf;
+}
+
+.bento_lock_bar_label > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bento_lock_bar_label svg {
+    flex-shrink: 0;
+    color: var(--light-green-500);
+}
+
+.bento_lock_bar_cta {
+    flex-shrink: 0;
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--light-green-500);
+    color: #16323d;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.bento_card.bento_locked:hover .bento_lock_bar_cta {
+    background: var(--light-green-400);
+}
+
+/* Invitación y Photo Wall ocupan una sola columna: la frase y el botón no caben
+   a 12px. Bajan un punto ahí en vez de apilarse, para no alterar el alto de las
+   filas —que es el mismo de pro. */
+@media (min-width: 901px) {
+    .bento_inv .bento_lock_bar,
+    .bento_wall .bento_lock_bar {
+        padding: 13px 10px;
+        gap: 7px;
+    }
+
+    .bento_inv .bento_lock_bar_label,
+    .bento_wall .bento_lock_bar_label {
+        font-size: 11px;
+        gap: 5px;
+    }
+
+    .bento_inv .bento_lock_bar_cta,
+    .bento_wall .bento_lock_bar_cta {
+        padding: 0 10px;
+        font-size: 11px;
+    }
+}
+
+/* Contrata I attend / Cámbiate a PRO — misma tarjeta, distinto plan. Se colocan
+   con estilo inline en la celda que en pro ocupa el card de feedback. */
+.bento_pro,
+.bento_hire {
+    background: linear-gradient(155deg, #1c3249 0%, #16323d 100%);
+    color: #fff;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 24px;
+}
+
+/* Glow verde de la esquina; el overflow hidden de .bento_card lo recorta. */
+.bento_pro::after,
+.bento_hire::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    right: -80px;
+    top: -80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(170, 193, 135, .5) 0%, rgba(170, 193, 135, 0) 70%);
+    pointer-events: none;
+}
+
+.bento_pro > *,
+.bento_hire > * {
+    position: relative;
+    z-index: 1;
+}
+
+.bento_pro_badge {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--light-green-500);
+    color: #16323d;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.bento_pro .bento_title,
+.bento_hire .bento_title {
+    color: #fff;
+    font-size: 26px;
+    margin-top: auto;
+}
+
+.bento_pro_caption {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #eeeadf;
+}
+
+.bento_pro_cta {
+    height: 42px;
+    border: none;
+    border-radius: 999px;
+    background: var(--light-green-500);
+    color: #16323d;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.bento_pro_cta:hover {
+    background: var(--light-green-400);
+}
+
+/* Fila 3 con CTA (free y lite): deja de ser dos celdas de la rejilla para poder
+   repartirse con flex — Save the Date crece y el CTA se topa en 360px. */
+.bento_row3 {
+    grid-column: 1 / span 4;
+    grid-row: 3;
+    display: flex;
+    gap: 18px;
+    min-width: 0;
+}
+
+.bento_row3 > .bento_std {
+    flex: 1;
+    min-width: 0;
+}
+
+.bento_row3 > .bento_hire,
+.bento_row3 > .bento_pro {
+    flex: 1;
+    max-width: 360px;
+    min-width: 0;
+}
+
+/* Save the Date — foto full-bleed */
+.bento_std {
+    background: rgba(22, 50, 61, 0.8);
+    color: #fff;
+    padding: 0;
+    min-height: 260px;
+    display: flex;
+}
+
+.bento_std_bg {
+    position: absolute;
+    inset: 0;
+}
+
+.bento_std_bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.bento_std_grad {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(12, 23, 27, 0) 30%, rgba(12, 23, 27, .78) 100%);
+    pointer-events: none;
+}
+
+.bento_std_row {
+    position: relative;
+    margin-top: auto;
+    padding: 28px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.bento_std_caption {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #eeeadf;
+    margin-top: 8px;
+}
+
+.bento_chip {
+    background: #fff;
+    color: #1c3249;
+    border-radius: 14px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 74px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .3);
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.bento_chip_month {
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #787878;
+}
+
+.bento_chip_day {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 32px;
+    line-height: 1;
+}
+
+/* Ayúdanos a mejorar — blanca */
+.bento_feedback {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1.5px solid #EBEBEB;
+    cursor: default;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.bento_feedback:hover {
+    box-shadow: none;
+}
+
+.bento_feedback_head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.bento_feedback_icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #D1BEDD;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.bento_feedback_title {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 24px;
+    line-height: 1.1;
+    color: #1c3249;
+}
+
+.bento_feedback_text {
+    font-size: 14px;
+    line-height: 1.55;
+    color: #787878;
+    margin-top: 8px;
+}
+
+/* Responsive: una columna */
+@media (max-width: 900px) {
+    .bento_grid {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+    }
+
+    .bento_grid > .bento_card,
+    .bento_row3 {
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
+
+    /* Apilada, la fila 3 se comporta como el resto del bento. */
+    .bento_row3 {
+        flex-direction: column;
+    }
+
+    .bento_row3 > .bento_hire,
+    .bento_row3 > .bento_pro {
+        max-width: none;
+    }
+
+    .bento_guests,
+    .bento_side {
+        grid-template-columns: 1fr;
+    }
+
+    .bento_title {
+        font-size: 24px;
+    }
+
+    .bento_inv_scene {
+        min-height: 360px;
+    }
+
+    .bento_sheet_wrap {
+        min-height: 180px;
+    }
+}
+
