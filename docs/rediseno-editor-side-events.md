@@ -199,13 +199,18 @@ con `/dashboard/guests`**: esa página cambió igual.
   le da `flex-wrap: wrap` con `white-space: nowrap` en cada hijo, así el número nunca se rompe y lo
   que baja a su propio renglón es el código de acceso. En side events (identidad de ~259px) los dos
   caben en una línea; en invitados, donde las etiquetas dejan ~160px, el código baja.
-- **El popup de *Copiar de otra lista* se salía de la pantalla.** Tres causas encadenadas: el ancho
-  fijo (ahora `calc(100vw - 24px)`), el `maxHeight: 480px` **inline** del scroller interno, que
-  sobresalía 55px por debajo de la tarjeta blanca de `65vh` (ahora `flex: 1; minHeight: 0`, que es
-  lo que corresponde dentro de una columna flex de alto fijo), y los nombres, que aun truncados por
-  JS se partían en dos renglones (`white-space: nowrap` + elipsis). También lleva
+- **El popup de *Copiar de otra lista* se salía de la pantalla.** Varias causas encadenadas: el
+  ancho fijo (ahora `calc(100vw - 24px)`), el `maxHeight: 480px` **inline** del scroller interno,
+  que sobresalía 55px por debajo de la tarjeta blanca (ahora `flex: 1; minHeight: 0`, que es lo que
+  corresponde dentro de una columna flex de alto fijo), y los nombres, que aun truncados por JS se
+  partían en dos renglones (`white-space: nowrap` + elipsis). También lleva
   `rootClassName='side_guest_list_pop'` con `z-index: 1080`: el menú de *+ Agregar* y este popup
   comparten el 1050 de antd y los dos cuelgan de `<body>`.
+- **El alto y la colocación del popup.** Su disparador vive **dentro** del menú de *+ Agregar*, que
+  puede quedar a media pantalla: con `70vh` no cabía ni arriba ni abajo, y antd —que por defecto
+  solo **voltea**— lo recortaba contra el borde. Se arregla por los dos lados: alto corto
+  (`min(52vh, 420px)`, `min(54vh, 420px)` en móvil) y `align={{ overflow: { adjustX, adjustY,
+  shiftX, shiftY } }}`, que hace que antd lo **deslice** para dejarlo dentro en vez de voltearlo.
 
 ## Los tours son solo de escritorio
 
@@ -306,8 +311,11 @@ el elemento más grande de la pantalla. Bajo 720px (`isMobile`) se renderiza otr
 - **El destacado es el próximo con fecha**; si ya pasaron todos, el más reciente; y si solo hay
   borradores, el primero de la lista. El antetítulo desaparece si la fecha ya pasó en vez de
   mentir.
-- **Filas compactas** para el resto: miniatura, nombre, fecha y conteo. Tocar la fila **abre** el
-  editor — en una columna no hay a dónde seleccionar.
+- **Filas compactas** para el resto: miniatura, nombre, fecha y conteo. Tocar una fila **la sube al
+  destacado**, igual que el riel de escritorio; abrir es siempre el botón. El destacado es el
+  seleccionado (`selectedId`), que en móvil arranca en el próximo en vez de en el primero de la
+  tabla, y el antetítulo dice *PRÓXIMO* solo cuando el destacado de verdad lo es — el resto se queda
+  con los días que faltan.
 - **Borrador** = le falta fecha o nombre, lo único que de verdad impide mandar la pieza.
   `side_events` no tiene columna de estado ni de publicado, así que se deriva (`isDraft`). Esas
   filas cambian el conteo por *Terminar invitación →* y llevan la etiqueta.
@@ -337,6 +345,9 @@ El listado y el editor son dos ramas del mismo componente, así que la continuid
   `setSelectedId` todavía no se refleja en el DOM. Ese `setSelectedId` sí decide cuál lleva
   `data-morph="cover"` para el **regreso**, que se mide un frame después — sin eso el fantasma
   aterrizaba siempre en el destacado, aunque se hubiera abierto una fila.
+- **`data-morph-id` tiene que estar también en la portada de escritorio.** `openFromList` mide por
+  id siempre, y `startMorph` hace `return` si no encuentra el origen: sin el atributo ahí, el
+  listado de escritorio abría el editor de golpe, sin animación.
 - El fantasma se renderiza dentro de `globals`, que vive en las dos ramas, y arranca con los
   estilos del origen. Un `useLayoutEffect` mide el destino en el siguiente frame —ya está montado,
   porque el `setMorph` y el cambio de rama van en el mismo commit— y lo anima con la Web

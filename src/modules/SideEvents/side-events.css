@@ -6,7 +6,10 @@
 
 /* ── Copiar la lista del evento principal (dropdown del toolbar) ── */
 .side_guest_list {
-    height: 70vh;
+    /* Corto a propósito: el disparador vive dentro del menú de "+ Agregar",
+       que puede quedar a media pantalla, y con 70vh no cabía ni arriba ni
+       abajo — antd lo volteaba y lo recortaba contra el borde superior. */
+    height: min(52vh, 420px);
     background-color: #FFF;
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
     border-radius: 16px;
@@ -82,6 +85,7 @@
     z-index: 1080;
 }
 
+
 /* ── Móvil ── */
 @media (max-width: 750px) {
     /* El popup de "copiar de otra lista" se salía de la pantalla: sus filas
@@ -90,7 +94,9 @@
         width: calc(100vw - 24px);
         max-width: calc(100vw - 24px);
         box-sizing: border-box;
-        height: 65vh;
+        /* Menos que 58vh: el respiro de 8px del popup vive fuera de este alto y,
+           pegado al borde inferior, se salía justo por esos pixeles. */
+        height: min(54vh, 420px);
         padding: 12px;
         gap: 12px;
     }

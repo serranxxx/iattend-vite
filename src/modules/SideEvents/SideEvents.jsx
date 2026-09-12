@@ -194,6 +194,8 @@ export const SideEvents = () => {
     // realtime sin meter la lista en las dependencias del efecto.
     const sideEventIdsRef = useRef([]);
     const detailRef = useRef(null);
+    // Destacado del listado móvil: el equivalente de `detailRef` en una columna.
+    const featuredRef = useRef(null);
 
      const phoneFormatter = (params) => {
         const val = typeof params === 'object' && params !== null ? params.value : params;
@@ -1202,6 +1204,11 @@ export const SideEvents = () => {
                                 placement={isMobile ? 'bottom' : 'bottomLeft'}
                                 getPopupContainer={() => document.body}
                                 rootClassName='side_guest_list_pop'
+                                // `shiftY`: sin esto antd solo voltea el popup, y
+                                // desde un disparador a media pantalla no cabe ni
+                                // arriba ni abajo — lo recortaba contra el borde.
+                                // Deslizándolo se queda dentro siempre.
+                                align={{ overflow: { adjustX: true, adjustY: true, shiftX: true, shiftY: true } }}
                                 popupRender={() => (
                                     <div key={3} className='side_guest_list'>
                                         <div className='single_row' style={{
@@ -2172,11 +2179,12 @@ export const SideEvents = () => {
     }, [sideEvent])
 
     // El detalle arranca con el primero, y si el seleccionado desaparece
-    // (o acaba de crearse uno) se reacomoda.
+    // (o acaba de crearse uno) se reacomoda. En móvil arranca con el próximo,
+    // que es lo que la pantalla promete con su antetítulo.
     useEffect(() => {
         if (!sideEvent?.length) return setSelectedId(null)
         if (sideEvent.some((se) => se.id === selectedId)) return
-        setSelectedId(sideEvent[0].id)
+        setSelectedId((isMobile ? nextUpEvent?.id : null) ?? sideEvent[0].id)
     }, [sideEvent])
 
     useEffect(() => {
@@ -2214,15 +2222,14 @@ export const SideEvents = () => {
         setDirty(true)
     }
 
-    // En el riel, tocar un side event lo selecciona; abrirlo es el botón del
-    // detalle. En móvil el detalle queda debajo de la lista, así que se sube.
+    // Tocar un side event lo selecciona; abrirlo es el botón. En escritorio el
+    // seleccionado llena el detalle de al lado; en móvil sube al destacado.
     const selectSideEvent = (item) => {
         setSelectedId(item.id)
-        if (isMobile) {
-            // el layout ya cambió de selección en este commit; el scroll va
-            // después para que el detalle tenga su alto definitivo
-            setTimeout(() => detailRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50)
-        }
+        if (!isMobile) return
+        // `block: 'nearest'` para no moverse si el destacado ya se ve: el
+        // scroll de cortesía es para cuando la lista es larga y quedó arriba.
+        setTimeout(() => featuredRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 50)
     }
 
     const openSideEvent = (item) => {
@@ -2984,9 +2991,9 @@ export const SideEvents = () => {
         return `${upperFirst(loc.format('ddd D MMM'))} · ${loc.format('HH:mm')}`
     }
 
-    // El destacado es el próximo con fecha; si ya pasaron todos, el más
-    // reciente; y si solo hay borradores, el primero de la lista.
-    const featured = (() => {
+    // El próximo con fecha; si ya pasaron todos, el más reciente; y si solo hay
+    // borradores, el primero de la lista.
+    const nextUpEvent = (() => {
         const list = sideEvent ?? []
         if (!list.length) return null
         const dated = list
@@ -3002,8 +3009,14 @@ export const SideEvents = () => {
         return last?.se ?? list[0]
     })()
 
+    // Lo que se ve en el destacado es el **seleccionado**: tocar una fila lo
+    // sube aquí en vez de abrir el editor, igual que el riel de escritorio.
+    const featured = sideEvent?.find((se) => se.id === selectedId) ?? nextUpEvent
+
     // "PRÓXIMO · EN 5 DÍAS". Null cuando la fecha ya pasó o no hay: en ese
-    // caso el destacado no lleva antetítulo en vez de mentir.
+    // caso el destacado no lleva antetítulo en vez de mentir. Y "PRÓXIMO" solo
+    // si el destacado es de verdad el siguiente: como ahora se puede elegir
+    // cualquiera, el resto se queda con los días que faltan.
     const featuredKicker = () => {
         const at = eventAt(featured)
         if (!at) return null
@@ -3014,7 +3027,9 @@ export const SideEvents = () => {
             : days === 1
                 ? t('side_events.list_when_tomorrow')
                 : t('side_events.list_when_days', { count: days })
-        return `${t('side_events.list_next')} · ${when}`
+        return featured?.id === nextUpEvent?.id
+            ? `${t('side_events.list_next')} · ${when}`
+            : when
     }
 
     // Fecha + lugar del destacado, en una línea
@@ -3082,7 +3097,7 @@ export const SideEvents = () => {
                 const counts = countsFor(featured.id)
                 const kicker = featuredKicker()
                 return (
-                    <article className={sl.mFeature}>
+                    <article className={sl.mFeature} ref={featuredRef}>
                         <div className={sl.mFeatureCover} {...morphProps(featured)}>
                             {featured.body?.image
                                 ? <img src={featured.body.image} alt="" />
@@ -3131,7 +3146,7 @@ export const SideEvents = () => {
                                     key={item.id}
                                     type="button"
                                     className={sl.mRow}
-                                    onClick={() => openFromList(item)}
+                                    onClick={() => selectSideEvent(item)}
                                 >
                                     <span className={sl.mThumb} {...morphProps(item)}>
                                         {item.body?.image
@@ -3261,7 +3276,11 @@ export const SideEvents = () => {
             <section className={sl.detail} ref={detailRef}>
                 {selected ? (
                     <>
-                        <div className={sl.cover} data-morph="cover" data-morphing={morph?.phase}>
+                        {/* `data-morph-id` además de `data-morph`: `openFromList` mide el
+                            origen por id, porque en el listado móvil hay varias portadas
+                            candidatas. Sin el id aquí, el morph de escritorio no encontraba
+                            de dónde salir y se abría sin animación. */}
+                        <div className={sl.cover} data-morph="cover" data-morph-id={selected.id} data-morphing={morph?.phase}>
                             {selected.body?.image
                                 ? <>
                                     <img src={selected.body.image} alt="" />
