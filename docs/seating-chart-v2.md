@@ -494,6 +494,35 @@ pasan a renglones con su contador a la derecha, las miniaturas del paso 2 se
 vuelven cabecera a todo el ancho, y las acciones se anclan abajo con
 `position: sticky` — con la principal arriba (`.secondary { order: 1 }`).
 
+## Tour guiado del mapa
+
+`TablesTour.jsx` + `tourDemoData.js` — mismo patrón que `GuestsTour` / `BuildTour` /
+`SideEventsTour`: anclajes `data-tour` resueltos al momento, contador en vez de puntitos y
+`disabledInteraction`. 10 pasos: el plano, Agregar, una mesa, la columna de confirmados, la franja
+de avance, Mapa/Lista, Auto acomodo, Centrar, las herramientas del plano y el "?".
+
+- **Se abre solo la primera vez que se entra SIN mesas** (`iattend_tables_tour_v1`) — justo cuando
+  la página no tiene nada que enseñar porque está el onboarding. Con mesas ya creadas **nunca** se
+  abre solo; siempre queda el `?` de la barra.
+- **Salón de ejemplo.** Sin mesas no habría nada que señalar, así que mientras dura el tour se
+  pintan 3 mesas y 14 confirmados de `tourDemoData.js`. Eso apaga el onboarding
+  (`showOnboarding` mira `tables_`) y da números reales a la franja de avance.
+  - Nunca se guarda: los ids son strings `demo-*`, `applyPositions` y `patchTable` cortan en seco
+    mientras `demoActiveRef` está prendido, y al cerrar se recarga lo real con
+    `getTables()` / `getGuests()` en vez de restaurar una copia.
+  - Con mesas propias no se monta nada: el tour corre sobre el salón de verdad y los dos pasos que
+    mencionan el ejemplo usan su variante de copy (`*_desc_own`).
+- **`data-tour="tables-replay"`, no `tour-replay`:** `TablesPage` vive dentro de un Drawer de
+  `GuestsPage`, que ya usa ese nombre para el `?` de su escalera de pasos — `querySelector` se
+  quedaba con el de la página de abajo.
+- **La apertura automática espera 1s**: el Drawer entra animado y, si el tour abre antes, antd
+  calcula la posición del primer paso con el drawer todavía a medio camino.
+- Auto acomodo, Centrar y la columna de confirmados no existen en móvil, así que esos pasos son
+  `desktopOnly`.
+- **Solo escritorio.** Bajo 750px el tour no se abre ni se ofrece: la máscara de antd mide
+  anclajes que viven en carruseles, drawers y hojas inferiores y no los recalcula. Ver
+  [rediseno-editor-side-events.md](./rediseno-editor-side-events.md#los-tours-son-solo-de-escritorio).
+
 ## Fuera de alcance (decidido)
 
 - Relaciones negativas entre invitados.

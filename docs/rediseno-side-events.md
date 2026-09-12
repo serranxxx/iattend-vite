@@ -10,6 +10,11 @@ Para el resto del módulo (tabs por estado, clima, ladas por país) sigue vigent
 
 Alcance: `ea9c90c → HEAD` en `SideEvents.jsx` — **+745 / −581 líneas**.
 
+> **Actualización:** el shell que contiene esta lista se rediseñó después —el módulo ya no usa
+> `Tabs` de antd ni el `useMemo` de `items`, y el editor tiene su propio tablero. Ver
+> [`rediseno-editor-side-events.md`](./rediseno-editor-side-events.md). Las tarjetas, el toolbar,
+> los filtros y la escalera de pasos que documenta este archivo siguen vigentes tal cual.
+
 ## Por qué
 
 Los dos módulos administran la misma entidad (invitados) con los mismos cuatro estados, pero

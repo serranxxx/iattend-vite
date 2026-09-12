@@ -138,6 +138,41 @@ carrusel** — quedó pendiente decidir si hace falta.
 - Sin `song` (§0.6, fuera de v1 como recomendaba el handoff — la copia de
   cover lo lleva en `null`).
 
+## Tour guiado
+
+`SaveTheDateTour.jsx` — mismo patrón que `GuestsTour` / `BuildTour` / `SideEventsTour` /
+`TablesTour`: anclajes `data-tour` resueltos al momento, bloques con "Saltar a…", contador en vez
+de puntitos y `disabledInteraction`.
+
+13 pasos en dos bloques: **Crear** (la pieza, las cinco herramientas del riel, ver en vivo,
+¿cuándo enviar?, copiar link y Guardar) y **Respuestas** (la columna de reacciones y mensajes).
+
+- Se abre solo la primera vez que se entra al editor (`iattend_std_tour_v1`) y se relanza desde el
+  `?` de la barra.
+- **En la versión gratis (`/save-the-date`, `demo`) no se abre solo**: ahí ya hay un modal de
+  bienvenida y dos capas encimadas no ayudan. El `?` sigue funcionando, y como esa versión no
+  tiene pestaña de Respuestas, el bloque se colapsa a uno solo con el paso de cierre al final.
+- `applyStep` cambia pestaña y panel **en el mismo commit** que el paso, así el anclaje ya está
+  montado cuando el Tour lo resuelve.
+- **El tour apaga "ver en vivo"** (`openTour`): con el remoto montado el riel se deshabilita y no
+  habría zonas que señalar.
+- **En móvil no abre los paneles** —la hoja inferior taparía el dock, que es lo que el paso
+  señala— y el `?` vive como **sexto botón del dock**, no en la barra: esa ya lleva seis piezas
+  (X, pestañas, ojo, ¿cuándo enviar?, link, Guardar) y un séptimo la parte en dos renglones.
+- Reusa `rootClassName="se-tour"` (panel de 360px): la pieza va centrada y el panel por defecto de
+  ~508px no cabe a los costados.
+- **La columna de Respuestas entra sin animación mientras el tour está abierto** (`.noAnim`): antd
+  mide el objetivo en el mismo commit, y con el ancho del hueco y el `translateX` todavía animando
+  la máscara quedaba desfasada —y no se vuelve a calcular.
+- **Solo escritorio.** Bajo 750px el tour no se abre ni se ofrece: la máscara de antd mide
+  anclajes que viven en carruseles, drawers y hojas inferiores y no los recalcula. Ver
+  [rediseno-editor-side-events.md](./rediseno-editor-side-events.md#los-tours-son-solo-de-escritorio).
+- **`isMobile` se declara antes del efecto que lo apaga.** Es la guarda de arriba, y `isMobile`
+  entra en su lista de dependencias — que se evalúa **en render**, no al correr el efecto. Con el
+  `useState` declarado después, la página entera tronaba con `Cannot access 'isMobile' before
+  initialization` y quedaba en blanco. El cuerpo del efecto sí puede referirse a lo que venga
+  después; el array de dependencias no.
+
 ## Gotchas nuevos
 
 - **El preview del editor apunta a prod por default**: hasta que

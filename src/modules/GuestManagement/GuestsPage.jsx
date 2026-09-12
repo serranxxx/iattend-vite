@@ -168,14 +168,19 @@ export default function GuestsPage() {
     // escalera de pasos.
     const [tourOpen, setTourOpen] = useState(false)
 
+    // El tour es solo de escritorio: en móvil la máscara de antd no alcanza a
+    // medir anclajes que viven en carruseles y hojas, y los bloques tapan la
+    // pantalla completa.
+    const tourAvailable = !isMobile
+
     useEffect(() => {
-        if (!invitation || isLoading) return
+        if (!invitation || isLoading || !tourAvailable) return
         if (localStorage.getItem(GUESTS_TOUR_STORAGE_KEY)) return
         // Pequeña espera para que las tarjetas ya estén pintadas cuando el
         // primer paso resuelva su anclaje.
         const timer = setTimeout(() => setTourOpen(true), 800)
         return () => clearTimeout(timer)
-    }, [invitation, isLoading])
+    }, [invitation, isLoading, tourAvailable])
 
     const closeTour = () => {
         localStorage.setItem(GUESTS_TOUR_STORAGE_KEY, '1')
@@ -2396,17 +2401,19 @@ export default function GuestsPage() {
                     </span>
                 </button>
             ))}
-            <Tooltip title={t('guests_tour.replay')}>
-                <button
-                    type="button"
-                    className="gx-tour-btn"
-                    data-tour="tour-replay"
-                    aria-label={t('guests_tour.replay')}
-                    onClick={() => setTourOpen(true)}
-                >
-                    <CircleHelp size={16} />
-                </button>
-            </Tooltip>
+            {tourAvailable && (
+                <Tooltip title={t('guests_tour.replay')}>
+                    <button
+                        type="button"
+                        className="gx-tour-btn"
+                        data-tour="tour-replay"
+                        aria-label={t('guests_tour.replay')}
+                        onClick={() => setTourOpen(true)}
+                    >
+                        <CircleHelp size={16} />
+                    </button>
+                </Tooltip>
+            )}
         </div>
     )
 
@@ -3124,7 +3131,7 @@ export default function GuestsPage() {
 
             {/* Tour del rediseño: recorre Seguimiento, Por invitar, Esperando
                 respuesta y Confirmados cambiando el tab activo por paso. */}
-            <GuestsTour open={tourOpen} onClose={closeTour} setActiveKey={setActiveKey} />
+            <GuestsTour open={tourOpen && tourAvailable} onClose={closeTour} setActiveKey={setActiveKey} />
 
             {/* Isla de progreso del envío masivo (estilo dynamic island): fija
                 abajo al centro, visible mientras el lote se procesa y hasta que

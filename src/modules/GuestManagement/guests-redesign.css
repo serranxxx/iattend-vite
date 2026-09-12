@@ -870,11 +870,44 @@
         font-size: 14px;
     }
 
+    /* Los banners son contexto, no el protagonista: en una pantalla de 375px
+       llegaban a comerse la mitad del alto útil. Aquí van compactos. */
     .gx-hero,
     .gx-alert {
         flex-wrap: wrap;
-        padding: 16px 18px;
-        border-radius: 16px;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        margin-bottom: 12px;
+    }
+
+    .gx-hero-title,
+    .gx-alert-title {
+        font-size: 14.5px;
+        line-height: 1.3;
+    }
+
+    .gx-hero-text,
+    .gx-alert-text {
+        font-size: 12.5px;
+        line-height: 1.35;
+        margin-top: 2px;
+    }
+
+    /* El botón se lleva un renglón para él (`gx-deadline-anchor`, abajo), así
+       que el texto puede compartir el suyo con la insignia en vez de salir en
+       tres líneas apretado al lado del botón. */
+    /* basis 0 y no `auto`: con `auto` el ancho base es el del título completo,
+       no cabe junto a la insignia y se va a su propio renglón. */
+    .gx-alert-texts {
+        flex: 1 1 0%;
+        min-width: 0;
+    }
+
+    .gx-alert-badge {
+        width: 32px;
+        height: 32px;
+        flex: none;
     }
 
     /* En mobile el banner se queda solo con el mensaje: sus acciones ya viven
@@ -885,6 +918,10 @@
 
     .gx-alert .gx-btn {
         width: 100%;
+    }
+
+    .gx-deadline-anchor {
+        flex: 1 1 100%;
     }
 
     .gx-alerts {
@@ -902,8 +939,47 @@
     }
 
     .gx-action {
-        flex: 1 1 auto;
-        justify-content: flex-start;
+        flex: 0 0 auto;
+    }
+
+    /* La tarjeta se queda en dos renglones: avatar + identidad arriba,
+       etiquetas y acciones abajo. El corte lo marca el bloque de etiquetas, no
+       la identidad —si no, el avatar se quedaba solo en su propio renglón—. El
+       texto de "Copiar link" se lleva ~75px y empujaba el chevron a un tercer
+       renglón él solo. */
+    .gx-identity {
+        flex: 1 1 150px;
+        min-width: 0;
+    }
+
+    /* El teléfono se partía en dos líneas ("+52 (614)" / "211-2087"). Lo que
+       no cabe ya no parte el número: es el código el que baja a su propio
+       renglón. */
+    .gx-sub {
+        flex-wrap: wrap;
+        row-gap: 0;
+    }
+
+    .gx-sub > span,
+    .gx-sub .gx-code {
+        white-space: nowrap;
+    }
+
+    /* Las etiquetas suben al renglón de la identidad; lo que baja son las
+       acciones. Con las etiquetas ocupando renglón propio eran tres. */
+    .gx-chips-col {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .gx-card .gx-pill span {
+        display: none;
+    }
+
+    .gx-card .gx-pill {
+        padding-inline: 10px;
     }
 
     .gx-when,

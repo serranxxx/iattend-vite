@@ -1,0 +1,425 @@
+/* ═══════════════════════════════════════════════════════════════
+   Lienzo de edición del side event.
+
+   Calca la pieza pública (iattend-events/src/components/SideEvent/
+   side-event.module.css): hero con blur enmascarado al que se le
+   encima una columna de tarjetas tintadas con el color del tema.
+   Cada zona es seleccionable y abre su panel.
+   ═══════════════════════════════════════════════════════════════ */
+.card {
+    position: relative;
+    width: 390px;
+    height: 700px;
+    border-radius: 28px;
+    overflow: hidden;
+    box-sizing: border-box;
+    /* mismo lienzo de arranque que el remoto */
+    background-image: linear-gradient(to bottom, #EEE, #CCC);
+    box-shadow: 0 24px 60px rgba(12, 23, 27, 0.28), 0 2px 8px rgba(12, 23, 27, 0.12);
+    font-family: Poppins, sans-serif;
+    user-select: none;
+}
+
+/* Móvil: la pieza llena su marco (el header y el dock viven fuera) */
+.cardFull {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* ── Zonas seleccionables ── */
+.pickable {
+    outline: 1.5px solid transparent;
+    outline-offset: 3px;
+    transition: outline-color 0.15s ease;
+    cursor: pointer;
+}
+
+.pickable:hover {
+    outline-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Sin hover que las delate, en el lienzo a pantalla completa las zonas se
+   marcan siempre: sin eso la pieza se ve idéntica a la publicada y no hay
+   forma de saber que se puede tocar. */
+.cardFull .pickable {
+    outline-color: rgba(255, 255, 255, 0.22);
+    outline-style: dashed;
+}
+
+.cardFull .picked {
+    outline-color: #FFFFFF;
+    outline-style: solid;
+}
+
+.picked {
+    outline-color: #FFFFFF;
+}
+
+/* ── Hero ──
+   En el remoto el hero es `sticky` y la columna de info le pasa por encima.
+   Aquí se queda fijo detrás del scroller y la columna arranca con un hueco
+   transparente: mismo efecto, sin depender de `vh` dentro de un lienzo
+   escalado. */
+.hero {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    outline-offset: -6px;
+}
+
+.heroBg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.heroEmpty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #FFFFFF;
+    background: linear-gradient(180deg, #D1BEDD 0%, #8C7FA6 34%, #3F5A6B 68%, #0C171B 100%);
+}
+
+.heroEmptyLabel {
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    opacity: 0.85;
+}
+
+/* blur enmascarado del remoto (.blur_cover) */
+.blurCover {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 40%, black 80%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 40%, black 80%);
+    pointer-events: none;
+}
+
+/* sombra multiplicada del remoto (.shadow) */
+.shadow {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
+    mix-blend-mode: multiply;
+    pointer-events: none;
+}
+
+/* ── Fila superior: chips de fondo (izq.) y color del tema (der.) ──
+   No son parte de la pieza: son el acceso a lo que no se puede tocar
+   directamente en el lienzo. Misma receta que el chip de canción del
+   Save the Date. */
+.topRow {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    z-index: 5;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 170px;
+    height: 32px;
+    padding: 0 12px 0 6px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(12, 23, 27, 0.42);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.chipIcon {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+/* Muestra el color del tema tal cual, sobre una base clara para que los
+   tintes translúcidos u oscuros se distingan del vidrio del chip */
+.chipSwatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.chipLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Scroller ── */
+.scrollArea {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* Hueco que deja ver el hero antes de la columna de info. Porcentaje sobre el
+   alto del scroller: funciona igual en la tarjeta de 700px y a pantalla
+   completa. */
+.heroGap {
+    flex: none;
+    height: 45%;
+    cursor: pointer;
+}
+
+/* ── Columna de info (.info_cont del remoto) ── */
+.infoCont {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 24px 20px;
+    box-sizing: border-box;
+    background-image: linear-gradient(to bottom, transparent, var(--blur-color));
+    /* misma curva y duración que la hoja inferior: suben como un solo gesto */
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ── Título ── */
+.titleZone {
+    width: 100%;
+    border-radius: 14px;
+    outline-offset: 0;
+}
+
+/* Texto editable, no input: crece solo con su contenido y se libra del
+   `font-size: 16px !important` que index.css le mete a todo input en móvil. */
+.titleInput {
+    width: 100%;
+    text-align: center;
+    color: #FFFFFF;
+    padding: 4px 0;
+    word-break: break-word;
+    text-shadow: 0 0 18px rgba(0, 0, 0, 0.35);
+    outline: none;
+    user-select: text;
+    cursor: text;
+}
+
+.titleInput:empty::before,
+.extrasInput:empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.5;
+    font-style: italic;
+}
+
+/* ── Fecha y lugar (.col del remoto) ── */
+.col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 4px 8px;
+    border-radius: 14px;
+    box-sizing: border-box;
+    text-align: center;
+    text-shadow: 0 0 16px rgba(0, 0, 0, 0.12);
+    color: #FFFFFF;
+    font-size: 16px;
+    font-family: Poppins, sans-serif;
+}
+
+.colMuted {
+    opacity: 0.55;
+    font-style: italic;
+    font-size: 14px;
+}
+
+/* ── Píldora de RSVP: maqueta, no se puede pulsar ── */
+.buttonsCont {
+    width: 100%;
+    max-width: 450px;
+    height: 58px;
+    border-radius: 999px;
+    background-color: var(--blur-color--dark);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid #FFFFFF40;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.mockBtn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 100%;
+    color: #FFFFFF;
+    font-size: 14px;
+    border-right: 1px solid #FFFFFF40;
+}
+
+.mockBtn:last-child {
+    border-right: none;
+}
+
+.mockBtn svg {
+    opacity: 0.5;
+}
+
+/* ── Tarjetas translúcidas (.mapa_container del remoto) ── */
+.block {
+    width: 100%;
+    max-width: 450px;
+    border-radius: 24px;
+    overflow: hidden;
+    background-color: var(--blur-color--dark);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #FFFFFF40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    box-sizing: border-box;
+    color: #FFFFFF;
+    outline-offset: -3px;
+}
+
+/* Notas del evento */
+.extrasInput {
+    width: 100%;
+    text-align: center;
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 14px;
+    padding: 0;
+    white-space: pre-line;
+    word-break: break-word;
+    mix-blend-mode: soft-light;
+    outline: none;
+    user-select: text;
+    cursor: text;
+}
+
+/* Mapa: marcador estático. Un iframe de Google dentro de un lienzo escalado
+   pesa y se come los clics de selección. */
+.mapBlock {
+    padding: 12px 0 0;
+    gap: 10px;
+}
+
+.mapLabel {
+    color: #FFFFFF90;
+    font-size: 16px;
+}
+
+.mapPreview {
+    position: relative;
+    width: 100%;
+    height: 112px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 26px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 26px);
+    border-top: 1px solid #FFFFFF25;
+    color: #FFFFFF;
+    font-size: 12.5px;
+    text-align: center;
+    padding: 0 18px;
+    box-sizing: border-box;
+}
+
+/* Clima: maqueta, no se llama a la API desde el editor */
+.weatherBlock {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+}
+
+.weatherLeft {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+}
+
+.weatherTitle {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.weatherHint {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+/* Franja de marca del pie */
+.footer {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 0 4px;
+    color: #FFFFFF;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+/* ── Solo lectura (la pieza se ve, no se edita) ── */
+.cardReadOnly,
+.cardReadOnly .titleInput,
+.cardReadOnly .extrasInput {
+    cursor: default;
+}

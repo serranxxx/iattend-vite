@@ -1,6 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
-   Editor del Save the Date: lienzo flotante al centro sobre un
+   Editor del side event: lienzo flotante al centro sobre un
    tablero, barra mínima arriba y herramientas flotando a la izq.
+
+   Espejo de SaveTheDatePage.module.css. La duplicación es
+   deliberada: se prefirió no tocar el editor del Save the Date en
+   este cambio. Cuando exista un tercer editor conviene extraer
+   estas clases a un módulo compartido.
    ═══════════════════════════════════════════════════════════════ */
 .pageContainer {
     position: relative;
@@ -18,8 +23,7 @@
 .topBar {
     position: sticky;
     top: 0;
-    /* arriba de las notificaciones: el popover de "¿Cuándo enviar?" vive
-       dentro de esta barra y no debe quedar tapado */
+    /* arriba de las notificaciones de Lia (1150) */
     z-index: 1200;
     display: flex;
     flex-direction: row;
@@ -104,19 +108,8 @@
     border-radius: 99px;
 }
 
-.tabs :global(.ant-segmented-item-icon) svg,
-.segmentedPill :global(.ant-segmented-item-icon) svg {
+.tabs :global(.ant-segmented-item-icon) svg {
     margin-top: 2px;
-}
-
-.segmentedPill,
-.segmentedPill :global(.ant-segmented-group) {
-    border-radius: 99px;
-}
-
-.segmentedPill :global(.ant-segmented-item),
-.segmentedPill :global(.ant-segmented-thumb) {
-    border-radius: 99px;
 }
 
 .actionsBar {
@@ -162,6 +155,24 @@
 
 .livePillOn .liveDot {
     background: #43B75D;
+}
+
+/* Punto rojo de "cambios sin guardar" sobre el botón Guardar */
+.saveWrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.saveDot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 99px;
+    background: #D32F2F;
+    border: 2px solid #EDEAE3;
+    pointer-events: none;
 }
 
 /* ── Riel de elementos ── */
@@ -256,7 +267,7 @@
     color: #29262D;
 }
 
-/* ── Escenario: tarjeta al centro y, en Respuestas, su columna a la derecha ── */
+/* ── Escenario: pieza al centro y, en Envío, la lista a la derecha ── */
 .stageRow {
     display: flex;
     flex-direction: row;
@@ -266,17 +277,13 @@
 }
 
 /* Hueco que abre y cierra la columna: al animar su ancho, la pieza se
-   recentra sola en vez de saltar. La separación va dentro (margin del
-   contenido) para que en cerrado no quede aire. */
-.answersSlot {
+   recentra sola en vez de saltar. El ancho lo pone el JS (inline) porque
+   depende del viewport y del escalado de la pieza. */
+.sendSlot {
     width: 0;
     flex-shrink: 0;
     overflow: hidden;
     transition: width 0.34s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.answersSlotIn {
-    width: 364px;
 }
 
 /* Mientras el tour está abierto, la columna entra sin animación: antd mide el
@@ -286,12 +293,10 @@
     transition: none !important;
 }
 
-/* Columna de reacciones + respuestas */
-.answersCol {
+/* Columna de invitados */
+.sendCol {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    width: 340px;
     margin-left: 24px;
     flex-shrink: 0;
     opacity: 0;
@@ -299,25 +304,26 @@
     transition: opacity 0.26s ease 0.06s, transform 0.28s ease 0.06s;
 }
 
-.answersColIn {
+.sendColIn {
     opacity: 1;
     transform: none;
 }
 
-/* El bloque de mensajes ocupa el resto del alto y su lista scrollea dentro */
-.answersCol > section:last-child {
+/* La lista ocupa el resto del alto y scrollea dentro */
+.sendBody {
     flex: 1;
     min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0 -4px;
+    padding: 0 4px;
 }
 
-.answersCol > section:last-child .blockBody {
-    flex: 1;
-    min-height: 0;
-}
-
-.answersCol .reactionsList {
-    max-height: none;
-    flex: 1;
+/* La escalera de pasos se queda arriba mientras la lista scrollea */
+.sendBody :global(.gx-steps) {
+    position: sticky;
+    top: 0;
+    z-index: 3;
 }
 
 /* ── Lienzo ── */
@@ -354,18 +360,6 @@
     text-transform: uppercase;
     color: #9A968E;
     text-align: center;
-}
-
-/* Contenedor de las pestañas que no son el lienzo */
-.tabWrap {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 8px 24px 48px;
-    box-sizing: border-box;
 }
 
 /* ═══════════════════════ Campos de los paneles ═══════════════════════ */
@@ -410,6 +404,43 @@
 .toggleLabel {
     font-size: 13px;
     color: #29262D;
+}
+
+/* Buscador de direcciones de Google (AddressAutocomplete) */
+.autocomplete {
+    width: 100%;
+    height: 32px !important;
+    border: 1px solid #D9D9D9;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.autocomplete::placeholder {
+    color: #BFBFBF;
+}
+
+.autocomplete:focus {
+    border-color: #16323d;
+}
+
+/* Dirección: dos columnas dentro del panel */
+.addressGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+/* La calle se lleva el renglón completo: los nombres son largos */
+.addressGrid > .fieldStack:first-child {
+    grid-column: 1 / -1;
+}
+
+.addressWide {
+    grid-column: 1 / -1;
 }
 
 /* Cabecera de panel / bloque */
@@ -458,7 +489,16 @@
     margin-left: auto;
 }
 
-/* ── Miniaturas de fondo ── */
+.countPill {
+    background: #F1F1F1;
+    border-radius: 99px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+/* ── Miniatura del fondo ── */
 .thumbRow {
     display: flex;
     flex-direction: row;
@@ -476,8 +516,7 @@
     flex-shrink: 0;
 }
 
-.thumb img,
-.thumb video {
+.thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -501,40 +540,7 @@
     opacity: 1;
 }
 
-.addTile {
-    width: 72px;
-    height: 96px;
-    border-radius: 12px;
-    border: 1px dashed #D9D9D9;
-    background: #FAFAFA;
-    color: #787878;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-}
-
-.addTile:hover {
-    border-color: #16323d;
-    color: #16323d;
-    background: #F5F3F2;
-}
-
-/* ── Color del CTA ── */
-.btnPreview {
-    margin-left: auto;
-    border-radius: 99px;
-    padding: 6px 14px;
-    color: #FFFFFF;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.6);
-}
-
+/* ── Tintes sugeridos del tema ── */
 .swatchRow {
     display: flex;
     flex-direction: row;
@@ -560,83 +566,15 @@
     box-shadow: 0 0 0 2px #16323d;
 }
 
-/* ── Selector de canción (mismo formato que el builder) ── */
-.songCard {
+/* El trigger de StorageImages entra en el hueco de una miniatura */
+.uploadTile {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
-    border: 1px solid #EBEBEB;
-    border-radius: 12px;
-    padding: 8px 12px;
-    box-sizing: border-box;
+    justify-content: center;
+    min-height: 96px;
 }
 
-.songArt {
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.songName {
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.songArtist {
-    font-size: 11px;
-    color: #888;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.songResults {
-    border: 1px solid #EBEBEB;
-    border-radius: 12px;
-    overflow: hidden;
-    width: 100%;
-}
-
-.songResult {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #EBEBEB;
-}
-
-.songResult:last-child {
-    border-bottom: none;
-}
-
-.songResult:hover {
-    background: #F5F3F2;
-}
-
-.songResultArt {
-    width: 36px;
-    height: 36px;
-    border-radius: 4px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-/* ═══════════════════ Respuestas y Compartir (bloques) ═══════════════════ */
-.blocks {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    gap: 16px;
-    width: 100%;
-}
-
+/* ── Bloque blanco (columna de Envío) ── */
 .block {
     background: #FFFFFF;
     border-radius: 24px;
@@ -646,199 +584,15 @@
     flex-direction: column;
     gap: 14px;
     min-width: 0;
-}
-
-.blockWide {
-    grid-column: 1 / -1;
-}
-
-.blockBody {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.reactionsCount {
-    background: #F1F1F1;
-    border-radius: 99px;
-    padding: 2px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #29262D;
-}
-
-.emojiSummary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.emojiCount {
-    background: #F5F3F2;
-    border-radius: 99px;
-    padding: 4px 10px;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.reactionsList {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 280px;
-    overflow-y: auto;
-}
-
-.reactionMsg {
-    background: #F5F3F2;
-    border-radius: 12px;
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 13px;
-    color: #29262D;
-}
-
-.reactionMeta {
-    font-size: 11px;
-    color: #787878;
-}
-
-/* Área de la lista de invitados (ancla del blur del CTA PRO) */
-.sendArea {
-    position: relative;
-    overflow: hidden;
-    border-radius: 16px;
-    min-height: 220px;
-}
-
-.proBlur {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    background: rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-radius: 16px;
-}
-
-.proCta {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    text-align: center;
-    padding: 24px;
+    /* el ancho lo fija el JS: el padding tiene que caber dentro del hueco */
     box-sizing: border-box;
-}
-
-.proCtaTitle {
-    font-weight: 700;
-    font-size: 18px;
-    color: #16323d;
-}
-
-.proCtaText {
-    font-size: 14px;
-    color: #29262D;
-    max-width: 380px;
-}
-
-/* ── Angosto ── */
-@media (max-width: 1080px) {
-    .blocks {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 1080px) {
-    .stageRow {
-        flex-wrap: wrap;
-    }
-
-    .answersSlotIn {
-        width: 100%;
-    }
-
-    .answersCol {
-        width: min(390px, 100%);
-        margin: 16px auto 0;
-        height: auto !important;
-    }
-}
-
-@media (max-width: 900px) {
-    .topBar {
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .topLeft,
-    .actionsBar {
-        flex: 1 1 auto;
-    }
-
-    .tabs {
-        order: 3;
-        flex-basis: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    /* El riel pasa a ser una barra flotante abajo */
-    .rail {
-        left: 50%;
-        top: auto;
-        bottom: 16px;
-        transform: translateX(-50%);
-        flex-direction: row;
-        border-radius: 22px;
-    }
-
-    .toolPanel {
-        left: 50%;
-        top: auto;
-        bottom: 74px;
-        transform: translateX(-50%);
-        width: min(320px, calc(100vw - 32px));
-        max-height: 50vh;
-        animation: none;
-    }
-
-    .canvasWrap {
-        padding-bottom: 96px;
-    }
-}
-
-/* Punto rojo de "cambios sin guardar" sobre el botón Guardar */
-.saveWrap {
-    position: relative;
-    display: inline-flex;
-}
-
-.saveDot {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 10px;
-    height: 10px;
-    border-radius: 99px;
-    background: #D32F2F;
-    border: 2px solid #EDEAE3;
-    pointer-events: none;
 }
 
 /* ═══════════════ Diálogo propio (sin Modal de antd) ═══════════════ */
 .modalBackdrop {
     position: fixed;
     inset: 0;
-    /* por encima del modal de cuenta (antd, 1000) y de las notificaciones
-       de Lia (1150) */
+    /* por encima de las notificaciones de Lia (1150) */
     z-index: 1250;
     display: flex;
     align-items: center;
@@ -925,9 +679,73 @@
     margin-right: auto;
 }
 
+/* ── Angosto ── */
+@media (max-width: 1080px) {
+    .stageRow {
+        flex-wrap: wrap;
+    }
+
+    .sendSlot {
+        width: 100% !important;
+    }
+
+    .sendCol {
+        width: 100%;
+        margin: 16px 0 0;
+        height: auto !important;
+    }
+
+    .sendBody {
+        overflow: visible;
+    }
+}
+
+@media (max-width: 900px) {
+    .topBar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .topLeft,
+    .actionsBar {
+        flex: 1 1 auto;
+    }
+
+    .tabs {
+        order: 3;
+        flex-basis: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* El riel pasa a ser una barra flotante abajo */
+    .rail {
+        left: 50%;
+        top: auto;
+        bottom: 16px;
+        transform: translateX(-50%);
+        flex-direction: row;
+        border-radius: 22px;
+    }
+
+    .toolPanel {
+        left: 50%;
+        top: auto;
+        bottom: 74px;
+        transform: translateX(-50%);
+        width: min(320px, calc(100vw - 32px));
+        max-height: 50vh;
+        animation: none;
+    }
+
+    .canvasWrap {
+        padding-bottom: 96px;
+    }
+}
+
 /* ═══════════════════════════════════════════════════════════════
-   Editor móvil: header y dock son superficies propias; la
-   invitación va enmarcada entre las dos.
+   Editor móvil: header y dock son superficies propias; la pieza
+   va enmarcada entre las dos.
    ═══════════════════════════════════════════════════════════════ */
 .mobileRoot {
     position: fixed;
@@ -938,7 +756,6 @@
     background: #14131A;
 }
 
-/* ── Header ── */
 .mobileHeader {
     flex: none;
     display: flex;
@@ -978,7 +795,7 @@
     color: #1B1A18;
 }
 
-/* Pestañas Crear / Respuestas */
+/* Pestañas Diseño / Envío */
 .hTabs {
     flex: 0 1 auto;
     min-width: 0;
@@ -988,15 +805,6 @@
     padding: 2px;
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.06);
-}
-
-/* Iconos y Guardar, pegados a la derecha */
-.hRight {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
 }
 
 .hTab {
@@ -1023,6 +831,15 @@
     color: #1B1A18;
 }
 
+/* Iconos y Guardar, pegados a la derecha */
+.hRight {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
 .hSave {
     height: 34px;
     padding: 0 11px;
@@ -1038,7 +855,7 @@
     cursor: pointer;
 }
 
-/* ── La invitación, enmarcada ── */
+/* ── La pieza, enmarcada ── */
 .mobileStage {
     position: relative;
     flex: 1;
@@ -1055,6 +872,20 @@
     height: 100%;
     border: none;
     display: block;
+}
+
+/* ── Envío en móvil: pantalla completa, con su propio scroll ── */
+.mobileSend {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    /* márgenes y padding apretados a propósito: las tarjetas `gx` traen
+       mucha información y necesitan todo el ancho del teléfono */
+    margin: 0 8px max(12px, env(safe-area-inset-bottom));
+    padding: 12px 10px;
+    box-sizing: border-box;
+    border-radius: 28px;
+    background: #F5F3F2;
 }
 
 /* ── Dock de herramientas ── */
@@ -1099,125 +930,4 @@
 /* La hoja (BottomSheet) ya trae su cabecera: el panel no repite el título */
 .editorSheet .blockHead {
     display: none;
-}
-
-/* ── Respuestas en móvil: encima de la pieza, dentro del marco ── */
-.mobileAnswers {
-    position: absolute;
-    inset: 0;
-    z-index: 8;
-    overflow-y: auto;
-    background: rgba(12, 23, 27, 0.55);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    padding: 14px;
-    box-sizing: border-box;
-}
-
-.mobileAnswers .answersCol {
-    width: 100%;
-    margin: 0;
-    height: auto !important;
-    opacity: 1;
-    transform: none;
-}
-
-/* ── Bienvenida de la versión gratis (/save-the-date) ── */
-.welcomeBadge {
-    align-self: flex-start;
-    padding: 4px 10px;
-    border-radius: 99px;
-    background: #D1BEDD;
-    color: #16323d;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.welcomeTitle {
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #29262D;
-    padding-right: 36px;
-}
-
-.welcomeList {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.welcomeList span {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    font-size: 13.5px;
-    color: #29262D;
-}
-
-.welcomeList svg {
-    flex-shrink: 0;
-    color: #16323d;
-}
-
-/* ── Elegir a qué evento se cuelga el Save the Date ── */
-.eventList {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 260px;
-    overflow-y: auto;
-    margin-top: 4px;
-}
-
-.eventRow {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    padding: 12px 14px;
-    border-radius: 16px;
-    border: 1px solid #EBEBEB;
-    background: #FFFFFF;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-}
-
-.eventRow:hover:not(:disabled) {
-    border-color: #16323d;
-    background: #F5F3F2;
-}
-
-.eventRow:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.eventName {
-    font-size: 14px;
-    font-weight: 600;
-    color: #29262D;
-}
-
-.eventMeta {
-    font-size: 12px;
-    color: #787878;
-}
-
-/* Falta la imagen del link: el tile lo pide con color de aviso */
-.addTileAlert {
-    border-color: #D32F2F;
-    color: #D32F2F;
-    background: #FFF5F5;
-}
-
-.addTileAlert:hover {
-    border-color: #D32F2F;
-    color: #D32F2F;
-    background: #FFECEC;
 }

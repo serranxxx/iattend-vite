@@ -32,6 +32,8 @@ import { LuShuffle } from 'react-icons/lu'
 import { RiDeleteBack2Line } from 'react-icons/ri'
 import { AlignEndHorizontal, AlignEndVertical, AlignHorizontalJustifyCenter, AlignStartHorizontal, AlignStartVertical, AlignVerticalJustifyCenter, ChevronDown, Circle, Crosshair, LayoutGrid, List, MoveHorizontal, MoveVertical, PartyPopper, Plus, RectangleHorizontal, Redo2, Square, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { TablesTour, TABLES_TOUR_STORAGE_KEY } from './TablesTour'
+import { DEMO_GUESTS, DEMO_TABLES } from './tourDemoData'
 
 const CANVAS_WIDTH = 3500
 const CANVAS_HEIGHT = 3500
@@ -146,6 +148,15 @@ export const TablesPage = ({ invitationID, onClose }) => {
     const [tables_, setTables_] = useState(null)
     const [confirmedGuests_, setconfirmedGuests_] = useState(null)
     const [filterByName, setFilterByName] = useState(null)
+    // Tour del mapa: se abre solo la primera vez que se entra SIN mesas, y
+    // mientras dura se pinta un salón de ejemplo (no hay nada que señalar en
+    // un tablero vacío). `demoActive` también bloquea las escrituras.
+    const [tourOpen, setTourOpen] = useState(false)
+    const [demoActive, setDemoActive] = useState(false)
+    // Espejo en ref: los handlers async (guardar posiciones, parchar mesa)
+    // corren con la clausura del render en el que empezaron.
+    const demoActiveRef = useRef(false)
+    demoActiveRef.current = demoActive
     const zoomStep = 0.01;
     const minZoom = 0.2;
     const maxZoom = 1.8;
@@ -879,6 +890,8 @@ export const TablesPage = ({ invitationID, onClose }) => {
     // existen.
     const applyPositions = async (updates) => {
         if (!updates.length) return true
+        // El salón del tour no se guarda: sus ids no existen en la BD.
+        if (demoActiveRef.current) return true
 
         // Primero el estado local, después la escritura. El refetch remontaba
         // las mesas (van con key por índice y Supabase no garantiza el orden),
@@ -935,6 +948,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
     /* ── Acciones del panel de mesa (§5.4) ─────────────────────────────── */
 
     const patchTable = async (tableId, patch) => {
+        if (demoActiveRef.current) return true
         const { error } = await supabase
             .from('tables')
             .update({ ...patch, last_update_at: new Date() })
@@ -1544,6 +1558,57 @@ export const TablesPage = ({ invitationID, onClose }) => {
         requestCenter(focus.x, focus.y, CENTER_ZOOM)
     }
 
+    /* ── Tour del mapa ────────────────────────────────────────────────── */
+
+    const realTableCount = (tables_ ?? []).filter(t => t.shape !== 'dance').length
+
+    // Solo escritorio: en móvil el mapa vive en un carrusel y la máscara de
+    // antd no alcanza a medir los anclajes.
+    const tourAvailable = !isMobile
+
+    const openTour = () => {
+        if (!tourAvailable) return
+        // Sin mesas propias se monta el salón de ejemplo: si no, el tour
+        // señalaría un tablero vacío (o el onboarding).
+        if (realTableCount === 0) {
+            setTables_(DEMO_TABLES)
+            setconfirmedGuests_(DEMO_GUESTS)
+            setDemoActive(true)
+            setLeftView('map')
+            setSelectedTable(null)
+            setOnViewTable(false)
+            requestCenter(WORK_CANVAS_SIZE / 2, WORK_CANVAS_SIZE / 2, CENTER_ZOOM)
+        }
+        setTourOpen(true)
+    }
+
+    const closeTour = () => {
+        localStorage.setItem(TABLES_TOUR_STORAGE_KEY, '1')
+        setTourOpen(false)
+        if (!demoActive) return
+        // Se recarga lo real en vez de restaurar una copia: así el estado
+        // queda como si el demo nunca hubiera existido.
+        setDemoActive(false)
+        setSelectedTable(null)
+        setOnViewTable(false)
+        getTables()
+        getGuests()
+    }
+
+    // Primera vez en el mapa y sin mesas: el tour se abre solo. La espera deja
+    // que el panel esté pintado cuando el primer paso resuelva su anclaje.
+    useEffect(() => {
+        if (tables_ === null || !tourAvailable) return
+        if (localStorage.getItem(TABLES_TOUR_STORAGE_KEY)) return
+        if (realTableCount > 0) return
+        // 1s y no menos: TablesPage vive dentro de un Drawer que entra
+        // animado, y el primer paso ancla al mapa — si se abre antes, antd
+        // calcula la posición con el drawer todavía a medio camino.
+        const timer = setTimeout(() => openTour(), 1000)
+        return () => clearTimeout(timer)
+        // tables_ pasa de null a array una sola vez por montaje
+    }, [tables_, tourAvailable])
+
     return (
         <div className="table-organization-main-container">
             {/* El título, el CTA y la franja de avance cruzan todo el drawer:
@@ -1577,6 +1642,18 @@ export const TablesPage = ({ invitationID, onClose }) => {
                             onClick={() => setOnGuestList(!onGuestList)} className={`button-web primarybutton--${onGuestList ? 'black' : 'active'}`}>
                         </Button>
 
+                        {tourAvailable && (
+                            <Tooltip title={t('tables_tour.replay')}>
+                                <Button
+                                    data-tour="tables-replay"
+                                    aria-label={t('tables_tour.replay')}
+                                    icon={<IoMdHelp size={16} style={{ marginTop: '3px' }} />}
+                                    style={{ borderRadius: '99px' }}
+                                    className='primarybutton'
+                                    onClick={openTour} />
+                            </Tooltip>
+                        )}
+
                         <Dropdown
                             trigger={['click']}
                             placement='bottomRight'
@@ -1592,6 +1669,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
                             )}
                         >
                             <Button
+                                data-tour="add-table"
                                 icon={<Plus size={isMobile ? 20 : 16} style={{ marginTop: '3px' }} />}
                                 className={`${chrome.addButton} ${isMobile ? chrome.addButtonRound : ''}`}
                                 aria-disabled={showOnboarding}
@@ -1605,6 +1683,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
                 </div>
 
                 {!showOnboarding && (
+                    <div data-tour="progress-strip">
                     <ProgressStrip
                         seated={seatingStats.seated}
                         totalConfirmed={seatingStats.totalConfirmed}
@@ -1613,6 +1692,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
                         tableCount={seatingStats.tableCount}
                         onReview={() => setLeftView('list')}
                     />
+                    </div>
                 )}
             </div>
 
@@ -1622,7 +1702,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
                         El mapa contesta "¿cómo se ve mi salón?", la lista "¿quién está dónde". */}
                     {!showOnboarding && (
                     <div className={chrome.switchRow}>
-                        <div className='view-switch'>
+                        <div className='view-switch' data-tour="view-switch">
                             <button
                                 type='button'
                                 className={`view-switch-option ${leftView === 'map' ? 'view-switch-active' : ''}`}
@@ -1659,6 +1739,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
 
                                     <Tooltip title='Reacomoda todas las mesas con uno de los tres arreglos'>
                                         <Button
+                                            data-tour="auto-layout"
                                             icon={<LayoutGrid size={15} style={{ marginTop: '3px' }} />}
                                             style={{ borderRadius: '99px' }}
                                             className='primarybutton'
@@ -1669,6 +1750,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
 
                                     <Tooltip title='Vuelve al centro del mapa con el zoom original'>
                                         <Button
+                                            data-tour="center-map"
                                             icon={<Crosshair size={15} style={{ marginTop: '3px' }} />}
                                             style={{ borderRadius: '99px' }}
                                             className='primarybutton'
@@ -1741,6 +1823,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
                         onMouseDown={startDrag}
                         onTouchStart={startDrag}
                         ref={mapContainerRef}
+                        data-tour="seating-map"
                         style={{ cursor: isDragging ? 'grabbing' : onGrab ? 'grab' : undefined }}
                         className={`org-map-container ${onMoving ? 'org-map-rule' : ''}`}>
                         <div
@@ -1880,7 +1963,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
 
                             {/* Deshacer y rehacer viven en el plano, junto al zoom
                                 y la mano: son herramientas del lienzo. */}
-                            <div className='map-tool-group'>
+                            <div className='map-tool-group' data-tour="map-tools">
                                 <Tooltip title={history.canUndo ? 'Deshacer' : 'Nada que deshacer'} placement='left'>
                                     <Button
                                         className='full-screen-button'
@@ -2056,9 +2139,12 @@ export const TablesPage = ({ invitationID, onClose }) => {
                     )}
                 </div>
 
-                <div className={`table-list-container ${mobileList ? 'table-mobile-list-active' : ''}`} style={{
-                    width: !onGuestList && '10px', paddingBottom: 0
-                }}>
+                <div
+                    className={`table-list-container ${mobileList ? 'table-mobile-list-active' : ''}`}
+                    data-tour="guest-panel"
+                    style={{
+                        width: !onGuestList && '10px', paddingBottom: 0
+                    }}>
                     <Button
                         onClick={() => setMobileList(!mobileList)}
                         icon={<FaList size={16} />}
@@ -2199,6 +2285,8 @@ export const TablesPage = ({ invitationID, onClose }) => {
                 </div>
             </Drawer>
         )}
+
+            <TablesTour open={tourOpen && tourAvailable} onClose={closeTour} demo={demoActive} />
 
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { load } from '../../helpers/assets/images'
 import { Button, ColorPicker, DatePicker, Dropdown, Input, Segmented, Select, Slider, Switch, Tooltip, message } from 'antd'
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronLeft, ChevronRight, Eye, Film, Heart, ImagePlus, Link2, MessageCircle, MousePointerClick, Music, Plus, Search, Send, Trash2, Type, Upload, Video, X } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Eye, Film, Heart, ImagePlus, Link2, MessageCircle, MousePointerClick, Music, Plus, Search, Send, Trash2, Type, Upload, Video, X } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -18,6 +19,7 @@ import SaveTheDateHost from '../../components/Host/SaveTheDateHost'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import WhenToSend from '../../components/WhenToSend/WhenToSend'
 import StdCanvas from './StdCanvas'
+import { SaveTheDateTour, STD_TOUR_STORAGE_KEY } from './SaveTheDateTour'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { AuthModal } from '../../pages/PreviewMood/AuthModal'
 // El AuthModal es el de /preview: sus clases viven en esa hoja de estilos
@@ -25,7 +27,6 @@ import '../../pages/PreviewMood/preview-mood.css'
 import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
-import { load } from '../../helpers/assets/images'
 import styles from './SaveTheDatePage.module.css'
 import '../GuestManagement/guests-redesign.css'
 
@@ -137,9 +138,32 @@ export const SaveTheDatePage = ({ demo = false }) => {
 
     const [welcomeIn, setWelcomeIn] = useState(false)
 
+    // Tour del editor: se abre solo la primera vez y se relanza desde el "?".
+    // En la versión gratis no se abre solo: ahí ya hay un modal de bienvenida
+    // y dos capas encimadas no ayudan a nadie.
+    const [tourOpen, setTourOpen] = useState(false)
+
     const closeWelcome = () => {
         setWelcomeIn(false)
         setTimeout(() => setWelcomeOpen(false), 220)
+    }
+
+    // El tour explica el lienzo editable, así que apaga "ver en vivo": con el
+    // remoto montado no habría zonas que señalar.
+    const openTour = () => {
+        if (isMobile) return
+        setLive(false)
+        setSection(null)
+        setTourOpen(true)
+    }
+
+    const closeTour = () => {
+        localStorage.setItem(STD_TOUR_STORAGE_KEY, '1')
+        setTourOpen(false)
+        // El tour termina en Respuestas; se regresa a Crear, que es la vista
+        // de entrada del editor.
+        setActiveTab('edicion')
+        setSection(null)
     }
 
     // Con la cuenta lista: se resuelve a qué evento va la pieza. Cuenta nueva
@@ -504,6 +528,16 @@ export const SaveTheDatePage = ({ demo = false }) => {
         mq.addEventListener('change', onChange)
         return () => mq.removeEventListener('change', onChange)
     }, [])
+
+    // Primera vez en el editor: el tour se abre solo. La espera deja que la
+    // pieza esté pintada cuando el primer paso resuelva su anclaje.
+    useEffect(() => {
+        // Solo escritorio: ver la nota de `tourAvailable` en SideEvents.jsx
+        if (demo || !std?.id || isMobile) return
+        if (localStorage.getItem(STD_TOUR_STORAGE_KEY)) return
+        const timer = setTimeout(() => openTour(), 800)
+        return () => clearTimeout(timer)
+    }, [demo, std?.id, isMobile])
 
     // La hoja se queda montada mientras baja, para que la salida se vea
     const [sheetSection, setSheetSection] = useState(null)
@@ -1727,7 +1761,8 @@ export const SaveTheDatePage = ({ demo = false }) => {
     const reactionsContent = (
         // la columna iguala el alto de la pieza: el historial crece con ella
         <div
-            className={`${styles.answersCol} ${answersIn ? styles.answersColIn : ''}`}
+            className={`${styles.answersCol} ${answersIn || tourOpen ? styles.answersColIn : ''} ${tourOpen ? styles.noAnim : ''}`}
+            data-tour="std-answers"
             style={{ height: DEVICE_H * deviceScale }}
         >
 
@@ -1785,7 +1820,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
     const showLivePiece = live || activeTab === 'reacciones'
 
     const canvasBlock = (
-        <div className={styles.canvasWrap}>
+        <div className={styles.canvasWrap} data-tour="std-canvas">
             {showLivePiece ? (
                 <div
                     key='live'
@@ -1852,6 +1887,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                     <Tooltip key={s.key} title={s.label} placement='right'>
                         <button
                             className={`${styles.railBtn} ${section === s.key ? styles.railBtnActive : ''}`}
+                            data-tour={`std-tool-${s.key}`}
                             onClick={() => setSection(section === s.key ? null : s.key)}
                             aria-label={s.label}
                             aria-pressed={section === s.key}
@@ -2110,7 +2146,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                         <X size={17} />
                     </button>
 
-                    <div className={styles.hTabs}>
+                    <div className={styles.hTabs} data-tour="std-tabs">
                         <button
                             className={`${styles.hTab} ${activeTab === 'edicion' ? styles.hTabOn : ''}`}
                             onClick={() => setActiveTab('edicion')}
@@ -2131,6 +2167,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                         {activeTab === 'edicion' &&
                             <button
                                 className={`${styles.hBtn} ${live ? styles.hBtnOn : ''}`}
+                                data-tour="std-live"
                                 onClick={() => { setLive((v) => !v); setSection(null) }}
                                 aria-label={t('savethedate.live')}
                                 aria-pressed={live}
@@ -2139,13 +2176,15 @@ export const SaveTheDatePage = ({ demo = false }) => {
                             </button>
                         }
 
-                        <WhenToSend compact className={styles.hBtn} />
+                        <span data-tour="std-when" style={{ display: 'inline-flex' }}>
+                            <WhenToSend compact className={styles.hBtn} />
+                        </span>
 
-                        <button className={styles.hBtn} onClick={handleCopyLink} aria-label={t('savethedate.copy_link')}>
+                        <button className={styles.hBtn} data-tour="std-link" onClick={handleCopyLink} aria-label={t('savethedate.copy_link')}>
                             <Link2 size={17} />
                         </button>
 
-                        <span className={styles.saveWrap}>
+                        <span className={styles.saveWrap} data-tour="std-save">
                             <button
                                 className={styles.hSave}
                                 onClick={() => { if (demo || dirty) handleSave() }}
@@ -2160,7 +2199,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 </div>
 
                 {/* La invitación, enmarcada */}
-                <div ref={stageRef} className={styles.mobileStage}>
+                <div ref={stageRef} className={styles.mobileStage} data-tour="std-canvas">
                     {live || activeTab !== 'edicion'
                         ? <SaveTheDateHost config={previewConfig} />
                         : (
@@ -2179,7 +2218,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
 
                     {/* Respuestas: encima de la pieza, difuminándola */}
                     {activeTab === 'reacciones' &&
-                        <div className={`${styles.mobileAnswers} scroll-invitation`}>{reactionsContent}</div>
+                        <div className={`${styles.mobileAnswers} scroll-invitation`} data-tour="std-answers">{reactionsContent}</div>
                     }
                 </div>
 
@@ -2190,6 +2229,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                             <button
                                 key={sec.key}
                                 className={`${styles.dockBtn} ${section === sec.key ? styles.dockBtnOn : ''}`}
+                                data-tour={`std-tool-${sec.key}`}
                                 onClick={() => setSection(section === sec.key ? null : sec.key)}
                                 aria-pressed={section === sec.key}
                             >
@@ -2216,6 +2256,15 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 {posterDialog}
                 {demoModals}
 
+                <SaveTheDateTour
+                    open={tourOpen && !isMobile}
+                    onClose={closeTour}
+                    demo={demo}
+                    isMobile={isMobile}
+                    setActiveTab={setActiveTab}
+                    setSection={setSection}
+                />
+
                 {!demo && <GuestsCRUD
                     rowData={rawData}
                     invitationID={id}
@@ -2241,10 +2290,21 @@ export const SaveTheDatePage = ({ demo = false }) => {
                     <span className={styles.crumb}>
                         Save the Date · <strong>{cover?.title?.text?.value || t('savethedate.untitled')}</strong>
                     </span>
+                    <Tooltip title={t('std_tour.replay')}>
+                        <button
+                            className={styles.helpBtn}
+                            data-tour="std-replay"
+                            aria-label={t('std_tour.replay')}
+                            onClick={openTour}
+                        >
+                            <CircleHelp size={16} />
+                        </button>
+                    </Tooltip>
                 </div>
 
                 <Segmented
                     className={styles.tabs}
+                    data-tour="std-tabs"
                     value={activeTab}
                     onChange={setActiveTab}
                     // 'envio' queda oculto de momento: la vista existe pero
@@ -2259,11 +2319,14 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 />
 
                 <div className={styles.actionsBar}>
-                    <WhenToSend />
+                    <span data-tour="std-when">
+                        <WhenToSend />
+                    </span>
 
                     {activeTab === 'edicion' &&
                         <button
                             className={`${styles.livePill} ${live ? styles.livePillOn : ''}`}
+                            data-tour="std-live"
                             onClick={() => setLive((v) => !v)}
                             aria-pressed={live}
                         >
@@ -2271,10 +2334,10 @@ export const SaveTheDatePage = ({ demo = false }) => {
                             {t('savethedate.live')}
                         </button>
                     }
-                    <Button icon={<Link2 size={16} style={{ marginTop: 2 }} />} style={{ borderRadius: '99px' }} onClick={handleCopyLink}>
+                    <Button data-tour="std-link" icon={<Link2 size={16} style={{ marginTop: 2 }} />} style={{ borderRadius: '99px' }} onClick={handleCopyLink}>
                         {t('savethedate.copy_link')}
                     </Button>
-                    <span className={styles.saveWrap}>
+                    <span className={styles.saveWrap} data-tour="std-save">
                         <Button
                             className='primarybutton--active'
                             loading={saving}
@@ -2296,8 +2359,8 @@ export const SaveTheDatePage = ({ demo = false }) => {
 
                     <div className={styles.stageRow}>
                         {canvasBlock}
-                        <div className={`${styles.answersSlot} ${answersIn ? styles.answersSlotIn : ''}`}>
-                            {answersMounted && reactionsContent}
+                        <div className={`${styles.answersSlot} ${answersIn || tourOpen ? styles.answersSlotIn : ''} ${tourOpen ? styles.noAnim : ''}`}>
+                            {(answersMounted || tourOpen) && reactionsContent}
                         </div>
                     </div>
                 </>
@@ -2310,6 +2373,15 @@ export const SaveTheDatePage = ({ demo = false }) => {
             {leaveDialog}
             {posterDialog}
             {demoModals}
+
+            <SaveTheDateTour
+                open={tourOpen}
+                onClose={closeTour}
+                demo={demo}
+                isMobile={isMobile}
+                setActiveTab={setActiveTab}
+                setSection={setSection}
+            />
 
             {!demo && <GuestsCRUD
                 rowData={rawData}

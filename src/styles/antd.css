@@ -42,3 +42,11 @@
   top: 18px;
   inset-inline-end: 18px;
 }
+
+/* El tour del editor de side events (rootClassName="se-tour") comparte la
+   pantalla con la pieza centrada: el panel por defecto (~508px) no cabe a
+   ningún costado y antd lo acaba recortando contra el borde de la ventana. */
+.se-tour.ant-tour,
+.se-tour .ant-tour-panel {
+  max-width: 360px;
+}

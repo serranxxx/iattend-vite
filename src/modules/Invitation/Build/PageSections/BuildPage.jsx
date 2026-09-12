@@ -304,6 +304,10 @@ export const BuildPage = () => {
     // entra a construir y se puede relanzar desde el "?" de la columna de
     // herramientas.
     const [tourOpen, setTourOpen] = useState(false)
+    // Solo escritorio: en móvil la máscara de antd mide anclajes que viven en
+    // drawers y hojas, y la columna de herramientas —donde está el "?"— no se
+    // pinta. Ver docs/rediseno-editor-side-events.md.
+    const [tourAvailable, setTourAvailable] = useState(() => !window.matchMedia('(max-width: 750px)').matches)
     // Candado del sync de secciones del preview (ver closeTour). Se levanta en
     // cuanto el usuario vuelve a tocar el teléfono o elige un módulo.
     const previewSyncLocked = useRef(false)
@@ -561,7 +565,14 @@ export const BuildPage = () => {
     // herramientas. "Primera vez" = nunca se ha publicado, o sea que no tiene
     // ninguna fila en invitation_versions (las escribe el RPC publish_invitation).
     useEffect(() => {
-        if (!copy || !id) return
+        const mq = window.matchMedia('(max-width: 750px)')
+        const sync = () => setTourAvailable(!mq.matches)
+        mq.addEventListener('change', sync)
+        return () => mq.removeEventListener('change', sync)
+    }, [])
+
+    useEffect(() => {
+        if (!copy || !id || !tourAvailable) return
         if (localStorage.getItem(BUILD_TOUR_STORAGE_KEY)) return
 
         let cancelled = false
@@ -586,7 +597,7 @@ export const BuildPage = () => {
             cancelled = true
             if (timer) clearTimeout(timer)
         }
-    }, [copy, id])
+    }, [copy, id, tourAvailable])
 
     const closeTour = () => {
         localStorage.setItem(BUILD_TOUR_STORAGE_KEY, '1')
@@ -959,7 +970,7 @@ export const BuildPage = () => {
                                 languages={copy?.generals?.languages ?? []} disabledLanguages={copy?.generals?.disabledLanguages ?? []} activeLang={activeLang} onActiveLangChange={setActiveLang}
                                 onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating}
                                 onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0}
-                                onReplayTour={() => setTourOpen(true)} tourOpen={tourOpen} />
+                                onReplayTour={tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen} />
                             </div>
 
                         </div>
@@ -969,7 +980,7 @@ export const BuildPage = () => {
 
                         {/* Tour del editor: recorre la barra de módulos explicando
                             qué vive en cada uno (Generales, Portada, Bienvenida...). */}
-                        <BuildTour open={tourOpen} onClose={closeTour} onSelectSection={selectSection} />
+                        <BuildTour open={tourOpen && tourAvailable} onClose={closeTour} onSelectSection={selectSection} />
                     </Layout >
                     : <div className='build-loading-container'>
                         <img alt='' src={load} style={{
