@@ -192,7 +192,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                 className='primarybutton'
                 onClick={() => handleUploadClick(fileInputRef)}
             >
-                {isVideoPicker ? t('storage.btn_upload_video') : t('storage.btn_upload')}
+                {t('storage.btn_upload')}
             </Button>
         </>
     )
@@ -240,7 +240,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         open={drawerOpen}
                         onClose={() => setDrawerOpen(false)}
                         maxHeight='92%'
-                        title={isVideoPicker ? t('storage.title_files') : t('storage.drawer_title')}
+                        title={t('storage.title')}
                         extra={!hideUpload &&
                             <>
                                 <input ref={mobileFileInputRef} type='file' accept={isVideoPicker ? 'video/*' : 'image/*'} style={{ display: 'none' }} onChange={handleFileChange} />
@@ -251,7 +251,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                                     style={{ borderRadius: '99px' }}
                                     onClick={() => handleUploadClick(mobileFileInputRef)}
                                 >
-                                    {isVideoPicker ? t('storage.btn_upload_video') : t('storage.btn_upload')}
+                                    {t('storage.btn_upload')}
                                 </Button>
                             </>
                         }
@@ -267,7 +267,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                     popupRender={() => (
                         <div className='images_storage_cont'>
                             <div className='storage_row'>
-                                <span style={{ fontSize: '16px' }}>{isVideoPicker ? t('storage.title_files') : t('storage.dropdown_title')}</span>
+                                <span style={{ fontSize: '16px' }}>{t('storage.title')}</span>
                             </div>
                             {tabsContent}
                         </div>

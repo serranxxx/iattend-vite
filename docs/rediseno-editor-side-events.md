@@ -239,6 +239,18 @@ con antd, que ahí va bien.
   timezone posible.
 - Los inputs nativos van a **16px**: por debajo, iOS hace zoom al enfocar.
 
+## El picker de imágenes es el mismo de toda la app
+
+`StorageImages` lo comparten el builder, los side events, el Save the Date y los links. Por eso su
+header se arregló una sola vez y para todos: **sin icono, "Almacenamiento" y "Subir"** —el anterior
+("Almacenamiento de archivos" / "Subir imagen") partía en dos líneas y recortaba el botón en 400px.
+Las tres claves de título y las dos del CTA se colapsaron en `storage.title` y `storage.btn_upload`;
+lo que distingue el tipo es la pestaña ("Mis imágenes" / "Mis videos"). Side events solo usa
+imágenes, así que el arreglo de los tiles de video en iOS (ver `save-the-date.md`) no le aplica.
+
+Ojo al borrar claves de i18n por nombre: `drawer_title` existía también en `new_inv` y un borrado
+por nombre se la llevó. Hay que acotar por namespace.
+
 ## Los tours son solo de escritorio
 
 Los cinco tours (`SideEventsTour`, `GuestsTour`, `TablesTour`, `SaveTheDateTour` y `BuildTour`) se

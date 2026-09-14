@@ -231,7 +231,6 @@
     "status_paused": "En pausa"
   },
   "new_inv": {
-    "drawer_title": "Configura tu evento",
     "btn_create": "Crear evento",
     "btn_prev": "Anterior",
     "btn_next": "Siguiente",
@@ -254,7 +253,8 @@
     "plan_payment": "MXN · pago único",
     "plan_popular": "Más popular",
     "collapse": "Ocultar",
-    "expand": "Ver detalles"
+    "expand": "Ver detalles",
+    "drawer_title": "Configura tu evento"
   },
   "user_popup": {
     "logout": "Cerrar sesión",
@@ -1397,12 +1397,9 @@
     "tab_ideas": "Ideas",
     "empty": "No tienes imágenes",
     "btn_delete": "Eliminar",
-    "btn_upload": "Subir imagen",
-    "drawer_title": "Imágenes",
-    "dropdown_title": "Almacenamiento de imágenes",
-    "tab_my_videos": "Mis videos",
-    "btn_upload_video": "Subir",
-    "title_files": "Almacenamiento"
+    "title": "Almacenamiento",
+    "btn_upload": "Subir",
+    "tab_my_videos": "Mis videos"
   },
   "dashboard_header": {
     "help": "Ayuda",

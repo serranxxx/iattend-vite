@@ -231,7 +231,6 @@
     "status_paused": "Paused"
   },
   "new_inv": {
-    "drawer_title": "Set up your event",
     "btn_create": "Create event",
     "btn_prev": "Previous",
     "btn_next": "Next",
@@ -254,7 +253,8 @@
     "plan_payment": "MXN · one-time payment",
     "plan_popular": "Most popular",
     "collapse": "Hide",
-    "expand": "See details"
+    "expand": "See details",
+    "drawer_title": "Set up your event"
   },
   "user_popup": {
     "logout": "Log out",
@@ -1397,12 +1397,9 @@
     "tab_ideas": "Ideas",
     "empty": "You have no images",
     "btn_delete": "Delete",
-    "btn_upload": "Upload image",
-    "drawer_title": "Images",
-    "dropdown_title": "Image storage",
-    "tab_my_videos": "My videos",
-    "btn_upload_video": "Upload",
-    "title_files": "Storage"
+    "title": "Storage",
+    "btn_upload": "Upload",
+    "tab_my_videos": "My videos"
   },
   "dashboard_header": {
     "help": "Help",
