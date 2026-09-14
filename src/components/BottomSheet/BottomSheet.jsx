@@ -30,6 +30,7 @@ export const BottomSheet = ({
 }) => {
 
     const sheetRef = useRef(null)
+    const bodyRef = useRef(null)
     const dragStartRef = useRef(null)
     const [dragY, setDragY] = useState(0)
     const [dragging, setDragging] = useState(false)
@@ -44,6 +45,12 @@ export const BottomSheet = ({
     useEffect(() => {
         if (!open) { setDragY(0); setDragging(false); dragStartRef.current = null }
     }, [open])
+
+    // Cada panel arranca desde arriba. La hoja se queda montada y solo cambia
+    // de contenido, así que el scroll del panel anterior se heredaba.
+    useEffect(() => {
+        if (open && bodyRef.current) bodyRef.current.scrollTop = 0
+    }, [open, title])
 
     // Reporta su alto (quien la use puede subir el contenido de atrás)
     useEffect(() => {
@@ -119,7 +126,7 @@ export const BottomSheet = ({
                 </div>
             </div>
 
-            <div className={`${styles.body} ${bodyClass} scroll-invitation`}>
+            <div ref={bodyRef} className={`${styles.body} ${bodyClass} scroll-invitation`}>
                 {children}
             </div>
         </div>,

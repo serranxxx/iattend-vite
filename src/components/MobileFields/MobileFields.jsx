@@ -18,11 +18,14 @@ export const FontPicker = ({ fonts, value, onChange }) => {
     const { t } = useTranslation()
     const listRef = useRef(null)
 
-    // La elegida entra a la vista al montar, sin animación: es el punto de
-    // partida, no un cambio.
+    // La elegida entra a la vista al montar. A mano y no con `scrollIntoView`:
+    // ese desplaza TODOS los ancestros con scroll —la hoja entera incluida— y
+    // dejaba el campo de fecha, que va arriba, a medio esconder.
     useEffect(() => {
-        const on = listRef.current?.querySelector('[data-on="true"]')
-        on?.scrollIntoView({ block: 'center' })
+        const list = listRef.current
+        const on = list?.querySelector('[data-on="true"]')
+        if (!list || !on) return
+        list.scrollTop = on.offsetTop - (list.clientHeight - on.offsetHeight) / 2
     }, [])
 
     return (
