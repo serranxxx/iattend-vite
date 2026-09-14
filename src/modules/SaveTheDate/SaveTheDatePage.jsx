@@ -12,7 +12,7 @@ import { supabase } from '../../lib/supabase'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { formatAbsoluteDateEs } from '../../helpers/assets/eventDateTime'
 import { searchSpotifyTracks } from '../../helpers/services/spotify'
-import { adoptDraftInto, createFreeInvitation, getTempFolder, listAdoptionTargets, readDraft, saveDraft, sweepTempStorage } from '../../helpers/services/saveTheDateDraft'
+import { adoptDraftInto, consumePendingSave, createFreeInvitation, getTempFolder, listAdoptionTargets, markPendingSave, readDraft, saveDraft, sweepTempStorage } from '../../helpers/services/saveTheDateDraft'
 import { uploadSongAudio } from '../../helpers/services/uploadAudio'
 import { fonts } from '../../helpers/assets/fonts'
 import SaveTheDateHost from '../../components/Host/SaveTheDateHost'
@@ -470,6 +470,9 @@ export const SaveTheDatePage = ({ demo = false }) => {
         }
         setPosterAsk(false)
         if (demo) {
+            // Si el login es con redirect (Google/Apple), esta bandera es lo
+            // que le dice a la vuelta que sí hay que terminar el guardado.
+            markPendingSave()
             askForAccount('savethedate')
             return false
         }
@@ -557,12 +560,16 @@ export const SaveTheDatePage = ({ demo = false }) => {
 
     // Vuelta del login con Google/Apple: la sesión ya existe y el borrador
     // sigue en localStorage, así que se termina el trabajo sin pedir nada más.
+    // Solo si el guardado se INICIÓ (bandera): el borrador existe siempre por
+    // el autoguardado, y con sesión + borrador bastaba para que a cualquiera
+    // que entrara ya logueado le saliera "creando tu Save the Date" al abrir.
     useEffect(() => {
         if (!demo) return
         let cancelled = false
         supabase.auth.getSession().then(({ data }) => {
             const draft = readDraft()
-            if (cancelled || !data?.session || !draft?.cover) return
+            const resume = consumePendingSave()
+            if (cancelled || !resume || !data?.session || !draft?.cover) return
             adoptAndGo(draft)
         })
         return () => { cancelled = true }
@@ -2051,8 +2058,8 @@ export const SaveTheDatePage = ({ demo = false }) => {
                 open={authOpen}
                 context={authContext}
                 redirectTo='/save-the-date'
-                onClose={() => setAuthOpen(false)}
-                onSuccess={() => { setAuthOpen(false); adoptAndGo({ cover, eventDate }) }}
+                onClose={() => { consumePendingSave(); setAuthOpen(false) }}
+                onSuccess={() => { consumePendingSave(); setAuthOpen(false); adoptAndGo({ cover, eventDate }) }}
             />
 
 

@@ -199,6 +199,16 @@ va con `alpha` (deslizador de opacidad → `rgba`). El porqué completo está en
 - Header compacto: sin icono, "Almacenamiento" y "Subir". El anterior partía en dos líneas y
   recortaba el botón en 400px.
 
+## El guardado en `/save-the-date` solo arranca al pulsar Guardar
+
+Con sesión iniciada, abrir la ruta pública disparaba de entrada "creando tu Save the Date" y luego el
+selector de evento. La causa: el efecto que reanuda el guardado tras un login con redirect solo
+comprobaba **sesión + borrador**, y el borrador existe siempre porque el autoguardado lo escribe con
+cada cambio. Ahora hace falta además la bandera `iattend_std_pending_save`, que `handleSave`
+enciende justo antes de mandar al login y que el efecto **consume** (lee y borra) al volver. Cerrar el
+modal de cuenta sin loguearse la apaga; el login sin redirect (email) la consume y sigue directo con
+`adoptAndGo`, como ya hacía.
+
 ## Gotchas nuevos
 
 - **El preview del editor apunta a prod por default**: hasta que

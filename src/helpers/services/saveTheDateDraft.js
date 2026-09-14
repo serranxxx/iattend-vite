@@ -14,6 +14,11 @@ import { supabase } from '../../lib/supabase'
 const BUCKET = 'user_images'
 const DRAFT_KEY = 'iattend_std_draft'
 const FOLDER_KEY = 'iattend_std_temp_folder'
+// Se enciende al pulsar Guardar sin sesión, justo antes de mandar al login con
+// redirect. Al volver, es lo que distingue "vengo de loguearme para guardar"
+// de "abrí la página ya logueado": sin ella, el borrador —que existe siempre
+// por el autoguardado— bastaba para arrancar la adopción al entrar.
+const PENDING_SAVE_KEY = 'iattend_std_pending_save'
 const PUBLIC_BASE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`
 
 const newId = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`)
@@ -43,6 +48,19 @@ export const readDraft = () => {
     } catch {
         return null
     }
+}
+
+export const markPendingSave = () => {
+    try { localStorage.setItem(PENDING_SAVE_KEY, '1') } catch { /* sin storage */ }
+}
+
+// Lee y apaga en el mismo gesto: una vuelta del login solo se reanuda una vez.
+export const consumePendingSave = () => {
+    try {
+        const on = localStorage.getItem(PENDING_SAVE_KEY) === '1'
+        localStorage.removeItem(PENDING_SAVE_KEY)
+        return on
+    } catch { return false }
 }
 
 export const clearDraft = () => {
