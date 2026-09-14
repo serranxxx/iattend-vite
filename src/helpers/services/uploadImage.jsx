@@ -301,10 +301,32 @@ export const getDresscodesFromSupabase = async (setImages) => {
    para imágenes. */
 
 const MAX_VIDEO_MB = 25;
+const MAX_VIDEO_SECONDS = 5;
+
+// Duración real del archivo, leída del metadata antes de subir nada. Si el
+// navegador no puede decodificarlo devuelve null y se deja pasar: mejor que
+// bloquear una subida válida por un formato que no sabe previsualizar.
+const readVideoDuration = (file) => new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const probe = document.createElement('video');
+    probe.preload = 'metadata';
+    const done = (value) => { URL.revokeObjectURL(url); resolve(value); };
+    probe.onloadedmetadata = () => done(Number.isFinite(probe.duration) ? probe.duration : null);
+    probe.onerror = () => done(null);
+    probe.src = url;
+});
 
 export const uploadEventVideo = async ({ file, invitationID, setVideos }) => {
     if (file.size > MAX_VIDEO_MB * 1024 * 1024) {
         message.warning(`El video pesa más de ${MAX_VIDEO_MB} MB. Sube un clip más corto o comprímelo.`);
+        return null;
+    }
+
+    // Medio segundo de tolerancia: un clip "de 5s" suele venir en 5.02 y
+    // rechazarlo por eso sería incomprensible para quien lo recortó.
+    const duration = await readVideoDuration(file);
+    if (duration !== null && duration > MAX_VIDEO_SECONDS + 0.5) {
+        message.warning(`El video dura ${duration.toFixed(1)}s. El máximo son ${MAX_VIDEO_SECONDS} segundos.`);
         return null;
     }
 

@@ -14,7 +14,8 @@ import { formatAbsoluteDateEs } from '../../helpers/assets/eventDateTime'
 import { searchSpotifyTracks } from '../../helpers/services/spotify'
 import { adoptDraftInto, consumePendingSave, createFreeInvitation, getTempFolder, listAdoptionTargets, markPendingSave, readDraft, saveDraft, sweepTempStorage } from '../../helpers/services/saveTheDateDraft'
 import { uploadSongAudio } from '../../helpers/services/uploadAudio'
-import { fonts } from '../../helpers/assets/fonts'
+import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
+import { useFonts } from '../../context/FontsContext'
 import SaveTheDateHost from '../../components/Host/SaveTheDateHost'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import WhenToSend from '../../components/WhenToSend/WhenToSend'
@@ -522,6 +523,12 @@ export const SaveTheDatePage = ({ demo = false }) => {
         const timer = setTimeout(() => setAnswersMounted(false), 320)
         return () => clearTimeout(timer)
     }, [activeTab])
+
+    // Catálogo del laboratorio de fuentes (tabla `fonts`, /admin → Herramientas).
+    // La lista estática es solo el respaldo mientras carga o si la query falla:
+    // mismo patrón que el builder (BuildCover / BuildGenerals / BuildQuote).
+    const { fonts: activeFonts } = useFonts()
+    const fonts = activeFonts.length ? activeFonts : fallbackFonts
 
     // Móvil: el editor cambia a pantalla completa con dock y hoja inferior
     const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 720px)').matches)

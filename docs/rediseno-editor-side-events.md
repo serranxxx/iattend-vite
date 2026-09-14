@@ -251,6 +251,12 @@ imágenes, así que el arreglo de los tiles de video en iOS (ver `save-the-date.
 Ojo al borrar claves de i18n por nombre: `drawer_title` existía también en `new_inv` y un borrado
 por nombre se la llevó. Hay que acotar por namespace.
 
+## Las fuentes salen del laboratorio
+
+El picker de tipografía lee `useFonts()` (tabla `fonts`, `active = true`), no la lista estática de
+`helpers/assets/fonts.js`, que queda solo como respaldo mientras carga. Así lo que se instala o se
+quita desde `/admin → Herramientas → Fuentes` se refleja en el editor. Mismo patrón que el builder.
+
 ## Los tours son solo de escritorio
 
 Los cinco tours (`SideEventsTour`, `GuestsTour`, `TablesTour`, `SaveTheDateTour` y `BuildTour`) se

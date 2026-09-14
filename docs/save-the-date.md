@@ -209,6 +209,22 @@ enciende justo antes de mandar al login y que el efecto **consume** (lee y borra
 modal de cuenta sin loguearse la apaga; el login sin redirect (email) la consume y sigue directo con
 `adoptAndGo`, como ya hacía.
 
+## Videos: 5 segundos y 25 MB
+
+`uploadEventVideo` mide la duración real antes de subir nada: crea un `<video preload="metadata">`
+sobre un object URL y lee `duration`. Sobre 5s (con medio segundo de tolerancia, porque un clip
+"de 5s" suele venir en 5.02) se rechaza con el dato concreto. Si el navegador no puede decodificar
+el archivo devuelve `null` y **se deja pasar**: bloquear una subida válida por un formato que no
+sabe previsualizar sería peor que el límite que se busca.
+
+## Las fuentes salen del laboratorio, no de la lista estática
+
+`SaveTheDatePage` y `SideEvents` leían `helpers/assets/fonts.js`, así que lo que se instalaba o
+quitaba desde `/admin → Herramientas → Fuentes` no llegaba a sus pickers. Ahora usan
+`useFonts()` (tabla `fonts`, `active = true`) con la lista estática como respaldo mientras carga o
+si la query falla — el mismo patrón que `BuildCover`, `BuildGenerals` y `BuildQuote`. Ojo: la
+estática tiene 28 familias y la tabla 26, así que la diferencia se nota.
+
 ## Gotchas nuevos
 
 - **El preview del editor apunta a prod por default**: hasta que

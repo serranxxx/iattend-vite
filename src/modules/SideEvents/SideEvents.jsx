@@ -14,7 +14,8 @@ import { HeaderDashboard } from '../Header/Header'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { dayjsToWallClock, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
-import { fonts } from '../../helpers/assets/fonts'
+import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
+import { useFonts } from '../../context/FontsContext'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
 import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
 import { useSearchParams, useNavigate } from 'react-router-dom'
@@ -166,6 +167,13 @@ export const SideEvents = () => {
     const [saving, setSaving] = useState(false)
     const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 720px)').matches)
     const [available, setAvailable] = useState({ h: 760, w: 1200 })
+
+    // Catálogo del laboratorio de fuentes (tabla `fonts`, /admin → Herramientas).
+    // La lista estática es solo el respaldo mientras carga o si la query falla:
+    // mismo patrón que el builder (BuildCover / BuildGenerals / BuildQuote).
+    const { fonts: activeFonts } = useFonts()
+    const fonts = activeFonts.length ? activeFonts : fallbackFonts
+
     const [sheetSection, setSheetSection] = useState(null)
     const [sheetHeight, setSheetHeight] = useState(0)
     const [stageGap, setStageGap] = useState(0)
