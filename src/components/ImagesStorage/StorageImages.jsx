@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './storage-images.css'
 import { Button, Dropdown, Empty, Tabs } from 'antd'
 import { LuImageOff, LuImagePlus, LuUpload } from 'react-icons/lu'
 import { deleteImageFromSupabase, deleteVideoFromSupabase, getCoversFromSubapase, getDresscodesFromSupabase, getImagesFromSupabase, getQuotesFromSubapase, getVideosFromSupabase, uploadEventVideo, uploadImagesSupabase } from '../../helpers/services/uploadImage'
-import { Sparkles } from 'lucide-react'
 import BottomSheet from '../BottomSheet/BottomSheet'
 
 
@@ -21,6 +20,10 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
     const resolvedIdRef = useRef(invitationID)
+    // Espejo en estado del id resuelto, para lo que se decide en render: la
+    // regla react-hooks/refs no deja leer el ref dentro de `handleOpen` porque
+    // se le pasa a cloneElement, que es una llamada normal durante el render.
+    const [resolvedId, setResolvedId] = useState(invitationID ?? null)
     const fileInputRef = useRef(null)
     const mobileFileInputRef = useRef(null)
 
@@ -32,7 +35,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
     }, [])
 
     useEffect(() => {
-        if (invitationID) resolvedIdRef.current = invitationID
+        if (invitationID) { resolvedIdRef.current = invitationID; setResolvedId(invitationID) }
     }, [invitationID])
 
     useEffect(() => {
@@ -44,6 +47,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
             const id = await onRequestSaveForImage()
             if (!id) return
             resolvedIdRef.current = id
+            setResolvedId(id)
         }
         inputRef.current?.click()
     }
@@ -107,7 +111,11 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         {[...images].reverse()?.map((i, index) => (
                             <div onClick={selectImage(handleImage ? () => handleImage(i.url, index, id) : null)} className='storage_img' key={index}>
                                 {isVideoPicker
-                                    ? <video src={i.url} muted playsInline preload='metadata' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    /* autoPlay + muted + playsInline: iOS Safari no pinta el
+                                       primer fotograma de un video en pausa hasta que hay
+                                       interacción — los tiles salían negros y parecía que no
+                                       había videos. En silencio y en línea sí lo deja correr. */
+                                    ? <video src={i.url} autoPlay muted loop playsInline preload='metadata' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     : <img src={i.url} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 }
                                 <Button
@@ -199,11 +207,15 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         />
     )
 
-    const handleOpen = useCallback(() => {
-        if (isVideoPicker) getVideosFromSupabase(invitationID, setImages)
-        else getImagesFromSupabase(invitationID, setImages)
+    const handleOpen = () => {
+        // El mismo id con el que se subió: si el picker nació sin `invitationID`
+        // y lo resolvió `onRequestSaveForImage`, la prop sigue vacía pero los
+        // archivos ya están bajo el id resuelto.
+        const folder = resolvedId ?? invitationID
+        if (isVideoPicker) getVideosFromSupabase(folder, setImages)
+        else getImagesFromSupabase(folder, setImages)
         if (isMobile) setDrawerOpen(true)
-    }, [isMobile, invitationID, isVideoPicker])
+    }
 
     const triggerButton = customTrigger
         ? React.cloneElement(customTrigger, { onClick: handleOpen })
@@ -228,12 +240,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                         open={drawerOpen}
                         onClose={() => setDrawerOpen(false)}
                         maxHeight='92%'
-                        title={
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Sparkles size={16} />
-                                {isVideoPicker ? t('storage.title_files') : t('storage.drawer_title')}
-                            </span>
-                        }
+                        title={isVideoPicker ? t('storage.title_files') : t('storage.drawer_title')}
                         extra={!hideUpload &&
                             <>
                                 <input ref={mobileFileInputRef} type='file' accept={isVideoPicker ? 'video/*' : 'image/*'} style={{ display: 'none' }} onChange={handleFileChange} />
@@ -260,7 +267,6 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                     popupRender={() => (
                         <div className='images_storage_cont'>
                             <div className='storage_row'>
-                                <Sparkles size={16} />
                                 <span style={{ fontSize: '16px' }}>{isVideoPicker ? t('storage.title_files') : t('storage.dropdown_title')}</span>
                             </div>
                             {tabsContent}

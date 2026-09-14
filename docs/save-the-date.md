@@ -183,6 +183,22 @@ de fuentes y controles nativos del teléfono. El color del botón es translúcid
 va con `alpha` (deslizador de opacidad → `rgba`). El porqué completo está en
 [rediseno-editor-side-events.md](./rediseno-editor-side-events.md#en-móvil-los-paneles-no-usan-popups-de-antd).
 
+## El picker de videos en el teléfono
+
+- **Los tiles salían negros en iOS y parecía que no había videos.** Safari iOS no pinta el primer
+  fotograma de un `<video>` en pausa hasta que hay interacción, aunque tenga `preload="metadata"` y
+  el listado sí traiga los archivos. Los tiles van con `autoPlay muted loop playsInline` — en
+  silencio y en línea iOS sí lo deja correr — y se ven como lo que son.
+- El listado filtra el marcador de carpeta vacía (`id: null`) y lo que no sea `.mp4/.webm/.mov/.m4v`,
+  igual que el de imágenes.
+- `handleOpen` lista con el **mismo id con el que se sube** (`resolvedId`), no con la prop
+  `invitationID`: si el picker nació sin id y lo resolvió `onRequestSaveForImage`, la prop sigue
+  vacía pero los archivos ya están bajo el id resuelto. Va en estado y no leyendo el ref: la regla
+  `react-hooks/refs` no deja leer un ref dentro de una función que se le pasa a `cloneElement`,
+  porque es una llamada normal durante el render y no puede probar que no la ejecute ahí.
+- Header compacto: sin icono, "Almacenamiento" y "Subir". El anterior partía en dos líneas y
+  recortaba el botón en 400px.
+
 ## Gotchas nuevos
 
 - **El preview del editor apunta a prod por default**: hasta que

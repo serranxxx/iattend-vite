@@ -343,7 +343,13 @@ export const getVideosFromSupabase = async (invitationID, setVideos) => {
         return;
     }
 
-    const videos = (data ?? []).map((file) => {
+    // Como en el listado de imágenes: Storage devuelve también el marcador de
+    // carpeta vacía (`id: null`) y cualquier archivo suelto; solo van los videos.
+    const onlyVideos = (data ?? []).filter((file) => (
+        file.id !== null && /\.(mp4|webm|mov|m4v)$/i.test(file.name)
+    ));
+
+    const videos = onlyVideos.map((file) => {
         const path = `${invitationID}/video/${file.name}`;
         const { data: urlData } = supabase.storage
             .from('user_images')

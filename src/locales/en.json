@@ -1401,8 +1401,8 @@
     "drawer_title": "Images",
     "dropdown_title": "Image storage",
     "tab_my_videos": "My videos",
-    "btn_upload_video": "Upload video",
-    "title_files": "File storage"
+    "btn_upload_video": "Upload",
+    "title_files": "Storage"
   },
   "dashboard_header": {
     "help": "Help",
