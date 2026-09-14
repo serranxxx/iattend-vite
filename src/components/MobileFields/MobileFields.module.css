@@ -5,63 +5,60 @@
    portalean a <body> y flotan anclados a su trigger: dentro de una hoja
    que se desliza, en una pantalla de 400px y con el dedo, eso es un
    desplegable que se abre donde puede, que se recorta, y cuyo scroll
-   pelea con el de la pieza. Aquí no hay popups: la lista de fuentes va
-   inline dentro de la hoja, y color y fecha usan los controles nativos
-   del teléfono, que son los que la gente ya sabe usar.
+   pelea con el de la pieza. Aquí no hay popups: las fuentes van en un
+   carrusel horizontal dentro de la hoja, y color y fecha usan los
+   controles nativos del teléfono, que son los que la gente ya sabe usar.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Fuentes: lista inline con vista previa ── */
-.fontList {
+/* ── Fuentes: carrusel horizontal de chips ──
+   Horizontal a propósito: una lista vertical con scroll dentro de la hoja
+   era un scroll anidado y el dedo sobre la lista movía la lista, no la hoja.
+   El eje X no compite con el Y. */
+.fontStrip {
     display: flex;
-    flex-direction: column;
-    max-height: 236px;
-    overflow-y: auto;
-    /* que el scroll de la lista no se le escape a la hoja al llegar al tope */
-    overscroll-behavior: contain;
+    gap: 8px;
+    padding: 4px 2px 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    /* que el rebote horizontal no se convierta en "atrás" del navegador */
+    overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
-    border: 1px solid #E6E2DA;
-    border-radius: 14px;
-    background: #FFFFFF;
     scrollbar-width: none;
+    /* los bordes se difuminan: se lee que hay más a los lados */
+    mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
 }
 
-.fontList::-webkit-scrollbar {
+.fontStrip::-webkit-scrollbar {
     display: none;
 }
 
-.fontRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    /* 48px: objetivo táctil cómodo */
-    min-height: 48px;
-    padding: 0 16px;
-    border: none;
-    border-bottom: 1px solid #F1EFEA;
-    background: none;
-    text-align: left;
-    font-size: 17px;
+.fontChip {
+    flex: none;
+    /* 44px: objetivo táctil */
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid #E6E2DA;
+    border-radius: 999px;
+    background: #FFFFFF;
     color: #29262D;
+    font-size: 16px;
+    line-height: 1;
+    white-space: nowrap;
+    scroll-snap-align: center;
     cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.fontRow:last-child {
-    border-bottom: none;
-}
-
-.fontRow:active {
-    background: #F7F6F3;
-}
-
-.fontRowOn {
+.fontChip:active {
     background: #F2F0EC;
 }
 
-.fontCheck {
-    flex: none;
-    color: #16323d;
+.fontChipOn {
+    background: #16323d;
+    border-color: #16323d;
+    color: #FFFFFF;
 }
 
 /* ── Color: el selector nativo detrás de una muestra ── */

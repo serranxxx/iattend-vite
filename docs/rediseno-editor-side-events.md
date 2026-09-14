@@ -224,9 +224,12 @@ La solución es no usarlos ahí. Bajo `isMobile` los paneles montan los campos d
 [`components/MobileFields`](../src/components/MobileFields/MobileFields.jsx); en escritorio siguen
 con antd, que ahí va bien.
 
-- **`FontPicker`** — la lista de tipografías **inline**, dentro de la hoja, con cada opción en su
-  propia fuente y `overscroll-behavior: contain` para que su scroll no se le escape a la hoja. La
-  elegida entra a la vista al montar.
+- **`FontPicker`** — las tipografías en un **carrusel horizontal** de chips, cada uno en su propia
+  fuente, la elegida centrada (de golpe al montar, suave al cambiar). Horizontal a propósito: la
+  primera versión era una lista vertical con scroll dentro de la hoja —que también hace scroll— y el
+  dedo sobre la lista movía la lista en vez de la hoja. El eje X no compite con el Y. Mide 58px en
+  vez de 238, y el centrado es a mano con `scrollTo`, no con `scrollIntoView`, que desplazaría
+  también la hoja entera.
 - **`ColorField`** — una muestra que abre el **selector nativo** del teléfono (`<input type=color>`
   invisible encima). El nativo solo entiende `#rrggbb`: con `alpha` agrega un deslizador de opacidad
   y devuelve `rgba(...)` — es el caso del botón del Save the Date, que es translúcido a propósito.

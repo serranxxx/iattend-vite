@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Slider } from 'antd'
-import { Calendar, Check } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import styles from './MobileFields.module.css'
 
 /* Campos para la hoja inferior de los editores en móvil. Sustituyen a los
@@ -11,25 +11,32 @@ import styles from './MobileFields.module.css'
 /* ── Fuentes ─────────────────────────────────────────────────────── */
 
 /**
- * Lista inline de tipografías con vista previa. Vive dentro de la hoja y
- * hace scroll con su propio contenedor, no en un popup.
+ * Tipografías en un carrusel HORIZONTAL de chips, cada uno en su propia
+ * fuente. Horizontal a propósito: una lista vertical con scroll dentro de la
+ * hoja —que también hace scroll— era un scroll anidado, y el dedo sobre la
+ * lista movía la lista en vez de la hoja. El eje horizontal no compite con el
+ * vertical, así que la hoja se sigue desplazando aunque el gesto arranque
+ * sobre los chips.
  */
 export const FontPicker = ({ fonts, value, onChange }) => {
     const { t } = useTranslation()
-    const listRef = useRef(null)
+    const stripRef = useRef(null)
+    const mounted = useRef(false)
 
-    // La elegida entra a la vista al montar. A mano y no con `scrollIntoView`:
-    // ese desplaza TODOS los ancestros con scroll —la hoja entera incluida— y
-    // dejaba el campo de fecha, que va arriba, a medio esconder.
+    // La elegida queda centrada: de golpe al montar, suave al cambiar. A mano
+    // y no con `scrollIntoView`, que desplazaría también la hoja entera.
     useEffect(() => {
-        const list = listRef.current
-        const on = list?.querySelector('[data-on="true"]')
-        if (!list || !on) return
-        list.scrollTop = on.offsetTop - (list.clientHeight - on.offsetHeight) / 2
-    }, [])
+        const strip = stripRef.current
+        const chip = strip?.querySelector('[data-on="true"]')
+        if (!strip || !chip) return
+        const left = chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        strip.scrollTo({ left, behavior: mounted.current && !reduce ? 'smooth' : 'instant' })
+        mounted.current = true
+    }, [value])
 
     return (
-        <div ref={listRef} className={styles.fontList} role="listbox" aria-label={t('mobile_fields.font')}>
+        <div ref={stripRef} className={styles.fontStrip} role="listbox" aria-label={t('mobile_fields.font')}>
             {fonts.map((f) => {
                 const on = f === value
                 return (
@@ -39,12 +46,11 @@ export const FontPicker = ({ fonts, value, onChange }) => {
                         role="option"
                         aria-selected={on}
                         data-on={on || undefined}
-                        className={`${styles.fontRow} ${on ? styles.fontRowOn : ''}`}
+                        className={`${styles.fontChip} ${on ? styles.fontChipOn : ''}`}
                         style={{ fontFamily: f }}
                         onClick={() => onChange(f)}
                     >
-                        <span>{f}</span>
-                        {on && <Check size={16} className={styles.fontCheck} />}
+                        {f}
                     </button>
                 )
             })}

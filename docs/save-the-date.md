@@ -178,8 +178,8 @@ de puntitos y `disabledInteraction`.
 Los paneles de la hoja inferior no usan `Select`, `ColorPicker` ni `DatePicker` de antd en móvil: sus
 popups flotan anclados al trigger y dentro de una hoja que se mueve, en 400px y con el dedo, son
 inoperables. Bajo `isMobile` montan `FontPicker`, `ColorField` y `DateField` de
-[`components/MobileFields`](../src/components/MobileFields/MobileFields.jsx) — lista de fuentes
-inline y controles nativos del teléfono. El color del botón es translúcido, así que su `ColorField`
+[`components/MobileFields`](../src/components/MobileFields/MobileFields.jsx) — carrusel horizontal
+de fuentes y controles nativos del teléfono. El color del botón es translúcido, así que su `ColorField`
 va con `alpha` (deslizador de opacidad → `rgba`). El porqué completo está en
 [rediseno-editor-side-events.md](./rediseno-editor-side-events.md#en-móvil-los-paneles-no-usan-popups-de-antd).
 
