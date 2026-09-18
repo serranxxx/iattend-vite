@@ -1,0 +1,747 @@
+/* Eventos: tabla densa en tarjeta, con créditos accionables por fila. */
+
+.eventos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+/* -------------------------------------------------------------- toolbar --- */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--ac-tint);
+    padding: 3px;
+    border-radius: 10px;
+}
+
+.tab {
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tabActive {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.filterBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.filterBtn:hover {
+    border-color: var(--ac-ink);
+}
+
+.filterBtnActive {
+    border-color: var(--ac-ink);
+    background: var(--ac-ink);
+    color: #fff;
+}
+
+.filterBtnAmber {
+    color: var(--ac-amber);
+}
+
+.filterBtnAmber:hover {
+    border-color: var(--ac-amber);
+}
+
+.filterBtnAmberActive {
+    background: var(--ac-amber);
+    border-color: var(--ac-amber);
+    color: #fff;
+}
+
+/* --------------------------------------------------------------- tabla --- */
+
+.card {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+}
+
+.scroller {
+    overflow-x: auto;
+}
+
+.table {
+    min-width: 980px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1.25fr 1.7fr 90px 176px 1fr 104px 40px;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--ac-line-soft);
+    font-size: 13px;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.row:hover {
+    background: var(--ac-surface-alt);
+}
+
+.head {
+    padding: 9px 16px;
+    background: var(--ac-surface-alt);
+    border-bottom: 1px solid var(--ac-line-table);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.head:hover {
+    background: var(--ac-surface-alt);
+}
+
+.cell {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.name {
+    font-weight: 600;
+}
+
+.email {
+    color: var(--ac-text-3);
+}
+
+.date {
+    color: var(--ac-text-3);
+}
+
+.dateEmpty {
+    color: var(--ac-muted-2);
+}
+
+.empty {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted-2);
+}
+
+/* --------------------------------------------------------------- plan --- */
+
+.plan {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    border-radius: 6px;
+    padding: 4px 9px;
+    background: var(--ac-ink);
+    color: #fff;
+}
+
+.planLite {
+    background: var(--ac-lilac);
+    color: var(--ac-lilac-ink);
+    font-size: 11px;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: 0;
+}
+
+.planPaperless {
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet-ink);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.planNone {
+    background: var(--ac-tint);
+    color: var(--ac-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+/* ------------------------------------------------------------ créditos --- */
+
+.credits {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.creditsChip {
+    min-width: 44px;
+    text-align: center;
+    border-radius: 7px;
+    padding: 4px 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--ac-page);
+    color: var(--ac-ink);
+}
+
+.creditsChipZero {
+    background: var(--ac-amber-soft);
+    color: var(--ac-amber);
+    font-weight: 700;
+}
+
+.recharge {
+    border: 1px solid var(--ac-line-outline);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 4px 9px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ac-ink);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.recharge:hover {
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
+}
+
+/* -------------------------------------------------------------- dueños --- */
+
+.owners {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 4px 9px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--ac-ink);
+    cursor: pointer;
+    max-width: 100%;
+    text-transform: capitalize;
+}
+
+.owners:hover {
+    border-color: var(--ac-ink);
+}
+
+/* El capitalize es para los nombres de los dueños; el placeholder no lo quiere. */
+.ownersEmpty {
+    color: var(--ac-muted-2);
+    text-transform: none;
+}
+
+.ownersLabel {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.iconBtn {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.iconBtn:hover {
+    border-color: var(--ac-ink);
+    color: var(--ac-ink);
+}
+
+/* -------------------------------------------------------------- popups --- */
+
+.popup {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 13px;
+    box-shadow: var(--ac-shadow-popup);
+    padding: 10px;
+    min-width: 210px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--ac-font-ui);
+}
+
+.popupItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.popupItem:hover {
+    background: var(--ac-tint);
+}
+
+.ownerRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px 6px 10px;
+    border-radius: 9px;
+    background: var(--ac-surface-alt);
+    font-size: 12.5px;
+    text-transform: capitalize;
+}
+
+.ownerName {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ownerRemove {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.ownerRemove:hover {
+    background: var(--ac-amber-soft);
+    color: var(--ac-amber);
+}
+
+.popupDivider {
+    height: 1px;
+    background: var(--ac-line-soft);
+    margin: 4px 0;
+}
+
+/* ------------------------------------------------------ modal recarga --- */
+
+/* La tarjeta del evento va sola en el modal: sin padding propio ni título, para
+   que se vea igual que en la rejilla. */
+.modalTarjeta {
+    padding: 0 !important;
+}
+
+.modalTarjeta .tarjeta {
+    border: none;
+    box-shadow: none;
+}
+
+.rechargeModal {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+}
+
+.rechargeEvent {
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+.rechargeEventName {
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.rechargeCurrent {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.rechargeCurrentValue {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.rechargeQuick {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.quickChip {
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.quickChip:hover {
+    border-color: var(--ac-ink);
+    background: var(--ac-tint);
+}
+
+.rechargeLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    margin-bottom: 5px;
+}
+
+.rechargeDelta {
+    font-size: 12px;
+    color: var(--ac-green-ink);
+}
+
+.rechargeDeltaDown {
+    color: var(--ac-amber);
+}
+
+/* ---------------------------------------------------------- responsive --- */
+
+.mobileList {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .scroller {
+        display: none;
+    }
+
+    .mobileList {
+        display: block;
+    }
+
+    .mobileRow {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--ac-line-soft);
+    }
+
+    .mobileRow:last-child {
+        border-bottom: none;
+    }
+
+    .mobileTop {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mobileName {
+        flex: 1;
+        min-width: 0;
+        font-size: 14px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobileDate {
+        font-size: 11.5px;
+        color: var(--ac-muted);
+        white-space: nowrap;
+    }
+
+    .mobileEmail {
+        font-size: 12px;
+        color: var(--ac-text-3);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobileBottom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
+
+/* Lite no usa créditos: la celda lo dice en vez de mostrar un 0 accionable. */
+.creditsNoAplica {
+    font-size: 12px;
+    color: var(--ac-muted-2);
+}
+
+/* ------------------------------------------ tarjetas de próximos eventos --- */
+
+/* En modo tarjetas el contenedor no pinta marco: cada tarjeta trae el suyo. */
+.cardPlano {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 14px;
+}
+
+.tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding: 0 18px 16px;
+    overflow: hidden;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+}
+
+.tarjeta:hover {
+    border-color: var(--ac-line-control);
+}
+
+.tarjetaHead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.tarjetaTitulo {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tarjetaNombre {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ac-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tarjetaEmail {
+    font-size: 12px;
+    color: var(--ac-text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ----------------------------------------------------------- portada --- */
+
+/* La portada rompe el padding de la tarjeta para ir de borde a borde. */
+.portada {
+    position: relative;
+    margin: 0 -18px;
+    height: 132px;
+    background: var(--ac-surface-alt);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+
+.portadaImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.portadaVacia {
+    font-size: 12px;
+    color: var(--ac-muted-2);
+}
+
+/* La cuenta regresiva se monta sobre la portada: es el dato que manda y así no
+   compite por espacio con el resto de la tarjeta. */
+.portadaCuenta {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    background: rgba(12, 23, 27, 0.72);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.portadaCuentaUrgente {
+    background: var(--ac-amber);
+}
+
+/* ------------------------------------------------------------- fecha --- */
+
+.tarjetaFecha {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+/* capitalize sube cada palabra ("Viernes 18 De Septiembre"); solo queremos la
+   primera letra de la frase. */
+.fechaLarga {
+    font-size: 12.5px;
+    color: var(--ac-muted);
+}
+
+.fechaLarga::first-letter {
+    text-transform: uppercase;
+}
+
+/* --------------------------------------------------------- contacto --- */
+
+.contacto {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+}
+
+.contactoLink,
+.contactoVacio {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--ac-text-2);
+    text-decoration: none;
+}
+
+.contactoLink:hover {
+    color: var(--green-color);
+}
+
+.contactoVacio {
+    color: var(--ac-muted-2);
+}
+
+.rsvp {
+    color: var(--ac-muted);
+}
+
+/* ---------------------------------------------------------- módulos --- */
+
+/* Qué tiene armado el evento. Los apagados se quedan visibles pero tenues: el
+   hueco también es información para el administrador. */
+.modulos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 13px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.modulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--ac-line);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    color: var(--ac-muted-2);
+    background: var(--ac-surface);
+}
+
+.moduloOn {
+    border-color: var(--blue-color);
+    background: var(--blue-bg);
+    color: var(--ac-ink);
+    font-weight: 500;
+}
+
+.modulo b {
+    font-weight: 700;
+    color: var(--blue-color);
+}
+
+/* -------------------------------------------------------------- pie --- */
+
+.tarjetaPie {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 13px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.tarjetaPie .owners {
+    flex: 1;
+    min-width: 0;
+}

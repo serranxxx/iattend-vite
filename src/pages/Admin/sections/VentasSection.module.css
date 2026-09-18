@@ -1,0 +1,1206 @@
+/* Ventas: fila de control + KPIs + bento de gráficas + tabla del mes. */
+
+.ventas {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+/* --------------------------------------------------------- fila control --- */
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--ac-tint);
+    padding: 3px;
+    border-radius: 10px;
+}
+
+.tab {
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tabActive {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.select {
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------ strip KPI --- */
+
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.kpi {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 14px;
+    box-shadow: var(--ac-shadow-card);
+    padding: 14px 16px;
+}
+
+.kpiAmber {
+    background: var(--ac-amber-soft);
+    border-color: var(--ac-amber-border);
+}
+
+.kpiLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.kpiAmber .kpiLabel {
+    color: var(--ac-amber-text);
+}
+
+.kpiValue {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+}
+
+.kpiAmber .kpiValue {
+    color: var(--ac-amber);
+}
+
+.kpiFoot {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.kpiFootGreen {
+    color: var(--ac-green);
+}
+
+/* ---------------------------------------------------------------- bento --- */
+
+/* Alto fijo: las gráficas se comprimen para encajar, nadie hace scroll.
+   `overflow: hidden` es obligatorio — sin él las tarjetas se desbordan encima
+   de la tabla de abajo. */
+.bento {
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+    height: 75vh;
+    overflow: hidden;
+}
+
+/* min-height: 0 es lo que deja que flex comprima las columnas por debajo del
+   alto natural de su contenido. Sin scroll: lo que cede son los canvas. */
+.bentoLeft,
+.bentoRight {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.bentoLeft {
+    flex: 2;
+}
+
+.bentoRight {
+    flex: 1;
+}
+
+/* Todas las tarjetas con gráfica se reparten el alto disponible y ceden: lo que
+   se encoge es el canvas, no el texto. */
+.bentoLeft .card,
+.bentoRight .card {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* El punto de equilibrio es la excepción: no tiene canvas que ceder, solo texto, barra
+   de avance y el botón de la calculadora. Si se comprimiera recortaría la barra,
+   así que conserva su alto natural y las otras dos absorben la diferencia. */
+.bentoRight .metaCard {
+    flex: 0 0 auto;
+}
+
+/* Las tres tarjetas de la derecha comparten el alto de las dos de la izquierda:
+   su chrome va más apretado para dejarle aire al canvas. */
+.bentoRight .card {
+    padding: 13px 14px;
+}
+
+.bentoRight .cardHead {
+    margin-bottom: 6px;
+}
+
+.card {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    padding: 16px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.bentoLeft .card {
+    padding: 18px;
+}
+
+.cardTitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.cardSub {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.cardHead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+
+.cardHeadRight {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.bigValue {
+    font-size: 27px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.delta {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ac-green-ink);
+}
+
+.deltaDown {
+    color: var(--ac-amber);
+}
+
+/* --------------------------------------------------------------- charts --- */
+
+/* chart.js dibuja en un <canvas> que se dimensiona contra su contenedor: por
+   eso estos wrappers llevan position:relative y alto explícito. */
+.sparkline {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 50px;
+}
+
+.chartArea {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 50px;
+}
+
+.chartCompare {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 50px;
+}
+
+.monthLabels {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    margin-top: 6px;
+}
+
+.monthLabel {
+    font-size: 10px;
+    color: var(--ac-muted-2);
+    text-align: center;
+}
+
+.axisX {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--ac-muted-2);
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+/* La leyenda y los chips replican el color de su serie: si no, mienten. */
+.legendBox {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--blue-color);
+}
+
+.legendLine {
+    width: 14px;
+    height: 2px;
+    background: var(--green-color);
+}
+
+/* ---------------------------------------------------------------- barras --- */
+
+.bars {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 50px;
+    margin-top: 6px;
+}
+
+/* ---------------------------------------------------------- chips de año --- */
+
+.chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    border: 1px solid var(--ac-line-input);
+    background: transparent;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-family: inherit;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.chip:hover {
+    border-color: var(--ac-ink);
+}
+
+.chipActual {
+    background: var(--blue-bg);
+    border-color: var(--blue-color);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.chipPrevio {
+    background: var(--purple-bg);
+    border-color: var(--purple-color);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.chipViejo {
+    background: var(--green-bg);
+    border-color: var(--green-color);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------- meta del mes --- */
+
+.metaHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* La meta va del color de su línea punteada en el chart, y la barra de avance
+   del color del neto acumulado: el color identifica qué es cada cosa. */
+.metaValue {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ac-ink);
+}
+
+.track {
+    position: relative;
+    height: 12px;
+    background: var(--ac-tint);
+    border-radius: 999px;
+    margin: 10px 0 6px;
+}
+
+.fill {
+    height: 100%;
+    background: var(--blue-color);
+    border-radius: 999px;
+}
+
+/* Marca del ritmo esperado al día de hoy, sobre la barra. */
+.ritmoMarca {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--green-color);
+    border-radius: 2px;
+}
+
+.ritmoNota {
+    font-size: 11.5px;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.ritmoAdelante {
+    color: var(--green-color);
+}
+
+.ritmoAtras {
+    color: var(--ac-amber);
+}
+
+.metaFoot {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.disclosure {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    margin-top: 9px;
+    border: none;
+    background: var(--ac-tint);
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.chevron {
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+/* La calculadora vive en un popup de Ant Design (portaleado a <body>), no
+   dentro de la tarjeta: abrirla no debe empujar el bento. */
+.calc {
+    width: 340px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 13px;
+    box-shadow: var(--ac-shadow-popup);
+    padding: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-family: var(--ac-font-ui);
+}
+
+.calcHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.calcTitle {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.calcAdd {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--ac-line-outline);
+    background: var(--ac-surface);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.calcAdd:hover {
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
+}
+
+/* Con muchos gastos el popup crece: se limita y se hace scroll interno. */
+.calcRows {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.calcEmpty {
+    font-size: 12px;
+    color: var(--ac-muted-2);
+    padding: 6px 0;
+}
+
+.calcRow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.calcLabel {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--ac-text-2);
+}
+
+.calcName {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 5px 9px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    outline: none;
+}
+
+.calcName:focus {
+    border-color: var(--ac-ink);
+}
+
+.calcName::placeholder {
+    color: var(--ac-muted-2);
+}
+
+.calcInput {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 5px 9px;
+    width: 84px;
+}
+
+.calcInput:focus-within {
+    border-color: var(--ac-ink);
+}
+
+.calcPrefix {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}
+
+.calcInput input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+    text-align: right;
+}
+
+/* Las flechitas del number input no caben en un campo de 96px. */
+.calcInput input::-webkit-outer-spin-button,
+.calcInput input::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+.calcInput input[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.calcRemove {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    color: var(--ac-muted-2);
+    cursor: pointer;
+}
+
+.calcRemove:hover {
+    background: var(--ac-amber-soft);
+    color: var(--ac-amber);
+}
+
+/* Alinea la fila de "Neto por venta" con las que sí llevan botón de quitar. */
+.calcRemoveSpacer {
+    width: 24px;
+    flex-shrink: 0;
+}
+
+.calcDivider {
+    height: 1px;
+    background: var(--ac-line-soft);
+}
+
+.calcFoot {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}
+
+/* ---------------------------------------------------------------- tabla --- */
+
+.tableCard {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+}
+
+.tableHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--ac-line-softer);
+}
+
+.tableTitle {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.outlineBtn {
+    border: 1px solid var(--ac-line-outline);
+    background: var(--ac-surface);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ac-ink);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.outlineBtn:hover {
+    border-color: var(--ac-ink);
+}
+
+.scroller {
+    overflow-x: auto;
+}
+
+.table {
+    min-width: 900px;
+}
+
+/* Cada tabla declara sus columnas; el resto del formato —tarjeta, scroll,
+   cabecera, hover— lo comparten todas. */
+.tablaHistorico {
+    min-width: 980px;
+}
+
+.tablaHistorico .row {
+    grid-template-columns: 80px 1.2fr 1.1fr 70px 90px 90px 80px 96px 96px 40px;
+}
+
+.tablaVendedores {
+    min-width: 820px;
+}
+
+.tablaVendedores .row {
+    grid-template-columns: 1.2fr 90px 1fr 1.4fr 90px 130px 90px 40px;
+}
+
+.tablaColaboradores {
+    min-width: 980px;
+}
+
+.tablaColaboradores .row {
+    grid-template-columns: 1.2fr 150px 1.4fr 1fr 1.2fr 80px 100px 90px;
+}
+
+/* Texto secundario dentro de una celda: correos, teléfonos, fechas. */
+.celdaTenue {
+    color: var(--ac-muted);
+}
+
+.enlaceWa {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--ac-ink);
+}
+
+.enlaceWa:hover {
+    color: var(--green-color);
+}
+
+/* Etiquetas de estado de las tablas. Verde claro y morado claro: el mismo par
+   para todas —tipo y estado de vendedor, contactado y aceptado de interesados—
+   para que la vista de Ventas no tenga tres familias de color compitiendo. */
+.etiqueta {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 99px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: lowercase;
+    white-space: nowrap;
+}
+
+.etiquetaVerde {
+    background: var(--green-bg);
+    color: #1F7F3A;
+}
+
+.etiquetaMorada {
+    background: var(--purple-bg);
+    color: #4B24C0;
+}
+
+.etiquetaApagada {
+    background: var(--ac-tint);
+    color: var(--ac-muted);
+}
+
+/* Botón de sí/no de la lista de interesados: la misma etiqueta, pero accionable. */
+.marcaBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 99px;
+    padding: 3px 9px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.marcaBtn:hover {
+    border-color: var(--ac-line-outline);
+    color: var(--ac-ink);
+}
+
+.marcaBtnVerde,
+.marcaBtnMorado {
+    border-color: transparent;
+    font-weight: 600;
+}
+
+.marcaBtnVerde {
+    background: var(--green-bg);
+    color: #1F7F3A;
+}
+
+.marcaBtnMorado {
+    background: var(--purple-bg);
+    color: #4B24C0;
+}
+
+/* Resultado del alta de un vendedor: el PIN solo se ve en este momento. */
+.altaResultado {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.altaNombre {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.altaLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.altaPin {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.altaOk {
+    font-size: 11.5px;
+    color: var(--green-color);
+}
+
+.altaError {
+    font-size: 11.5px;
+    color: var(--red-color);
+}
+
+/* PIN de acceso: se copia al hacer clic. */
+.pin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-family: inherit;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.pin:hover {
+    background: var(--ac-surface-alt);
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1.2fr 1.1fr 70px 90px 90px 80px 96px 96px 40px;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--ac-line-soft);
+    font-size: 13px;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.row:hover {
+    background: var(--ac-surface-alt);
+}
+
+.rowHead {
+    padding: 9px 16px;
+    background: var(--ac-surface-alt);
+    border-bottom: 1px solid var(--ac-line-table);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rowHead:hover {
+    background: var(--ac-surface-alt);
+}
+
+.cell {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cellNum {
+    text-align: right;
+}
+
+.evento {
+    font-weight: 600;
+}
+
+.vendedor {
+    color: var(--ac-text-3);
+}
+
+.saldoOk {
+    color: var(--ac-green-ink);
+    font-weight: 600;
+    text-align: right;
+}
+
+.saldoDebe {
+    color: var(--ac-amber);
+    font-weight: 600;
+    text-align: right;
+}
+
+.badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 3px 8px;
+}
+
+.badgeOk {
+    background: var(--ac-green-soft);
+    color: var(--ac-green-ink);
+}
+
+.badgeWarn {
+    background: var(--ac-amber-soft);
+    color: var(--ac-amber);
+}
+
+.comprobanteOk {
+    color: var(--ac-green-ink);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.comprobanteFalta {
+    color: var(--ac-amber);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.plan {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    border-radius: 6px;
+    padding: 4px 9px;
+    background: var(--ac-ink);
+    color: #fff;
+}
+
+.planLite {
+    background: var(--ac-lilac);
+    color: var(--ac-lilac-ink);
+    font-size: 11px;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: 0;
+}
+
+.iconBtn {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.iconBtn:hover {
+    border-color: var(--ac-ink);
+    color: var(--ac-ink);
+}
+
+.popup {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 13px;
+    box-shadow: var(--ac-shadow-popup);
+    padding: 10px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--ac-font-ui);
+}
+
+.popupItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.popupItem:hover {
+    background: var(--ac-tint);
+}
+
+.empty {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted-2);
+}
+
+.banner {
+    background: var(--ac-amber-soft);
+    border: 1px solid var(--ac-amber-border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--ac-amber-text);
+}
+
+/* ------------------------------------------------------------ responsive --- */
+
+@media (max-width: 1000px) {
+    .bento {
+        flex-direction: column;
+    }
+}
+
+/* Valor secundario bajo el número grande de una tarjeta (ej. la proyección en
+   invitaciones bajo la proyección en pesos). */
+.bigValueSub {
+    font-size: 12px;
+    color: var(--ac-muted);
+    margin-top: -2px;
+}
+
+/* --------------------------------------------- saldo pendiente: detalle --- */
+
+/* El KPI de saldo es un <button>: hereda el layout de .kpi pero necesita
+   resetear los defaults del botón. */
+.kpiClickable {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.kpiClickable .kpiLabel,
+.kpiClickable .kpiValue,
+.kpiClickable .kpiFoot {
+    display: block;
+}
+
+.kpiClickable:hover {
+    border-color: var(--ac-amber);
+}
+
+.saldoPopup {
+    width: 380px;
+    max-height: 340px;
+    overflow-y: auto;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 13px;
+    box-shadow: var(--ac-shadow-popup);
+    padding: 6px;
+    font-family: var(--ac-font-ui);
+}
+
+.saldoPopupHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px 10px;
+    border-bottom: 1px solid var(--ac-line-soft);
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+.saldoPopupHead span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ac-amber);
+}
+
+.saldoRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.saldoRow:hover {
+    background: var(--ac-surface-alt);
+}
+
+.saldoEvento {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.saldoMeta {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ac-muted);
+}
+
+.saldoMonto {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ac-amber);
+}
+
+/* ------------------------------------- calculadora: tipo de concepto --- */
+
+/* Icon button dentro de la misma fila: como texto ("fijo al mes" / "por
+   invitación") obligaba a una segunda fila por concepto y desbordaba el popup.
+   El detalle del cálculo se movió al tooltip. */
+.calcTipo {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 7px;
+    color: var(--ac-muted-2);
+    cursor: pointer;
+}
+
+.calcTipo:hover {
+    border-color: var(--ac-ink);
+    color: var(--ac-ink);
+}
+
+.calcTipoVariable {
+    background: var(--purple-bg);
+    border-color: var(--purple-color);
+    color: var(--purple-color);
+}
+
+/* Neto por venta: ya no se captura, se calcula del promedio real del mes. */
+.calcLabel {
+    display: flex;
+    flex-direction: column;
+}
+
+.calcFuente {
+    font-size: 10.5px;
+    color: var(--ac-muted-2);
+}
+
+.calcCalculado {
+    flex-shrink: 0;
+    width: 84px;
+    text-align: right;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+/* Switches del encabezado del acumulado: periodo + base de cálculo. Los dos son
+   segmentados idénticos para que se lean como un solo bloque de controles. */
+.headSwitches {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+/* Variante apretada: van bajo el número grande, no deben competir con él. */
+.tabsCompact .tab {
+    padding: 5px 11px;
+    font-size: 11.5px;
+}
+
+
+/* Total del año junto al número del mes, en chico. */
+.kpiValue {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.kpiAnual {
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--ac-muted);
+    white-space: nowrap;
+}

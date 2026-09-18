@@ -1,0 +1,2543 @@
+/* Analítica de producto. Hoja compartida por todas las etapas: el chrome
+   (KPIs, tarjetas, bento, leyendas) es el mismo y cada etapa solo agrega lo
+   suyo al final. */
+
+/* ---------------------------------------------------------- contenedor --- */
+
+.contenedor {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/*
+  Barra de navegación de la analítica. Es una tarjeta con dos renglones: arriba
+  las pestañas con el control principal de la etapa (los presets de ventana o el
+  selector de mes), y abajo, solo en el resumen, el rango que cubre la ventana
+  con su ajuste fino.
+
+  Los dos renglones van dentro del mismo marco a propósito: el de abajo describe
+  lo que el de arriba acaba de elegir, y separarlos los convertía en dos
+  controles sin relación aparente.
+*/
+.nav {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 14px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+}
+
+.navFila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+}
+
+.navPie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 9px 16px;
+    border-top: 1px solid var(--ac-line-softer);
+    background: var(--ac-tint);
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.navPie b {
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+/* Pestañas de etapa. Más discretas que las de Eventos a propósito: son una
+   navegación de segundo nivel y no deben competir con la de arriba. */
+.etapas {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.etapa {
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 99px;
+    padding: 5px 13px;
+    font-family: var(--ac-font-ui);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.etapa:hover {
+    color: var(--ac-ink);
+}
+
+.etapaActiva {
+    border-color: var(--ac-line);
+    background: var(--ac-tint);
+    box-shadow: none;
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.analitica {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.empty {
+    padding: 48px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+/* ------------------------------------------------------------ strip KPI --- */
+
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 14px;
+    box-shadow: var(--ac-shadow-card);
+    padding: 14px 16px;
+}
+
+.kpiLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.kpiValue {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+}
+
+.kpiValue small {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    letter-spacing: 0;
+}
+
+.kpiFoot {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+/* ---------------------------------------------------------------- bento --- */
+
+/* Alturas de fila explícitas en vez de un alto en vh repartido con flex: cada
+   gráfica tiene su alto fijo y nada compite por el espacio, así ninguna tarjeta
+   se desborda sobre la siguiente. */
+.bento {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 14px;
+}
+
+/* Columnas iguales. El bento por defecto es 1.5fr/1fr porque casi siempre hay
+   una tarjeta protagonista; en Respuestas las cuatro pesan lo mismo.
+
+   Va aquí arriba y no junto al resto de los estilos de Respuestas: las media
+   queries no suman especificidad, así que declarada después del bloque
+   responsive ganaría ella y las columnas no colapsarían nunca. */
+.bentoPar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Ocupa el ancho completo del bento en vez de una columna. */
+.cardAncha {
+    grid-column: 1 / -1;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    padding: 16px 18px;
+    min-width: 0;
+}
+
+.cardHead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cardTitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.cardSub {
+    margin: 2px 0 0;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.cardFoot {
+    margin-top: auto;
+    padding-top: 4px;
+    font-size: 11px;
+    color: var(--ac-muted-2);
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.chart {
+    position: relative;
+    width: 100%;
+    height: 210px;
+}
+
+/* Gráfica que no se comprime: el lienzo crece con los datos y la tarjeta se
+   desplaza en horizontal. Sin esto, medio año de envíos diarios queda en barras
+   de 3 px imposibles de apuntar con el mouse. */
+.chartScrollX {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+}
+
+.chartAncho {
+    position: relative;
+    width: 100%;
+    height: 200px;
+}
+
+/* Título de cada gráfica. Es hijo directo del contenedor de scroll, no del
+   lienzo ancho: así mide lo que mide la tarjeta y `sticky` lo deja fijo a la
+   izquierda mientras las barras se desplazan por debajo. Dentro del lienzo se
+   iba con el scroll y desaparecía. */
+.chartTitulo {
+    position: sticky;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.chartTitulo + .chartAncho {
+    margin-bottom: 14px;
+}
+
+/* ------------------------------------------------------------- chips --- */
+
+.chips {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.chipGrupo {
+    display: flex;
+    gap: 2px;
+    background: var(--ac-tint);
+    padding: 3px;
+    border-radius: 10px;
+}
+
+.chip {
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-family: var(--ac-font-ui);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.chip:hover {
+    color: var(--ac-ink);
+}
+
+.chipActivo {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.chartCorto {
+    position: relative;
+    width: 100%;
+    height: 160px;
+}
+
+/* -------------------------------------------------------------- leyenda --- */
+
+.leyendaInline {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.leyendaChip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--ac-muted);
+    white-space: nowrap;
+}
+
+/* `display: block` es obligatorio: un span inline ignora width/height y el
+   punto sale de 0px. */
+.punto {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.puntoAzul {
+    background: var(--blue-color);
+}
+
+.puntoMorado {
+    background: var(--purple-color);
+}
+
+.kpiAcento .kpiValue {
+    color: var(--ac-amber);
+}
+
+/* ---------------------------------------------- salud de envíos (etapa 2) --- */
+
+.saludTrack {
+    display: flex;
+    height: 10px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: var(--ac-tint);
+}
+
+/* Los segmentos son spans dentro de un flex: sin `display: block` el width
+   inline no aplica y el track sale vacío. */
+.saludSeg {
+    display: block;
+    height: 100%;
+}
+
+.saludLlego {
+    background: var(--green-color);
+}
+
+.saludPendiente {
+    background: var(--ac-line-control);
+}
+
+.saludFallo {
+    background: var(--red-color);
+}
+
+.saludLista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.saludItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+/* La tasa de lectura no es parte del embudo de entrega: va separada por una
+   línea para que nadie sume los cuatro porcentajes. */
+.saludItemExtra {
+    margin-top: 2px;
+    padding-top: 8px;
+    border-top: 1px solid var(--ac-line-soft);
+    color: var(--ac-muted);
+}
+
+.saludNombre {
+    flex: 1;
+    min-width: 0;
+}
+
+.saludValor {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.puntoVerde {
+    background: var(--green-color);
+}
+
+.puntoRojo {
+    background: var(--red-color);
+}
+
+.puntoGris {
+    background: var(--ac-line-control);
+}
+
+/* Bloque secundario dentro de la tarjeta de salud: usa el espacio que dejaba
+   libre el embudo y baja la media global al detalle por evento. */
+.peores {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.peoresTitulo {
+    font-size: 11px;
+    color: var(--ac-muted);
+}
+
+.peorEvento {
+    display: grid;
+    grid-template-columns: minmax(0, 150px) minmax(0, 1fr) minmax(34px, auto);
+    align-items: center;
+    gap: 10px;
+}
+
+.peorNombre {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.peorBarra {
+    display: block;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--ac-tint);
+    overflow: hidden;
+}
+
+.peorFill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--red-color);
+}
+
+.peorFillOk {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--green-color);
+}
+
+.peorValor {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Explicación al pie del embudo, antes del footer accionable. */
+.nota {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--ac-muted-2);
+}
+
+/* -------------------------------------------- costo de envíos (etapa 2) --- */
+
+.cambio {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cambioFuente {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--ac-muted);
+}
+
+.costos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.costo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 10px 12px;
+    background: var(--ac-surface-alt);
+    border-radius: 12px;
+}
+
+.costoLabel {
+    font-size: 11px;
+    color: var(--ac-muted);
+}
+
+.costoUsd {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.costoMxn {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}
+
+.tarifas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tarifa {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.tarifaNombre {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.tarifaPrecio {
+    font-size: 10.5px;
+    color: var(--ac-muted);
+}
+
+.tarifaValor {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------- filas extra de los popups (etapa 2) --- */
+
+.listaPopupAncha {
+    min-width: 320px;
+}
+
+/* Variante de dos columnas: para listas sin numerar. Sin esto el nombre caía en
+   la columna de 18px de `.listaItem` y se truncaba a una sola letra. */
+.listaItemSimple {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+
+.listaItemSimple:hover {
+    background: var(--ac-surface-alt);
+}
+
+.listaItemEvento {
+    display: grid;
+    /* La última columna es `auto` y no un ancho fijo: aquí caben tanto "86%"
+       como "60 días" sin partir el texto en dos renglones. */
+    grid-template-columns: minmax(0, 1fr) auto minmax(38px, auto);
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+
+.listaItemEvento:hover {
+    background: var(--ac-surface-alt);
+}
+
+/* Cuando la fila es accionable llega como <button>: se le quita el cromo. */
+button.listaItemEvento {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.listaItemMes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 58px 62px;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+
+.listaItemMes:hover {
+    background: var(--ac-surface-alt);
+}
+
+.listaDetalle {
+    font-size: 10.5px;
+    color: var(--ac-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.listaValorMxn {
+    font-size: 11.5px;
+    color: var(--ac-muted-2);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.listaValorAlto {
+    color: var(--red-color);
+}
+
+/* Filtro que gobierna toda una etapa: va arriba de los KPI, no dentro de una
+   tarjeta, para que se lea como global y no como propio de una tarjeta. */
+.filtroGeneral {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filtroEtiqueta {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+/* ------------------------------------------------ conversación (etapa 8) --- */
+
+/* Lista de preguntas a la izquierda y la conversación elegida a la derecha.
+   La tarjeta ya ocupaba el ancho completo y esa mitad estaba vacía. */
+.fueraDeLoComun {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.conversacion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    max-height: 420px;
+    border-left: 1px solid var(--ac-line-soft);
+    padding-left: 18px;
+}
+
+.conversacionHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.conversacionTitulo {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.conversacionCerrar {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.conversacionCerrar:hover {
+    color: var(--ac-ink);
+}
+
+.conversacionVacia {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    min-height: 120px;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+/* Un hilo largo se desplaza dentro de su mitad en vez de estirar la tarjeta. */
+.hilo {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+    font-family: var(--ac-font-ui);
+}
+
+.mensaje {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-width: 92%;
+    border-radius: 14px;
+    padding: 10px 12px;
+}
+
+.mensajeUsuario {
+    align-self: flex-end;
+    background: var(--blue-bg);
+}
+
+.mensajeLia {
+    align-self: flex-start;
+    background: var(--ac-surface-alt);
+}
+
+.mensajeMeta {
+    font-size: 10px;
+    color: var(--ac-muted);
+}
+
+/* Marca de que la pregunta se repitió; sin ella, la lista ordenada por fecha
+   pierde la señal de cuáles son realmente irrepetibles. */
+.preguntaRepetida {
+    margin-left: 6px;
+    font-size: 10.5px;
+    color: var(--ac-muted);
+}
+
+/* Las respuestas de Lia vienen en markdown con saltos de línea: se respetan. */
+.mensajeTexto {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ac-ink);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------- preguntas (etapa 8) --- */
+
+/* Las preguntas son texto libre y largo: van a renglón completo con su tema
+   arriba, no en una fila con barra como los rankings. */
+.preguntas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    /* Las 133 preguntas viven en este scroll: ya no hay dropdown que las
+       repita. Se empareja con el alto del hilo de la derecha. */
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Cada pregunta abre su conversación, así que es un botón; se le quita el
+   cromo de botón y se le deja solo el hover. */
+.pregunta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    width: 100%;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    margin: 0 -8px;
+    padding: 6px 8px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.pregunta:hover {
+    background: var(--ac-surface-alt);
+}
+
+.preguntaActiva {
+    background: var(--blue-bg);
+}
+
+.preguntaActiva:hover {
+    background: var(--blue-bg);
+}
+
+.preguntaTema {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.preguntaTexto {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--ac-ink);
+}
+
+/* ------------------------------------------- planes (etapa 3) --- */
+
+/* Un bloque por plan: nombre, volumen, barra partida y las dos mitades escritas
+   debajo. Antes era una fila de cinco columnas y se leía como una tabla
+   apretada. */
+.planes {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    /* También se usa como <ul> en el resumen. */
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.planBloque {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.planHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.planNombre {
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.planDetalle {
+    font-size: 11px;
+    color: var(--ac-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.planPie {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--ac-muted);
+}
+
+.planPie b {
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.segInvitado {
+    background: var(--blue-color);
+}
+
+.segOrganizador {
+    background: var(--ac-line-control);
+}
+
+/* ------------------------------------------------- créditos (etapa 1) --- */
+
+/* Dispersión a la izquierda y la lista de números a la derecha. Sin
+   `align-items`, las dos columnas se estiran al alto de la más alta (la lista)
+   y la gráfica deja de tener medio lienzo en blanco debajo. */
+.creditosSplit {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 20px;
+}
+
+/* El alto lo pone la rejilla; `position: relative` es lo que necesita el canvas
+   de chart.js para llenar a su padre. */
+.creditosGrafica {
+    position: relative;
+    width: 100%;
+    min-height: 260px;
+}
+
+/* Lista sin barras: la proporción ya la dice la dispersión y repetirla sería
+   contar lo mismo dos veces. */
+.consumos {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.consumoFila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 44px;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--ac-line-soft);
+    font-size: 12px;
+}
+
+.consumoFila:last-child {
+    border-bottom: none;
+}
+
+.consumoNombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.consumoSaldo {
+    font-size: 10.5px;
+    color: var(--ac-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.consumoValor {
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Un solo número arriba de las listas: es el único agregado que se pidió. */
+.creditoPromedio {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--ac-surface-alt);
+    border-radius: 12px;
+}
+
+.creditoPromedioValor {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.creditoPromedioTexto {
+    flex: 1;
+    min-width: 0;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--ac-muted);
+}
+
+/* ------------------------------------------- tabla de errores (etapa 2) --- */
+
+.selectorMes {
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 9px;
+    padding: 6px 10px;
+    font-family: var(--ac-font-ui);
+    font-size: 12px;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+/* Los tres números del mes, arriba de la tabla: responden "cuántos fallaron y
+   cuántos se reenviaron" sin tener que leer 300 filas. */
+.resumenMes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--ac-surface-alt);
+    border-radius: 12px;
+}
+
+.resumenNumero {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.resumenValor {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.resumenValorOk {
+    color: var(--green-color);
+}
+
+.resumenValorMal {
+    color: var(--red-color);
+}
+
+.resumenLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    line-height: 1.35;
+}
+
+/* La tabla no se comprime por debajo de su ancho mínimo: en pantallas chicas
+   se desplaza en horizontal en vez de apretar seis columnas hasta romperlas.
+   El alto sí se topa: un mes malo trae 300 fallos y sin tope la tarjeta medía
+   17,000 px, con el resto del panel enterrado abajo. */
+.tablaScroll {
+    overflow: auto;
+    max-height: 440px;
+    margin: 0 -4px;
+    padding: 0 4px;
+}
+
+.tabla {
+    display: flex;
+    flex-direction: column;
+    min-width: 760px;
+}
+
+.tablaFila {
+    display: grid;
+    grid-template-columns:
+        minmax(130px, 1.1fr) minmax(90px, 0.9fr) minmax(180px, 1.6fr)
+        64px 120px 104px;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 6px;
+    border-bottom: 1px solid var(--ac-line-soft);
+    font-size: 12px;
+}
+
+.tablaFila:last-child {
+    border-bottom: none;
+}
+
+/* Tabla de seis columnas iguales, sin la rejilla asimétrica de la de errores. */
+.tablaHeadCorta {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.tablaHead {
+    position: sticky;
+    top: 0;
+    background: var(--ac-surface);
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.celdaInvitado {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.celdaNombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.celdaTel {
+    font-size: 10.5px;
+    color: var(--ac-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.celdaTrunca {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.celdaTenue {
+    color: var(--ac-muted);
+}
+
+.marca {
+    display: inline-block;
+    border-radius: 99px;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.marcaOk {
+    background: var(--green-bg);
+    color: var(--green-color);
+}
+
+.marcaMal {
+    background: var(--red-bg);
+    color: var(--red-color);
+}
+
+.marcaTibia {
+    background: var(--ac-tint);
+    color: var(--ac-muted);
+}
+
+/* -------------------------------------------- causas de fallo (etapa 2) --- */
+
+/* Dos renglones por causa en lugar de una fila: los títulos de Meta son largos
+   ("This message was not delivered to maintain healthy ecosystem engagement")
+   y truncarlos a un ancho de columna los deja ilegibles. */
+.causas {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.causa {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.causaTop {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.causaTitulo {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.causaValor {
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.causaBajo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.causaBarra {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--ac-tint);
+    overflow: hidden;
+}
+
+.causaFill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--ac-line-control);
+}
+
+/* La causa que depende de nosotros se pinta en ámbar: es la única sobre la que
+   se puede actuar desde aquí. */
+.causaFillPropia {
+    background: var(--ac-amber);
+}
+
+.causaCodigo {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    color: var(--ac-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------- ranking ciudades --- */
+
+.ranking {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rankingItem {
+    display: grid;
+    grid-template-columns: minmax(0, 124px) minmax(0, 1fr) 26px;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Fila de ranking accionable: llega como <button>, hay que quitarle el cromo y
+   estirarla al ancho completo para que la rejilla siga cuadrando. */
+.rankingClicable {
+    width: 100%;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    margin: 0 -8px;
+    padding: 3px 8px;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.rankingClicable:hover {
+    background: var(--ac-surface-alt);
+}
+
+.rankingActivo {
+    background: var(--blue-bg);
+}
+
+.rankingActivo:hover {
+    background: var(--blue-bg);
+}
+
+/* Chip que muestra el tema por el que está acotada la lista, con su salida. */
+.filtroChip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-family: var(--ac-font-ui);
+    font-size: 11.5px;
+    color: var(--ac-ink);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.filtroChip:hover {
+    background: var(--ac-surface-alt);
+}
+
+.rankingNombre {
+    font-size: 12px;
+    color: var(--ac-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rankingBarra {
+    display: block;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--ac-tint);
+    overflow: hidden;
+}
+
+.rankingFill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--blue-color);
+}
+
+.rankingValor {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Vive dentro de .cardFoot, así que hereda su tamaño y color; el hover sube al
+   tono de tinta para que se lea como accionable y no como nota al pie. */
+.verTodas {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.verTodas:hover {
+    color: var(--ac-ink);
+}
+
+.verTodas[aria-expanded='true'] {
+    color: var(--ac-ink);
+}
+
+.chevron {
+    transition: transform 0.16s ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+/* El popup se portalea a <body>: los tokens que usa son los de :root, no los de
+   ninguna clase contenedora. */
+.listaPopup {
+    min-width: 240px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 12px;
+    box-shadow: var(--ac-shadow-popup);
+    padding: 10px 6px 6px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.listaHead {
+    padding: 0 10px 8px;
+    font-size: 11px;
+    color: var(--ac-muted);
+    border-bottom: 1px solid var(--ac-line-soft);
+}
+
+/* Con muchas ciudades la lista sí hace scroll: es un popup, no la tarjeta, y
+   crecer sin límite lo sacaría de la pantalla. */
+.lista {
+    display: flex;
+    flex-direction: column;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.listaItem {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+
+.listaItem:hover {
+    background: var(--ac-surface-alt);
+}
+
+.listaPos {
+    font-size: 11px;
+    color: var(--ac-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.listaNombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.listaValor {
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- países --- */
+
+.paises {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.donut {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    flex-shrink: 0;
+}
+
+.leyenda {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    min-width: 0;
+    flex: 1;
+}
+
+.leyendaItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.leyendaNombre {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.leyendaValor {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.vacio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 0;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+/* ----------------------------------------------------------- responsive --- */
+
+@media (max-width: 1100px) {
+
+    /* `.bentoPar` se declara más abajo en el archivo y con la misma
+       especificidad, así que sin nombrarla aquí ganaría ella y las dos
+       columnas no colapsarían nunca. */
+    .bento,
+    .bentoPar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .creditosSplit {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* En una columna la conversación va debajo de la lista, con la línea
+       divisoria arriba en vez de a la izquierda. */
+    .fueraDeLoComun {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .conversacion {
+        border-left: none;
+        border-top: 1px solid var(--ac-line-soft);
+        padding-left: 0;
+        padding-top: 14px;
+    }
+}
+
+@media (max-width: 600px) {
+    /* En columna el título ya ocupa el ancho: la leyenda se va abajo en vez de
+       pelear por el espacio y partir el título en tres renglones. */
+    .cardHead {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .paises {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .donut {
+        align-self: center;
+    }
+
+    .rankingItem {
+        grid-template-columns: minmax(0, 106px) minmax(0, 1fr) 24px;
+    }
+}
+
+/* ------------------------------------------------ evento promedio --- */
+
+/* El retrato en prosa. Va fuera del bento y en oscuro porque es la respuesta a
+   la pregunta de la pestaña; las tarjetas de abajo solo la desglosan, y en una
+   rejilla de tarjetas blancas el contraste es lo único que jerarquiza. */
+.retratoOscuro {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--ac-ink);
+    border-radius: 18px;
+    padding: 22px 26px;
+    color: #fff;
+}
+
+.retratoOscuro .retratoEtiqueta {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.retratoOscuro .retratoTexto {
+    font-size: 21px;
+    line-height: 1.55;
+    color: #fff;
+}
+
+/* El único dato del párrafo que es un resultado y no una descripción. */
+.retratoVerde {
+    color: #6EE7A0;
+}
+
+.retratoEtiqueta {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ac-muted-2);
+}
+
+.retratoTexto {
+    margin: 0;
+    font-size: 16.5px;
+    line-height: 1.65;
+    color: var(--ac-ink);
+    /* `text-wrap: pretty` evita la palabra huérfana en la última línea: es un
+       párrafo que se lee, no una etiqueta. */
+    text-wrap: pretty;
+}
+
+.retratoTexto b {
+    font-weight: 600;
+}
+
+/* Rasgos del cliente: etiqueta, valor y la nota que lo relativiza. La nota va
+   en su propia columna y no debajo, para que las cuatro filas se lean como
+   una tabla y no como cuatro párrafos. */
+.rasgos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rasgo {
+    display: grid;
+    grid-template-columns: minmax(0, 96px) minmax(0, auto) minmax(0, 1fr);
+    align-items: baseline;
+    gap: 10px;
+    padding: 7px 0;
+    font-size: 12px;
+    border-bottom: 1px solid var(--ac-line-soft);
+}
+
+.rasgo:last-child {
+    border-bottom: none;
+}
+
+.rasgoLabel {
+    color: var(--ac-muted-2);
+}
+
+/* Solo la inicial. `capitalize` sube la primera letra de CADA palabra y dejaba
+   "241 Personas". */
+.rasgoValor {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.rasgoValor::first-letter {
+    text-transform: uppercase;
+}
+
+.rasgoNota {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+    text-align: right;
+}
+
+/* Tamaño de muestra. Siempre visible, pero solo llama la atención cuando cae
+   por debajo del mínimo: ahí el dato sigue siendo el único que hay y lo
+   honesto es enseñarlo marcado, no esconderlo. */
+.muestra {
+    font-size: 10.5px;
+    font-weight: 400;
+    color: var(--ac-muted-2);
+    white-space: nowrap;
+}
+
+/* Siempre va pegada a un dato ("7 meses", "el mayor invitó 417"), así que el
+   separador es parte de la muestra: sin él se lee "7 meses 23 de 25". */
+.muestra::before {
+    content: '· ';
+}
+
+.muestraCorta {
+    color: var(--orange-color);
+    font-weight: 500;
+}
+
+/* Línea de tiempo compra → envío → evento. Los tramos se reparten el ancho
+   según los días reales, así que la distancia visual entre hitos es la
+   distancia que el cliente realmente vive. */
+.linea {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 2px 0 8px;
+}
+
+.lineaTramo {
+    position: relative;
+    min-width: 0;
+    padding-top: 13px;
+}
+
+.lineaTramo::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 99px;
+}
+
+.lineaTramo:first-child::before {
+    background: var(--blue-color);
+}
+
+.lineaTramo:nth-child(2)::before {
+    background: var(--purple-color);
+}
+
+.lineaHito {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 10.5px;
+    color: var(--ac-muted-2);
+    white-space: nowrap;
+}
+
+.lineaHito b {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+/* El evento no abre un tramo: es el final de la línea, así que va sin barra y
+   alineado a la derecha para que quede pegado al borde de la tarjeta. */
+.lineaFin {
+    padding-top: 13px;
+    text-align: right;
+}
+
+/* --------------------------------------------- respuestas (rediseño) --- */
+
+/* KPI con barra: el número solo no dice si 136 rechazos es mucho. La barra da
+   la proporción de un vistazo, y cada tarjeta declara en su pie contra qué
+   base está midiendo, porque no todas comparten denominador. */
+.kpiBarra {
+    height: 4px;
+    margin: 6px 0 7px;
+    border-radius: 99px;
+    background: var(--ac-tint);
+    overflow: hidden;
+}
+
+.kpiFill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    /* Con porcentajes de un dígito la barra desaparece; 3px la mantiene
+       visible sin mentir sobre la magnitud. */
+    min-width: 3px;
+}
+
+.kpiFillInk {
+    background: var(--ac-ink);
+}
+
+.kpiFillVerde {
+    background: var(--green-color);
+}
+
+.kpiFillRojo {
+    background: var(--red-color);
+}
+
+.kpiFillAmbar {
+    background: var(--orange-color);
+}
+
+.kpiFillAzul {
+    background: var(--blue-color);
+}
+
+.kpiFillMorado {
+    background: var(--purple-color);
+}
+
+.kpiValorVerde {
+    color: var(--green-color);
+}
+
+.kpiValorRojo {
+    color: var(--red-color);
+}
+
+.kpiValorAmbar {
+    color: var(--orange-color);
+}
+
+.kpiValorAzul {
+    color: var(--blue-color);
+}
+
+.kpiValorMorado {
+    color: var(--purple-color);
+}
+
+/* ------------------------------------------------------------- roscas --- */
+
+.rosca {
+    position: relative;
+    width: 100%;
+}
+
+/* `pointer-events: none` para no robarle el hover al canvas de debajo. */
+.roscaCentro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    pointer-events: none;
+}
+
+.roscaValor {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ac-ink);
+}
+
+.roscaPie {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}
+
+/* --------------------------------------------------------- titulares --- */
+
+/* La frase que resume la tarjeta antes de la gráfica: número grande a la
+   izquierda y la lectura en prosa al lado. */
+.titular {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: var(--ac-tint);
+}
+
+.titularValor {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ac-ink);
+    white-space: nowrap;
+}
+
+.titularAzul {
+    color: var(--blue-color);
+}
+
+/* Variante de aviso del titular: el dato no es neutro, es el que hay que
+   mirar. 19 de 39 side events vacíos no es una estadística más de la tarjeta. */
+.titularAviso {
+    background: var(--orange-bg);
+    box-shadow: inset 0 0 0 1px var(--yellow-color-40);
+}
+
+.titularAmbar {
+    color: var(--orange-color);
+}
+
+.titularMorado {
+    color: var(--purple-color);
+}
+
+.titularTexto {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--ac-muted-2);
+}
+
+/* ---------------------------------------------------------- gráficas --- */
+
+/* Gráfica que recibe su alto de quien la usa: el número de filas lo decide el
+   dato, no la hoja de estilos. */
+.chartFlexible {
+    position: relative;
+    width: 100%;
+}
+
+.chartTiempo {
+    position: relative;
+    width: 100%;
+    height: 232px;
+}
+
+.leyendaChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.leyendaPunto {
+    display: block;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+}
+
+/* Porcentaje del embudo, en su propia columna para que los tres queden
+   alineados en vertical y se puedan comparar sin leerlos. */
+.saludPct {
+    min-width: 34px;
+    font-size: 11.5px;
+    color: var(--ac-muted-2);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------- trío de la tasa --- */
+
+.trio {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding-top: 11px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.trioItem {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.trioValor {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ac-ink);
+}
+
+.trioLabel {
+    font-size: 10.5px;
+    line-height: 1.35;
+    color: var(--ac-muted-2);
+}
+
+/* -------------------------------------------- los que no responden --- */
+
+.tresColumnas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.8fr) minmax(0, 1.05fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.dosColumnas {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.columna {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.columnaTitulo {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.desglose {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.desgloseItem {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 13px;
+    border-radius: 11px;
+    background: var(--ac-tint);
+    font-size: 12px;
+}
+
+/* La fila de resultado: no es un paso del proceso, es lo que se consiguió al
+   final. */
+.desgloseLogro {
+    background: var(--green-bg);
+    box-shadow: inset 2px 0 0 var(--green-color);
+}
+
+.desgloseLogro .desgloseValor {
+    color: var(--green-color);
+}
+
+/* La fila accionable: son los que nadie ha tocado todavía, o sea el único
+   número de la tarjeta sobre el que aún se puede hacer algo. */
+.desgloseAccion {
+    background: var(--orange-bg);
+    box-shadow: inset 2px 0 0 var(--orange-color);
+}
+
+/* Variante de tres columnas: nombre, el detalle que lo sostiene y el número.
+   El nombre deja de estirarse para que el detalle quede pegado a él y no
+   flotando a media fila. */
+.desgloseItemPlan {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: baseline;
+}
+
+.desgloseItemPlan .desgloseNombre {
+    font-weight: 600;
+}
+
+.desgloseDetalle {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.desgloseNombre {
+    flex: 1;
+    min-width: 0;
+}
+
+.desgloseValor {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* El ámbar dorado de la paleta auxiliar marca a los que ya recibieron un
+   recordatorio y siguen callados; es el mismo tono del tramo de la barra. */
+.puntoAmbar {
+    background: var(--orange-color);
+}
+
+/* Los que nunca recibieron uno van en el oro oscuro de marca. No es capricho:
+   --orange-color y --yellow-color son el mismo hex, así que el segundo tono
+   cálido tiene que salir de otro lado. La fila además va resaltada, que es lo
+   que de verdad los separa. */
+.puntoNaranja {
+    background: var(--ac-amber);
+}
+
+@media (max-width: 1100px) {
+
+    .tresColumnas,
+    .dosColumnas {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+}
+
+/* ------------------------------------------ resumen de los 30 días --- */
+
+/* El párrafo que ata los números de la tarjeta. Más grande que un pie y más
+   chico que un titular: se lee como una frase, no como una etiqueta. */
+.parte {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ac-muted-2);
+    text-wrap: pretty;
+}
+
+.parte b {
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+/* Rejilla de cifras sueltas. `auto-fit` en vez de un número de columnas fijo
+   porque las tarjetas traen entre tres y cuatro datos, y en Side events depende
+   de cuántos planes hayan creado alguno. */
+.datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
+    gap: 14px 18px;
+    margin-top: 2px;
+    padding-top: 13px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+/* --------------------------------------------- slider de la ventana --- */
+
+.slider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* El número exacto lo lleva el chip de la fila de arriba, así que aquí basta
+   con decir qué hace el control. */
+.sliderEtiqueta {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    white-space: nowrap;
+}
+
+.slider input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 190px;
+    height: 4px;
+    border-radius: 99px;
+    /* `--recorrido` lo pone el componente: el corte duro del degradado marca la
+       parte recorrida, que un input de rango no expone por su cuenta. */
+    background: linear-gradient(
+        to right,
+        var(--ac-ink) 0 var(--recorrido, 0%),
+        var(--ac-tint) var(--recorrido, 0%) 100%
+    );
+    cursor: pointer;
+}
+
+.slider input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid var(--ac-surface);
+    background: var(--ac-ink);
+    box-shadow: var(--ac-shadow-pill);
+    cursor: pointer;
+}
+
+.slider input::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid var(--ac-surface);
+    background: var(--ac-ink);
+    box-shadow: var(--ac-shadow-pill);
+    cursor: pointer;
+}
+
+/* Firefox pinta su propio riel encima del fondo del input. */
+.slider input::-moz-range-track {
+    height: 4px;
+    border-radius: 99px;
+    background: transparent;
+}
+
+.slider input:focus-visible {
+    outline: 2px solid var(--ac-ink);
+    outline-offset: 4px;
+}
+
+/* ------------------------------------------------ resumen: tarjetas --- */
+
+.kpisResumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+}
+
+.kpiResumen {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    padding: 15px 17px 13px;
+    min-width: 0;
+}
+
+/* La primera tarjeta va en oscuro: es la cifra de la que cuelgan las otras
+   tres, y en una fila de cuatro cajas blancas nada más la distingue. */
+.kpiOscuro {
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
+}
+
+.kpiResumenLabel {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ac-muted-2);
+}
+
+.kpiOscuro .kpiResumenLabel,
+.kpiOscuro .kpiResumenPie {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.kpiResumenFila {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.kpiResumenValor {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: var(--ac-ink);
+}
+
+.kpiOscuro .kpiResumenValor {
+    color: #fff;
+}
+
+.kpiResumenNota {
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.notaRoja {
+    color: var(--red-color);
+}
+
+.notaAmbar {
+    color: var(--orange-color);
+}
+
+.notaVerde {
+    color: var(--green-color);
+}
+
+.variacion {
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.sube {
+    color: var(--green-color);
+}
+
+.baja {
+    color: var(--red-color);
+}
+
+.chispa {
+    position: relative;
+    width: 100%;
+    height: 42px;
+}
+
+.kpiResumenPie {
+    font-size: 10.5px;
+    line-height: 1.4;
+    color: var(--ac-muted-2);
+}
+
+/* ------------------------------------------ resumen: cuerpo de tarjeta --- */
+
+/* Etiqueta del encabezado: el dato que resume la tarjeta entera, en la esquina
+   donde el ojo cae después del título. */
+.insignia {
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: var(--ac-tint);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--ac-muted-2);
+    white-space: nowrap;
+}
+
+.insigniaVerde {
+    background: var(--green-bg);
+    color: #1B7A46;
+}
+
+.insigniaAmbar {
+    background: var(--orange-bg);
+    color: var(--ac-amber);
+}
+
+.valorVerde {
+    color: var(--green-color);
+}
+
+.valorRojo {
+    color: var(--red-color);
+}
+
+.valorAmbar {
+    color: var(--orange-color);
+}
+
+.miniTitulo {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ac-muted-2);
+}
+
+.miniTituloFila {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.miniNota {
+    font-size: 10.5px;
+    color: var(--ac-muted-3);
+}
+
+.miniChart {
+    position: relative;
+    width: 100%;
+}
+
+/* ------------------------------------------------- resumen: embudo --- */
+
+.embudo {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Dos renglones por peldaño: arriba el nombre y la cifra, abajo la barra. La
+   barra ocupa el ancho completo para que los cuatro peldaños se comparen
+   contra la misma referencia. */
+.embudoFila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 4px 10px;
+    font-size: 12px;
+}
+
+.embudoNombre {
+    color: var(--ac-muted-2);
+}
+
+.embudoValor {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.embudoValor small {
+    margin-left: 6px;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--ac-muted-2);
+}
+
+.embudoPista {
+    grid-column: 1 / -1;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--ac-tint);
+    overflow: hidden;
+}
+
+.embudoFill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    min-width: 3px;
+}
+
+/* ------------------------------------------------ resumen: reparto --- */
+
+.reparto {
+    display: flex;
+    gap: 2px;
+    height: 9px;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.repartoSeg {
+    display: block;
+    height: 100%;
+}
+
+.repartoLista {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.repartoFila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.repartoNombre {
+    flex: 1;
+    min-width: 0;
+    color: var(--ac-muted-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.repartoValor {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------ resumen: escala por plan --- */
+
+.planFila {
+    display: grid;
+    grid-template-columns: minmax(0, 132px) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.planNombre small {
+    font-weight: 400;
+    color: var(--ac-muted-2);
+}
+
+.planPista {
+    height: 8px;
+    border-radius: 99px;
+    background: var(--ac-tint);
+    overflow: hidden;
+}
+
+.planFill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--purple-color);
+}
+
+.planValor {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Cuerpo de una tarjeta a ancho completo, en dos columnas: el texto y sus
+   cifras a la izquierda, la visualización a la derecha. Apiladas, una tarjeta
+   de ancho completo deja la gráfica sola en una franja larguísima. */
+.cuerpoEnFila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .cuerpoEnFila {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+}
+
+/* El reparto es un bloque, no un fragmento: dentro de una rejilla sus tres
+   piezas se convertirían en tres celdas sueltas. */
+.repartoBloque {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* Dos insignias en la misma cabecera: agrupadas, porque `.cardHead` reparte a
+   los extremos y sueltas se iban una a cada lado de la tarjeta. */
+.insignias {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------- tabla de tipos --- */
+
+.tablaCaja {
+    border: 1px solid var(--ac-line-soft);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/*
+  Se llama `tablaTipos` y no `tabla` porque ese nombre ya estaba tomado por la
+  tabla de errores de Envíos, que es un flex con `min-width: 760px`. Compartir
+  clase le metía ese mínimo a esta tabla y la desbordaba fuera de su tarjeta.
+
+  `table-layout: fixed` además la blinda: con el reparto automático, un ancho en
+  porcentaje sobre la primera columna convive mal con tres columnas que piden su
+  ancho de contenido y el navegador resuelve estirando la tabla.
+*/
+.tablaTipos {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.tablaTipos thead th {
+    padding: 9px 14px;
+    background: var(--ac-tint);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-muted-2);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.tablaTipos tbody th {
+    font-weight: 400;
+    color: var(--ac-muted-2);
+    text-align: left;
+}
+
+/* La primera columna lleva el nombre; el 40% le da aire sin ahogar las cifras,
+   que se reparten el resto a partes iguales. */
+.tablaTipos th:first-child {
+    text-align: left;
+    width: 40%;
+}
+
+/* Nombres largos como "Recordatorio de side event" no pueden empujar la
+   tabla: se parten en dos renglones. */
+.tablaTipos tbody th {
+    white-space: normal;
+    line-height: 1.35;
+}
+
+.tablaTipos td {
+    padding: 9px 14px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.tablaTipos tbody th {
+    padding: 9px 14px;
+}
+
+.tablaTipos tbody tr + tr th,
+.tablaTipos tbody tr + tr td {
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.tablaCero {
+    font-weight: 700;
+    color: var(--ac-ink);
+}
+
+/* El punto de color dentro de la celda ata cada fila de la tabla con su serie
+   en la gráfica de al lado. */
+.tablaTipos tbody th .leyendaPunto {
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+}

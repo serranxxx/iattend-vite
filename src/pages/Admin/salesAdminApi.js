@@ -34,6 +34,11 @@ export const createAdminVendedor = async (payload) => {
     return axios.post(`${API_URL}/api/admin/vendedores`, payload, { headers })
 }
 
+export const updateAdminVendedor = async (vendedorId, payload) => {
+    const headers = await authHeaders()
+    return axios.patch(`${API_URL}/api/admin/vendedores/${vendedorId}`, payload, { headers })
+}
+
 export const searchAdminInvitations = async (q) => {
     const headers = await authHeaders()
     return axios.get(`${API_URL}/api/admin/invitaciones-disponibles`, { headers, params: { q } })

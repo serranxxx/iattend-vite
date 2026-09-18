@@ -1,0 +1,167 @@
+/* Buzón acoplado al sider. Todo el alto y el ancho los manda el contenedor:
+   este componente no fija ninguno de los dos, que es justo lo que hacía el
+   flotante y lo que lo volvía inservible aquí. */
+
+.buzon {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.lista {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fila {
+    display: grid;
+    /* La columna del centro es `minmax(0, 1fr)` y no `1fr`: sin el mínimo en 0
+       el texto largo estira la rejilla y el meta se sale de la tarjeta. */
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 11px 16px;
+    border: none;
+    border-bottom: 1px solid var(--ac-line-softer);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.fila:hover {
+    background: var(--ac-tint);
+}
+
+.filaPendiente {
+    background: var(--ac-violet-soft);
+}
+
+.filaPendiente:hover {
+    background: color-mix(in srgb, var(--ac-violet-soft) 88%, var(--ac-violet));
+}
+
+.avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: var(--ac-tint);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ac-muted);
+}
+
+.filaPendiente .avatar {
+    background: var(--ac-violet);
+    color: #fff;
+}
+
+.centro {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.nombre,
+.evento,
+.vistazo,
+.adjunto {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nombre {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* De qué evento viene. En el buzón del Admin caen mensajes de todas las
+   invitaciones a la vez, así que sin esto un "Hola!" no se puede atender. */
+.evento {
+    font-size: 10.5px;
+    color: var(--ac-violet);
+}
+
+.vistazo,
+.adjunto {
+    font-size: 12px;
+    color: var(--ac-muted-2);
+}
+
+.adjunto {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    /* Alinea la hora con el nombre y no con el centro del bloque de tres
+       líneas, que es donde el ojo la busca. */
+    align-self: flex-start;
+    padding-top: 2px;
+}
+
+.hora {
+    font-size: 10.5px;
+    color: var(--ac-muted-3);
+    white-space: nowrap;
+}
+
+.pendientes {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: grid;
+    place-items: center;
+    border-radius: 99px;
+    background: var(--ac-violet);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.vacio {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    padding: 32px 24px;
+    font-family: var(--ac-font-ui);
+    font-size: 12.5px;
+    color: var(--ac-muted-2);
+    text-align: center;
+}
+
+/* ------------------------------------------------ conversación abierta --- */
+
+/*
+  OpenChat está calibrado para el panel flotante de 450px. Aquí el sider son
+  352, y sus dos topes se multiplican: la burbuja al 70% del panel y el cuerpo
+  al 70% de la burbuja dejan el texto en el 49% del ancho, así que "Confirmar
+  asistencia de 3 personas" salía en tres renglones de dos palabras.
+
+  Se corrigen desde aquí, con :global y acotado a `.buzon`, y no en
+  open-chat.css: esos valores son correctos para el flotante, que es donde
+  siguen viviendo. El que cambia de contexto es este componente.
+*/
+.buzon :global(.open_message_cont) {
+    max-width: 86%;
+}
+
+.buzon :global(.open_message_body) {
+    max-width: 100%;
+}

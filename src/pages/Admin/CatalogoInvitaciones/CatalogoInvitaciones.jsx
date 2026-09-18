@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Checkbox, Dropdown, Modal, Spin, Tag, message } from 'antd'
+import { Button, Checkbox, Dropdown, Spin, Tag, message } from 'antd'
 import { ArrowLeft, ArrowRight, ChevronDown, Copy, Eye, ImageOff, Palette, X } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
+import { AdminModal } from '../AdminModal'
 import { BuildContent } from '../../../modules/Invitation/Build/PageSections/BuildContent'
 import { fetchAdminInvitaciones, fetchAdminInvitacionData } from '../catalogoAdminApi'
 import styles from './CatalogoInvitaciones.module.css'
@@ -75,7 +76,7 @@ const initialsOf = (inv) => {
 }
 
 // `tipo` viene del Segmented Clientes/Tests que vive en el extra content
-// de las tabs de Laboratorio (HerramientasSection); clientes y tests nunca
+// de las tabs de Laboratorio (LaboratorioSection); clientes y tests nunca
 // se mezclan — el backend filtra por role del owner
 export const CatalogoInvitaciones = ({ tipo }) => {
     const [invitations, setInvitations] = useState([])
@@ -503,21 +504,13 @@ export const CatalogoInvitaciones = ({ tipo }) => {
                 </div>
             )}
 
-            <Modal
+            <AdminModal
                 open={!!selected}
-                onCancel={() => setSelected(null)}
-                footer={null}
-                destroyOnHidden
-                closable={false}
-                width="min(1100px, 94vw)"
-                className={styles.previewModal}
-                styles={{
-                    content: { padding: 0, overflow: 'hidden', borderRadius: 28 },
-                    body: { padding: 0 },
-                }}
+                onClose={() => setSelected(null)}
+                width='min(1100px, 94vw)'
             >
                 {selected && renderModalContent()}
-            </Modal>
+            </AdminModal>
         </div>
     )
 }

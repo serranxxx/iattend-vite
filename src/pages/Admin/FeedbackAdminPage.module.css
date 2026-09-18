@@ -1,95 +1,209 @@
-.page {
-  padding: 24px 0px;
+/* Feedback: KPIs, distribución de estrellas y lista de reviews. */
+
+.feedback {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
 }
 
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
+/* ------------------------------------------------------------ strip KPI --- */
+
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
 }
 
-.title {
-  font-family: 'Denver-Serial', 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--mid-blue-500);
+.kpi {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 14px;
+    box-shadow: var(--ac-shadow-card);
+    padding: 14px 16px;
 }
 
-.subtitle {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  color: var(--gray-color);
+.kpiLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
 }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 22px;
+.kpiValue {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
 }
 
-.statCard {
-  background: var(--sc-color);
-  border-radius: 16px;
-  padding: 14px 16px;
+.kpiFoot {
+    font-size: 11.5px;
+    color: var(--ac-muted);
 }
 
-.statLabel {
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  color: var(--gray-color);
+/* --------------------------------------------------------- distribución --- */
+
+.card {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
 }
 
-.statValue {
-  font-family: 'Poppins', sans-serif;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--mid-blue-500);
-  margin-top: 4px;
+.cardPad {
+    padding: 16px;
 }
 
-.statSub {
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  color: var(--success-color-600);
+.cardHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--ac-line-softer);
+    flex-wrap: wrap;
 }
 
-.chartHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+.cardTitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
 }
 
-.chartTitle {
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-color);
+.dist {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.chartWrapper {
-  position: relative;
-  height: 220px;
-  background: #fff;
-  border-radius: 16px;
-  border: 0.5px solid var(--borders);
-  padding: 16px;
-  box-sizing: border-box;
-  margin-bottom: 20px;
+.distRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.filtersRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+.distLabel {
+    width: 32px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--ac-text-2);
+}
+
+.distTrack {
+    flex: 1;
+    min-width: 0;
+    height: 8px;
+    background: var(--ac-tint);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+/* El fill es un <span> y su padre no es flex, así que sin display:block queda
+   inline y ni width ni height aplican: la barra se dibuja de 0px. */
+.distFill {
+    display: block;
+    height: 100%;
+    background: var(--ac-lilac);
+    border-radius: 999px;
+}
+
+.distCount {
+    width: 28px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+/* -------------------------------------------------------------- filtros --- */
+
+.filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.select {
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--ac-text-2);
+    cursor: pointer;
+}
+
+.checkbox input {
+    accent-color: var(--ac-ink);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+/* -------------------------------------------------------------- reviews --- */
+
+.review {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--ac-line-soft);
+}
+
+.review:last-child {
+    border-bottom: none;
+}
+
+.stars {
+    flex-shrink: 0;
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet-ink);
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.reviewBody {
+    flex: 1;
+    min-width: 0;
+}
+
+.reviewMeta {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.comment {
+    font-size: 13px;
+    color: var(--ac-text-2);
+    line-height: 1.55;
+    text-wrap: pretty;
 }
 
 .noComment {
-  color: var(--gray-color);
+    font-size: 13px;
+    color: var(--ac-muted-2);
+    font-style: italic;
+}
+
+.empty {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted-2);
 }

@@ -1,0 +1,522 @@
+/* Laboratorio: catálogo de fonts, texturas e invitaciones. */
+
+.lab {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--ac-tint);
+    padding: 3px;
+    border-radius: 10px;
+}
+
+.tab {
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tabActive {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.search {
+    flex: 1;
+    min-width: 180px;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line-input);
+    border-radius: 11px;
+    padding: 8px 12px;
+    color: var(--ac-muted-2);
+}
+
+.search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ac-ink);
+}
+
+/* ------------------------------------------------------- tarjetas resumen --- */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.summary {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 14px;
+    box-shadow: var(--ac-shadow-card);
+    padding: 14px 16px;
+    min-width: 0;
+}
+
+.summaryLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.summaryValue {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+}
+
+/* La font más usada se pinta con su propia tipografía: es el dato y la muestra. */
+.summaryFont {
+    font-size: 22px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.summaryFoot {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.summaryFootGreen {
+    color: var(--ac-green-ink);
+}
+
+.summaryFootAmber {
+    color: var(--ac-amber);
+}
+
+/* --------------------------------------------------------- tabla de fonts --- */
+
+.card {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+}
+
+.scroller {
+    overflow-x: auto;
+}
+
+.table {
+    min-width: 760px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1.6fr 110px 110px 92px 108px 108px;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--ac-line-soft);
+    font-size: 13px;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.row:hover {
+    background: var(--ac-surface-alt);
+}
+
+.head {
+    padding: 9px 16px;
+    background: var(--ac-surface-alt);
+    border-bottom: 1px solid var(--ac-line-table);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.head:hover {
+    background: var(--ac-surface-alt);
+}
+
+.cell {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fontName {
+    font-size: 18px;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chip {
+    display: inline-block;
+    background: var(--ac-tint);
+    color: var(--ac-text-3);
+    font-size: 11px;
+    border-radius: 6px;
+    padding: 3px 8px;
+}
+
+.chipSelfHosted {
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet-ink);
+    font-weight: 600;
+}
+
+.pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 3px 10px;
+}
+
+.pillActiva {
+    background: var(--ac-green-soft);
+    color: var(--ac-green-ink);
+}
+
+.pillInactiva {
+    background: var(--ac-tint);
+    color: var(--ac-muted);
+}
+
+.uso {
+    color: var(--ac-violet);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: left;
+}
+
+.uso:hover {
+    text-decoration: underline;
+}
+
+.sinUso {
+    color: var(--ac-muted-2);
+}
+
+.toggle {
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.toggle:hover {
+    border-color: var(--ac-ink);
+    color: var(--ac-ink);
+}
+
+.toggleOn {
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
+}
+
+.toggleOn:hover {
+    background: var(--ac-ink-hover);
+    color: #fff;
+}
+
+/* Bloqueado usa aria-disabled y no `disabled`: un <button disabled> no emite
+   eventos de mouse y el Tooltip con el motivo nunca se vería. */
+.toggle[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.toggle[aria-disabled='true']:hover {
+    border-color: var(--ac-line-control);
+    color: var(--ac-muted);
+}
+
+.popup {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 13px;
+    box-shadow: var(--ac-shadow-popup);
+    padding: 12px 14px;
+    min-width: 260px;
+    max-height: 280px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: var(--ac-font-ui);
+}
+
+.popupLabel {
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.popupId {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}
+
+/* ---------------------------------------------------------------- texturas --- */
+
+.texGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.texCard {
+    border: 1px solid var(--ac-line);
+    border-radius: 13px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+    background: var(--ac-surface);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.texCard:hover {
+    border-color: var(--ac-ink);
+}
+
+.swatch {
+    height: 86px;
+    width: 100%;
+    object-fit: cover;
+    display: block;
+    background: var(--ac-tint);
+}
+
+.texFoot {
+    padding: 9px 11px;
+}
+
+.texName {
+    font-size: 12.5px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.texUsos {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}
+
+.upload {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px dashed var(--ac-line-control);
+    background: var(--ac-surface-alt);
+    border-radius: 9px;
+    padding: 8px 13px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.upload:hover {
+    border-color: var(--ac-ink);
+}
+
+.empty {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted-2);
+}
+
+/* ------------------------------------------------- regalos (gift_brands) --- */
+
+.brandGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.brandGroupTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.brandGroupTitle span {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ac-muted-2);
+    background: var(--ac-tint);
+    border-radius: 99px;
+    padding: 1px 8px;
+}
+
+.brandGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.brandCard {
+    border: 1px solid var(--ac-line);
+    border-radius: 13px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+    background: var(--ac-surface);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.brandCard:hover {
+    border-color: var(--ac-ink);
+}
+
+.brandSwatch {
+    height: 86px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ac-tint);
+}
+
+.brandSwatch img {
+    max-height: 44%;
+    max-width: 55%;
+    object-fit: contain;
+}
+
+.brandSwatch span {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0 10px;
+    text-align: center;
+}
+
+.brandFoot {
+    padding: 9px 11px;
+}
+
+.brandName {
+    font-size: 12.5px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.brandMeta {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}
+
+/* Valores guardados en tarjetas que no resuelven a ninguna marca del catálogo */
+.orphanBox {
+    border: 1px solid var(--ac-line);
+    border-left: 3px solid var(--ac-lilac-2);
+    border-radius: 13px;
+    background: var(--ac-surface);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.orphanTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.orphanHelp {
+    font-size: 12px;
+    color: var(--ac-muted);
+    margin: 4px 0 10px;
+}
+
+.orphanList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.orphanChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--ac-line-soft);
+    border-radius: 99px;
+    padding: 3px 10px;
+    background: var(--ac-surface-alt);
+}
+
+.orphanChip code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ac-text-2);
+}
+
+.orphanChip b {
+    font-size: 11px;
+    color: var(--ac-muted-2);
+}

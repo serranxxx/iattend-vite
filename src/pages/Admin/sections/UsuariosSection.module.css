@@ -1,0 +1,256 @@
+/* Usuarios: tabla densa con filtro segmentado por rol. */
+
+.usuarios {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--ac-tint);
+    padding: 3px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+}
+
+.tab {
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tabActive {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+/* --------------------------------------------------------------- tabla --- */
+
+.card {
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+}
+
+.scroller {
+    overflow-x: auto;
+}
+
+.table {
+    min-width: 820px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1.1fr 1.5fr 90px 1.4fr 132px;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--ac-line-soft);
+    font-size: 13px;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.row:hover {
+    background: var(--ac-surface-alt);
+}
+
+.head {
+    padding: 9px 16px;
+    background: var(--ac-surface-alt);
+    border-bottom: 1px solid var(--ac-line-table);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.head:hover {
+    background: var(--ac-surface-alt);
+}
+
+.cell {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.name {
+    font-weight: 600;
+}
+
+.email {
+    color: var(--ac-text-3);
+}
+
+/* El id truncado no sirve de nada si no se puede copiar. */
+.id {
+    display: block;
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ac-muted-2);
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.id:hover {
+    color: var(--ac-ink);
+}
+
+/* ----------------------------------------------------------------- rol --- */
+
+.role {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 3px 10px;
+}
+
+.roleCliente {
+    background: var(--ac-green-soft);
+    color: var(--ac-green-ink);
+}
+
+.roleVendedor {
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet-ink);
+}
+
+/* Admin va sobre el navy de marca: es el rol con más peso de los cuatro. */
+.roleAdmin {
+    background: var(--ac-ink);
+    color: #fff;
+}
+
+.rolePruebas {
+    background: var(--ac-surface-alt);
+    color: var(--ac-muted);
+    border: 1px solid var(--ac-line);
+}
+
+/* -------------------------------------------------------------- acción --- */
+
+.action {
+    border: 1px solid var(--ac-line-outline);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 4px 9px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ac-ink);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.action:hover {
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
+}
+
+.empty {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted-2);
+}
+
+/* ---------------------------------------------------------- responsive --- */
+
+@media (max-width: 900px) {
+    .scroller {
+        display: none;
+    }
+
+    .mobileRow {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--ac-line-soft);
+    }
+
+    .mobileRow:last-child {
+        border-bottom: none;
+    }
+
+    .mobileTop {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mobileName {
+        flex: 1;
+        min-width: 0;
+        font-size: 14px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobileEmail {
+        font-size: 12px;
+        color: var(--ac-text-3);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobileBottom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
+
+.mobileList {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .mobileList {
+        display: block;
+    }
+}

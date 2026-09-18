@@ -1,0 +1,285 @@
+/* Calendario continuo de eventos (Eventos → Próximos). */
+
+.calendario {
+    display: flex;
+    flex-direction: column;
+    /* Alto de pantalla menos el chrome del shell (topbar, padding, toolbar).
+       `.content` del shell no tiene alto definido, así que un `flex: 1` aquí no
+       resolvería a nada y la rejilla crecería sin scroll. */
+    height: calc(100vh - 215px);
+    min-height: 460px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
+    font-family: var(--ac-font-ui);
+}
+
+/* ---------------------------------------------------------------- barra --- */
+
+.barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px 10px;
+}
+
+.mes {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--ac-muted);
+    text-transform: capitalize;
+}
+
+.mes b {
+    font-weight: 700;
+    color: var(--ac-ink);
+}
+
+.controles {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.flecha,
+.hoyBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--ac-tint);
+    border-radius: 99px;
+    font-family: inherit;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.flecha {
+    width: 30px;
+    height: 30px;
+}
+
+.flecha:disabled {
+    color: var(--ac-line-control);
+    cursor: default;
+}
+
+.hoyBtn {
+    height: 30px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.flecha:not(:disabled):hover,
+.hoyBtn:hover {
+    background: var(--ac-line-soft);
+}
+
+/* ------------------------------------------------------------- rejilla --- */
+
+.encabezadoDias {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border-bottom: 1px solid var(--ac-line-soft);
+    padding: 0 0 6px;
+}
+
+.encabezadoDias span {
+    padding-right: 8px;
+    font-size: 11px;
+    color: var(--ac-muted);
+    text-align: right;
+}
+
+/* El scroll vive aquí, no en la página: el encabezado y los días de la semana
+   quedan fijos mientras los meses corren. */
+.scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.semana {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    /* Alto mínimo por semana, no fijo: una semana con muchos eventos crece en
+       vez de recortarlos. */
+    min-height: 106px;
+}
+
+.dia {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    border-top: 1px solid var(--ac-line-soft);
+    border-right: 1px solid var(--ac-line-soft);
+    padding: 4px 0 6px;
+}
+
+.dia:last-child {
+    border-right: none;
+}
+
+.numeroFila {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 8px;
+}
+
+.numero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 99px;
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    white-space: nowrap;
+}
+
+.numeroHoy {
+    background: var(--red-color);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+/* -------------------------------------------------------------- eventos --- */
+
+/* Los eventos llenan el alto libre de la celda; con `flex: 1` en cada uno, dos
+   eventos se reparten mitad y mitad, tres un tercio, y así. */
+.eventos {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    padding: 2px 5px 0;
+}
+
+/* El nombre va pegado arriba del bloque, no centrado: con celdas altas el
+   título quedaba flotando a media altura y se perdía la lectura por renglones
+   entre un día y otro. */
+.evento {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    flex: 1;
+    min-height: 24px;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    padding: 4px 8px 4px 5px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* Barra de color a la izquierda del bloque, como en el calendario de Apple. */
+.marca {
+    display: block;
+    width: 3px;
+    align-self: stretch;
+    border-radius: 99px;
+    flex-shrink: 0;
+}
+
+.eventoNombre {
+    min-width: 0;
+    /* Compensa el ascendente de la fuente para que el texto quede alineado con
+       el inicio de la barra de color y no un pelo más abajo. */
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Un color por evento, tomado de la paleta auxiliar del producto. El fondo es
+   el tono suave y la barra y el texto el saturado. */
+.azul {
+    background: var(--blue-bg);
+    color: #0B62A8;
+}
+
+.azul .marca {
+    background: var(--blue-color);
+}
+
+.morado {
+    background: var(--purple-bg);
+    color: #4B24C0;
+}
+
+.morado .marca {
+    background: var(--purple-color);
+}
+
+.verde {
+    background: var(--green-bg);
+    color: #1F7F3A;
+}
+
+.verde .marca {
+    background: var(--green-color);
+}
+
+.naranja {
+    background: var(--orange-bg);
+    color: #8F5C1A;
+}
+
+.naranja .marca {
+    background: var(--orange-color);
+}
+
+.rojo {
+    background: var(--red-bg);
+    color: #B03A2C;
+}
+
+.rojo .marca {
+    background: var(--red-color);
+}
+
+.eventoActivo {
+    outline: 2px solid var(--ac-ink);
+    outline-offset: -2px;
+}
+
+/* ----------------------------------------------------------- responsive --- */
+
+@media (max-width: 900px) {
+    .calendario {
+        height: calc(100vh - 250px);
+    }
+
+    .semana {
+        min-height: 84px;
+    }
+
+    /* En pantallas chicas el nombre no cabe: queda el bloque de color como
+       marca de que ese día hay algo, y el detalle se abre al tocar. */
+    .eventoNombre {
+        display: none;
+    }
+
+    .evento {
+        min-height: 14px;
+        padding: 0;
+    }
+
+    .marca {
+        display: none;
+    }
+}

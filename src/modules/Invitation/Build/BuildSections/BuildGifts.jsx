@@ -5,30 +5,23 @@ import { IoMdAdd } from 'react-icons/io';
 import { RiDeleteBack2Line } from 'react-icons/ri';
 import { TbEyeClosed } from 'react-icons/tb';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
+import { useGiftBrands } from '../../../../hooks/useGiftBrands';
 
 const { Option } = Select;
 
-const banks = [
-    "Banamex",
-    "Banorte",
-    "BBVA",
-    "HSBC",
-    "Nu",
-    "Santander",
-    "Scotiabank",
-    "Crelan"
-]
-
-const stores = [
-    "Amazon",
-    "Liverpool",
-    "Palacio de hierro",
-    "Sears",
-]
+// Una tarjeta vieja puede traer una marca que ya no está activa en el catálogo
+// (o que nunca estuvo, como los valores sucios que dejó el frontend anterior).
+// Si no la agregamos como opción, antd la muestra pero el organizador la pierde
+// en cuanto toca el Select.
+const opcionesConValorActual = (nombres, valorActual) =>
+    valorActual && !nombres.includes(valorActual)
+        ? [...nombres, valorActual]
+        : nombres;
 
 export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }) => {
 
     const { t } = useTranslation()
+    const { stores, banks, loading: brandsLoading } = useGiftBrands()
     const [onGeneration] = useState(false)
     const [descriptionValue, setDescriptionValue] = useState(null)
 
@@ -92,44 +85,34 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
         setSaved(false)
     }
 
-    const addNewCard = (link) => {
-        if (link) {
-            setInvitation(prevInvitation => ({
-                ...prevInvitation,
-                gifts: {
-                    ...prevInvitation.gifts,
-                    cards: [
-                        ...prevInvitation.gifts.cards,
-                        {
-                            kind: 'store',
-                            brand: 'Amazon',
-                            url: null,
-                            bank: null,
-                            name: null,
-                            number: null
-                        }
-                    ]
-                }
-            }));
-        } else {
-            setInvitation(prevInvitation => ({
-                ...prevInvitation,
-                gifts: {
-                    ...prevInvitation.gifts,
-                    cards: [
-                        ...prevInvitation.gifts.cards,
-                        {
-                            kind: 'bank',
-                            brand: null,
-                            url: null,
-                            bank: "BBVA",
-                            name: null,
-                            number: null
-                        }
-                    ]
-                }
-            }));
-        }
+    // `esTienda` decide el tipo de tarjeta. La marca por default es la primera
+    // del catálogo para ese tipo (sort_order), no una constante hardcodeada.
+    const addNewCard = (esTienda) => {
+        const nuevaTarjeta = esTienda
+            ? {
+                kind: 'store',
+                brand: stores[0]?.name ?? null,
+                url: null,
+                bank: null,
+                name: null,
+                number: null
+            }
+            : {
+                kind: 'bank',
+                brand: null,
+                url: null,
+                bank: banks[0]?.name ?? null,
+                name: null,
+                number: null
+            };
+
+        setInvitation(prevInvitation => ({
+            ...prevInvitation,
+            gifts: {
+                ...prevInvitation.gifts,
+                cards: [...prevInvitation.gifts.cards, nuevaTarjeta]
+            }
+        }));
 
         setSaved(false)
     }
@@ -303,6 +286,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                         width: '180px', borderRadius: '99px'
                                                     }}
                                                     onClick={() => addNewCard(false)}
+                                                    disabled={brandsLoading || banks.length === 0}
                                                     icon={<IoMdAdd />}
                                                 >
                                                     {t('build_gifts.btn_bank')}
@@ -314,6 +298,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                         width: '180px', borderRadius: '99px'
                                                     }}
                                                     onClick={() => addNewCard(true)}
+                                                    disabled={brandsLoading || stores.length === 0}
                                                     icon={<IoMdAdd />}
                                                 >
                                                     {t('build_gifts.btn_store')}
@@ -370,9 +355,10 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
 
                                                                             value={card.brand}
                                                                             onChange={(e) => changeCardTypeByIndex(index, e)}
+                                                                            loading={brandsLoading}
                                                                             style={{ width: '100%' }}>
-                                                                            {stores.map((font, index) => (
-                                                                                <Option key={index} value={font}>{font}</Option>
+                                                                            {opcionesConValorActual(stores.map(s => s.name), card.brand).map((nombre) => (
+                                                                                <Option key={nombre} value={nombre}>{nombre}</Option>
                                                                             ))}
 
                                                                         </Select>
@@ -417,9 +403,10 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
 
                                                                                 value={card.bank}
                                                                                 onChange={(e) => changeCardBankByIndex(index, e)}
+                                                                                loading={brandsLoading}
                                                                                 style={{ flex: 1 }}>
-                                                                                {banks.map((font, index) => (
-                                                                                    <Option key={index} value={font}>{font}</Option>
+                                                                                {opcionesConValorActual(banks.map(b => b.name), card.bank).map((nombre) => (
+                                                                                    <Option key={nombre} value={nombre}>{nombre}</Option>
                                                                                 ))}
 
                                                                             </Select>

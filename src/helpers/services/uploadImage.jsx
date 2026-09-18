@@ -423,3 +423,34 @@ export const deleteVideoFromSupabase = async (path, invitationID, setVideos) => 
     }
 };
 
+
+// Logo de una marca de la mesa de regalos (catálogo gift_brands).
+// Mismo bucket que las texturas; los PNG originales vivían en
+// iattend-events/public/assets/banks antes de mover el catálogo a Supabase.
+export const uploadGiftBrandLogo = async (file) => {
+    const isPng = file.type === 'image/png';
+    const compressedFile = await imageCompression(file, {
+        maxSizeMB: 0.3,
+        maxWidthOrHeight: 600,
+        initialQuality: 0.9,
+        fileType: isPng ? 'image/png' : 'image/jpeg',
+        useWebWorker: true,
+    });
+
+    const filePath = `GiftBrands/${Date.now()}-${compressedFile.name}`;
+
+    const { error } = await supabase.storage
+        .from('assets')
+        .upload(filePath, compressedFile, {
+            upsert: true,
+            contentType: compressedFile.type,
+        });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+    return { url: data.publicUrl, path: filePath };
+};

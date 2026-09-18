@@ -1,0 +1,118 @@
+/*
+  Tokens del Admin Control Center (rediseño del panel de administrador).
+
+  Derivados del Manual de Marca 2026 (Iranica Design Lab) y de la capa de
+  Producto/Interfaz documentada en .claude/skills/iattend-design-system.
+
+  Paleta de marca que se usa tal cual:
+    navy      #1c3249   lila     #D1BEDD   salvia   #b9bba6
+    contraste #0c171b   crema    #eeeadf  → NO se usa: el fondo es blanco
+
+  Los neutros (superficies, bordes, grises de texto) NO son grises puros: se
+  derivan del navy sobre blanco, para que todo el panel comparta el mismo
+  subtono frío de la marca en vez de verse gris de plantilla.
+
+  Viven en :root y no en una clase raíz a propósito: los popups de Ant Design
+  (Dropdown, Tooltip, Select) se portalean a <body>, y ahí las variables
+  declaradas en un contenedor local no resuelven. Mismo criterio que
+  --gx-* en guests-redesign.css.
+
+  Prefijo --ac-* (admin control center) para no chocar con --gx-* ni con las
+  variables globales de src/styles/**.
+*/
+
+:root {
+    /* --- Superficies ------------------------------------------------------ */
+    /* El fondo de página es blanco: las tarjetas se separan con borde + glow
+       (--ac-shadow-card), que es como el dashboard real distingue sus tarjetas. */
+    --ac-page: #FFFFFF;
+    --ac-surface: #FFFFFF;
+    --ac-surface-alt: #F6F7F9;
+    --ac-tint: #EFF2F4;
+
+    /* --- Bordes (rampa fría derivada del navy) ---------------------------- */
+    --ac-line: #DDE3E9;
+    --ac-line-soft: #E8ECF0;
+    --ac-line-softer: #E3E8ED;
+    --ac-line-table: #E3E8ED;
+    --ac-line-input: #DDE3E9;
+    --ac-line-control: #D3DAE2;
+    --ac-line-outline: #D3DAE2;
+
+    /* --- Tinta ------------------------------------------------------------ */
+    --ac-ink: #1C3249;
+    --ac-ink-hover: #2A4763;
+    --ac-contrast: #0C171B;
+    --ac-text-2: #3D5165;
+    --ac-text-3: #556A7F;
+    --ac-muted: #5C6F84;
+    --ac-muted-2: #64768A;
+    --ac-muted-3: #64768A;
+
+    /* --- Rail oscuro (navy de marca) -------------------------------------- */
+    --ac-rail-bg: #1C3249;
+    --ac-rail-border: #24405B;
+    --ac-rail-border-soft: #2A4763;
+    --ac-rail-active: #2E4C69;
+    --ac-rail-hover: #26415A;
+    --ac-rail-idle: #B6C4D2;
+    --ac-rail-label: #93A7BC;
+    --ac-rail-count: #A9BACA;
+    /* Acento sobre el navy: la lila de marca, no un mint inventado. */
+    --ac-mint: #D1BEDD;
+    /* Colapsado el rail va claro: en 72px el navy pesa demasiado al lado de una
+       página blanca. El gris lo separa del contenido sin necesitar el bloque
+       oscuro. */
+    --ac-rail-collapsed-bg: #F5F5F5;
+
+    /* --- Lila de marca ----------------------------------------------------- */
+    --ac-lilac: #D1BEDD;
+    --ac-lilac-ink: #4A3457;
+    --ac-lilac-2: #B09BC2;
+    /* La lila de marca es demasiado clara para texto o badges sobre blanco;
+       --ac-violet es su versión oscurecida, misma familia de color. */
+    --ac-violet: #6E4C87;
+    --ac-violet-ink: #56386B;
+    --ac-violet-soft: #F2EDF6;
+
+    /* --- Verde salvia de marca -------------------------------------------- */
+    --ac-green: #6E7256;
+    --ac-green-ink: #5C6047;
+    --ac-green-soft: #EEEFE8;
+    --ac-sage: #B9BBA6;
+
+    /* --- Ocre de alerta ---------------------------------------------------- */
+    /* Único tono fuera del manual. La marca no tiene color de advertencia y el
+       panel necesita distinguir "requiere atención" (créditos en 0, saldo por
+       cobrar, falta comprobante) de "error". Tostado apagado para que conviva
+       con navy, lila y salvia. */
+    --ac-amber: #8F5C1A;
+    --ac-amber-soft: #FAF2E6;
+    --ac-amber-border: #EADEC6;
+    --ac-amber-text: #7D5219;
+
+    /* Error del design system de producto; también la línea de meta del chart. */
+    --ac-red: #D32F2F;
+
+    /* --- Tipografía -------------------------------------------------------- */
+    /* Poppins es la fuente de trabajo del producto (tablas, nav, formularios);
+       Denver-Serial y Windsor son de marca y solo llevan jerarquía alta.
+       Todas self-hosted en public/assets/fonts (ver src/styles/index.css). */
+    --ac-font-ui: 'Poppins', 'Plus Jakarta Sans', sans-serif;
+    --ac-font-display: 'Denver-Serial', 'Poppins', serif;
+    --ac-font-brand: 'Windsor', 'Poppins', serif;
+    --ac-font-body: 'Luxora Grotesk', 'Poppins', sans-serif;
+    --ac-font-script: 'Michigan Signature', cursive;
+
+    /* --- Sombras ----------------------------------------------------------- */
+    /* Glow sin offset, no drop-shadow: es el patrón del dashboard real. */
+    --ac-shadow-card: 0 0 12px rgba(12, 23, 27, 0.07);
+    --ac-shadow-pill: 0 1px 2px rgba(28, 50, 73, 0.12);
+    --ac-shadow-drawer: -10px 0 40px rgba(12, 23, 27, 0.10);
+    --ac-shadow-popup: 0 6px 24px rgba(12, 23, 27, 0.13);
+    --ac-shadow-phone: 0 22px 50px rgba(12, 23, 27, 0.22);
+
+    /* --- Medidas del shell ------------------------------------------------- */
+    --ac-rail-w: 232px;
+    --ac-drawer-w: 352px;
+}

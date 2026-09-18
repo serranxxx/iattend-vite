@@ -1,176 +1,163 @@
 import { useMemo, useState } from 'react'
-import { Button, Collapse, Dropdown, Input, Modal, Table, Tag, message } from 'antd'
-import { LuCopy, LuPlus, LuUserPlus } from 'react-icons/lu'
-import { CreateAccount } from '../../../components/Auth/CreateUser'
-import styles from '../SalesAdminPage.module.css'
+import { message } from 'antd'
+import styles from './UsuariosSection.module.css'
 
-const ROLE_META = {
-    Administration: { label: 'Administración', color: 'gold' },
-    sales: { label: 'Vendedor', color: 'blue' },
-    test: { label: 'Pruebas', color: 'default' },
+// El rol vive crudo en `profiles.role`; todo lo demás (etiqueta, color, orden del
+// filtro) se deriva de aquí para no repetir el mapeo en cada vista.
+const ROLES = {
+    Administration: { label: 'Administración', clase: 'roleAdmin' },
+    sales: { label: 'Vendedor', clase: 'roleVendedor' },
+    test: { label: 'Pruebas', clase: 'rolePruebas' },
 }
-const DEFAULT_ROLE_META = { label: 'Cliente', color: 'green' }
-const ROLE_GROUP_ORDER = ['Administración', 'Vendedor', 'Cliente', 'Pruebas']
 
-const getRoleMeta = (role) => ROLE_META[role] ?? DEFAULT_ROLE_META
-const INITIALLY_COLLAPSED_GROUPS = ['Administración', 'Vendedor', 'Pruebas']
+const ROL_CLIENTE = { label: 'Cliente', clase: 'roleCliente' }
 
-export const UsuariosSection = ({ profiles, refreshUsuarios, onOpenNewInvitation }) => {
-    const [visible, setVisible] = useState(false)
-    const [userData, setUserData] = useState(null)
-    const [collapsedGroups, setCollapsedGroups] = useState(new Set(INITIALLY_COLLAPSED_GROUPS))
-    const [filterName, setFilterName] = useState(null)
+const rolDe = (role) => ROLES[role] ?? ROL_CLIENTE
 
-    const copyToClipboard = async (textToCopy) => {
+const FILTROS = [
+    { key: 'todos', label: 'Todos' },
+    { key: 'Administration', label: 'Administración' },
+    { key: 'sales', label: 'Vendedor' },
+    { key: 'cliente', label: 'Cliente' },
+    { key: 'test', label: 'Pruebas' },
+]
+
+// 'cliente' no es un valor guardado: es "cualquier rol que no sea uno de los
+// conocidos", que es justo como lo pinta la tabla.
+const coincideFiltro = (perfil, filtro) => {
+    if (filtro === 'todos') return true
+    if (filtro === 'cliente') return !ROLES[perfil.role]
+    return perfil.role === filtro
+}
+
+export const UsuariosSection = ({ profiles, onOpenNewInvitation, query = '' }) => {
+    const [filtro, setFiltro] = useState('todos')
+
+    const copiar = async (texto) => {
         try {
-            await navigator.clipboard.writeText(textToCopy);
+            await navigator.clipboard.writeText(texto)
             message.success('Copiado')
         } catch (err) {
-            console.error('Error al copiar el texto: ', err);
+            console.error('Error al copiar el texto: ', err)
         }
-    };
+    }
 
-    const userCols = [
-        {
-            title: 'Nombre',
-            dataIndex: 'full_name',
-            key: 'name',
-        },
-        {
-            title: 'Email',
-            dataIndex: 'user_email',
-            key: 'email',
-        },
-        {
-            title: 'Id',
-            dataIndex: 'user_id',
-            key: 'email',
-        },
-        {
-            title: 'Rol',
-            dataIndex: 'role',
-            key: 'role',
-            render: (role) => {
-                const meta = getRoleMeta(role)
-                return <Tag color={meta.color}>{meta.label}</Tag>
-            }
-        },
-        {
-            title: 'Acciones',
-            dataIndex: '',
-            key: 'address',
-            render: (_, record) => (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <Button onClick={() => onOpenNewInvitation(record)} icon={<LuPlus />} >Agregar evento</Button>
-                </div>
-            )
-        },
-    ];
+    const buscados = useMemo(() => {
+        const texto = query.trim().toLowerCase()
+        if (!texto) return profiles ?? []
 
-    const filteredProfiles = useMemo(() => {
-        if (!filterName) return profiles ?? []
-        const needle = filterName.toLowerCase()
-        return (profiles ?? []).filter((p) =>
-            p.full_name?.toLowerCase().includes(needle) || p.user_email?.toLowerCase().includes(needle)
+        return (profiles ?? []).filter(p =>
+            [p.full_name, p.user_email, p.user_id]
+                .some(campo => String(campo ?? '').toLowerCase().includes(texto))
         )
-    }, [profiles, filterName]);
+    }, [profiles, query])
 
-    const roleGroups = useMemo(() => {
-        const buckets = new Map()
-        filteredProfiles.forEach((p) => {
-            const label = getRoleMeta(p.role).label
-            if (!buckets.has(label)) buckets.set(label, [])
-            buckets.get(label).push(p)
-        })
+    const conteos = useMemo(() => (
+        FILTROS.reduce((acc, { key }) => {
+            acc[key] = buscados.filter(p => coincideFiltro(p, key)).length
+            return acc
+        }, {})
+    ), [buscados])
 
-        const ordered = ROLE_GROUP_ORDER.filter((label) => buckets.has(label))
-        const rest = [...buckets.keys()].filter((label) => !ROLE_GROUP_ORDER.includes(label))
+    const visibles = useMemo(
+        () => buscados.filter(p => coincideFiltro(p, filtro)),
+        [buscados, filtro]
+    )
 
-        return [...ordered, ...rest].map((label) => ({ label, items: buckets.get(label) }))
-    }, [filteredProfiles]);
+    const botonEvento = (perfil) => (
+        <button type='button' className={styles.action} onClick={() => onOpenNewInvitation(perfil)}>
+            + Agregar evento
+        </button>
+    )
 
-    const activeGroupKeys = roleGroups
-        .map((group) => group.label)
-        .filter((label) => !collapsedGroups.has(label))
-
-    const handleGroupsChange = (openKeys) => {
-        const openSet = new Set(openKeys)
-        setCollapsedGroups(new Set(roleGroups.map((g) => g.label).filter((label) => !openSet.has(label))))
+    const badgeRol = (perfil) => {
+        const rol = rolDe(perfil.role)
+        return <span className={`${styles.role} ${styles[rol.clase]}`}>{rol.label}</span>
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-            <div className={styles.headerRow}>
-                <div>
-                    <div className={styles.title}>Usuarios</div>
-                    <div className={styles.subtitle}>Panel interno — solo admin</div>
-                </div>
-                <div className={styles.headerControls} style={{ flex: 1, marginLeft: '24px' }}>
-                    <Input placeholder='Búscar...' value={filterName} onChange={(e) => setFilterName(e.target.value)} style={{ flex: 1, borderRadius: '99px' }} />
-                    <Dropdown
-                        arrow
-                        trigger={['click']}
-                        popupRender={() => (
-                            <div style={{
-                                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                backgroundColor: '#FFF', borderRadius: '16px', boxShadow: '0px 0px 12px rgba(0,0,0,0.2)',
-                                boxSizing: 'border-box', padding: '12px'
-                            }}>
-                                <CreateAccount refreshData={refreshUsuarios} setVisible={setVisible} setUserData={setUserData} />
-                            </div>
-                        )}
-                    >
-                        <Button className='primarybutton--active' style={{ borderRadius: '99px' }} icon={<LuUserPlus size={16} />}>Nuevo usuario</Button>
-                    </Dropdown>
+        <div className={styles.usuarios}>
+            <div className={styles.toolbar}>
+                <div className={styles.tabs}>
+                    {FILTROS
+                        // Ocultar un rol sin nadie evita pills vacías (ej. "Pruebas 0").
+                        .filter(({ key }) => key === 'todos' || conteos[key] > 0)
+                        .map(({ key, label }) => (
+                            <button
+                                key={key}
+                                type='button'
+                                className={`${styles.tab} ${filtro === key ? styles.tabActive : ''}`}
+                                onClick={() => setFiltro(key)}
+                            >
+                                {label} {conteos[key]}
+                            </button>
+                        ))}
                 </div>
             </div>
 
-            <Collapse
-                activeKey={activeGroupKeys}
-                onChange={handleGroupsChange}
-                items={roleGroups.map((group) => ({
-                    key: group.label,
-                    label: <span className={styles.tableLabel} style={{ marginBottom: 0 }}>{group.label} ({group.items.length})</span>,
-                    children: (
-                        <Table
-                            rowKey="id"
-                            columns={userCols}
-                            dataSource={group.items}
-                            pagination={false}
-                        />
-                    ),
-                }))}
-            />
+            <div className={styles.card}>
+                {visibles.length === 0 ? (
+                    <div className={styles.empty}>No hay usuarios que coincidan.</div>
+                ) : (
+                    <>
+                        <div className={styles.scroller}>
+                            <div className={styles.table}>
+                                <div className={`${styles.row} ${styles.head}`}>
+                                    <span className={styles.cell}>Nombre</span>
+                                    <span className={styles.cell}>Email</span>
+                                    <span className={styles.cell}>Rol</span>
+                                    <span className={styles.cell}>Id</span>
+                                    <span className={styles.cell} />
+                                </div>
 
-            <Modal
-                footer={null}
-                open={visible && !!userData}
-                onOk={() => setVisible(false)}
-                onCancel={() => setVisible(false)}
-                title="Nuevo usuario agregado exitosamente"
-                width={400}
-                styles={{
-                    container: {
-                        borderRadius: '24px',
-                        padding: '32px',
-                    },
-                    header: {
-                        borderBottom: 'none',
-                        padding: 0,
-                    },
-                    body: {
-                        padding: 0,
-                    }
-                }}
-            >
-                <div className='new_user_col' style={{ alignSelf: 'stretch', }}>
-                    <span>{userData?.email ?? "----"}</span>
-                    <div className='new_user_col' style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'space-between' }}>
-                        <span>{userData?.pass ?? "*******"}</span>
-                        <Button onClick={() => copyToClipboard(userData.password ?? "")} icon={<LuCopy />}>Copiar contraseña</Button>
-                    </div>
-                </div>
-            </Modal>
+                                {visibles.map(perfil => (
+                                    <div className={styles.row} key={perfil.user_id}>
+                                        <span className={`${styles.cell} ${styles.name}`}>
+                                            {perfil.full_name || 'Sin nombre'}
+                                        </span>
+                                        <span className={`${styles.cell} ${styles.email}`}>{perfil.user_email}</span>
+                                        <span className={styles.cell}>{badgeRol(perfil)}</span>
+                                        <span className={styles.cell}>
+                                            <button
+                                                type='button'
+                                                className={styles.id}
+                                                title={`${perfil.user_id} — clic para copiar`}
+                                                onClick={() => copiar(perfil.user_id)}
+                                            >
+                                                {perfil.user_id}
+                                            </button>
+                                        </span>
+                                        <span className={styles.cell}>{botonEvento(perfil)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className={styles.mobileList}>
+                            {visibles.map(perfil => (
+                                <div className={styles.mobileRow} key={perfil.user_id}>
+                                    <div className={styles.mobileTop}>
+                                        <span className={styles.mobileName}>{perfil.full_name || 'Sin nombre'}</span>
+                                        {badgeRol(perfil)}
+                                    </div>
+                                    <div className={styles.mobileEmail}>{perfil.user_email}</div>
+                                    <div className={styles.mobileBottom}>
+                                        {botonEvento(perfil)}
+                                        <button
+                                            type='button'
+                                            className={styles.id}
+                                            style={{ width: 'auto' }}
+                                            onClick={() => copiar(perfil.user_id)}
+                                        >
+                                            copiar id
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     )
 }

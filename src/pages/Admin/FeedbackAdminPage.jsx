@@ -1,163 +1,150 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Bar } from 'react-chartjs-2'
-import {
-    Chart as ChartJS,
-    BarElement,
-    LinearScale,
-    CategoryScale,
-    Legend,
-    Tooltip as ChartTooltip,
-} from 'chart.js'
-import { Checkbox, message, Select, Table, Tag } from 'antd'
+import { message } from 'antd'
 import dayjs from 'dayjs'
+import 'dayjs/locale/es'
 import { fetchSubmittedFeedback } from './feedbackAdminApi'
 import styles from './FeedbackAdminPage.module.css'
 
-ChartJS.register(BarElement, LinearScale, CategoryScale, Legend, ChartTooltip)
+dayjs.locale('es')
 
-const STAR_OPTIONS = [1, 2, 3, 4, 5].map(v => ({ value: v, label: `${v} ★` }))
+const ESTRELLAS = [5, 4, 3, 2, 1]
 
-const eventoLabel = (row) => {
-    const inv = row.invitations
+const tieneComentario = (review) => Boolean(review.comment && review.comment.trim())
+
+const eventoLabel = (review) => {
+    const inv = review.invitations
     return inv?.label || inv?.name || 'Evento'
 }
 
-export const FeedbackAdminPage = () => {
+export const FeedbackAdminPage = ({ eventosActivos = 0 }) => {
     const [rows, setRows] = useState([])
     const [loading, setLoading] = useState(true)
-    const [filterRatings, setFilterRatings] = useState([])
-    const [onlyWithComment, setOnlyWithComment] = useState(false)
+    const [filtroEstrellas, setFiltroEstrellas] = useState('todas')
+    const [soloConComentario, setSoloConComentario] = useState(false)
 
-    const load = async () => {
-        setLoading(true)
-        try {
-            const data = await fetchSubmittedFeedback()
-            setRows(data)
-        } catch (err) {
-            console.error('Error al cargar feedback:', err)
-            message.error('No se pudo cargar el feedback')
-        } finally {
-            setLoading(false)
-        }
-    }
+    useEffect(() => {
+        let cancelado = false
 
-    useEffect(() => { load() }, [])
+        fetchSubmittedFeedback()
+            .then(data => { if (!cancelado) setRows(data) })
+            .catch(err => {
+                console.error('Error al cargar feedback:', err)
+                message.error('No se pudo cargar el feedback')
+            })
+            .finally(() => { if (!cancelado) setLoading(false) })
+
+        return () => { cancelado = true }
+    }, [])
 
     const kpis = useMemo(() => {
         const total = rows.length
-        const avg = total ? rows.reduce((sum, r) => sum + (r.rating || 0), 0) / total : 0
-        const withComment = rows.filter(r => r.comment && r.comment.trim().length > 0).length
-        const pctWithComment = total ? (withComment / total) * 100 : 0
-        return { total, avg, pctWithComment }
+        const promedio = total ? rows.reduce((sum, r) => sum + (r.rating || 0), 0) / total : 0
+        const conComentario = rows.filter(tieneComentario).length
+
+        return {
+            total,
+            promedio,
+            pctConComentario: total ? (conComentario / total) * 100 : 0,
+        }
     }, [rows])
 
-    const distribution = useMemo(() => {
-        const counts = [0, 0, 0, 0, 0]
-        rows.forEach(r => {
-            if (r.rating >= 1 && r.rating <= 5) counts[r.rating - 1] += 1
-        })
-        return counts
+    // Barras horizontales: el ancho es relativo al rating más frecuente, no al
+    // total, para que la distribución se lea aunque haya pocas respuestas.
+    const distribucion = useMemo(() => {
+        const conteos = ESTRELLAS.map(estrella => ({
+            estrella,
+            conteo: rows.filter(r => r.rating === estrella).length,
+        }))
+        const max = Math.max(...conteos.map(c => c.conteo), 1)
+        return conteos.map(c => ({ ...c, pct: (c.conteo / max) * 100 }))
     }, [rows])
 
-    const filteredRows = useMemo(() => rows.filter(r => {
-        if (filterRatings.length && !filterRatings.includes(r.rating)) return false
-        if (onlyWithComment && !(r.comment && r.comment.trim().length > 0)) return false
+    const visibles = useMemo(() => rows.filter(r => {
+        if (filtroEstrellas !== 'todas' && r.rating !== Number(filtroEstrellas)) return false
+        if (soloConComentario && !tieneComentario(r)) return false
         return true
-    }), [rows, filterRatings, onlyWithComment])
-
-    const columns = [
-        { title: 'Evento', key: 'evento', render: (_, row) => eventoLabel(row) },
-        {
-            title: '★ Rating', dataIndex: 'rating', key: 'rating', align: 'center', width: 100,
-            sorter: (a, b) => (a.rating || 0) - (b.rating || 0),
-            render: (rating) => <Tag color="purple">{rating} ★</Tag>,
-        },
-        {
-            title: 'Comentario', dataIndex: 'comment', key: 'comment',
-            render: (comment) => comment ? <span>{comment}</span> : <span className={styles.noComment}>—</span>,
-        },
-        {
-            title: 'Fecha', dataIndex: 'submitted_at', key: 'submitted_at', width: 140,
-            sorter: (a, b) => new Date(a.submitted_at) - new Date(b.submitted_at),
-            defaultSortOrder: 'descend',
-            render: (date) => dayjs(date).format('DD MMM YYYY'),
-        },
-    ]
+    }), [rows, filtroEstrellas, soloConComentario])
 
     return (
-        <div className={styles.page}>
-            <div className={styles.headerRow}>
-                <div>
-                    <div className={styles.title}>Feedback de eventos</div>
-                    <div className={styles.subtitle}>Reviews dejadas por organizadores desde el dashboard</div>
+        <div className={styles.feedback}>
+            <div className={styles.kpis}>
+                <div className={styles.kpi}>
+                    <div className={styles.kpiLabel}>Promedio general</div>
+                    <div className={styles.kpiValue}>{kpis.promedio.toFixed(1)} ★</div>
+                    <div className={styles.kpiFoot}>sobre {kpis.total} respuestas</div>
+                </div>
+
+                <div className={styles.kpi}>
+                    <div className={styles.kpiLabel}>Respuestas</div>
+                    <div className={styles.kpiValue}>{kpis.total}</div>
+                    <div className={styles.kpiFoot}>de {eventosActivos} eventos activos</div>
+                </div>
+
+                <div className={styles.kpi}>
+                    <div className={styles.kpiLabel}>Con comentario</div>
+                    <div className={styles.kpiValue}>{kpis.pctConComentario.toFixed(0)}%</div>
+                    <div className={styles.kpiFoot}>feedback cualitativo real</div>
                 </div>
             </div>
 
-            <div className={styles.statsGrid}>
-                <div className={styles.statCard}>
-                    <div className={styles.statLabel}>Promedio general</div>
-                    <div className={styles.statValue}>{kpis.avg.toFixed(1)} ★</div>
-                    <div className={styles.statSub}>sobre {kpis.total} respuestas</div>
-                </div>
-                <div className={styles.statCard}>
-                    <div className={styles.statLabel}>Total de respuestas</div>
-                    <div className={styles.statValue}>{kpis.total}</div>
-                    <div className={styles.statSub}>eventos que dejaron feedback</div>
-                </div>
-                <div className={styles.statCard}>
-                    <div className={styles.statLabel}>Con comentario</div>
-                    <div className={styles.statValue}>{kpis.pctWithComment.toFixed(0)}%</div>
-                    <div className={styles.statSub}>feedback cualitativo real</div>
+            <div className={`${styles.card} ${styles.cardPad}`}>
+                <h2 className={styles.cardTitle} style={{ marginBottom: 12 }}>Distribución de estrellas</h2>
+                <div className={styles.dist}>
+                    {distribucion.map(({ estrella, conteo, pct }) => (
+                        <div className={styles.distRow} key={estrella}>
+                            <span className={styles.distLabel}>{estrella} ★</span>
+                            <span className={styles.distTrack}>
+                                <span className={styles.distFill} style={{ width: `${pct}%` }} />
+                            </span>
+                            <span className={styles.distCount}>{conteo}</span>
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            <div className={styles.chartHeader}>
-                <div className={styles.chartTitle}>Distribución de estrellas</div>
-            </div>
-            <div className={styles.chartWrapper}>
-                <Bar
-                    data={{
-                        labels: ['1 ★', '2 ★', '3 ★', '4 ★', '5 ★'],
-                        datasets: [{
-                            label: 'Respuestas',
-                            data: distribution,
-                            backgroundColor: '#d2bfdd',
-                            borderRadius: 6,
-                        }],
-                    }}
-                    options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { precision: 0 } },
-                        },
-                    }}
-                />
-            </div>
+            <div className={styles.card}>
+                <div className={styles.cardHead}>
+                    <h2 className={styles.cardTitle}>Reviews</h2>
+                    <div className={styles.filters}>
+                        <select
+                            className={styles.select}
+                            value={filtroEstrellas}
+                            onChange={(e) => setFiltroEstrellas(e.target.value)}
+                            aria-label='Filtrar por estrellas'
+                        >
+                            <option value='todas'>Todas las estrellas</option>
+                            {ESTRELLAS.map(e => <option key={e} value={e}>{e} ★</option>)}
+                        </select>
 
-            <div className={styles.filtersRow}>
-                <Select
-                    mode="multiple"
-                    allowClear
-                    placeholder="Filtrar por estrellas"
-                    value={filterRatings}
-                    onChange={setFilterRatings}
-                    options={STAR_OPTIONS}
-                    style={{ minWidth: 220 }}
-                />
-                <Checkbox checked={onlyWithComment} onChange={e => setOnlyWithComment(e.target.checked)}>
-                    Solo con comentario
-                </Checkbox>
-            </div>
+                        <label className={styles.checkbox}>
+                            <input
+                                type='checkbox'
+                                checked={soloConComentario}
+                                onChange={(e) => setSoloConComentario(e.target.checked)}
+                            />
+                            Solo con comentario
+                        </label>
+                    </div>
+                </div>
 
-            <Table
-                rowKey="id"
-                columns={columns}
-                dataSource={filteredRows}
-                loading={loading}
-                pagination={{ pageSize: 10 }}
-            />
+                {loading ? (
+                    <div className={styles.empty}>Cargando reviews…</div>
+                ) : visibles.length === 0 ? (
+                    <div className={styles.empty}>No hay reviews que coincidan con el filtro.</div>
+                ) : visibles.map(review => (
+                    <div className={styles.review} key={review.id}>
+                        <span className={styles.stars}>{review.rating} ★</span>
+                        <div className={styles.reviewBody}>
+                            <div className={styles.reviewMeta}>
+                                {eventoLabel(review)} · {dayjs(review.submitted_at).format('D MMM YYYY')}
+                            </div>
+                            {tieneComentario(review)
+                                ? <div className={styles.comment}>{review.comment}</div>
+                                : <div className={styles.noComment}>Sin comentario</div>}
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }

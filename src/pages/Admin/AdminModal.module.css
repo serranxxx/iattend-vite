@@ -1,0 +1,147 @@
+/* Modal propio del panel: mismos tokens que el resto de la marca. */
+
+.telon {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(12, 23, 27, 0.45);
+    animation: aparecer 0.14s ease;
+}
+
+.panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    /* Un modal alto no debe empujar fuera de la pantalla: el cuerpo hace scroll
+       y la cabecera y el pie se quedan. */
+    max-height: calc(100vh - 48px);
+    background: var(--ac-surface);
+    border-radius: 18px;
+    box-shadow: var(--ac-shadow-popup);
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+    outline: none;
+    animation: subir 0.16s ease;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; }
+}
+
+@keyframes subir {
+    from { opacity: 0; transform: translateY(8px); }
+}
+
+.cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px 12px;
+}
+
+.titulo {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.cerrar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 99px;
+    color: var(--ac-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.cerrar:hover {
+    background: var(--ac-surface-alt);
+    color: var(--ac-ink);
+}
+
+/* Sin cabecera el botón flota sobre el contenido, para modales que son solo una
+   tarjeta —como la de un evento en el calendario. */
+.cerrarSuelto {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+}
+
+.cuerpo {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 20px 20px;
+}
+
+.cuerpoSinCabecera {
+    padding: 0;
+}
+
+.pie {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 20px 18px;
+}
+
+.btnPrimario,
+.btnSecundario {
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btnSecundario {
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    color: var(--ac-ink);
+}
+
+.btnSecundario:hover {
+    background: var(--ac-surface-alt);
+}
+
+.btnPrimario {
+    border: none;
+    background: var(--ac-ink);
+    color: #FFFFFF;
+}
+
+.btnPrimario:hover:not(:disabled) {
+    background: var(--ac-contrast);
+}
+
+.btnPrimario:disabled {
+    background: var(--ac-line-control);
+    cursor: default;
+}
+
+@media (max-width: 600px) {
+    .telon {
+        padding: 12px;
+        align-items: flex-end;
+    }
+
+    .panel {
+        width: 100% !important;
+        max-height: calc(100vh - 24px);
+    }
+}

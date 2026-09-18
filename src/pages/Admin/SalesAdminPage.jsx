@@ -22,6 +22,7 @@ import {
     registrarAdminPago,
     subirAdminComprobante,
 } from './salesAdminApi'
+import { MESES, formatCurrency, calcularCargosPorVenta, calcularKpis } from './ventasCalculos'
 import styles from './SalesAdminPage.module.css'
 
 const MODAL_PADDING_STYLES = {
@@ -39,104 +40,13 @@ const METODOS_PAGO = [
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Filler, Legend, ChartTooltip)
 
-const MESES = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-]
-
 const ESTADO_LABEL = {
     completo: 'completo',
     apartado: 'apartado',
     sin_pago: 'sin pago',
 }
 
-const formatCurrency = (value) =>
-    `$${Number(value || 0).toLocaleString('es-MX', { maximumFractionDigits: 0 })}`
-
-const IVA_RATE = 0.16
-const COMISION_POR_VENTA_PRO = 1000
-const COMISION_POR_VENTA_LITE = 750
-const COMISION_MONTO_MINIMO = 1000
 const PUNTO_EQUILIBRIO_NETO = 15318
-
-// Ventas antes de esta fecha son legacy: no pagan IVA ni comisión, para mantener
-// el margen ya acordado con esos clientes.
-const CUTOFF_IVA_COMISION = new Date('2026-07-01T00:00:00')
-
-// Paulina Pérez tiene un esquema de comisión distinto al resto de los vendedores:
-// sus primeras 3 ventas elegibles del mes no comisionan, y a partir de la 4ta
-// comisiona normal. Además recibe bonos fijos al llegar a ciertos hitos de ventas —
-// pero esos hitos se cuentan sobre el total GENERAL de invitaciones del mes
-// (todos los vendedores juntos), no solo las que ella vendió.
-const VENDEDOR_ESPECIAL_ID = '5eb35f6b-38c9-4ffd-a063-447b02a94e24'
-const VENTAS_SIN_COMISION_ESPECIAL = 3
-const BONO_ESPECIAL_MONTO = 1000
-const BONO_ESPECIAL_HITOS = [8, 12, 16]
-
-const comisionBaseVenta = (venta) =>
-    venta.plan === 'Lite' ? COMISION_POR_VENTA_LITE : COMISION_POR_VENTA_PRO
-
-// Devuelve un Map<venta_id, { bruto, iva, comision }>. Las ventas elegibles
-// (posteriores al corte y con precio_acordado >= $1,000) se agrupan de dos formas:
-// por vendedor + mes calendario (para el conteo de "primeras 3" de Paulina), y por
-// mes calendario general (para los hitos de bono, que dependen del total de la
-// compañía). Ambos agrupamientos son mensuales, sin importar si el panel está
-// mostrando un mes o el año completo.
-const calcularCargosPorVenta = (ventas) => {
-    const cargosPorVentaId = new Map()
-    const gruposPorVendedor = new Map()
-    const gruposGenerales = new Map()
-
-    ventas.forEach(v => {
-        const fecha = new Date(v.fecha_venta)
-        const bruto = Number(v.precio_acordado || 0)
-
-        if (fecha < CUTOFF_IVA_COMISION) {
-            cargosPorVentaId.set(v.venta_id, { bruto, iva: 0, comision: 0 })
-            return
-        }
-
-        const iva = bruto - bruto / (1 + IVA_RATE)
-        cargosPorVentaId.set(v.venta_id, { bruto, iva, comision: 0 })
-
-        if (bruto < COMISION_MONTO_MINIMO) return
-
-        const mesKey = `${fecha.getFullYear()}-${fecha.getMonth()}`
-
-        const vendedorKey = `${v.vendedor_id}-${mesKey}`
-        if (!gruposPorVendedor.has(vendedorKey)) gruposPorVendedor.set(vendedorKey, [])
-        gruposPorVendedor.get(vendedorKey).push(v)
-
-        if (!gruposGenerales.has(mesKey)) gruposGenerales.set(mesKey, [])
-        gruposGenerales.get(mesKey).push(v)
-    })
-
-    gruposPorVendedor.forEach(grupoVentas => {
-        const ordenadas = [...grupoVentas].sort((a, b) => new Date(a.fecha_venta) - new Date(b.fecha_venta))
-        const esEspecial = ordenadas[0]?.vendedor_id === VENDEDOR_ESPECIAL_ID
-
-        ordenadas.forEach((v, i) => {
-            const ordinal = i + 1
-            const cargos = cargosPorVentaId.get(v.venta_id)
-            cargos.comision = (esEspecial && ordinal <= VENTAS_SIN_COMISION_ESPECIAL)
-                ? 0
-                : comisionBaseVenta(v)
-        })
-    })
-
-    gruposGenerales.forEach(grupoVentas => {
-        const ordenadas = [...grupoVentas].sort((a, b) => new Date(a.fecha_venta) - new Date(b.fecha_venta))
-
-        ordenadas.forEach((v, i) => {
-            const ordinal = i + 1
-            if (BONO_ESPECIAL_HITOS.includes(ordinal)) {
-                cargosPorVentaId.get(v.venta_id).comision += BONO_ESPECIAL_MONTO
-            }
-        })
-    })
-
-    return cargosPorVentaId
-}
 
 const now = new Date()
 
@@ -329,27 +239,7 @@ export const SalesAdminPage = ({ forcedView, hideToggle = false } = {}) => {
 
     const cargosPorVenta = useMemo(() => calcularCargosPorVenta(ventas), [ventas])
 
-    const kpis = useMemo(() => {
-        const ventasCount = ventas.length
-        const proCount = ventas.filter(v => v.plan === 'PRO').length
-        const liteCount = ventas.filter(v => v.plan === 'Lite').length
-
-        let ingresoBruto = 0
-        let iva = 0
-        let comisiones = 0
-        ventas.forEach(v => {
-            const cargos = cargosPorVenta.get(v.venta_id)
-            ingresoBruto += cargos.bruto
-            iva += cargos.iva
-            comisiones += cargos.comision
-        })
-        const ingresoNeto = ingresoBruto - iva - comisiones
-
-        const saldoPendiente = ventas.reduce((sum, v) => sum + Number(v.saldo_pendiente || 0), 0)
-        const ventasConApartado = ventas.filter(v => v.estado_pago === 'apartado').length
-
-        return { ventasCount, proCount, liteCount, ingresoBruto, iva, comisiones, ingresoNeto, saldoPendiente, ventasConApartado }
-    }, [ventas, cargosPorVenta])
+    const kpis = useMemo(() => calcularKpis(ventas, cargosPorVenta), [ventas, cargosPorVenta])
 
     const comprobantesPendientes = useMemo(
         () => ventas.filter(v => v.abonos_sin_comprobante > 0),

@@ -3,6 +3,10 @@ import { Button, Tooltip } from 'antd';
 import { Check, CheckCheck, ChevronUp, Download, FileText, MapPin, Play, SendHorizontal, X } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './open-chat.css'
+// OpenChat usa .message_icon, .message_col y .messages_main_row, que se definen
+// en la hoja del buzón. Hasta ahora las heredaba de que WhatsappMessages fuera
+// siempre su padre; montado desde otro sitio la cabecera salía deshecha.
+import '../whatsapp-messages.css'
 import TextArea from 'antd/es/input/TextArea';
 import axios from 'axios';
 import { FaWhatsapp } from 'react-icons/fa6';

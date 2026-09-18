@@ -148,13 +148,6 @@
 
 /* ── Modal de vista previa: panel de info (crema) + panel de preview (navy) ── */
 
-.previewModal :global(.ant-modal-content),
-.previewModal :global(.ant-modal-container) {
-    padding: 0;
-    overflow: hidden;
-    border-radius: 28px;
-}
-
 /* BuildContent trae el slider de zoom del builder — aquí no se usa */
 .previewStage :global(.tools-settings-menu-container) {
     display: none;

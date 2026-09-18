@@ -29,6 +29,7 @@ import { RequireSalesOrAdmin } from './RequireSalesOrAdmin'
 import { AdminPage } from '../pages/Admin/AdminPage'
 import { TextureLabPage } from '../pages/Admin/TextureLabPage'
 import { FontLabPage } from '../pages/Admin/FontLabPage'
+import { GiftBrandLabPage } from '../pages/Admin/GiftBrandLabPage'
 import { FeaturesPage } from '../pages/FeatruesPage'
 import { LegalPage } from '../pages/Extras/Legal/LegalPage'
 import { LinkTree } from '../pages/Extras/LinkTree/LinkTree'
@@ -110,6 +111,13 @@ export const AppRouter = () => {
         element={
           <AdminHOC>
             <FontLabPage />
+          </AdminHOC>
+        } />
+
+      <Route path="/admin/gift-brand-lab"
+        element={
+          <AdminHOC>
+            <GiftBrandLabPage />
           </AdminHOC>
         } />
 
