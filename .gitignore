@@ -24,3 +24,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Skills de Claude Code: `.agents` es el paquete instalado (como node_modules) y
+# `.claude/skills/*` son symlinks hacia él, así que clonar sin `.agents` los
+# dejaría rotos. El lockfile y la skill propia del proyecto sí van versionados.
+.agents
+.claude/skills/*
+!.claude/skills/iattend-design-system
+.claude/settings.local.json
+
+# Proyectos de video: 27 MB de render que se regeneran desde su fuente.
+videos
