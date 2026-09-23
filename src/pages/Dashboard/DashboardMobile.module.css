@@ -453,6 +453,32 @@
     margin-left: -8px;
 }
 
+/* Acomodo de mesas — mismo lila que en el bento de escritorio */
+.railTables {
+    background: rgba(209, 190, 221, 0.8);
+}
+
+.railTables .railTitle {
+    position: relative;
+    z-index: 1;
+    color: #1c3249;
+}
+
+.tablesScene {
+    flex: 1;
+    position: relative;
+    min-height: 70px;
+}
+
+.tablesScene svg {
+    position: absolute;
+    left: -14px;
+    bottom: -26px;
+    width: calc(100% + 22px);
+    height: auto;
+    overflow: visible;
+}
+
 /* Side events */
 .railSide {
     background: var(--sand);

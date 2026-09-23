@@ -1139,19 +1139,22 @@
    filas —que es el mismo de pro. */
 @media (min-width: 901px) {
     .bento_inv .bento_lock_bar,
-    .bento_wall .bento_lock_bar {
+    .bento_wall .bento_lock_bar,
+    .bento_tables .bento_lock_bar {
         padding: 13px 10px;
         gap: 7px;
     }
 
     .bento_inv .bento_lock_bar_label,
-    .bento_wall .bento_lock_bar_label {
+    .bento_wall .bento_lock_bar_label,
+    .bento_tables .bento_lock_bar_label {
         font-size: 11px;
         gap: 5px;
     }
 
     .bento_inv .bento_lock_bar_cta,
-    .bento_wall .bento_lock_bar_cta {
+    .bento_wall .bento_lock_bar_cta,
+    .bento_tables .bento_lock_bar_cta {
         padding: 0 10px;
         font-size: 11px;
     }
@@ -1232,8 +1235,9 @@
     background: var(--light-green-400);
 }
 
-/* Fila 3 con CTA (free y lite): deja de ser dos celdas de la rejilla para poder
-   repartirse con flex — Save the Date crece y el CTA se topa en 360px. */
+/* Fila 3 (todo menos paperless): deja de ser celdas de la rejilla para poder
+   repartirse con flex — Save the Date crece, Acomodo de mesas mide una columna
+   del bento y el feedback / CTA se topa en 360px. */
 .bento_row3 {
     grid-column: 1 / span 4;
     grid-row: 3;
@@ -1248,10 +1252,41 @@
 }
 
 .bento_row3 > .bento_hire,
-.bento_row3 > .bento_pro {
+.bento_row3 > .bento_pro,
+.bento_row3 > .bento_feedback {
     flex: 1;
     max-width: 360px;
     min-width: 0;
+}
+
+/* Acomodo de mesas — lila, mesa larga dibujada a línea. Ancho = una columna
+   del bento: (fila - 3 gaps de 18px) / 4. */
+.bento_tables {
+    width: calc((100% - 54px) / 4);
+    flex-shrink: 0;
+    min-height: 260px;
+    background: rgba(209, 190, 221, 0.8);
+}
+
+.bento_tables .bento_title {
+    position: relative;
+    z-index: 1;
+}
+
+.bento_tables_scene {
+    flex: 1;
+    position: relative;
+    min-height: 150px;
+}
+
+/* El dibujo se sale por los bordes y el pie; el overflow de la tarjeta lo recorta. */
+.bento_tables_svg {
+    position: absolute;
+    left: -40px;
+    bottom: -40px;
+    width: calc(100% + 74px);
+    height: auto;
+    overflow: visible;
 }
 
 /* Save the Date — foto full-bleed */
@@ -1388,8 +1423,13 @@
     }
 
     .bento_row3 > .bento_hire,
-    .bento_row3 > .bento_pro {
+    .bento_row3 > .bento_pro,
+    .bento_row3 > .bento_feedback {
         max-width: none;
+    }
+
+    .bento_tables {
+        width: auto;
     }
 
     .bento_guests,

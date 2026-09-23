@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ImageIcon, Share2, Star } from 'lucide-react'
 import { CountUp } from './CountUp'
+import { TablesSketch } from './TablesSketch'
 import styles from './DashboardMobile.module.css'
 
 /* ═══════════════════════════════════════════════════════════════
@@ -37,10 +38,12 @@ export const DashboardMobile = ({
     stdImg,
     stdChip,
     wallThumbs,
+    showTables,
     feedbackVisible,
     onOpenFeedback,
     onShare,
     onOpen,
+    onOpenTables,
 }) => {
     const { t } = useTranslation()
 
@@ -178,6 +181,13 @@ export const DashboardMobile = ({
                             <span className={styles.env} />
                         </span>
                     </button>
+
+                    {showTables && (
+                        <button type="button" className={`${styles.railCard} ${styles.railTables}`} onClick={onOpenTables}>
+                            <span className={styles.railTitle}>{t('dashboard.card_tables')}</span>
+                            <span className={styles.tablesScene}><TablesSketch /></span>
+                        </button>
+                    )}
 
                     <button type="button" className={`${styles.railCard} ${styles.railStd}`} onClick={onOpen('savethedate')}>
                         <span className={styles.railStdBg}>{stdImg && <img src={stdImg} alt="" />}</span>

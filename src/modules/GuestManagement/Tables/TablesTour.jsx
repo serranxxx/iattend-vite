@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Grid, Tour } from 'antd'
 import { useTranslation } from 'react-i18next'
+// .gx-tour-* vive ahí. Se importa aquí porque el mapa de mesas también se abre
+// desde el dashboard, donde GuestsPage (que ya la carga) no está montado.
+import '../guests-redesign.css'
 
 const { useBreakpoint } = Grid
 

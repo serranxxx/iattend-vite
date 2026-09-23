@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './dashboard.css'
-import { Button, message } from 'antd'
+import { Button, Drawer, message } from 'antd'
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { FooterApp } from '../../modules/Footer/FooterApp'
 import { supabase } from '../../lib/supabase'
@@ -17,6 +17,8 @@ import { FeedbackModal } from '../../components/FeedbackPrompt/FeedbackModal'
 import { useFeedbackTrigger } from '../../components/FeedbackPrompt/useFeedbackTrigger'
 import { CountUp } from './CountUp'
 import { DashboardMobile } from './DashboardMobile'
+import { TablesSketch } from './TablesSketch'
+import { TablesPage } from '../../modules/GuestManagement/Tables/TablesPage'
 
 
 const LANDING = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing';
@@ -64,6 +66,7 @@ export const DashboardPage = () => {
     const [plansOpen, setPlansOpen] = useState(false)
     const [activation, setActivation] = useState(null)
     const [activatedPlan, setActivatedPlan] = useState(null)
+    const [tablesOpen, setTablesOpen] = useState(false)
     const interBubbleRef = useRef(null)
 
     // El feedback dejó de vivir en el header: ahora es un banner del dashboard.
@@ -74,6 +77,13 @@ export const DashboardPage = () => {
         closeModal: closeFeedbackModal,
         submit: submitFeedback,
     } = useFeedbackTrigger(id, createdAt)
+
+    // El FAB del header es fijo al viewport y queda encima del mapa de mesas:
+    // igual que en GuestsPage, se marca el body para que el CSS lo esconda.
+    useEffect(() => {
+        document.body.classList.toggle('seating-drawer-open', tablesOpen)
+        return () => document.body.classList.remove('seating-drawer-open')
+    }, [tablesOpen])
 
     useEffect(() => {
         const mq = window.matchMedia('(max-width: 767px)')
@@ -270,6 +280,13 @@ export const DashboardPage = () => {
         handleMoode(path)
     };
 
+    // El mapa de mesas se abre aquí mismo, en el mismo drawer que usa
+    // GuestsPage, en vez de navegar a invitados para abrirlo allá.
+    const openTables = () => {
+        if (isFree) { setPlansOpen(true); return }
+        setTablesOpen(true)
+    };
+
     // Módulo no contratado: la tarjeta conserva su color, pierde el detalle del
     // contenido y gana una barra de acción abajo. La barra va en absoluto para
     // no alterar la rejilla interna de cada tarjeta, que es distinta en cada una.
@@ -340,15 +357,13 @@ export const DashboardPage = () => {
     // Free y lite usan exactamente la rejilla de pro; la única diferencia es que
     // la celda del card de feedback la ocupa el CTA del plan.
     const hasCta = isFree || isLite;
-    // Con CTA, la fila 3 deja de ser dos celdas de la rejilla y pasa a ser una
-    // fila flex (`.bento_row3`): es la única forma de que Save the Date crezca
-    // con `flex: 1` mientras el CTA queda topado por `max-width`.
-    const stdGridStyle = plan === 'paperless'
-        ? { gridColumn: '2 / span 3', gridRow: '1' }
-        : { gridColumn: feedbackVisible ? '1 / span 2' : '1 / span 4', gridRow: '3' };
-    const feedbackGridStyle = plan === 'paperless'
-        ? { gridColumn: '2 / span 3', gridRow: '2' }
-        : { gridColumn: '3 / span 2', gridRow: '3' };
+    const isPaperless = plan === 'paperless';
+    // Fuera de paperless la fila 3 es una fila flex (`.bento_row3`): Save the
+    // Date crece con `flex: 1`, Acomodo de mesas mide una columna del bento y el
+    // feedback / CTA queda topado por `max-width`. Paperless no tiene mesas y
+    // conserva sus celdas de la rejilla.
+    const stdGridStyle = { gridColumn: '2 / span 3', gridRow: '1' };
+    const feedbackGridStyle = { gridColumn: '2 / span 3', gridRow: '2' };
 
     const ctaCard = isFree
         ? (
@@ -394,7 +409,7 @@ export const DashboardPage = () => {
     };
 
     const stdCard = (
-        <div className='bento_card bento_std' style={hasCta ? undefined : stdGridStyle} onClick={() => handleMoode('savethedate')}>
+        <div className='bento_card bento_std' style={isPaperless ? stdGridStyle : undefined} onClick={() => handleMoode('savethedate')}>
             <div className='bento_std_bg'>
                 {stdImg && <img src={stdImg} alt='' />}
             </div>
@@ -415,6 +430,41 @@ export const DashboardPage = () => {
                     </div>
                 }
             </div>
+        </div>
+    );
+
+    const feedbackCard = feedbackVisible && !hasCta && (
+        <div className='bento_card bento_feedback' style={isPaperless ? feedbackGridStyle : undefined}>
+            <div className='bento_feedback_head'>
+                <div className='bento_feedback_icon'>
+                    <Star size={20} style={{ color: '#1c3249' }} />
+                </div>
+                <div>
+                    <div className='bento_feedback_title'>{t('feedback_prompt.banner_title')}</div>
+                    <div className='bento_feedback_text'>{t('feedback_prompt.banner_text')}</div>
+                </div>
+            </div>
+            <Button
+                onClick={openFeedbackModal}
+                style={{ alignSelf: 'flex-start', background: '#1c3249', color: '#fff', border: 'none', borderRadius: '999px', height: '44px', padding: '0 22px', fontWeight: 700 }}
+            >
+                {t('feedback_prompt.banner_cta')}
+            </Button>
+        </div>
+    );
+
+    // Acomodo de mesas: abre el mapa de mesas en un drawer sobre el dashboard.
+    // Solo lite y pro; en free sale bloqueada y en paperless no existe.
+    const tablesCard = (
+        <div
+            className={`bento_card bento_tables${isFree ? ' bento_locked' : ''}`}
+            onClick={openTables}
+        >
+            <div className='bento_title'>{t('dashboard.card_tables')}</div>
+            <div className='bento_tables_scene'>
+                <TablesSketch />
+            </div>
+            {isFree && freeBar}
         </div>
     );
 
@@ -463,10 +513,13 @@ export const DashboardPage = () => {
                             wallThumbs={[...wall.thumbs, `${LANDING}/wall-1.jpg`, `${LANDING}/wall-2.jpg`].slice(0, 2)}
                             stdImg={stdImg}
                             stdChip={stdChip}
+                            /* Acomodo de mesas: fuera en paperless; en free abre planes vía onOpen. */
+                            showTables={!isPaperless}
                             feedbackVisible={feedbackVisible}
                             onOpenFeedback={openFeedbackModal}
                             onShare={shareInvitation}
                             onOpen={openSection}
+                            onOpenTables={openTables}
                         /> : <div className='bento_grid'>
 
                             {/* ── Invitación Paperless — lila, alta ── */}
@@ -578,31 +631,10 @@ export const DashboardPage = () => {
 
 
 
-                            {/* ── Save the Date + CTA del plan ── */}
-                            {hasCta
-                                ? <div className='bento_row3'>{stdCard}{ctaCard}</div>
-                                : stdCard
-                            }
-
-                            {/* ── Ayúdanos a mejorar — blanca ── */}
-                            {feedbackVisible && !hasCta &&
-                                <div className='bento_card bento_feedback' style={feedbackGridStyle}>
-                                    <div className='bento_feedback_head'>
-                                        <div className='bento_feedback_icon'>
-                                            <Star size={20} style={{ color: '#1c3249' }} />
-                                        </div>
-                                        <div>
-                                            <div className='bento_feedback_title'>{t('feedback_prompt.banner_title')}</div>
-                                            <div className='bento_feedback_text'>{t('feedback_prompt.banner_text')}</div>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        onClick={openFeedbackModal}
-                                        style={{ alignSelf: 'flex-start', background: '#1c3249', color: '#fff', border: 'none', borderRadius: '999px', height: '44px', padding: '0 22px', fontWeight: 700 }}
-                                    >
-                                        {t('feedback_prompt.banner_cta')}
-                                    </Button>
-                                </div>
+                            {/* ── Save the Date + Acomodo de mesas + feedback / CTA del plan ── */}
+                            {isPaperless
+                                ? <>{stdCard}{feedbackCard}</>
+                                : <div className='bento_row3'>{stdCard}{tablesCard}{feedbackCard}{ctaCard}</div>
                             }
 
                         </div>}
@@ -611,6 +643,30 @@ export const DashboardPage = () => {
                 </div>
 
                 <ProModal open={proOpen} onClose={() => setProOpen(false)} invitationId={id} />
+
+                {/* Misma configuración que el drawer de GuestsPage. */}
+                <Drawer
+                    onClose={() => setTablesOpen(false)}
+                    open={tablesOpen}
+                    destroyOnHidden
+                    placement='left'
+                    width={isMobile ? '100%' : '95%'}
+                    height="100%"
+                    title={null}
+                    closable={false}
+                    push={false}
+                    style={{ borderRadius: isMobile ? '0px' : '0px 24px 24px 0px', maxWidth: isMobile ? 'none' : '1450px' }}
+                    styles={{
+                        header: { display: 'none' },
+                        body: {
+                            padding: 0,
+                            height: '100%',
+                            overflow: 'hidden',
+                        }
+                    }}
+                >
+                    <TablesPage invitationID={id} onClose={() => setTablesOpen(false)} />
+                </Drawer>
 
                 <PlansModal open={plansOpen} onClose={() => setPlansOpen(false)} invitationId={id} />
 
