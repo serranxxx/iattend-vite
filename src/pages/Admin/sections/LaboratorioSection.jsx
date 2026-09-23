@@ -6,10 +6,11 @@ import { supabase } from '../../../lib/supabase'
 import { fetchAdminFonts, updateAdminFont } from '../fontsAdminApi'
 import { fetchGiftBrands } from '../giftBrandsAdminApi'
 import { CatalogoInvitaciones } from '../CatalogoInvitaciones/CatalogoInvitaciones'
+import { TestsDeIframe } from './TestsDeIframe'
 import styles from './LaboratorioSection.module.css'
 import catalogoStyles from '../CatalogoInvitaciones/CatalogoInvitaciones.module.css'
 
-const SUBTABS = ['fonts', 'texturas', 'regalos', 'catalogo']
+const SUBTABS = ['fonts', 'texturas', 'regalos', 'catalogo', 'tests']
 
 const ORDENES = [
     { key: 'nombre', label: 'A–Z' },
@@ -22,6 +23,7 @@ const SUBTAB_LABELS = {
     texturas: 'Texturas',
     regalos: 'Regalos',
     catalogo: 'Catálogo',
+    tests: 'Tests',
 }
 
 const CATALOGO_TIPOS = [
@@ -193,6 +195,7 @@ export const LaboratorioSection = ({ invitations }) => {
         texturas: textures.length,
         regalos: marcas.length,
         catalogo: null,
+        tests: null,
     }
 
     const marcasPorTipo = useMemo(() => ({
@@ -241,6 +244,8 @@ export const LaboratorioSection = ({ invitations }) => {
                     />
                 )}
             </div>
+
+            {subtab === 'tests' && <TestsDeIframe />}
 
             {subtab === 'fonts' && (
                 <>

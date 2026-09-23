@@ -31,7 +31,12 @@ const devices = [
 export const BuildContent = ({
     positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride, fontOverride,
     languages, disabledLanguages, activeLang, onActiveLangChange, onAddLanguage, onToggleLanguageEnabled, onRetranslate, translating, minimalControls = false, onBack,
-    onUndo, onRedo, canUndo, canRedo, onReplayTour, tourOpen
+    onUndo, onRedo, canUndo, canRedo, onReplayTour, tourOpen,
+    // `pantalla` sustituye a la invitación dentro del marco del teléfono. El
+    // laboratorio la usa para meter un iframe y ver cómo se comporta un sitio
+    // externo en el mismo contexto en el que se vería dentro de i attend, sin
+    // tener que montar una invitación de mentira.
+    pantalla,
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -78,7 +83,7 @@ export const BuildContent = ({
 
     return (
 
-        invitation && positionY && !coverUpdated ?
+        (pantalla || (invitation && positionY)) && !coverUpdated ?
             <>
 
                 <div onClick={screens.xs ? () => !onHide ? setOnHide(true) : () => {} : () => {}} className='web-devices device-container'
@@ -231,7 +236,7 @@ export const BuildContent = ({
 
                                 <div className='ios26-screen'>
                                     <div ref={scrollableContentRef} className='scroll-invitation ios26-content'>
-                                        <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />
+                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />}
                                     </div>
 
                                     <div className='ios26-island' />
@@ -279,7 +284,7 @@ export const BuildContent = ({
                                     </div>
 
                                     <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
-                                        <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />
+                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />}
 
                                     </div>
                                     <div className={`inv-light-space-${currentDevice}`} />
@@ -291,7 +296,12 @@ export const BuildContent = ({
                 </div >
 
                 <div className='mobile-devices' onClick={() => setOnHide(true)} style={{ width: '100%', height: '100vh', overflowY: 'auto', paddingBottom: '0px', boxSizing: 'border-box' }}>
-                    <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang}/>
+                    {/* Este bloque y el marco de arriba conviven siempre: el CSS esconde
+                        uno u otro según el ancho. Para la invitación da igual, pero una
+                        `pantalla` prestada se montaría dos veces —y si trae un iframe,
+                        el sitio recibe dos visitas por cada prueba—, así que ahí se
+                        deja solo el marco. */}
+                    {pantalla ? null : <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang}/>}
                 </div>
             </>
             : <></>

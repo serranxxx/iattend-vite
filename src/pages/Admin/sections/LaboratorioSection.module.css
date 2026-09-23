@@ -520,3 +520,110 @@
     font-size: 11px;
     color: var(--ac-muted-2);
 }
+
+/* ------------------------------------------------------- tests de iframe --- */
+
+.tests {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.testBarra {
+    display: flex;
+    gap: 8px;
+}
+
+.testInput {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--ac-line-input);
+    border-radius: 10px;
+    background: var(--ac-surface);
+    font-family: var(--ac-font-ui);
+    font-size: 13px;
+    color: var(--ac-ink);
+}
+
+.testInput:focus {
+    outline: none;
+    border-color: var(--ac-ink);
+}
+
+.testProbar {
+    height: 36px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--ac-ink);
+    font-family: var(--ac-font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+}
+
+.testProbar:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.testAtajos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.testAtajosLabel {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.testAtajo {
+    padding: 4px 11px;
+    border: 1px solid var(--ac-line);
+    border-radius: 99px;
+    background: var(--ac-surface);
+    font-family: var(--ac-font-ui);
+    font-size: 11.5px;
+    color: var(--ac-muted-2);
+    cursor: pointer;
+}
+
+.testAtajo:hover {
+    border-color: var(--ac-ink);
+    color: var(--ac-ink);
+}
+
+.testAviso {
+    padding: 9px 13px;
+    border-radius: 10px;
+    background: var(--ac-tint);
+    font-size: 12.5px;
+    color: var(--ac-muted-2);
+}
+
+/* Sospecha, no veredicto: el navegador no deja saber por qué no cargó. */
+.testMal {
+    background: var(--orange-bg);
+    color: var(--ac-amber);
+}
+
+/* Ancla de la capa de invitación: sin esto sus `absolute` se irían a buscar
+   el primer padre posicionado, que está fuera del marco del teléfono. */
+.testPantalla {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.testIframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+}

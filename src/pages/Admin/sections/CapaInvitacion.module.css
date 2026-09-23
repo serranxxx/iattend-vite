@@ -1,0 +1,70 @@
+/*
+  Copia literal de `invitation-control-bar.module.css` y del bloque
+  `.uploadTrigger` de `song-player.module.css` en `iattend-events`, con un
+  solo cambio: `position: fixed` → `absolute`, para que los controles se
+  queden dentro del marco del teléfono y no salten a la pantalla completa
+  del laboratorio.
+*/
+
+/* ── Ícono de la canción · arriba a la izquierda ──
+   Variante "liquid glass" redonda (la que usa el audio subido a mano). */
+.cancion {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 999;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(28px) saturate(200%);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.65),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* ── Botón de confirmar · abajo al centro ── */
+.barra {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateX(-50%);
+    transform-origin: center bottom;
+}
+
+.confirmar {
+    height: 48px;
+    min-width: 200px;
+    padding: 0 28px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+    backdrop-filter: blur(28px) saturate(200%);
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.65),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.confirmar:active {
+    transform: scale(0.97);
+}
