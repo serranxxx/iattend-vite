@@ -1259,6 +1259,51 @@
     min-width: 0;
 }
 
+/* Plan free: solo Save the Date + "Contrata I attend", lado a lado. Mismo
+   ancho y zoom que el bento para que no brinque al contratar un plan. */
+.bento_free {
+    width: 100%;
+    max-width: 1160px;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 18px;
+    font-family: 'Manrope', sans-serif;
+    position: relative;
+    z-index: 2;
+}
+
+.bento_free > .bento_std,
+.bento_free > .bento_hire {
+    min-height: 420px;
+}
+
+@media (min-width: 901px) {
+    .bento_free {
+        zoom: 0.8;
+    }
+}
+
+.bento_free--mobile {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.bento_free--mobile > .bento_std {
+    min-height: 360px;
+}
+
+.bento_free--mobile > .bento_hire {
+    min-height: 240px;
+}
+
+/* A 375px título y chip no caben en una fila: el chip baja. */
+.bento_free--mobile .bento_std_row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+}
+
 /* Acomodo de mesas — lila, mesa larga dibujada a línea. Ancho = una columna
    del bento: (fila - 3 gaps de 18px) / 4. */
 .bento_tables {

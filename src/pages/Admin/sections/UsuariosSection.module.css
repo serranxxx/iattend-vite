@@ -154,10 +154,20 @@
     color: var(--ac-violet-ink);
 }
 
-/* Admin va sobre el navy de marca: es el rol con más peso de los cuatro. */
+/* Admin va sobre el navy de marca: es el rol con más peso de todos. */
 .roleAdmin {
     background: var(--ac-ink);
     color: #fff;
+}
+
+.rolePlanner {
+    background: var(--ac-amber-soft);
+    color: var(--ac-amber-text);
+}
+
+.roleMkt {
+    background: var(--ac-lilac);
+    color: var(--ac-lilac-ink);
 }
 
 .rolePruebas {

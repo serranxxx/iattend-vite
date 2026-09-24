@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Dropdown, Input, InputNumber, message } from 'antd'
-import { ArrowUpRight, Check, ChevronDown, Copy, Link2, Minus, MoreHorizontal, Phone, Plus } from 'lucide-react'
+import { Dropdown, Input, InputNumber, Select, message } from 'antd'
+import { ArrowUpRight, Check, ChevronDown, Copy, Link2, Minus, MoreHorizontal, Phone, Plus, UserCog } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import dayjs from 'dayjs'
@@ -8,6 +8,7 @@ import 'dayjs/locale/es'
 import { supabase } from '../../../lib/supabase'
 import { esEventoActivo, fechaDeEvento } from '../adminConstants'
 import { AdminModal } from '../AdminModal'
+import { asignarPlannerAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
 import styles from './EventosSection.module.css'
 
@@ -63,7 +64,7 @@ const formatFecha = (invitation) => {
     return null
 }
 
-export const EventosSection = ({ newInvitations, refreshEventos, query = '', esPrueba }) => {
+export const EventosSection = ({ newInvitations, profiles, refreshEventos, query = '', esPrueba }) => {
     const [tab, setTab] = useState('calendario')
     const [ownerInputs, setOwnerInputs] = useState({})
     const [radiografia, setRadiografia] = useState({})
@@ -76,6 +77,31 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
     const [recargando, setRecargando] = useState(null)
     const [creditosNuevos, setCreditosNuevos] = useState(0)
     const [guardando, setGuardando] = useState(false)
+
+    // Asignación de planner: mismo esquema de "un evento a la vez" que la recarga.
+    const [asignando, setAsignando] = useState(null)
+    const [plannerElegido, setPlannerElegido] = useState(null)
+    const [guardandoPlanner, setGuardandoPlanner] = useState(false)
+
+    const planners = useMemo(
+        () => (profiles ?? [])
+            .filter(p => p.role === 'planner')
+            .sort((a, b) => String(a.full_name ?? '').localeCompare(String(b.full_name ?? ''))),
+        [profiles]
+    )
+
+    // Se busca en todos los perfiles, no solo en `planners`: si a alguien le
+    // quitan el rol, su nombre sigue saliendo en los eventos que conserva.
+    const perfilesPorId = useMemo(
+        () => new Map((profiles ?? []).map(p => [p.user_id, p])),
+        [profiles]
+    )
+
+    const nombrePlanner = (record) => {
+        if (!record.planner_id) return null
+        const perfil = perfilesPorId.get(record.planner_id)
+        return perfil?.full_name || perfil?.user_email || 'Planner'
+    }
 
     const copyToClipboard = async (textToCopy) => {
         try {
@@ -115,6 +141,33 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
             setGuardando(false)
         }
     };
+
+    const abrirAsignarPlanner = (invitation) => {
+        setAsignando(invitation)
+        setPlannerElegido(invitation.planner_id ?? null)
+    }
+
+    const cerrarAsignarPlanner = () => {
+        setAsignando(null)
+        setPlannerElegido(null)
+    }
+
+    const confirmarPlanner = async () => {
+        if (!asignando) return
+
+        setGuardandoPlanner(true)
+        try {
+            await asignarPlannerAdmin(asignando.id, plannerElegido)
+            message.success(plannerElegido ? 'Planner asignado' : 'Planner quitado')
+            cerrarAsignarPlanner()
+            refreshEventos()
+        } catch (error) {
+            console.error('Error assigning planner:', error.response?.data || error.message);
+            message.error(error.response?.data?.msg || 'No se pudo asignar el planner')
+        } finally {
+            setGuardandoPlanner(false)
+        }
+    }
 
     const AddNewOwner = async (id, name) => {
         if (!name?.trim()) return
@@ -255,9 +308,9 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
         const texto = query.trim().toLowerCase()
 
         // El buscador de la topbar es global: aquí cubre nombre, email y dueños.
-        return porTab[tab].filter(i => !texto || [i.name, i.user_email, ...(i.owners ?? [])]
+        return porTab[tab].filter(i => !texto || [i.name, i.user_email, nombrePlanner(i), ...(i.owners ?? [])]
             .some(campo => String(campo ?? '').toLowerCase().includes(texto)))
-    }, [porTab, tab, query])
+    }, [porTab, tab, query, perfilesPorId])
 
     const accionesPopup = (record) => (
         <div className={styles.popup}>
@@ -280,6 +333,9 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
             </button>
             <button type='button' className={styles.popupItem} onClick={() => insertSideEvent(record?.id)}>
                 <Plus size={14} /> Side event
+            </button>
+            <button type='button' className={styles.popupItem} onClick={() => abrirAsignarPlanner(record)}>
+                <UserCog size={14} /> Asignar planner
             </button>
         </div>
     )
@@ -481,6 +537,7 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
                                     <span className={styles.cell}>Plan</span>
                                     <span className={styles.cell}>Créditos</span>
                                     <span className={styles.cell}>Dueños</span>
+                                    <span className={styles.cell}>Planner</span>
                                     <span className={styles.cell}>Fecha</span>
                                     <span className={styles.cell} />
                                 </div>
@@ -496,6 +553,9 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
                                             </span>
                                             <span className={styles.cell}>{chipCreditos(record)}</span>
                                             <span className={styles.cell}>{botonDuenos(record)}</span>
+                                            <span className={`${styles.cell} ${record.planner_id ? styles.planner : styles.dateEmpty}`}>
+                                                {nombrePlanner(record) || 'Sin planner'}
+                                            </span>
                                             <span className={`${styles.cell} ${fecha ? styles.date : styles.dateEmpty}`}>
                                                 {fecha || 'sin fecha'}
                                             </span>
@@ -522,7 +582,10 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
                                             <span className={planClass(record.plan)}>{record.plan || 'sin plan'}</span>
                                             <span className={styles.mobileDate}>{fecha || 'sin fecha'}</span>
                                         </div>
-                                        <div className={styles.mobileEmail}>{record.user_email}</div>
+                                        <div className={styles.mobileEmail}>
+                                            {record.user_email}
+                                            {record.planner_id && ` · Planner: ${nombrePlanner(record)}`}
+                                        </div>
                                         <div className={styles.mobileBottom}>
                                             {chipCreditos(record)}
                                             {botonDuenos(record)}
@@ -543,6 +606,42 @@ export const EventosSection = ({ newInvitations, refreshEventos, query = '', esP
 
             <AdminModal open={Boolean(abierto)} onClose={() => setAbierto(null)} width={420}>
                 {abierto && tarjetaEvento(abierto)}
+            </AdminModal>
+
+            <AdminModal
+                open={Boolean(asignando)}
+                title='Asignar planner'
+                onClose={cerrarAsignarPlanner}
+                onConfirm={confirmarPlanner}
+                confirmDisabled={(plannerElegido ?? null) === (asignando?.planner_id ?? null)}
+                loading={guardandoPlanner}
+                width={400}
+            >
+                <div className={styles.rechargeModal}>
+                    <div className={styles.rechargeEvent}>
+                        <span className={styles.rechargeEventName}>{asignando?.name}</span> · {asignando?.user_email}
+                    </div>
+
+                    <div>
+                        <div className={styles.rechargeLabel}>Planner</div>
+                        {/* Dentro del modal: el menú portaleado a <body> quedaría
+                            debajo del telón del AdminModal. */}
+                        <Select
+                            showSearch
+                            allowClear
+                            placeholder={planners.length ? 'Sin planner' : 'No hay usuarios con rol planner'}
+                            value={plannerElegido ?? undefined}
+                            onChange={(value) => setPlannerElegido(value ?? null)}
+                            optionFilterProp='label'
+                            options={planners.map(p => ({
+                                value: p.user_id,
+                                label: `${p.full_name || 'Sin nombre'} (${p.user_email})`,
+                            }))}
+                            getPopupContainer={(trigger) => trigger.parentElement}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                </div>
             </AdminModal>
 
             <AdminModal

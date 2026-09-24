@@ -23,21 +23,6 @@ import { TablesPage } from '../../modules/GuestManagement/Tables/TablesPage'
 
 const LANDING = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing';
 
-// Contenido de muestra para las tarjetas bloqueadas del plan free. Sin él las
-// tarjetas salen vacías (una invitación free no tiene portada ni invitados) y
-// no se entiende qué se está comprando.
-const LOCKED_DEMO = {
-    cover: `${LANDING}/cover.jpg`,
-    title: 'Andrés & Julieta',
-    date: '2026-08-08',
-    stats: { confirmed: 84, waiting: 12, available: 24 },
-    guests: [
-        { id: 'demo-1', name: 'Mariana Robles', tag: 'Familia', state: 'confirmado' },
-        { id: 'demo-2', name: 'Diego Fuentes', tag: 'Amigos', state: 'confirmado' },
-        { id: 'demo-3', name: 'Sofía Márquez', tag: 'Trabajo', state: 'esperando' },
-    ],
-};
-
 export const DashboardPage = () => {
 
     const { t, i18n } = useTranslation()
@@ -266,16 +251,14 @@ export const DashboardPage = () => {
         setActivation('timeout');
     };
 
-    // Gating del plan free: solo se muestra el módulo de Save the Date (§5.4)
+    // Plan free: el tablero se reduce a Save the Date + "Contrata I attend"
+    // (ver el render). Los demás módulos ni se dibujan.
     const isFree = plan === 'free';
     // Lite: el Photo Wall está bloqueado y el upsell a PRO deja de ser un banner
     // flotante para ocupar su propia celda del bento (col 4, fila 1).
     const isLite = plan === 'lite';
 
-    // En free lo único usable es Save the Date: el resto se muestra bloqueado
-    // y cualquier click lleva al selector de planes.
     const openSection = (path) => () => {
-        if (isFree) { setPlansOpen(true); return }
         if (path === 'photowall' && isLite) { setProOpen(true); return }
         handleMoode(path)
     };
@@ -283,7 +266,6 @@ export const DashboardPage = () => {
     // El mapa de mesas se abre aquí mismo, en el mismo drawer que usa
     // GuestsPage, en vez de navegar a invitados para abrirlo allá.
     const openTables = () => {
-        if (isFree) { setPlansOpen(true); return }
         setTablesOpen(true)
     };
 
@@ -302,10 +284,9 @@ export const DashboardPage = () => {
         </div>
     );
 
-    const freeBar = lockBar('dashboard.bento_locked_free');
     // En lite el único módulo bloqueado es el Photo Wall, y su etiqueta apunta
     // a PRO en vez de a contratar.
-    const wallLocked = isFree || isLite;
+    const wallLocked = isLite;
 
     const handleMoode = (path) => {
         const params = new URLSearchParams({ id });
@@ -321,11 +302,9 @@ export const DashboardPage = () => {
     };
 
     const realCoverImg = toFirstString(invitation?.cover?.image?.prod);
-    const coverImg = isFree ? LOCKED_DEMO.cover : realCoverImg;
-    const coverTitle = isFree ? LOCKED_DEMO.title : (invitation?.cover?.title?.text?.value ?? '');
-    const coverChip = isFree
-        ? fmtChip(LOCKED_DEMO.date)
-        : (invitation?.cover?.date?.value ? fmtChip(invitation.cover.date.value) : null);
+    const coverImg = realCoverImg;
+    const coverTitle = invitation?.cover?.title?.text?.value ?? '';
+    const coverChip = invitation?.cover?.date?.value ? fmtChip(invitation.cover.date.value) : null;
 
     // Con fondo de video no hay imagen que mostrar: se usa la "imagen para el
     // link" que el editor pide en ese caso.
@@ -336,8 +315,8 @@ export const DashboardPage = () => {
     const stdImg = saveTheDate?.cover?.image?.poster || stdFirstImage || realCoverImg;
     const stdChip = saveTheDate?.event_date ? fmtChip(saveTheDate.event_date) : null;
 
-    const stats = isFree ? LOCKED_DEMO.stats : { confirmed, waiting, available };
-    const shownGuests = isFree ? LOCKED_DEMO.guests : guestsSample;
+    const stats = { confirmed, waiting, available };
+    const shownGuests = guestsSample;
     const totalPasses = stats.confirmed + stats.waiting + stats.available;
     const totalGuests = Math.max(stats.confirmed + stats.waiting + Math.max(stats.available, 0), 1);
     const pctConfirmed = Math.min(100, Math.round((stats.confirmed / totalGuests) * 100));
@@ -454,17 +433,13 @@ export const DashboardPage = () => {
     );
 
     // Acomodo de mesas: abre el mapa de mesas en un drawer sobre el dashboard.
-    // Solo lite y pro; en free sale bloqueada y en paperless no existe.
+    // Solo lite y pro; en paperless no existe.
     const tablesCard = (
-        <div
-            className={`bento_card bento_tables${isFree ? ' bento_locked' : ''}`}
-            onClick={openTables}
-        >
+        <div className='bento_card bento_tables' onClick={openTables}>
             <div className='bento_title'>{t('dashboard.card_tables')}</div>
             <div className='bento_tables_scene'>
                 <TablesSketch />
             </div>
-            {isFree && freeBar}
         </div>
     );
 
@@ -494,10 +469,15 @@ export const DashboardPage = () => {
 
                     <div className='dashboard_stack'>
 
-                        {isMobile ? <DashboardMobile
+                        {isFree ? (
+                            <div className={`bento_free${isMobile ? ' bento_free--mobile' : ''}`}>
+                                {stdCard}
+                                {ctaCard}
+                            </div>
+                        ) : isMobile ? <DashboardMobile
                             coverTitle={coverTitle}
                             coverChip={coverChip}
-                            coverImg={isFree ? LOCKED_DEMO.cover : realCoverImg}
+                            coverImg={realCoverImg}
                             published={published}
                             stats={stats}
                             /* "137 de 150": enviados contra el cupo del plan */
@@ -513,7 +493,7 @@ export const DashboardPage = () => {
                             wallThumbs={[...wall.thumbs, `${LANDING}/wall-1.jpg`, `${LANDING}/wall-2.jpg`].slice(0, 2)}
                             stdImg={stdImg}
                             stdChip={stdChip}
-                            /* Acomodo de mesas: fuera en paperless; en free abre planes vía onOpen. */
+                            /* Acomodo de mesas: fuera en paperless. */
                             showTables={!isPaperless}
                             feedbackVisible={feedbackVisible}
                             onOpenFeedback={openFeedbackModal}
@@ -524,7 +504,7 @@ export const DashboardPage = () => {
 
                             {/* ── Invitación Paperless — lila, alta ── */}
                             <div
-                                className={`bento_card bento_inv${isFree ? ' bento_locked' : ''}`}
+                                className='bento_card bento_inv'
                                 onClick={openSection('build')}
                             >
                                     <div className='bento_title'>{t('dashboard.card_invitation')}</div>
@@ -537,13 +517,12 @@ export const DashboardPage = () => {
                                             {coverChip && <div className='bento_inv_date'>{coverChip.day} · {coverChip.month} · {coverChip.year}</div>}
                                         </div>
                                     </div>
-                                {isFree && freeBar}
                             </div>
 
                             {/* ── Gestión de invitados — salvia, ancha ── */}
                             {plan !== 'paperless' &&
                                 <div
-                                    className={`bento_card bento_guests${isFree ? ' bento_locked' : ''}`}
+                                    className='bento_card bento_guests'
                                     onClick={openSection('guests')}
                                 >
                                     <div className='bento_guests_left'>
@@ -581,14 +560,13 @@ export const DashboardPage = () => {
                                             ))}
                                         </div>
                                     </div>
-                                    {isFree && freeBar}
                                 </div>
                             }
 
                             {/* ── Side events — crema ── */}
                             {plan !== 'paperless' &&
                                 <div
-                                    className={`bento_card bento_side${isFree ? ' bento_locked' : ''}`}
+                                    className='bento_card bento_side'
                                     onClick={openSection('side')}
                                 >
                                     <div className='bento_side_left'>
@@ -603,7 +581,6 @@ export const DashboardPage = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    {isFree && freeBar}
                                 </div>
                             }
 

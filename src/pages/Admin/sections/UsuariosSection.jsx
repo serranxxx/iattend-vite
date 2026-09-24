@@ -7,6 +7,8 @@ import styles from './UsuariosSection.module.css'
 const ROLES = {
     Administration: { label: 'Administración', clase: 'roleAdmin' },
     sales: { label: 'Vendedor', clase: 'roleVendedor' },
+    planner: { label: 'Planner', clase: 'rolePlanner' },
+    mkt: { label: 'Marketing', clase: 'roleMkt' },
     test: { label: 'Pruebas', clase: 'rolePruebas' },
 }
 
@@ -18,6 +20,8 @@ const FILTROS = [
     { key: 'todos', label: 'Todos' },
     { key: 'Administration', label: 'Administración' },
     { key: 'sales', label: 'Vendedor' },
+    { key: 'planner', label: 'Planner' },
+    { key: 'mkt', label: 'Marketing' },
     { key: 'cliente', label: 'Cliente' },
     { key: 'test', label: 'Pruebas' },
 ]

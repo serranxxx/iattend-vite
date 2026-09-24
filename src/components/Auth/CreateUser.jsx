@@ -1,8 +1,21 @@
 
-import { Button, Input, message } from "antd";
+import { Button, Input, Select, message } from "antd";
 import { LuPlus } from "react-icons/lu";
 import axios from "axios";
 import { useState } from "react";
+import { supabase } from "../../lib/supabase";
+
+// `value` es lo que se guarda en profiles.role; '' = cliente (sin rol).
+// "Admin" se guarda como 'Administration' porque es lo que revisan AdminHOC
+// y el backend.
+const ROLE_OPTIONS = [
+    { value: '', label: 'Cliente (sin rol)' },
+    { value: 'Administration', label: 'Admin' },
+    { value: 'sales', label: 'Sales' },
+    { value: 'planner', label: 'Planner' },
+    { value: 'mkt', label: 'Mkt' },
+    { value: 'test', label: 'Test' },
+]
 
 export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
 
@@ -10,6 +23,7 @@ export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
     const [newName, setNewName] = useState(null)
     const [newUsername, setNewUsername] = useState(null)
     const [newPassword, setNewPassword] = useState(null)
+    const [newRole, setNewRole] = useState('')
     const [messageApi, contextHolder] = message.useMessage();
 
     const handleCreate = async () => {
@@ -32,7 +46,13 @@ export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
                 return messageApi.error('La contraseña debe tener mínimo 6 caracteres')
             }
 
-            // 2️⃣ Petición al backend
+            // 2️⃣ Petición al backend. Asignar un rol exige sesión de admin: el
+            // backend lo valida con este token.
+            const { data: { session } } = await supabase.auth.getSession()
+            const headers = session?.access_token
+                ? { Authorization: `Bearer ${session.access_token}` }
+                : {}
+
             const { data } = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/auth/create-user`,
                 // 'http://localhost:4000/api/auth/create-user', // ajusta la ruta si es diferente
@@ -40,7 +60,9 @@ export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
                     Name: newName,
                     Email: newUsername,
                     Password: newPassword,
-                }
+                    Role: newRole || null,
+                },
+                { headers }
             )
 
             if (data.ok) {
@@ -55,6 +77,7 @@ export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
                 setNewName('')
                 setNewUsername('')
                 setNewPassword('')
+                setNewRole('')
             }
 
         } catch (error) {
@@ -90,6 +113,15 @@ export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
                 <Input onChange={(e) => setNewName(e.target.value)} value={newName} placeholder='Nombre' />
                 <Input onChange={(e) => setNewUsername(e.target.value)} value={newUsername} placeholder='Email' />
                 <Input.Password onChange={(e) => setNewPassword(e.target.value)} value={newPassword} placeholder='Contraseña' />
+                {/* El menú se dibuja dentro del picker: si se portalea a <body>, el
+                    clic en una opción cuenta como "afuera" y cierra el Dropdown. */}
+                <Select
+                    value={newRole}
+                    onChange={setNewRole}
+                    options={ROLE_OPTIONS}
+                    getPopupContainer={(trigger) => trigger.parentElement}
+                    style={{ width: '100%' }}
+                />
 
             </div>
 

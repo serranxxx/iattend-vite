@@ -353,6 +353,7 @@ export const AdminLayout = () => {
                 return (
                     <EventosSection
                         newInvitations={newInvitations}
+                        profiles={newProfiles}
                         refreshEventos={refreshEventos}
                         query={globalQuery}
                         esPrueba={esPrueba}

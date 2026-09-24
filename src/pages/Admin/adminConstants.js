@@ -17,7 +17,11 @@ export const TEST_EMAILS = [
 // ventas o cuentas de prueba— y sus invitaciones no son eventos de clientes.
 // Hoy son 13 perfiles (2 Administration, 6 test, 5 sales) dueños de 25
 // invitaciones, y el rol cubre a todos los correos de `TEST_EMAILS`.
-export const tieneRol = (profile) => Boolean(String(profile?.role ?? '').trim())
+// Excepción: `planner` es un cliente externo que paga, no gente de casa.
+export const tieneRol = (profile) => {
+    const role = String(profile?.role ?? '').trim()
+    return Boolean(role) && role !== 'planner'
+}
 
 // El filtro necesita los perfiles, así que se construye una vez y se pasa hecho
 // a quien lo ocupe, en vez de que cada pantalla vuelva a cruzar las dos listas.

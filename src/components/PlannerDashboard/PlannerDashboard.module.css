@@ -1,0 +1,779 @@
+/* Dashboard del planner — capa de Producto del design system: Poppins para
+   la interfaz, Windsor para títulos y cifras, crema/lila/salvia de marca. */
+
+.dashboard {
+    --pd-ink: #0c171b;
+    --pd-text: #29262D;
+    --pd-muted: #787878;
+    --pd-line: #EBEBEB;
+    --pd-cream: #F5F3F2;
+    --pd-lilac: #d2bfdd;
+    --pd-lilac-soft: #efe7f4;
+    --pd-sage: #b9bba6;
+    --pd-success: #43B75D;
+    --pd-amber: #FBBF24;
+    --pd-error: #D32F2F;
+
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    max-width: 1320px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    font-family: 'Poppins', var(--font-family);
+    color: var(--pd-text);
+}
+
+.muted {
+    color: var(--pd-muted);
+    font-size: 13px;
+}
+
+/* ------------------------------------------------------------ vacío --- */
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 80px 16px;
+    color: var(--pd-ink, #0c171b);
+    font-family: 'Poppins', var(--font-family);
+    text-align: center;
+}
+
+.emptyTitle {
+    font-family: 'Windsor', var(--font-family);
+    font-weight: 800;
+    font-size: 20px;
+}
+
+/* ---------------------------------------------------------- filtro --- */
+
+.toolbar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.eventFilter {
+    width: 280px;
+    max-width: 100%;
+}
+
+/* ------------------------------------------------------------- KPIs --- */
+
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px 18px;
+    background: var(--pd-cream);
+    border-radius: 24px;
+    min-width: 0;
+}
+
+.kpiIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 99px;
+    background: #fff;
+    color: var(--pd-ink);
+    margin-bottom: 8px;
+}
+
+.kpiLabel {
+    font-size: 12px;
+    color: var(--pd-muted);
+}
+
+.kpiValue {
+    font-family: 'Windsor', var(--font-family);
+    font-weight: 800;
+    font-size: 30px;
+    line-height: 1.1;
+    color: var(--pd-ink);
+}
+
+.kpiHint {
+    font-size: 12px;
+    color: var(--pd-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------- paneles --- */
+
+.columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid var(--pd-line);
+    border-radius: 24px;
+    min-width: 0;
+}
+
+.panelHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.panelTitle {
+    font-family: 'Windsor', var(--font-family);
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--pd-ink);
+}
+
+.badge {
+    min-width: 24px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--pd-lilac-soft);
+    color: var(--pd-ink);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* -------------------------------------------------------- pendientes --- */
+
+.alertsPanel {
+    max-height: 520px;
+}
+
+.alerts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+}
+
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 16px;
+    background: var(--pd-cream);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.alert:hover {
+    background: var(--pd-lilac-soft);
+}
+
+.alertIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+}
+
+.alert_high {
+    background: #fbe3e3;
+    color: var(--pd-error);
+}
+
+.alert_medium {
+    background: #fdf1d2;
+    color: #9a6b00;
+}
+
+.alert_low {
+    background: #fff;
+    color: var(--pd-muted);
+}
+
+.alertText {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.alertText b {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pd-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.alertText small {
+    font-size: 12px;
+    color: var(--pd-muted);
+}
+
+.alertWhen {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--pd-muted);
+}
+
+/* -------------------------------------------------------- calendario --- */
+
+.monthNav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.monthNav button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--pd-line);
+    border-radius: 99px;
+    background: #fff;
+    color: var(--pd-ink);
+    cursor: pointer;
+}
+
+.monthNav button:hover {
+    border-color: var(--pd-ink);
+}
+
+.monthLabel {
+    min-width: 130px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--pd-ink);
+}
+
+.calendarBody {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 18px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    align-content: start;
+}
+
+.weekday {
+    font-size: 11px;
+    color: var(--pd-muted);
+    text-align: center;
+    text-transform: capitalize;
+    padding-bottom: 4px;
+}
+
+.day {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    aspect-ratio: 1;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--pd-text);
+    cursor: pointer;
+}
+
+.day:hover {
+    background: var(--pd-cream);
+}
+
+.dayOut {
+    color: #c4c4c4;
+}
+
+.dayToday {
+    border-color: var(--pd-ink);
+}
+
+.dayWedding {
+    background: var(--pd-lilac-soft);
+    font-weight: 600;
+    color: var(--pd-ink);
+}
+
+.daySelected,
+.daySelected:hover {
+    background: var(--pd-ink);
+    color: #fff;
+}
+
+.dots {
+    display: flex;
+    gap: 3px;
+}
+
+.dotWedding,
+.dotSide {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 99px;
+}
+
+.dotWedding {
+    background: #a07fb6;
+}
+
+.dotSide {
+    background: #7f8266;
+}
+
+.daySelected .dotWedding,
+.daySelected .dotSide {
+    background: #fff;
+}
+
+.agenda {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 16px;
+    background: var(--pd-cream);
+    min-height: 100%;
+    box-sizing: border-box;
+}
+
+.agendaDate {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pd-ink);
+}
+
+/* Solo la primera letra: capitalize subiría también el "de" de "2 de octubre". */
+.agendaDate::first-letter {
+    text-transform: uppercase;
+}
+
+.agendaWedding {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.agendaEventName {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Windsor', var(--font-family);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--pd-ink);
+}
+
+.timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 10px;
+    border-left: 2px solid var(--pd-lilac);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.timeline li {
+    display: flex;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.timelineTime {
+    flex-shrink: 0;
+    min-width: 58px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--pd-muted);
+}
+
+.timelineText {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.timelineText b {
+    font-weight: 600;
+    color: var(--pd-ink);
+}
+
+.timelineText small,
+.agendaSide small {
+    font-size: 12px;
+    color: var(--pd-muted);
+}
+
+.agendaSide {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 13px;
+    color: #7f8266;
+}
+
+.agendaSide span {
+    display: flex;
+    flex-direction: column;
+}
+
+.agendaSide b {
+    font-weight: 600;
+    color: var(--pd-ink);
+}
+
+.legend {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--pd-muted);
+}
+
+.legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ----------------------------------------------------------- eventos --- */
+
+.eventsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.events {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.event {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid var(--pd-line);
+    border-radius: 24px;
+}
+
+.eventHead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.eventThumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--pd-cream);
+    color: var(--pd-muted);
+}
+
+.eventThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.eventTitle {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.eventTitle b {
+    font-family: 'Windsor', var(--font-family);
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--pd-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: capitalize;
+}
+
+.eventTitle small {
+    font-size: 12px;
+    color: var(--pd-muted);
+}
+
+.countdown {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: var(--pd-cream);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--pd-ink);
+}
+
+.countdownSoon {
+    background: var(--pd-ink);
+    color: #fff;
+}
+
+.rsvp {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rsvpTop {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pd-ink);
+}
+
+.bar {
+    display: flex;
+    height: 8px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: var(--pd-cream);
+}
+
+.bar span {
+    height: 100%;
+}
+
+.barEmpty {
+    width: 100%;
+}
+
+.barConfirmed { background: var(--pd-success); }
+.barWaiting { background: var(--pd-amber); }
+.barDeclined { background: #e57373; }
+.barNotSent { background: #d9d9d9; }
+
+.rsvpLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 11.5px;
+    color: var(--pd-muted);
+}
+
+.rsvpLegend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rsvpLegend i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+}
+
+.facts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--pd-line);
+}
+
+.facts div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.facts dt {
+    color: var(--pd-muted);
+    flex-shrink: 0;
+}
+
+.facts dd {
+    margin: 0;
+    color: var(--pd-ink);
+    text-align: right;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.warn {
+    margin-left: 6px;
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--pd-error);
+}
+
+.open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: auto;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--pd-ink);
+    color: #fff;
+    font-family: 'Poppins', var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.open:hover {
+    opacity: 0.9;
+}
+
+/* ------------------------------------------------------- responsive --- */
+
+@media (max-width: 1100px) {
+    .kpis {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .dashboard {
+        gap: 16px;
+    }
+
+    .eventFilter {
+        width: 100%;
+    }
+
+    .panel {
+        padding: 16px;
+        border-radius: 20px;
+    }
+
+    /* El título y la navegación de mes no caben juntos a 375px: la
+       navegación baja a su propia fila y ocupa el ancho. */
+    .calendarPanel .panelHead {
+        flex-wrap: wrap;
+    }
+
+    .monthNav {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .monthLabel {
+        min-width: 0;
+    }
+
+    /* Cinco indicadores apilados ocupaban una pantalla entera: sin ícono y
+       con menos aire caben en poco más de media. */
+    .kpi {
+        padding: 12px 14px;
+        border-radius: 18px;
+    }
+
+    .kpiIcon {
+        display: none;
+    }
+
+    .kpiValue {
+        font-size: 24px;
+    }
+
+    .kpiHint {
+        font-size: 11px;
+    }
+
+    .event {
+        padding: 16px;
+        border-radius: 20px;
+    }
+
+    /* Con el contador al lado, "Andrea & Samantha" se cortaba en una línea. */
+    .eventTitle b {
+        white-space: normal;
+    }
+
+    .eventHead {
+        align-items: flex-start;
+    }
+
+    .kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Son cinco: la última ocupa la fila completa en vez de quedar huérfana. */
+    .kpi:last-child {
+        grid-column: span 2;
+    }
+
+    .kpiHint {
+        white-space: normal;
+    }
+
+    .calendarBody {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .events {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

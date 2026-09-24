@@ -18,3 +18,13 @@ export const fetchAdminInvitacionData = async (invitationId) => {
     const headers = await authHeaders()
     return axios.get(`${API_URL}/api/admin/invitaciones/${invitationId}/data`, { headers })
 }
+
+// planner_id null quita el planner del evento.
+export const asignarPlannerAdmin = async (invitationId, plannerId) => {
+    const headers = await authHeaders()
+    return axios.patch(
+        `${API_URL}/api/admin/invitaciones/${invitationId}/planner`,
+        { planner_id: plannerId },
+        { headers }
+    )
+}

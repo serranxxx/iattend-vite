@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Input, Layout, Row, message, Button, notification } from 'antd';
+import { Input, Layout, Row, message, Button, notification, Segmented } from 'antd';
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -8,13 +8,14 @@ import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
 import { AdsCarousel } from '../../components/AdsCarousel/AdsCarousel'
 import { RegalaIAttend } from '../../components/RegalaIAttend/RegalaIAttend';
-import { ArrowRight, Calendar1, Gift, Plus, Share } from 'lucide-react';
+import { ArrowRight, Calendar1, ClipboardList, Gift, Plus, Share } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
 import { GiftDrawer } from '../../components/Gift/GiftDrawer';
 import { FooterApp } from '../../modules/Footer/FooterApp';
 import { useTranslation } from 'react-i18next';
 import { OnboardingWizard } from '../PreviewMood/OnboardingWizard';
 import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData';
+import { PlannerDashboard } from '../../components/PlannerDashboard/PlannerDashboard';
 
 const { Content } = Layout;
 
@@ -47,6 +48,21 @@ export const InvitationsPage = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
+    const isPlanner = sessions?.user?.role === 'planner'
+    // Vista del planner: sus invitaciones o la pestaña "Dashboard". Va en la
+    // URL (?view=data) para que recargar no lo regrese a las cards.
+    const view = isPlanner && searchParams.get('view') === 'data' ? 'data' : 'invitations'
+    const setView = (value) => {
+        if (value === 'data') searchParams.set('view', 'data')
+        else searchParams.delete('view')
+        setSearchParams(searchParams, { replace: true })
+    }
+
+    // "Mis clientes" = eventos ajenos que organiza; "Mis eventos" = los suyos
+    // (incluido el free con el que nace su cuenta). "Dashboard" es solo de clientes.
+    const esDeCliente = (inv) => inv.planner_id === sessions?.user?.uid && inv.user_id !== sessions?.user?.uid
+    const clientInvitations = (invitationsNI ?? []).filter(esDeCliente)
+
     useEffect(() => {
         if (searchParams.get('welcome') === '1') {
             notification.success({
@@ -60,9 +76,15 @@ export const InvitationsPage = () => {
         }
     }, [])
 
+    // El evento free es solo el Save the Date: su título de portada es el de la
+    // plantilla default, no el de la pareja. La tarjeta y el buscador usan este.
+    const cardTitle = (inv) => inv?.plan === 'free'
+        ? t('invitations.free_std_title')
+        : (inv?.data?.cover?.title?.text?.value ?? '')
+
     const handleFilter = (value) => {
         setInvitationsCopy(
-            invitationsNI.filter((inv) => inv.data?.cover?.title?.text?.value.toLowerCase().includes(value.toLowerCase()))
+            invitationsNI.filter((inv) => cardTitle(inv).toLowerCase().includes(value.toLowerCase()))
         );
     };
 
@@ -74,6 +96,106 @@ export const InvitationsPage = () => {
             console.error('Error al copiar el texto: ', err);
         }
     };
+
+    // Tarjeta de "nuevo evento": la grande invita a comprar el primero, la
+    // chica acompaña a los que ya hay.
+    const renderNewEventCard = (count) => count > 1 ? (
+        <div onClick={() => navigate('/checkout')} className="invitation-container new-event-card">
+            <div className='new_inv_cont'>
+                <div className='add_button_circle'>
+                    <Plus size={32} color='#0c171b' strokeWidth={3} />
+                </div>
+                <span className='cta_title' style={{ maxWidth: '100%' }}>
+                    {t('invitations.new_event_title')}
+                </span>
+                <span className='cta_text'>{t('invitations.new_event_cta')}</span>
+            </div>
+        </div>
+    ) : (
+        <div onClick={() => navigate('/checkout')} className="invitation-container new-event-card">
+            <div className='new_inv_cont' style={{minHeight:'400px', maxHeight:'400px'}}>
+                <div className='add_button_circle'>
+                    <Calendar1 size={32} color='#0c171b' strokeWidth={2} />
+                </div>
+                <span className='cta_title'>{t('invitations.empty_title')}</span>
+                <span className='cta_text'>{t('invitations.empty_text')}</span>
+                <Button type="primary" className='cta_plans'>{t('invitations.empty_cta')}</Button>
+                {/* <small className='cta_support'>{t('invitations.empty_support')} <a>{t('invitations.empty_support_link')}</a></small> */}
+            </div>
+        </div>
+    )
+
+    const renderInvitationCard = (invitation) => (
+        <div
+            key={invitation.id}
+            className="invitation-container"
+        >
+            {/* Full-bleed background image */}
+            {toFirstString(invitation?.data?.cover?.image?.prod) && (
+                <img
+                    src={toFirstString(invitation.data.cover.image.prod)}
+                    alt=""
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+            )}
+            {/* Dark overlay */}
+            <div style={{
+                position: 'absolute', inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                mixBlendMode: 'multiply',
+            }} />
+
+            {/* Text + buttons — pushed to bottom */}
+            <div style={{
+                position: 'relative', zIndex: 1,
+                width: '100%', marginTop: 'auto',
+                display: 'flex', flexDirection: 'column', gap: '4px',
+            }}>
+                <span className='invitation_name'>
+                    {cardTitle(invitation)}
+                </span>
+                <span className='invitation_path'>
+                    {invitation?.name}
+                </span>
+                <div className='invitation_btns_cont'>
+                    <Button
+                        disabled={!invitation.active}
+                        icon={<ArrowRight size={16} />}
+                        className='invitation_start_button'
+                        onClick={() => handleMoode(invitation.id)}
+                    >
+                        {t('invitations.btn_start')}
+                    </Button>
+                    <Button
+                        disabled={!invitation.active}
+                        icon={<Share size={16} />}
+                        className='invitation_url_button'
+                        onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
+                    />
+                </div>
+            </div>
+
+            {/* Status badge */}
+            <div
+                className='invitation_status'
+                style={{ position: 'absolute', top: '22px', right: '22px', zIndex: 2 }}
+            >
+                <div className='status_indicator' style={{ backgroundColor: invitation.active ? '#4ADE80' : '#FBBF24' }} />
+                <span>{invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}</span>
+            </div>
+
+            {/* Evento de un cliente que este usuario organiza como planner */}
+            {esDeCliente(invitation) && (
+                <div
+                    className='invitation_status'
+                    style={{ position: 'absolute', top: '22px', left: '22px', zIndex: 2 }}
+                >
+                    <ClipboardList size={12} />
+                    <span>{t('invitations.planner_badge')}</span>
+                </div>
+            )}
+        </div>
+    )
 
     const handleMoode = (id) => {
         const params = new URLSearchParams({ id });
@@ -107,10 +229,16 @@ export const InvitationsPage = () => {
 
         setLoader(true)
 
-        const { data, error } = await supabase
-            .from("invitations")
-            .select("*")
-            .eq("user_id", session.user.id);
+        // Un planner ve sus eventos propios más los de sus clientes
+        // (invitations.planner_id); en pantalla se separan en dos secciones.
+        // Se filtra por rol, igual que can_manage_invitation en la base.
+        const uid = session.user.id
+        let query = supabase.from("invitations").select("*")
+        query = sessions?.user?.role === 'planner'
+            ? query.or(`user_id.eq.${uid},planner_id.eq.${uid}`)
+            : query.eq("user_id", uid)
+
+        const { data, error } = await query;
 
         if (error) {
             console.error("Error al obtener invitaciones:", error);
@@ -200,10 +328,25 @@ export const InvitationsPage = () => {
                                             <Row className='invs-header-ctas'>
 
                                                 <span className='invitations_title'>{greeting}</span>
-                                                <Input
-                                                    placeholder={t('invitations.search_placeholder')}
-                                                    onChange={(e) => handleFilter(e.target.value)}
-                                                    className='invs-searcher' />
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                                    {view === 'invitations' && (
+                                                        <Input
+                                                            placeholder={t('invitations.search_placeholder')}
+                                                            onChange={(e) => handleFilter(e.target.value)}
+                                                            className='invs-searcher' />
+                                                    )}
+                                                    {isPlanner && (
+                                                        <Segmented
+                                                            shape='round'
+                                                            value={view}
+                                                            onChange={setView}
+                                                            options={[
+                                                                { value: 'invitations', label: t('planner.segment_invitations') },
+                                                                { value: 'data', label: t('planner.segment_data') },
+                                                            ]}
+                                                        />
+                                                    )}
+                                                </div>
                                                 {/* <Button style={{ borderRadius: '99px' }} icon={<LuPlus />} type='primary'>Nuevo evento</Button> */}
 
 
@@ -212,122 +355,33 @@ export const InvitationsPage = () => {
 
                                         </div>
 
-                                        <div className={`inv-invitations-container`} >
-
-                                            {
-                                                invitationsCopy?.length > 1 ?
-
-                                                    <div onClick={() => navigate('/checkout')} className="invitation-container new-event-card">
-                                                        <div className='new_inv_cont'>
-                                                            <div className='add_button_circle'>
-                                                                <Plus size={32} color='#0c171b' strokeWidth={3} />
-                                                            </div>
-                                                            <span className='cta_title' style={{ maxWidth: '100%' }}>
-                                                                {t('invitations.new_event_title')}
-                                                            </span>
-                                                            <span className='cta_text'>{t('invitations.new_event_cta')}</span>
+                                        {view === 'data' ? (
+                                            <PlannerDashboard invitations={clientInvitations} />
+                                        ) : isPlanner ? (
+                                            // Una sola fila: "nuevo evento" siempre primero a la izquierda y
+                                            // luego cada grupo con su título encima. Los vacíos no se pintan.
+                                            <div className='inv-invitations-container inv-invitations-grouped'>
+                                                {renderNewEventCard(invitationsCopy?.length ?? 0)}
+                                                {[
+                                                    { key: 'clients', title: t('invitations.section_clients'), items: (invitationsCopy ?? []).filter(esDeCliente) },
+                                                    { key: 'own', title: t('invitations.section_own'), items: (invitationsCopy ?? []).filter(inv => !esDeCliente(inv)) },
+                                                ].filter(group => group.items.length > 0).map(group => (
+                                                    <section key={group.key} className='inv-group'>
+                                                        <span className='inv-section-title'>
+                                                            {group.title} <small>{group.items.length}</small>
+                                                        </span>
+                                                        <div className='inv-group-cards'>
+                                                            {group.items.map(renderInvitationCard)}
                                                         </div>
-                                                    </div>
-
-                                                    :
-                                                    <div onClick={() => navigate('/checkout')} className="invitation-container new-event-card">
-                                                        <div className='new_inv_cont' style={{minHeight:'400px', maxHeight:'400px'}}>
-                                                            <div className='add_button_circle'>
-                                                                <Calendar1 size={32} color='#0c171b' strokeWidth={2} />
-                                                            </div>
-                                                            <span className='cta_title'>{t('invitations.empty_title')}</span>
-                                                            <span className='cta_text'>{t('invitations.empty_text')}</span>
-                                                            <Button type="primary" className='cta_plans'>{t('invitations.empty_cta')}</Button>
-                                                            {/* <small className='cta_support'>{t('invitations.empty_support')} <a>{t('invitations.empty_support_link')}</a></small> */}
-                                                        </div>
-                                                    </div>
-
-                                            }
-
-                                            {
-                                                load ? (
-                                                    invitationsCopy?.map((invitation) => (
-                                                        <div
-                                                            key={invitation.id}
-                                                            className="invitation-container"
-                                                        >
-                                                            {/* Full-bleed background image */}
-                                                            {toFirstString(invitation?.data?.cover?.image?.prod) && (
-                                                                <img
-                                                                    src={toFirstString(invitation.data.cover.image.prod)}
-                                                                    alt=""
-                                                                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                                                                />
-                                                            )}
-                                                            {/* Dark overlay */}
-                                                            <div style={{
-                                                                position: 'absolute', inset: 0,
-                                                                background: 'rgba(0,0,0,0.5)',
-                                                                mixBlendMode: 'multiply',
-                                                            }} />
-
-                                                            {/* Text + buttons — pushed to bottom */}
-                                                            <div style={{
-                                                                position: 'relative', zIndex: 1,
-                                                                width: '100%', marginTop: 'auto',
-                                                                display: 'flex', flexDirection: 'column', gap: '4px',
-                                                            }}>
-                                                                <span className='invitation_name'>
-                                                                    {invitation?.data?.cover?.title?.text?.value}
-                                                                </span>
-                                                                <span className='invitation_path'>
-                                                                    {invitation?.name}
-                                                                </span>
-                                                                <div className='invitation_btns_cont'>
-                                                                    <Button
-                                                                        disabled={!invitation.active}
-                                                                        icon={<ArrowRight size={16} />}
-                                                                        className='invitation_start_button'
-                                                                        onClick={() => handleMoode(invitation.id)}
-                                                                    >
-                                                                        {t('invitations.btn_start')}
-                                                                    </Button>
-                                                                    <Button
-                                                                        disabled={!invitation.active}
-                                                                        icon={<Share size={16} />}
-                                                                        className='invitation_url_button'
-                                                                        onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
-                                                                    />
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Status badge */}
-                                                            <div
-                                                                className='invitation_status'
-                                                                style={{ position: 'absolute', top: '22px', right: '22px', zIndex: 2 }}
-                                                            >
-                                                                <div className='status_indicator' style={{ backgroundColor: invitation.active ? '#4ADE80' : '#FBBF24' }} />
-                                                                <span>{invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}</span>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                )
-                                                    : (
-                                                        <div
-                                                            style={{
-                                                                width: '100%',
-                                                                marginTop: '150px',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                            }}
-                                                        >
-                                                            <img
-                                                                src={load}
-                                                                style={{
-                                                                    width: '200px',
-                                                                }}
-                                                                alt="Loading"
-                                                            />
-                                                        </div>
-                                                    )
-                                            }
-                                        </div>
+                                                    </section>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className='inv-invitations-container'>
+                                                {renderNewEventCard(invitationsCopy?.length ?? 0)}
+                                                {invitationsCopy?.map(renderInvitationCard)}
+                                            </div>
+                                        )}
 
                                         {/* <div className='banner_cont'>
                                             <div className="gift-banner">
