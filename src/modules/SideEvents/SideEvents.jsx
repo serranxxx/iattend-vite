@@ -17,12 +17,13 @@ import { dayjsToWallClock, formatAbsoluteDateEs, formatEventDateTime, getTimezon
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
 import { useFonts } from '../../context/FontsContext'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
-import { UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
+import { ProModal, UpgradeBanner } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
+import { usePlans } from '../../hooks/usePlans'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, ImagePlus, Info, Landmark, Link2, Palette, Plus, Search, Send, Share2, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, ImagePlus, Info, Landmark, Link2, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -135,6 +136,12 @@ export const SideEvents = () => {
     })
     const [credits, setCredits] = useState(0)
     const [plan, setPlan] = useState(null)
+    // Tope de side events de ESTA invitación (lo que incluía su plan al
+    // comprarse + los comprados sueltos). No se deriva del plan: un Lite de
+    // antes del 1 de octubre conserva el suyo aunque el catálogo ya diga 0.
+    const [sideEventsCap, setSideEventsCap] = useState(0)
+    const [proOpen, setProOpen] = useState(false)
+    const { getPlan } = usePlans()
     const [invName, setInvName] = useState(null)
     const [invLabel, setInvLabel] = useState(null)
     const [invPhone, setInvPhone] = useState(null)
@@ -1608,7 +1615,7 @@ export const SideEvents = () => {
     const getCredits = async () => {
         const { data, error } = await supabase
             .from('invitations')
-            .select('credits, plan, name, label, phone_number, owners')
+            .select('credits, plan, side_events_included, name, label, phone_number, owners')
             .eq('id', id)
             .maybeSingle()
 
@@ -1617,6 +1624,7 @@ export const SideEvents = () => {
             return
         }
         setPlan(data.plan)
+        setSideEventsCap(data.side_events_included ?? 0)
         setCredits(data.credits)
         setInvName(data.name ?? null)
         setInvLabel(data.label ?? null)
@@ -2947,12 +2955,20 @@ export const SideEvents = () => {
        y los números del seleccionado.
        ═════════════════════════════════════════════════════════════════════ */
 
-    // Tope del plan: misma regla que ya decidía si se podía crear (pro 3,
-    // lite 1). Se deriva de un solo lugar para que el texto del riel nunca
-    // contradiga al botón.
-    const planCap = plan === 'pro' ? 3 : plan === 'lite' ? 1 : 0
+    // Tope de la invitación (`invitations.side_events_included`). Se deriva de
+    // un solo lugar para que el texto del riel nunca contradiga al botón.
+    const planCap = sideEventsCap
     const usedCount = sideEvent?.length ?? 0
     const canCreate = usedCount < planCap
+    // Comprar sueltos depende del plan en el catálogo (hoy solo PRO). Un Lite
+    // que no puede comprar ve la invitación a subir a PRO en su lugar.
+    const canBuySideEvents = !!getPlan(plan)?.can_buy_side_events
+    const upgradeForSideEvents = !canBuySideEvents && plan === 'lite'
+    const capReachedText = canBuySideEvents
+        ? t('side_events.list_cap_reached', { cap: planCap })
+        : upgradeForSideEvents
+            ? t('side_events.list_cap_reached_pro', { cap: planCap })
+            : t('side_events.list_no_plan')
 
     const countsFor = (sideEventId) =>
         guestCounts[sideEventId] ?? { total: 0, confirmado: 0, pendiente: 0, rechazado: 0 }
@@ -3123,7 +3139,9 @@ export const SideEvents = () => {
                 <span className={sl.mMeta}>
                     {planCap > 0
                         ? t('side_events.list_used', { used: usedCount, cap: planCap })
-                        : t('side_events.list_no_plan')}
+                        : upgradeForSideEvents
+                            ? t('side_events.list_pro_only')
+                            : t('side_events.list_no_plan')}
                 </span>
             </div>
 
@@ -3222,7 +3240,7 @@ export const SideEvents = () => {
                 </div>
             )}
 
-            {planCap > 0 && (
+            {canBuySideEvents && planCap > 0 && (
                 <div className={sl.mUpsell}>
                     <span className={sl.mUpsellText}>
                         <b>{t('side_events.list_used', { used: usedCount, cap: planCap })}.</b>{' '}
@@ -3239,9 +3257,26 @@ export const SideEvents = () => {
                 </div>
             )}
 
+            {upgradeForSideEvents && (
+                <div className={sl.mUpsell}>
+                    <span className={sl.mUpsellText}>
+                        {planCap > 0 && <><b>{t('side_events.list_used', { used: usedCount, cap: planCap })}.</b>{' '}</>}
+                        {t('side_events.pro_only_text')}
+                    </span>
+                    <button
+                        type="button"
+                        className={sl.mUpsellBtn}
+                        onClick={() => setProOpen(true)}
+                    >
+                        {t('side_events.cta_pro')}
+                        <ArrowRight size={14} />
+                    </button>
+                </div>
+            )}
+
             {canCreate
                 ? mobileNewButton
-                : <Tooltip title={t('side_events.list_cap_reached', { cap: planCap })}>{mobileNewButton}</Tooltip>
+                : <Tooltip title={capReachedText}>{mobileNewButton}</Tooltip>
             }
         </div>
     )
@@ -3254,7 +3289,9 @@ export const SideEvents = () => {
                 <span className={sl.railMeta}>
                     {planCap > 0
                         ? t('side_events.list_used', { used: usedCount, cap: planCap })
-                        : t('side_events.list_no_plan')}
+                        : upgradeForSideEvents
+                            ? t('side_events.list_pro_only')
+                            : t('side_events.list_no_plan')}
                 </span>
 
                 <div className={sl.list}>
@@ -3284,10 +3321,10 @@ export const SideEvents = () => {
                     no emite eventos de mouse y el motivo no se vería. */}
                 {canCreate
                     ? newEventButton
-                    : <Tooltip title={t('side_events.list_cap_reached', { cap: planCap })}>{newEventButton}</Tooltip>
+                    : <Tooltip title={capReachedText}>{newEventButton}</Tooltip>
                 }
 
-                {planCap > 0 &&
+                {canBuySideEvents && planCap > 0 &&
                     <div className={sl.upsell}>
                         <span className={sl.upsellIcon}><LuShoppingCart size={26} /></span>
                         <span className={sl.upsellTitle}>{t('side_events.cta_more_title')}</span>
@@ -3302,6 +3339,21 @@ export const SideEvents = () => {
                             onClick={() => handleCheckout(id, PRICE_IDS.SIDE_EVENT)}
                         >
                             {t('side_events.cta_buy')}
+                        </button>
+                    </div>
+                }
+
+                {upgradeForSideEvents &&
+                    <div className={sl.upsell}>
+                        <span className={sl.upsellIcon}><Sparkles size={26} /></span>
+                        <span className={sl.upsellTitle}>{t('side_events.pro_only_title')}</span>
+                        <span className={sl.upsellText}>{t('side_events.pro_only_text')}</span>
+                        <button
+                            type="button"
+                            className={sl.upsellBtn}
+                            onClick={() => setProOpen(true)}
+                        >
+                            {t('side_events.cta_pro')}
                         </button>
                     </div>
                 }
@@ -3728,6 +3780,7 @@ export const SideEvents = () => {
                 </Layout >
 
                 <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />
+                <ProModal open={proOpen} onClose={() => setProOpen(false)} invitationId={id} />
                 <FooterApp></FooterApp>
                 {globals}
             </Layout >

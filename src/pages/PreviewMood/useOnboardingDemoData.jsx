@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 export const ONBOARDING_DEMO_ID = '3cb0ab8b-41cb-428d-b383-ff9d5bbae17d'
 const LS_KEY = 'invitation-preview'
 
-const processInvitation = (raw) => ({
+export const processInvitation = (raw) => ({
     ...raw,
     cover: {
         ...raw.cover,
@@ -66,4 +66,50 @@ export const useOnboardingDemoData = () => {
     ]
 
     return { invitation, buttons, invitationID: ONBOARDING_DEMO_ID }
+}
+
+// Invitación demo por ID, para el slide "Editor de invitación" cuando en
+// Admin → Onboarding se eligió otra que no es ONBOARDING_DEMO_ID. Se guarda en
+// localStorage por ID para que el wizard la tenga al instante la próxima vez.
+export const useDemoInvitation = (id) => {
+    const cacheKey = id ? `${LS_KEY}:${id}` : null
+
+    const leerCache = () => {
+        if (!cacheKey) return null
+        try {
+            const stored = localStorage.getItem(cacheKey)
+            return stored ? JSON.parse(stored) : null
+        } catch {
+            return null
+        }
+    }
+
+    const [estado, setEstado] = useState(() => ({ id, invitation: leerCache(), error: false }))
+
+    useEffect(() => {
+        if (!id) return
+        let vivo = true
+        setEstado({ id, invitation: leerCache(), error: false })
+
+        supabase
+            .from('invitations')
+            .select('data')
+            .eq('id', id)
+            .maybeSingle()
+            .then(({ data, error }) => {
+                if (!vivo) return
+                if (error || !data?.data) {
+                    setEstado({ id, invitation: null, error: true })
+                    return
+                }
+                const processed = processInvitation(data.data)
+                try { localStorage.setItem(cacheKey, JSON.stringify(processed)) } catch { /* sin espacio: no pasa nada */ }
+                setEstado({ id, invitation: processed, error: false })
+            })
+
+        return () => { vivo = false }
+    }, [id])
+
+    // Mientras llega la del ID nuevo no se devuelve la anterior.
+    return estado.id === id ? estado : { id, invitation: null, error: false }
 }

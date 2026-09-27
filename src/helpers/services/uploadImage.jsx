@@ -454,3 +454,33 @@ export const uploadGiftBrandLogo = async (file) => {
 
     return { url: data.publicUrl, path: filePath };
 };
+
+// Fotos del Photo Wall del onboarding (Admin → Onboarding). Van al bucket
+// público `assets`, junto a las texturas y los logos de marcas.
+export const uploadOnboardingPhoto = async (file) => {
+    const compressedFile = await imageCompression(file, {
+        maxSizeMB: 0.6,
+        maxWidthOrHeight: 1400,
+        initialQuality: 0.85,
+        fileType: 'image/jpeg',
+        useWebWorker: true,
+    });
+
+    const nombre = compressedFile.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9-_]+/gi, '-').slice(0, 40)
+    const filePath = `Onboarding/${Date.now()}-${nombre || 'foto'}.jpg`;
+
+    const { error } = await supabase.storage
+        .from('assets')
+        .upload(filePath, compressedFile, {
+            upsert: true,
+            contentType: 'image/jpeg',
+        });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+    return data.publicUrl;
+};

@@ -1,35 +1,97 @@
-import { useEffect, useRef, useState } from 'react'
-import { Modal, Button, Table, QRCode, Slider } from 'antd'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Modal, Button, QRCode } from 'antd'
 import confetti from 'canvas-confetti'
-import { Send, Check, Wallet, ArrowRight, Plus, Minus, Sparkles, X, Lock } from 'lucide-react'
-import { FiArrowUpRight } from 'react-icons/fi'
-import { FaPaperPlane, FaWhatsapp } from 'react-icons/fa'
-import { LuCalendar, LuCalendarCheck2, LuCalendarClock, LuCalendarX } from 'react-icons/lu'
-import { Pie } from 'react-chartjs-2'
-import { Chart as ChartJS, ArcElement, Legend } from 'chart.js'
+import { Send, Check, CheckCheck, ArrowRight, Sparkles, X, Lock, Camera, Crown } from 'lucide-react'
+import { FaWhatsapp } from 'react-icons/fa'
 import { BuildContent } from '../../modules/Invitation/Build/PageSections/BuildContent'
 import ios_settings from '../../assets/images/iphone-settings.svg'
+import { usePlans } from '../../hooks/usePlans'
+import { DEFAULT_STD_URL, DEFAULT_WALL_PHOTOS, useOnboardingSlides } from './onboardingSlides'
+import { useDemoInvitation } from './useOnboardingDemoData'
 
-ChartJS.register(ArcElement, Legend)
 
-const STEPS = [
-    {
-        key: 'intro',
-        title: 'Conoce I attend',
-        subtitle: 'Crea tu invitación perfecta',
-    },
-    { key: 'step-2', title: 'Crea tu lista de invitados', subtitle: 'y envía tu invitación en automático' },
-    { key: 'step-3', title: 'Recibe confirmaciones', subtitle: 'todos tus invitados bajo control' },
-    { key: 'step-4', title: 'Pases digitales', subtitle: 'para que nada falle el día del evento' },
-    { key: 'step-5', title: 'Seating chart', subtitle: 'acomoda mesas y sillas como quieras' },
-    { key: 'step-6', title: 'Side events', subtitle: 'cada evento con su propio pase' },
-    { key: 'step-7', title: 'Conoce a Lia', subtitle: 'tu asistente con el contexto completo de tu evento' },
-]
+// Los textos, el orden y qué slides salen vienen de `onboarding_slides`
+// (Admin → Onboarding; ver ./onboardingSlides.js). Aquí solo viven las demos
+// interactivas de cada `kind`.
 
-const Step1Demo = ({ invitation, buttons, invitationID }) => {
+// Badge "Exclusivo en PRO" con el nombre del plan del catálogo.
+const ExclusiveBadge = ({ planId }) => {
+    const { getPlan } = usePlans()
+    if (!planId) return null
+    const nombre = getPlan(planId)?.name ?? planId
+    return (
+        <span className='ob-exclusive-badge'>
+            <Crown size={13} strokeWidth={2.2} />
+            Exclusivo en {nombre.toUpperCase()}
+        </span>
+    )
+}
+
+// Botón de acción de la demo: en escritorio botón, en celular link.
+const SlideCta = ({ label, onClick }) => {
+    if (!label) return null
+    return (
+        <>
+            <Button icon={<ArrowRight size={16} />} className='ob-wizard-nav-btn ob-wizard-nav-btn--primary ob-slide-cta-desktop' onClick={onClick}>
+                {label}
+            </Button>
+            <button type='button' className='ob-wizard-link-cta ob-slide-cta-mobile' onClick={onClick}>
+                {label} <ArrowRight size={16} />
+            </button>
+        </>
+    )
+}
+
+// Columna de texto de un slide: badge, eyebrow, título, subtítulo y
+// descripción (con su versión corta para celular si existe).
+const SlideCopy = ({ slide, titleClassName = 'ob-wizard-title-serif', children }) => (
+    <div className='ob-wizard-visual-content'>
+        <ExclusiveBadge planId={slide.exclusive_plan} />
+        {slide.eyebrow && <span className='ob-wizard-eyebrow'>{slide.eyebrow}</span>}
+        <h2 className={titleClassName}>{slide.title}</h2>
+        {slide.subtitle && <p className='ob-wizard-subtitle-serif'>{slide.subtitle}</p>}
+        {slide.description && (
+            <p className={`ob-wizard-visual-description${slide.description_mobile ? ' ob-wizard-visual-description--desktop' : ''}`}>
+                {slide.description}
+            </p>
+        )}
+        {slide.description_mobile && (
+            <p className='ob-wizard-visual-description ob-wizard-visual-description--mobile'>{slide.description_mobile}</p>
+        )}
+        {children}
+    </div>
+)
+
+// Portada que tapa el iframe de la invitación mientras carga: la foto y el
+// nombre de la invitación demo con un brillo que pasa. Se desvanece cuando el
+// remoto avisa que está listo.
+const HostPoster = ({ invitation, visible }) => {
+    const imagen = invitation?.cover?.image?.prod
+    const titulo = invitation?.cover?.title?.text?.value
+    return (
+        <div className={`ob-host-poster${visible ? '' : ' ob-host-poster--hidden'}`} aria-hidden='true'>
+            {imagen && <img src={imagen} alt='' />}
+            <div className='ob-host-poster-shade' />
+            {titulo && <span className='ob-host-poster-title'>{titulo}</span>}
+            <div className='ob-host-poster-shimmer' />
+        </div>
+    )
+}
+
+const Step1Demo = ({ slide, invitation, buttons, invitationID }) => {
     const [demoPositionY, setDemoPositionY] = useState('cover')
     const [demoDevice, setDemoDevice] = useState('ios')
     const [demoOnHide, setDemoOnHide] = useState(false)
+    // El iframe tarda en arrancar (es la app completa de iattend.events): hasta
+    // que avisa, se ve la portada. Tras el aviso se espera un poco más para que
+    // alcance a pintar, y hay un tope por si el aviso nunca llega.
+    const [hostReady, setHostReady] = useState(false)
+    const onHostReady = () => setTimeout(() => setHostReady(true), 450)
+
+    useEffect(() => {
+        const tope = setTimeout(() => setHostReady(true), 10000)
+        return () => clearTimeout(tope)
+    }, [])
 
     return (
         <div className='ob-step1-demo'>
@@ -49,18 +111,14 @@ const Step1Demo = ({ invitation, buttons, invitationID }) => {
                             setDevice={setDemoDevice}
                             onHide={demoOnHide}
                             setOnHide={setDemoOnHide}
+                            onHostReady={onHostReady}
+                            hostOverlay={<HostPoster invitation={invitation} visible={!hostReady} />}
                         />
                     </div>
                 </div>
             </div>
 
-            <div className='ob-wizard-visual-content'>
-                <span className='ob-wizard-eyebrow'>Empecemos juntas</span>
-                <h2 className='ob-step1-title'>Conoce I attend</h2>
-                <p className='ob-wizard-visual-description'>
-                    Dale vida a tu invitación en segundos. Cambia fotos, colores y textos, y observa la magia suceder aquí mismo —sin saber de diseño.
-                </p>
-
+            <SlideCopy slide={slide} titleClassName='ob-step1-title'>
                 <span className='ob-step1-pills-label'>Todo lo que puedes editar</span>
                 <div className='ob-step1-pills'>
                     {buttons.map((item, index) => {
@@ -78,7 +136,7 @@ const Step1Demo = ({ invitation, buttons, invitationID }) => {
                         )
                     })}
                 </div>
-            </div>
+            </SlideCopy>
         </div>
     )
 }
@@ -102,73 +160,79 @@ const generateMockGuests = (count) => Array.from({ length: count }, (_, i) => ({
     state: 'creado',
 }))
 
-const Step2Demo = () => {
-    const [guests, setGuests] = useState(() => generateMockGuests(45))
-    const [sendingId, setSendingId] = useState(null)
-    const [pillPhase, setPillPhase] = useState(null)
+// Lista de invitados con el envío masivo por WhatsApp corriendo: cada
+// invitado pasa por Por invitar → Enviando → Enviada → Leída, y algunos
+// llegan a confirmar. Al terminar, vuelve a empezar.
+const GUEST_ESTADOS = {
+    creado: { label: 'Por invitar' },
+    enviando: { label: 'Enviando' },
+    enviada: { label: 'Enviada' },
+    leida: { label: 'Leída' },
+    confirmado: { label: 'Confirmó' },
+}
+const GUESTS_TOTAL = 45
+const GUESTS_TICK_MS = 1100
 
-    const handleSend = (guestId) => {
-        if (sendingId) return
-        setSendingId(guestId)
-        setPillPhase('sending')
+const GuestEstado = ({ estado }) => (
+    <span className={`ob-guest-state ob-guest-state--${estado}`}>
+        {estado === 'enviando' && <span className='ob-guest-spinner' />}
+        {estado === 'enviada' && <Check size={12} strokeWidth={3} />}
+        {(estado === 'leida' || estado === 'confirmado') && <CheckCheck size={12} strokeWidth={3} />}
+        {GUEST_ESTADOS[estado].label}
+    </span>
+)
+
+const Step2Demo = ({ slide, activo }) => {
+    const [guests, setGuests] = useState(() => generateMockGuests(GUESTS_TOTAL))
+    const listaRef = useRef(null)
+
+    const enviados = guests.filter(g => g.state !== 'creado').length
+
+    // Envía a uno: "Enviando" y al momento "Enviada".
+    const enviar = (id) => {
+        setGuests(prev => prev.map(g => (g.id === id && g.state === 'creado' ? { ...g, state: 'enviando' } : g)))
         setTimeout(() => {
-            setPillPhase('sent')
-            setGuests((prev) => prev.map((g) => (g.id === guestId ? { ...g, state: 'esperando' } : g)))
-            setTimeout(() => {
-                setPillPhase('hiding')
-                setTimeout(() => {
-                    setPillPhase(null)
-                    setSendingId(null)
-                }, 400)
-            }, 1200)
-        }, 2000)
+            setGuests(prev => prev.map(g => (g.id === id && g.state === 'enviando' ? { ...g, state: 'enviada' } : g)))
+        }, 700)
     }
 
-    const columns = [
-        {
-            title: 'Nombre',
-            dataIndex: 'name',
-            width: 180,
-            render: (value) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <FiArrowUpRight size={14} style={{ color: '#999', flexShrink: 0 }} />
-                    <span>{value}</span>
-                </div>
-            ),
-        },
-        {
-            title: 'Contacto',
-            dataIndex: 'phone_number',
-            width: 150,
-        },
-        {
-            title: 'Estado',
-            dataIndex: 'state',
-            width: 110,
-            render: (value) => (
-                <span className={`new-table-tag ob-step2-tag state-${value}`}>
-                    {value === 'creado' ? 'Por Invitar' : 'Enviada'}
-                </span>
-            ),
-        },
-        {
-            title: 'Acciones',
-            key: 'send',
-            width: 110,
-            fixed: 'right',
-            render: (_, record) => (
-                <Button
-                    className='primarybutton--active'
-                    icon={<Send size={14} />}
-                    style={{ borderRadius: 99 }}
-                    disabled={!!sendingId || record.state !== 'creado'}
-                    onClick={() => handleSend(record.id)}
-                >
-                    Enviar
-                </Button>
-            ),
-        },
-    ]
+    // Cada tick: el siguiente de la fila se envía, y algunos de los ya
+    // enviados avanzan (los leen, algunos confirman).
+    useEffect(() => {
+        if (!activo) return
+        const intervalo = setInterval(() => {
+            setGuests(prev => {
+                const siguiente = prev.find(g => g.state === 'creado')
+                if (!siguiente) return prev
+                setTimeout(() => {
+                    setGuests(p => p.map(g => (g.id === siguiente.id && g.state === 'enviando' ? { ...g, state: 'enviada' } : g)))
+                }, 700)
+                return prev.map(g => {
+                    if (g.id === siguiente.id) return { ...g, state: 'enviando' }
+                    if (g.state === 'enviada' && Math.random() < 0.45) return { ...g, state: 'leida' }
+                    if (g.state === 'leida' && Math.random() < 0.3) return { ...g, state: 'confirmado' }
+                    return g
+                })
+            })
+        }, GUESTS_TICK_MS)
+        return () => clearInterval(intervalo)
+    }, [activo])
+
+    // Todos enviados: una pausa y la lista vuelve a empezar.
+    const terminado = enviados === GUESTS_TOTAL && !guests.some(g => g.state === 'enviando')
+    useEffect(() => {
+        if (!terminado) return
+        const t = setTimeout(() => setGuests(generateMockGuests(GUESTS_TOTAL)), 3000)
+        return () => clearTimeout(t)
+    }, [terminado])
+
+    // La lista sigue al que se está enviando.
+    const activoId = guests.find(g => g.state === 'enviando')?.id
+    useEffect(() => {
+        if (!activoId || !listaRef.current) return
+        const fila = listaRef.current.querySelector(`[data-guest="${activoId}"]`)
+        if (fila) listaRef.current.scrollTo({ top: fila.offsetTop - listaRef.current.clientHeight / 2 + fila.clientHeight / 2, behavior: 'smooth' })
+    }, [activoId])
 
     return (
         <div className='ob-step2-demo'>
@@ -176,125 +240,132 @@ const Step2Demo = () => {
                 <div className='ob-wizard-blob ob-wizard-blob--top' />
                 <div className='ob-wizard-blob ob-wizard-blob--bottom' />
 
-                <div
-                    className={`ob-step2-sending-pill${pillPhase ? ' ob-step2-sending-pill--active' : ''}${pillPhase === 'hiding' ? ' ob-step2-sending-pill--hiding' : ''}`}
-                >
-                    {pillPhase === 'sent' || pillPhase === 'hiding'
-                        ? <Check size={16} />
-                        : <FaPaperPlane className='paper_flight' />}
-                    <span className='ob-step2-sending-pill-text'>
-                        {pillPhase === 'sent' || pillPhase === 'hiding' ? 'Enviada' : 'Enviando invitación'}
-                    </span>
-                </div>
-
-                <div className='ob-step2-visual-stack'>
-                    <div className='ob-step2-table-card'>
-                        <Table
-                            className='table_container'
-                            size='small'
-                            rowKey='id'
-                            pagination={false}
-                            scroll={{ x: 480, y: 420 }}
-                            columns={columns}
-                            dataSource={guests}
-                        />
+                <div className='ob-guests-card'>
+                    <div className='ob-guests-head'>
+                        <div>
+                            <span className='ob-guests-title'>Invitados</span>
+                            <span className='ob-guests-count'>{GUESTS_TOTAL} en la lista</span>
+                        </div>
+                        <span className='ob-guests-whats'><FaWhatsapp size={14} /> Envío automático</span>
                     </div>
 
-                    <div className='ob-step2-whatsapp-badge'>Envío automático por WhatsApp</div>
-                </div>
-
-                <div className='ob-step2-mobile-list'>
-                    <div className='ob-step2-mobile-card'>
-                        <div className='ob-step2-mobile-header'>
-                            <span className='ob-step2-mobile-count'>{guests.length} invitados</span>
-                            <button type='button' className='ob-step2-mobile-add'>+ Agregar</button>
+                    <div className='ob-guests-progress'>
+                        <div className='ob-guests-progress-text'>
+                            <span>{terminado ? 'Listo, todos invitados' : 'Enviando por WhatsApp'}</span>
+                            <b>{enviados} de {GUESTS_TOTAL}</b>
                         </div>
+                        <div className='ob-guests-progress-track'>
+                            <span style={{ width: `${(enviados / GUESTS_TOTAL) * 100}%` }} />
+                        </div>
+                    </div>
 
-                        {guests.slice(0, 4).map((g) => (
-                            <div key={g.id} className='ob-step2-mobile-row'>
-                                <div className='ob-step2-mobile-info'>
-                                    <span className='ob-step2-mobile-name'>{g.name}</span>
-                                    <span className='ob-step2-mobile-phone'>{g.phone_number}</span>
-                                </div>
-                                <button
-                                    style={{minWidth:'89px', backgroundColor:g.state !== 'creado' ? 'var(--mid-blue-500)' : undefined, color: g.state !== 'creado' ? '#FFFFFF80' : undefined }}
-                                    type='button'
-                                    className='ob-step2-mobile-send'
-                                    disabled={!!sendingId || g.state !== 'creado'}
-                                    onClick={() => handleSend(g.id)}
-                                >
-                                    {
-                                        g.state === 'creado' && 
-                                        <Send size={13} />
-                                    }
-                                    
-                                    {g.state !== 'creado' ? 'Invitado' : 'Enviar'}
-                                </button>
+                    <div className='ob-guests-list' ref={listaRef}>
+                        {guests.map(g => (
+                            <div key={g.id} data-guest={g.id} className={`ob-guest-row${g.state === 'enviando' ? ' ob-guest-row--active' : ''}`}>
+                                <span className='ob-guest-avatar'>{g.name.split(' ').slice(0, 2).map(p => p[0]).join('')}</span>
+                                <span className='ob-guest-info'>
+                                    <b>{g.name}</b>
+                                    <small>{g.phone_number}</small>
+                                </span>
+                                {g.state === 'creado'
+                                    ? (
+                                        <button type='button' className='ob-guest-send' onClick={() => enviar(g.id)}>
+                                            <Send size={12} /> Enviar
+                                        </button>
+                                    )
+                                    : <GuestEstado estado={g.state} />}
                             </div>
                         ))}
                     </div>
-
-                    <div className='ob-step2-whatsapp-badge'>
-                        <FaWhatsapp size={16}/>
-                        <span>Envío por WhatsApp</span>
-                    </div>
                 </div>
             </div>
 
-            <div className='ob-wizard-visual-content'>
-                <span className='ob-wizard-eyebrow'>Sin hojas de calculo</span>
-                <h2 className='ob-wizard-title-serif'>Crea tu lista de invitados</h2>
-                <p className='ob-wizard-subtitle-serif'>y envía la invitación en automático.</p>
-                <p className='ob-wizard-visual-description'>
-                    Olvídate de las hojas de Excel y de escribir mensajes uno por uno. Organiza a tus invitados aquí y envía su invitación con un solo clic —por WhatsApp, sin arriesgar tu número personal.
-                </p>
-            </div>
+            <SlideCopy slide={slide} />
         </div>
     )
 }
 
-const chartOptions = {
-    responsive: false,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            display: false,
-        },
-    },
+// Confirmaciones como parte de un todo: número principal + barra apilada de
+// los lugares + leyenda con cantidad y %. Paleta validada con la guía de
+// dataviz (lightness, croma, CVD y contraste sobre #fcfcfb): verde, lila y
+// coral de marca con más croma; "Disponible" no es un color sino la pista
+// gris de la barra (capacidad sin ocupar).
+const RSVP_ESTADOS = [
+    { key: 'confirmed', label: 'Confirmados', color: '#6F9A3E' },
+    { key: 'waiting', label: 'Esperando', color: '#9A78C8' },
+    { key: 'rejected', label: 'No asistirán', color: '#D2654E' },
+    { key: 'available', label: 'Disponibles', color: null },
+]
+
+// Número que cuenta hasta su nuevo valor en vez de brincar.
+const NumeroAnimado = ({ valor }) => {
+    const [mostrado, setMostrado] = useState(valor)
+    // El número que se ve en este momento: si llega otro valor a media
+    // animación, se sigue desde aquí en vez de brincar.
+    const actual = useRef(valor)
+
+    useEffect(() => {
+        const inicio = actual.current
+        if (inicio === valor) return
+        const t0 = performance.now()
+        let raf
+        const paso = (t) => {
+            const avance = Math.min(1, (t - t0) / 450)
+            const n = Math.round(inicio + (valor - inicio) * (1 - (1 - avance) ** 3))
+            actual.current = n
+            setMostrado(n)
+            if (avance < 1) raf = requestAnimationFrame(paso)
+        }
+        raf = requestAnimationFrame(paso)
+        return () => cancelAnimationFrame(raf)
+    }, [valor])
+
+    return mostrado
 }
 
-const Step3Demo = () => {
-    const [confirmed, setConfirmed] = useState(76)
-    const [waiting, setWaiting] = useState(35)
-    const [available] = useState(39)
-    const [rejected] = useState(3)
-    const [toasts, setToasts] = useState([])
+const RSVP_INICIAL = { confirmed: 76, waiting: 35, rejected: 3, available: 39 }
+const RSVP_TICK_MS = 2400
+// Cuando casi no queda nadie esperando, la demo vuelve a empezar.
+const RSVP_REINICIO = 18
 
-    const handleConfirm = () => {
+const Step3Demo = ({ slide, activo }) => {
+    const [valores, setValores] = useState(RSVP_INICIAL)
+    // Últimas respuestas, la más nueva primero (se muestran 3).
+    const [actividad, setActividad] = useState(() => ([
+        { id: 'a1', name: 'Regina Luna', tipo: 'confirmed', hace: 2 },
+        { id: 'a2', name: 'Diego Ramírez', tipo: 'confirmed', hace: 5 },
+        { id: 'a3', name: 'Paulina Ortiz', tipo: 'rejected', hace: 9 },
+    ]))
+    const [ultimo, setUltimo] = useState(null)
+    const [hover, setHover] = useState(null)
+
+    // Responde un invitado: casi siempre confirma, a veces no puede ir.
+    const responder = (tipo = Math.random() < 0.85 ? 'confirmed' : 'rejected') => {
         const name = `${randomFrom(FIRST_NAMES)} ${randomFrom(LAST_NAMES)}`
-        setConfirmed((c) => c + 1)
-        setWaiting((w) => Math.max(0, w - 1))
-        const id = Date.now() + Math.random()
-        setToasts((prev) => [...prev, { id, name, leaving: false }])
-        setTimeout(() => {
-            setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)))
-            setTimeout(() => {
-                setToasts((prev) => prev.filter((t) => t.id !== id))
-            }, 300)
-        }, 3500)
+        const id = `${Date.now()}-${Math.random()}`
+        setValores(v => (v.waiting <= 0 ? v : { ...v, waiting: v.waiting - 1, [tipo]: v[tipo] + 1 }))
+        setActividad(prev => [{ id, name, tipo, hace: 0 }, ...prev.map(a => ({ ...a, hace: a.hace + 1 }))].slice(0, 3))
+        setUltimo({ tipo, id })
     }
 
-    const chartData = {
-        labels: ['Confirmados', 'Esperando', 'Disponible', 'Rechazos'],
-        datasets: [
-            {
-                data: [confirmed, waiting, available, rejected],
-                backgroundColor: ['#C5D5AD', '#aac187', '#8FA271', 'var(--light-green-700)'],
-                borderColor: 'transparent',
-                borderWidth: 2,
-            },
-        ],
-    }
+    const handleConfirm = () => responder('confirmed')
+
+    const responderRef = useRef(responder)
+    useEffect(() => { responderRef.current = responder })
+
+    useEffect(() => {
+        if (!activo) return
+        if (valores.waiting <= RSVP_REINICIO) {
+            const t = setTimeout(() => setValores(RSVP_INICIAL), 2000)
+            return () => clearTimeout(t)
+        }
+        const intervalo = setInterval(() => responderRef.current(), RSVP_TICK_MS)
+        return () => clearInterval(intervalo)
+    }, [valores.waiting <= RSVP_REINICIO, activo])
+
+    const { confirmed } = valores
+    const total = Object.values(valores).reduce((a, b) => a + b, 0)
+    const pct = (n) => Math.round((n / total) * 100)
 
     return (
         <div className='ob-step3-demo'>
@@ -302,82 +373,79 @@ const Step3Demo = () => {
                 <div className='ob-wizard-blob ob-wizard-blob--top' />
                 <div className='ob-wizard-blob ob-wizard-blob--bottom' />
 
-                <div className='ob-step3-toast-stack'>
-                    {toasts.map((t) => (
-                        <div className={`ob-step3-toast${t.leaving ? ' ob-step3-toast--leaving' : ''}`} key={t.id}>
-                            <div className='ob-step3-toast-icon'>
-                                <LuCalendarCheck2 size={18} />
-                            </div>
-                            <div className='ob-step3-toast-text'>
-                                <strong>¡Nueva confirmación!</strong>
-                                <span>{t.name} confirmó su asistencia</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <div className='ob-rsvp-card'>
+                    <div className='ob-rsvp-head'>
+                        <span className='ob-rsvp-title'>Confirmaciones</span>
+                        <span className='ob-rsvp-live'><i /> En vivo</span>
+                    </div>
 
-                <div className='ob-step3-card'>
-                    <div className='ob-step3-row'>
-                        <div className='ob-step3-pie'>
-                            <Pie data={chartData} options={chartOptions} width={200} height={200} />
-                        </div>
+                    <div className='ob-rsvp-hero'>
+                        <span className='ob-rsvp-hero-value'><NumeroAnimado valor={confirmed} /></span>
+                        <span className='ob-rsvp-hero-text'>
+                            confirmados<br />de {total} lugares
+                        </span>
+                        <span key={ultimo?.id ?? 'pct'} className='ob-rsvp-hero-pct ob-rsvp-hero-pct--tick'>{pct(confirmed)}%</span>
+                    </div>
 
-                        <div className='ob-step3-grid'>
-                            <div className='ob-step3-col'>
-                                <span className='ob-step3-stat-label'>Confirmados</span>
-                                <div className='ob-step3-stat-row'>
-                                    <span className='ob-step3-stat-value'>{confirmed}</span>
-                                    <LuCalendarCheck2 className='ob-step3-stat-icon' size={32} style={{ color: '#BFBFBF' }} />
-                                </div>
-                            </div>
+                    {/* Barra apilada: la pista gris es la capacidad libre; cada
+                        segmento se separa con 2px de superficie. */}
+                    <div className='ob-rsvp-bar' onMouseLeave={() => setHover(null)}>
+                        {RSVP_ESTADOS.filter(e => e.color).map(e => (
+                            <div
+                                key={e.key === ultimo?.tipo ? `${e.key}-${ultimo.id}` : e.key}
+                                className={`ob-rsvp-seg${hover && hover !== e.key ? ' ob-rsvp-seg--dim' : ''}${e.key === ultimo?.tipo ? ' ob-rsvp-seg--glow' : ''}`}
+                                style={{ width: `${(valores[e.key] / total) * 100}%`, background: e.color }}
+                                onMouseEnter={() => setHover(e.key)}
+                            />
+                        ))}
+                        {hover && (
+                            <span className='ob-rsvp-tooltip'>
+                                {RSVP_ESTADOS.find(e => e.key === hover).label}: <b>{valores[hover]}</b> · {pct(valores[hover])}%
+                            </span>
+                        )}
+                    </div>
 
-                            <div className='ob-step3-col'>
-                                <span className='ob-step3-stat-label'>Esperando</span>
-                                <div className='ob-step3-stat-row'>
-                                    <span className='ob-step3-stat-value'>{waiting}</span>
-                                    <LuCalendarClock className='ob-step3-stat-icon' size={32} style={{ color: '#BFBFBF' }} />
-                                </div>
-                            </div>
+                    <ul className='ob-rsvp-legend'>
+                        {RSVP_ESTADOS.map(e => (
+                            <li
+                                key={e.key}
+                                className={hover && hover !== e.key ? 'ob-rsvp-legend--dim' : ''}
+                                onMouseEnter={() => e.color && setHover(e.key)}
+                                onMouseLeave={() => setHover(null)}
+                            >
+                                <span
+                                    className={`ob-rsvp-dot${e.color ? '' : ' ob-rsvp-dot--track'}`}
+                                    style={e.color ? { background: e.color } : undefined}
+                                />
+                                <span className='ob-rsvp-legend-label'>{e.label}</span>
+                                <span className='ob-rsvp-legend-value'>{valores[e.key]}</span>
+                                <span className='ob-rsvp-legend-pct'>{pct(valores[e.key])}%</span>
+                            </li>
+                        ))}
+                    </ul>
 
-                            <div className='ob-step3-col'>
-                                <span className='ob-step3-stat-label'>Disponible</span>
-                                <div className='ob-step3-stat-row'>
-                                    <span className='ob-step3-stat-value'>{available}</span>
-                                    <LuCalendar className='ob-step3-stat-icon' size={32} style={{ color: '#BFBFBF' }} />
-                                </div>
-                            </div>
-
-                            <div className='ob-step3-col'>
-                                <span className='ob-step3-stat-label'>Rechazos</span>
-                                <div className='ob-step3-stat-row'>
-                                    <span className='ob-step3-stat-value'>{rejected}</span>
-                                    <LuCalendarX className='ob-step3-stat-icon' size={32} style={{ color: '#BFBFBF' }} />
-                                </div>
-                            </div>
-                        </div>
+                    {/* Lo último que llegó, en vivo. */}
+                    <div className='ob-rsvp-feed'>
+                        <span className='ob-rsvp-feed-title'>Ahora mismo</span>
+                        <ul>
+                            {actividad.map(a => (
+                                <li key={a.id} className={a.hace === 0 ? 'ob-rsvp-feed--new' : ''}>
+                                    <span className='ob-rsvp-feed-avatar'>{a.name.split(' ').map(p => p[0]).join('')}</span>
+                                    <span className='ob-rsvp-feed-name'>{a.name}</span>
+                                    <span className={`ob-rsvp-feed-status ob-rsvp-feed-status--${a.tipo}`}>
+                                        {a.tipo === 'confirmed' ? 'Confirmó' : 'No asistirá'}
+                                    </span>
+                                    <span className='ob-rsvp-feed-time'>{a.hace === 0 ? 'ahora' : `hace ${a.hace} min`}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
             </div>
 
-            <div className='ob-wizard-visual-content'>
-                <span className='ob-wizard-eyebrow'>En tiempo real</span>
-                <h2 className='ob-wizard-title-serif'>Mira las confirmaciones llegar</h2>
-                <p className='ob-wizard-subtitle-serif'>sin preguntarle a nadie.</p>
-                <p className='ob-wizard-visual-description'>
-                    Cada invitado confirma desde su invitación —tú solo ves los números moverse. Confirmados, pendientes y cancelados, siempre al día, sin revisar la plataforma a cada rato.
-                </p>
-                <p className='ob-wizard-visual-description ob-wizard-visual-description--mobile'>
-                    Cada invitado confirma desde su invitación —tú solo ves los números moverse, sin revisar la plataforma a cada rato.
-                </p>
-
-                <Button style={{width:'220px'}} icon={<ArrowRight size={16} />} className='ob-wizard-nav-btn ob-wizard-nav-btn--primary ob-step3-cta-desktop' onClick={handleConfirm}>
-                    Confirmar un invitado
-                </Button>
-
-                <button type='button' className='ob-wizard-link-cta ob-step3-cta-mobile' onClick={handleConfirm}>
-                    Confirmar un invitado <ArrowRight size={16} />
-                </button>
-            </div>
+            <SlideCopy slide={slide}>
+                <SlideCta label={slide.cta_label} onClick={handleConfirm} />
+            </SlideCopy>
         </div>
     )
 }
@@ -406,7 +474,7 @@ const PASSES = [
     },
 ]
 
-const Step4Demo = () => {
+const Step4Demo = ({ slide }) => {
     const pass = PASSES[0]
 
     return (
@@ -468,14 +536,7 @@ const Step4Demo = () => {
                 </div>
             </div>
 
-            <div className='ob-wizard-visual-content'>
-                <span className='ob-wizard-eyebrow'>Sin boletos fisicos</span>
-                <h2 className='ob-wizard-title-serif'>Un pase digital para cada invitado</h2>
-                <p className='ob-wizard-subtitle-serif'>para que nada falle el día del evento.</p>
-                <p className='ob-wizard-visual-description'>
-                    Olvídate de las listas impresas en la entrada. Cada invitado lleva su pase con código QR directo desde su celular —compatible con Apple Wallet, y siempre actualizado si algo cambia.
-                </p>
-            </div>
+            <SlideCopy slide={slide} />
         </div>
     )
 }
@@ -483,7 +544,11 @@ const Step4Demo = () => {
 const SEATING_CANVAS_WIDTH = 620
 const SEATING_CANVAS_HEIGHT = 400
 const SEATING_TABLE_SIZE = 56
-const SEATING_DANCE_FLOOR = { x: 200, y: 100, width: 220, height: 140 }
+// Posiciones calculadas para que el conjunto (mesas + sus sillas, que salen
+// 15px del borde de la mesa) quede centrado en el plano, con el mismo margen
+// en los cuatro lados y la pista justo al centro.
+const SEAT_OVERHANG = 15
+const SEATING_DANCE_FLOOR = { x: 200, y: 130, width: 220, height: 140 }
 
 const SEATING_CANVAS_WIDTH_MOBILE = 280
 const SEATING_CANVAS_HEIGHT_MOBILE = 560
@@ -495,7 +560,9 @@ const buildSeatingTables = (mobile) => {
             id: `seating-table-${startNumber + i}`,
             number: startNumber + i,
             x,
-            y: 20 + i * 108,
+            // 5 mesas cada 108px: se arranca donde el margen de arriba y el de
+            // abajo quedan iguales.
+            y: (SEATING_CANVAS_HEIGHT_MOBILE - (4 * 108 + SEATING_TABLE_SIZE)) / 2 + i * 108,
         }))
         return [...col(20, 1), ...col(SEATING_CANVAS_WIDTH_MOBILE - SEATING_TABLE_SIZE - 20, 6)]
     }
@@ -503,24 +570,81 @@ const buildSeatingTables = (mobile) => {
     const row = (y, startNumber) => Array.from({ length: 5 }, (_, i) => ({
         id: `seating-table-${startNumber + i}`,
         number: startNumber + i,
-        x: 24 + i * 122,
+        x: (SEATING_CANVAS_WIDTH - (4 * 122 + SEATING_TABLE_SIZE)) / 2 + i * 122,
         y,
     }))
-    return [...row(24, 1), ...row(260, 6)]
+    // Filas simétricas respecto a la pista: arriba y abajo con el mismo
+    // margen (contando las sillas) y la pista en medio.
+    const arriba = SEAT_OVERHANG + 19
+    const abajo = SEATING_CANVAS_HEIGHT - SEATING_TABLE_SIZE - arriba
+    return [...row(arriba, 1), ...row(abajo, 6)]
 }
+
+// Lugares por mesa y ocupación inicial (42 de 80, como decía la leyenda).
+const SEATS_PER_TABLE = 8
+const OCUPACION_INICIAL = [6, 4, 5, 3, 5, 4, 6, 3, 4, 2]
+const conOcupacion = (tables) => tables.map((t, i) => ({ ...t, seated: OCUPACION_INICIAL[i] ?? 0 }))
+const SEATING_TICK_MS = 1500
+const SEATING_FLIGHT_MS = 650
+
+// Sillas alrededor de la mesa: posiciones fijas en círculo.
+const SEAT_POSITIONS = Array.from({ length: SEATS_PER_TABLE }, (_, i) => {
+    const angulo = (i / SEATS_PER_TABLE) * Math.PI * 2 - Math.PI / 2
+    return { x: Math.cos(angulo) * 38, y: Math.sin(angulo) * 38 }
+})
+
+// Saca una mesa de la pista: si la mesa (contando sus sillas) se enciman con
+// la pista, se empuja hacia el borde más cercano, con un poco de aire.
+const PISTA_AIRE = 6
+const fueraDeLaPista = (mesa, pista, ancho, alto) => {
+    const orilla = SEAT_OVERHANG + PISTA_AIRE
+    const izq = mesa.x - orilla
+    const der = mesa.x + SEATING_TABLE_SIZE + orilla
+    const arr = mesa.y - orilla
+    const abj = mesa.y + SEATING_TABLE_SIZE + orilla
+    const encima = der > pista.x && izq < pista.x + pista.width && abj > pista.y && arr < pista.y + pista.height
+    if (!encima) return mesa
+
+    const opciones = [
+        { x: pista.x - SEATING_TABLE_SIZE - orilla, y: mesa.y },
+        { x: pista.x + pista.width + orilla, y: mesa.y },
+        { x: mesa.x, y: pista.y - SEATING_TABLE_SIZE - orilla },
+        { x: mesa.x, y: pista.y + pista.height + orilla },
+    ]
+        .map(o => ({
+            x: clampValue(o.x, 0, ancho - SEATING_TABLE_SIZE),
+            y: clampValue(o.y, 0, alto - SEATING_TABLE_SIZE),
+        }))
+        .sort((a, b) => Math.hypot(a.x - mesa.x, a.y - mesa.y) - Math.hypot(b.x - mesa.x, b.y - mesa.y))
+
+    return { ...mesa, ...opciones[0] }
+}
+
+const iniciales = (nombre) => nombre.split(' ').slice(0, 2).map(p => p[0]).join('')
 
 const clampValue = (value, min, max) => Math.min(Math.max(value, min), max)
 const getEventPoint = (event) => (event.touches && event.touches.length ? event.touches[0] : event)
 const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth <= 750
 
-const Step5Demo = () => {
+const Step5Demo = ({ slide, activo }) => {
     const mobile = isMobileViewport()
     const canvasWidth = mobile ? SEATING_CANVAS_WIDTH_MOBILE : SEATING_CANVAS_WIDTH
     const canvasHeight = mobile ? SEATING_CANVAS_HEIGHT_MOBILE : SEATING_CANVAS_HEIGHT
     const danceFloor = mobile ? SEATING_DANCE_FLOOR_MOBILE : SEATING_DANCE_FLOOR
 
-    const [tables, setTables] = useState(() => buildSeatingTables(mobile))
-    const [zoomLevel, setZoomLevel] = useState(() => (mobile ? 0.68 : 1))
+    const [tables, setTables] = useState(() => conOcupacion(buildSeatingTables(mobile)))
+    // Ninguna mesa arranca encima de la pista (también corrige posiciones que
+    // hayan quedado de otra versión del plano).
+    useEffect(() => {
+        setTables((prev) => prev.map((t) => fueraDeLaPista(t, danceFloor, canvasWidth, canvasHeight)))
+    }, [])
+
+    // Invitado "volando" de la fila al lugar: { key, name, x, y, tableId }.
+    const [vuelo, setVuelo] = useState(null)
+    const [pulso, setPulso] = useState(null)
+    const [fila, setFila] = useState(() => Array.from({ length: 4 }, () => randomFrom(FIRST_NAMES)))
+    // Zoom fijo: el control de zoom se quitó de la demo.
+    const [zoomLevel] = useState(() => (mobile ? 0.68 : 1))
     const [draggingId, setDraggingId] = useState(null)
     const canvasRef = useRef(null)
     const dragRef = useRef({ id: null, offsetX: 0, offsetY: 0 })
@@ -548,7 +672,11 @@ const Step5Demo = () => {
             setTables((prev) => prev.map((t) => (t.id === dragRef.current.id ? { ...t, x: nextX, y: nextY } : t)))
         }
 
-        const handleDragEnd = () => setDraggingId(null)
+        // Al soltar, si quedó encima de la pista, se acomoda a su orilla.
+        const handleDragEnd = () => {
+            setTables((prev) => prev.map((t) => (t.id === dragRef.current.id ? fueraDeLaPista(t, danceFloor, canvasWidth, canvasHeight) : t)))
+            setDraggingId(null)
+        }
 
         document.addEventListener('mousemove', handleMove)
         document.addEventListener('touchmove', handleMove)
@@ -562,13 +690,47 @@ const Step5Demo = () => {
         }
     }, [draggingId, zoomLevel, canvasWidth, canvasHeight])
 
-    const handleAddTable = () => {
-        setTables((prev) => {
-            const lastTable = prev.reduce((acc, t) => (t.x > acc.x ? t : acc), prev[0])
-            const nextX = clampValue(lastTable.x + 90, 0, canvasWidth - SEATING_TABLE_SIZE)
-            return [...prev, { id: `seating-table-${Date.now()}`, number: prev.length + 1, x: nextX, y: lastTable.y }]
-        })
+    // Origen de los vuelos: el borde de abajo, al centro, justo encima de la
+    // fila "Por acomodar" que vive debajo del plano.
+    const origen = { x: canvasWidth / 2 - 14, y: canvasHeight - 14 }
+
+    // Acomoda al siguiente de la fila en una mesa con lugar: sale de la fila,
+    // vuela a la mesa y al llegar ocupa su silla (la mesa late).
+    const acomodar = () => {
+        if (vuelo || draggingId) return
+        const libres = tables.filter(t => t.seated < SEATS_PER_TABLE)
+        if (!libres.length) return
+        const mesa = randomFrom(libres)
+        const name = fila[0]
+        const key = Date.now()
+        setFila(prev => [...prev.slice(1), randomFrom(FIRST_NAMES)])
+        setVuelo({ key, name, x: origen.x, y: origen.y, tableId: mesa.id, volando: false })
+        // Dos frames: primero se pinta en el origen, luego viaja (transición CSS).
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            setVuelo(v => (v?.key === key ? { ...v, x: mesa.x + 14, y: mesa.y + 14, volando: true } : v))
+        }))
+        setTimeout(() => {
+            setTables(prev => prev.map(t => (t.id === mesa.id ? { ...t, seated: Math.min(SEATS_PER_TABLE, t.seated + 1) } : t)))
+            setPulso({ id: mesa.id, key })
+            setVuelo(v => (v?.key === key ? null : v))
+        }, SEATING_FLIGHT_MS + 40)
     }
+
+    // Se acomoda solo; con el salón lleno, se vacía y vuelve a empezar.
+    // El intervalo llama siempre a la versión más reciente de `acomodar`.
+    const acomodarRef = useRef(acomodar)
+    useEffect(() => { acomodarRef.current = acomodar })
+    const lleno = tables.every(t => t.seated >= SEATS_PER_TABLE)
+
+    useEffect(() => {
+        if (!activo) return
+        if (lleno) {
+            const t = setTimeout(() => setTables(prev => prev.map((m, i) => ({ ...m, seated: OCUPACION_INICIAL[i] ?? 0 }))), 1800)
+            return () => clearTimeout(t)
+        }
+        const intervalo = setInterval(() => acomodarRef.current(), SEATING_TICK_MS)
+        return () => clearInterval(intervalo)
+    }, [lleno, activo])
 
     return (
         <div className='ob-step5-demo'>
@@ -603,65 +765,56 @@ const Step5Demo = () => {
                             {tables.map((table) => (
                                 <div
                                     key={table.id}
-                                    className={`ob-step5-table${draggingId === table.id ? ' ob-step5-table--dragging' : ''}`}
+                                    className={`ob-step5-table${draggingId === table.id ? ' ob-step5-table--dragging' : ''}${table.seated >= SEATS_PER_TABLE ? ' ob-step5-table--full' : ''}`}
                                     style={{ left: table.x, top: table.y }}
                                     onMouseDown={(event) => handleTableDragStart(event, table)}
                                     onTouchStart={(event) => handleTableDragStart(event, table)}
                                 >
-                                    #{table.number}
+                                    {SEAT_POSITIONS.map((pos, i) => (
+                                        <span
+                                            key={i}
+                                            className={`ob-seat${i < table.seated ? ' ob-seat--taken' : ''}${pulso?.id === table.id && i === table.seated - 1 ? ' ob-seat--new' : ''}`}
+                                            style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+                                        />
+                                    ))}
+                                    <span
+                                        key={pulso?.id === table.id ? pulso.key : 'quieta'}
+                                        className={`ob-step5-table-num${pulso?.id === table.id ? ' ob-step5-table-num--pulse' : ''}`}
+                                    >
+                                        #{table.number}
+                                        <small>{table.seated}/{SEATS_PER_TABLE}</small>
+                                    </span>
                                 </div>
                             ))}
+
+                            {vuelo && (
+                                <span
+                                    className={`ob-seat-flyer${vuelo.volando ? ' ob-seat-flyer--flying' : ''}`}
+                                    style={{ left: vuelo.x, top: vuelo.y, transitionDuration: `${SEATING_FLIGHT_MS}ms` }}
+                                >
+                                    {iniciales(vuelo.name)}
+                                </span>
+                            )}
+
                         </div>
 
-                        <div className='ob-step5-zoom'>
-                            <Plus size={12} />
-                            <Slider
-                                vertical
-                                min={isMobileViewport() ? 0.4 : 0.6}
-                                max={1.6}
-                                step={0.01}
-                                value={zoomLevel}
-                                onChange={setZoomLevel}
-                                style={{ height: 70 }}
-                            />
-                            <Minus size={12} />
-                        </div>
                     </div>
 
-                    <div className='ob-step5-legend'>
-                        <span className='ob-step5-legend-item'>
-                            <span className='ob-step5-legend-dot ob-step5-legend-dot--occupied' />
-                            <span className='ob-step5-legend-text-desktop'>Lugares ocupados: 42</span>
-                            <span className='ob-step5-legend-text-mobile'>Ocupados: 42</span>
-                        </span>
-                        <span className='ob-step5-legend-item'>
-                            <span className='ob-step5-legend-dot ob-step5-legend-dot--available' />
-                            <span className='ob-step5-legend-text-desktop'>Lugares disponibles: 38</span>
-                            <span className='ob-step5-legend-text-mobile'>Disponibles: 38</span>
-                        </span>
+                    {/* Fila de invitados por acomodar, abajo al centro del plano: de
+                        aquí salen los vuelos hacia las mesas. */}
+                    <div className='ob-seat-queue'>
+                        <span className='ob-seat-queue-label'>Por acomodar</span>
+                        <div className='ob-seat-queue-avatars'>
+                            {fila.map((nombre, i) => (
+                                <span key={`${nombre}-${i}`} className='ob-seat-avatar' title={nombre}>{iniciales(nombre)}</span>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className='ob-wizard-visual-content'>
-                <span className='ob-wizard-eyebrow'>Arrastra y acomoda</span>
-                <h2 className='ob-wizard-title-serif'>Que el seating chart no te quite el sueño</h2>
-                <p className='ob-wizard-subtitle-serif'>acomoda mesas y sillas como quieras.</p>
-                <p className='ob-wizard-visual-description'>
-                    Diseña el plano de tu salón, agrega mesas de cualquier forma y asigna a cada invitado con solo arrastrarlo. Ve en tiempo real cuántos lugares tienes ocupados y cuántos te faltan por llenar.
-                </p>
-                <p className='ob-wizard-visual-description ob-wizard-visual-description--mobile'>
-                    Diseña el plano de tu salón y asigna a cada invitado con solo arrastrarlo.
-                </p>
-
-                <Button style={{width:'200px'}} icon={<ArrowRight size={16} />} className='ob-wizard-nav-btn ob-wizard-nav-btn--primary ob-step5-cta-desktop' onClick={handleAddTable}>
-                    Agregar una mesa
-                </Button>
-
-                {/* <button type='button' className='ob-wizard-link-cta ob-step5-cta-mobile' onClick={handleAddTable}>
-                    Agregar una mesa <ArrowRight size={16} />
-                </button> */}
-            </div>
+            {/* Sin botón: la demo se acomoda sola. */}
+            <SlideCopy slide={slide} />
         </div>
     )
 }
@@ -699,7 +852,7 @@ const PhoneMock = ({ image, className }) => (
     </div>
 )
 
-const Step6Demo = () => (
+const Step6Demo = ({ slide }) => (
     <div className='ob-step6-demo'>
         <div className='ob-wizard-visual'>
             <div className='ob-wizard-blob ob-wizard-blob--top' />
@@ -712,77 +865,403 @@ const Step6Demo = () => (
             </div>
         </div>
 
-        <div className='ob-wizard-visual-content'>
-            <span className='ob-wizard-eyebrow'>Mas que un solo dia</span>
-            <h2 className='ob-wizard-title-serif'>Conoce los side events</h2>
-            <p className='ob-wizard-subtitle-serif'>despedida, torna boda, brunch —cada uno con su propia invitación.</p>
-            <p className='ob-wizard-visual-description'>
-                Crea una invitación distinta para cada evento alrededor de tu boda, con su propio dress code, ubicación y confirmación. Tus invitados solo ven los eventos a los que fueron invitados.
-            </p>
-            <p className='ob-wizard-visual-description ob-wizard-visual-description--mobile'>
-                Crea una invitación distinta para cada evento alrededor de tu boda, con su propio dress code y confirmación.
-            </p>
-        </div>
+        <SlideCopy slide={slide} />
     </div>
 )
 
-const LIA_DEMO_MESSAGES = [
-    'Soy tu asistente de boda. Conozco cada detalle de tu evento. ✨',
-    '75 invitados confirmados, 35 esperando. Te aviso si alguien cambia su respuesta.',
-    'Sé quién va en cada mesa, qué menú eligió cada invitado y quién todavía no confirma.',
+// Conversación de ejemplo que se reproduce sola: Lia saluda, se "escribe"
+// una pregunta en el input, Lia "escribe" y responde con una tarjeta de
+// datos. Al terminar las tres, se limpia y vuelve a empezar.
+const LIA_SALUDO = 'Hola, soy Lia ✨ Conozco cada detalle de tu evento. Pregúntame lo que quieras.'
+const LIA_GUION = [
+    {
+        pregunta: '¿Quién no ha confirmado?',
+        respuesta: 'Faltan 35 invitados. Estos son de prioridad A:',
+        tarjeta: { tipo: 'lista', items: ['Regina Luna', 'Diego Ramírez', 'Camila Torres'] },
+    },
+    {
+        pregunta: '¿Cuántos lugares quedan en mesas?',
+        respuesta: 'Te quedan 38 lugares. La Mesa 7 es la que tiene más espacio.',
+        tarjeta: { tipo: 'barra', ocupados: 42, total: 80 },
+    },
+    {
+        pregunta: 'Mándales un recordatorio',
+        respuesta: 'Listo. Les mandé el recordatorio por WhatsApp.',
+        tarjeta: { tipo: 'enviado', total: 35 },
+    },
 ]
 
-const Step7Demo = () => (
+const LiaTarjeta = ({ tarjeta }) => {
+    if (tarjeta.tipo === 'lista') {
+        return (
+            <ul className='ob-lia-list'>
+                {tarjeta.items.map(nombre => (
+                    <li key={nombre}>
+                        <span className='ob-lia-avatar'>{nombre.split(' ').map(p => p[0]).join('')}</span>
+                        <span>{nombre}</span>
+                        <em>sin respuesta</em>
+                    </li>
+                ))}
+            </ul>
+        )
+    }
+    if (tarjeta.tipo === 'barra') {
+        return (
+            <div className='ob-lia-meter'>
+                <div className='ob-lia-meter-track'>
+                    <span style={{ width: `${(tarjeta.ocupados / tarjeta.total) * 100}%` }} />
+                </div>
+                <span className='ob-lia-meter-text'>{tarjeta.ocupados} de {tarjeta.total} ocupados</span>
+            </div>
+        )
+    }
+    return (
+        <span className='ob-lia-sent'>
+            <Check size={13} strokeWidth={3} /> {tarjeta.total} recordatorios enviados
+        </span>
+    )
+}
+
+const LiaChatDemo = ({ activo }) => {
+    const [mensajes, setMensajes] = useState([])
+    const [pensando, setPensando] = useState(false)
+    const [tecleo, setTecleo] = useState('')
+    const listaRef = useRef(null)
+
+    // Cada vez que el slide se vuelve visible, la conversación empieza de cero.
+    useEffect(() => {
+        if (!activo) return
+        let vivo = true
+        const timers = []
+        const esperar = (ms) => new Promise(r => { timers.push(setTimeout(r, ms)) })
+        const agregar = (m) => vivo && setMensajes(prev => [...prev, { ...m, id: `${Date.now()}-${Math.random()}` }])
+
+        const escribirPregunta = async (texto) => {
+            for (let i = 1; i <= texto.length && vivo; i++) {
+                setTecleo(texto.slice(0, i))
+                await esperar(45)
+            }
+            await esperar(350)
+            if (!vivo) return
+            setTecleo('')
+            agregar({ rol: 'usuario', texto })
+        }
+
+        const responder = async (texto, tarjeta) => {
+            setPensando(true)
+            await esperar(1100)
+            if (!vivo) return
+            setPensando(false)
+            agregar({ rol: 'lia', texto, tarjeta })
+        }
+
+        const correr = async () => {
+            while (vivo) {
+                setMensajes([])
+                setPensando(false)
+                setTecleo('')
+                await esperar(500)
+                await responder(LIA_SALUDO)
+                for (const paso of LIA_GUION) {
+                    if (!vivo) return
+                    await esperar(1400)
+                    await escribirPregunta(paso.pregunta)
+                    await esperar(250)
+                    await responder(paso.respuesta, paso.tarjeta)
+                }
+                await esperar(3500)
+            }
+        }
+
+        correr()
+        return () => { vivo = false; timers.forEach(clearTimeout) }
+    }, [activo])
+
+    // Siempre se ve lo último, como en un chat real.
+    useEffect(() => {
+        const lista = listaRef.current
+        if (lista) lista.scrollTo({ top: lista.scrollHeight, behavior: 'smooth' })
+    }, [mensajes.length, pensando])
+
+    return (
+        <div className='ob-step7-card'>
+            <div className='ob-step7-header'>
+                <div className='ob-step7-header-title'>
+                    <Sparkles size={15} strokeWidth={1.8} className='ob-lia-spark' />
+                    <span>Lia · tu asistente</span>
+                    <span className='ob-lia-online'><i /> en línea</span>
+                </div>
+                <div className='ob-step7-close'>
+                    <X size={14} strokeWidth={2.5} />
+                </div>
+            </div>
+
+            <div className='ob-step7-messages ob-lia-messages' ref={listaRef}>
+                {mensajes.map(m => (
+                    <div key={m.id} className={`ob-step7-bubble ob-lia-bubble${m.rol === 'usuario' ? ' ob-lia-bubble--user' : ''}`}>
+                        {m.texto}
+                        {m.tarjeta && <LiaTarjeta tarjeta={m.tarjeta} />}
+                    </div>
+                ))}
+                {pensando && (
+                    <div className='ob-step7-bubble ob-lia-bubble ob-lia-typing'>
+                        <i /><i /><i />
+                    </div>
+                )}
+            </div>
+
+            <div className='ob-step7-input-row'>
+                <div className={`ob-step7-input ob-lia-input${tecleo ? ' ob-lia-input--typing' : ''}`}>
+                    {tecleo || 'Pregúntale a Lia...'}
+                    {tecleo && <span className='ob-lia-caret' />}
+                </div>
+                <div className='ob-step7-lock'>{tecleo ? <Send size={13} /> : <Lock size={13} />}</div>
+            </div>
+        </div>
+    )
+}
+
+const Step7Demo = ({ slide, activo }) => (
     <div className='ob-step7-demo'>
         <div className='ob-wizard-visual'>
             <div className='ob-wizard-blob ob-wizard-blob--top' />
             <div className='ob-wizard-blob ob-wizard-blob--bottom' />
-
-            <div className='ob-step7-card'>
-                <div className='ob-step7-header'>
-                    <div className='ob-step7-header-title'>
-                        <Sparkles size={15} strokeWidth={1.8} />
-                        <span>Lia · tu asistente</span>
-                    </div>
-                    <div className='ob-step7-close'>
-                        <X size={14} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                <div className='ob-step7-messages'>
-                    {LIA_DEMO_MESSAGES.map((text, i) => (
-                        <div key={i} className='ob-step7-bubble'>{text}</div>
-                    ))}
-                </div>
-
-                <div className='ob-step7-input-row'>
-                    <input className='ob-step7-input' disabled placeholder='Desbloquea Lia con Pro...' />
-                    <div className='ob-step7-lock'><Lock size={13} /></div>
-                </div>
-            </div>
+            <LiaChatDemo activo={activo} />
         </div>
 
-        <div className='ob-wizard-visual-content'>
-            <span className='ob-wizard-eyebrow'>Tu copiloto de boda</span>
-            <h2 className='ob-wizard-title-serif'>Conoce a Lia</h2>
-            <p className='ob-wizard-subtitle-serif'>tu asistente con el contexto completo de tu evento.</p>
-            <p className='ob-wizard-visual-description'>
-                Pregúntale lo que quieras —dress code, horarios, confirmaciones, logística— y responde al instante con la información real de tu invitación. Siempre disponible, sin buscar entre pestañas.
-            </p>
-            <p className='ob-wizard-visual-description ob-wizard-visual-description--mobile'>
-                Pregúntale lo que quieras —dress code, horarios, logística— y responde al instante con la información real de tu invitación.
-            </p>
-        </div>
+        <SlideCopy slide={slide} />
     </div>
 )
 
-export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitationID }) => {
+// ------------------------------------------------------------ Save the Date ---
+
+// El Save the Date real (iattend.events/save-the-date/…) dentro del mismo
+// teléfono que el editor de invitación. La URL se elige en Admin → Onboarding.
+const SaveTheDateDemo = ({ slide }) => {
+    const url = slide.config?.url || DEFAULT_STD_URL
+    const [positionY, setPositionY] = useState('cover')
+    const [device, setDevice] = useState('ios')
+    const [onHide, setOnHide] = useState(false)
+    const [cargado, setCargado] = useState(false)
+
+    // Otra URL = otra carga: vuelve la portada hasta que termine.
+    useEffect(() => { setCargado(false) }, [url])
+    useEffect(() => {
+        const tope = setTimeout(() => setCargado(true), 10000)
+        return () => clearTimeout(tope)
+    }, [url])
+
+    return (
+        <div className='ob-step1-demo ob-std-demo'>
+            <div className='ob-wizard-visual' style={{ flex: '0 0 44%' }}>
+                <div className='ob-wizard-blob ob-wizard-blob--top' />
+                <div className='ob-wizard-blob ob-wizard-blob--bottom' />
+
+                <div className='ob-step1-phone'>
+                    <div className='ob-step1-phone-inner'>
+                        <BuildContent
+                            minimalControls
+                            positionY={positionY}
+                            setPositionY={setPositionY}
+                            currentDevice={device}
+                            setDevice={setDevice}
+                            onHide={onHide}
+                            setOnHide={setOnHide}
+                            pantalla={(
+                                <iframe
+                                    key={url}
+                                    src={url}
+                                    title='Save the Date'
+                                    className='ob-std-iframe'
+                                    onLoad={() => setTimeout(() => setCargado(true), 300)}
+                                />
+                            )}
+                            hostOverlay={<HostPoster invitation={null} visible={!cargado} />}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <SlideCopy slide={slide} titleClassName='ob-step1-title' />
+        </div>
+    )
+}
+
+// --------------------------------------------------------------- Photo Wall ---
+
+// Muro con las fotos que se suben en Admin → Onboarding, en columnas con
+// parallax (una sube, la siguiente baja). Se ven todas desde el inicio; "Subir
+// una foto" pone una nueva en el lugar de la más vieja, como si la mandara
+// otro invitado.
+
+// Siempre 3 columnas, en escritorio y en celular.
+const WALL_COLUMNAS = 3
+
+const fotoDelMuro = (src, i, minutos) => ({
+    id: `wall-${i}-${Math.random()}`,
+    src,
+    name: FIRST_NAMES[(i * 7) % FIRST_NAMES.length],
+    time: minutos === 0 ? 'ahora' : `hace ${minutos} min`,
+})
+
+const PhotoWallDemo = ({ slide }) => {
+    const fuente = slide.config?.photos?.length ? slide.config.photos : DEFAULT_WALL_PHOTOS
+    const clave = fuente.join('|')
+    const iniciales = () => fuente.map((src, i) => fotoDelMuro(src, i, (i + 1) * 3))
+
+    const [fotos, setFotos] = useState(iniciales)
+    const [total, setTotal] = useState(214)
+    const siguiente = useRef(0)
+
+    // Si cambian las fotos (en el admin), el muro se vuelve a armar.
+    useEffect(() => {
+        setFotos(iniciales())
+        siguiente.current = 0
+    }, [clave])
+
+    const numColumnas = WALL_COLUMNAS
+    // Reparto en orden (1 a la col 1, 2 a la col 2…) y cada columna se repite
+    // hasta tener al menos 4 fotos, para que su tira siempre cubra el alto.
+    const columnas = Array.from({ length: numColumnas }, (_, c) => {
+        const propias = fotos.filter((_, i) => i % numColumnas === c)
+        if (!propias.length) return []
+        const lista = [...propias]
+        while (lista.length < 4) lista.push(...propias.map(f => ({ ...f, id: `${f.id}-r${lista.length}`, nueva: false })))
+        return lista
+    }).filter(col => col.length)
+
+    const subir = () => {
+        const i = siguiente.current++
+        const foto = { ...fotoDelMuro(fuente[i % fuente.length], fuente.length + i, 0), nueva: true }
+        setTotal(t => t + 1)
+        // La nueva toma el lugar de la más vieja (en orden de lugares): así
+        // ninguna otra foto cambia de columna y el parallax no brinca.
+        setFotos(prev => prev.map((f, k) => (k === i % prev.length ? foto : f)))
+    }
+
+    return (
+        <div className='ob-wall-demo'>
+            <div className='ob-wizard-visual'>
+                <div className='ob-wizard-blob ob-wizard-blob--top' />
+                <div className='ob-wizard-blob ob-wizard-blob--bottom' />
+
+                <div className='ob-wall-board'>
+                    <div className='ob-wall-header'>
+                        <span className='ob-wall-live'><i /> En vivo</span>
+                        <span className='ob-wall-total'><Camera size={14} /> {total} fotos</span>
+                    </div>
+                    <div className='ob-wall-columns' style={{ gridTemplateColumns: `repeat(${columnas.length}, minmax(0, 1fr))` }}>
+                        {columnas.map((columna, c) => (
+                            <div key={c} className='ob-wall-col'>
+                                {/* La tira va dos veces: al llegar a -50% se ve igual que en 0 y
+                                    el ciclo no brinca. Pares suben, nones bajan. */}
+                                <div
+                                    className={`ob-wall-track ob-wall-track--${c % 2 === 0 ? 'up' : 'down'}`}
+                                    style={{ animationDuration: `${columna.length * 12}s` }}
+                                >
+                                    {[...columna, ...columna].map((f, k) => (
+                                        <figure key={`${f.id}-${k}`} className={`ob-wall-photo${f.nueva ? ' ob-wall-photo--new' : ''}`}>
+                                            <img src={f.src} alt='' loading='lazy' />
+                                            <figcaption>
+                                                <b>{f.name}</b>
+                                                <span>{f.time}</span>
+                                            </figcaption>
+                                        </figure>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <SlideCopy slide={slide}>
+                <SlideCta label={slide.cta_label} onClick={subir} />
+            </SlideCopy>
+        </div>
+    )
+}
+
+// ----------------------------------------------------- Imagen (sin demo) ---
+
+const ImageDemo = ({ slide }) => (
+    <div className='ob-image-demo'>
+        <div className='ob-wizard-visual'>
+            {slide.image_url
+                ? <img className='ob-image-demo-img' src={slide.image_url} alt='' />
+                : <span className='ob-image-demo-empty'>Sin imagen</span>}
+        </div>
+        <SlideCopy slide={slide} />
+    </div>
+)
+
+// Editor de invitación con la invitación demo elegida en Admin → Onboarding
+// (`config.invitation_id`). Sin ID, o si no se encuentra, usa la que trae la
+// página (ONBOARDING_DEMO_ID).
+const InvitationSlide = ({ slide, invitation, buttons, invitationID }) => {
+    const id = slide.config?.invitation_id
+    const propia = id && id !== invitationID
+    const demo = useDemoInvitation(propia ? id : null)
+    const usarPropia = propia && !demo.error
+
+    return (
+        <Step1Demo
+            key={usarPropia ? id : invitationID}
+            slide={slide}
+            invitation={usarPropia ? demo.invitation : invitation}
+            buttons={buttons ?? []}
+            invitationID={usarPropia ? id : invitationID}
+        />
+    )
+}
+
+// Un slide por `kind`. Lo usa el wizard y la vista previa de Admin → Onboarding.
+// `activo`: el slide es el que se ve. Las demos que se reproducen solas solo
+// corren entonces (el wizard monta el siguiente por adelantado).
+export const OnboardingSlide = ({ slide, invitation, buttons, invitationID, activo = true }) => {
+    switch (slide.kind) {
+        case 'invitation': return <InvitationSlide slide={slide} invitation={invitation} buttons={buttons} invitationID={invitationID} />
+        case 'save_the_date': return <SaveTheDateDemo slide={slide} />
+        case 'guests': return <Step2Demo slide={slide} activo={activo} />
+        case 'rsvp': return <Step3Demo slide={slide} activo={activo} />
+        case 'passes': return <Step4Demo slide={slide} />
+        case 'seating': return <Step5Demo slide={slide} activo={activo} />
+        case 'side_events': return <Step6Demo slide={slide} />
+        case 'photo_wall': return <PhotoWallDemo slide={slide} />
+        case 'lia': return <Step7Demo slide={slide} activo={activo} />
+        default: return <ImageDemo slide={slide} />
+    }
+}
+
+// Slides con el teléfono de BuildContent: sin padding, como el primero.
+export const FULL_BLEED = new Set(['invitation', 'save_the_date'])
+
+export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitationID, prewarm = false, slides: slidesProp }) => {
+    const slidesCatalogo = useOnboardingSlides()
+    const slides = slidesProp ?? slidesCatalogo
     const [stepIndex, setStepIndex] = useState(0)
+    // Slides ya vistos: se quedan montados para no perder lo que el usuario
+    // movió en la demo. Los demás se montan al acercarse (actual ± 1): abrir el
+    // wizard ya no dibuja las 9 demos de golpe.
+    const [vistos, setVistos] = useState(() => new Set([0]))
 
-    const isLast = stepIndex === STEPS.length - 1
+    const total = slides.length
+    const indice = Math.min(stepIndex, Math.max(total - 1, 0))
+    const isLast = indice === total - 1
 
-    const goPrev = () => setStepIndex((i) => Math.max(i - 1, 0))
-    const goNext = () => setStepIndex((i) => Math.min(i + 1, STEPS.length - 1))
+    useEffect(() => {
+        setVistos(prev => (prev.has(indice) ? prev : new Set(prev).add(indice)))
+    }, [indice])
+
+    // La portada de la invitación demo se pide antes de abrir para que la
+    // portada de carga del primer slide salga al instante.
+    useEffect(() => {
+        const src = invitation?.cover?.image?.prod
+        if (src) new Image().src = src
+    }, [invitation?.cover?.image?.prod])
+
+    const goPrev = () => setStepIndex(Math.max(indice - 1, 0))
+    const goNext = () => setStepIndex(Math.min(indice + 1, total - 1))
 
     const handleClose = () => {
         setStepIndex(0)
@@ -799,6 +1278,11 @@ export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitatio
         handleClose()
     }
 
+    const montar = useMemo(
+        () => (i) => vistos.has(i) || Math.abs(i - indice) <= 1,
+        [vistos, indice]
+    )
+
     return (
         <Modal
             open={open}
@@ -809,6 +1293,9 @@ export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitatio
             width='90vw'
             className='ob-wizard-modal'
             style={{ maxWidth: '1250px' }}
+            // `prewarm`: el modal se monta oculto desde que carga la página, así
+            // el iframe de la invitación ya está arrancando cuando se abre.
+            forceRender={prewarm}
             styles={{
                 content: { borderRadius: 24, overflow: 'hidden', padding: 0 },
                 body: { height: '90vh', overflow: 'hidden', padding: 0, borderRadius: 24, },
@@ -816,7 +1303,7 @@ export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitatio
         >
             <div className='ob-wizard' style={{ position: 'relative' }}>
                 <div className='ob-wizard-header'>
-                    <span className='ob-wizard-step-count'>Paso {stepIndex + 1} de {STEPS.length}</span>
+                    <span className='ob-wizard-step-count'>Paso {indice + 1} de {total}</span>
                     <button type='button' className='ob-wizard-skip' onClick={handleClose}>Saltar intro</button>
                 </div>
 
@@ -824,25 +1311,22 @@ export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitatio
                     <div
                         className='ob-wizard-track'
                         style={{
-                            width: `${STEPS.length * 100}%`,
-                            transform: `translateX(-${(100 / STEPS.length) * stepIndex}%)`,
+                            width: `${total * 100}%`,
+                            transform: `translateX(-${(100 / total) * indice}%)`,
                         }}
                     >
-                        {STEPS.map((step, i) => (
-                            <div className={`ob-wizard-slide${i === 0 ? ' ob-wizard-slide--full-bleed' : ''}`} key={step.key} style={{ width: `${100 / STEPS.length}%` }}>
-                                {/* <div className='ob-wizard-slide-heading'>
-                                    <h2 className='ob-wizard-slide-title'>{step.title}</h2>
-                                    <p className='ob-wizard-slide-subtitle'>{step.subtitle}</p>
-                                </div> */}
-
+                        {slides.map((slide, i) => (
+                            <div className={`ob-wizard-slide${FULL_BLEED.has(slide.kind) ? ' ob-wizard-slide--full-bleed' : ''}`} key={slide.id} style={{ width: `${100 / total}%` }}>
                                 <div className='ob-wizard-slide-body'>
-                                    {i === 0 && <Step1Demo invitation={invitation} buttons={buttons} invitationID={invitationID} />}
-                                    {i === 1 && <Step2Demo />}
-                                    {i === 2 && <Step3Demo />}
-                                    {i === 3 && <Step4Demo />}
-                                    {i === 4 && <Step5Demo />}
-                                    {i === 5 && <Step6Demo />}
-                                    {i === 6 && <Step7Demo />}
+                                    {montar(i) && (
+                                        <OnboardingSlide
+                                            slide={slide}
+                                            invitation={invitation}
+                                            buttons={buttons}
+                                            invitationID={invitationID}
+                                            activo={open && i === indice}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -850,16 +1334,17 @@ export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitatio
                 </div>
 
                 <div className='ob-wizard-nav'>
-                    <button type='button' className='ob-wizard-nav-btn' disabled={stepIndex === 0} onClick={goPrev}>
+                    <button type='button' className='ob-wizard-nav-btn' disabled={indice === 0} onClick={goPrev}>
                         Atrás
                     </button>
 
                     <div className='ob-wizard-dots'>
-                        {STEPS.map((_, i) => (
+                        {slides.map((slide, i) => (
                             <button
-                                key={i}
+                                key={slide.id}
                                 type='button'
-                                className={`ob-wizard-dot${i === stepIndex ? ' ob-wizard-dot--active' : ''}`}
+                                aria-label={`Ir a ${slide.title}`}
+                                className={`ob-wizard-dot${i === indice ? ' ob-wizard-dot--active' : ''}`}
                                 onClick={() => setStepIndex(i)}
                             />
                         ))}

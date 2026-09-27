@@ -1,17 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Modal } from 'antd'
 import { Check, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { fetchPrices, handleCheckout, markPendingPlan, plan_lite, plan_pro, PRICE_IDS } from '../functions'
+import { handleCheckout, markPendingPlan } from '../functions'
+import { usePlans } from '../../../hooks/usePlans'
 import { AdvisorButton } from '../AdvisorButton/AdvisorButton'
 import './PlansModal.css'
 
-// Paperless queda fuera a propósito: la página /checkout tampoco lo ofrece en
-// su selector, y desde una invitación free el salto natural es Lite o Pro.
-const PLANS = [
-    { id: 'lite', priceId: PRICE_IDS.PLAN_LITE, features: plan_lite },
-    { id: 'pro', priceId: PRICE_IDS.PLAN_PRO, features: plan_pro, featured: true },
-]
+// Qué planes se ofrecen, su nombre, price id y monto salen del catálogo
+// (Admin → Planes, interruptor "Selector en la app"). Como todo selector de
+// la app, muestra solo nombre y precio.
+const FEATURED = 'pro'
 
 /**
  * Selector de plan para una invitación que todavía está en free. Cobra sobre
@@ -20,23 +19,12 @@ const PLANS = [
  */
 export const PlansModal = ({ open, onClose, invitationId }) => {
     const { t, i18n } = useTranslation()
-    const [prices, setPrices] = useState([])
-    const [failed, setFailed] = useState(false)
+    const { plansFor, failed } = usePlans()
     const [buying, setBuying] = useState(null)
 
-    // Los precios viven en Stripe: se piden al abrir, no en cada render del
-    // dashboard.
-    useEffect(() => {
-        if (!open || prices.length > 0) return
-        setFailed(false)
-        fetchPrices(setPrices).catch((error) => {
-            console.error('Error obteniendo precios:', error)
-            setFailed(true)
-        })
-    }, [open, prices.length])
+    const plans = plansFor('app')
 
     const lang = i18n.language?.startsWith('en') ? 'en-US' : 'es-MX'
-    const amountOf = (priceId) => prices.find((p) => p.priceId === priceId)?.amount
     const fmt = (amount) => new Intl.NumberFormat(lang, {
         style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
     }).format(amount)
@@ -44,7 +32,7 @@ export const PlansModal = ({ open, onClose, invitationId }) => {
     const onChoose = (plan) => {
         setBuying(plan.id)
         markPendingPlan(invitationId, plan.id)
-        handleCheckout(invitationId, plan.priceId)
+        handleCheckout(invitationId, plan.stripe_price_id)
     }
 
     return (
@@ -79,17 +67,18 @@ export const PlansModal = ({ open, onClose, invitationId }) => {
                 </div>
 
                 <div className='plans-modal-grid'>
-                    {PLANS.map((plan) => {
-                        const amount = amountOf(plan.priceId)
+                    {plans.map((plan) => {
+                        const amount = plan.price?.amount
+                        const featured = plan.id === FEATURED
                         return (
                             <div
                                 key={plan.id}
-                                className={`plan-card${plan.featured ? ' plan-card--featured' : ''}`}
+                                className={`plan-card${featured ? ' plan-card--featured' : ''}`}
                             >
-                                {plan.featured &&
+                                {featured &&
                                     <span className='plan-card-tag'>{t('plans_modal.recommended')}</span>
                                 }
-                                <span className='plan-card-name'>{t(`plans_modal.plan_${plan.id}`)}</span>
+                                <span className='plan-card-name'>{`Plan ${plan.name}`}</span>
 
                                 <div className='plan-card-price'>
                                     {amount != null
@@ -101,14 +90,6 @@ export const PlansModal = ({ open, onClose, invitationId }) => {
                                     {amount != null && <span>{t('plans_modal.one_time')}</span>}
                                 </div>
 
-                                <ul className='plan-card-features'>
-                                    {plan.features.map((feature) => (
-                                        <li key={feature.key}>
-                                            <Check size={13} strokeWidth={3} />
-                                            <span>{t(feature.key)}</span>
-                                        </li>
-                                    ))}
-                                </ul>
 
                                 <button
                                     type='button'

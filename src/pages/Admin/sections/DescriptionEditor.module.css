@@ -1,0 +1,213 @@
+/* Editor de la descripción de la landing (Admin → Planes). */
+
+.wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--ac-line-input);
+    border-radius: 10px;
+    background: var(--ac-surface);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.wrap:focus-within {
+    border-color: var(--ac-violet);
+    box-shadow: 0 0 0 3px var(--ac-violet-soft);
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--ac-line-soft);
+}
+
+.toolBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.toolBtn:hover { background: var(--ac-tint); }
+
+.toolHint {
+    font-size: 11px;
+    color: var(--ac-muted);
+}
+
+.editor {
+    min-height: 120px;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ac-ink);
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.editor:empty::before {
+    content: attr(data-placeholder);
+    color: var(--ac-muted);
+}
+
+/* El link dentro del editor: se ve como en la landing (negritas) pero con el
+   color del admin para que se distinga del texto normal. */
+.link {
+    font-weight: 700;
+    color: var(--ac-violet-ink);
+    background: var(--ac-violet-soft);
+    border-radius: 4px;
+    padding: 0 3px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.link:hover { text-decoration: underline; }
+
+.popover {
+    position: absolute;
+    z-index: 5;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--ac-line);
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-popup);
+}
+
+.popTexto {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ac-ink);
+}
+
+.popRuta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ac-text-3);
+    word-break: break-all;
+}
+
+.popAcciones {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.popAcciones button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 4px 9px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--ac-text-2);
+    cursor: pointer;
+}
+
+.popAcciones button:hover { background: var(--ac-tint); }
+
+.formPanel {
+    width: 320px;
+    gap: 10px;
+}
+
+.formHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ac-ink);
+}
+
+.formHead button {
+    display: inline-flex;
+    border: none;
+    background: transparent;
+    color: var(--ac-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 6px;
+}
+
+.formHead button:hover { background: var(--ac-tint); color: var(--ac-ink); }
+
+.formCampo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--ac-text-2);
+}
+
+.mono input,
+input.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+
+.sugerencias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.sugerencias button {
+    border: 1px solid var(--ac-line-soft);
+    background: var(--ac-surface-alt);
+    border-radius: 99px;
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ac-text-3);
+    cursor: pointer;
+}
+
+.sugerencias button:hover {
+    border-color: var(--ac-violet);
+    color: var(--ac-violet-ink);
+}
+
+.popAcciones .empuja {
+    margin-left: auto;
+}
+
+.popAcciones .primario {
+    border-color: var(--ac-ink);
+    background: var(--ac-ink);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.popAcciones .primario:hover:not(:disabled) { background: var(--ac-ink-hover); }
+
+.popAcciones .primario:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.error {
+    color: var(--ac-red);
+    font-size: 11px;
+}

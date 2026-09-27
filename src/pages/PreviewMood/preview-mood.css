@@ -3594,3 +3594,1320 @@
         transform: scale(0.7);
     }
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   Onboarding: piezas agregadas con el catálogo de slides (Admin → Onboarding)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.ob-wall-demo,
+.ob-image-demo {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+/* Badge "Exclusivo en PRO": el verde de marca, como la tarjeta PRO del bento. */
+.ob-exclusive-badge {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    background: rgba(170, 193, 135, 0.16);
+    border: 1px solid rgba(170, 193, 135, 0.55);
+    color: #AAC187;
+    font-family: 'Poppins', var(--font-family);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+/* Botón de acción de las demos (antes uno por slide). */
+.ob-slide-cta-desktop {
+    align-self: flex-start;
+    width: auto !important;
+    min-width: 200px;
+}
+
+.ob-slide-cta-mobile {
+    display: none;
+}
+
+/* Portada de carga del primer slide: tapa el iframe hasta REMOTE_READY. */
+.ob-host-poster {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    background: #1c3249;
+    transition: opacity 450ms ease, visibility 0s linear 0s;
+}
+
+.ob-host-poster--hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 450ms ease, visibility 0s linear 450ms;
+}
+
+.ob-host-poster img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: ob-poster-zoom 6s ease-out both;
+}
+
+.ob-host-poster-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.ob-host-poster-title {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 120px;
+    text-align: center;
+    padding: 0 24px;
+    font-family: 'Denver-Serial', var(--font-family);
+    font-style: italic;
+    font-size: 34px;
+    line-height: 1.1;
+    color: #FFFFFF;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.ob-host-poster-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+    background-size: 250% 100%;
+    animation: ob-poster-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes ob-poster-shimmer {
+    from { background-position: 120% 0; }
+    to { background-position: -120% 0; }
+}
+
+@keyframes ob-poster-zoom {
+    from { transform: scale(1.08); }
+    to { transform: scale(1); }
+}
+
+/* ── Save the Date: el real en un iframe, dentro del teléfono de BuildContent
+   (el layout sale de .ob-step1-demo). ───────────────────────────────────── */
+
+.ob-std-iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 620px;
+    border: 0;
+}
+
+/* ── Photo Wall ────────────────────────────────────────────────────────── */
+
+.ob-wall-board {
+    position: relative;
+    z-index: 1;
+    width: 88%;
+    /* Todo el alto del panel: las columnas se ajustan a cuántas fotos hay
+       para que quepan todas. */
+    height: calc(100% - 72px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ob-wall-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Poppins', var(--font-family);
+    font-size: 13px;
+    font-weight: 600;
+    color: #eeeadf;
+}
+
+.ob-wall-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ob-wall-live i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff5a5f;
+    box-shadow: 0 0 0 0 rgba(255, 90, 95, 0.6);
+    animation: ob-live-pulse 1.6s ease-out infinite;
+}
+
+@keyframes ob-live-pulse {
+    to { box-shadow: 0 0 0 10px rgba(255, 90, 95, 0); }
+}
+
+.ob-wall-total {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.8;
+}
+
+.ob-wall-columns {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    gap: 10px;
+    overflow: hidden;
+    /* Las fotos entran y salen desvanecidas por arriba y por abajo. */
+    mask-image: linear-gradient(180deg, transparent, #000 10%, #000 90%, transparent);
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.ob-wall-col {
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Parallax: cada columna es una tira duplicada que se desliza sin fin. Se usa
+   margin (no gap) entre fotos para que las dos mitades midan exactamente
+   igual y el salto de -50% a 0 no se note. */
+.ob-wall-track {
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+    animation: ob-wall-up 40s linear infinite;
+}
+
+.ob-wall-track--down {
+    animation-name: ob-wall-down;
+}
+
+.ob-wall-columns:hover .ob-wall-track {
+    animation-play-state: paused;
+}
+
+@keyframes ob-wall-up {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+}
+
+@keyframes ob-wall-down {
+    from { transform: translateY(-50%); }
+    to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ob-wall-track { animation: none; }
+}
+
+.ob-wall-photo {
+    position: relative;
+    flex-shrink: 0;
+    margin: 0 0 10px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ob-wall-photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.ob-wall-photo figcaption {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(12, 23, 27, 0.55);
+    backdrop-filter: blur(4px);
+    color: #FFFFFF;
+    font-family: 'Poppins', var(--font-family);
+    font-size: 10px;
+}
+
+.ob-wall-photo figcaption span {
+    opacity: 0.75;
+}
+
+.ob-wall-photo--new {
+    animation: ob-wall-pop 500ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+    outline: 2px solid #AAC187;
+    outline-offset: -2px;
+}
+
+@keyframes ob-wall-pop {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Imagen (sin demo) ─────────────────────────────────────────────────── */
+
+.ob-image-demo-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ob-image-demo-empty {
+    font-family: 'Poppins', var(--font-family);
+    color: #eeeadf80;
+}
+
+/* ── Celular ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 750px) {
+    .ob-slide-cta-desktop {
+        display: none !important;
+    }
+
+    .ob-slide-cta-mobile {
+        display: inline-flex;
+    }
+
+    .ob-wizard-visual-description--desktop {
+        display: none;
+    }
+
+    .ob-wizard-visual-content .ob-wizard-visual-description--mobile {
+        display: block;
+    }
+
+    .ob-wall-demo,
+    .ob-image-demo {
+        flex-direction: column;
+    }
+
+    .ob-wall-demo .ob-wizard-visual,
+    .ob-image-demo .ob-wizard-visual {
+        flex: 0 0 62% !important;
+        min-height: 0;
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .ob-wall-demo .ob-wizard-visual-content,
+    .ob-image-demo .ob-wizard-visual-content {
+        flex: 1 1 auto;
+        width: 100%;
+        padding: 24px 20px;
+        box-sizing: border-box;
+        justify-content: flex-start;
+        overflow-y: auto;
+    }
+
+    .ob-wall-demo .ob-wizard-subtitle-serif {
+        display: none;
+    }
+
+    .ob-wall-board {
+        width: 100%;
+    }
+
+    .ob-wall-columns {
+        gap: 6px;
+    }
+
+    .ob-wall-photo {
+        margin-bottom: 6px;
+    }
+
+    .ob-wall-photo figcaption {
+        display: none;
+    }
+
+    .ob-host-poster-title {
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 750px) {
+    /* antd centra con un ::before inline-block de 100% de alto. Con el modal a
+       100vw (que incluye la barra de scroll) no caben en la misma línea y el
+       wizard se iba abajo de la pantalla en anchos de tablet. */
+    .ant-modal-wrap.ant-modal-centered:has(.ob-wizard-modal)::before {
+        display: none;
+    }
+}
+
+@media (max-width: 750px) {
+    /* Editor de invitación y Save the Date comparten el mismo teléfono: mismo
+       alto de panel y misma escala para que se vean iguales, y sin margen
+       extra para que el teléfono quede centrado en su panel. */
+    .ob-step1-demo .ob-wizard-visual {
+        flex: 0 0 60% !important;
+        padding: 0 !important;
+        justify-content: center;
+    }
+
+    /* El contenedor llena el panel y el teléfono se escala desde su centro.
+       El padding inferior que BuildContent reserva en celular para sus
+       controles (aquí ocultos) lo empujaba hacia abajo. */
+    .ob-step1-demo .ob-step1-phone-inner {
+        width: 100%;
+        /* El marco de BuildContent (su zoom interno) deja la pantalla 12px
+           abajo y 5px a la izquierda del centro; se compensa aquí para no
+           tocar el editor real, que usa el mismo marco. Medido a 390 × 844. */
+        transform: translate(5px, -12px) scale(0.52);
+        margin-top: 0;
+    }
+
+    .ob-step1-demo .ob-step1-phone-inner .web-devices.device-container {
+        padding: 0 !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ob-step1-demo .ob-wizard-visual-content {
+        padding: 20px 20px 16px;
+    }
+
+    /* Zona segura: la barra de navegación no queda bajo el indicador de inicio
+       ni las barras del navegador (el modal ya mide 100dvh). */
+    .ob-wizard-nav {
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* ── Confirmaciones (slide rsvp): número principal + barra apilada + leyenda.
+   Colores de serie validados contra esta superficie (#fcfcfb); los textos
+   van en tinta neutra, nunca en el color de la serie. ─────────────────── */
+.ob-rsvp-card {
+    position: relative;
+    z-index: 1;
+    width: min(460px, 86%);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px;
+    border-radius: 22px;
+    background: #fcfcfb;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    font-family: 'Poppins', var(--font-family);
+    color: #1c3249;
+}
+
+.ob-rsvp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ob-rsvp-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #3d5165;
+}
+
+.ob-rsvp-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #5c6f84;
+}
+
+.ob-rsvp-live i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #6F9A3E;
+    animation: ob-rsvp-pulse 1.8s ease-out infinite;
+}
+
+@keyframes ob-rsvp-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(111, 154, 62, 0.5); }
+    100% { box-shadow: 0 0 0 8px rgba(111, 154, 62, 0); }
+}
+
+.ob-rsvp-hero {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ob-rsvp-hero-value {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: #0c171b;
+    font-variant-numeric: tabular-nums;
+}
+
+.ob-rsvp-hero-text {
+    font-size: 13px;
+    line-height: 1.35;
+    color: #5c6f84;
+}
+
+.ob-rsvp-hero-pct {
+    margin-left: auto;
+    padding: 5px 10px;
+    border-radius: 99px;
+    background: #eef3e7;
+    font-size: 13px;
+    font-weight: 700;
+    color: #3f5c20;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Pista gris = lugares disponibles. Segmentos con 2px de separación y
+   extremos de 4px redondeados. */
+.ob-rsvp-bar {
+    position: relative;
+    display: flex;
+    gap: 2px;
+    height: 16px;
+    padding: 0;
+    border-radius: 6px;
+    background: #e6e9ee;
+}
+
+.ob-rsvp-seg {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 150ms ease;
+    cursor: default;
+}
+
+.ob-rsvp-seg--dim {
+    opacity: 0.35;
+}
+
+.ob-rsvp-tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #0c171b;
+    color: #FFFFFF;
+    font-size: 11.5px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.ob-rsvp-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 18px;
+}
+
+.ob-rsvp-legend li {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    transition: opacity 150ms ease;
+}
+
+.ob-rsvp-legend--dim {
+    opacity: 0.4;
+}
+
+.ob-rsvp-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.ob-rsvp-dot--track {
+    background: #e6e9ee;
+    box-shadow: inset 0 0 0 1px #cfd5dd;
+}
+
+.ob-rsvp-legend-label {
+    color: #3d5165;
+}
+
+.ob-rsvp-legend-value {
+    font-weight: 700;
+    color: #0c171b;
+    font-variant-numeric: tabular-nums;
+}
+
+.ob-rsvp-legend-pct {
+    min-width: 30px;
+    text-align: right;
+    color: #5c6f84;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 750px) {
+    .ob-rsvp-card {
+        width: calc(100% - 40px);
+        padding: 18px;
+        gap: 14px;
+    }
+
+    .ob-rsvp-hero-value {
+        font-size: 44px;
+    }
+
+    /* Una columna: en dos, los % de la derecha se salían de la tarjeta. */
+    .ob-rsvp-legend {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .ob-rsvp-legend li {
+        font-size: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ob-rsvp-seg { transition: none; }
+    .ob-rsvp-live i { animation: none; }
+}
+
+/* ── Seating chart vivo: sillas alrededor de cada mesa, invitados que salen
+   de la fila "Por acomodar" y vuelan a su lugar. ───────────────────────── */
+.ob-seat {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(239, 234, 223, 0.35);
+    background: transparent;
+    box-sizing: border-box;
+    pointer-events: none;
+    transition: background 200ms ease, border-color 200ms ease;
+}
+
+.ob-seat--taken {
+    background: var(--light-green-500, #AAC187);
+    border-color: var(--light-green-500, #AAC187);
+}
+
+.ob-seat--new {
+    animation: ob-seat-pop 500ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+@keyframes ob-seat-pop {
+    0% { box-shadow: 0 0 0 0 rgba(170, 193, 135, 0.8); scale: 0.4; }
+    60% { scale: 1.35; }
+    100% { box-shadow: 0 0 0 8px rgba(170, 193, 135, 0); scale: 1; }
+}
+
+.ob-step5-table-num {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.05;
+    pointer-events: none;
+}
+
+.ob-step5-table-num small {
+    font-size: 9px;
+    font-weight: 600;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}
+
+.ob-step5-table-num--pulse {
+    animation: ob-table-pulse 520ms ease;
+}
+
+@keyframes ob-table-pulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.18); color: var(--light-green-500, #AAC187); }
+    100% { transform: scale(1); }
+}
+
+/* Mesa llena: el borde se vuelve verde. */
+.ob-step5-table--full {
+    border-color: rgba(170, 193, 135, 0.7);
+    background: rgba(170, 193, 135, 0.14);
+}
+
+.ob-seat-flyer {
+    position: absolute;
+    z-index: 7;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #D1BEDD;
+    color: #1c3249;
+    font-family: 'Poppins', var(--font-family);
+    font-size: 10px;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    transition-property: left, top, transform, opacity;
+    transition-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+.ob-seat-flyer--flying {
+    transform: scale(0.45);
+    opacity: 0.85;
+}
+
+.ob-seat-queue {
+    position: relative;
+    z-index: 6;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px 4px 10px;
+    border-radius: 99px;
+    background: rgba(12, 23, 27, 0.75);
+    border: 1px solid rgba(239, 234, 223, 0.14);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.ob-seat-queue-label {
+    font-family: 'Poppins', var(--font-family);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: rgba(239, 234, 223, 0.7);
+}
+
+.ob-seat-queue-avatars {
+    display: flex;
+}
+
+.ob-seat-avatar {
+    width: 20px;
+    height: 20px;
+    margin-left: -5px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #D1BEDD;
+    border: 1.5px solid #0c171b;
+    color: #1c3249;
+    font-family: 'Poppins', var(--font-family);
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.ob-seat-avatar:first-child {
+    margin-left: 0;
+    animation: ob-seat-next 1500ms ease-in-out infinite;
+}
+
+@keyframes ob-seat-next {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .ob-seat--new,
+    .ob-step5-table-num--pulse,
+    .ob-seat-avatar:first-child { animation: none; }
+    .ob-seat-flyer { transition: none; }
+}
+
+/* El borde va dentro del tamaño: sin esto la mesa medía 59px y no 56, y
+   el plano quedaba 1.5px corrido a la derecha y abajo. */
+.ob-step5-table,
+.ob-step5-dance {
+    box-sizing: border-box;
+}
+
+/* La fila "Por acomodar" va debajo del plano, centrada. */
+.ob-step5-board-wrap {
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Lia: conversación que se reproduce sola ─────────────────────────── */
+.ob-lia-messages {
+    height: 300px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    /* Lo viejo se desvanece arriba, como un chat que sigue. */
+    mask-image: linear-gradient(180deg, transparent, #000 14%);
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%);
+}
+
+.ob-lia-messages::-webkit-scrollbar {
+    display: none;
+}
+
+.ob-lia-bubble {
+    flex-shrink: 0;
+    animation: ob-lia-in 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+    transform-origin: left bottom;
+}
+
+.ob-lia-bubble--user {
+    align-self: flex-end;
+    border-radius: 16px 16px 4px 16px;
+    background: #D1BEDD;
+    color: #1c3249;
+    font-weight: 500;
+    transform-origin: right bottom;
+}
+
+@keyframes ob-lia-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+.ob-lia-typing {
+    display: inline-flex;
+    gap: 5px;
+    padding: 14px 16px;
+}
+
+.ob-lia-typing i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(239, 234, 223, 0.7);
+    animation: ob-lia-dot 1s ease-in-out infinite;
+}
+
+.ob-lia-typing i:nth-child(2) { animation-delay: 0.15s; }
+.ob-lia-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes ob-lia-dot {
+    0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-3px); }
+}
+
+.ob-lia-list {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ob-lia-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: rgba(12, 23, 27, 0.35);
+    font-size: 12.5px;
+    animation: ob-lia-in 380ms ease both;
+}
+
+.ob-lia-list li:nth-child(2) { animation-delay: 120ms; }
+.ob-lia-list li:nth-child(3) { animation-delay: 240ms; }
+
+.ob-lia-list em {
+    margin-left: auto;
+    font-style: normal;
+    font-size: 11px;
+    color: rgba(239, 234, 223, 0.55);
+}
+
+.ob-lia-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #D1BEDD;
+    color: #1c3249;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.ob-lia-meter {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ob-lia-meter-track {
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(239, 234, 223, 0.14);
+    overflow: hidden;
+}
+
+.ob-lia-meter-track span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--light-green-500, #AAC187);
+    animation: ob-lia-grow 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: left;
+}
+
+@keyframes ob-lia-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+.ob-lia-meter-text {
+    font-size: 11.5px;
+    color: rgba(239, 234, 223, 0.65);
+}
+
+.ob-lia-sent {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 99px;
+    background: rgba(170, 193, 135, 0.18);
+    color: var(--light-green-500, #AAC187);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* El input es un div: se "escribe" la pregunta con un cursor. */
+.ob-lia-input {
+    display: flex;
+    align-items: center;
+    cursor: default;
+}
+
+.ob-lia-input--typing {
+    color: #EFEADF;
+    border-color: rgba(170, 193, 135, 0.5);
+}
+
+.ob-lia-caret {
+    width: 1.5px;
+    height: 16px;
+    margin-left: 2px;
+    background: #EFEADF;
+    animation: ob-lia-caret 0.9s steps(1) infinite;
+}
+
+@keyframes ob-lia-caret {
+    50% { opacity: 0; }
+}
+
+.ob-lia-online {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(239, 234, 223, 0.55);
+}
+
+.ob-lia-online i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--light-green-500, #AAC187);
+}
+
+.ob-lia-spark {
+    animation: ob-lia-spark 3s ease-in-out infinite;
+}
+
+@keyframes ob-lia-spark {
+    0%, 100% { transform: rotate(0) scale(1); }
+    50% { transform: rotate(18deg) scale(1.15); }
+}
+
+@media (max-width: 750px) {
+    .ob-lia-messages {
+        height: 260px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ob-lia-bubble,
+    .ob-lia-list li,
+    .ob-lia-meter-track span,
+    .ob-lia-spark { animation: none; }
+}
+
+/* ── Confirmaciones en vivo ──────────────────────────────────────────── */
+.ob-rsvp-seg--glow {
+    animation: ob-rsvp-glow 900ms ease-out;
+}
+
+@keyframes ob-rsvp-glow {
+    0% { filter: brightness(1.35); box-shadow: 0 0 0 3px rgba(111, 154, 62, 0.35); }
+    100% { filter: none; box-shadow: none; }
+}
+
+.ob-rsvp-hero-pct--tick {
+    animation: ob-rsvp-tick 450ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+@keyframes ob-rsvp-tick {
+    0% { transform: scale(0.85); }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.ob-rsvp-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid #e6e9ee;
+}
+
+.ob-rsvp-feed-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64768a;
+}
+
+.ob-rsvp-feed ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ob-rsvp-feed li {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+}
+
+.ob-rsvp-feed--new {
+    animation: ob-rsvp-feed-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes ob-rsvp-feed-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.ob-rsvp-feed-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eee7f4;
+    color: #5b3f82;
+    font-size: 9.5px;
+    font-weight: 700;
+}
+
+.ob-rsvp-feed-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #1c3249;
+    font-weight: 500;
+}
+
+.ob-rsvp-feed-status {
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ob-rsvp-feed-status--confirmed {
+    background: #eef3e7;
+    color: #3f5c20;
+}
+
+.ob-rsvp-feed-status--rejected {
+    background: #fbece8;
+    color: #9a3b27;
+}
+
+.ob-rsvp-feed-time {
+    min-width: 62px;
+    text-align: right;
+    font-size: 11px;
+    color: #64768a;
+}
+
+@media (max-width: 750px) {
+    .ob-rsvp-feed li {
+        font-size: 12px;
+    }
+
+    /* En celular solo la más reciente, para no crecer la tarjeta. */
+    .ob-rsvp-feed li:nth-child(n + 2) {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ob-rsvp-seg--glow,
+    .ob-rsvp-hero-pct--tick,
+    .ob-rsvp-feed--new { animation: none; }
+}
+
+/* ── Lista de invitados en vivo (misma familia que la tarjeta de
+   confirmaciones: superficie #fcfcfb, tinta neutra). ───────────────────── */
+.ob-guests-card {
+    position: relative;
+    z-index: 1;
+    width: min(500px, 88%);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border-radius: 22px;
+    background: #fcfcfb;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    font-family: 'Poppins', var(--font-family);
+    color: #1c3249;
+}
+
+.ob-guests-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.ob-guests-head > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.ob-guests-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0c171b;
+}
+
+.ob-guests-count {
+    font-size: 11.5px;
+    color: #64768a;
+}
+
+.ob-guests-whats {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 99px;
+    background: #eef3e7;
+    color: #3f5c20;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ob-guests-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ob-guests-progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #3d5165;
+}
+
+.ob-guests-progress-text b {
+    font-variant-numeric: tabular-nums;
+    color: #0c171b;
+}
+
+.ob-guests-progress-track {
+    height: 8px;
+    border-radius: 99px;
+    background: #e6e9ee;
+    overflow: hidden;
+}
+
+.ob-guests-progress-track span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: #6F9A3E;
+    transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ob-guests-list {
+    /* Referencia del offsetTop de las filas: así el scroll centra de verdad
+       al invitado que se está enviando. */
+    position: relative;
+    height: 330px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 -8px;
+    padding: 0 8px;
+    mask-image: linear-gradient(180deg, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.ob-guests-list::-webkit-scrollbar {
+    display: none;
+}
+
+.ob-guest-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    transition: background 250ms ease;
+}
+
+.ob-guest-row--active {
+    background: #f1ecf6;
+}
+
+.ob-guest-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eee7f4;
+    color: #5b3f82;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+
+.ob-guest-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ob-guest-info b {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1c3249;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ob-guest-info small {
+    font-size: 11px;
+    color: #64768a;
+    font-variant-numeric: tabular-nums;
+}
+
+.ob-guest-send {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border: none;
+    border-radius: 99px;
+    background: #1c3249;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ob-guest-send:hover {
+    background: #2a4763;
+}
+
+.ob-guest-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    animation: ob-guest-state-in 300ms ease both;
+}
+
+@keyframes ob-guest-state-in {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: none; }
+}
+
+.ob-guest-state--enviando { background: #f1ecf6; color: #5b3f82; }
+.ob-guest-state--enviada { background: #eef1f5; color: #3d5165; }
+.ob-guest-state--leida { background: #e7f0fb; color: #1f5c99; }
+.ob-guest-state--confirmado { background: #eef3e7; color: #3f5c20; }
+
+.ob-guest-spinner {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(91, 63, 130, 0.25);
+    border-top-color: #5b3f82;
+    animation: ob-guest-spin 700ms linear infinite;
+}
+
+@keyframes ob-guest-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 750px) {
+    .ob-guests-card {
+        width: calc(100% - 40px);
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .ob-guests-list {
+        height: 190px;
+    }
+
+    .ob-guests-whats {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ob-guest-state,
+    .ob-guest-spinner { animation: none; }
+    .ob-guests-progress-track span { transition: none; }
+}

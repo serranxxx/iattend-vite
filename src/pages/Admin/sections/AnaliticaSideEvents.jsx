@@ -254,14 +254,11 @@ export const AnaliticaSideEvents = ({ invitacionesReales, mes, onMesesDisponible
         .join(', ')
         .replace(/, ([^,]*)$/, ' y $1')
 
-    // Cuántos side events tiene cada evento. El tope se etiqueta como tal
-    // porque nadie lo ha pasado: es un dato, no una casualidad del corte.
-    const filasDeDistribucion = distribucion.map((tramo, i) => ({
-        ...tramo,
-        label: i === 2 && datos.maximoPorEvento === 3
-            ? '3 side events (el máximo)'
-            : tramo.label,
-    }))
+    // Cuántos side events tiene cada evento. Ya no hay un tope único que
+    // etiquetar: depende del plan con que se compró cada invitación (PRO de
+    // antes del 1 de octubre de 2026 incluye 3, los nuevos lo que diga el
+    // catálogo) y de los que se compraron sueltos.
+    const filasDeDistribucion = distribucion
 
     // Los tres temas de cabeza van en azul pleno y el resto en azul claro: la
     // pregunta de la tarjeta es si hay un puñado de plantillas que cubran casi

@@ -14,7 +14,7 @@ import { Bar, Doughnut, Line, Scatter } from 'react-chartjs-2'
 import { Dropdown } from 'antd'
 import { ChevronDown, MapPin } from 'lucide-react'
 import {
-    CREDITOS_INCLUIDOS_PRO, RANGOS_ANTICIPACION, anticipacionEnDias, contarCiudades,
+    RANGOS_ANTICIPACION, anticipacionEnDias, contarCiudades,
     contarPaises, creditosDeEvento, esPro, mediana, ubicacionesDe,
 } from '../analiticaCalculos'
 import { traerTodo } from '../analiticaDatos'
@@ -165,6 +165,9 @@ const useCreditos = (reales) => {
             promedio: activos.length ? Math.round(consumos.reduce((a, b) => a + b, 0) / activos.length) : 0,
             maximo: Math.max(0, ...consumos),
             porConsumo: [...activos].sort((a, b) => b.consumo - a.consumo),
+            // Con PRO de 300 y de 200 conviviendo, la diagonal se traza con el
+            // mayor: es la referencia del paquete más generoso vendido.
+            incluidos: Math.max(0, ...eventos.map(e => e.incluidos)),
         }
     }, [cobros, reales])
 }
@@ -178,7 +181,7 @@ const useCreditos = (reales) => {
 const ConsumoContraSaldo = ({ eventos, incluidos }) => {
     const tokens = useTokens()
 
-    // Los 300 incluidos del plan: por debajo de esta diagonal el evento nunca
+    // Los incluidos del plan: por debajo de esta diagonal el evento nunca
     // compró créditos extra; por encima, sí.
     const maximo = Math.max(incluidos, ...eventos.map(e => Math.max(e.consumo, e.saldo)))
 
@@ -655,7 +658,7 @@ export const AnaliticaInvitaciones = ({ invitacionesReales, totalInvitaciones })
                             <div className={styles.creditosSplit}>
                                 <ConsumoContraSaldo
                                     eventos={creditos.porConsumo}
-                                    incluidos={CREDITOS_INCLUIDOS_PRO}
+                                    incluidos={creditos.incluidos}
                                 />
 
                                 {/* La lista sin barras: la proporción ya la cuenta

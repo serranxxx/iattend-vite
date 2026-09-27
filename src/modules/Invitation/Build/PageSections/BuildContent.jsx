@@ -37,6 +37,9 @@ export const BuildContent = ({
     // externo en el mismo contexto en el que se vería dentro de i attend, sin
     // tener que montar una invitación de mentira.
     pantalla,
+    // Onboarding: aviso de que el iframe cargó y una capa encima de la pantalla
+    // (la portada de carga) mientras tanto.
+    onHostReady, hostOverlay,
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -236,8 +239,10 @@ export const BuildContent = ({
 
                                 <div className='ios26-screen'>
                                     <div ref={scrollableContentRef} className='scroll-invitation ios26-content'>
-                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />}
+                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} />}
                                     </div>
+
+                                    {hostOverlay}
 
                                     <div className='ios26-island' />
 

@@ -45,6 +45,7 @@ import { Login } from '../components/Auth/Login'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
 import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
+import { OnboardingPreviewPage } from '../pages/PreviewMood/OnboardingPreviewPage'
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
 import { SalesApp } from '../modules/Sales/SalesApp'
 import { ProspectosPage } from '../modules/Prospectos/ProspectosPage'
@@ -79,6 +80,8 @@ export const AppRouter = () => {
       <Route path="/legal" element={<LegalPage />} />
       <Route path="/luma" element={<Lia />} />
       <Route path="/preview" element={<PreviewMoodPage />} />
+      {/* Solo el wizard: lo usa Admin → Onboarding en un iframe de celular */}
+      <Route path="/onboarding-preview" element={<OnboardingPreviewPage />} />
       {/* Save the Date gratis, sin cuenta: mismo editor en modo demo */}
       <Route path="/save-the-date" element={<SaveTheDatePage demo />} />
       <Route path="/checkout" element={<CheckoutPage />} />

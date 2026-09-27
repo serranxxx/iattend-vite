@@ -10,7 +10,10 @@ const ALLOWED_ORIGINS = new Set([
 
 
 export default function ReactHost({
-  config, onHide, screens, scrollToSection, onSectionChange, textureOverride, fontOverride, activeLang
+  config, onHide, screens, scrollToSection, onSectionChange, textureOverride, fontOverride, activeLang,
+  // Se llama una vez cuando el remoto avisa que ya cargó (REMOTE_READY). El
+  // onboarding lo usa para quitar la portada de carga.
+  onReady,
 }) {
   const iframeRef = useRef(null);
   const lastSentHashRef = useRef("");
@@ -19,9 +22,15 @@ export default function ReactHost({
   const onSectionChangeRef = useRef(onSectionChange);
   const isFirstScrollRef = useRef(true);
 
+  const onReadyRef = useRef(onReady);
+
   useEffect(() => {
     onSectionChangeRef.current = onSectionChange;
   }, [onSectionChange]);
+
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
 
   // URL del componente remoto: /shared/[invitation_label]/[invitation_name]
   const url = useMemo(() => {
@@ -74,6 +83,7 @@ export default function ReactHost({
       if (!ALLOWED_ORIGINS.has(ev.origin)) return;
       if (ev.data?.type === "REMOTE_READY") {
         postProps("ready");
+        onReadyRef.current?.();
       }
       // (Opcional) si implementas un ping en el remoto:
       if (ev.data?.type === "REMOTE_REQUEST_LATEST") {

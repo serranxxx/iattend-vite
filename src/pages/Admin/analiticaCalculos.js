@@ -173,9 +173,14 @@ export const contarPaises = (valores) => contarPorClave(valores, claveDe)
 
 // -------------------------------------------------------------- créditos ---
 
-// Una invitación PRO nace con 300 créditos incluidos (ver
-// `createInvitationWithPlan` en el backend). Lite y Paperless no usan créditos.
+// Los créditos incluidos viven en cada invitación (`credits_included`, copiados
+// del catálogo de planes al crearla): PRO de antes del 1 de octubre de 2026
+// trae 300, los posteriores lo que diga Admin → Planes. Este 300 solo cubre
+// filas leídas antes de correr la migración del catálogo.
 export const CREDITOS_INCLUIDOS_PRO = 300
+
+export const creditosIncluidos = (invitation) =>
+    Number(invitation?.credits_included ?? CREDITOS_INCLUIDOS_PRO)
 
 // Los créditos comprados NO se registran en ninguna tabla: Stripe acredita
 // directo sobre `invitations.credits` con un RPC. Lo único deducible es cuántos
@@ -206,8 +211,9 @@ export const creditosDeEvento = (invitation, enviosCobrados, recordatoriosCobrad
         email: invitation.user_email ?? null,
         consumo,
         saldo,
+        incluidos: creditosIncluidos(invitation),
         // Lo que el evento tuvo por encima de los créditos del plan.
-        extra: Math.max(0, consumo + saldo - CREDITOS_INCLUIDOS_PRO),
+        extra: Math.max(0, consumo + saldo - creditosIncluidos(invitation)),
     }
 }
 

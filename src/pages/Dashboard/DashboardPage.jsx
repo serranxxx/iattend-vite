@@ -31,6 +31,8 @@ export const DashboardPage = () => {
     const [available, setAvailable] = useState(0)
     const [invitation, setInvitation] = useState(null)
     const [plan, setPlan] = useState(null)
+    const [sideEventsCap, setSideEventsCap] = useState(0)
+    const [photoWallIncluded, setPhotoWallIncluded] = useState(true)
     const [saveTheDate, setSaveTheDate] = useState(null)
     const [guestsSample, setGuestsSample] = useState([])
     const [sideNames, setSideNames] = useState([])
@@ -99,7 +101,7 @@ export const DashboardPage = () => {
         // 1️⃣ Obtener invitación
         const { data: invitation, error } = await supabase
             .from("invitations")
-            .select("tickets, plan, data, created_at, name, type")
+            .select("tickets, plan, side_events_included, photo_wall_included, data, created_at, name, type")
             .eq("id", invitation_id)
             .single();
 
@@ -109,6 +111,10 @@ export const DashboardPage = () => {
         }
 
         setPlan(invitation?.plan)
+        setSideEventsCap(invitation?.side_events_included ?? 0)
+        // Sin la columna (migración 2026-09-26b sin correr) vale lo de antes:
+        // solo PRO trae Photo Wall.
+        setPhotoWallIncluded(invitation?.photo_wall_included ?? invitation?.plan === 'pro')
         setInvitation(invitation?.data);
         setCreatedAt(invitation?.created_at ?? null);
         setSlug(invitation?.name ?? null);
@@ -258,8 +264,19 @@ export const DashboardPage = () => {
     // flotante para ocupar su propia celda del bento (col 4, fila 1).
     const isLite = plan === 'lite';
 
+    // Lite de después del 1 de octubre: su plan ya no incluye side events
+    // (`side_events_included` en 0) y la tarjeta se bloquea igual que el Photo
+    // Wall. Los Lite anteriores conservan el suyo y entran normal.
+    const sideLocked = isLite && sideEventsCap === 0 && sideNames.length === 0;
+
+    // El Photo Wall se bloquea si la invitación no lo trae
+    // (`invitations.photo_wall_included`, copiado del plan al comprarse). La
+    // etiqueta apunta a PRO en vez de a contratar.
+    const wallLocked = !photoWallIncluded;
+
     const openSection = (path) => () => {
-        if (path === 'photowall' && isLite) { setProOpen(true); return }
+        if (path === 'photowall' && wallLocked) { setProOpen(true); return }
+        if (path === 'side' && sideLocked) { setProOpen(true); return }
         handleMoode(path)
     };
 
@@ -284,9 +301,6 @@ export const DashboardPage = () => {
         </div>
     );
 
-    // En lite el único módulo bloqueado es el Photo Wall, y su etiqueta apunta
-    // a PRO en vez de a contratar.
-    const wallLocked = isLite;
 
     const handleMoode = (path) => {
         const params = new URLSearchParams({ id });
@@ -566,7 +580,7 @@ export const DashboardPage = () => {
                             {/* ── Side events — crema ── */}
                             {plan !== 'paperless' &&
                                 <div
-                                    className='bento_card bento_side'
+                                    className={`bento_card bento_side${sideLocked ? ' bento_locked' : ''}`}
                                     onClick={openSection('side')}
                                 >
                                     <div className='bento_side_left'>
@@ -581,6 +595,7 @@ export const DashboardPage = () => {
                                             </div>
                                         ))}
                                     </div>
+                                    {sideLocked && lockBar('dashboard.bento_side_locked')}
                                 </div>
                             }
 

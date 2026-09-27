@@ -1,5 +1,4 @@
 import axios from "axios";
-import { LuArmchair, LuClipboardList, LuImages, LuPalette, LuPartyPopper, LuPencilRuler, LuSend, LuSmartphone, LuSparkles, LuTicket } from "react-icons/lu";
 
 export const fetchPrices = async (setPrices) => {
     const res = await axios.get(
@@ -157,34 +156,3 @@ export const PRODUCTS = {
   };
   
 
-  export const plan_paperless = [
-    { key: "plan_features.digital_invitation", icon: LuSmartphone },
-    { key: "plan_features.free_design", icon: LuPalette },
-    { key: "plan_features.unlimited_edits", icon: LuPencilRuler },
-    { key: "plan_features.public_event", icon: LuPencilRuler },
-    { key: "plan_features.manual_confirmation", icon: LuPencilRuler },
-  ];
-
-  export const plan_pro = [
-    { key: "plan_features.digital_invitation", icon: LuSmartphone },
-    { key: "plan_features.free_design", icon: LuPalette },
-    { key: "plan_features.unlimited_edits", icon: LuPencilRuler },
-    { key: "plan_features.public_private_event", icon: LuPencilRuler },
-    { key: "plan_features.guest_list", icon: LuClipboardList },
-    { key: "plan_features.seating_chart", icon: LuArmchair },
-    { key: "plan_features.auto_sends", icon: LuSend },
-    { key: "plan_features.digital_passes", icon: LuTicket },
-    { key: "plan_features.side_events_3", icon: LuPartyPopper },
-    { key: "plan_features.photo_wall", icon: LuImages },
-    { key: "plan_features.lia", icon: LuSparkles },
-  ];
-
-  export const plan_lite = [
-    { key: "plan_features.digital_invitation", icon: LuSmartphone },
-    { key: "plan_features.free_design", icon: LuPalette },
-    { key: "plan_features.unlimited_edits", icon: LuPencilRuler },
-    { key: "plan_features.public_private_event", icon: LuPencilRuler },
-    { key: "plan_features.guest_list", icon: LuClipboardList },
-    { key: "plan_features.seating_chart", icon: LuArmchair },
-    { key: "plan_features.side_events_1", icon: LuPartyPopper },
-  ];

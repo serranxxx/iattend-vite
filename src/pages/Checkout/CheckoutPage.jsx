@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { AuthModal } from '../PreviewMood/AuthModal'
 import { OnboardingWizard } from '../PreviewMood/OnboardingWizard'
 import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData'
-import { fetchPrices, PRODUCTS } from '../../components/Payment/functions'
+import { PLAN_FEATURE_GROUPS, planFeatures, usePlans } from '../../hooks/usePlans'
 import { FooterApp } from '../../modules/Footer/FooterApp'
 
 const API = import.meta.env.VITE_API_URL
@@ -87,9 +87,21 @@ export const CheckoutPage = () => {
 
     const [searchParams] = useSearchParams()
     const planParam = searchParams.get('plan')
-    const [selected, setSelected] = useState(planParam === 'lite' ? 'lite' : 'pro')
+    const [elegido, setSelected] = useState(planParam || 'pro')
 
-    const [prices, setPrices] = useState([])
+    // Qué planes se ofrecen, su nombre, precio y checklist: del catálogo
+    // (Admin → Planes, interruptor "Checkout").
+    const { plansFor } = usePlans()
+    const checkoutPlans = plansFor('checkout')
+    // Si el plan pedido no se vende aquí (o el catálogo aún no carga), cae en
+    // Pro o en el primero disponible.
+    const selectedPlan = checkoutPlans.find(p => p.id === elegido)
+        ?? checkoutPlans.find(p => p.id === 'pro')
+        ?? checkoutPlans[0]
+        ?? null
+    const selected = selectedPlan?.id ?? elegido
+    // Solo el nombre del catálogo ("Pro", "Lite"), sin el prefijo "Plan".
+    const planLabel = (plan) => plan?.name ?? ''
     const [loading, setLoading] = useState(false)
     const [authOpen, setAuthOpen] = useState(false)
     const [onboardingOpen, setOnboardingOpen] = useState(() => searchParams.get('openWizard') === 'true')
@@ -115,26 +127,15 @@ export const CheckoutPage = () => {
         return () => clearInterval(timer)
     }, [])
 
-    useEffect(() => {
-        fetchPrices(setPrices)
-    }, [])
-
-    const planPrices = prices.filter(p => {
-        if (p.priceId === 'price_1TlC4RAAdNlITNVbjcRtexSy') return;
-        const product = PRODUCTS[p.priceId]
-        return product?.type === 'plan' && product?.value !== 'paperless'
-    })
-
-    const selectedEntry = planPrices.find(p => PRODUCTS[p.priceId]?.value === selected)
-    const selectedPriceFormatted = selectedEntry
-        ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(selectedEntry.amount)
+    const selectedPriceFormatted = selectedPlan?.price
+        ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(selectedPlan.price.amount)
         : '…'
 
     const executePurchase = async () => {
         const session = getSession()
         if (!session?.user?.uid) { setAuthOpen(true); return }
 
-        const priceId = planPrices.find(p => PRODUCTS[p.priceId]?.value === selected)?.priceId
+        const priceId = selectedPlan?.stripe_price_id
         if (!priceId) { messageApi.error('No se pudo obtener el precio del plan'); return }
 
         setLoading(true)
@@ -245,15 +246,13 @@ export const CheckoutPage = () => {
                         </button>
 
                         <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-                            {planPrices.map(p => {
-                                const planValue = PRODUCTS[p.priceId]?.value
-                                if (!planValue) return null
-                                const isSelected = selected === planValue
-                                const planName = planValue === 'pro' ? 'Plan Pro' : 'Plan Lite'
+                            {checkoutPlans.map(plan => {
+                                const isSelected = selected === plan.id
+                                const planName = planLabel(plan)
                                 return (
                                     <button
-                                        key={p.priceId}
-                                        onClick={() => setSelected(planValue)}
+                                        key={plan.id}
+                                        onClick={() => setSelected(plan.id)}
                                         style={{
                                             flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
                                             fontWeight: 600, fontSize: 14,
@@ -275,29 +274,20 @@ export const CheckoutPage = () => {
                         </div>
 
     
-                        <SectionLabel>Tu invitación</SectionLabel>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
-                            <CheckItem label='Portada de invitación' />
-                            <CheckItem label='Dresscode' />
-                            <CheckItem label='Itinerario' />
-                            <CheckItem label='Mesa de regalos' />
-                            <CheckItem label='Galería de fotos' />
-                        </div>
-
-                        <SectionLabel>Gestión del evento</SectionLabel>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
-                            <CheckItem label='Lista de invitados' />
-                            <CheckItem label='Acomodo de mesas' />
-                            <CheckItem label={selected === 'pro' ? '3 Side events' : '1 Side event'} />
-                            {selected === 'pro' && (
-                                <>
-                                    <CheckItem label='Photo Wall' />
-                                    <CheckItem label='Envíos por WhatsApp' />
-                                    <CheckItem label='Pases en Apple Wallet' />
-                                    <CheckItem label='Lia · asistente IA' />
-                                </>
-                            )}
-                        </div>
+                        {/* Checklist del catálogo (Admin → Planes): cada feature trae su
+                            grupo, y las que dependen de un número en 0 no salen. */}
+                        {PLAN_FEATURE_GROUPS.map(group => {
+                            const items = planFeatures(selectedPlan, { group: group.key })
+                            if (!items.length) return null
+                            return (
+                                <div key={group.key}>
+                                    <SectionLabel>{group.label}</SectionLabel>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
+                                        {items.map((item, i) => <CheckItem key={i} label={item.text} />)}
+                                    </div>
+                                </div>
+                            )
+                        })}
 
                         <div style={{ height: 24 }} />
                     </div>
@@ -310,7 +300,7 @@ export const CheckoutPage = () => {
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                             <span style={{ fontSize: 15, fontWeight: 500, color: TEXT_DIM, fontFamily: 'Luxora Grotesk' }}>
-                                {selected === 'pro' ? 'Plan Pro' : 'Plan Lite'}
+                                {planLabel(selectedPlan)}
                             </span>
                             <span style={{ fontSize: 28, fontWeight: 800, color: TEXT, fontFamily: 'Windsor', lineHeight: 1 }}>
                                 {selectedPriceFormatted}
@@ -321,13 +311,13 @@ export const CheckoutPage = () => {
                         </span>
 
                         <button
-                            disabled={planPrices.length === 0 || loading}
+                            disabled={checkoutPlans.length === 0 || loading}
                             onClick={executePurchase}
                             style={{
                                 width: '100%', height: 50, borderRadius: 12,
-                                background: loading || planPrices.length === 0 ? 'rgba(239,234,223,0.4)' : TEXT,
+                                background: loading || checkoutPlans.length === 0 ? 'rgba(239,234,223,0.4)' : TEXT,
                                 color: '#0c171b',
-                                border: 'none', cursor: planPrices.length === 0 ? 'not-allowed' : 'pointer',
+                                border: 'none', cursor: checkoutPlans.length === 0 ? 'not-allowed' : 'pointer',
                                 fontSize: 16, fontWeight: 800, fontFamily: 'Windsor',
                                 letterSpacing: 0.5,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -353,7 +343,11 @@ export const CheckoutPage = () => {
                     context='publish'
                 />
 
+                {/* prewarm: en el checkout el wizard es la vitrina principal, así
+                    que la invitación demo empieza a cargar desde que se abre la
+                    página y no hasta que se da clic en "Conoce I attend". */}
                 <OnboardingWizard
+                    prewarm
                     open={onboardingOpen && !!demoInvitation}
                     onClose={() => setOnboardingOpen(false)}
                     invitation={demoInvitation}

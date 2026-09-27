@@ -3,7 +3,7 @@ import { Button, Dropdown, Select, Tooltip, message } from 'antd'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
     BarChart3, Calendar, ChevronDown, FlaskConical, Home, Inbox, Landmark,
-    Menu as MenuIcon, ArrowLeft, Copy, Plus, Search, Star, Users, X,
+    Menu as MenuIcon, ArrowLeft, Copy, GalleryHorizontalEnd, Package, Plus, Search, Star, Users, X,
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
@@ -19,19 +19,21 @@ import { VentasSection } from './sections/VentasSection'
 import { LaboratorioSection } from './sections/LaboratorioSection'
 import { FeedbackAdminPage } from './FeedbackAdminPage'
 import { HoySection } from './sections/HoySection'
+import { PlanesSection } from './sections/PlanesSection'
+import { OnboardingSection } from './sections/OnboardingSection'
 import { crearFiltroDePrueba, esEventoActivo } from './adminConstants'
 import './admin-tokens.css'
 import styles from './AdminShell.module.css'
 
 dayjs.locale('es')
 
-// Pantallas reservadas al dueño: números de negocio y feedback de clientes.
-// Cualquier otro admin ve el resto del panel, pero no estas tres.
+// Pantallas reservadas al dueño: números de negocio, feedback de clientes y el
+// catálogo de planes. Cualquier otro admin ve el resto del panel, pero no estas.
 const CORREO_DEL_DUENIO = 'albserrano8@gmail.com'
-const RUTAS_RESERVADAS = new Set(['ventas', 'analitica', 'feedback'])
+const RUTAS_RESERVADAS = new Set(['ventas', 'analitica', 'feedback', 'planes'])
 
 
-const ROUTES = ['hoy', 'eventos', 'usuarios', 'ventas', 'analitica', 'feedback', 'lab']
+const ROUTES = ['hoy', 'eventos', 'usuarios', 'ventas', 'planes', 'analitica', 'feedback', 'lab', 'onboarding']
 
 // Grupos del rail. `lab` conserva el key legacy 'herramientas' en la URL para no
 // romper los enlaces ?tab=herramientas que ya circulan.
@@ -48,6 +50,7 @@ const NAV_GROUPS = [
         label: 'Negocio',
         items: [
             { key: 'ventas', label: 'Ventas', icon: Landmark },
+            { key: 'planes', label: 'Planes', icon: Package },
             { key: 'analitica', label: 'Analítica', icon: BarChart3 },
             { key: 'feedback', label: 'Feedback', icon: Star },
         ],
@@ -56,6 +59,7 @@ const NAV_GROUPS = [
         label: 'Estudio',
         items: [
             { key: 'lab', label: 'Laboratorio', icon: FlaskConical },
+            { key: 'onboarding', label: 'Onboarding', icon: GalleryHorizontalEnd },
         ],
     },
 ]
@@ -240,6 +244,8 @@ export const AdminLayout = () => {
             action: { label: 'Nuevo usuario', wrap: (boton) => pickerNuevoUsuario(boton) },
         },
         ventas: { title: 'Ventas', subtitle: 'Ingresos, comisiones y cobranza' },
+        onboarding: { title: 'Onboarding', subtitle: 'Slides del wizard "Conoce I attend" · checkout, invitaciones y preview' },
+        planes: { title: 'Planes', subtitle: 'Qué incluye cada plan · se refleja en la app, el checkout y la landing' },
         analitica: {
             title: 'Analítica',
             subtitle: 'Uso del producto evento por evento · las invitaciones de prueba quedan fuera',
@@ -338,6 +344,10 @@ export const AdminLayout = () => {
                 )
             case 'ventas':
                 return puedeVer('ventas') ? <VentasSection /> : null
+            case 'onboarding':
+                return <OnboardingSection />
+            case 'planes':
+                return puedeVer('planes') ? <PlanesSection /> : null
             case 'analitica':
                 return puedeVer('analitica')
                     ? <EventosAnalitica invitations={newInvitations} esPrueba={esPrueba} />

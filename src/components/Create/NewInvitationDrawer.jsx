@@ -4,7 +4,8 @@ import { invitationsTypes } from '../../helpers/invitation/invitation-types'
 import { supabase } from '../../lib/supabase'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { FaPlus } from 'react-icons/fa6'
-import { fetchPrices, handleCheckoutInvitation, handleCreateFree, plan_lite, plan_paperless, plan_pro, PRODUCTS } from '../Payment/functions'
+import { handleCheckoutInvitation, handleCreateFree } from '../Payment/functions'
+import { usePlans } from '../../hooks/usePlans'
 import { PHONE_CODE_OPTIONS } from '../../helpers/assets/phoneCodes'
 import { ChevronsLeft, ChevronsRight, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -430,28 +431,15 @@ const Plantillas = ({ currentTemplate, setCurrentTemplate, setAvailableNext }) =
 }
 
 
-const PLAN_FEATURES = {
-    pro: plan_pro,
-    lite: plan_lite,
-    paperless: plan_paperless,
-}
-
 const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
 
     const { t } = useTranslation()
-    const [prices, setPrices] = useState([])
-    const [expanded, setExpanded] = useState({})
+    // Qué planes se ofrecen, en qué orden y con qué precio: del catálogo
+    // (Admin → Planes, interruptor "Selector en la app"). El selector muestra
+    // solo nombre y precio; el detalle de lo que incluye vive en el checkout.
+    const { plansFor } = usePlans()
+    const appPlans = plansFor('app').filter(plan => plan.price)
 
-    useEffect(() => {
-        fetchPrices(setPrices)
-    }, [])
-
-    const planPrices = prices.filter(p => PRODUCTS[p.priceId]?.type === 'plan')
-
-    const toggleExpand = (e, key) => {
-        e.stopPropagation()
-        setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
-    }
 
     const PLAN_STYLE = {
         paperless: { accent: '#bbb', name: '#1C1B26', feat: '#555', subtext: '#bbb', dark: false },
@@ -465,14 +453,13 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
             <span className='route-info'>{t('new_inv.plan_desc')}</span>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
-                {planPrices.map((p, index) => {
-                    const product = PRODUCTS[p.priceId]
+                {appPlans.map((catalogPlan, index) => {
+                    const p = { priceId: catalogPlan.stripe_price_id }
+                    const product = { value: catalogPlan.id }
                     const isPro = product.value === 'pro'
                     const ps = PLAN_STYLE[product.value] || PLAN_STYLE.lite
                     const isSelected = currentPlan === product.value
-                    const features = PLAN_FEATURES[product.value] || []
-                    const price = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p.amount)
-                    const isExpanded = expanded[product.value]
+                    const price = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(catalogPlan.price.amount)
 
                     return (
                         <div
@@ -503,31 +490,27 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                 </div>
                             )}
 
-                            {/* Name + price */}
+                            {/* Nombre + precio: el selector ya no lista features, así que
+                                el bloque ocupa toda la tarjeta. */}
                             <div style={{
-                                display: 'flex', flexDirection: isMobile ? 'row' : 'column',
-                                alignItems: isMobile ? 'flex-start' : undefined,
-                                justifyContent: isMobile ? 'space-between' : 'center',
-                                padding: isMobile ? '18px 16px' : '28px 32px',
-                                minWidth: isMobile ? 'auto' : '160px',
-                                maxWidth: isMobile ? 'auto' : '160px',
-                                minHeight: isMobile ? 'auto' : '160px',
-                                maxHeight: '165px',
+                                display: 'flex', flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: isMobile ? '18px 16px' : '26px 32px',
+                                borderRadius: '18px',
                                 background: ps.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                                borderRight: isMobile ? 'none' : (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0'),
-                                borderBottom: isMobile ? (ps.dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f0f0f0') : 'none',
-                                gap: isMobile ? '0' : '4px',
-                                flex: 2
+                                gap: '12px',
+                                flex: 1
                             }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                                     <span style={{ fontSize: isMobile ? '14px' : '10px', fontWeight: 500, letterSpacing: '3px', textTransform: 'uppercase', color: ps.accent }}>
                                         Plan
                                     </span>
                                     <div style={{ fontSize: product.value === "paperless" ? '32px' : isMobile ? '26px' : '46px', fontWeight: 900, color: ps.name, textTransform: 'capitalize', lineHeight: 1 }}>
-                                        {product.value}
+                                        {catalogPlan.name}
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'flex-end' : undefined, gap: '2px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                                     <div style={{ fontSize: isMobile ? '24px' : '24px', fontWeight: 800, color: ps.accent, letterSpacing: '-0.5px', marginTop: isMobile ? '0' : '6px', lineHeight: 1 }}>
                                         {price}
                                     </div>
@@ -537,54 +520,6 @@ const Pago = ({ setCurrentPlan, currentPlan, setCurrentPriceId, isMobile }) => {
                                 </div>
                             </div>
 
-                            {/* Features — always visible on desktop, collapsible on mobile */}
-                            {!isMobile && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 24px', flex: 1, padding: '28px', alignContent: 'center' }}>
-                                    {features.map((feat, i) => (
-                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <feat.icon size={15} style={{ color: ps.accent, flexShrink: 0 }} />
-                                            <span style={{ fontSize: '14px', color: ps.feat, lineHeight: 1.4 }}>
-                                                {t(feat.key)}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {isMobile && (
-                                <div style={{
-                                    overflow: 'hidden',
-                                    maxHeight: isExpanded ? '400px' : '0px',
-                                    opacity: isExpanded ? 1 : 0,
-                                    transition: 'max-height 0.35s ease, opacity 0.25s ease',
-                                }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '4px 16px 12px' }}>
-                                        {features.map((feat, i) => (
-                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <feat.icon size={14} style={{ color: ps.accent, flexShrink: 0 }} />
-                                                <span style={{ fontSize: '13px', color: ps.feat, lineHeight: 1.4 }}>
-                                                    {t(feat.key)}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {isMobile && (
-                                <button
-                                    onClick={(e) => toggleExpand(e, product.value)}
-                                    style={{
-                                        background: 'none', border: 'none', cursor: 'pointer',
-                                        fontSize: '12x', fontWeight: 600, fontFamily: 'Poppins',
-                                        color: ps.subtext,
-                                        padding: '8px 16px',
-                                        textAlign: 'left',
-                                    }}
-                                >
-                                    {isExpanded ? t('new_inv.collapse') : t('new_inv.expand')}
-                                </button>
-                            )}
                         </div>
                     )
                 })}
