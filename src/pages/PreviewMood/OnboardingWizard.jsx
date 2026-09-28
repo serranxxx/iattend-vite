@@ -871,7 +871,7 @@ const Step6Demo = ({ slide }) => (
 
 // Conversación de ejemplo que se reproduce sola: Lia saluda, se "escribe"
 // una pregunta en el input, Lia "escribe" y responde con una tarjeta de
-// datos. Al terminar las tres, se limpia y vuelve a empezar.
+// datos. Al terminar las dos, se limpia y vuelve a empezar.
 const LIA_SALUDO = 'Hola, soy Lia ✨ Conozco cada detalle de tu evento. Pregúntame lo que quieras.'
 const LIA_GUION = [
     {
@@ -883,11 +883,6 @@ const LIA_GUION = [
         pregunta: '¿Cuántos lugares quedan en mesas?',
         respuesta: 'Te quedan 38 lugares. La Mesa 7 es la que tiene más espacio.',
         tarjeta: { tipo: 'barra', ocupados: 42, total: 80 },
-    },
-    {
-        pregunta: 'Mándales un recordatorio',
-        respuesta: 'Listo. Les mandé el recordatorio por WhatsApp.',
-        tarjeta: { tipo: 'enviado', total: 35 },
     },
 ]
 
@@ -905,20 +900,13 @@ const LiaTarjeta = ({ tarjeta }) => {
             </ul>
         )
     }
-    if (tarjeta.tipo === 'barra') {
-        return (
-            <div className='ob-lia-meter'>
-                <div className='ob-lia-meter-track'>
-                    <span style={{ width: `${(tarjeta.ocupados / tarjeta.total) * 100}%` }} />
-                </div>
-                <span className='ob-lia-meter-text'>{tarjeta.ocupados} de {tarjeta.total} ocupados</span>
-            </div>
-        )
-    }
     return (
-        <span className='ob-lia-sent'>
-            <Check size={13} strokeWidth={3} /> {tarjeta.total} recordatorios enviados
-        </span>
+        <div className='ob-lia-meter'>
+            <div className='ob-lia-meter-track'>
+                <span style={{ width: `${(tarjeta.ocupados / tarjeta.total) * 100}%` }} />
+            </div>
+            <span className='ob-lia-meter-text'>{tarjeta.ocupados} de {tarjeta.total} ocupados</span>
+        </div>
     )
 }
 
@@ -1097,15 +1085,30 @@ const SaveTheDateDemo = ({ slide }) => {
 // Siempre 3 columnas, en escritorio y en celular.
 const WALL_COLUMNAS = 3
 
+// Cada foto tiene una proporción fija (y se recorta con object-fit): así la
+// tira mide lo mismo antes y después de que carguen las imágenes, ninguna
+// columna se ve vacía mientras tanto y el parallax no brinca.
+const WALL_PROPORCIONES = ['3 / 4', '1 / 1', '4 / 5', '3 / 4', '4 / 3', '4 / 5']
+
+// Las fotos de Supabase Storage se piden reducidas (el muro las muestra a
+// ~180px de ancho); las de otros orígenes van tal cual.
+const STORAGE_PUBLICO = '/storage/v1/object/public/'
+const miniaturaDelMuro = (src) => (src.includes(STORAGE_PUBLICO)
+    ? `${src.replace(STORAGE_PUBLICO, '/storage/v1/render/image/public/')}?width=480&quality=70`
+    : src)
+
+const fotosDelMuro = (slide) => (slide?.config?.photos?.length ? slide.config.photos : DEFAULT_WALL_PHOTOS)
+
 const fotoDelMuro = (src, i, minutos) => ({
     id: `wall-${i}-${Math.random()}`,
-    src,
+    src: miniaturaDelMuro(src),
+    proporcion: WALL_PROPORCIONES[i % WALL_PROPORCIONES.length],
     name: FIRST_NAMES[(i * 7) % FIRST_NAMES.length],
     time: minutos === 0 ? 'ahora' : `hace ${minutos} min`,
 })
 
 const PhotoWallDemo = ({ slide }) => {
-    const fuente = slide.config?.photos?.length ? slide.config.photos : DEFAULT_WALL_PHOTOS
+    const fuente = fotosDelMuro(slide)
     const clave = fuente.join('|')
     const iniciales = () => fuente.map((src, i) => fotoDelMuro(src, i, (i + 1) * 3))
 
@@ -1160,8 +1163,12 @@ const PhotoWallDemo = ({ slide }) => {
                                     style={{ animationDuration: `${columna.length * 12}s` }}
                                 >
                                     {[...columna, ...columna].map((f, k) => (
-                                        <figure key={`${f.id}-${k}`} className={`ob-wall-photo${f.nueva ? ' ob-wall-photo--new' : ''}`}>
-                                            <img src={f.src} alt='' loading='lazy' />
+                                        <figure
+                                            key={`${f.id}-${k}`}
+                                            className={`ob-wall-photo${f.nueva ? ' ob-wall-photo--new' : ''}`}
+                                            style={{ aspectRatio: f.proporcion }}
+                                        >
+                                            <img src={f.src} alt='' decoding='async' />
                                             <figcaption>
                                                 <b>{f.name}</b>
                                                 <span>{f.time}</span>
@@ -1259,6 +1266,14 @@ export const OnboardingWizard = ({ open, onClose, invitation, buttons, invitatio
         const src = invitation?.cover?.image?.prod
         if (src) new Image().src = src
     }, [invitation?.cover?.image?.prod])
+
+    // Las fotos del Photo Wall también: al llegar a ese slide ya están.
+    const muro = slides.find(s => s.kind === 'photo_wall')
+    const clavesMuro = muro ? fotosDelMuro(muro).join('|') : ''
+    useEffect(() => {
+        if (!open || !clavesMuro) return
+        clavesMuro.split('|').forEach(src => { new Image().src = miniaturaDelMuro(src) })
+    }, [open, clavesMuro])
 
     const goPrev = () => setStepIndex(Math.max(indice - 1, 0))
     const goNext = () => setStepIndex(Math.min(indice + 1, total - 1))
