@@ -448,6 +448,24 @@
     outline: none;
 }
 
+/* El textarea no dibuja su propio outline: el foco de teclado se ve en la tarjeta */
+.lia-input-card:has(.lia-textarea:focus-visible) {
+    outline: 2px solid var(--brand-color-500);
+    outline-offset: 2px;
+}
+
+.lia-typing-label {
+    font-size: 12px;
+    color: var(--text-color-50);
+    margin-left: 8px;
+    align-self: center;
+}
+
+.lia-cta-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .lia-textarea:disabled {
     opacity: 0.6;
     cursor: not-allowed;

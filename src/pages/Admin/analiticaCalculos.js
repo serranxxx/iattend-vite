@@ -10,6 +10,8 @@
 */
 
 import { MESES } from './ventasCalculos'
+import es from '../../locales/es.json'
+import en from '../../locales/en.json'
 
 // --------------------------------------------------------------- fechas ---
 
@@ -286,33 +288,28 @@ export const tituloLimpio = (nombre) => String(nombre ?? '').replace(/\s+/g, ' '
 // Separarlos importa: un clic en un chip no es lo mismo que una pregunta que
 // alguien se tomó la molestia de escribir, y mezclarlos haría que "Mis
 // notificaciones" pareciera la duda más frecuente del producto.
-export const ATAJOS_LIA = new Set([
-    'resumen del evento',
-    'mis notificaciones',
-    'mensajes nuevos',
-    'pendientes de respuesta',
-    'espacios disponibles en mesas',
-    'pases disponibles',
-    'porcentaje de confirmados',
-    'prioridad a sin respuesta',
-    'vieron pero no respondieron',
-    'invitaciones no entregadas',
-    'confirmados sin mesa asignada',
-    'cuántos niños vienen',
-    'mensajes sin leer',
-    'último mensaje recibido',
-    'mis side events',
-    'quién confirmó en mis side events',
-    'quién falta por responder en mis side events',
-])
+// Salen de `lia.prompts` en los locales, en los dos idiomas: la UI los manda
+// tal cual en el idioma de la app y no deben desincronizarse de esta lista.
+const PROMPTS_LIA = [es.lia?.prompts, en.lia?.prompts].filter(Boolean)
 
-// Este atajo se arma con los nombres de los novios ("Lado de Gemma vs lado de
-// Hugo"), así que no puede estar en la lista fija.
-const ATAJO_CON_NOMBRES = /^lado de .+ vs lado de .+$/i
+export const ATAJOS_LIA = new Set(
+    PROMPTS_LIA.flatMap(p => Object.entries(p)
+        .filter(([clave]) => clave !== 'sides')
+        .map(([, texto]) => texto.toLowerCase()))
+)
+
+// Este atajo se arma con los nombres de los anfitriones ("Lado de Gemma vs lado
+// de Hugo"), así que se compara como patrón en vez de texto fijo.
+const ATAJOS_CON_NOMBRES = PROMPTS_LIA.map(p => new RegExp(
+    '^' + p.sides.toLowerCase()
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\\\{\\\{[ab]\\\}\\\}/g, '.+') + '$',
+    'i',
+))
 
 export const esAtajoDeLia = (texto) => {
     const limpio = tituloLimpio(texto).toLowerCase()
-    return ATAJOS_LIA.has(limpio) || ATAJO_CON_NOMBRES.test(limpio)
+    return ATAJOS_LIA.has(limpio) || ATAJOS_CON_NOMBRES.some(re => re.test(limpio))
 }
 
 // Temas de las preguntas escritas a mano. Igual que con los side events, es una

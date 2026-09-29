@@ -1,70 +1,58 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button, Input } from 'antd'
-import { Send, ThumbsUp, ThumbsDown, RotateCcw, Bot, Minus, Plus, Copy, Check, MousePointer2, Lock } from 'lucide-react'
+import { Send, ThumbsUp, ThumbsDown, RotateCcw, Minus, Plus, Copy, Check, MousePointer2, Lock } from 'lucide-react'
 import axios from 'axios'
 import { useLia } from '../../context/LiaContext'
 import { supabase } from '../../lib/supabase'
+import { liaHeaders, leerSSE } from './liaApi'
 import './lia.css'
 
 const API = import.meta.env.VITE_API_URL
-// const API = "http://localhost:4000"
 
-const CTAS = [
-    'Resumen del evento',
-    'Mis notificaciones',
-    'Mensajes nuevos',
-    'Pendientes de respuesta',
-    'Espacios disponibles en mesas',
-    // 'Side events',
-]
+// Si Lia no termina en este tiempo se corta la petición: sin esto un stream
+// colgado dejaba el chat bloqueado para siempre.
+const TIMEOUT_MS = 60 * 1000
 
-const getPageLabel = (pathname) => {
-    if (pathname.includes('/build')) return 'Invitación'
-    if (pathname.includes('/guests')) return 'Invitados'
-    if (pathname.includes('/side')) return 'Eventos'
-    return 'Dashboard'
+// Los textos de los atajos viven en `lia.prompts` de los locales. La analítica
+// del admin (analiticaCalculos.js, esAtajoDeLia) los lee de ahí para separar
+// clics de preguntas escritas: no escribirlos a mano en otro lado.
+const CTAS = ['summary', 'notifications', 'new_messages', 'pending', 'table_space']
+
+const getPageLabel = (pathname, t) => {
+    if (pathname.includes('/build')) return t('lia.page_build')
+    if (pathname.includes('/guests')) return t('lia.page_guests')
+    if (pathname.includes('/side')) return t('lia.page_side')
+    return t('lia.page_dashboard')
 }
 
-const buildPromptMenu = (event) => {
-    const owners = event?.owners || []
-    const owner1 = owners[0] || null
-    const owner2 = owners[1] || null
+const buildPromptMenu = (event, t) => {
+    const [owner1, owner2] = (event?.owners || []).filter(Boolean)
+    const p = (key, vars) => t(`lia.prompts.${key}`, vars)
 
     return [
         {
-            category: '¿Cómo vamos?',
+            category: t('lia.menu_how'),
             prompts: [
-                'Resumen del evento',
-                'Pases disponibles',
-                'Porcentaje de confirmados',
-                owner1 && owner2 ? `Lado de ${owner1} vs lado de ${owner2}` : null,
-                'Prioridad A sin respuesta',
+                p('summary'),
+                p('passes'),
+                p('pct_confirmed'),
+                owner1 && owner2 ? p('sides', { a: owner1, b: owner2 }) : null,
+                p('priority_a'),
             ].filter(Boolean),
         },
         {
-            category: 'Invitados',
-            prompts: [
-                'Vieron pero no respondieron',
-                'Invitaciones no entregadas',
-                'Confirmados sin mesa asignada',
-                'Cuántos niños vienen',
-            ].filter(Boolean),
+            category: t('lia.menu_guests'),
+            prompts: [p('seen'), p('undelivered'), p('no_table'), p('kids')],
         },
         {
-            category: 'Mensajes',
-            prompts: [
-                'Mensajes sin leer',
-                'Último mensaje recibido',
-            ],
+            category: t('lia.menu_messages'),
+            prompts: [p('unread'), p('last_message')],
         },
         {
-            category: 'Side events',
-            prompts: [
-                'Mis side events',
-                'Quién confirmó en mis side events',
-                'Quién falta por responder en mis side events',
-            ],
+            category: t('lia.menu_side'),
+            prompts: [p('my_side_events'), p('side_confirmed'), p('side_pending')],
         },
     ]
 }
@@ -105,18 +93,18 @@ const renderMarkdown = (text) => {
 
 // ── Sub-components ───────────────────────────────────────────
 
-const TypingIndicator = () => (
-    <div className="lia-typing-row">
-        {/* <div className="lia-avatar">✦</div> */}
+const TypingIndicator = ({ label }) => (
+    <div className="lia-typing-row" role="status" aria-label={label}>
         <div className="lia-typing-bubble">
             <div className="lia-typing-dot" />
             <div className="lia-typing-dot" />
             <div className="lia-typing-dot" />
         </div>
+        {label && <span className="lia-typing-label">{label}</span>}
     </div>
 )
 
-const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) => {
+const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback, t }) => {
     const isUser = msg.role === 'user'
     const safeContent = typeof msg.content === 'string'
         ? msg.content
@@ -140,12 +128,16 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) =>
         ? onActionFeedback(msg.action_id, 'incorrect')
         : onFeedback(msg.message_id, 'negative')
 
+    // Mientras llega el primer pedazo del stream no hay nada que mostrar:
+    // el indicador de "escribiendo" ocupa su lugar.
+    if (msg.streaming && !safeContent) return null
+
     return (
         <div className={`lia-message-row ${isUser ? 'user' : ''}`}>
-            
+
             <div className={`lia-bubble ${isUser ? 'user' : 'assistant'}`}>
                 {isUser ? safeContent : renderMarkdown(safeContent)}
-                {!isUser && (msg.message_id || msg.action_id) && (
+                {!isUser && !msg.streaming && (msg.message_id || msg.action_id) && (
                     <div style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', gap: 4 }}>
                             <Button
@@ -153,7 +145,9 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) =>
                                 size="small"
                                 icon={<ThumbsUp size={13} />}
                                 onClick={handleThumbUp}
-                                title="Respuesta correcta"
+                                title={t('lia.feedback_good')}
+                                aria-label={t('lia.feedback_good')}
+                                aria-pressed={isPositive}
                                 style={{
                                     color: isPositive ? '#b8b8b8' : '#bfbfbf',
                                     background: isPositive ? '#F5F3F240' : 'transparent',
@@ -166,7 +160,9 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) =>
                                 size="small"
                                 icon={<ThumbsDown size={13} />}
                                 onClick={handleThumbDown}
-                                title="Respuesta incorrecta"
+                                title={t('lia.feedback_bad')}
+                                aria-label={t('lia.feedback_bad')}
+                                aria-pressed={isNegative}
                                 style={{
                                     color: isNegative ? '#b8b8b8' : '#bfbfbf',
                                     background: isNegative ? '#F5F3F240' : 'transparent',
@@ -179,7 +175,8 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) =>
                                 size="small"
                                 icon={copied ? <Check size={13} /> : <Copy size={13} />}
                                 onClick={handleCopy}
-                                title="Copiar mensaje"
+                                title={t('lia.copy')}
+                                aria-label={t('lia.copy')}
                                 style={{
                                     color: copied ? '#52c41a' : '#bfbfbf',
                                     background: copied ? '#f6ffed' : 'transparent',
@@ -191,9 +188,14 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) =>
                         {msg.showFeedbackInput && msg.message_id && (
                             <div style={{ marginTop: 8 }}>
                                 <Input.TextArea
-                                    placeholder="¿Qué estuvo mal? (opcional)"
+                                    placeholder={t('lia.feedback_placeholder')}
+                                    aria-label={t('lia.feedback_placeholder')}
                                     autoSize={{ minRows: 1, maxRows: 3 }}
-                                    onPressEnter={(e) => { e.preventDefault(); onFeedbackNote(msg.message_id, e.target.value) }}
+                                    onPressEnter={(e) => {
+                                        if (e.shiftKey) return
+                                        e.preventDefault()
+                                        onFeedbackNote(msg.message_id, e.target.value)
+                                    }}
                                 />
                             </div>
                         )}
@@ -204,40 +206,41 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback }) =>
     )
 }
 
-const ActionCard = ({ action, onApprove, onStartReject, onConfirmReject, onCancelReject, isRejecting, rejectNote, onRejectNoteChange }) => (
+const ActionCard = ({ action, onApprove, onStartReject, onConfirmReject, onCancelReject, isRejecting, rejectNote, onRejectNoteChange, busy, t }) => (
     <div className="lia-action-card">
         <span className="lia-action-text">{action.preview_text}</span>
         {isRejecting ? (
             <div style={{ marginTop: 8 }}>
                 <Input.TextArea
-                    placeholder="¿Por qué cancelaste? (opcional)"
+                    placeholder={t('lia.reject_placeholder')}
+                    aria-label={t('lia.reject_placeholder')}
                     autoSize={{ minRows: 1, maxRows: 2 }}
                     value={rejectNote}
                     onChange={(e) => onRejectNoteChange(e.target.value)}
                 />
                 <div className="lia-action-buttons" style={{ marginTop: 8 }}>
-                    <Button size="small" className="primarybutton--active" style={{ borderRadius: 99 }} onClick={() => onConfirmReject(action, rejectNote)}>
-                        Confirmar
+                    <Button size="small" className="primarybutton--active" style={{ borderRadius: 99 }} loading={busy} onClick={() => onConfirmReject(action, rejectNote)}>
+                        {t('lia.confirm')}
                     </Button>
                     <Button size="small" className="primarybutton" style={{ borderRadius: 99 }} onClick={onCancelReject}>
-                        Volver
+                        {t('lia.back')}
                     </Button>
                 </div>
             </div>
         ) : (
             <div className="lia-action-buttons">
-                <Button className="primarybutton--active" style={{ borderRadius: 99 }} onClick={() => onApprove(action)}>
-                    Aprobar
+                <Button className="primarybutton--active" style={{ borderRadius: 99 }} loading={busy} onClick={() => onApprove(action)}>
+                    {t('lia.approve')}
                 </Button>
-                <Button className="primarybutton" style={{ borderRadius: 99 }} onClick={() => onStartReject(action)}>
-                    Cancelar
+                <Button className="primarybutton" style={{ borderRadius: 99 }} disabled={busy} onClick={() => onStartReject(action)}>
+                    {t('lia.cancel')}
                 </Button>
             </div>
         )}
     </div>
 )
 
-const CreditCircle = ({ freeRemaining, freeLimit, paidBalance }) => {
+const CreditCircle = ({ freeRemaining, freeLimit, paidBalance, t }) => {
     const [hovered, setHovered] = useState(false)
     const pct = freeLimit > 0 ? freeRemaining / freeLimit : 1
     const radius = 9
@@ -248,13 +251,20 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance }) => {
         : pct > 0.2 ? '#faad14'
             : '#ff4d4f'
 
+    const resumen = `${freeRemaining} ${t('lia.tokens_today', { limit: freeLimit })}${paidBalance > 0 ? ` · +${paidBalance} ${t('lia.tokens_bought')}` : ''}`
+
     return (
         <div
             style={{ position: 'relative', cursor: 'default', width: 25, height: 25, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
+            onFocus={() => setHovered(true)}
+            onBlur={() => setHovered(false)}
+            tabIndex={0}
+            role="img"
+            aria-label={resumen}
         >
-            <svg width="25" height="25" style={{ transform: 'rotate(-90deg)' }}>
+            <svg width="25" height="25" style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
                 <circle
                     cx="12.5" cy="12.5" r={radius}
                     fill="none"
@@ -300,7 +310,7 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance }) => {
                         <div style={{ width: 8, height: 8, borderRadius: '99px', background: color, flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--text-color)' }}>
                             <strong>{freeRemaining}</strong>
-                            <span style={{ color: 'var(--text-color-50)' }}> de {freeLimit} tokens hoy</span>
+                            <span style={{ color: 'var(--text-color-50)' }}> {t('lia.tokens_today', { limit: freeLimit })}</span>
                         </span>
                     </div>
                     {paidBalance > 0 && (
@@ -308,7 +318,7 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance }) => {
                             <div style={{ width: 8, height: 8, borderRadius: '99px', background: 'var(--brand-color-500)', flexShrink: 0 }} />
                             <span style={{ fontSize: 12, color: 'var(--text-color)' }}>
                                 <strong>+{paidBalance}</strong>
-                                <span style={{ color: 'var(--text-color-50)' }}> tokens comprados</span>
+                                <span style={{ color: 'var(--text-color-50)' }}> {t('lia.tokens_bought')}</span>
                             </span>
                         </div>
                     )}
@@ -318,16 +328,21 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance }) => {
     )
 }
 
-const CREDIT_PACKAGES = [
-    { aiCredits: 50, iattendCost: 50 },
-    { aiCredits: 100, iattendCost: 80 },
-    { aiCredits: 150, iattendCost: 120 },
-]
-
+// Los paquetes salen del backend (GET /api/ai/credits/packages/list), que es
+// también el único que acepta el canje: no se repiten aquí.
 const NoCreditsScreen = ({ invitationId, onPurchaseSuccess }) => {
+    const { t } = useTranslation()
     const [iattendBalance, setIattendBalance] = useState(null)
+    const [packages, setPackages] = useState(null)
     const [purchasing, setPurchasing] = useState(null)
     const [error, setError] = useState('')
+
+    useEffect(() => {
+        fetch(`${API}/api/ai/credits/packages/list`)
+            .then(res => res.json())
+            .then(data => setPackages((data.packages ?? []).map(p => ({ aiCredits: p.ai_credits, iattendCost: p.iattend_cost }))))
+            .catch(() => setPackages([]))
+    }, [])
 
     useEffect(() => {
         const fetchBalance = async () => {
@@ -347,17 +362,18 @@ const NoCreditsScreen = ({ invitationId, onPurchaseSuccess }) => {
         try {
             const res = await fetch(`${API}/api/ai/credits/purchase`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await liaHeaders(),
                 body: JSON.stringify({ invitation_id: invitationId, ai_credits: pkg.aiCredits }),
             })
-            const data = await res.json()
-            if (data.success) {
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data.success) {
+                setIattendBalance(data.iattend_credits)
                 onPurchaseSuccess()
             } else {
-                setError(data.message || 'No se pudo completar la compra')
+                setError(data.message || t('lia.nc_error'))
             }
         } catch {
-            setError('Error al conectar. Intenta de nuevo.')
+            setError(t('lia.nc_connect_error'))
         } finally {
             setPurchasing(null)
         }
@@ -366,27 +382,27 @@ const NoCreditsScreen = ({ invitationId, onPurchaseSuccess }) => {
     return (
         <div className="lia-no-credits">
             <div className="lia-no-credits-top">
-                <span className="lia-no-credits-star">✦</span>
-                <p className="lia-no-credits-title">Has llegado a tu límite gratis del día</p>
-                <p className="lia-no-credits-sub">Regresa mañana para seguir usando a Lia, o adquiere más tokens para continuar hoy.</p>
+                <span className="lia-no-credits-star" aria-hidden="true">✦</span>
+                <p className="lia-no-credits-title">{t('lia.nc_title')}</p>
+                <p className="lia-no-credits-sub">{t('lia.nc_sub')}</p>
             </div>
 
             <div className="lia-no-credits-packages">
-                <p className="lia-no-credits-section-label">Adquiere más tokens</p>
+                <p className="lia-no-credits-section-label">{t('lia.nc_section')}</p>
                 {iattendBalance !== null && (
-                    <p className="lia-no-credits-balance">
-                        Saldo disponible: <strong>{iattendBalance} créditos</strong> I attend
-                    </p>
+                    <p className="lia-no-credits-balance">{t('lia.nc_balance', { n: iattendBalance })}</p>
                 )}
                 <div className="lia-credit-pkg-list">
-                    {CREDIT_PACKAGES.map(pkg => {
+                    {packages === null && <p className="lia-no-credits-balance">{t('lia.nc_loading')}</p>}
+                    {packages?.length === 0 && <p className="lia-no-credits-error">{t('lia.nc_failed')}</p>}
+                    {(packages ?? []).map(pkg => {
                         const canAfford = iattendBalance === null || iattendBalance >= pkg.iattendCost
                         const isLoading = purchasing === pkg.aiCredits
                         return (
                             <div key={pkg.aiCredits} className={`lia-credit-pkg${!canAfford ? ' lia-credit-pkg--disabled' : ''}`}>
                                 <div className="lia-credit-pkg-left">
-                                    <span className="lia-credit-pkg-ai">{pkg.aiCredits} tokens Lia</span>
-                                    <span className="lia-credit-pkg-cost">{pkg.iattendCost} I attend</span>
+                                    <span className="lia-credit-pkg-ai">{t('lia.nc_pkg', { n: pkg.aiCredits })}</span>
+                                    <span className="lia-credit-pkg-cost">{t('lia.nc_cost', { n: pkg.iattendCost })}</span>
                                 </div>
                                 <Button
                                     className={canAfford ? 'primarybutton--active' : 'primarybutton'}
@@ -396,21 +412,21 @@ const NoCreditsScreen = ({ invitationId, onPurchaseSuccess }) => {
                                     loading={isLoading}
                                     onClick={() => handlePurchase(pkg)}
                                 >
-                                    {canAfford ? 'Comprar' : 'Sin saldo'}
+                                    {canAfford ? t('lia.nc_buy') : t('lia.nc_no_balance')}
                                 </Button>
                             </div>
                         )
                     })}
                 </div>
-                {error && <p className="lia-no-credits-error">{error}</p>}
+                {error && <p className="lia-no-credits-error" role="alert">{error}</p>}
             </div>
         </div>
     )
 }
 
 const ErrorState = ({ icon = '⚠️', message }) => (
-    <div className="lia-error-state">
-        <div className="lia-error-icon">{icon}</div>
+    <div className="lia-error-state" role="alert">
+        <div className="lia-error-icon" aria-hidden="true">{icon}</div>
         <span>{message}</span>
     </div>
 )
@@ -418,78 +434,89 @@ const ErrorState = ({ icon = '⚠️', message }) => (
 // ── Main component ───────────────────────────────────────────
 
 export default function Lia({ id: idProp, onMinimize }) {
+    const { t, i18n } = useTranslation()
     const [searchParams] = useSearchParams()
     const { pathname } = useLocation()
     const id = idProp ?? searchParams.get('id')
-    const pageLabel = getPageLabel(pathname)
+    const navigate = useNavigate()
+    const pageLabel = getPageLabel(pathname, t)
     const { setUiAction } = useLia()
 
     const [messages, setMessages] = useState([])
     const [pendingActions, setPendingActions] = useState([])
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
+    // Mientras Lia consulta datos (tool_start) se muestra un texto junto al
+    // indicador: sin streaming de tokens, varios segundos de puntitos solos.
+    const [working, setWorking] = useState(false)
     const [credits, setCredits] = useState(null)
-    const [isPro, setIsPro] = useState(true)
-    const [sessionId] = useState(() => crypto.randomUUID())
+    // null = todavía no se sabe. Lo decide el backend (plans.features 'lia'),
+    // no una comparación con 'pro' en el cliente.
+    const [liaIncluded, setLiaIncluded] = useState(null)
+    const [sessionId, setSessionId] = useState(() => crypto.randomUUID())
     const [rejectingActionId, setRejectingActionId] = useState(null)
+    const [busyActionId, setBusyActionId] = useState(null)
     const [rejectNote, setRejectNote] = useState('')
     const [conversationStarted, setConversationStarted] = useState(false)
     const [greetingText, setGreetingText] = useState('')
     const [showPromptMenu, setShowPromptMenu] = useState(false)
     const [eventData, setEventData] = useState(null)
-    const [availableTags, setAvailableTags] = useState([])
 
     const bottomRef = useRef(null)
     const textareaRef = useRef(null)
     const promptMenuRef = useRef(null)
+    const abortRef = useRef(null)
+    const sendingRef = useRef(false)
 
+    const locked = liaIncluded === false
 
     useEffect(() => {
         if (!conversationStarted) return
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }, [messages, pendingActions, loading, conversationStarted])
 
+    // Al desmontar (cerrar el panel) se corta la respuesta en curso.
+    useEffect(() => () => abortRef.current?.abort('unmount'), [])
+
+    // El textarea se deshabilita mientras Lia responde y pierde el foco; en
+    // escritorio se le regresa para seguir escribiendo (en móvil abriría el
+    // teclado sin que lo pidan).
+    useEffect(() => {
+        if (loading || !conversationStarted) return
+        if (window.matchMedia?.('(pointer: fine)').matches) textareaRef.current?.focus()
+    }, [loading])
+
     const fetchCredits = async () => {
-        const res = await fetch(`${API}/api/ai/credits/${id}`)
-        const data = await res.json()
-        if (data.success) {
-            setCredits({
-                total_available: data.credits_remaining,
-                free_remaining: data.free_remaining,
-                free_limit: data.free_limit,
-                paid_balance: data.paid_balance,
-                pct_free_used: data.pct_free_used,
-            })
+        try {
+            const res = await fetch(`${API}/api/ai/credits/${id}`, { headers: await liaHeaders() })
+            const data = await res.json()
+            if (data.success) {
+                setCredits({
+                    total_available: data.credits_remaining,
+                    free_remaining: data.free_remaining,
+                    free_limit: data.free_limit,
+                    paid_balance: data.paid_balance,
+                    pct_free_used: data.pct_free_used,
+                })
+            }
+        } catch (err) {
+            console.error('No se pudieron leer los créditos de Lia:', err)
         }
+    }
+
+    // Las ui_actions las ejecuta GuestsPage: si el organizador está en otra
+    // pantalla, se le lleva a Invitados para que la acción se vea.
+    const dispatchUiActions = (actions) => {
+        if (!actions?.length) return
+        actions.forEach(action => setUiAction(action))
+        if (!pathname.startsWith('/dashboard/guests')) navigate(`/dashboard/guests?id=${id}`)
     }
 
     useEffect(() => {
         if (!id) return
         callGreeting()
         fetchCredits()
-        supabase
-            .from('invitations')
-            .select('plan')
-            .eq('id', id)
-            .single()
-            .then(({ data }) => setIsPro(data?.plan === 'pro'))
     }, [])
-
-    useEffect(() => {
-        if (!id) return
-        const fetchTags = async () => {
-            const { data } = await supabase
-                .from('guests')
-                .select('tag')
-                .eq('invitation_id', id)
-                .not('tag', 'is', null)
-            if (data) {
-                const uniqueTags = [...new Set(data.map(g => g.tag).filter(Boolean))]
-                setAvailableTags(uniqueTags)
-            }
-        }
-        fetchTags()
-    }, [id])
 
     const callGreeting = async () => {
         setLoading(true)
@@ -497,63 +524,176 @@ export default function Lia({ id: idProp, onMinimize }) {
             const { data } = await axios.post(`${API}/api/ai/greeting`, {
                 invitation_id: id,
                 session_id: sessionId,
-            })
+                lang: i18n.language,
+            }, { headers: await liaHeaders() })
             setGreetingText(String(data.greeting_text || ''))
             setEventData(data.event_summary?.event || null)
+            if (typeof data.lia_included === 'boolean') setLiaIncluded(data.lia_included)
         } catch {
-            setGreetingText('¡Hola! 👋')
+            setGreetingText(t('lia.greeting_fallback'))
         } finally {
             setLoading(false)
         }
     }
 
+    // Reemplaza (o quita, con null) el mensaje que se está transmitiendo.
+    const setStreamingMessage = (message) => setMessages(prev => {
+        const idx = prev.findIndex(m => m.streaming)
+        if (idx === -1) return message ? [...prev, message] : prev
+        const next = [...prev]
+        if (message) next[idx] = message
+        else next.splice(idx, 1)
+        return next
+    })
+
     const handleSendMessage = async (text) => {
         const textToSend = (typeof text === 'string' ? text : input).trim()
-        if (!textToSend || loading) return
+        // El ref evita el doble envío de dos clics en el mismo tick, antes de
+        // que `loading` llegue a renderizarse.
+        if (!textToSend || loading || locked || sendingRef.current) return
+        sendingRef.current = true
 
         if (!conversationStarted) setConversationStarted(true)
         setInput('')
         if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-        setMessages(prev => [...prev, { role: 'user', content: textToSend }])
+        // Los errores locales no son del modelo: reenviarlos le haría creer
+        // que él los escribió.
+        const history = messages
+            .filter(m => !m.local && !m.streaming)
+            .slice(-6)
+            .map(({ role, content }) => ({ role, content }))
+
+        setMessages(prev => [...prev,
+        { role: 'user', content: textToSend },
+        { role: 'assistant', content: '', streaming: true },
+        ])
         setLoading(true)
+        setWorking(false)
+
+        const ctrl = new AbortController()
+        abortRef.current = ctrl
+        const timer = setTimeout(() => ctrl.abort('timeout'), TIMEOUT_MS)
+
+        let texto = ''
+        let final = null
+        let failed = false
 
         try {
-            const { data } = await axios.post(`${API}/api/ai/chat`, {
-                invitation_id: id,
-                message: textToSend,
-                session_id: sessionId,
-                stream: false,
-                conversation_history: messages.slice(-6).map(m => ({
-                    role: m.role,
-                    content: m.content,
-                })),
+            const res = await fetch(`${API}/api/ai/chat`, {
+                method: 'POST',
+                headers: await liaHeaders(),
+                body: JSON.stringify({
+                    invitation_id: id,
+                    message: textToSend,
+                    session_id: sessionId,
+                    lang: i18n.language,
+                    stream: true,
+                    conversation_history: history,
+                }),
+                signal: ctrl.signal,
             })
-            setMessages(prev => [...prev, { role: 'assistant', content: String(data.message || ''), message_id: data.message_id }])
-            fetchCredits()
-            if (data.pending_actions?.length) setPendingActions(prev => [...prev, ...data.pending_actions])
-            if (data.ui_actions?.length) data.ui_actions.forEach(action => setUiAction(action))
-        } catch {
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Ocurrió un error. Intenta de nuevo.' }])
+
+            // Los rechazos (sin saldo, plan sin Lia, error) llegan como JSON
+            // antes de abrir el stream.
+            if (!res.ok || !res.headers.get('content-type')?.includes('text/event-stream')) {
+                const data = await res.json().catch(() => ({}))
+                if (res.status === 402 && data.code === 'NO_CREDITS') {
+                    setStreamingMessage(null)
+                    setCredits(prev => ({ ...prev, total_available: 0 }))
+                    fetchCredits()
+                    return
+                }
+                if (res.status === 403 && data.code === 'NOT_AVAILABLE') {
+                    setStreamingMessage(null)
+                    setLiaIncluded(false)
+                    return
+                }
+                throw new Error(data.error || `HTTP ${res.status}`)
+            }
+
+            await leerSSE(res, (event) => {
+                if (event.type === 'text') {
+                    texto += event.text ?? ''
+                    setWorking(false)
+                    setStreamingMessage({ role: 'assistant', content: texto, streaming: true })
+                } else if (event.type === 'replace') {
+                    texto = ''
+                    setStreamingMessage({ role: 'assistant', content: '', streaming: true })
+                } else if (event.type === 'tool_start') {
+                    setWorking(true)
+                } else if (event.type === 'done') {
+                    final = event
+                } else if (event.type === 'error') {
+                    failed = true
+                }
+            })
+        } catch (err) {
+            // Cerrar el panel o reiniciar el chat no es un error que mostrar.
+            if (ctrl.signal.aborted && ctrl.signal.reason !== 'timeout') return
+            console.error('Error en el chat de Lia:', err)
+            failed = true
         } finally {
+            clearTimeout(timer)
+            if (abortRef.current === ctrl) abortRef.current = null
+            sendingRef.current = false
             setLoading(false)
+            setWorking(false)
         }
+
+        if (!final || failed) {
+            // Si alcanzó a llegar texto, se conserva; si no, se avisa.
+            setStreamingMessage(texto.trim() && !failed
+                ? { role: 'assistant', content: texto }
+                : {
+                    role: 'assistant',
+                    content: ctrl.signal.reason === 'timeout' ? t('lia.error_timeout') : t('lia.error_generic'),
+                    local: true,
+                })
+            return
+        }
+
+        setStreamingMessage({ role: 'assistant', content: texto, message_id: final.message_id })
+        if (final.credits_remaining != null) {
+            setCredits(prev => ({
+                ...prev,
+                total_available: final.credits_remaining,
+                paid_balance: final.paid_balance,
+                pct_free_used: final.pct_free_used,
+            }))
+        }
+        fetchCredits()
+        if (final.pending_actions?.length) setPendingActions(prev => [...prev, ...final.pending_actions])
+        dispatchUiActions(final.ui_actions)
     }
 
     const approveAction = async (action) => {
-        const response = await fetch(`${API}/api/ai/chat/approve`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action_id: action.id, invitation_id: id }),
-        })
-        const data = await response.json()
-        if (data.success) {
-            setPendingActions(prev => prev.filter(a => a.id !== action.id))
-            setMessages(prev => [...prev,
-            { role: 'user', content: String(`Aprobé: ${action.preview_text ?? ''}`) },
-            { role: 'assistant', content: 'Listo ✓', action_id: action.id, feedback: null },
-            ])
+        if (busyActionId) return
+        setBusyActionId(action.id)
+        let ok = false
+        try {
+            const response = await fetch(`${API}/api/ai/chat/approve`, {
+                method: 'POST',
+                headers: await liaHeaders(),
+                body: JSON.stringify({ action_id: action.id, invitation_id: id }),
+            })
+            const data = await response.json().catch(() => ({}))
+            ok = response.ok && data.success
+        } catch (err) {
+            console.error('No se pudo aprobar la acción:', err)
+        } finally {
+            setBusyActionId(null)
         }
+
+        // Pase lo que pase, la tarjeta se quita: mientras hay tarjetas el
+        // footer se oculta y, si falló, el organizador quedaría atorado.
+        setPendingActions(prev => prev.filter(a => a.id !== action.id))
+        setMessages(prev => [...prev,
+        { role: 'user', content: t('lia.approved', { text: action.preview_text ?? '' }) },
+        ok
+            ? { role: 'assistant', content: t('lia.done'), action_id: action.id, feedback: null }
+            : { role: 'assistant', content: t('lia.action_failed'), local: true },
+        ])
     }
 
     const handleStartReject = (action) => {
@@ -562,24 +702,34 @@ export default function Lia({ id: idProp, onMinimize }) {
     }
 
     const confirmReject = async (action, note) => {
-        await fetch(`${API}/api/ai/chat/reject`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action_id: action.id }),
-        })
-        if (note?.trim()) {
-            await fetch(`${API}/api/ai/chat/action-feedback`, {
+        if (busyActionId) return
+        setBusyActionId(action.id)
+        try {
+            await fetch(`${API}/api/ai/chat/reject`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action_id: action.id, feedback: 'incorrect', note }),
+                headers: await liaHeaders(),
+                body: JSON.stringify({ action_id: action.id, invitation_id: id }),
             })
+            if (note?.trim()) {
+                await fetch(`${API}/api/ai/chat/action-feedback`, {
+                    method: 'POST',
+                    headers: await liaHeaders(),
+                    body: JSON.stringify({ action_id: action.id, invitation_id: id, feedback: 'incorrect', note }),
+                })
+            }
+        } catch (err) {
+            // Si no se registró, la acción se queda pending en la base y nunca
+            // se ejecuta sin aprobar: se sigue adelante en la UI.
+            console.error('No se pudo registrar el rechazo:', err)
+        } finally {
+            setBusyActionId(null)
         }
         setRejectingActionId(null)
         setRejectNote('')
         setPendingActions(prev => prev.filter(a => a.id !== action.id))
         setMessages(prev => [...prev,
-        { role: 'user', content: String(`Cancelé: ${action.preview_text ?? ''}`) },
-        { role: 'assistant', content: 'Entendido, acción cancelada.' },
+        { role: 'user', content: t('lia.cancelled', { text: action.preview_text ?? '' }) },
+        { role: 'assistant', content: t('lia.action_cancelled') },
         ])
     }
 
@@ -589,11 +739,13 @@ export default function Lia({ id: idProp, onMinimize }) {
         ))
         await fetch(`${API}/api/ai/chat/action-feedback`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action_id: actionId, feedback }),
-        })
+            headers: await liaHeaders(),
+            body: JSON.stringify({ action_id: actionId, invitation_id: id, feedback }),
+        }).catch(err => console.error('No se pudo guardar el feedback:', err))
     }
 
+    // El 👎 se registra al hacer clic; la nota, si la escriben, va aparte.
+    // Antes solo se mandaba al escribir la nota, así que casi nunca llegaba.
     const handleFeedback = async (messageId, feedback) => {
         if (!messageId) return
         setMessages(prev => prev.map(m =>
@@ -601,21 +753,21 @@ export default function Lia({ id: idProp, onMinimize }) {
                 ? { ...m, feedback, showFeedbackInput: feedback === 'negative' }
                 : m
         ))
-        if (feedback === 'positive') {
-            await fetch(`${API}/api/ai/chat/feedback`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message_id: messageId, feedback }),
-            })
-        }
+        await fetch(`${API}/api/ai/chat/feedback`, {
+            method: 'POST',
+            headers: await liaHeaders(),
+            body: JSON.stringify({ message_id: messageId, invitation_id: id, feedback }),
+        }).catch(err => console.error('No se pudo guardar el feedback:', err))
     }
 
     const handleFeedbackNote = async (messageId, note) => {
-        await fetch(`${API}/api/ai/chat/feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message_id: messageId, feedback: 'negative', note }),
-        })
+        if (note?.trim()) {
+            await fetch(`${API}/api/ai/chat/feedback`, {
+                method: 'POST',
+                headers: await liaHeaders(),
+                body: JSON.stringify({ message_id: messageId, invitation_id: id, feedback: 'negative', note }),
+            }).catch(err => console.error('No se pudo guardar el feedback:', err))
+        }
         setMessages(prev => prev.map(m =>
             m.message_id === messageId ? { ...m, showFeedbackInput: false } : m
         ))
@@ -626,12 +778,15 @@ export default function Lia({ id: idProp, onMinimize }) {
     }
 
     const handleReset = () => {
+        abortRef.current?.abort('reset')
         setConversationStarted(false)
         setMessages([])
         setPendingActions([])
         setInput('')
         setRejectingActionId(null)
         setRejectNote('')
+        // Conversación nueva = sesión nueva: si no, la analítica mezcla las dos.
+        setSessionId(crypto.randomUUID())
         if (textareaRef.current) textareaRef.current.style.height = 'auto'
     }
 
@@ -642,27 +797,35 @@ export default function Lia({ id: idProp, onMinimize }) {
                 setShowPromptMenu(false)
             }
         }
+        const handleEscape = (e) => { if (e.key === 'Escape') setShowPromptMenu(false) }
         document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
+        document.addEventListener('keydown', handleEscape)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+            document.removeEventListener('keydown', handleEscape)
+        }
     }, [showPromptMenu])
 
-    if (!id) return <ErrorState icon="🔗" message="ID de invitación requerido" />
-    if (credits !== null && credits.total_available === 0) return (
+    const minimizeButton = onMinimize && (
+        <Button
+            size='small'
+            icon={<Minus size={12} />}
+            onClick={onMinimize}
+            title={t('lia.minimize')}
+            aria-label={t('lia.minimize')}
+            style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
+        />
+    )
+
+    if (!id) return <ErrorState icon="🔗" message={t('lia.missing_id')} />
+    if (credits != null && credits.total_available <= 0) return (
         <div className="lia-page">
             <div className="lia-main">
                 <header className="lia-chat-header">
                     <span className="lia-header-title">✦ Lia</span>
                     <span className="lia-beta-badge">Beta</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-                        {onMinimize && (
-                            <Button
-                                size='small'
-                                icon={<Minus size={12} />}
-                                onClick={onMinimize}
-                                title="Minimizar"
-                                style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
-                            />
-                        )}
+                        {minimizeButton}
                     </div>
                 </header>
                 <NoCreditsScreen invitationId={id} onPurchaseSuccess={fetchCredits} />
@@ -670,45 +833,35 @@ export default function Lia({ id: idProp, onMinimize }) {
         </div>
     )
 
+    const streamingVisible = messages.some(m => m.streaming && m.content)
+    const canSend = Boolean(input.trim()) && !loading && !locked
+
     return (
         <div className="lia-page">
             <div className="lia-main">
                 <header className="lia-chat-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap:4 }}>
-                            {/* <div className='lia_cont_img'>
-                                <img src="/images/lia/heart_3.png" className="lia-avatar" alt="Lia" />
-                            </div> */}
-                            <span className="lia-header-title">✦ Lia</span>
-
-                        </div>
+                        <span className="lia-header-title">✦ Lia</span>
                         <span className="lia-beta-badge">Beta</span>
-
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
                         <Button
                             size='small'
                             icon={<RotateCcw size={12} />}
                             onClick={handleReset}
-                            title="Reiniciar chat"
+                            title={t('lia.reset')}
+                            aria-label={t('lia.reset')}
                             style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
                         />
                         <Button
                             size='small'
                             icon={<MousePointer2 size={12} />}
-                            title="Agente (próximamente)"
+                            title={t('lia.agent_soon')}
+                            aria-label={t('lia.agent_soon')}
                             disabled
                             style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
                         />
-                        {onMinimize && (
-                            <Button
-                                size='small'
-                                icon={<Minus size={12} />}
-                                onClick={onMinimize}
-                                title="Minimizar"
-                                style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
-                            />
-                        )}
+                        {minimizeButton}
                     </div>
                 </header>
 
@@ -724,13 +877,15 @@ export default function Lia({ id: idProp, onMinimize }) {
                                     <span className="lia-landing-greeting">{greetingText}</span>
                                 )}
                                 <div className="lia-cta-grid">
-                                    {CTAS.map(cta => (
+                                    {CTAS.map(key => (
                                         <button
-                                            key={cta}
+                                            key={key}
+                                            type="button"
                                             className="lia-cta-btn"
-                                            onClick={() => handleSendMessage(cta)}
+                                            disabled={locked}
+                                            onClick={() => handleSendMessage(t(`lia.prompts.${key}`))}
                                         >
-                                            {cta}
+                                            {t(`lia.prompts.${key}`)}
                                         </button>
                                     ))}
                                 </div>
@@ -739,9 +894,14 @@ export default function Lia({ id: idProp, onMinimize }) {
                         <div ref={bottomRef} />
                     </div>
                 ) : (
-                    <div className={`lia-messages-area scroll-invitation${pendingActions.length > 0 ? ' lia-messages-area--actions' : ''}`}>
-                        {messages.map((msg, i) => <MessageBubble key={i} msg={msg} onFeedback={handleFeedback} onFeedbackNote={handleFeedbackNote} onActionFeedback={handleActionFeedback} />)}
-                        {loading && <TypingIndicator />}
+                    <div
+                        className={`lia-messages-area scroll-invitation${pendingActions.length > 0 ? ' lia-messages-area--actions' : ''}`}
+                        role="log"
+                        aria-live="polite"
+                        aria-label={t('lia.messages_label')}
+                    >
+                        {messages.map((msg, i) => <MessageBubble key={i} msg={msg} t={t} onFeedback={handleFeedback} onFeedbackNote={handleFeedbackNote} onActionFeedback={handleActionFeedback} />)}
+                        {loading && !streamingVisible && <TypingIndicator label={working ? t('lia.working') : undefined} />}
                         <div ref={bottomRef} />
                     </div>
                 )}
@@ -752,6 +912,7 @@ export default function Lia({ id: idProp, onMinimize }) {
                             <ActionCard
                                 key={action.id}
                                 action={action}
+                                t={t}
                                 onApprove={approveAction}
                                 onStartReject={handleStartReject}
                                 onConfirmReject={confirmReject}
@@ -759,6 +920,7 @@ export default function Lia({ id: idProp, onMinimize }) {
                                 isRejecting={rejectingActionId === action.id}
                                 rejectNote={rejectNote}
                                 onRejectNoteChange={setRejectNote}
+                                busy={busyActionId === action.id}
                             />
                         ))}
                     </div>
@@ -767,18 +929,21 @@ export default function Lia({ id: idProp, onMinimize }) {
                 <footer className={`lia-footer${pendingActions.length > 0 ? ' lia-footer--hidden' : ''}`}>
                     <div ref={promptMenuRef} className="prompt-menu-container lia-input-card">
                         {showPromptMenu && (
-                            <div className="lia-prompt-popup">
+                            <div className="lia-prompt-popup" role="menu" aria-label={t('lia.menu_title')}>
                                 <div className="lia-prompt-popup-header">
-                                    <p className="lia-prompt-popup-title">Atajos rápidos</p>
+                                    <p className="lia-prompt-popup-title">{t('lia.menu_title')}</p>
                                 </div>
                                 <div className="lia-prompt-popup-body scroll-invitation">
-                                    {buildPromptMenu(eventData, availableTags).map((section) => (
+                                    {buildPromptMenu(eventData, t).map((section) => (
                                         <div key={section.category} style={{ marginBottom: '8px' }}>
                                             <p className="lia-prompt-category">{section.category}</p>
                                             {section.prompts.map((prompt) => (
                                                 <button
                                                     key={prompt}
+                                                    type="button"
+                                                    role="menuitem"
                                                     className="lia-prompt-item"
+                                                    disabled={loading}
                                                     onClick={() => { handleSendMessage(prompt); setShowPromptMenu(false) }}
                                                     onMouseEnter={e => e.currentTarget.style.background = 'var(--sc-color)'}
                                                     onMouseLeave={e => e.currentTarget.style.background = 'none'}
@@ -794,13 +959,14 @@ export default function Lia({ id: idProp, onMinimize }) {
 
                         <div className="lia-input-bottom">
                             <div className="lia-context-chip">
-                                <span className="lia-context-chip-dot">✦</span>
+                                <span className="lia-context-chip-dot" aria-hidden="true">✦</span>
                                 {pageLabel}
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', }}>
                                 {credits != null && (
                                     <CreditCircle
+                                        t={t}
                                         freeRemaining={credits?.free_remaining ?? 50}
                                         freeLimit={credits?.free_limit ?? 50}
                                         paidBalance={credits?.paid_balance ?? 0}
@@ -812,9 +978,22 @@ export default function Lia({ id: idProp, onMinimize }) {
                                     className='primarybutton'
                                     icon={<Plus size={12} />}
                                     onClick={() => setShowPromptMenu(prev => !prev)}
-                                    disabled={!isPro}
+                                    disabled={locked}
+                                    title={t('lia.shortcuts')}
+                                    aria-label={t('lia.shortcuts')}
+                                    aria-expanded={showPromptMenu}
+                                    aria-haspopup="menu"
                                 />
 
+                                <Button
+                                    style={{ maxHeight: '25px', width: '25px' }}
+                                    className={canSend ? 'primarybutton--active' : 'primarybutton'}
+                                    icon={<Send size={12} />}
+                                    onClick={() => handleSendMessage()}
+                                    disabled={!canSend}
+                                    title={t('lia.send')}
+                                    aria-label={t('lia.send')}
+                                />
                             </div>
                         </div>
 
@@ -822,26 +1001,29 @@ export default function Lia({ id: idProp, onMinimize }) {
                             <textarea
                                 ref={textareaRef}
                                 className="lia-textarea scroll-invitation"
-                                placeholder={isPro ? 'Preguntale a Lia...' : 'Desbloquea Lia con Pro...'}
+                                placeholder={locked ? t('lia.placeholder_locked') : t('lia.placeholder')}
+                                aria-label={t('lia.input_label')}
                                 value={input}
                                 rows={3}
+                                enterKeyHint="send"
                                 onChange={(e) => {
                                     setInput(e.target.value)
                                     e.target.style.height = 'auto'
                                     e.target.style.height = `${Math.min(e.target.scrollHeight, 96)}px`
                                 }}
                                 onKeyDown={handleKeyDown}
-                                disabled={loading || !isPro}
+                                disabled={loading || locked}
                             />
-                            {!isPro && (
+                            {locked && (
                                 <Lock
                                     size={14}
+                                    aria-hidden="true"
                                     style={{ position: 'absolute', right: 10, bottom: 10, color: '#bfbfbf', pointerEvents: 'none' }}
                                 />
                             )}
                         </div>
                     </div>
-                    <span className="lia-disclaimer">Lia puede cometer errores. Por favor verifica las respuestas.</span>
+                    <span className="lia-disclaimer">{t('lia.disclaimer')}</span>
                 </footer>
             </div>
         </div>

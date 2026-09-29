@@ -14,11 +14,10 @@
     reales. Eso deja fuera casi todo el registro de herramientas, acciones y
     feedback, que hoy es prácticamente todo de prueba.
 
-  · `ai_agent_logs`, `ai_daily_usage` y `ai_pending_actions` NO son legibles con
-    la anon key: devuelven cero filas sin error, porque sus políticas de RLS no
-    contemplan a `anon`. El panel lo detecta y cae al volumen de tokens de
-    `ai_conversations`, que sí es legible. Si algún día se les da política de
-    lectura, la tarjeta de costo se enciende sola.
+  · Las tablas de Lia no se leen con la anon key (tendrían conversaciones de
+    todos los organizadores a la vista): llegan por GET /api/admin/lia/datos,
+    detrás de validarAdmin. Si `ai_agent_logs` viniera vacío, el panel cae al
+    volumen de tokens de `ai_conversations`.
 
   · Los chips que ofrece la UI se cuentan aparte de las preguntas escritas. Un
     clic en "Mis notificaciones" no es una duda; mezclarlos haría que el atajo
@@ -33,7 +32,7 @@ import 'dayjs/locale/es'
 import {
     acumuladoDe, claveDeMes, esAtajoDeLia, nombreDeMes, temaDePregunta, tituloLimpio,
 } from '../analiticaCalculos'
-import { traerTodo } from '../analiticaDatos'
+import { fetchDatosLiaAdmin } from '../catalogoAdminApi'
 import { useTokens } from '../adminCharts'
 import { useTipoDeCambio } from '../tipoDeCambio'
 import { BarrasCategoria, BarrasConAcumulado, Rosca } from './AnaliticaPiezas'
@@ -62,12 +61,8 @@ const useLia = (invitacionesReales, mes) => {
     useEffect(() => {
         let cancelado = false
 
-        Promise.all([
-            traerTodo('ai_conversations', 'id,invitation_id,session_id,role,content,model_used,tokens_in,tokens_out,created_at'),
-            traerTodo('ai_agent_logs', 'id,invitation_id,model,tool_called,cost_usd,success,created_at'),
-            traerTodo('ai_daily_usage', 'invitation_id,usage_date,free_used,total_spend_usd', 'usage_date'),
-        ])
-            .then(([conversaciones, logs, uso]) => {
+        fetchDatosLiaAdmin(['conversaciones', 'logs', 'uso'])
+            .then(({ conversaciones, logs, uso }) => {
                 if (!cancelado) setCrudo({ conversaciones, logs, uso })
             })
             .catch(fallo => {
@@ -180,9 +175,8 @@ const useLia = (invitacionesReales, mes) => {
             .sort((a, b) => b.preguntas - a.preguntas)
 
         // --- modelos y volumen ---
-        // El costo en dólares vive en `ai_agent_logs`; si la RLS no lo deja
-        // leer, `logs` llega vacío y se usa el modelo y los tokens que sí trae
-        // cada mensaje de `ai_conversations`.
+        // El costo en dólares vive en `ai_agent_logs`; si llega vacío se usa el
+        // modelo y los tokens que sí trae cada mensaje de `ai_conversations`.
         const logs = crudo.logs.filter(l => porId.has(l.invitation_id) && delPeriodo(l.created_at))
         const hayLogs = logs.length > 0
 
@@ -576,9 +570,8 @@ export const AnaliticaLia = ({ invitacionesReales, mes, onMesesDisponibles }) =>
                             </>
                         ) : (
                             <>
-                                El costo en dólares vive en <code>ai_agent_logs</code>, que hoy devuelve cero
-                                filas con la llave pública del panel: su RLS no contempla lectura anónima.
-                                Con una política de lectura, esta tarjeta muestra el gasto real.
+                                El costo en dólares vive en <code>ai_agent_logs</code>, que no trajo filas
+                                para este periodo; se muestra el volumen de tokens de las conversaciones.
                             </>
                         )}
                     </footer>

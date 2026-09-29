@@ -8,7 +8,7 @@ import 'dayjs/locale/es'
 import { supabase } from '../../../lib/supabase'
 import { esEventoActivo, fechaDeEvento } from '../adminConstants'
 import { AdminModal } from '../AdminModal'
-import { asignarPlannerAdmin } from '../catalogoAdminApi'
+import { actualizarCreditosAdmin, asignarPlannerAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
 import styles from './EventosSection.module.css'
 
@@ -127,10 +127,7 @@ export const EventosSection = ({ newInvitations, profiles, refreshEventos, query
 
         setGuardando(true)
         try {
-            await axios.patch(
-                `${import.meta.env.VITE_API_URL}/api/invitation/update-credits`,
-                { id: recargando.id, credits: creditosNuevos }
-            );
+            await actualizarCreditosAdmin(recargando.id, creditosNuevos);
             message.success('Créditos actualizados')
             cerrarRecarga()
             refreshEventos()

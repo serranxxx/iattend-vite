@@ -4,7 +4,7 @@ import { CircleQuestionMark, Coins, MessageCircle, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
-import { LIA_CHAT_OPEN_EVENT } from '../../components/ChatContainer/ChatContainer'
+import { LIA_CHAT_OPEN_EVENT, LIA_CHAT_STATE_EVENT } from '../../components/ChatContainer/ChatContainer'
 import { CreditsMobile } from '../../components/Payment/Credits/CreditsMobile'
 import styles from './MobileActionsFab.module.css'
 
@@ -18,6 +18,14 @@ export const MobileActionsFab = ({ invitationId, unAnswer = 0, bottomOffset = 24
     const { subscribe } = useDashboardRealtime()
     const [credits, setCredits] = useState(null)
     const [creditsOpen, setCreditsOpen] = useState(false)
+    // Con Lia abierta (pantalla completa en mobile) el botón se oculta
+    const [liaOpen, setLiaOpen] = useState(false)
+
+    useEffect(() => {
+        const onState = (e) => setLiaOpen(Boolean(e.detail?.open))
+        window.addEventListener(LIA_CHAT_STATE_EVENT, onState)
+        return () => window.removeEventListener(LIA_CHAT_STATE_EVENT, onState)
+    }, [])
 
     useEffect(() => {
         if (!invitationId) return
@@ -46,7 +54,7 @@ export const MobileActionsFab = ({ invitationId, unAnswer = 0, bottomOffset = 24
                 type="primary"
                 placement="top"
                 // bottomOffset deja espacio a la barra de herramientas del editor
-                style={{ insetInlineEnd: 20, insetBlockEnd: bottomOffset, zIndex: 1200 }}
+                style={{ insetInlineEnd: 20, insetBlockEnd: bottomOffset, zIndex: 1200, display: liaOpen ? 'none' : undefined }}
                 icon={<Plus size={22} />}
             >
                 <FloatButton

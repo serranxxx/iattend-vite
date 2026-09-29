@@ -24,6 +24,7 @@ import {
     masComun, mediana, temaDePregunta, ubicacionesDe,
 } from '../analiticaCalculos'
 import { traerTodo } from '../analiticaDatos'
+import { fetchDatosLiaAdmin } from '../catalogoAdminApi'
 import { Bar } from 'react-chartjs-2'
 import { ejeTexto, opcionesBase, tooltipBase, useTokens } from '../adminCharts'
 import { BarrasApiladas, BarrasConAcumulado, Leyenda } from './AnaliticaPiezas'
@@ -60,7 +61,7 @@ const useRetrato = (invitacionesReales, ventana) => {
             traerTodo('invitation_message_dispatches', 'invitation_id,guest_id,status,created_at'),
             traerTodo('tables', 'invitation_id,size'),
             traerTodo('side_events', 'invitation_id'),
-            traerTodo('ai_conversations', 'invitation_id,role,content'),
+            fetchDatosLiaAdmin(['conversaciones']).then(d => d.conversaciones),
         ])
             .then(([invitados, envios, mesas, sides, conversaciones]) => {
                 if (!cancelado) setCrudo({ invitados, envios, mesas, sides, conversaciones })

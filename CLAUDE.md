@@ -46,7 +46,6 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
   /context
     AuthProvider.jsx / authReducer.js / AuthContext.jsx  ← sesión (localStorage: session/user/logged)
     LiaContext.jsx                ← estado del asistente Lia (notificaciones, acciones UI, créditos)
-    LumaContext.jsx                ← estado de la feature Luma (ruta /luma)
     TexturesContext.jsx           ← texturas disponibles, consumido por el Texture Lab (pages/Admin/TextureLabPage.jsx) y el builder
     DashboardRealtimeContext.jsx  ← hub de subscripciones Supabase Realtime para /dashboard/*
     AntdProvider.jsx              ← configuración/tema de Ant Design
@@ -63,7 +62,7 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
     Admin/TextureLabPage.jsx      ← laboratorio de texturas (sube/gestiona texturas en Supabase Storage, reemplazó los JPG estáticos de src/assets/textures)
     Admin/SalesAdminPage.jsx      ← panel de ventas/vendedores dentro de Admin
     Scanner/ScannerPage.jsx       ← scanner QR de pases de invitados
-    Lia/, Luma/                   ← páginas relacionadas con el asistente / feature Luma
+    Lia/                          ← chat de Lia (Lia.jsx, liaApi.js con headers y lector SSE); lo monta ChatContainer en /dashboard/*
     PreviewMood/                  ← preview de estilo/mood antes de comprar
     Extras/                       ← Legal, LinkTree, PageNotFound
 
@@ -101,7 +100,7 @@ App del organizador de I attend (los novios, o quien haya comprado la plataforma
 - Sin TypeScript — JS puro; usar PropTypes solo si aporta validación real.
 - Ant Design para tablas, modales, botones de acción y formularios; Lucide React para iconos decorativos/navegación (20px).
 - Nada de llamadas centralizadas a un cliente axios propio — los componentes nuevos hacen `axios.post/get` inline contra `${import.meta.env.VITE_API_URL}/api/...`. No reintroducir el patrón `operation` callback de `src/services/` en código nuevo.
-- Contextos disponibles y su propósito: `LiaProvider` (asistente + notificaciones + créditos), `AppProvider`/`AuthProvider` (sesión), `AntdProvider` (tema Ant Design), `DashboardRealtimeProvider` (Realtime, solo dentro de las rutas `/dashboard/*`), `LumaContext` (feature Luma), `TexturesContext` (texturas del Texture Lab), `VendorSessionContext` (sesión de vendedores, solo dentro de `modules/Sales/`, no confundir con `AuthContext`).
+- Contextos disponibles y su propósito: `LiaProvider` (asistente + notificaciones + créditos), `AppProvider`/`AuthProvider` (sesión), `AntdProvider` (tema Ant Design), `DashboardRealtimeProvider` (Realtime, solo dentro de las rutas `/dashboard/*`), `TexturesContext` (texturas del Texture Lab), `VendorSessionContext` (sesión de vendedores, solo dentro de `modules/Sales/`, no confundir con `AuthContext`).
 - Horas de side events/pop events (`data.body.hour`, `data.information.date` en Supabase): se guardan y leen como string "wall-clock" plano (`YYYY-MM-DD HH:mm:00`), **nunca** se convierten con timezone — ver `src/helpers/assets/eventDateTime.js`, cuya contraparte de lectura vive en `iattend-events/src/helpers/functions.ts`. Datos legados (antes de este cambio) sí son instantes UTC reales y necesitan reconvertirse con el mapa `STATE_TIMEZONES` (BC, BCS, Sonora, Sinaloa, Quintana Roo tienen huso distinto al de CDMX). No reintroducir conversión de timezone en código nuevo que toque estas fechas.
 - Dentro de `/dashboard/*`, suscribirse a cambios de tablas vía `useDashboardRealtime().subscribe(table, cb)` en vez de abrir un canal Supabase propio — evita canales duplicados. La excepción documentada es `PhotoWall`, que gestiona su propio canal para `event_photos`.
 - i18n con `react-i18next`; textos con keys namespaced (ej. `guests.notification_title`) en `src/locales/{es,en}.json`.
@@ -123,7 +122,7 @@ Existe una skill de proyecto (`.claude/skills/iattend-design-system/`) con los c
 | `/checkout` | Checkout de compra (planes, créditos, side events) | `CheckoutPage` |
 | `/login` | Login / registro | `Login` |
 | `/scanner` | Scanner QR de pases de invitados | `ScannerPage` |
-| `/luma` | Feature Lia/Luma | `Lia` |
+| `/luma` | Lia a pantalla completa (nombre histórico de la ruta; Luma ya no existe) | `Lia` |
 | `/preview` | Preview de estilo antes de comprar | `PreviewMoodPage` |
 | `/features` | Landing de features | `FeaturesPage` |
 | `/linktree` | Link tree público | `LinkTree` |
@@ -178,6 +177,8 @@ npm run lint
 - `FloatButton` de Ant Design v6 no expone `size`, y posiciona su menú asumiendo un trigger de 40px más un `translateY(40px)` en reposo. `MobileActionsFab.module.css` compensa eso a mano — revisar esa regla al actualizar antd.
 - El onboarding wizard ("Conoce I attend", `pages/PreviewMood/OnboardingWizard.jsx`, usado en `/checkout`, `/invitations` y `/preview`) lee sus slides de la tabla `onboarding_slides` (Admin → Configuración → Onboarding, `/api/admin/onboarding-slides`) vía `useOnboardingSlides()` en `onboardingSlides.js`, con `DEFAULT_SLIDES` como respaldo. Cada slide trae textos, orden, visibilidad y `exclusive_plan` (badge "Exclusivo en PRO"); su `kind` elige la demo interactiva. No volver a escribir textos de slides en el componente. El primer slide carga la invitación en un iframe de `iattend.events`: por eso hay portada de carga (`HostPoster`), `prewarm` en el checkout y los slides se montan solo al acercarse.
 - Los reportes del botón de soporte (`modules/Header/SupportTicketModal.jsx`) van a `POST /api/support/tickets`, que los guarda en `support_tickets` **y** manda el correo a soporte. No volver a mandarlos directo a `/api/mail/send-mail`: se perderían de Admin → Buzón → Reportes (`sections/NotificacionesSection.jsx`). La tabla solo la lee el backend (sin policies para anon). Ver `iattend--backend/migrations/2026-09-28_create_support_tickets.sql`.
+- Lia en el dashboard: el chat consume `POST /api/ai/chat` con `stream: true` (SSE: `text`, `tool_start`, `replace`, `done`, `error`), manda `lang` y corta con `AbortController` al cerrar o a los 60 s. Si el plan incluye Lia lo decide el backend (`lia_included` del saludo, feature `lia` en `plans.features`), no una comparación con `'pro'`. Textos en `lia.*` de los locales; los atajos (`lia.prompts`) también los usa la analítica (`esAtajoDeLia`) para separar clics de preguntas escritas.
+- Las rutas de Lia del organizador (`/api/ai/greeting`, `/chat`, `/chat/*`, `/credits/:id`) piden `Authorization: Bearer` con la sesión de Supabase (`src/pages/Lia/liaApi.js`) y el backend valida dueño/planner/admin de la invitación. Las tablas `ai_conversations`, `ai_agent_logs`, `ai_daily_usage` y `ai_pending_actions` **no** se leen con la anon key: la analítica va por `GET /api/admin/lia/datos` (`fetchDatosLiaAdmin` en `catalogoAdminApi.js`). Ver `iattend--backend/migrations/2026-09-29_cerrar_tablas_lia.sql`.
 - El sistema de traducciones de la invitación (DeepL + tablas Supabase `copy_bundles`/`copy_translations`/`invitation_translations`) **no vive en este repo** — vive enteramente en `iattend-events` (`src/lib/translation/`). Este repo no llama a DeepL ni lee esas tablas.
 
 ## Pendientes / deuda técnica conocida

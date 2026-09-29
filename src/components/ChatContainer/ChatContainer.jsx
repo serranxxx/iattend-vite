@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Lia from '../../pages/Lia/Lia'
 import { useLia } from '../../context/LiaContext'
 import AISiri from '../AISiri/AISiri'
-// import { DotMatrix } from './DotMatrix'
 import './ChatContainer.css'
 
 const PILL_DURATION = 4000
@@ -23,8 +23,15 @@ const ORB_FLOW_SCALE_HOVER = 1
 // El chat maneja su propio `open`, así que para abrirlo desde fuera (el botón
 // flotante de mobile) se usa un evento de ventana, igual que WhatsNewBanners.
 export const LIA_CHAT_OPEN_EVENT = 'lia:open-chat'
+// Y avisa cuando se abre o se cierra (detail: { open }), para que el botón
+// flotante de mobile no quede encima del chat a pantalla completa.
+export const LIA_CHAT_STATE_EVENT = 'lia:chat-state'
+
+// Enter o espacio en un div con role="button"
+const isActivateKey = (e) => e.key === 'Enter' || e.key === ' '
 
 export const ChatContainer = () => {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
     const [notifVisible, setNotifVisible] = useState(false)
@@ -47,6 +54,10 @@ export const ChatContainer = () => {
     const containerRef = useRef(null)
 
     useEffect(() => { openRef.current = open }, [open])
+
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent(LIA_CHAT_STATE_EVENT, { detail: { open } }))
+    }, [open])
 
     // Expand to pill when a new notification arrives (only when chat is closed)
     useEffect(() => {
@@ -95,8 +106,13 @@ export const ChatContainer = () => {
                 handleToggle()
             }
         }
+        const onEscape = (e) => { if (e.key === 'Escape') handleToggle() }
         document.addEventListener('mousedown', onClickOutside)
-        return () => document.removeEventListener('mousedown', onClickOutside)
+        document.addEventListener('keydown', onEscape)
+        return () => {
+            document.removeEventListener('mousedown', onClickOutside)
+            document.removeEventListener('keydown', onEscape)
+        }
     }, [open, handleToggle])
 
     useEffect(() => {
@@ -119,8 +135,11 @@ export const ChatContainer = () => {
 
     // En mobile la entrada a Lia es el botón flotante del header, así que el
     // círculo propio del chat solo aparece cuando ya está abierto — si no,
-    // habría dos botones flotantes peleándose la misma esquina.
-    if (!open && isMobileViewport) return null
+    // habría dos botones flotantes peleándose la misma esquina. Cerrado se
+    // oculta en vez de desmontarse: si no, cada apertura perdía la
+    // conversación y volvía a pedir el saludo.
+    const hiddenOnMobile = !open && isMobileViewport
+    if (hiddenOnMobile && !mounted) return null
 
     const latestNotif = notifications[notifications.length - 1]
 
@@ -131,23 +150,29 @@ export const ChatContainer = () => {
        <div
             ref={containerRef}
             className={`chat-morph-shell chat-morph-shell--${morphState}`}
-            style={isMobileOpen ? {
+            style={hiddenOnMobile ? { display: 'none' } : isMobileOpen ? {
                 inset: 0,
                 width: '100vw',
                 height: '100dvh',
                 borderRadius: 0,
             } : undefined}
+            role={open ? 'dialog' : undefined}
+            aria-label={open ? 'Lia' : undefined}
         >
             <div className={`chat-morph chat-morph--${morphState}`}>
 
                 {/* Circle button — visible when closed */}
                 <div
                     className="chat-morph-btn"
+                    role="button"
+                    tabIndex={morphState === 'closed' ? 0 : -1}
+                    aria-label={t('lia.open_chat')}
+                    aria-hidden={morphState !== 'closed'}
                     onClick={handleToggle}
+                    onKeyDown={(e) => { if (isActivateKey(e)) { e.preventDefault(); handleToggle() } }}
                     onMouseEnter={() => setBtnHovered(true)}
                     onMouseLeave={() => setBtnHovered(false)}
                 >
-                    {/* <DotMatrix size={84} hovered={btnHovered && morphState === 'closed'} /> */}
                     <AISiri
                         size={60}
                         speed={btnHovered ? ORB_SPEED_HOVER : ORB_SPEED}
@@ -160,14 +185,18 @@ export const ChatContainer = () => {
                 {/* Dynamic Island pill content — visible during notif state */}
                 <div
                     className="chat-morph-pill"
+                    role="button"
+                    tabIndex={morphState === 'notif' ? 0 : -1}
+                    aria-label={t('lia.notifications_label')}
+                    aria-live="polite"
                     onClick={() => { dismissAll(); handleToggle() }}
+                    onKeyDown={(e) => { if (isActivateKey(e)) { e.preventDefault(); dismissAll(); handleToggle() } }}
                 >
                     <div style={{
                         height: '64px', width: '64px', minWidth:'64px', overflow: 'hidden', borderRadius: '99px',
                         background: 'var(--mid-blue-500)', boxShadow: 'inset 0px 0px 6px rgba(0,0,0,0.3)',
                         display:'flex',alignItems:'center',justifyContent:'center'
                     }}>
-                        {/* <DotMatrix size={84} mode='notification' /> */}
                         <span style={{ fontSize: 24, color: '#fff', lineHeight: 1 }}>✦</span>
                     </div>
                     <div className="chat-morph-pill-text">

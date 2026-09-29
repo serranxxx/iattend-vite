@@ -195,23 +195,31 @@ export default function GuestsPage() {
     const { uiAction, clearUiAction, setCreditSending, setCreditSuccess, clearCreditState } = useLia()
     const { subscribe } = useDashboardRealtime()
 
+    // Acciones que pide Lia (ui_action). Llegan con la forma que valida el
+    // backend: { type, payload: { query | state | guest_id } }. Una acción vieja
+    // (Lia la mandó y el organizador tardó en llegar aquí) se descarta.
     useEffect(() => {
         if (!uiAction) return
+        if (Date.now() - (uiAction._ts ?? 0) > 60 * 1000) {
+            clearUiAction()
+            return
+        }
+        const payload = uiAction.payload ?? {}
         switch (uiAction.type) {
             case 'filter_guests':
-                setSearchUser(uiAction.payload?.query ?? '')
+                setSearchUser(payload.query ?? '')
                 break
             case 'filter_by_state':
-                setActiveKey(uiAction.value)
+                if (['creado', 'esperando', 'confirmado', 'rechazado'].includes(payload.state)) setActiveKey(payload.state)
                 break
             case 'open_guest_form':
                 setDrawerState({ currentGuest: null, onEditGuest: true, companions: [], visible: true })
                 break
             case 'open_guest_detail': {
-                const guest = rowData.find(g =>
-                    g.phone_number === uiAction.value ||
-                    g.name?.toLowerCase().includes((uiAction.value ?? '').toLowerCase())
-                )
+                // Si Lia trajo al organizador desde otra pantalla, la lista
+                // todavía no carga: se espera a rowData sin descartar la acción.
+                if (!rowData?.length) return
+                const guest = rowData.find(g => g.id === Number(payload.guest_id))
                 if (guest) setDrawerState({ currentGuest: guest, onEditGuest: false, companions: rowData.filter((row) => row.companion_id === guest.id), visible: true })
                 break
             }
@@ -219,7 +227,7 @@ export default function GuestsPage() {
                 break
         }
         clearUiAction()
-    }, [uiAction])
+    }, [uiAction, rowData])
 
     // Sorts de columna (no filtran filas): un botón en el header cicla
     // inactivo -> asc -> desc -> inactivo. Solo una columna puede estar activa
