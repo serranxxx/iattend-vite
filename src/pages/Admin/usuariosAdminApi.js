@@ -14,3 +14,9 @@ export const updateUsuario = async (userId, payload) => {
     const headers = await authHeaders()
     return axios.patch(`${API_URL}/api/admin/usuarios/${userId}`, payload, { headers })
 }
+
+// Cómo entra cada cuenta: { [user_id]: ['google' | 'apple' | 'email', …] }.
+export const fetchProveedores = async () => {
+    const headers = await authHeaders()
+    return axios.get(`${API_URL}/api/admin/usuarios/proveedores`, { headers })
+}

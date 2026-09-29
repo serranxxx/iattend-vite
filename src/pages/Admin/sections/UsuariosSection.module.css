@@ -59,12 +59,12 @@
 }
 
 .table {
-    min-width: 820px;
+    min-width: 920px;
 }
 
 .row {
     display: grid;
-    grid-template-columns: 1.1fr 1.5fr 110px 1.4fr 160px;
+    grid-template-columns: 1.1fr 1.5fr 110px 110px 1.2fr 160px;
     gap: 12px;
     align-items: center;
     padding: 9px 16px;
@@ -132,6 +132,26 @@
 
 .id:hover {
     color: var(--ac-ink);
+}
+
+/* -------------------------------------------------------------- acceso --- */
+
+.acceso {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.accesoItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--ac-text-3);
+}
+
+.accesoVacio {
+    color: var(--ac-muted-2);
 }
 
 /* ----------------------------------------------------------------- rol --- */

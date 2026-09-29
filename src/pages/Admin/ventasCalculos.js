@@ -66,6 +66,10 @@ export const calcularCargosPorVenta = (ventas) => {
 
         if (bruto < COMISION_MONTO_MINIMO) return
 
+        // Ecommerce (compras en línea con Stripe) no comisiona ni cuenta para
+        // los hitos del bono: no la vendió nadie.
+        if (v.vendedor_tipo === 'ecommerce') return
+
         const mesKey = `${fecha.getFullYear()}-${fecha.getMonth()}`
 
         const vendedorKey = `${v.vendedor_id}-${mesKey}`

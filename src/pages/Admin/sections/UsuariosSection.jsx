@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
-import { Input, Select, message } from 'antd'
-import { Lock, Pencil } from 'lucide-react'
-import { updateUsuario } from '../usuariosAdminApi'
+import { useEffect, useMemo, useState } from 'react'
+import { Input, Select, Tooltip, message } from 'antd'
+import { Lock, Mail, Pencil } from 'lucide-react'
+import { FcGoogle } from 'react-icons/fc'
+import { FaApple } from 'react-icons/fa'
+import { fetchProveedores, updateUsuario } from '../usuariosAdminApi'
 import styles from './UsuariosSection.module.css'
 
 // El rol vive crudo en `profiles.role`; todo lo demás (etiqueta, color, orden del
@@ -34,6 +36,35 @@ const coincideFiltro = (perfil, filtro) => {
     if (filtro === 'todos') return true
     if (filtro === 'cliente') return !ROLES[perfil.role]
     return perfil.role === filtro
+}
+
+// Cómo entra la cuenta (auth.users → app_metadata.providers). Una cuenta puede
+// tener varios: p. ej. se registró con correo y luego entró con Google.
+const PROVEEDORES = {
+    google: { label: 'Google', Icono: FcGoogle },
+    apple: { label: 'Apple', Icono: FaApple },
+    email: { label: 'Correo', Icono: Mail },
+}
+
+const Acceso = ({ lista }) => {
+    if (lista === undefined) return <span className={styles.accesoVacio}>—</span>
+    const conocidos = lista.filter(p => PROVEEDORES[p])
+    if (!conocidos.length) return <span className={styles.accesoVacio}>—</span>
+    return (
+        <span className={styles.acceso}>
+            {conocidos.map(p => {
+                const { label, Icono } = PROVEEDORES[p]
+                return (
+                    <Tooltip key={p} title={label}>
+                        <span className={styles.accesoItem} aria-label={label}>
+                            <Icono size={13} />
+                            {conocidos.length === 1 && label}
+                        </span>
+                    </Tooltip>
+                )
+            })}
+        </span>
+    )
 }
 
 // '' en el Select = Cliente (role null en la base).
@@ -111,6 +142,13 @@ const EditorPerfil = ({ perfil, onCancelar, onGuardado }) => {
 export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActualizado, query = '' }) => {
     const [filtro, setFiltro] = useState('todos')
     const [editando, setEditando] = useState(null)
+    const [proveedores, setProveedores] = useState({})
+
+    useEffect(() => {
+        fetchProveedores()
+            .then(({ data }) => setProveedores(data.proveedores ?? {}))
+            .catch(error => console.error('No se pudo cargar cómo entra cada usuario:', error.response?.data || error.message))
+    }, [])
 
     const copiar = async (texto) => {
         try {
@@ -121,15 +159,20 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
         }
     }
 
+    // Los más nuevos primero (profiles.created_at); sin fecha, al final.
+    const ordenados = useMemo(() => [...(profiles ?? [])].sort((a, b) =>
+        (b.created_at ? Date.parse(b.created_at) : 0) - (a.created_at ? Date.parse(a.created_at) : 0)
+    ), [profiles])
+
     const buscados = useMemo(() => {
         const texto = query.trim().toLowerCase()
-        if (!texto) return profiles ?? []
+        if (!texto) return ordenados
 
-        return (profiles ?? []).filter(p =>
+        return ordenados.filter(p =>
             [p.full_name, p.user_email, p.user_id]
                 .some(campo => String(campo ?? '').toLowerCase().includes(texto))
         )
-    }, [profiles, query])
+    }, [ordenados, query])
 
     const conteos = useMemo(() => (
         FILTROS.reduce((acc, { key }) => {
@@ -208,6 +251,7 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
                                     <span className={styles.cell}>Nombre</span>
                                     <span className={styles.cell}>Email</span>
                                     <span className={styles.cell}>Rol</span>
+                                    <span className={styles.cell}>Acceso</span>
                                     <span className={styles.cell}>Id</span>
                                     <span className={styles.cell} />
                                 </div>
@@ -223,6 +267,7 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
                                         </span>
                                         <span className={`${styles.cell} ${styles.email}`}>{perfil.user_email}</span>
                                         <span className={styles.cell}>{badgeRol(perfil)}</span>
+                                        <span className={styles.cell}><Acceso lista={proveedores[perfil.user_id]} /></span>
                                         <span className={styles.cell}>
                                             <button
                                                 type='button'
@@ -254,6 +299,7 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
                                         {badgeRol(perfil)}
                                     </div>
                                     <div className={styles.mobileEmail}>{perfil.user_email}</div>
+                                    <Acceso lista={proveedores[perfil.user_id]} />
                                     <div className={styles.mobileBottom}>
                                         {botonEditar(perfil)}
                                         {botonEvento(perfil)}
