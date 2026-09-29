@@ -563,10 +563,6 @@
         color: var(--ac-ink);
     }
 
-    .tabbarItemInbox {
-        color: var(--ac-violet);
-    }
-
     /* En móvil es una hoja inferior: se desliza en vertical y conserva su alto
        cerrada, así que aquí el ancho no se anima. */
     .drawer {
@@ -624,4 +620,71 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+}
+
+/* ---------------------------------------- pestañas de Buzón y Configuración --- */
+
+.conPestanas {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+}
+
+.pestanas {
+    align-self: flex-start;
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--ac-tint);
+    font-family: var(--ac-font-ui);
+}
+
+.pestana {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pestanaActiva {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.pestanaConteo {
+    min-width: 18px;
+    padding: 1px 6px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: var(--ac-violet);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Buzón → Mensajes: la misma lista del drawer, a pantalla. */
+.buzonPagina {
+    height: calc(100dvh - 210px);
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+    overflow: hidden;
 }

@@ -1,7 +1,7 @@
 import { message } from 'antd'
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { appContext } from '../../context'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Eye, EyeOff, Languages } from 'lucide-react'
 import axios from 'axios'
@@ -233,7 +233,18 @@ export const Login = () => {
 
             if (error.response) {
                 // Error que viene del backend
-                const backendMessage = error.response.data.msg;
+                const { msg: backendMessage, code, providers = [] } = error.response.data ?? {};
+
+                // Correo ya registrado: se dice cómo entrar (con Google/Apple si
+                // así se creó la cuenta) en el idioma de la app.
+                if (code === 'EMAIL_EXISTS') {
+                    const nombres = { google: 'Google', apple: 'Apple' }
+                    const provider = providers.map(p => nombres[p]).filter(Boolean).join(' / ')
+                    return messageApi.warning({
+                        content: provider ? t('login.err_email_exists_provider', { provider }) : t('login.err_email_exists'),
+                        duration: 6,
+                    })
+                }
 
                 messageApi.warning(backendMessage || t('login.err_create_user'));
             } else {
@@ -395,7 +406,9 @@ export const Login = () => {
                 </div>
             </>
 
-            : <></>
+            // Con sesión no hay nada que hacer aquí (pasa al volver de Google o
+            // Apple): antes se pintaba vacío y el usuario se quedaba atorado.
+            : <Navigate to='/invitations' replace />
 
     )
 }

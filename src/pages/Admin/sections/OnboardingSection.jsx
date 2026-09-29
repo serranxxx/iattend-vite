@@ -97,7 +97,10 @@ const SaveTheDateConfig = ({ config, onChange }) => {
     )
 }
 
-const PhotoWallConfig = ({ config, onChange }) => {
+// Las fotos se suben a Storage en cuanto se eligen, y la lista del muro se
+// guarda en ese momento (`onSubidas`): si no, quedaban en Storage sin estar
+// en el slide hasta dar "Guardar cambios".
+const PhotoWallConfig = ({ config, onChange, onSubidas }) => {
     const [messageApi, contextHolder] = message.useMessage()
     const [subiendo, setSubiendo] = useState(0)
     const [arrastrando, setArrastrando] = useState(false)
@@ -120,7 +123,10 @@ const PhotoWallConfig = ({ config, onChange }) => {
                 setSubiendo(n => n - 1)
             }
         }
-        if (nuevas.length) setFotos([...fotos, ...nuevas])
+        if (!nuevas.length) return
+        const lista = [...fotos, ...nuevas]
+        setFotos(lista)
+        onSubidas?.(lista)
     }
 
     const mover = (index, delta) => {
@@ -180,10 +186,10 @@ const PhotoWallConfig = ({ config, onChange }) => {
     )
 }
 
-const DemoConfig = ({ kind, config, onChange }) => {
+const DemoConfig = ({ kind, config, onChange, onSubidas }) => {
     if (kind === 'invitation') return <InvitationConfig config={config} onChange={onChange} />
     if (kind === 'save_the_date') return <SaveTheDateConfig config={config} onChange={onChange} />
-    if (kind === 'photo_wall') return <PhotoWallConfig config={config} onChange={onChange} />
+    if (kind === 'photo_wall') return <PhotoWallConfig config={config} onChange={onChange} onSubidas={onSubidas} />
     return null
 }
 
@@ -248,7 +254,20 @@ const Editor = ({ slide, planOptions, demo, onGuardado, onEliminado }) => {
     const [guardando, setGuardando] = useState(false)
     const [confirmarBorrar, setConfirmarBorrar] = useState(false)
 
-    useEffect(() => { setBorrador(borradorDe(slide)); setConfirmarBorrar(false) }, [slide])
+    // Cuando el slide cambia (se guardó, se prendió/apagó desde la lista), el
+    // borrador toma los valores nuevos solo en los campos que no se habían
+    // tocado: lo que estaba sin guardar se conserva.
+    const slideAnterior = useRef(slide)
+    useEffect(() => {
+        const anterior = slideAnterior.current
+        slideAnterior.current = slide
+        if (anterior === slide) return
+        setBorrador(prev => Object.fromEntries(CAMPOS.map(c => [
+            c,
+            JSON.stringify(prev[c] ?? vacioDe(c)) === JSON.stringify(valorDe(anterior, c)) ? valorDe(slide, c) : prev[c],
+        ])))
+        setConfirmarBorrar(false)
+    }, [slide])
 
     const cambios = useMemo(() => Object.fromEntries(
         CAMPOS
@@ -273,6 +292,18 @@ const Editor = ({ slide, planOptions, demo, onGuardado, onEliminado }) => {
             messageApi.error(error?.response?.data?.msg || 'No se pudo guardar el slide')
         } finally {
             setGuardando(false)
+        }
+    }
+
+    // Solo la lista de fotos; el resto del borrador sigue sin guardar.
+    const guardarFotos = async (fotos) => {
+        try {
+            const { data } = await updateOnboardingSlide(slide.id, { config: { ...(slide.config ?? {}), photos: fotos } })
+            invalidarSlides()
+            onGuardado(data.slide)
+            messageApi.success('Fotos guardadas')
+        } catch (error) {
+            messageApi.error(error?.response?.data?.msg || 'Las fotos se subieron, pero no se guardaron en el slide. Da "Guardar cambios".')
         }
     }
 
@@ -322,6 +353,7 @@ const Editor = ({ slide, planOptions, demo, onGuardado, onEliminado }) => {
                         kind={borrador.kind}
                         config={borrador.config ?? {}}
                         onChange={config => set('config', config)}
+                        onSubidas={guardarFotos}
                     />
 
                     {borrador.kind === 'image' && (

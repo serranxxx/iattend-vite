@@ -1,6 +1,6 @@
 import { useContext, useEffect } from 'react'
 import axios from 'axios'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { appContext } from './AuthContext'
 
@@ -18,7 +18,6 @@ import { appContext } from './AuthContext'
 export const SessionBridge = () => {
     const { login } = useContext(appContext)
     const navigate = useNavigate()
-    const { pathname } = useLocation()
 
     useEffect(() => {
         let done = false
@@ -46,8 +45,10 @@ export const SessionBridge = () => {
                 })
 
                 // El redirect de OAuth cae en /invitations, que rebota a /login
-                // mientras no hay sesión local: ya con ella, se vuelve.
-                if (pathname === '/login') navigate('/invitations')
+                // mientras no hay sesión local: ya con ella, se vuelve. Se lee la
+                // ruta de ahora, no la del arranque: el efecto corre una sola vez
+                // y para cuando esto termina el rebote ya pasó.
+                if (window.location.pathname === '/login') navigate('/invitations', { replace: true })
             } catch (error) {
                 console.error('No se pudo completar la cuenta:', error)
                 done = false

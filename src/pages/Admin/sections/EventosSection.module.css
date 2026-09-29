@@ -348,6 +348,10 @@
     background: var(--ac-tint);
 }
 
+.popupItemDanger {
+    color: var(--ac-red);
+}
+
 .ownerRow {
     display: flex;
     align-items: center;

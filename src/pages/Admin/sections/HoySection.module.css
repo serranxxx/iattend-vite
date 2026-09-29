@@ -1,81 +1,326 @@
-/* Pantalla "Hoy": tres lecturas sin marco. Sin tarjetas, sin sombras: la
-   separación la dan las reglas finas y el aire. */
+/* Pantalla "Hoy": rejilla de tarjetas. A la izquierda, en grande, el camino a
+   la meta (oscura) y la bandeja; a la derecha, lo que se lee de un vistazo. */
 
 .hoy {
     font-family: var(--ac-font-ui);
     color: var(--ac-ink);
 }
 
-.columnas {
+.grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    border-top: 1px solid var(--ac-line);
-    border-bottom: 1px solid var(--ac-line);
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-areas:
+        'equilibrio ventas'
+        'equilibrio saldo'
+        'bandeja std'
+        'bandeja reportes';
+    gap: 16px;
 }
 
-.columna {
+.gridSinVentas {
+    grid-template-areas:
+        'bandeja std'
+        'bandeja reportes';
+}
+
+.areaEquilibrio { grid-area: equilibrio; }
+.areaVentas { grid-area: ventas; }
+.areaSaldo { grid-area: saldo; }
+.areaBandeja { grid-area: bandeja; }
+.areaStd { grid-area: std; }
+.areaReportes { grid-area: reportes; }
+
+/* -------------------------------------------------------------- tarjeta --- */
+
+.card {
     min-width: 0;
-    padding: 34px 40px;
+    display: flex;
+    flex-direction: column;
+    padding: 22px 26px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 20px;
+    box-shadow: var(--ac-shadow-card);
+    animation: hoy-entrada 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* La regla vertical va entre columnas, no en los extremos. */
-.columna + .columna {
-    border-left: 1px solid var(--ac-line);
+.areaVentas { animation-delay: 0.05s; }
+.areaSaldo { animation-delay: 0.1s; }
+.areaBandeja { animation-delay: 0.15s; }
+.areaStd { animation-delay: 0.2s; }
+.areaReportes { animation-delay: 0.25s; }
+
+@keyframes hoy-entrada {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card { animation: none; }
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .label {
     margin: 0;
-    font-size: 11.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
+    color: var(--ac-text-3);
+}
+
+.cardMeta {
+    font-size: 13px;
     color: var(--ac-muted);
 }
 
-.cifra {
-    margin-top: 22px;
-    font-size: 76px;
+.enlace {
+    flex-shrink: 0;
+    border: none;
+    background: none;
+    padding: 0 0 2px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ac-ink);
+    border-bottom: 1px solid currentColor;
+    cursor: pointer;
+}
+
+.enlace:hover {
+    color: var(--blue-color);
+}
+
+.alFinal {
+    margin-left: auto;
+}
+
+.vacio {
+    font-size: 13.5px;
+    color: var(--ac-muted-2);
+}
+
+.cifraGigante,
+.cifraGrande,
+.cifraMedia {
     font-weight: 700;
     letter-spacing: -0.04em;
-    line-height: 1;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+}
+
+.cifraGigante {
+    font-size: 96px;
+}
+
+.cifraGigante small {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin-left: 4px;
+    opacity: 0.8;
+}
+
+.cifraGrande {
+    font-size: 60px;
     color: var(--ac-ink);
 }
 
-.cifra small {
-    font-size: 26px;
-    font-weight: 500;
-    letter-spacing: 0;
-    color: var(--ac-muted);
-    margin-left: 6px;
+.cifraMedia {
+    font-size: 36px;
+    color: var(--ac-ink);
 }
 
-.cifraNota {
-    margin-top: 16px;
-    font-size: 13.5px;
-    color: var(--ac-muted);
+.valorOk { color: #7ad69a; }
+.valorCorto { color: #f6c667; }
+
+/* ---------------------------------------------------- punto de equilibrio --- */
+
+.cardOscura {
+    padding: 28px 32px 24px;
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
 }
 
-.barra {
-    margin-top: 20px;
-    height: 4px;
-    background: var(--ac-tint);
-    border-radius: 999px;
-    overflow: hidden;
+.cardOscura .label {
+    color: rgba(255, 255, 255, 0.72);
 }
 
-.barraFill {
-    height: 100%;
-    background: var(--blue-color);
-    border-radius: 999px;
+.cardOscura .enlace {
+    color: #9dc3ff;
 }
 
-/* ---------------------------------------------------------- listas --- */
+.cardOscura .enlace:hover {
+    color: #fff;
+}
 
-.lista {
-    margin-top: 26px;
+.equilibrioCifras {
+    margin-top: 18px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.equilibrioPrincipal {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.equilibrioDe {
+    padding-bottom: 8px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.equilibrioDatos {
+    display: flex;
+    gap: 32px;
+    padding-bottom: 8px;
+}
+
+.equilibrioDatos div {
     display: flex;
     flex-direction: column;
-    gap: 13px;
+    gap: 6px;
+}
+
+.equilibrioDatos strong {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.equilibrioDatos span {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+/* Gráfica: el SVG se estira a lo ancho; punto y etiquetas van encima en HTML. */
+.grafica {
+    margin-top: 22px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* El lienzo mide lo mismo que el SVG: punto y etiqueta se ubican en % de él. */
+.graficaLienzo {
+    position: relative;
+    flex: 1;
+    min-height: 110px;
+    max-height: 150px;
+}
+
+.graficaSvg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.graficaMeta {
+    stroke: rgba(255, 255, 255, 0.35);
+    stroke-width: 1.2;
+    stroke-dasharray: 5 6;
+    vector-effect: non-scaling-stroke;
+}
+
+.graficaRitmo {
+    stroke: rgba(255, 255, 255, 0.22);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.graficaBase {
+    stroke: rgba(255, 255, 255, 0.14);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.graficaLinea {
+    fill: none;
+    stroke: #4f8cff;
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.graficaProyeccion {
+    stroke: #f6c667;
+    stroke-width: 2;
+    stroke-dasharray: 4 5;
+    vector-effect: non-scaling-stroke;
+}
+
+.graficaMetaLabel {
+    position: absolute;
+    right: 0;
+    transform: translateY(calc(-100% - 8px));
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.graficaPunto {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #4f8cff;
+    box-shadow: 0 0 0 3px var(--ac-ink);
+    transform: translate(-50%, -50%);
+}
+
+.graficaEje {
+    position: relative;
+    height: 18px;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.graficaEje span {
+    position: absolute;
+    white-space: nowrap;
+}
+
+.ejeCentro { transform: translateX(-50%); }
+.ejeFinal { transform: translateX(-100%); }
+
+/* ------------------------------------------------------ ventas del mes --- */
+
+.ventasCuerpo {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    min-height: 0;
+}
+
+.ventasLista {
+    flex: 1;
+    min-width: 0;
+    max-height: 128px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
 }
 
 .fila {
@@ -83,12 +328,12 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 14px;
-    font-size: 13.5px;
+    font-size: 14px;
 }
 
 .filaNombre {
     min-width: 0;
-    color: var(--ac-text-2);
+    color: var(--ac-ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -103,67 +348,63 @@
     color: var(--ac-muted);
 }
 
-.valorOk {
-    color: var(--green-color);
+/* ------------------------------------------------------ saldo por cobrar --- */
+
+.saldoCifras {
+    margin-top: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
-.enlace {
-    flex-shrink: 0;
-    border: none;
-    background: none;
-    padding: 0;
-    font-family: inherit;
+.saldoCifras .cifraGrande {
+    font-size: 48px;
+}
+
+.saldoCifras .cardMeta {
+    font-size: 14px;
+}
+
+/* Un segmento por venta, del tamaño de su saldo; 2px de aire entre ellos. */
+.saldoBarra {
+    margin-top: 16px;
+    display: flex;
+    gap: 3px;
+    height: 8px;
+}
+
+.saldoBarra span {
+    flex-basis: 0;
+    min-width: 6px;
+    border-radius: 999px;
+}
+
+.saldoLeyenda {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
     font-size: 13.5px;
     color: var(--ac-ink);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    cursor: pointer;
 }
 
-.enlace:hover {
-    color: var(--blue-color);
+.saldoItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
 }
 
-.enlaceSolo {
-    align-self: flex-start;
-    margin-top: 3px;
+.saldoItem i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
 }
 
-/* ------------------------------------------------------- responsive --- */
-
-@media (max-width: 1100px) {
-    .columnas {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    /* Con dos columnas la tercera baja: su regla pasa a ser horizontal. */
-    .columna:nth-child(3) {
-        grid-column: 1 / -1;
-        border-left: none;
-        border-top: 1px solid var(--ac-line);
-    }
+.saldoItem b {
+    font-weight: 700;
 }
-
-@media (max-width: 760px) {
-    .columnas {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .columna {
-        padding: 26px 0;
-    }
-
-    .columna + .columna {
-        border-left: none;
-        border-top: 1px solid var(--ac-line);
-    }
-
-    .cifra {
-        font-size: 60px;
-    }
-}
-
-/* ------------------------------------------- saldo por cobrar: detalle --- */
 
 .saldoPopup {
     width: 380px;
@@ -228,191 +469,303 @@
     color: var(--ac-amber);
 }
 
+/* ---------------------------------------------------------------- pills --- */
 
-/* ------------------------------------ 1. lista de ventas del mes --- */
-
-/* Quién vendió cada invitación y cuándo. Scrollea si el mes fue bueno. */
-.listaVentas {
-    margin-top: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-    overflow-y: auto;
-    min-height: 0;
-}
-
-.ventaLinea {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-}
-
-.ventaEvento {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ac-ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ventaMeta {
-    font-size: 11.5px;
-    color: var(--ac-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* ------------------------------------- 2. pie de camino a la meta --- */
-
-.chipOscuro {
-    flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.10);
-    color: var(--ac-rail-idle);
-    border-radius: 999px;
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     padding: 4px 11px;
-    font-size: 11.5px;
-    font-weight: 600;
-    text-transform: capitalize;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
     white-space: nowrap;
 }
 
-/* El pie pasa a dos columnas: lo que falta y a dónde se va a llegar. */
-.tarjetaPieOscuro {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    align-items: start;
+.pill i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
 }
 
-.pieColumna {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
+.pillVioleta {
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet);
 }
 
-.proyeccionOk {
-    color: var(--green-color);
+.pillVerde {
+    background: #e8f5ec;
+    color: #2f7a4a;
 }
 
-.proyeccionCorta {
-    color: var(--ac-amber-border);
-}
-
-/* -------------------------------- 3. vendedor en cada saldo --- */
-
-.saldoLinea {
-    align-items: flex-start;
-}
-
-.saldoLineaTexto {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-}
-
-.saldoLineaVendedor {
-    font-size: 11px;
+.pillAmbar {
+    background: var(--ac-amber-soft);
     color: var(--ac-amber-text);
-    opacity: 0.75;
+}
+
+/* -------------------------------------------------------------- bandeja --- */
+
+.bandeja {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.bandeja li {
+    border-bottom: 1px solid var(--ac-line-soft);
+}
+
+.bandeja li:last-child {
+    border-bottom: none;
+}
+
+.bandejaFila {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 40px minmax(120px, 0.9fr) minmax(0, 1.6fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 11px 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.bandejaFila:hover .bandejaQuien b {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: var(--ac-surface-alt);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.bandejaQuien {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.bandejaQuien b {
+    font-size: 14.5px;
+    font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* ------------------------------------------------------------ entrada --- */
-
-/*
-  Entrada escalonada. La pantalla se monta con los datos todavía en vuelo, así
-  que sin esto aparece el armazón completo de golpe y un instante después los
-  números saltan de cero a su valor. El escalonado convierte esos dos saltos en
-  una sola llegada.
-
-  Los retardos son cortos a propósito: 60 ms entre columnas y 35 ms entre
-  renglones. Por encima de eso deja de leerse como que la pantalla llega y
-  empieza a leerse como que va lenta.
-*/
-@keyframes acLlegada {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: none;
-    }
+.bandejaQuien span {
+    font-size: 12.5px;
+    color: var(--ac-violet);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.columna {
-    animation: acLlegada 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+.bandejaTexto {
+    min-width: 0;
+    font-size: 14px;
+    color: var(--ac-text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.columna:nth-child(2) {
-    animation-delay: 0.06s;
+.bandejaTexto > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.columna:nth-child(3) {
-    animation-delay: 0.12s;
+.bandejaHora {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--ac-muted);
+    white-space: nowrap;
 }
 
-/* Dentro de cada columna, el bloque de arriba llega antes que la lista: es el
-   orden en que se lee. */
-.label {
-    animation: acLlegada 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: 0.05s;
+.bandejaHora i {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--ac-violet);
+    color: #fff;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
 }
 
-.cifra {
-    animation: acLlegada 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: 0.1s;
+.bandejaFilaNueva .bandejaTexto {
+    color: var(--ac-ink);
+    font-weight: 500;
 }
 
-.cifraNota {
-    animation: acLlegada 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: 0.16s;
+/* -------------------------------------------------------- save the date --- */
+
+.segmentado {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--ac-surface-alt);
 }
 
-.fila {
-    animation: acLlegada 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+.segmentado button {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ac-muted);
+    cursor: pointer;
 }
 
-.fila:nth-child(1) { animation-delay: 0.22s; }
-.fila:nth-child(2) { animation-delay: 0.255s; }
-.fila:nth-child(3) { animation-delay: 0.29s; }
-.fila:nth-child(4) { animation-delay: 0.325s; }
-.fila:nth-child(n + 5) { animation-delay: 0.36s; }
-
-/* La barra crece hasta su avance en vez de aparecer ya llena. Es transición y
-   no keyframes porque el ancho lo decide el dato, que llega después del
-   montaje: la transición se dispara sola cuando pasa de 0 a su valor. */
-.barraFill {
-    transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+.segmentado .segmentoActivo {
+    background: var(--ac-ink);
+    color: #fff;
 }
 
-@media (prefers-reduced-motion: reduce) {
-
-    .columna,
-    .label,
-    .cifra,
-    .cifraNota,
-    .fila {
-        animation: none;
-    }
-
-    .barraFill {
-        transition: none;
-    }
+/* En la tarjeta oscura el control va en blanco sobre tinta. */
+.segmentadoOscuro {
+    background: rgba(255, 255, 255, 0.08);
 }
+
+.segmentadoOscuro button {
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.segmentadoOscuro .segmentoActivo {
+    background: #fff;
+    color: var(--ac-ink);
+}
+
+.cardHeadAcciones {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.stdCuerpo {
+    margin-top: 14px;
+    display: flex;
+    align-items: flex-end;
+    gap: 22px;
+}
+
+.stdTexto {
+    padding-bottom: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ac-text-3);
+    white-space: nowrap;
+}
+
+.sparkline {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+}
+
+.sparklineArea {
+    fill: rgba(79, 140, 255, 0.12);
+}
+
+.sparklineLinea {
+    fill: none;
+    stroke: #3b6fe0;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.stdPie {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+/* ------------------------------------------------------------- reportes --- */
+
+.cardFila {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+/* ---------------------------------------------------------- sin permiso --- */
 
 .sinPermiso {
-    padding: 44px 40px;
-    border-top: 1px solid var(--ac-line);
-    border-bottom: 1px solid var(--ac-line);
+    margin-bottom: 22px;
+    padding: 18px 22px;
+    border: 1px dashed var(--ac-line);
+    border-radius: 16px;
     font-size: 13.5px;
     color: var(--ac-muted);
+}
+
+/* ------------------------------------------------------------ responsive --- */
+
+@media (max-width: 1280px) {
+    .cifraGigante { font-size: 80px; }
+    .cifraGrande { font-size: 52px; }
+    .saldoCifras .cifraGrande { font-size: 42px; }
+    .equilibrioDatos { gap: 24px; }
+    .equilibrioDatos strong { font-size: 22px; }
+}
+
+@media (max-width: 1080px) {
+    .grid,
+    .gridSinVentas {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: none;
+    }
+
+    .grid > * {
+        grid-area: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .grid { gap: 12px; }
+    .card { padding: 18px; border-radius: 16px; }
+    .cardOscura { padding: 20px 18px 16px; }
+    .cifraGigante { font-size: 68px; }
+    .cifraGigante small { font-size: 24px; }
+    .cifraGrande { font-size: 46px; }
+    .saldoCifras .cifraGrande { font-size: 38px; }
+    .equilibrioDe { font-size: 14px; }
+    .equilibrioDatos strong { font-size: 20px; }
+    .equilibrioDatos span { font-size: 12.5px; }
+    .ventasCuerpo { gap: 20px; }
+    .bandejaFila { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; }
+    .avatar { width: 36px; height: 36px; border-radius: 10px; font-size: 14px; }
+    .bandejaTexto { display: none; }
+    .stdCuerpo { flex-wrap: wrap; }
+    .sparkline { flex-basis: 100%; }
 }

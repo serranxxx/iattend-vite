@@ -531,6 +531,8 @@
     "err_password_length": "La contraseña debe tener mínimo 6 caracteres",
     "success_created": "Usuario creado correctamente",
     "err_create_user": "Error al crear el usuario",
+    "err_email_exists": "Ya existe una cuenta con este correo. Inicia sesión.",
+    "err_email_exists_provider": "Ya existe una cuenta con este correo. Entra con {{provider}}.",
     "err_connection": "Error de conexión con el servidor"
   },
   "guests": {

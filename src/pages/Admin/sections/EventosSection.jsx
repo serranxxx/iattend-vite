@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Dropdown, Input, InputNumber, Select, message } from 'antd'
-import { ArrowUpRight, Check, ChevronDown, Copy, Link2, Minus, MoreHorizontal, Phone, Plus, UserCog } from 'lucide-react'
+import { ArrowUpRight, Check, ChevronDown, Copy, Link2, Minus, MoreHorizontal, Phone, Plus, UserCog, UserMinus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import dayjs from 'dayjs'
@@ -166,6 +166,18 @@ export const EventosSection = ({ newInvitations, profiles, refreshEventos, query
             message.error(error.response?.data?.msg || 'No se pudo asignar el planner')
         } finally {
             setGuardandoPlanner(false)
+        }
+    }
+
+    // Quitar directo desde el menú, sin pasar por el diálogo de asignar.
+    const quitarPlanner = async (invitation) => {
+        try {
+            await asignarPlannerAdmin(invitation.id, null)
+            message.success(`Planner quitado de ${invitation.name || 'el evento'}`)
+            refreshEventos()
+        } catch (error) {
+            console.error('Error removing planner:', error.response?.data || error.message);
+            message.error(error.response?.data?.msg || 'No se pudo quitar el planner')
         }
     }
 
@@ -335,8 +347,13 @@ export const EventosSection = ({ newInvitations, profiles, refreshEventos, query
                 <Plus size={14} /> Side event
             </button>
             <button type='button' className={styles.popupItem} onClick={() => abrirAsignarPlanner(record)}>
-                <UserCog size={14} /> Asignar planner
+                <UserCog size={14} /> {record.planner_id ? 'Cambiar planner' : 'Asignar planner'}
             </button>
+            {record.planner_id && (
+                <button type='button' className={`${styles.popupItem} ${styles.popupItemDanger}`} onClick={() => quitarPlanner(record)}>
+                    <UserMinus size={14} /> Quitar planner
+                </button>
+            )}
         </div>
     )
 

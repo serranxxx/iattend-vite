@@ -1,0 +1,285 @@
+/* Notificaciones: reportes de soporte, uno por tarjeta. */
+
+.notificaciones {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.tabs {
+    align-self: flex-start;
+    display: flex;
+    gap: 2px;
+    background: var(--ac-tint);
+    padding: 3px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+}
+
+.tab {
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tabActive {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vacio {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted-2);
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+}
+
+/* ------------------------------------------------------------- tarjeta --- */
+
+.ticket {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: var(--ac-shadow-card);
+}
+
+/* Los resueltos quedan de fondo: siguen ahí, pero no piden atención. */
+.ticket[data-status='resolved'] {
+    box-shadow: none;
+    background: var(--ac-surface-alt);
+}
+
+.ticket[data-status='resolved'] .cuerpo {
+    color: var(--ac-muted);
+}
+
+.ticketHead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tema {
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 3px 10px;
+    background: var(--ac-tint);
+    color: var(--ac-ink);
+}
+
+.tema_help {
+    background: var(--ac-amber-soft);
+    color: var(--ac-amber-text);
+}
+
+.tema_improvement {
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet-ink);
+}
+
+.tema_question {
+    background: var(--ac-green-soft);
+    color: var(--ac-green-ink);
+}
+
+.cuando {
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+.sinCorreo {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ac-red);
+}
+
+.cuerpo {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ac-text-2);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.remitente {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--ac-text-3);
+}
+
+.remitenteNombre {
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+/* ---------------------------------------------------------------- nota --- */
+
+.nota {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    border: 1px dashed var(--ac-amber-border);
+    background: var(--ac-amber-soft);
+    color: var(--ac-amber-text);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    white-space: pre-wrap;
+    cursor: text;
+}
+
+.nota svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notaEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notaEditor textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--ac-line-input);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+    color: var(--ac-ink);
+    background: var(--ac-surface);
+}
+
+.notaEditor textarea:focus {
+    outline: 2px solid var(--ac-ink);
+    outline-offset: -1px;
+}
+
+.notaAcciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+/* ---------------------------------------------------------------- pie --- */
+
+.ticketPie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.estados {
+    display: flex;
+    gap: 2px;
+    background: var(--ac-tint);
+    padding: 2px;
+    border-radius: 9px;
+}
+
+.estado {
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.estado:disabled {
+    cursor: default;
+}
+
+.estadoActivo {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.ticket[data-status='resolved'] .estadoActivo {
+    color: var(--ac-green-ink);
+}
+
+.acciones {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ac-line-outline);
+    background: var(--ac-surface);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ac-ink);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.accion:hover {
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
+}
+
+.accion:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.accionIcono {
+    padding: 5px 7px;
+}
+
+.accionPrimaria {
+    background: var(--ac-ink);
+    border-color: var(--ac-ink);
+    color: #fff;
+}

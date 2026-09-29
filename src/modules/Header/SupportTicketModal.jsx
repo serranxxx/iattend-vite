@@ -5,20 +5,15 @@ import { Check, MessageCircle } from 'lucide-react'
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
 import styles from './SupportTicketModal.module.css'
-import { advisorWhatsappUrl, SUPPORT_EMAIL } from '../../helpers/contact'
+import { advisorWhatsappUrl } from '../../helpers/contact'
 
 
 const TOPICS = ['help', 'improvement', 'question']
 
-const escapeHtml = (value = '') => String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-
 /**
- * Ticket de soporte del header. Manda un correo a soporte con el asunto que
- * eligió el usuario y, en el cuerpo, su mensaje más los datos con los que el
- * equipo puede ubicarlo: correo, nombre e id de la invitación.
+ * Ticket de soporte del header. Se guarda en `support_tickets` y le llega un
+ * correo a soporte con el tema, el mensaje y los datos con los que el equipo
+ * puede ubicar al usuario (correo, nombre e id de la invitación).
  */
 export const SupportTicketModal = ({ open, onClose, invitationId, session, eventName }) => {
     const { t } = useTranslation()
@@ -73,7 +68,6 @@ export const SupportTicketModal = ({ open, onClose, invitationId, session, event
     const sessionUser = session?.user ?? {}
     const userEmail = owner?.email ?? sessionUser.email ?? '—'
     const userName = owner?.name ?? sessionUser.name ?? '—'
-    const userId = owner?.userId ?? sessionUser.uid ?? sessionUser.id ?? '—'
 
     useEffect(() => {
         if (!open) return undefined
@@ -99,26 +93,20 @@ export const SupportTicketModal = ({ open, onClose, invitationId, session, event
         setSending(true)
         setError(null)
 
-        const subject = t(`support_ticket.topic_${topic}`)
-        const html = `
-            <h2>${escapeHtml(subject)}</h2>
-            <p style="white-space:pre-wrap">${escapeHtml(body.trim())}</p>
-            <hr />
-            <p>
-                <b>Usuario:</b> ${escapeHtml(userName)}<br />
-                <b>Correo:</b> ${escapeHtml(userEmail)}<br />
-                <b>ID de usuario:</b> ${escapeHtml(userId)}<br />
-                <b>Invitación:</b> ${escapeHtml(eventName || '—')}<br />
-                <b>ID de invitación:</b> ${escapeHtml(invitationId || '—')}
-            </p>
-        `
-
+        // El backend guarda el reporte (Admin → Notificaciones) y manda el
+        // correo a soporte. Con sesión, el remitente sale de ella; sin sesión,
+        // del dueño de la invitación.
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/mail/send-mail`, {
-                to: SUPPORT_EMAIL,
-                subject: `[Soporte] ${subject}`,
-                html,
-            })
+            const { data } = await supabase.auth.getSession()
+            const token = data?.session?.access_token
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/support/tickets`, {
+                topic,
+                body: body.trim(),
+                invitation_id: invitationId || null,
+                event_name: eventName || null,
+                user_email: userEmail !== '—' ? userEmail : null,
+                user_name: userName !== '—' ? userName : null,
+            }, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
             setSent(true)
         } catch (e) {
             console.error('Error enviando ticket de soporte:', e)

@@ -23,6 +23,7 @@ import { useMemo, useState } from 'react'
 import { FileText, Image, MapPin, Mic, SmilePlus, Video } from 'lucide-react'
 import { OpenChat } from '../../modules/GuestManagement/WhatsappMessages/OpenChat/OpenChat'
 import { phoneFormatter } from '../../modules/GuestManagement/WhatsappMessages/phone'
+import { enMilisegundos, idDe, sinLeer, ultimoEntrante, ultimoMensaje } from './buzonConversaciones'
 import styles from './BuzonDrawer.module.css'
 
 const MS_POR_DIA = 86_400_000
@@ -36,20 +37,6 @@ const ADJUNTOS = {
     location: { Icono: MapPin, label: 'Ubicación' },
 }
 
-const idDe = (conversacion) => `${conversacion.phone}-${conversacion.invitation_id}`
-
-const ultimoMensaje = (conversacion) => {
-    const mensajes = conversacion.messages ?? []
-    return mensajes[mensajes.length - 1] ?? null
-}
-
-const ultimoEntrante = (conversacion) =>
-    [...(conversacion.messages ?? [])].reverse().find(m => m.direction === 'inbound') ?? null
-
-const sinLeer = (conversacion) =>
-    (conversacion.messages ?? []).filter(m => !m.read && m.direction === 'inbound').length
-
-const enMilisegundos = (mensaje) => (mensaje?.timestamp ? new Date(mensaje.timestamp).getTime() : 0)
 
 // Reloj de bandeja: hora si es de hoy, "Ayer", día de la semana dentro de la
 // semana y fecha corta más atrás. Una fecha completa en cada fila sería ruido.
@@ -67,7 +54,7 @@ const horaCorta = (timestamp) => {
     return fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }).replace('.', '')
 }
 
-const Vistazo = ({ mensaje }) => {
+export const Vistazo = ({ mensaje }) => {
     if (!mensaje) return null
 
     const adjunto = ADJUNTOS[mensaje.message_type]
@@ -85,8 +72,10 @@ const Vistazo = ({ mensaje }) => {
     return <span className={styles.vistazo}>{mensaje.body ?? ''}</span>
 }
 
-export const BuzonDrawer = ({ conversations, invitationsById = new Map() }) => {
-    const [abierta, setAbierta] = useState(null)
+// `inicial`: id de conversación (ver `idDe`) para abrir el buzón directo en
+// ella, como hace la bandeja de Hoy al hacer clic en una fila.
+export const BuzonDrawer = ({ conversations, invitationsById = new Map(), inicial = null }) => {
+    const [abierta, setAbierta] = useState(inicial)
 
     // Sin responder primero, y dentro de cada bloque lo más reciente arriba.
     const ordenadas = useMemo(() => {

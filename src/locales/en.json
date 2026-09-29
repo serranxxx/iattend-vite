@@ -531,6 +531,8 @@
     "err_password_length": "Password must be at least 6 characters",
     "success_created": "User created successfully",
     "err_create_user": "Error creating user",
+    "err_email_exists": "An account with this email already exists. Please log in.",
+    "err_email_exists_provider": "An account with this email already exists. Sign in with {{provider}}.",
     "err_connection": "Connection error with the server"
   },
   "guests": {

@@ -59,9 +59,10 @@ export const InvitationsPage = () => {
     }
 
     // "Mis clientes" = eventos ajenos que organiza; "Mis eventos" = los suyos
-    // (incluido el free con el que nace su cuenta). "Dashboard" es solo de clientes.
+    // (incluido el free con el que nace su cuenta). "Dashboard" = todo evento
+    // donde está asignado como planner, aunque también sea el dueño.
     const esDeCliente = (inv) => inv.planner_id === sessions?.user?.uid && inv.user_id !== sessions?.user?.uid
-    const clientInvitations = (invitationsNI ?? []).filter(esDeCliente)
+    const plannerInvitations = (invitationsNI ?? []).filter(inv => inv.planner_id === sessions?.user?.uid)
 
     useEffect(() => {
         if (searchParams.get('welcome') === '1') {
@@ -356,7 +357,7 @@ export const InvitationsPage = () => {
                                         </div>
 
                                         {view === 'data' ? (
-                                            <PlannerDashboard invitations={clientInvitations} />
+                                            <PlannerDashboard invitations={plannerInvitations} />
                                         ) : isPlanner ? (
                                             // Una sola fila: "nuevo evento" siempre primero a la izquierda y
                                             // luego cada grupo con su título encima. Los vacíos no se pintan.

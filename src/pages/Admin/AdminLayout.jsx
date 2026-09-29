@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button, Dropdown, Select, Tooltip, message } from 'antd'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-    BarChart3, Calendar, ChevronDown, FlaskConical, Home, Inbox, Landmark,
-    Menu as MenuIcon, ArrowLeft, Copy, GalleryHorizontalEnd, Package, Plus, Search, Star, Users, X,
+    BarChart3, Calendar, ChevronDown, FlaskConical, Settings, Home, Inbox, Landmark,
+    Menu as MenuIcon, ArrowLeft, Copy, Plus, Search, Users, X,
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
@@ -21,27 +21,55 @@ import { FeedbackAdminPage } from './FeedbackAdminPage'
 import { HoySection } from './sections/HoySection'
 import { PlanesSection } from './sections/PlanesSection'
 import { OnboardingSection } from './sections/OnboardingSection'
+import { NotificacionesSection } from './sections/NotificacionesSection'
+import { fetchSupportTickets } from './supportTicketsAdminApi'
+import { pendientes } from './supportTickets'
 import { crearFiltroDePrueba, esEventoActivo } from './adminConstants'
 import './admin-tokens.css'
 import styles from './AdminShell.module.css'
 
 dayjs.locale('es')
 
-// Pantallas reservadas al dueño: números de negocio, feedback de clientes y el
+// Pantallas reservadas al dueño: números de negocio, reviews de clientes y el
 // catálogo de planes. Cualquier otro admin ve el resto del panel, pero no estas.
 const CORREO_DEL_DUENIO = 'albserrano8@gmail.com'
-const RUTAS_RESERVADAS = new Set(['ventas', 'analitica', 'feedback', 'planes'])
+const RUTAS_RESERVADAS = new Set(['ventas', 'analitica'])
+const SUBS_RESERVADAS = new Set(['reviews', 'planes'])
 
+const ROUTES = ['hoy', 'buzon', 'eventos', 'usuarios', 'ventas', 'analitica', 'lab', 'configuracion']
 
-const ROUTES = ['hoy', 'eventos', 'usuarios', 'ventas', 'planes', 'analitica', 'feedback', 'lab', 'onboarding']
+// Pantallas con pestañas. La primera que se pueda ver es la de entrada.
+//  · Buzón: todo lo que llega de fuera (mensajes, reportes de soporte, reviews).
+//  · Configuración: catálogos que se tocan poco (planes y onboarding).
+const SUBTABS = {
+    buzon: [
+        { key: 'mensajes', label: 'Mensajes' },
+        { key: 'reportes', label: 'Reportes' },
+        { key: 'reviews', label: 'Reviews' },
+    ],
+    configuracion: [
+        { key: 'planes', label: 'Planes' },
+        { key: 'onboarding', label: 'Onboarding' },
+    ],
+}
 
-// Grupos del rail. `lab` conserva el key legacy 'herramientas' en la URL para no
-// romper los enlaces ?tab=herramientas que ya circulan.
+// Enlaces que ya circulan (?tab=planes, ?tab=feedback, ?tab=herramientas…)
+// siguen funcionando: caen en su pantalla y pestaña nuevas.
+const RUTAS_LEGADAS = {
+    notificaciones: ['buzon', 'reportes'],
+    mensajes: ['buzon', 'mensajes'],
+    feedback: ['buzon', 'reviews'],
+    planes: ['configuracion', 'planes'],
+    onboarding: ['configuracion', 'onboarding'],
+    herramientas: ['lab', null],
+}
+
 const NAV_GROUPS = [
     {
         label: 'Operación',
         items: [
             { key: 'hoy', label: 'Hoy', icon: Home },
+            { key: 'buzon', label: 'Buzón', icon: Inbox },
             { key: 'eventos', label: 'Eventos', icon: Calendar },
             { key: 'usuarios', label: 'Usuarios', icon: Users },
         ],
@@ -50,30 +78,29 @@ const NAV_GROUPS = [
         label: 'Negocio',
         items: [
             { key: 'ventas', label: 'Ventas', icon: Landmark },
-            { key: 'planes', label: 'Planes', icon: Package },
             { key: 'analitica', label: 'Analítica', icon: BarChart3 },
-            { key: 'feedback', label: 'Feedback', icon: Star },
         ],
     },
     {
         label: 'Estudio',
         items: [
             { key: 'lab', label: 'Laboratorio', icon: FlaskConical },
-            { key: 'onboarding', label: 'Onboarding', icon: GalleryHorizontalEnd },
         ],
     },
 ]
 
 const TAB_BAR = [
     { key: 'hoy', label: 'Hoy', icon: Home },
+    { key: 'buzon', label: 'Buzón', icon: Inbox },
     { key: 'eventos', label: 'Eventos', icon: Calendar },
     { key: 'ventas', label: 'Ventas', icon: Landmark },
-    { key: 'lab', label: 'Lab', icon: FlaskConical },
 ]
 
-const normalizarRuta = (tab) => {
-    if (tab === 'herramientas') return 'lab'
-    return ROUTES.includes(tab) ? tab : null
+// Devuelve [ruta, pestaña] a partir de lo que venga en la URL o de un goTo().
+const resolverRuta = (tab, sub) => {
+    if (RUTAS_LEGADAS[tab]) return RUTAS_LEGADAS[tab]
+    if (!ROUTES.includes(tab)) return [null, null]
+    return [tab, SUBTABS[tab]?.some(s => s.key === sub) ? sub : null]
 }
 
 export const AdminLayout = () => {
@@ -86,14 +113,32 @@ export const AdminLayout = () => {
     // renderiza. Ese último es el que importa: sin él, `?tab=ventas` entraba
     // aunque el menú no lo ofreciera.
     const puedeVer = (clave) => !RUTAS_RESERVADAS.has(clave) || esDuenio
+    const puedeVerSub = (clave) => !SUBS_RESERVADAS.has(clave) || esDuenio
+    const subsDe = (ruta) => (SUBTABS[ruta] ?? []).filter(s => puedeVerSub(s.key))
+    // Pestaña válida para la ruta: la pedida si se puede ver, si no la primera.
+    const subValida = (ruta, sub) => {
+        const visibles = subsDe(ruta)
+        if (!visibles.length) return null
+        return visibles.some(s => s.key === sub) ? sub : visibles[0].key
+    }
     const userName = session?.user?.name || session?.user?.full_name || session?.user?.email || 'Admin'
 
     const [searchParams, setSearchParams] = useSearchParams()
-    const requestedRoute = normalizarRuta(searchParams.get('tab'))
-    const initialRoute = requestedRoute && puedeVer(requestedRoute) ? requestedRoute : 'hoy'
+    const [rutaPedida, subPedida] = resolverRuta(searchParams.get('tab'), searchParams.get('sub'))
+    const initialRoute = rutaPedida && puedeVer(rutaPedida) ? rutaPedida : 'hoy'
 
     const [route, setRoute] = useState(initialRoute)
+    const [sub, setSub] = useState(() => subValida(initialRoute, subPedida))
     const [drawerOpen, setDrawerOpen] = useState(false)
+    // Conversación con la que se abre el buzón (desde la bandeja de Hoy).
+    const [buzonInicial, setBuzonInicial] = useState(null)
+    // Desde Hoy: una conversación se abre en el drawer para contestar sin salir;
+    // "abrir bandeja" lleva a la pantalla del Buzón.
+    const abrirBuzon = (conversacionId = null) => {
+        if (!conversacionId) return goTo('buzon', 'mensajes')
+        setBuzonInicial(conversacionId)
+        setDrawerOpen(true)
+    }
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [globalQuery, setGlobalQuery] = useState('')
     const [pickerOpen, setPickerOpen] = useState(false)
@@ -110,10 +155,20 @@ export const AdminLayout = () => {
     const [conversations, setConversations] = useState([])
     const [unAnswer, setUnAnswer] = useState(0)
 
-    const goTo = (key) => {
-        setRoute(key)
+    // Reportes de soporte: los usan Hoy, Notificaciones y el contador del rail.
+    const [tickets, setTickets] = useState(null)
+    const [ticketsError, setTicketsError] = useState(null)
+
+    function goTo(key, subPedido = null) {
+        const [ruta, subDeRuta] = resolverRuta(key, subPedido)
+        if (!ruta || !puedeVer(ruta)) return
+        const pestana = subValida(ruta, subPedido ?? subDeRuta)
+        setRoute(ruta)
+        setSub(pestana)
         setMobileNavOpen(false)
-        searchParams.set('tab', key)
+        searchParams.set('tab', ruta)
+        if (pestana) searchParams.set('sub', pestana)
+        else searchParams.delete('sub')
         setSearchParams(searchParams, { replace: true })
     }
 
@@ -145,6 +200,20 @@ export const AdminLayout = () => {
     const refreshEventos = () => {
         getNewInvitations()
     }
+
+    const getTickets = async () => {
+        try {
+            const { data } = await fetchSupportTickets()
+            setTickets(data.tickets ?? [])
+            setTicketsError(null)
+        } catch (error) {
+            console.error('Error al obtener reportes:', error.response?.data || error.message)
+            setTicketsError(error.response?.data?.msg || 'No se pudieron cargar los reportes')
+            setTickets(prev => prev ?? [])
+        }
+    }
+
+    const actualizarTicket = (ticket) => setTickets(prev => (prev ?? []).map(t => (t.id === ticket.id ? ticket : t)))
 
     const getChats = async () => {
         const { data, error } = await supabase.rpc('get_conversations_v2');
@@ -206,6 +275,7 @@ export const AdminLayout = () => {
         getNewInvitations()
         getNewUsers()
         getChats()
+        getTickets()
     }, [])
 
     // ------------------------------------------------- contadores del rail ---
@@ -229,7 +299,11 @@ export const AdminLayout = () => {
     const HEAD = {
         hoy: {
             title: 'Hoy',
-            subtitle: dayjs().format('dddd D [de] MMMM'),
+            subtitle: (() => {
+                const quedan = dayjs().daysInMonth() - dayjs().date()
+                const resto = quedan === 0 ? 'último día del mes' : `${quedan === 1 ? 'queda 1 día' : `quedan ${quedan} días`} del mes`
+                return `${dayjs().format('dddd D [de] MMMM')} · ${resto}`
+            })(),
         },
         eventos: {
             title: 'Eventos',
@@ -243,14 +317,23 @@ export const AdminLayout = () => {
             subtitle: `${conteos.usuarios} cuentas · ${conteos.admins} admin · ${conteos.vendedores} vendedores · ${conteos.usuarios - conteos.admins - conteos.vendedores} clientes`,
             action: { label: 'Nuevo usuario', wrap: (boton) => pickerNuevoUsuario(boton) },
         },
+        buzon: {
+            title: 'Buzón',
+            subtitle: `${unAnswer} mensajes sin leer · ${pendientes(tickets).length} reportes sin resolver`,
+            action: sub === 'reportes' ? { label: 'Actualizar', onClick: getTickets } : null,
+        },
         ventas: { title: 'Ventas', subtitle: 'Ingresos, comisiones y cobranza' },
-        onboarding: { title: 'Onboarding', subtitle: 'Slides del wizard "Conoce I attend" · checkout, invitaciones y preview' },
-        planes: { title: 'Planes', subtitle: 'Qué incluye cada plan · se refleja en la app, el checkout y la landing' },
         analitica: {
             title: 'Analítica',
             subtitle: 'Uso del producto evento por evento · las invitaciones de prueba quedan fuera',
         },
-        feedback: { title: 'Feedback', subtitle: 'Reviews dejadas por organizadores' },
+        configuracion: {
+            title: 'Configuración',
+            subtitle: {
+                planes: 'Qué incluye cada plan · se refleja en la app, el checkout y la landing',
+                onboarding: 'Slides del wizard "Conoce I attend" · checkout, invitaciones y preview',
+            }[sub] ?? '',
+        },
         lab: {
             title: 'Laboratorio',
             subtitle: 'Fonts, texturas y catálogo de invitaciones',
@@ -328,34 +411,89 @@ export const AdminLayout = () => {
         </Dropdown>
     )
 
+    const conteoDeSub = (clave) => {
+        if (clave === 'mensajes') return unAnswer || null
+        if (clave === 'reportes') return pendientes(tickets).length || null
+        return null
+    }
+
+    // Pestañas de Buzón y Configuración, arriba del contenido.
+    const conPestanas = (contenido) => (
+        <div className={styles.conPestanas}>
+            <div className={styles.pestanas} role='tablist'>
+                {subsDe(route).map(({ key, label }) => {
+                    const conteo = conteoDeSub(key)
+                    return (
+                        <button
+                            key={key}
+                            type='button'
+                            role='tab'
+                            aria-selected={sub === key}
+                            className={`${styles.pestana} ${sub === key ? styles.pestanaActiva : ''}`}
+                            onClick={() => goTo(route, key)}
+                        >
+                            {label}
+                            {conteo !== null && <span className={styles.pestanaConteo}>{conteo}</span>}
+                        </button>
+                    )
+                })}
+            </div>
+            {contenido}
+        </div>
+    )
+
     const renderSection = () => {
         switch (route) {
             case 'hoy':
                 return (
-                    <HoySection onNavigate={goTo} canSeeVentas={esDuenio} />
+                    <HoySection
+                        onNavigate={goTo}
+                        canSeeVentas={esDuenio}
+                        tickets={tickets}
+                        conversations={conversations}
+                        invitations={newInvitations}
+                        profiles={newProfiles}
+                        esPrueba={esPrueba}
+                        onAbrirBuzon={abrirBuzon}
+                    />
                 )
             case 'usuarios':
                 return (
                     <UsuariosSection
                         profiles={newProfiles}
                         onOpenNewInvitation={onOpenNewInvitation}
+                        onPerfilActualizado={perfil => setNewProfiles(prev => prev.map(p => (p.user_id === perfil.user_id ? perfil : p)))}
                         query={globalQuery}
                     />
                 )
             case 'ventas':
                 return puedeVer('ventas') ? <VentasSection /> : null
-            case 'onboarding':
-                return <OnboardingSection />
-            case 'planes':
-                return puedeVer('planes') ? <PlanesSection /> : null
             case 'analitica':
                 return puedeVer('analitica')
                     ? <EventosAnalitica invitations={newInvitations} esPrueba={esPrueba} />
                     : null
-            case 'feedback':
-                return puedeVer('feedback')
-                    ? <FeedbackAdminPage eventosActivos={conteos.eventosActivos} />
-                    : null
+            case 'buzon':
+                return conPestanas(
+                    sub === 'reportes' ? (
+                        <NotificacionesSection
+                            tickets={tickets}
+                            cargando={tickets === null}
+                            error={ticketsError}
+                            onActualizado={actualizarTicket}
+                            query={globalQuery}
+                        />
+                    ) : sub === 'reviews' ? (
+                        puedeVerSub('reviews') ? <FeedbackAdminPage eventosActivos={conteos.eventosActivos} /> : null
+                    ) : (
+                        <div className={styles.buzonPagina}>
+                            <BuzonDrawer conversations={conversations} invitationsById={invitationsById} />
+                        </div>
+                    )
+                )
+            case 'configuracion':
+                return conPestanas(
+                    sub === 'planes' ? (puedeVerSub('planes') ? <PlanesSection /> : null) : <OnboardingSection />
+                )
             case 'lab':
                 return <LaboratorioSection invitations={newInvitations} />
             case 'eventos':
@@ -405,6 +543,7 @@ export const AdminLayout = () => {
                                 const { key, label } = item
                                 const Icon = item.icon
                                 const counter = counterFor(key)
+                                const pendientesBuzon = key === 'buzon' ? unAnswer + pendientes(tickets).length : 0
                                 return (
                                     <Tooltip key={key} title={label} placement='right'>
                                         <button
@@ -415,6 +554,9 @@ export const AdminLayout = () => {
                                             <Icon size={17} strokeWidth={1.7} />
                                             <span className={styles.railItemLabel}>{label}</span>
                                             {counter !== null && <span className={styles.railCount}>{counter}</span>}
+                                            {pendientesBuzon > 0 && (
+                                                <span className={`${styles.railBadge} ${styles.railBadgeViolet}`}>{pendientesBuzon}</span>
+                                            )}
                                         </button>
                                     </Tooltip>
                                 )
@@ -424,17 +566,14 @@ export const AdminLayout = () => {
                 </nav>
 
                 <div className={styles.railFooter}>
-                    <Tooltip title='Mensajes' placement='right'>
+                    <Tooltip title='Configuración' placement='right'>
                         <button
                             type='button'
-                            className={styles.railItem}
-                            onClick={() => setDrawerOpen(open => !open)}
+                            className={`${styles.railItem} ${route === 'configuracion' ? styles.railItemActive : ''}`}
+                            onClick={() => goTo('configuracion')}
                         >
-                            <Inbox size={17} strokeWidth={1.7} />
-                            <span className={styles.railItemLabel}>Mensajes</span>
-                            {unAnswer > 0 && (
-                                <span className={`${styles.railBadge} ${styles.railBadgeViolet}`}>{unAnswer}</span>
-                            )}
+                            <Settings size={17} strokeWidth={1.7} />
+                            <span className={styles.railItemLabel}>Configuración</span>
                         </button>
                     </Tooltip>
 
@@ -514,8 +653,10 @@ export const AdminLayout = () => {
                     </div>
                     <div className={styles.drawerBody}>
                         <BuzonDrawer
+                            key={buzonInicial ?? 'lista'}
                             conversations={conversations}
                             invitationsById={invitationsById}
+                            inicial={buzonInicial}
                         />
                     </div>
                 </div>
@@ -538,14 +679,6 @@ export const AdminLayout = () => {
                             </button>
                         )
                     })}
-                <button
-                    type='button'
-                    className={`${styles.tabbarItem} ${styles.tabbarItemInbox}`}
-                    onClick={() => setDrawerOpen(open => !open)}
-                >
-                    <Inbox size={19} strokeWidth={1.7} />
-                    Buzón
-                </button>
             </nav>
 
             <AdminModal
