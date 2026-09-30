@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Input, Layout, Row, message, Button, notification, Segmented } from 'antd';
+import { Input, Layout, Row, message, Button, notification, Segmented, ConfigProvider } from 'antd';
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -18,6 +18,16 @@ import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData';
 import { PlannerDashboard } from '../../components/PlannerDashboard/PlannerDashboard';
 
 const { Content } = Layout;
+
+// Toggle Invitaciones / Dashboard del planner (handoff del dashboard de planners)
+const VIEW_TOGGLE_THEME = {
+    components: {
+        Segmented: {
+            trackBg: '#F4F3F1', trackPadding: 4, itemSelectedBg: '#FFFFFF', itemColor: '#5B6166',
+            itemSelectedColor: '#0E1A22', itemHoverColor: '#0E1A22', controlHeight: 32, fontSize: 14,
+        },
+    },
+};
 
 const baseProd = "https://www.iattend.events"
 
@@ -52,6 +62,8 @@ export const InvitationsPage = () => {
     // Vista del planner: sus invitaciones o la pestaña "Dashboard". Va en la
     // URL (?view=data) para que recargar no lo regrese a las cards.
     const view = isPlanner && searchParams.get('view') === 'data' ? 'data' : 'invitations'
+    // Nodo del encabezado donde PlannerDashboard monta su filtro de eventos
+    const [filterSlot, setFilterSlot] = useState(null)
     const setView = (value) => {
         if (value === 'data') searchParams.set('view', 'data')
         else searchParams.delete('view')
@@ -298,8 +310,11 @@ export const InvitationsPage = () => {
                     maxWidth: '100vw', padding: 0,
                     backgroundColor: 'transparent',
                 }} >
-                    <div style={{ padding: '0px', width: '100%', overflow: 'hidden' }}>
-                        <AdsCarousel onRegalar={() => setRegalaVisible(true)} />
+                    {/* En el dashboard del planner el hero se colapsa (ver .inv-hero) */}
+                    <div className={`inv-hero${view === 'data' ? ' inv-hero--hidden' : ''}`} aria-hidden={view === 'data'}>
+                        <div className='inv-hero-inner'>
+                            <AdsCarousel onRegalar={() => setRegalaVisible(true)} />
+                        </div>
                     </div>
                     {
                         loader ?
@@ -330,6 +345,10 @@ export const InvitationsPage = () => {
 
                                                 <span className='invitations_title'>{greeting}</span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                                    {view === 'data' && (
+                                                        // PlannerDashboard dibuja aquí su filtro de eventos (portal)
+                                                        <div ref={setFilterSlot} className='inv-planner-filter' />
+                                                    )}
                                                     {view === 'invitations' && (
                                                         <Input
                                                             placeholder={t('invitations.search_placeholder')}
@@ -337,15 +356,17 @@ export const InvitationsPage = () => {
                                                             className='invs-searcher' />
                                                     )}
                                                     {isPlanner && (
-                                                        <Segmented
-                                                            shape='round'
-                                                            value={view}
-                                                            onChange={setView}
-                                                            options={[
-                                                                { value: 'invitations', label: t('planner.segment_invitations') },
-                                                                { value: 'data', label: t('planner.segment_data') },
-                                                            ]}
-                                                        />
+                                                        <ConfigProvider theme={VIEW_TOGGLE_THEME}>
+                                                            <Segmented
+                                                                shape='round'
+                                                                value={view}
+                                                                onChange={setView}
+                                                                options={[
+                                                                    { value: 'invitations', label: t('planner.segment_invitations') },
+                                                                    { value: 'data', label: t('planner.segment_data') },
+                                                                ]}
+                                                            />
+                                                        </ConfigProvider>
                                                     )}
                                                 </div>
                                                 {/* <Button style={{ borderRadius: '99px' }} icon={<LuPlus />} type='primary'>Nuevo evento</Button> */}
@@ -357,7 +378,7 @@ export const InvitationsPage = () => {
                                         </div>
 
                                         {view === 'data' ? (
-                                            <PlannerDashboard invitations={plannerInvitations} />
+                                            <PlannerDashboard invitations={plannerInvitations} filterSlot={filterSlot} userId={sessions?.user?.uid} />
                                         ) : isPlanner ? (
                                             // Una sola fila: "nuevo evento" siempre primero a la izquierda y
                                             // luego cada grupo con su título encima. Los vacíos no se pintan.

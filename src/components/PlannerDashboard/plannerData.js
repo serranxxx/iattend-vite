@@ -77,6 +77,12 @@ export const minutesOf = (time) => {
     return hours * 60 + minutes
 }
 
+// Lo de la madrugada ("1:00 am" del after) es la misma noche: va al final.
+const partyMinutes = (time) => {
+    const minutes = minutesOf(time)
+    return minutes < 5 * 60 ? minutes + 24 * 60 : minutes
+}
+
 export const itineraryOf = (invitation) =>
     (invitation?.data?.itinerary?.object ?? [])
         .filter(item => item?.name?.trim())
@@ -86,7 +92,7 @@ export const itineraryOf = (invitation) =>
             time: item.time?.trim() || null,
             place: item.subtext?.trim() || null,
         }))
-        .sort((a, b) => minutesOf(a.time) - minutesOf(b.time))
+        .sort((a, b) => partyMinutes(a.time) - partyMinutes(b.time))
 
 const CONFIRMED = new Set(['confirmado', 'asistente'])
 
@@ -134,37 +140,32 @@ export const buildStats = (invitation, { guests, tables, sideEvents }, today) =>
     }
 }
 
-// Lo que el planner tendría que atender ya, del más urgente al menos.
-export const buildAlerts = (statsList, t) => {
-    const alerts = []
+// Pendientes de un evento, del más grave al menos. Van en la columna
+// "Siguiente acción" de la tabla y pintan de rojo su punto en la línea de tiempo.
+export const buildPending = (s, t) => {
+    const pending = []
+    if (s.tables > 0 && s.withoutTable > 0) {
+        pending.push({ level: 'critical', text: t('planner.pending_no_table', { count: s.withoutTable }) })
+    }
+    if (s.tables === 0 && s.confirmed > 0) {
+        pending.push({ level: 'critical', text: t('planner.pending_no_tables') })
+    }
+    if (s.notSent > 0) {
+        pending.push({ level: 'warning', text: t('planner.pending_not_sent', { count: s.notSent }) })
+    }
+    if (s.total === 0) {
+        pending.push({ level: 'warning', text: t('planner.pending_no_guests') })
+    }
+    return pending
+}
 
-    statsList.forEach(s => {
-        if (s.daysLeft == null || s.daysLeft < 0) return
-
-        if (s.rsvpDaysLeft != null && s.rsvpDaysLeft >= 0 && s.rsvpDaysLeft <= 7 && s.waiting > 0) {
-            alerts.push({ id: `${s.invitation.id}-rsvp`, level: 'high', urgency: s.rsvpDaysLeft, event: s,
-                text: s.rsvpDaysLeft === 0
-                    ? t('planner.alert_rsvp_today', { guests: s.waiting })
-                    : t('planner.alert_rsvp', { count: s.rsvpDaysLeft, guests: s.waiting }) })
-        }
-        if (s.withoutTable > 0 && s.daysLeft <= 30) {
-            alerts.push({ id: `${s.invitation.id}-tables`, level: 'high', urgency: s.daysLeft, event: s,
-                text: t('planner.alert_no_table', { count: s.withoutTable }) })
-        }
-        if (s.notSent > 0 && s.daysLeft <= 60) {
-            alerts.push({ id: `${s.invitation.id}-send`, level: 'medium', urgency: s.daysLeft, event: s,
-                text: t('planner.alert_not_sent', { count: s.notSent }) })
-        }
-        if (s.total === 0) {
-            alerts.push({ id: `${s.invitation.id}-guests`, level: 'medium', urgency: s.daysLeft, event: s,
-                text: t('planner.alert_no_guests') })
-        }
-        if (s.tables === 0 && s.confirmed > 0) {
-            alerts.push({ id: `${s.invitation.id}-map`, level: 'low', urgency: s.daysLeft, event: s,
-                text: t('planner.alert_no_tables') })
-        }
-    })
-
-    const weight = { high: 0, medium: 1, low: 2 }
-    return alerts.sort((a, b) => weight[a.level] - weight[b.level] || a.urgency - b.urgency)
+// Hora de inicio del evento: la primera del itinerario, en HH:mm para ordenar
+// la agenda. El itinerario ya viene ordenado por hora.
+export const startTimeOf = (s) => {
+    const first = s.itinerary.find(item => item.time)
+    const minutes = first ? minutesOf(first.time) : Number.MAX_SAFE_INTEGER
+    if (minutes === Number.MAX_SAFE_INTEGER) return { time: null, label: null, place: first?.place ?? null }
+    const hh = String(Math.floor(minutes / 60)).padStart(2, '0')
+    const mm = String(minutes % 60).padStart(2, '0')
+    return { time: `${hh}:${mm}`, label: first.time, place: first.place }
 }
