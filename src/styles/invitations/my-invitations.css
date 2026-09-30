@@ -374,6 +374,38 @@
     background: #fff;
 }
 
+/* Hero (AdsCarousel): se colapsa al pasar al dashboard del planner.
+   grid-template-rows 1fr -> 0fr anima la altura real sin medirla. */
+.inv-hero {
+    display: grid;
+    grid-template-rows: 1fr;
+    width: 100%;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        grid-template-rows 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s ease,
+        transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inv-hero-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.inv-hero--hidden {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .inv-hero {
+        transition: none;
+    }
+}
+
 @media (max-width: 750px) {
 
     .invitations-page-main-container {
@@ -534,4 +566,21 @@
     width: 100%;
     text-align: center;
   }
+}
+/* Espacio del encabezado donde PlannerDashboard monta su filtro de eventos */
+.inv-planner-filter {
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+    max-width: 280px;
+}
+
+.inv-planner-filter .ant-select {
+    width: 100%;
+}
+
+@media (max-width: 750px) {
+    .inv-planner-filter {
+        max-width: none;
+    }
 }
