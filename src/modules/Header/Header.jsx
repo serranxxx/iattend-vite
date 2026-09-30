@@ -19,6 +19,7 @@ import { useDashboardRealtime } from "../../context/DashboardRealtimeContext";
 import { PHONE_CODE_OPTIONS } from "../../helpers/assets/phoneCodes";
 import { PassesPill } from "./PassesPill";
 import { SupportTicketModal } from "./SupportTicketModal";
+import { advisorWhatsappUrl } from "../../helpers/contact";
 import { MobileActionsFab } from "./MobileActionsFab";
 
 const baseProd = "https://www.iattend.events"
@@ -182,7 +183,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
                             </Link>
                         )
                     })}
-                    <Link target='_blank' style={{ textDecoration: 'none' }} to="https://wa.me/6145338500" onClick={() => setOpenMenu(false)}>
+                    <Link target='_blank' style={{ textDecoration: 'none' }} to={advisorWhatsappUrl()} onClick={() => setOpenMenu(false)}>
                         <span className="mobile-nav-item mobile-nav-item--inactive">{t('header.contact')}</span>
                     </Link>
 

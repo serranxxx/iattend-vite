@@ -1940,6 +1940,32 @@
     "kpi_side_hint_event": "En este evento"
   },
   "lia": {
+    "blocks": {
+      "state": {
+        "creado": "por invitar",
+        "esperando": "sin respuesta",
+        "confirmado": "confirmado",
+        "asistente": "confirmado",
+        "rechazado": "no asistirá"
+      },
+      "table": "Mesa #{{number}}",
+      "seats": "{{seated}}/{{size}}",
+      "bar_mesas": "{{used}} de {{total}} lugares ocupados",
+      "bar_confirmaciones": "{{used}} de {{total}} confirmados",
+      "bar_pases": "{{used}} de {{total}} pases usados",
+      "rsvp_confirmados": "Confirmados",
+      "rsvp_esperando": "Esperando",
+      "rsvp_por_invitar": "Por invitar",
+      "rsvp_no_asistiran": "No asistirán",
+      "side_of": "Lado de {{name}}",
+      "guests_count_one": "{{count}} invitado",
+      "guests_count_other": "{{count}} invitados",
+      "no_side": "{{count}} invitados sin lado asignado",
+      "support_text": "El equipo de soporte de I attend te ayuda con esto.",
+      "support_whatsapp": "WhatsApp {{phone}}",
+      "support_draft": "Hola, necesito ayuda con mi evento en I attend.",
+      "se_confirmed": "{{confirmed}} de {{total}} confirmados"
+    },
     "prompts": {
       "summary": "Resumen del evento",
       "notifications": "Mis notificaciones",
@@ -1974,7 +2000,8 @@
     "input_label": "Mensaje para Lia",
     "send": "Enviar",
     "reset": "Reiniciar chat",
-    "agent_soon": "Agente (próximamente)",
+    "expand": "Pantalla completa",
+    "collapse": "Tamaño normal",
     "minimize": "Minimizar",
     "shortcuts": "Atajos rápidos",
     "disclaimer": "Lia puede cometer errores. Por favor verifica las respuestas.",

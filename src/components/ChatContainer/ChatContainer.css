@@ -35,6 +35,13 @@
     
 }
 
+.chat-morph-shell--open.chat-morph-shell--expanded {
+    /* Toda la altura de la ventana (menos el margen de 24px arriba y abajo)
+       y un 15% más de ancho que el panel normal (404px). */
+    width: calc(404px * 1.15);
+    height: calc(100dvh - 48px);
+}
+
 .chat-morph-shell--notif {
     width: 300px;
     height: 64px;

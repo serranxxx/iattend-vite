@@ -33,6 +33,9 @@ const isActivateKey = (e) => e.key === 'Enter' || e.key === ' '
 export const ChatContainer = () => {
     const { t } = useTranslation()
     const [open, setOpen] = useState(false)
+    // Pantalla completa de alto (el ancho se mantiene). Solo escritorio: en
+    // mobile el chat ya ocupa toda la pantalla.
+    const [expanded, setExpanded] = useState(false)
     const [mounted, setMounted] = useState(false)
     const [notifVisible, setNotifVisible] = useState(false)
     const [btnHovered, setBtnHovered] = useState(false)
@@ -149,7 +152,7 @@ export const ChatContainer = () => {
     return (
        <div
             ref={containerRef}
-            className={`chat-morph-shell chat-morph-shell--${morphState}`}
+            className={`chat-morph-shell chat-morph-shell--${morphState}${expanded && !isMobileViewport ? ' chat-morph-shell--expanded' : ''}`}
             style={hiddenOnMobile ? { display: 'none' } : isMobileOpen ? {
                 inset: 0,
                 width: '100vw',
@@ -212,7 +215,12 @@ export const ChatContainer = () => {
                 {/* Lia panel — visible when open */}
                 {mounted && (
                     <div className="chat-morph-panel">
-                        <Lia id={id} onMinimize={handleToggle} />
+                        <Lia
+                            id={id}
+                            onMinimize={handleToggle}
+                            expanded={expanded}
+                            onToggleExpand={isMobileViewport ? undefined : () => setExpanded(prev => !prev)}
+                        />
                     </div>
                 )}
             </div>

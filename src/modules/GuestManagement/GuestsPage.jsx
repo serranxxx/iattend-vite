@@ -215,6 +215,9 @@ export default function GuestsPage() {
             case 'open_guest_form':
                 setDrawerState({ currentGuest: null, onEditGuest: true, companions: [], visible: true })
                 break
+            case 'open_tables':
+                sethandleTables(true)
+                break
             case 'open_guest_detail': {
                 // Si Lia trajo al organizador desde otra pantalla, la lista
                 // todavía no carga: se espera a rowData sin descartar la acción.

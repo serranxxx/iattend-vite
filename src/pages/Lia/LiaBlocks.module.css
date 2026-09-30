@@ -1,0 +1,348 @@
+/* Bloques visuales de Lia. Mismo lenguaje que la demo del onboarding
+   (OnboardingWizard → LiaTarjeta): filas con avatar lila y barras verdes. */
+
+.blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color-50);
+}
+
+/* ── Lista de invitados ── */
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--sc-color);
+    font-size: 13px;
+    animation: blockIn 320ms ease both;
+}
+
+.row:nth-child(2) { animation-delay: 60ms; }
+.row:nth-child(3) { animation-delay: 120ms; }
+.row:nth-child(4) { animation-delay: 180ms; }
+.row:nth-child(n + 5) { animation-delay: 220ms; }
+
+.avatar {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #D1BEDD;
+    color: #1c3249;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-color);
+}
+
+.meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--text-color-50);
+    text-align: right;
+}
+
+.state {
+    font-style: normal;
+}
+
+.stateConfirmed { color: #43B75D; }
+.stateDeclined  { color: #D32F2F; }
+
+/* ── Barra ── */
+
+.track {
+    height: 8px;
+    border-radius: 99px;
+    background: var(--text-color-20);
+    overflow: hidden;
+}
+
+.fill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--light-green-500, #AAC187);
+    transform-origin: left;
+    animation: blockGrow 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.caption {
+    font-size: 12px;
+    color: var(--text-color-50);
+}
+
+/* ── Resumen por estado ── */
+
+.segments {
+    display: flex;
+    height: 8px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: var(--text-color-20);
+}
+
+.segments span {
+    height: 100%;
+    transform-origin: left;
+    animation: blockGrow 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.legend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--sc-color);
+    font-size: 12px;
+    color: var(--text-color-50);
+}
+
+.legendItem strong {
+    margin-left: auto;
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 99px;
+}
+
+.cConfirmed { background: #43B75D; }
+.cWaiting   { background: var(--light-green-500, #AAC187); }
+.cPending   { background: #D1BEDD; }
+.cDeclined  { background: #D32F2F; }
+
+/* ── Comparación por lado ── */
+
+.sides {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+}
+
+.side {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--sc-color);
+    animation: blockIn 320ms ease both;
+}
+
+.side:nth-child(2) { animation-delay: 80ms; }
+
+.sideHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.sideTotal {
+    font-size: 18px;
+    color: var(--text-color);
+}
+
+.sideStats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-color-50);
+}
+
+.sideStats li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sideStats strong {
+    margin-left: auto;
+    color: var(--text-color);
+}
+
+/* ── Side events ── */
+
+.sideEvent {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--sc-color);
+    animation: blockIn 320ms ease both;
+}
+
+.sideEventHead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.sideEventHead .count {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-color-50);
+}
+
+/* ── Atajo y soporte ── */
+
+.shortcut,
+.shortcutGhost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.shortcut {
+    background: #D1BEDD;
+    color: #1c3249;
+}
+
+.shortcutGhost {
+    justify-content: flex-start;
+    background: var(--sc-color);
+    border-color: var(--brand-color-100);
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.shortcut:hover,
+.shortcutGhost:hover {
+    transform: translateY(-1px);
+}
+
+.shortcut:focus-visible,
+.shortcutGhost:focus-visible {
+    outline: 2px solid var(--brand-color-500);
+    outline-offset: 2px;
+}
+
+.support {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--sc-color);
+}
+
+.supportText {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-color-80);
+}
+
+.supportActions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.supportActions .shortcut {
+    justify-content: flex-start;
+}
+
+/* ── Mesas ── */
+
+.table {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    row-gap: 6px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--sc-color);
+    font-size: 13px;
+    animation: blockIn 320ms ease both;
+}
+
+.table .name { grid-column: 1; }
+.table .count { grid-column: 2; font-size: 12px; color: var(--text-color-50); }
+.table .track { grid-column: 1 / -1; height: 6px; }
+.fillFull { background: var(--text-color-50); }
+
+@keyframes blockIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes blockGrow {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .row, .table, .side, .sideEvent, .fill, .segments span { animation: none; }
+}

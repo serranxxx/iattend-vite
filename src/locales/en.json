@@ -1940,6 +1940,32 @@
     "kpi_side_hint_event": "In this event"
   },
   "lia": {
+    "blocks": {
+      "state": {
+        "creado": "not invited",
+        "esperando": "no reply",
+        "confirmado": "confirmed",
+        "asistente": "confirmed",
+        "rechazado": "not attending"
+      },
+      "table": "Table #{{number}}",
+      "seats": "{{seated}}/{{size}}",
+      "bar_mesas": "{{used}} of {{total}} seats taken",
+      "bar_confirmaciones": "{{used}} of {{total}} confirmed",
+      "bar_pases": "{{used}} of {{total}} passes used",
+      "rsvp_confirmados": "Confirmed",
+      "rsvp_esperando": "Waiting",
+      "rsvp_por_invitar": "Not invited",
+      "rsvp_no_asistiran": "Not attending",
+      "side_of": "{{name}}'s side",
+      "guests_count_one": "{{count}} guest",
+      "guests_count_other": "{{count}} guests",
+      "no_side": "{{count}} guests without a side",
+      "support_text": "The I attend support team can help you with this.",
+      "support_whatsapp": "WhatsApp {{phone}}",
+      "support_draft": "Hi, I need help with my event on I attend.",
+      "se_confirmed": "{{confirmed}} of {{total}} confirmed"
+    },
     "prompts": {
       "summary": "Event summary",
       "notifications": "My notifications",
@@ -1974,7 +2000,8 @@
     "input_label": "Message for Lia",
     "send": "Send",
     "reset": "Restart chat",
-    "agent_soon": "Agent (coming soon)",
+    "expand": "Full screen",
+    "collapse": "Normal size",
     "minimize": "Minimize",
     "shortcuts": "Quick shortcuts",
     "disclaimer": "Lia can make mistakes. Please double-check her answers.",

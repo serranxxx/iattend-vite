@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Input } from 'antd'
-import { Send, ThumbsUp, ThumbsDown, RotateCcw, Minus, Plus, Copy, Check, MousePointer2, Lock } from 'lucide-react'
+import { Send, ThumbsUp, ThumbsDown, RotateCcw, Minus, Plus, Copy, Check, Maximize2, Minimize2, Lock } from 'lucide-react'
 import axios from 'axios'
 import { useLia } from '../../context/LiaContext'
 import { supabase } from '../../lib/supabase'
 import { liaHeaders, leerSSE } from './liaApi'
+import { LiaBlocks } from './LiaBlocks'
+import { DESTINOS } from './liaDestinos'
 import './lia.css'
 
 const API = import.meta.env.VITE_API_URL
@@ -104,7 +106,7 @@ const TypingIndicator = ({ label }) => (
     </div>
 )
 
-const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback, t }) => {
+const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback, onAtajo, t }) => {
     const isUser = msg.role === 'user'
     const safeContent = typeof msg.content === 'string'
         ? msg.content
@@ -130,13 +132,14 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback, t })
 
     // Mientras llega el primer pedazo del stream no hay nada que mostrar:
     // el indicador de "escribiendo" ocupa su lugar.
-    if (msg.streaming && !safeContent) return null
+    if (msg.streaming && !safeContent && !msg.blocks?.length) return null
 
     return (
         <div className={`lia-message-row ${isUser ? 'user' : ''}`}>
 
             <div className={`lia-bubble ${isUser ? 'user' : 'assistant'}`}>
                 {isUser ? safeContent : renderMarkdown(safeContent)}
+                {!isUser && <LiaBlocks blocks={msg.blocks} onAtajo={onAtajo} />}
                 {!isUser && !msg.streaming && (msg.message_id || msg.action_id) && (
                     <div style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', gap: 4 }}>
@@ -242,20 +245,26 @@ const ActionCard = ({ action, onApprove, onStartReject, onConfirmReject, onCance
 
 const CreditCircle = ({ freeRemaining, freeLimit, paidBalance, t }) => {
     const [hovered, setHovered] = useState(false)
-    const pct = freeLimit > 0 ? freeRemaining / freeLimit : 1
-    const radius = 9
-    const stroke = 2.5
+    // El anillo es lo que queda disponible (gratis del día + comprados). Si
+    // solo contara los gratis, con la cuota agotada y saldo comprado se vería
+    // vacío aunque Lia siga respondiendo.
+    const disponible = freeRemaining + paidBalance
+    const capacidad = freeLimit + paidBalance
+    const pct = capacidad > 0 ? Math.max(0, Math.min(1, disponible / capacidad)) : 1
+    // Mismo tamaño que el botón de atajos de al lado (25px)
+    const size = 25
+    const stroke = 3
+    const radius = (size - stroke) / 2
     const circumference = 2 * Math.PI * radius
     const offset = circumference * (1 - pct)
-    const color = pct > 0.5 ? 'var(--brand-color-500)'
-        : pct > 0.2 ? '#faad14'
-            : '#ff4d4f'
+    // Lila de Lia; en rojo suave cuando queda poco
+    const color = pct > 0.2 ? 'var(--brand-color-800, #D1BEDD)' : '#E57373'
 
     const resumen = `${freeRemaining} ${t('lia.tokens_today', { limit: freeLimit })}${paidBalance > 0 ? ` · +${paidBalance} ${t('lia.tokens_bought')}` : ''}`
 
     return (
         <div
-            style={{ position: 'relative', cursor: 'default', width: 25, height: 25, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ position: 'relative', cursor: 'default', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onFocus={() => setHovered(true)}
@@ -264,34 +273,24 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance, t }) => {
             role="img"
             aria-label={resumen}
         >
-            <svg width="25" height="25" style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
+            <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
                 <circle
-                    cx="12.5" cy="12.5" r={radius}
+                    cx={size / 2} cy={size / 2} r={radius}
                     fill="none"
-                    stroke="var(--color-background-secondary)"
+                    stroke="var(--text-color-20)"
                     strokeWidth={stroke}
                 />
                 <circle
-                    cx="12.5" cy="12.5" r={radius}
+                    cx={size / 2} cy={size / 2} r={radius}
                     fill="none"
                     stroke={color}
                     strokeWidth={stroke}
                     strokeDasharray={circumference}
                     strokeDashoffset={offset}
                     strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+                    style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.4s ease' }}
                 />
             </svg>
-            {paidBalance > 0 && (
-                <div style={{
-                    position: 'absolute',
-                    top: 0, right: 0,
-                    width: '6px', height: '6px',
-                    background: 'var(--brand-color-500)',
-                    borderRadius: '99px',
-                    border: '1px solid white',
-                }} />
-            )}
             {hovered && (
                 <div style={{
                     position: 'absolute',
@@ -315,7 +314,7 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance, t }) => {
                     </div>
                     {paidBalance > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '99px', background: 'var(--brand-color-500)', flexShrink: 0 }} />
+                            <div style={{ width: 8, height: 8, borderRadius: '99px', background: 'var(--brand-color-800, #D1BEDD)', flexShrink: 0 }} />
                             <span style={{ fontSize: 12, color: 'var(--text-color)' }}>
                                 <strong>+{paidBalance}</strong>
                                 <span style={{ color: 'var(--text-color-50)' }}> {t('lia.tokens_bought')}</span>
@@ -433,7 +432,7 @@ const ErrorState = ({ icon = '⚠️', message }) => (
 
 // ── Main component ───────────────────────────────────────────
 
-export default function Lia({ id: idProp, onMinimize }) {
+export default function Lia({ id: idProp, onMinimize, expanded = false, onToggleExpand }) {
     const { t, i18n } = useTranslation()
     const [searchParams] = useSearchParams()
     const { pathname } = useLocation()
@@ -463,6 +462,7 @@ export default function Lia({ id: idProp, onMinimize }) {
     const [eventData, setEventData] = useState(null)
 
     const bottomRef = useRef(null)
+    const messagesRef = useRef(null)
     const textareaRef = useRef(null)
     const promptMenuRef = useRef(null)
     const abortRef = useRef(null)
@@ -470,10 +470,21 @@ export default function Lia({ id: idProp, onMinimize }) {
 
     const locked = liaIncluded === false
 
+    // Cada mensaje del organizador y cada pedazo de la respuesta de Lia llevan
+    // la conversación al final. Se mueve el contenedor directamente: con
+    // scrollIntoView suave, cada chunk del stream interrumpía la animación
+    // anterior y nunca llegaba abajo. Mientras Lia escribe el salto es
+    // instantáneo; con un mensaje completo, suave. El rAF espera a que se
+    // pinte el contenido nuevo (texto o bloques) para medir su altura real.
     useEffect(() => {
         if (!conversationStarted) return
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }, [messages, pendingActions, loading, conversationStarted])
+        const el = messagesRef.current
+        if (!el) return
+        const frame = requestAnimationFrame(() => {
+            el.scrollTo({ top: el.scrollHeight, behavior: loading ? 'auto' : 'smooth' })
+        })
+        return () => cancelAnimationFrame(frame)
+    }, [messages, pendingActions, loading, working, conversationStarted])
 
     // Al desmontar (cerrar el panel) se corta la respuesta en curso.
     useEffect(() => () => abortRef.current?.abort('unmount'), [])
@@ -510,6 +521,17 @@ export default function Lia({ id: idProp, onMinimize }) {
         if (!actions?.length) return
         actions.forEach(action => setUiAction(action))
         if (!pathname.startsWith('/dashboard/guests')) navigate(`/dashboard/guests?id=${id}`)
+    }
+
+    // Botón de atajo de un bloque: lleva a la pantalla y, si hace falta, deja
+    // una ui_action para que GuestsPage abra la pestaña, el formulario o las
+    // mesas. En mobile el chat tapa toda la pantalla, así que se minimiza.
+    const handleAtajo = (destino) => {
+        const d = DESTINOS[destino]
+        if (!d) return
+        if (d.uiAction) setUiAction(d.uiAction)
+        navigate(d.sinId ? d.path : `${d.path}?id=${id}`)
+        if (window.innerWidth <= 480) onMinimize?.()
     }
 
     useEffect(() => {
@@ -559,10 +581,12 @@ export default function Lia({ id: idProp, onMinimize }) {
 
         // Los errores locales no son del modelo: reenviarlos le haría creer
         // que él los escribió.
+        // historyContent = texto + resumen de los bloques: sin eso, Lia no
+        // sabría a quién acaba de mostrar en una lista.
         const history = messages
             .filter(m => !m.local && !m.streaming)
             .slice(-6)
-            .map(({ role, content }) => ({ role, content }))
+            .map(({ role, content, historyContent }) => ({ role, content: historyContent ?? content }))
 
         setMessages(prev => [...prev,
         { role: 'user', content: textToSend },
@@ -576,6 +600,7 @@ export default function Lia({ id: idProp, onMinimize }) {
         const timer = setTimeout(() => ctrl.abort('timeout'), TIMEOUT_MS)
 
         let texto = ''
+        let blocks = []
         let final = null
         let failed = false
 
@@ -616,9 +641,14 @@ export default function Lia({ id: idProp, onMinimize }) {
                 if (event.type === 'text') {
                     texto += event.text ?? ''
                     setWorking(false)
-                    setStreamingMessage({ role: 'assistant', content: texto, streaming: true })
+                    setStreamingMessage({ role: 'assistant', content: texto, blocks, streaming: true })
+                } else if (event.type === 'block' && event.block) {
+                    blocks = [...blocks, event.block]
+                    setWorking(false)
+                    setStreamingMessage({ role: 'assistant', content: texto, blocks, streaming: true })
                 } else if (event.type === 'replace') {
                     texto = ''
+                    blocks = []
                     setStreamingMessage({ role: 'assistant', content: '', streaming: true })
                 } else if (event.type === 'tool_start') {
                     setWorking(true)
@@ -643,8 +673,8 @@ export default function Lia({ id: idProp, onMinimize }) {
 
         if (!final || failed) {
             // Si alcanzó a llegar texto, se conserva; si no, se avisa.
-            setStreamingMessage(texto.trim() && !failed
-                ? { role: 'assistant', content: texto }
+            setStreamingMessage((texto.trim() || blocks.length) && !failed
+                ? { role: 'assistant', content: texto, blocks }
                 : {
                     role: 'assistant',
                     content: ctrl.signal.reason === 'timeout' ? t('lia.error_timeout') : t('lia.error_generic'),
@@ -653,7 +683,13 @@ export default function Lia({ id: idProp, onMinimize }) {
             return
         }
 
-        setStreamingMessage({ role: 'assistant', content: texto, message_id: final.message_id })
+        setStreamingMessage({
+            role: 'assistant',
+            content: texto,
+            blocks: final.blocks ?? blocks,
+            historyContent: final.history_content,
+            message_id: final.message_id,
+        })
         if (final.credits_remaining != null) {
             setCredits(prev => ({
                 ...prev,
@@ -823,7 +859,6 @@ export default function Lia({ id: idProp, onMinimize }) {
             <div className="lia-main">
                 <header className="lia-chat-header">
                     <span className="lia-header-title">✦ Lia</span>
-                    <span className="lia-beta-badge">Beta</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
                         {minimizeButton}
                     </div>
@@ -833,7 +868,7 @@ export default function Lia({ id: idProp, onMinimize }) {
         </div>
     )
 
-    const streamingVisible = messages.some(m => m.streaming && m.content)
+    const streamingVisible = messages.some(m => m.streaming && (m.content || m.blocks?.length))
     const canSend = Boolean(input.trim()) && !loading && !locked
 
     return (
@@ -842,7 +877,6 @@ export default function Lia({ id: idProp, onMinimize }) {
                 <header className="lia-chat-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span className="lia-header-title">✦ Lia</span>
-                        <span className="lia-beta-badge">Beta</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
                         <Button
@@ -853,14 +887,17 @@ export default function Lia({ id: idProp, onMinimize }) {
                             aria-label={t('lia.reset')}
                             style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
                         />
-                        <Button
-                            size='small'
-                            icon={<MousePointer2 size={12} />}
-                            title={t('lia.agent_soon')}
-                            aria-label={t('lia.agent_soon')}
-                            disabled
-                            style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
-                        />
+                        {onToggleExpand && (
+                            <Button
+                                size='small'
+                                icon={expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                                onClick={onToggleExpand}
+                                title={expanded ? t('lia.collapse') : t('lia.expand')}
+                                aria-label={expanded ? t('lia.collapse') : t('lia.expand')}
+                                aria-pressed={expanded}
+                                style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
+                            />
+                        )}
                         {minimizeButton}
                     </div>
                 </header>
@@ -895,12 +932,13 @@ export default function Lia({ id: idProp, onMinimize }) {
                     </div>
                 ) : (
                     <div
+                        ref={messagesRef}
                         className={`lia-messages-area scroll-invitation${pendingActions.length > 0 ? ' lia-messages-area--actions' : ''}`}
                         role="log"
                         aria-live="polite"
                         aria-label={t('lia.messages_label')}
                     >
-                        {messages.map((msg, i) => <MessageBubble key={i} msg={msg} t={t} onFeedback={handleFeedback} onFeedbackNote={handleFeedbackNote} onActionFeedback={handleActionFeedback} />)}
+                        {messages.map((msg, i) => <MessageBubble key={i} msg={msg} t={t} onAtajo={handleAtajo} onFeedback={handleFeedback} onFeedbackNote={handleFeedbackNote} onActionFeedback={handleActionFeedback} />)}
                         {loading && !streamingVisible && <TypingIndicator label={working ? t('lia.working') : undefined} />}
                         <div ref={bottomRef} />
                     </div>
@@ -986,8 +1024,7 @@ export default function Lia({ id: idProp, onMinimize }) {
                                 />
 
                                 <Button
-                                    style={{ maxHeight: '25px', width: '25px' }}
-                                    className={canSend ? 'primarybutton--active' : 'primarybutton'}
+                                    className='lia-send-btn'
                                     icon={<Send size={12} />}
                                     onClick={() => handleSendMessage()}
                                     disabled={!canSend}

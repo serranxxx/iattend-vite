@@ -167,16 +167,6 @@
     letter-spacing: 0.3px;
 }
 
-.lia-beta-badge {
-    font-size: 10px;
-    font-weight: 600;
-    color: #fff;
-    background: var(--brand-color-500);
-    padding: 2px 6px;
-    border-radius: 99px;
-    letter-spacing: 0.04em;
-}
-
 .lia-credits-badge {
     font-size: 11px;
     font-weight: 600;
@@ -454,6 +444,33 @@
     outline-offset: 2px;
 }
 
+/* Enviar: siempre visible para que la fila no termine en un hueco. Lila
+   cuando hay texto, gris tenue cuando está deshabilitado (el gris por defecto
+   de antd casi no se ve sobre el fondo oscuro de Lia). */
+.lia-page .lia-send-btn.ant-btn {
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    background: var(--brand-color-800, #D1BEDD);
+    color: #1c3249;
+    box-shadow: none;
+}
+
+.lia-page .lia-send-btn.ant-btn:not(:disabled):hover {
+    background: var(--brand-color-800, #D1BEDD);
+    color: #1c3249;
+    filter: brightness(1.08);
+}
+
+.lia-page .lia-send-btn.ant-btn:disabled {
+    background: var(--text-color-20);
+    color: var(--text-color-50);
+    opacity: 1;
+}
+
 .lia-typing-label {
     font-size: 12px;
     color: var(--text-color-50);
@@ -605,7 +622,9 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding-bottom: 168px;
+    /* Lo que ocupa el footer (caja de texto + aviso), que va encima en
+       absoluto: así el saludo queda centrado en el espacio visible. */
+    padding-bottom: 151px;
     box-sizing: border-box;
     background-color: var(--ft-color);
     background-image:
@@ -845,7 +864,6 @@
 }
 
 /* Texto oscuro sobre acentos lila (antes era blanco sobre lila) */
-.lia-page .lia-beta-badge,
 .lia-page .lia-context-chip-dot,
 .lia-page .lia-prompt-plus-btn:hover,
 .lia-page .lia-prompt-plus-btn.active {

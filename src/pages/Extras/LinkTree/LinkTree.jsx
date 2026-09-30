@@ -9,6 +9,7 @@ import { FaInstagram } from "react-icons/fa";
 import { supabase } from '../../../lib/supabase'
 import ReactHost from '../../../components/Host/ReactHost'
 import { FooterApp } from '../../../modules/Footer/FooterApp'
+import { advisorWhatsappUrl } from '../../../helpers/contact'
 const baseProd = "https://www.iattend.events"
 
 export const LinkTree = () => {
@@ -102,7 +103,7 @@ export const LinkTree = () => {
         </div>
 
         <div className='lt-buttons-container'>
-          <Link to={`https://wa.me/6145338500?text=${encodeURIComponent("Hola, quiero cotizar una invitación digital :)")}`} target='_blank' style={{ width: '100%' }}>
+          <Link to={advisorWhatsappUrl("Hola, quiero cotizar una invitación digital :)")} target='_blank' style={{ width: '100%' }}>
             <Button icon={<SiWhatsapp size={18} />} className='primarybutton--active lt-cta-button'>Platica con nosotros</Button>
           </Link>
 
