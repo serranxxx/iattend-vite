@@ -5,6 +5,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 import { fetchAdminVentas } from '../salesAdminApi'
 import { fetchGastosFijos, sumarMeta } from '../gastosFijosApi'
+import { fetchStripeComisiones } from '../stripeAdminApi'
 import { calcularCargosPorVenta, calcularKpis, formatCurrency, netoDeVenta } from '../ventasCalculos'
 import { useContador } from '../useContador'
 import { BandejaCard, ReportesCard, SaveTheDateCard } from './HoyActividad'
@@ -93,6 +94,9 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, conversations, i
     // Punto de equilibrio sin IVA (lo que de verdad queda) o con IVA (lo cobrado
     // menos comisiones). La meta no cambia: son los gastos del mes.
     const [conIva, setConIva] = useState(false)
+    // Comisión de Stripe del mes por día ({ 'YYYY-MM-DD': monto }). Se resta del
+    // ingreso: es lo que Stripe se queda de cada cobro en línea.
+    const [stripePorDia, setStripePorDia] = useState({})
 
     const periodo = useMemo(() => ({ anio: dayjs().year(), mes: dayjs().month() + 1 }), [])
 
@@ -117,6 +121,12 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, conversations, i
         }
 
         cargar()
+
+        // Aparte: si Stripe no responde, Hoy se ve igual, solo sin descontarla.
+        fetchStripeComisiones(periodo)
+            .then(({ data }) => { if (!cancelado) setStripePorDia(data.porDia ?? {}) })
+            .catch(error => console.error('No se pudo leer la comisión de Stripe:', error.response?.data || error.message))
+
         return () => { cancelado = true }
     }, [canSeeVentas, periodo])
 
@@ -140,7 +150,8 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, conversations, i
         }
     }, [ventasDelAnio])
 
-    const ingreso = conIva ? kpis.ingresoNeto + kpis.iva : kpis.ingresoNeto
+    const comisionStripe = Object.values(stripePorDia).reduce((acc, v) => acc + v, 0)
+    const ingreso = (conIva ? kpis.ingresoNeto + kpis.iva : kpis.ingresoNeto) - comisionStripe
     const meta = gastos ? sumarMeta(gastos, kpis.ventasCount) : 0
     const avance = meta > 0 ? Math.min(1, ingreso / meta) : 0
 
@@ -153,6 +164,10 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, conversations, i
     // Neto acumulado día por día, del 1 a hoy.
     const serie = useMemo(() => {
         const porDia = Array(diaDelMes).fill(0)
+        Object.entries(stripePorDia).forEach(([fecha, monto]) => {
+            const dia = Number(fecha.slice(8, 10))
+            if (dia <= diaDelMes) porDia[dia - 1] -= monto
+        })
         ventas.forEach(v => {
             const dia = new Date(v.fecha_venta).getDate()
             if (dia <= diaDelMes) {
@@ -160,7 +175,7 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, conversations, i
             }
         })
         return porDia.reduce((acc, valor, i) => [...acc, (acc[i - 1] ?? 0) + valor], [])
-    }, [ventas, cargosPorVenta, diaDelMes, conIva])
+    }, [ventas, cargosPorVenta, diaDelMes, conIva, stripePorDia])
 
     const ventasOrdenadas = useMemo(
         () => [...ventas].sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta)),
