@@ -1,133 +1,33 @@
-/* ── Page shell ──────────────────────────────────────────── */
+/* ═══ Lia ══════════════════════════════════════════════════════
+   Tema oscuro propio. Casi todo consume variables, así que el tema es
+   redefinirlas aquí (los bloques de LiaBlocks.module.css las heredan). */
 .lia-page {
+    --ft-color: #1E1926;            /* superficies / tarjetas */
+    --sc-color: #161218;            /* fondo base (negro con tinte morado) */
+    --text-color: #F5F3F7;
+    --text-color-80: #F5F3F7CC;
+    --text-color-50: #F5F3F780;
+    --text-color-20: #F5F3F733;
+    --brand-color-100: #2C2536;     /* bordes y superficies sutiles */
+    --brand-color-200: #352D41;
+    --brand-color-300: #413950;
+    --brand-color-500: #D2BFDD;     /* lila de Lia */
+    --brand-color-800: #E0D3E8;     /* texto acento sobre fondos oscuros */
+    --lia-glass: rgba(30, 25, 38, 0.82);
+
     display: flex;
     flex-direction: row;
     height: 100dvh;
     width: 100%;
-    background-color: var(--sc-color);
     overflow: hidden;
     position: relative;
-}
-
-/* ── Desktop sidebar ─────────────────────────────────────── */
-.lia-sidebar {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    max-height: 99vh;
-    position: absolute;
-    box-sizing: border-box;
-    padding: 8px;
-}
-
-/* Shared sidebar content (desktop column + mobile Drawer) */
-.lia-sidebar-inner {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    background-color: transparent;
-    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
-    min-width: 260px;
-    border-radius: 24px;
-    max-width: 260px;
-    backdrop-filter: blur(12px);
-
-}
-
-.lia-sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 16px 12px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--brand-color-100);
-}
-
-.lia-sidebar-actions {
-    padding: 12px 12px 8px;
-    flex-shrink: 0;
-}
-
-.lia-sessions-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 4px 8px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.lia-sessions-empty {
-    font-size: 12px;
-    color: var(--text-color-50);
-    text-align: center;
-    padding: 24px 0;
-}
-
-.lia-session-item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
-    padding: 9px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-}
-
-.lia-session-info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    overflow: hidden;
-}
-
-.lia-session-menu-btn {
-    flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.15s;
-    width: 24px !important;
-    height: 24px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: var(--text-color-50) !important;
-}
-
-.lia-session-item:hover .lia-session-menu-btn,
-.lia-session-item.active .lia-session-menu-btn {
-    opacity: 1;
-}
-
-.lia-session-item:hover {
-    background-color: var(--sc-color);
-}
-
-.lia-session-item.active {
-    background-color: var(--brand-color-100);
-}
-
-.lia-session-title {
-    font-size: 13px;
-    font-weight: 500;
     color: var(--text-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* Fondo de puntos con halo morado arriba */
+    background:
+        radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1.5px) 0 0 / 22px 22px,
+        radial-gradient(120% 55% at 50% 0%, #2E2440 0%, #161218 70%) #161218;
 }
 
-.lia-session-date {
-    font-size: 11px;
-    color: var(--text-color-50);
-}
-
-/* ── Main chat area ──────────────────────────────────────── */
 .lia-main {
     flex: 1;
     display: flex;
@@ -138,159 +38,203 @@
     position: relative;
 }
 
+/* Marca ✦ de Lia: en el header (28px) y junto a cada respuesta (24px) */
+.lia-mark {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    background: var(--brand-color-100);
+    color: var(--brand-color-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
 .lia-chat-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 0 16px;
-    height: 52px;
+    height: 56px;
     flex-shrink: 0;
-    background-color: var(--ft-color);
     border-bottom: 1px solid var(--brand-color-100);
+    background: rgba(30, 25, 38, 0.6);
+    backdrop-filter: blur(8px);
     box-sizing: border-box;
+    position: relative;
+    z-index: 2;
 }
 
-.lia-chat-title {
-    font-size: 14px;
-    font-weight: 600;
+.lia-chat-header .lia-mark {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    background: var(--brand-color-500);
+    color: #161218;
+}
+
+.lia-header-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    min-width: 0;
+}
+
+.lia-header-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
     color: var(--text-color);
+}
+
+.lia-header-sub {
+    font-size: 11px;
+    color: var(--text-color-50);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* ── Shared header elements ──────────────────────────────── */
-.lia-header-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-color);
-    letter-spacing: 0.3px;
-}
-
-.lia-credits-badge {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--brand-color-800);
-    background-color: var(--brand-color-100);
-    padding: 3px 8px;
-    border-radius: 99px;
-    white-space: nowrap;
-}
-
-/* ── Messages area ───────────────────────────────────────── */
-.lia-messages-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 16px 156px;
+.lia-header-actions {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-sizing: border-box;
-    background-color: var(--ft-color);
-    background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
-        radial-gradient(ellipse at center, #EBE6F180, #FFFFFF);
-    background-size: 20px 20px, 20px 20px, 200% 100%;
-    background-position: 0 0, 0 0, 0% 50%;
-    animation: lia-drift 6s ease-in-out infinite;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
 }
 
-@keyframes lia-drift {
-    0% {
-        background-position: 0 0, 0 0, 0% 50%;
-    }
-
-    50% {
-        background-position: 0 0, 0 0, 100% 50%;
-    }
-
-    100% {
-        background-position: 0 0, 0 0, 0% 50%;
-    }
-}
-
-/* ── Message bubbles ─────────────────────────────────────── */
-.lia-message-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-}
-
-.lia-message-row.user {
-    flex-direction: row-reverse;
-}
-
-.lia_cont_img {
-    width: 16px;
-    height: 16px;
+/* Botón de icono sin caja: header y herramientas de cada respuesta */
+.lia-icon-btn {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-color-50);
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s, color 0.15s;
 }
 
-.lia-avatar {
-    height: 100%;
-    /* width: 100%; */
-    object-fit: cover;
+.lia-icon-btn:hover,
+.lia-icon-btn.is-pressed {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-color);
+}
+
+.lia-icon-btn.is-done { color: #43B75D; }
+
+.lia-icon-btn:focus-visible,
+.lia-plus-btn:focus-visible,
+.lia-send-btn:focus-visible,
+.lia-cta-btn:focus-visible,
+.lia-pill-btn:focus-visible,
+.lia-token-pill:focus-visible {
+    outline: 2px solid var(--brand-color-500);
+    outline-offset: 2px;
+}
+
+/* ── Conversación ────────────────────────────────────────── */
+.lia-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    /* Lo que ocupa el footer (caja de texto + aviso), que va encima en absoluto */
+    padding: 20px 16px 168px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+.lia-messages-area--actions {
+    padding-bottom: 200px;
+}
+
+/* Turno de Lia: marca a la izquierda y respuesta a todo el ancho */
+.lia-turn {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    animation: lia-in 240ms ease both;
+}
+
+.lia-turn--typing {
+    align-items: center;
+}
+
+.lia-turn--user {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .lia-bubble {
-    max-width: 72%;
-    padding: 10px 14px;
-    border-radius: 16px;
+    max-width: 80%;
+    padding: 9px 14px;
+    border-radius: 18px;
+    border-bottom-right-radius: 6px;
+    background: var(--brand-color-500);
+    color: #161218;
     font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.lia-answer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding-top: 1px;
     line-height: 1.55;
     color: var(--text-color);
     word-break: break-word;
-    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.lia-bubble.assistant {
-    background-color: var(--ft-color);
-    border-bottom-left-radius: 4px;
-    border: 1px solid var(--brand-color-100);
-}
+.lia-answer-text p { margin: 0 0 4px; }
+.lia-answer-text p:last-child { margin-bottom: 0; }
+.lia-answer-text ul { margin: 4px 0; padding-left: 18px; }
+.lia-answer-text li { margin-bottom: 2px; }
+.lia-answer-text strong { font-weight: 700; }
+.lia-answer-text a { color: var(--brand-color-800); }
 
-.lia-bubble.user {
-    background-color: var(--brand-color-500);
-    color: var(--ft-color);
-    border-bottom-right-radius: 4px;
-}
-
-.lia-bubble p {
-    margin: 0 0 4px;
-}
-
-.lia-bubble p:last-child {
-    margin-bottom: 0;
-}
-
-.lia-bubble ul {
-    margin: 4px 0;
-    padding-left: 18px;
-}
-
-.lia-bubble li {
-    margin-bottom: 2px;
-}
-
-/* ── Typing indicator ────────────────────────────────────── */
-.lia-typing-row {
+.lia-answer-tools {
     display: flex;
-    align-items: flex-end;
-    gap: 8px;
-
+    gap: 2px;
+    margin-left: -6px;
 }
 
-.lia-typing-bubble {
-    background-color: var(--ft-color);
-    border: 1px solid var(--brand-color-100);
-    border-radius: 16px;
-    border-bottom-left-radius: 4px;
-    padding: 10px 14px;
+.lia-page .lia-feedback-note.ant-input,
+.lia-page .lia-feedback-note textarea {
+    background: var(--ft-color);
+    border-color: var(--brand-color-100);
+    color: var(--text-color);
+    border-radius: 12px;
+}
+
+.lia-page .lia-feedback-note::placeholder,
+.lia-page .lia-feedback-note textarea::placeholder {
+    color: var(--text-color-50);
+}
+
+/* ── Escribiendo ─────────────────────────────────────────── */
+.lia-typing {
     display: flex;
     align-items: center;
+    gap: 10px;
+}
+
+.lia-typing-dots {
+    display: flex;
     gap: 4px;
 }
 
@@ -298,34 +242,29 @@
     width: 6px;
     height: 6px;
     border-radius: 99px;
-    background-color: var(--brand-color-500);
-    animation: lia-bounce 1.2s infinite ease-in-out;
+    background: var(--brand-color-500);
+    animation: lia-pulse 1.2s infinite ease-in-out;
 }
 
-.lia-typing-dot:nth-child(2) {
-    animation-delay: 0.2s;
+.lia-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.lia-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.lia-typing-label {
+    font-size: 12px;
+    color: var(--text-color-50);
 }
 
-.lia-typing-dot:nth-child(3) {
-    animation-delay: 0.4s;
+@keyframes lia-pulse {
+    0%, 80%, 100% { opacity: 0.4; }
+    40% { opacity: 1; }
 }
 
-@keyframes lia-bounce {
-
-    0%,
-    80%,
-    100% {
-        transform: translateY(0);
-        opacity: 0.4;
-    }
-
-    40% {
-        transform: translateY(-5px);
-        opacity: 1;
-    }
+@keyframes lia-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
 }
 
-/* ── Action cards ────────────────────────────────────────── */
+/* ── Acción pendiente ────────────────────────────────────── */
 .lia-actions-area {
     position: absolute;
     bottom: 0;
@@ -334,232 +273,306 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 0 16px 16px;
+    padding: 0 12px 12px;
     z-index: 9;
 }
 
 .lia-action-card {
-    background-color: var(--ft-color);
+    background: var(--ft-color);
     border: 1px solid var(--brand-color-300);
-    border-radius: 12px;
-    padding: 12px 14px;
+    border-radius: 16px;
+    padding: 14px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     gap: 12px;
-    /* margin-bottom: 128px; */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    animation: lia-in 240ms ease both;
+}
+
+.lia-action-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--brand-color-800);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .lia-action-text {
-    font-size: 13px;
+    font-size: 14px;
+    line-height: 1.4;
     color: var(--text-color);
-    flex: 1;
 }
 
 .lia-action-buttons {
     display: flex;
-    gap: 6px;
-    flex-shrink: 0;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
-/* ── Footer ──────────────────────────────────────────────── */
+.lia-pill-btn {
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: filter 0.15s, background 0.15s;
+}
+
+.lia-pill-btn--ghost {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: var(--text-color-80);
+}
+
+.lia-pill-btn--ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.lia-pill-btn--primary {
+    padding: 0 18px;
+    border: none;
+    background: var(--light-green-500, #AAC187);
+    color: #161218;
+}
+
+.lia-pill-btn--primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+}
+
+.lia-pill-btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+/* ── Footer / caja de texto ──────────────────────────────── */
 .lia-footer {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
+    padding: 16px 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     box-sizing: border-box;
     z-index: 10;
-    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
+    /* La conversación se desvanece detrás de la caja y del aviso */
+    background: linear-gradient(to bottom, rgba(22, 18, 24, 0) 0, #161218 56px);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lia-footer--hidden {
-    bottom: -350px;
+    transform: translateY(110%);
+    pointer-events: none;
 }
 
-
 .lia-input-card {
-    background: #FFFFFF99;
-    border: 1px solid #ebebeb;
-    border-radius: 24px 24px 16px 16px;
-    padding: 10px 12px 10px;
-    padding-bottom: 24px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+    padding: 14px 12px 10px;
+    border-radius: 20px;
+    background: var(--lia-glass);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(12px);
 }
 
-.lia-context-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--sc-color);
-    border: 0.5px solid var(--brand-color-100);
-    border-radius: 99px;
-    padding: 4px;
-    padding-right: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-color-80);
-    width: fit-content;
+/* El textarea no dibuja su propio outline: el foco se ve en la tarjeta */
+.lia-input-card:has(.lia-textarea:focus-visible) {
+    border-color: rgba(210, 191, 221, 0.35);
 }
 
-.lia-context-chip-dot {
-    width: 18px;
-    height: 18px;
-    border-radius: 99px;
-    background: var(--brand-color-500);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 9px;
-    flex-shrink: 0;
+.lia-textarea-wrap {
+    position: relative;
+    padding: 0 4px;
 }
 
 .lia-textarea {
     width: 100%;
+    min-height: 44px;
     resize: none;
     border: none;
     padding: 0;
+    font-family: inherit;
     font-size: 14px;
+    line-height: 1.5;
     color: var(--text-color);
     background: transparent;
     box-sizing: border-box;
-    line-height: 1.5;
-    min-height: 22px;
+    display: block;
 }
 
-.lia-textarea:focus {
-    outline: none;
-}
-
-/* El textarea no dibuja su propio outline: el foco de teclado se ve en la tarjeta */
-.lia-input-card:has(.lia-textarea:focus-visible) {
-    outline: 2px solid var(--brand-color-500);
-    outline-offset: 2px;
-}
-
-/* Enviar: siempre visible para que la fila no termine en un hueco. Lila
-   cuando hay texto, gris tenue cuando está deshabilitado (el gris por defecto
-   de antd casi no se ve sobre el fondo oscuro de Lia). */
-.lia-page .lia-send-btn.ant-btn {
-    width: 25px;
-    height: 25px;
-    min-width: 25px;
-    padding: 0;
-    border: none;
-    border-radius: 99px;
-    background: var(--brand-color-800, #D1BEDD);
-    color: #1c3249;
-    box-shadow: none;
-}
-
-.lia-page .lia-send-btn.ant-btn:not(:disabled):hover {
-    background: var(--brand-color-800, #D1BEDD);
-    color: #1c3249;
-    filter: brightness(1.08);
-}
-
-.lia-page .lia-send-btn.ant-btn:disabled {
-    background: var(--text-color-20);
-    color: var(--text-color-50);
-    opacity: 1;
-}
-
-.lia-typing-label {
-    font-size: 12px;
-    color: var(--text-color-50);
-    margin-left: 8px;
-    align-self: center;
-}
-
-.lia-cta-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+.lia-textarea:focus { outline: none; }
+.lia-textarea::placeholder { color: var(--text-color-50); }
 
 .lia-textarea:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-.lia-textarea::placeholder {
-    color: var(--text-color-50);
-}
-
-.lia-disclaimer {
+.lia-textarea-lock {
     position: absolute;
-    
-    font-size: 10px;
+    right: 4px;
+    bottom: 4px;
     color: var(--text-color-50);
-    text-align: center;
     pointer-events: none;
-    z-index: 999;
-
-    bottom: 5%;
-    left: 50%;
-    width: 100%;
-    transform: translateX(-50%);
 }
 
 .lia-input-bottom {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 2px;
-
+    gap: 8px;
 }
 
-.lia-prompt-plus-btn {
-    width: 28px;
-    height: 28px;
+.lia-input-tools {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.lia-plus-btn {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
     border-radius: 99px;
-    border: 0.5px solid var(--brand-color-200, #d9d0f0);
-    background: var(--sc-color);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: var(--text-color-80);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.lia-plus-btn:hover:not(:disabled),
+.lia-plus-btn.is-active {
+    background: var(--brand-color-500);
+    border-color: var(--brand-color-500);
+    color: #161218;
+}
+
+.lia-plus-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lia-token-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 6px;
+    border-radius: 99px;
+    border: 1px solid var(--brand-color-100);
+    font-size: 12px;
     color: var(--text-color-50);
+    white-space: nowrap;
+    cursor: default;
+}
+
+.lia-token-extra { color: var(--brand-color-800); }
+
+.lia-token-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--ft-color);
+    border: 1px solid var(--brand-color-100);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+    z-index: 20;
+    color: var(--text-color);
+}
+
+.lia-token-tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lia-token-tooltip-dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    background: var(--brand-color-800);
+}
+
+.lia-token-tooltip-muted { color: var(--text-color-50); }
+
+/* Enviar: siempre visible. Lila cuando hay texto, gris tenue deshabilitado */
+.lia-send-btn {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 99px;
+    padding: 0;
+    background: var(--brand-color-500);
+    color: #161218;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: filter 0.15s, background 0.15s;
 }
 
-.lia-prompt-plus-btn:hover,
-.lia-prompt-plus-btn.active {
-    background: var(--brand-color-500);
-    color: #fff;
-    border-color: var(--brand-color-500);
+.lia-send-btn:hover:not(:disabled) { filter: brightness(1.08); }
+
+.lia-send-btn:disabled {
+    background: var(--text-color-20);
+    color: var(--text-color-50);
+    cursor: not-allowed;
 }
 
-/* ── Prompt popup ────────────────────────────────────────── */
+.lia-disclaimer {
+    font-size: 10px;
+    color: var(--text-color-50);
+    text-align: center;
+    pointer-events: none;
+}
+
+/* ── Atajos (menú del +) ─────────────────────────────────── */
 .lia-prompt-popup {
     position: absolute;
     bottom: calc(100% + 8px);
-    right: 8px;
+    left: 8px;
     background: var(--ft-color);
-    border: 0.5px solid var(--brand-color-100);
+    border: 1px solid var(--brand-color-100);
     border-radius: 12px;
     width: 280px;
+    max-width: calc(100% - 16px);
     max-height: 360px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     z-index: 100;
     overflow: hidden;
 }
 
 .lia-prompt-popup-header {
     padding: 10px 12px 8px;
-    border-bottom: 0.5px solid var(--brand-color-100);
+    border-bottom: 1px solid var(--brand-color-100);
     flex-shrink: 0;
 }
 
-.lia-prompt-popup-title {
+.lia-prompt-popup-title,
+.lia-eyebrow {
     font-size: 11px;
     font-weight: 600;
     color: var(--text-color-50);
@@ -572,6 +585,8 @@
     overflow-y: auto;
     padding: 8px;
 }
+
+.lia-prompt-section { margin-bottom: 8px; }
 
 .lia-prompt-category {
     font-size: 10px;
@@ -590,9 +605,95 @@
     border: none;
     padding: 6px 8px;
     border-radius: 6px;
+    font-family: inherit;
     font-size: 13px;
     color: var(--text-color);
     cursor: pointer;
+}
+
+.lia-prompt-item:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.lia-prompt-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Inicio ──────────────────────────────────────────────── */
+.lia-landing {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    /* Lo que ocupa el footer (caja de texto + aviso), que va encima en absoluto */
+    padding-bottom: 150px;
+    box-sizing: border-box;
+}
+
+.lia-landing--actions {
+    padding-bottom: 190px;
+}
+
+/* El saludo y los atajos quedan abajo, pegados a la caja de texto */
+.lia-landing-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 20px;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.lia-landing-greeting {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-color);
+    text-wrap: pretty;
+    animation: lia-in 320ms ease both;
+}
+
+.lia-cta-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: lia-in 320ms ease 80ms both;
+}
+
+.lia-cta-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.lia-cta-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 99px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.lia-cta-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.lia-cta-btn:active:not(:disabled) {
+    background: rgba(255, 255, 255, 0.13);
+}
+
+.lia-cta-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ── Error / empty state ─────────────────────────────────── */
@@ -613,98 +714,7 @@
     margin-bottom: 4px;
 }
 
-/* ── Landing screen ──────────────────────────────────────── */
-.lia-landing {
-    flex: 1;
-    width: 100%;
-    overflow-y: auto;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    /* Lo que ocupa el footer (caja de texto + aviso), que va encima en
-       absoluto: así el saludo queda centrado en el espacio visible. */
-    padding-bottom: 151px;
-    box-sizing: border-box;
-    background-color: var(--ft-color);
-    background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
-        radial-gradient(ellipse at center, #EBE6F180, #FFFFFF);
-    background-size: 20px 20px, 20px 20px, 200% 100%;
-    background-position: 0 0, 0 0, 0% 50%;
-    animation: lia-drift 6s ease-in-out infinite;
-}
-
-.lia-landing-content {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    flex-direction: column;
-    box-sizing: border-box;
-    padding: 24px;
-    gap: 24px;
-    align-self: stretch;
-    flex: 1;
-}
-
-.lia-landing-greeting {
-    font-size: 28px;
-    font-weight: 400;
-    color: var(--text-color);
-    margin: 0;
-    line-height: 1.2;
-}
-
-.lia-landing-summary {
-    font-size: 14px;
-    color: var(--text-color-80);
-    line-height: 1.6;
-}
-
-.lia-landing-summary p {
-    margin: 0 0 4px;
-}
-
-.lia-landing-summary ul {
-    margin: 0;
-    padding-left: 16px;
-}
-
-.lia-cta-grid {
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    flex-direction: column;
-    gap: 12px;
-
-}
-
-.lia-cta-btn {
-    background: #ffffff;
-    border: 1px solid #e8e8e8;
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 13px;
-    color: var(--text-color);
-    text-align: left;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-    line-height: 1.4;
-    font-family: inherit;
-}
-
-.lia-cta-btn:hover {
-    background: #f5f3f2;
-    border-color: #d0cece;
-}
-
-.lia-cta-btn:active {
-    background: #ede9e8;
-}
-
-/* ── No credits screen ───────────────────────────────────── */
+/* ── Sin tokens ──────────────────────────────────────────── */
 .lia-no-credits {
     flex: 1;
     display: flex;
@@ -712,13 +722,6 @@
     justify-content: center;
     padding: 24px 20px;
     gap: 28px;
-    background-color: var(--ft-color);
-    background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 1px, transparent 2px),
-        radial-gradient(ellipse at center, #EBE6F180, #FFFFFF);
-    background-size: 20px 20px, 20px 20px, 200% 100%;
-    animation: lia-drift 6s ease-in-out infinite;
     overflow-y: auto;
 }
 
@@ -784,11 +787,10 @@
     justify-content: space-between;
     background: var(--ft-color);
     border: 1px solid var(--brand-color-100);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 12px 14px;
     gap: 12px;
     transition: opacity 0.15s;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .lia-credit-pkg--disabled {
@@ -819,104 +821,13 @@
     text-align: center;
 }
 
-/* ═══ Tema oscuro de Lia ══════════════════════════════════════
-   Casi todo el componente consume variables, así que el grueso del
-   tema es redefinirlas aquí (los estilos inline del JSX también las
-   heredan). Abajo van solo los overrides de colores hardcodeados. */
-.lia-page {
-    --ft-color: #1E1926;            /* superficies / tarjetas */
-    --sc-color: #161218;            /* fondo base (negro con tinte morado) */
-    --text-color: #F5F3F7;
-    --text-color-80: #F5F3F7CC;
-    --text-color-50: #F5F3F780;
-    --text-color-20: #F5F3F733;
-    --brand-color-100: #2C2536;     /* bordes y superficies sutiles */
-    --brand-color-200: #352D41;
-    --brand-color-300: #413950;
-    --brand-color-800: var(--light-purple-300);   /* texto acento sobre fondos oscuros */
-}
-
-/* Fondo con grid y glow morado (versión oscura del patrón original) */
-.lia-page .lia-messages-area,
-.lia-page .lia-landing,
-.lia-page .lia-no-credits {
-    background-color: var(--sc-color);
-    background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 2px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 2px),
-        radial-gradient(ellipse at center, #2A2138E6, #14101A);
-}
-
-/* Botones del header (Ant Design trae fondo blanco por defecto) */
-.lia-page .lia-chat-header .ant-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.12);
-}
-
-.lia-page .lia-chat-header .ant-btn:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.lia-page .lia-chat-header .ant-btn:disabled {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.06);
-}
-
-/* Texto oscuro sobre acentos lila (antes era blanco sobre lila) */
-.lia-page .lia-context-chip-dot,
-.lia-page .lia-prompt-plus-btn:hover,
-.lia-page .lia-prompt-plus-btn.active {
-    color: #161218;
-}
-
-.lia-page .lia-bubble {
-    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-.lia-page .lia-bubble.user {
-    color: #161218;
-}
-
-.lia-page .lia-landing-greeting {
-    font-weight: 600;
-}
-
-.lia-page .lia-input-card {
-    background: rgba(30, 25, 38, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.lia-page .lia-cta-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    color: var(--text-color);
-}
-
-.lia-page .lia-cta-btn:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-.lia-page .lia-cta-btn:active {
-    background: rgba(255, 255, 255, 0.13);
-}
-
-.lia-page .lia-prompt-popup {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-}
-
-.lia-page .lia-prompt-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.lia-page .lia-credit-pkg {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* CTA primario en verde I attend (como el botón de la referencia) */
+/* CTA primario en verde I attend (comprar tokens) */
 .lia-page .primarybutton--active {
     background: var(--light-green-500);
     color: #161218;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lia-turn, .lia-action-card, .lia-landing-greeting, .lia-cta-group { animation: none; }
+    .lia-typing-dot { animation: none; opacity: 0.7; }
 }
