@@ -1,323 +1,308 @@
-.wrapper {
-  min-height: 100vh;
-  background: #FFF;
-  padding: 20px 16px 40px;
-  max-width: 480px;
-  margin: 0 auto;
-}
+/* Las variables --s-* vienen de .screen (SalesUi.module.css) */
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  gap: 12px;
 }
 
 .identity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .avatar {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   border-radius: 99px;
-  background: var(--mid-blue-500);
-  color: #fff;
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
+  background: var(--s-lilac);
+  color: var(--s-navy);
+  font-weight: 700;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.greeting {
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.logoutBtn {
-  background: transparent;
-  border: none;
-  color: var(--gray-color);
-  cursor: pointer;
-  padding: 6px;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.statCard {
-  background: var(--sc-color-80);
-  border-radius: 16px;
-  padding: 12px 14px;
-}
-
-.statLabel {
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  color: var(--gray-color);
-}
-
-.statValue {
-  font-family: 'Poppins', sans-serif;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--mid-blue-500);
-  margin-top: 4px;
-}
-
-.paymentBox {
-  background: var(--sc-color-80);
-  border-radius: 16px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-}
-
-.paymentTitle {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-color);
-  margin-bottom: 6px;
-  user-select: none;
-}
-
-.paymentBody {
-  overflow: hidden;
-  max-height: 400px;
-  opacity: 1;
-  transition: max-height 0.35s ease, opacity 0.25s ease;
-}
-
-.paymentBodyClosed {
-  max-height: 0;
-  opacity: 0;
-}
-
-.paymentRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 0;
-}
-
-.paymentRowText {
-  min-width: 0;
-  overflow: hidden;
+.hello {
   display: flex;
   flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
 }
 
-.paymentRowLabel {
-  font-family: 'Poppins', sans-serif;
-  font-size: 10px;
-  color: var(--gray-color);
+.helloSmall {
+  font-size: 13px;
+  color: var(--s-muted);
 }
 
-.paymentValue {
-  font-family: 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 12px;
-  color: var(--text-color);
-}
-
-.paymentLink {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  color: var(--info-color-500);
+.helloName {
+  font-family: 'Denver-Serial', 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.copyBtn {
+.circleBtn {
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
+  border-radius: 99px;
   background: #fff;
-  border: 0.5px solid var(--light-purple-500);
-  color: #4a2f57;
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 5px 12px;
-  border-radius: 99px;
+  border: 1px solid var(--s-border);
+  color: var(--s-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
-.copyBankBtn {
-  width: 100%;
-  background: var(--light-purple-500);
-  color: #4a2f57;
-  border: none;
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 9px;
-  border-radius: 99px;
-  cursor: pointer;
-  margin-top: 6px;
+/* ── Tarjeta de comisión ── */
+
+.summary {
+  background: var(--s-navy);
+  border-radius: 24px;
+  padding: 20px;
+  color: var(--s-cream);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.newSaleBtn {
-  background: var(--light-purple-500) !important;
-  color: #4a2f57 !important;
-  border: none !important;
-  font-family: 'Poppins', sans-serif !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  border-radius: 99px !important;
-  height: 32px !important;
-  padding: 0 14px !important;
-}
-
-.listHeader {
+.summaryTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
 }
 
-.listLabel {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  color: var(--gray-color);
-  white-space: nowrap;
-}
-
-.listFilters {
-  display: flex;
-  gap: 6px;
-}
-
-.switchFilter {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.switchLabel {
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  color: var(--gray-color);
-  white-space: nowrap;
-}
-
-.filterSelect {
-  min-width: 80px;
-}
-
-.filterSelect :global(.ant-select-selector) {
-  border-radius: 99px !important;
-  height: 28px !important;
-  align-items: center !important;
-  font-family: 'Poppins', sans-serif !important;
-  font-size: 11px !important;
-  padding: 0 10px !important;
-}
-
-.filterSelect :global(.ant-select-arrow) {
-  display: none !important;
-}
-
-.empty {
-  font-family: 'Poppins', sans-serif;
+.summaryLabel {
   font-size: 13px;
-  color: var(--gray-color);
-  padding: 16px 0;
-  text-align: center;
+  color: rgba(238, 234, 223, 0.7);
 }
 
-.ventaList {
+/* El select nativo va encima, transparente: en el teléfono abre el
+   selector del sistema y la pill solo lo dibuja. */
+.periodPill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 99px;
+  background: rgba(238, 234, 223, 0.12);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.periodPill:focus-within {
+  outline: 2px solid var(--s-lilac);
+  outline-offset: 2px;
+}
+
+.periodSelect {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.commission {
+  font-family: 'Windsor', 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+}
+
+.summaryStats {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(238, 234, 223, 0.15);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.statValue {
+  font-family: 'Windsor', 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.statAccent { color: var(--s-lilac); }
+
+.statLabel {
+  font-size: 12px;
+  color: rgba(238, 234, 223, 0.7);
+}
+
+.statDivider { background: rgba(238, 234, 223, 0.15); }
+
+/* ── Compartir datos de pago ── */
+
+.share {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.shareChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shareChipsSecondary {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shareChipsSecondary::-webkit-scrollbar { display: none; }
+
+.shareChip {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--s-border);
+  color: var(--s-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.15s;
+}
+
+.shareChip:active { background: var(--s-track); }
+
+/* Links a meses: más chicos, debajo de los principales */
+.shareChipSecondary {
+  flex: 0 0 auto;
+  height: 34px;
+  border-radius: 99px;
+  font-size: 13px;
+  color: var(--s-muted);
+}
+
+.shareChip:focus-visible,
+.circleBtn:focus-visible,
+.ventaCard:focus-visible {
+  outline: 2px solid var(--s-lilac);
+  outline-offset: 2px;
+}
+
+/* ── Mis ventas ── */
+
+.sales {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.salesTitle {
+  margin: 0;
+  font-family: 'Denver-Serial', 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  text-transform: uppercase;
+  color: var(--s-navy);
+}
+
+.empty {
+  padding: 28px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--s-muted);
 }
 
 .ventaCard {
   width: 100%;
+  border: none;
+  text-align: left;
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  background: #fff;
-  border: 0.5px solid var(--borders);
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.06);
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(28, 50, 73, 0.06);
+  color: var(--s-navy);
+  font-family: inherit;
   cursor: pointer;
-  text-align: left;
+  transition: transform 0.1s;
 }
 
-.ventaCardTop {
+.ventaCard:active { transform: scale(0.99); }
+
+.ventaTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.ventaCardBottom {
+.ventaText {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .ventaEvento {
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-color);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ventaMeta {
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  color: var(--gray-color);
+  font-size: 12px;
+  color: var(--s-muted);
 }
 
-.ventaSaldo {
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  color: var(--gray-color);
+.ventaProgress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.ventaDate {
-  font-family: 'Poppins', sans-serif;
-  font-size: 10px;
-  color: var(--gray-color);
-  opacity: 0.7;
+.ventaAmounts {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--s-muted);
 }
 
-.statusBadge {
-  font-family: 'Poppins', sans-serif;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 3px 9px;
-  border-radius: 12px;
-  background: var(--gray-bg);
-  color: var(--gray-color);
-  white-space: nowrap;
-}
-
-.status_completo {
-  background: var(--success-color-100);
-  color: var(--success-color-700);
-}
-
-.status_apartado {
-  background: #FFF6E5;
-  color: #A6720C;
-}
-
-.status_sin_pago {
-  background: var(--danger-color-100);
-  color: var(--danger-color-700);
-}
+.ventaAmounts strong { color: var(--s-navy); }
+.ventaAmounts .paid { color: #2E7C3F; }

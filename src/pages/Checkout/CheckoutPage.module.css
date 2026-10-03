@@ -1,0 +1,257 @@
+/* Checkout. Móvil (< 768px): una tarjeta centrada que hace scroll, con el
+   hero arriba y el plan abajo. Web: hero a la izquierda sobre el video y el
+   plan en un panel a la derecha (solo el panel hace scroll). */
+
+.page {
+    --ck-text: #EFEADF;
+    --ck-dim: rgba(239, 234, 223, 0.6);
+    --ck-faint: rgba(239, 234, 223, 0.25);
+
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100vh;
+    background: var(--dark-blue-500);
+    color: var(--ck-text);
+}
+
+.videoBg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: #0c171b;
+}
+
+/* Hace scroll, pero sin barra visible. */
+.scrollArea {
+    scrollbar-width: none;
+}
+
+.scrollArea::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── Móvil ─────────────────────────────────────────────── */
+
+.layout {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 480px;
+    height: 100%;
+    max-height: 100vh;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(6px);
+}
+
+.hero {
+    padding: 32px 28px 0;
+}
+
+.heroCopy {
+    text-align: center;
+}
+
+.titleMain,
+.titleSub {
+    margin: 0;
+    font-family: 'Denver-Serial';
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--ck-text);
+}
+
+.titleMain {
+    font-size: 38px;
+}
+
+.titleSub {
+    font-size: 30px;
+}
+
+.titleScript {
+    margin: 16px 0 0;
+    font-family: 'Michigan Signature';
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--ck-text);
+}
+
+.discover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 14px 0 24px;
+}
+
+.discoverButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border: none;
+    border-radius: 99px;
+    background: #aac187;
+    color: #1c3249;
+    font-family: 'Luxora Grotesk';
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.panelBody {
+    flex: 1;
+    padding: 0 28px 24px;
+}
+
+.panelPricing {
+    padding: 0 16px 20px;
+}
+
+.planTabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.planTab {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 10px;
+    border: 1.5px solid var(--ck-faint);
+    background: rgba(239, 234, 223, 0.05);
+    color: rgba(239, 234, 223, 0.5);
+    font-family: 'Luxora Grotesk';
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.planTabSelected {
+    border: 2px solid rgba(210, 191, 221, 0.8);
+    background: rgba(210, 191, 221, 0.18);
+    color: var(--ck-text);
+}
+
+.checklist {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 8px;
+}
+
+/* ── Web ───────────────────────────────────────────────── */
+
+@media (min-width: 768px) {
+    .layout {
+        flex-direction: row;
+        max-width: none;
+        overflow: hidden;
+        background: none;
+        backdrop-filter: none;
+    }
+
+    .hero {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 48px clamp(40px, 6vw, 96px);
+    }
+
+    .logo {
+        width: 72px;
+        height: auto;
+    }
+
+    .heroCopy {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: left;
+    }
+
+    .titleMain {
+        font-size: clamp(64px, 8vw, 128px);
+        line-height: 0.95;
+    }
+
+    .titleSub {
+        font-size: clamp(52px, 6.4vw, 104px);
+        line-height: 1;
+    }
+
+    .titleScript {
+        margin-top: 20px;
+        font-size: clamp(28px, 3vw, 48px);
+    }
+
+    .discover {
+        justify-content: flex-start;
+        margin: 40px 0 0;
+    }
+
+    .discoverButton {
+        padding: 12px 22px;
+        font-size: 15px;
+    }
+
+    .heroFooter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Luxora Grotesk';
+        font-size: 12px;
+        color: var(--ck-dim);
+    }
+
+    .panel {
+        flex: 0 0 clamp(420px, 34vw, 560px);
+        height: 100%;
+        overflow-y: auto;
+        border-left: 1px solid rgba(239, 234, 223, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(14px);
+    }
+
+    .panelBody {
+        padding: 28px 32px 16px;
+    }
+
+    .panelPricing {
+        padding: 0 20px 24px;
+    }
+
+    .eyebrow {
+        display: block;
+        font-family: 'Luxora Grotesk';
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--ck-dim);
+    }
+
+    .panelTitle {
+        margin: 6px 0 0;
+        font-family: 'Denver-Serial';
+        font-size: clamp(44px, 4vw, 64px);
+        font-weight: 800;
+        line-height: 1;
+        color: var(--ck-text);
+    }
+}

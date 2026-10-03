@@ -4,8 +4,42 @@
     {
       "name": "iattend-vite-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3050"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3050"
+      ],
       "port": 3050
+    },
+    {
+      "name": "iattend-events-api-local",
+      "runtimeExecutable": "../iattend-events/node_modules/.bin/next",
+      "runtimeArgs": [
+        "dev",
+        "../iattend-events",
+        "--turbopack",
+        "-p",
+        "3050"
+      ],
+      "env": {
+        "NEXT_PUBLIC_IATTEND_API_URL": "http://localhost:4000/api"
+      },
+      "port": 3050
+    },
+    {
+      "name": "lia-promo-video",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "hyperframes",
+        "preview",
+        "../videos/lia-promo",
+        "--port",
+        "3060",
+        "--no-open"
+      ],
+      "port": 3060
     }
   ]
 }

@@ -5,6 +5,8 @@ import axios from 'axios'
 import { supabase } from '../../lib/supabase'
 import { AuthModal } from './AuthModal'
 import { fetchPrices, PRODUCTS } from '../../components/Payment/functions'
+import { formatMXN, termCaption, usePlans } from '../../hooks/usePlans'
+import { InstallmentPicker } from '../../components/Payment/InstallmentPicker/InstallmentPicker'
 
 const API = import.meta.env.VITE_API_URL
 const PREVIEW_ID = '3cb0ab8b-41cb-428d-b383-ff9d5bbae17d'
@@ -78,9 +80,16 @@ export const PublishModal = ({ open, onClose, invitation }) => {
     })
 
     const selectedEntry = planPrices.find(p => PRODUCTS[p.priceId]?.value === selected)
-    const selectedPriceFormatted = selectedEntry
-        ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(selectedEntry.amount)
-        : '…'
+
+    // Plazos a meses sin intereses del catálogo (GET /api/plans); el contado
+    // sigue saliendo de fetchPrices. 0 = contado.
+    const { getPlan } = usePlans()
+    const [meses, setMeses] = useState(0)
+    const terms = selectedEntry
+        ? [{ months: 0, amount: selectedEntry.amount, monthly: null, lookup_key: null }, ...(getPlan(selected)?.installments ?? [])]
+        : []
+    const term = terms.find(t => t.months === meses) ?? terms[0] ?? null
+    const selectedPriceFormatted = term ? formatMXN(term.amount) : '…'
 
     const coverImg = invitation?.cover?.image?.dev || invitation?.cover?.image?.prod
     const eventName = invitation?.cover?.title?.text?.value
@@ -103,6 +112,7 @@ export const PublishModal = ({ open, onClose, invitation }) => {
                 userId: session.user.uid,
                 userEmail: session.user.email,
                 priceId,
+                lookupKey: term?.lookup_key ?? undefined,
                 previewData,
                 successUrl: `${window.location.origin}/invitations?welcome=1`,
                 cancelUrl: `${window.location.origin}/preview`,
@@ -227,7 +237,8 @@ export const PublishModal = ({ open, onClose, invitation }) => {
 
                 {/* ── Sticky bottom ── */}
                 <div style={{ padding: '16px 24px 24px', borderTop: '1px solid #f3f4f6', background: '#fff' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <InstallmentPicker terms={terms} value={term?.months ?? 0} onChange={setMeses} />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2, marginTop: terms.length > 1 ? 14 : 0 }}>
                         <span style={{ fontSize: 15, fontWeight: 500, color: '#374151' }}>
                             {selected === 'pro' ? 'Plan Pro' : 'Plan Lite'}
                         </span>
@@ -236,7 +247,7 @@ export const PublishModal = ({ open, onClose, invitation }) => {
                         </span>
                     </div>
                     <span style={{ fontSize: 12, color: '#9ca3af', display: 'block', marginBottom: 14 }}>
-                        Pago único · activa para siempre
+                        {termCaption(term)} · activa para siempre
                     </span>
 
                     <Button

@@ -134,3 +134,34 @@ export const descriptionSegments = (text) => {
     if (ultimo < fuente.length) segmentos.push({ text: fuente.slice(ultimo) })
     return segmentos
 }
+
+// ── Meses sin intereses ──────────────────────────────────────────────────────
+// `plan.installments` llega de GET /api/plans: cada plazo es un price propio
+// en Stripe (más caro que el contado) con su total y mensualidad. Aquí no se
+// escribe ningún monto.
+
+const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
+const mxnSinCentavos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 })
+
+// "$4,719" / "$533.17": los centavos solo cuando no es entero.
+export const formatMXN = (amount) =>
+    (Number.isInteger(amount) ? mxnSinCentavos : mxn).format(amount)
+
+// Mensualidad sin centavos ("$394" para $393.25), igual que la landing. Se
+// redondea hacia arriba para nunca anunciar menos de lo que se cobra.
+export const formatMonthly = (amount) => mxnSinCentavos.format(Math.ceil(amount))
+
+// Plazos del plan, contado primero: [{ months: 0, amount, monthly: null,
+// lookup_key: null }, { months: 3, amount, monthly, lookup_key }, ...].
+export const planTerms = (plan) => {
+    if (!plan?.price) return []
+    const contado = { months: 0, amount: plan.price.amount, monthly: null, lookup_key: null }
+    return [contado, ...(plan.installments ?? [])]
+}
+
+// Texto bajo el precio: "Pago único" o "6 pagos de $734". No se dice
+// "sin intereses": el precio a meses es más caro que el de contado.
+export const termCaption = (term) =>
+    term?.months
+        ? `${term.months} pagos de ${formatMonthly(term.monthly)}`
+        : 'Pago único'

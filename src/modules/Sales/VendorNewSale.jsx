@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, DatePicker, Input, Select, Switch, message } from 'antd'
-import { Check, ChevronDown } from 'lucide-react'
-import dayjs from 'dayjs'
+import { message } from 'antd'
+import { ArrowRight, Check, ChevronDown, Search, X } from 'lucide-react'
 import { useVendorSession } from './VendorSessionContext'
 import {
     checkUrlDisponible,
@@ -11,71 +10,40 @@ import {
     crearVenta,
     fetchConfiguracionPagos,
 } from './salesApi'
-// import { buildBankMessage } from './paymentUtils'
-import { PHONE_CODE_OPTIONS } from '../../helpers/assets/phoneCodes'
+import { installmentLinks } from './paymentUtils'
+import { formatMXN, usePlans } from '../../hooks/usePlans'
+import { PHONE_CODES } from '../../helpers/assets/phoneCodes'
+import {
+    Screen, ScreenHeader, StickyFooter, PrimaryButton, Field, TextInput, Hint, Segmented, ChipGroup, Steps, Card, CopyRow,
+} from './SalesUi'
+import { formatClabe, formatCurrency } from './salesFormat'
 import styles from './VendorNewSale.module.css'
 
 const PLANS = ['PRO', 'Lite']
 const DEFAULT_PRICE = { PRO: 3999, Lite: 2899 }
 const DISCOUNT_OPTIONS = [0, 5, 10, 15, 20]
-
-const formatCurrency = (value) =>
-    `$${Number(value || 0).toLocaleString('es-MX', { maximumFractionDigits: 0 })}`
-
-const BlockHeader = ({ title, open, onToggle, incomplete }) => (
-    <div
-        onClick={onToggle}
-        style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            cursor: 'pointer',
-            paddingBottom: open ? 6 : 0,
-            marginBottom: open ? 12 : 0,
-            borderBottom: open ? '0.5px solid var(--borders)' : 'none',
-        }}
-    >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{
-                fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 600,
-                letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--mid-blue-500)',
-            }}>
-                {title}
-            </span>
-            {incomplete && (
-                <span style={{
-                    fontSize: 10, fontWeight: 600, fontFamily: 'Poppins, sans-serif',
-                    color: '#c0392b', background: '#fdecea',
-                    border: '0.5px solid #f5c6c2',
-                    borderRadius: 99, padding: '1px 7px', lineHeight: 1.6,
-                    transition: 'opacity 0.2s',
-                }}>
-                    Incompleto
-                </span>
-            )}
-        </div>
-        <ChevronDown
-            size={14}
-            color='var(--mid-blue-500)'
-            style={{ transition: 'transform 0.2s', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-        />
-    </div>
-)
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export const VendorNewSale = ({ onCancel, onCreated }) => {
     const { t } = useTranslation()
     const { vendedor } = useVendorSession()
 
-    // Bloque 1 — datos del cliente
+    // Venta en 3 pasos: 0 cliente, 1 evento, 2 pago
+    const [paso, setPaso] = useState(0)
+
+    // Paso 1 — datos del cliente
     const [esClienteExistente, setEsClienteExistente] = useState(false)
     const [nombreCliente, setNombreCliente] = useState('')
     const [correoCliente, setCorreoCliente] = useState('')
     const [clienteStatus, setClienteStatus] = useState(null) // null | 'checking' | 'nuevo' | 'existente'
     const [clienteNombreDetectado, setClienteNombreDetectado] = useState(null)
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null)
+    const [busquedaCliente, setBusquedaCliente] = useState('')
     const [clientOptions, setClientOptions] = useState([])
     const [searchingClientes, setSearchingClientes] = useState(false)
     const clientSearchDebounceRef = useRef(null)
 
-    // Bloque 2 — evento
+    // Paso 2 — evento
     const [tipoEvento, setTipoEvento] = useState('boda')
     const [urlEvento, setUrlEvento] = useState('')
     const [urlStatus, setUrlStatus] = useState(null) // null | 'checking' | 'disponible' | 'ocupada'
@@ -85,15 +53,10 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
     const [owner2, setOwner2] = useState('')
     const [fechaEvento, setFechaEvento] = useState('')
 
-    // Bloque 3 — pago
+    // Paso 3 — pago
     const [plan, setPlan] = useState('PRO')
     const [descuentoPct, setDescuentoPct] = useState(0)
     const [configPagos, setConfigPagos] = useState(null)
-
-    // Collapse state
-    const [openCliente, setOpenCliente] = useState(true)
-    const [openEvento, setOpenEvento] = useState(true)
-    const [openPago, setOpenPago] = useState(true)
 
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
@@ -109,10 +72,19 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
     )
     const linkPago = configPagos?.stripe_links?.[`${plan}_${descuentoPct}`]
         || (descuentoPct === 0 ? configPagos?.stripe_links?.[plan] : undefined)
+    // Links a meses: cobran un precio fijo (el de Stripe), así que solo
+    // aplican sin descuento. El monto sale del catálogo.
+    const { getPlan } = usePlans()
+    const linksMeses = descuentoPct === 0
+        ? installmentLinks(configPagos?.stripe_links, plan).map(link => ({
+            ...link,
+            amount: getPlan(plan)?.installments?.find(term => term.months === link.months)?.amount,
+        }))
+        : []
 
     const clienteCompleto = esClienteExistente
         ? !!clienteSeleccionado
-        : !!nombreCliente.trim() && !!correoCliente.trim()
+        : !!nombreCliente.trim() && EMAIL_RE.test(correoCliente.trim())
 
     const eventoCompleto = !!urlEvento.trim()
         && urlStatus !== 'ocupada'
@@ -120,7 +92,7 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
         && !!fechaEvento
         && (tipoEvento !== 'boda' || (!!owner1.trim() && !!owner2.trim()))
 
-    const formCompleto = clienteCompleto && eventoCompleto
+    const nombreClienteFinal = esClienteExistente ? (clienteSeleccionado?.nombre || clienteSeleccionado?.correo) : nombreCliente.trim()
 
     useEffect(() => {
         fetchConfiguracionPagos().then(({ data }) => setConfigPagos(data)).catch(() => {})
@@ -141,7 +113,7 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
     useEffect(() => {
         if (esClienteExistente) { setClienteStatus(null); return }
         const correo = correoCliente.trim()
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+        if (!EMAIL_RE.test(correo)) {
             setClienteStatus(null); setClienteNombreDetectado(null); return
         }
         setClienteStatus('checking')
@@ -155,11 +127,18 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
         return () => clearTimeout(timer)
     }, [correoCliente, esClienteExistente])
 
+    // Al cambiar de paso se empieza arriba y se limpia el error del anterior
+    useEffect(() => {
+        window.scrollTo({ top: 0 })
+        setError('')
+    }, [paso])
+
     const handleSearchClientes = (q) => {
+        setBusquedaCliente(q)
         clearTimeout(clientSearchDebounceRef.current)
-        if (!q || q.trim().length < 2) { setClientOptions([]); return }
+        if (!q || q.trim().length < 2) { setClientOptions([]); setSearchingClientes(false); return }
+        setSearchingClientes(true)
         clientSearchDebounceRef.current = setTimeout(async () => {
-            setSearchingClientes(true)
             try {
                 const { data } = await buscarClientes(q.trim())
                 setClientOptions(data?.clientes || [])
@@ -168,14 +147,11 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
         }, 400)
     }
 
-    const handleSelectCliente = (userId) => {
-        setClienteSeleccionado(clientOptions.find((c) => c.user_id === userId) || null)
-    }
-
-    const handleToggleClienteExistente = (checked) => {
-        setEsClienteExistente(checked)
+    const handleTipoCliente = (existente) => {
+        setEsClienteExistente(existente)
         setClienteSeleccionado(null)
         setClientOptions([])
+        setBusquedaCliente('')
         setNombreCliente('')
         setCorreoCliente('')
         setClienteStatus(null)
@@ -186,19 +162,28 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
         message.success(t('sales.new_sale.copied'))
     }
 
+    const handleBack = () => (paso === 0 ? onCancel() : setPaso(paso - 1))
+
+    const handleNext = () => {
+        if (paso === 0) {
+            if (esClienteExistente && !clienteSeleccionado) { setError(t('sales.new_sale.err_select_client')); return }
+            if (!esClienteExistente && nombreCliente.trim() && correoCliente.trim() && !EMAIL_RE.test(correoCliente.trim())) {
+                setError(t('sales.new_sale.err_email')); return
+            }
+            if (!clienteCompleto) { setError(t('sales.new_sale.err_required')); return }
+        }
+        if (paso === 1) {
+            if (urlStatus === 'ocupada') { setError(t('sales.new_sale.err_url_taken')); return }
+            if (!eventoCompleto) { setError(t('sales.new_sale.err_required')); return }
+        }
+        setPaso(paso + 1)
+    }
+
     const handleSubmit = async () => {
+        if (submitting) return
         setError('')
 
-        if (esClienteExistente && !clienteSeleccionado) {
-            setError(t('sales.new_sale.err_select_client')); return
-        }
-        if (!esClienteExistente && (!nombreCliente.trim() || !correoCliente.trim())) {
-            setError(t('sales.new_sale.err_required')); return
-        }
-        if (!urlEvento.trim() || !telefonoLocal.trim() || !fechaEvento) {
-            setError(t('sales.new_sale.err_required')); return
-        }
-        if (tipoEvento === 'boda' && (!owner1.trim() || !owner2.trim())) {
+        if (!clienteCompleto || !eventoCompleto) {
             setError(t('sales.new_sale.err_required')); return
         }
         if (urlStatus === 'ocupada') {
@@ -225,7 +210,7 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
 
             const evento = tipoEvento === 'boda'
                 ? `${owner1.trim()} & ${owner2.trim()}`
-                : (esClienteExistente ? clienteSeleccionado.nombre : nombreCliente.trim()) || urlEvento.trim()
+                : nombreClienteFinal || urlEvento.trim()
 
             onCreated({
                 venta_id: data.venta_id,
@@ -245,81 +230,135 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
         }
     }
 
+    const pasoCompleto = paso === 0 ? clienteCompleto : paso === 1 ? eventoCompleto : true
+    const errorMsg = error && <p className={styles.error} role="alert">{error}</p>
+
+    const footer = (
+        <StickyFooter solid>
+            {errorMsg}
+            {paso === 1 && (
+                <div className={styles.footerSummary}>
+                    <span>{t('sales.new_sale.client')}: <strong>{nombreClienteFinal}</strong></span>
+                    <span>{plan} · {formatCurrency(precioAcordado)}</span>
+                </div>
+            )}
+            {paso < 2 ? (
+                <PrimaryButton disabled={!pasoCompleto} onClick={handleNext} iconEnd={<ArrowRight size={18} aria-hidden="true" />}>
+                    {paso === 0 ? t('sales.new_sale.continue_event') : t('sales.new_sale.continue_payment')}
+                </PrimaryButton>
+            ) : (
+                <PrimaryButton icon={<Check size={20} />} loading={submitting} onClick={handleSubmit}>
+                    {submitting ? t('sales.new_sale.submitting') : t('sales.new_sale.submit_amount', { amount: formatCurrency(precioAcordado) })}
+                </PrimaryButton>
+            )}
+        </StickyFooter>
+    )
+
     return (
-        <div className={styles.wrapper}>
-            <div className={styles.headerRow}>
-                <Button type='text' className={styles.backBtn} onClick={onCancel}>←</Button>
-                <div className={styles.title}>{t('sales.new_sale.title')}</div>
-            </div>
+        <Screen footer={footer}>
+            <ScreenHeader
+                title={t('sales.new_sale.title')}
+                onBack={handleBack}
+                backLabel={paso === 0 ? t('sales.new_sale.cancel') : t('sales.new_sale.back')}
+                aside={t('sales.new_sale.step_of', { n: paso + 1, total: 3 })}
+            />
+            <Steps
+                current={paso}
+                labels={[t('sales.new_sale.step_client'), t('sales.new_sale.step_event'), t('sales.new_sale.step_payment')]}
+            />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* ── Paso 1: cliente ── */}
+            {paso === 0 && (
+                <>
+                    <Segmented
+                        label={t('sales.new_sale.block_client')}
+                        value={esClienteExistente}
+                        onChange={handleTipoCliente}
+                        options={[
+                            { value: false, label: t('sales.new_sale.client_new') },
+                            { value: true, label: t('sales.new_sale.client_existing_tab') },
+                        ]}
+                    />
 
-                {/* ── Bloque 1: Datos del cliente ── */}
-                <div className={styles.block}>
-                    <BlockHeader title={t('sales.new_sale.block_client')} open={openCliente} onToggle={() => setOpenCliente(v => !v)} incomplete={!clienteCompleto} />
-
-                    <div className={`${styles.blockBody} ${!openCliente ? styles.blockBodyClosed : ''}`}>
-                        <div className={styles.switchRow}>
-                            <span className={styles.label}>{t('sales.new_sale.existing_client_switch')}</span>
-                            <Switch checked={esClienteExistente} onChange={handleToggleClienteExistente} />
-                        </div>
-
-                        {esClienteExistente ? (
-                            <>
-                                <span className={styles.label}>{t('sales.new_sale.search_client')}</span>
-                                <Select
-                                    showSearch
-                                    filterOption={false}
-                                    suffixIcon={null}
-                                    className={styles.selectAntd}
-                                    style={{ width: '100%' }}
-                                    value={clienteSeleccionado?.user_id}
-                                    onSearch={handleSearchClientes}
-                                    onChange={handleSelectCliente}
-                                    placeholder={t('sales.new_sale.search_client_placeholder')}
-                                    notFoundContent={searchingClientes ? t('sales.new_sale.client_checking') : null}
-                                    options={clientOptions.map((c) => ({ value: c.user_id, label: `${c.nombre || c.correo} — ${c.correo}` }))}
-                                />
-                            </>
+                    {esClienteExistente ? (
+                        clienteSeleccionado ? (
+                            <Card className={styles.selectedClient}>
+                                <div className={styles.clientText}>
+                                    <span className={styles.clientName}>{clienteSeleccionado.nombre || clienteSeleccionado.correo}</span>
+                                    <span className={styles.clientMail}>{clienteSeleccionado.correo}</span>
+                                </div>
+                                <button type="button" className={styles.linkBtn} onClick={() => setClienteSeleccionado(null)}>
+                                    {t('sales.new_sale.change')}
+                                </button>
+                            </Card>
                         ) : (
-                            <>
-                                <span className={styles.label}>{t('sales.new_sale.client_name')}</span>
-                                <Input
-                                    className={styles.input}
-                                    value={nombreCliente}
-                                    onChange={(e) => setNombreCliente(e.target.value)}
-                                />
-
-                                <span className={styles.label}>{t('sales.new_sale.client_email')}</span>
-                                <Input
-                                    type='email'
-                                    className={styles.input}
-                                    placeholder='cliente@correo.com'
+                            <Field label={t('sales.new_sale.search_client')} htmlFor="ns-search">
+                                <div className={styles.searchBox}>
+                                    <Search size={18} className={styles.searchIcon} aria-hidden="true" />
+                                    <TextInput
+                                        id="ns-search"
+                                        className={styles.searchInput}
+                                        type="search"
+                                        autoComplete="off"
+                                        placeholder={t('sales.new_sale.search_client_placeholder')}
+                                        value={busquedaCliente}
+                                        onChange={(e) => handleSearchClientes(e.target.value)}
+                                    />
+                                </div>
+                                {searchingClientes && <Hint>{t('sales.new_sale.client_checking')}</Hint>}
+                                {!searchingClientes && busquedaCliente.trim().length >= 2 && clientOptions.length === 0 && (
+                                    <Hint>{t('sales.new_sale.no_clients')}</Hint>
+                                )}
+                                {clientOptions.length > 0 && (
+                                    <ul className={styles.results}>
+                                        {clientOptions.map(c => (
+                                            <li key={c.user_id}>
+                                                <button type="button" className={styles.result} onClick={() => setClienteSeleccionado(c)}>
+                                                    <span className={styles.clientName}>{c.nombre || c.correo}</span>
+                                                    <span className={styles.clientMail}>{c.correo}</span>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </Field>
+                        )
+                    ) : (
+                        <>
+                            <Field label={t('sales.new_sale.client_name')} htmlFor="ns-name">
+                                <TextInput id="ns-name" autoComplete="name" value={nombreCliente} onChange={(e) => setNombreCliente(e.target.value)} />
+                            </Field>
+                            <Field
+                                label={t('sales.new_sale.client_email')}
+                                htmlFor="ns-email"
+                                hint={
+                                    clienteStatus === 'checking' ? <Hint>{t('sales.new_sale.client_checking')}</Hint>
+                                        : clienteStatus === 'existente' ? <Hint tone="success">✓ {t('sales.new_sale.client_existing', { nombre: clienteNombreDetectado })}</Hint>
+                                            : <Hint>{t('sales.new_sale.client_email_hint')}</Hint>
+                                }
+                            >
+                                <TextInput
+                                    id="ns-email"
+                                    type="email"
+                                    inputMode="email"
+                                    autoComplete="email"
+                                    autoCapitalize="none"
+                                    placeholder="cliente@correo.com"
                                     value={correoCliente}
                                     onChange={(e) => setCorreoCliente(e.target.value)}
                                 />
-                                {clienteStatus === 'checking' && <div className={styles.hintNeutral}>{t('sales.new_sale.client_checking')}</div>}
-                                {clienteStatus === 'existente' && (
-                                    <div className={styles.hintSuccess}>✓ {t('sales.new_sale.client_existing', { nombre: clienteNombreDetectado })}</div>
-                                )}
-                                {(clienteStatus === 'nuevo' || !clienteStatus) && (
-                                    <div className={styles.hintNeutral}>{t('sales.new_sale.client_email_hint')}</div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
+                            </Field>
+                        </>
+                    )}
+                </>
+            )}
 
-                {/* ── Bloque 2: Evento ── */}
-                <div className={styles.block}>
-                    <BlockHeader title={t('sales.new_sale.block_event')} open={openEvento} onToggle={() => setOpenEvento(v => !v)} incomplete={!eventoCompleto} />
-
-                    <div className={`${styles.blockBody} ${!openEvento ? styles.blockBodyClosed : ''}`}>
-                        <span className={styles.label}>{t('sales.new_sale.event_type')}</span>
-                        <Select
-                            suffixIcon={null}
-                            className={styles.selectAntd}
-                            style={{ width: '100%' }}
+            {/* ── Paso 2: evento ── */}
+            {paso === 1 && (
+                <>
+                    <Field label={t('sales.new_sale.event_type')}>
+                        <Segmented
+                            label={t('sales.new_sale.event_type')}
                             value={tipoEvento}
                             onChange={setTipoEvento}
                             options={[
@@ -327,147 +366,173 @@ export const VendorNewSale = ({ onCancel, onCreated }) => {
                                 { value: 'xv', label: t('sales.new_sale.event_type_xv') },
                             ]}
                         />
+                    </Field>
 
-                        <span className={styles.label}>{t('sales.new_sale.event_url')}</span>
-                        <Input
-                            className={styles.input}
-                            placeholder='ale-santiago'
-                            value={urlEvento}
-                            onChange={(e) => setUrlEvento(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                        />
-                        {urlStatus === 'checking' && <div className={styles.hintNeutral}>{t('sales.new_sale.url_checking')}</div>}
-                        {urlStatus === 'disponible' && <div className={styles.hintSuccess}>✓ {t('sales.new_sale.url_available')}</div>}
-                        {urlStatus === 'ocupada' && <div className={styles.hintError}>✕ {t('sales.new_sale.url_taken')}</div>}
+                    {tipoEvento === 'boda' && (
+                        <div className={styles.twoCols}>
+                            <Field label={t('sales.new_sale.owner_1')} htmlFor="ns-o1">
+                                <TextInput id="ns-o1" value={owner1} onChange={(e) => setOwner1(e.target.value)} />
+                            </Field>
+                            <Field label={t('sales.new_sale.owner_2')} htmlFor="ns-o2">
+                                <TextInput id="ns-o2" value={owner2} onChange={(e) => setOwner2(e.target.value)} />
+                            </Field>
+                        </div>
+                    )}
 
-                        {tipoEvento === 'boda' && (
-                            <div className={styles.ownersRow}>
-                                <div className={styles.ownerCol}>
-                                    <span className={styles.label}>{t('sales.new_sale.owner_1')}</span>
-                                    <Input className={styles.input} value={owner1} onChange={(e) => setOwner1(e.target.value)} />
-                                </div>
-                                <div className={styles.ownerCol}>
-                                    <span className={styles.label}>{t('sales.new_sale.owner_2')}</span>
-                                    <Input className={styles.input} value={owner2} onChange={(e) => setOwner2(e.target.value)} />
-                                </div>
-                            </div>
-                        )}
-
-                        <span className={styles.label}>{t('sales.new_sale.phone')}</span>
-                        <div className={styles.phoneRow}>
-                            <Select
-                                suffixIcon={null}
-                                className={styles.ladaSelectAntd}
-                                style={{ width: 110 }}
-                                value={lada}
-                                onChange={setLada}
-                                options={PHONE_CODE_OPTIONS}
+                    <Field
+                        label={t('sales.new_sale.event_url')}
+                        htmlFor="ns-url"
+                        hint={urlStatus === 'ocupada' && <Hint tone="error">{t('sales.new_sale.url_taken_hint')}</Hint>}
+                    >
+                        <div className={styles.inputWithBadge}>
+                            <TextInput
+                                id="ns-url"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                placeholder="ale-santiago"
+                                value={urlEvento}
+                                onChange={(e) => setUrlEvento(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
                             />
-                            <Input
-                                className={styles.input}
-                                placeholder='8119777738'
-                                inputMode='numeric'
+                            {urlStatus && (
+                                <span className={`${styles.badge} ${styles[`badge_${urlStatus}`]}`}>
+                                    {urlStatus === 'disponible' && <Check size={12} strokeWidth={3} aria-hidden="true" />}
+                                    {urlStatus === 'ocupada' && <X size={12} strokeWidth={3} aria-hidden="true" />}
+                                    {t(`sales.new_sale.url_${urlStatus === 'disponible' ? 'available' : urlStatus === 'ocupada' ? 'taken' : 'checking'}`)}
+                                </span>
+                            )}
+                        </div>
+                    </Field>
+
+                    <Field label={t('sales.new_sale.phone')} htmlFor="ns-phone">
+                        <div className={styles.phoneRow}>
+                            <div className={styles.selectWrap}>
+                                <select
+                                    className={styles.nativeSelect}
+                                    value={lada}
+                                    onChange={(e) => setLada(e.target.value)}
+                                    aria-label={t('sales.new_sale.country_code')}
+                                >
+                                    {PHONE_CODES.map(c => <option key={c.iso} value={c.code}>{c.flag} {c.code}</option>)}
+                                </select>
+                                <ChevronDown size={16} className={styles.selectChevron} aria-hidden="true" />
+                            </div>
+                            <TextInput
+                                id="ns-phone"
+                                type="tel"
+                                inputMode="numeric"
+                                autoComplete="tel-national"
+                                placeholder="614 123 4567"
                                 value={telefonoLocal}
                                 onChange={(e) => setTelefonoLocal(e.target.value.replace(/\D/g, ''))}
                             />
                         </div>
+                    </Field>
 
-                        <span className={styles.label}>{t('sales.new_sale.event_date')}</span>
-                        <DatePicker
-                            className={styles.datePicker}
-                            style={{ width: '100%' }}
-                            format='DD/MM/YYYY'
-                            value={fechaEvento ? dayjs(fechaEvento) : null}
-                            onChange={(_, dateString) => setFechaEvento(dateString ? dayjs(dateString, 'DD/MM/YYYY').format('YYYY-MM-DD') : '')}
+                    <Field label={t('sales.new_sale.event_date')} htmlFor="ns-date">
+                        <TextInput
+                            id="ns-date"
+                            type="date"
+                            className={styles.dateInput}
+                            value={fechaEvento}
+                            onChange={(e) => setFechaEvento(e.target.value)}
                         />
-                    </div>
-                </div>
+                    </Field>
+                </>
+            )}
 
-                {/* ── Bloque 3: Pago ── */}
-                <div className={styles.block}>
-                    <BlockHeader title={t('sales.new_sale.block_payment')} open={openPago} onToggle={() => setOpenPago(v => !v)} />
-
-                    <div className={`${styles.blockBody} ${!openPago ? styles.blockBodyClosed : ''}`}>
-                        <span className={styles.label}>{t('sales.new_sale.plan')}</span>
-                        <div className={styles.planToggle}>
-                            {PLANS.map((p) => (
-                                <Button
+            {/* ── Paso 3: pago ── */}
+            {paso === 2 && (
+                <>
+                    <Field label={t('sales.new_sale.plan')}>
+                        <div className={styles.planGrid} role="radiogroup" aria-label={t('sales.new_sale.plan')}>
+                            {PLANS.map(p => (
+                                <button
                                     key={p}
-                                    type='text'
-                                    className={`${styles.planOption} ${plan === p ? styles.planOptionActive : ''}`}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={plan === p}
+                                    className={`${styles.planCard} ${plan === p ? styles.planCardActive : ''}`}
                                     onClick={() => setPlan(p)}
                                 >
-                                    {p}
-                                </Button>
+                                    {plan === p && <span className={styles.planCheck}><Check size={14} strokeWidth={3} /></span>}
+                                    <span className={styles.planName}>{p}</span>
+                                    <span className={styles.planPrice}>{formatCurrency(DEFAULT_PRICE[p])}</span>
+                                </button>
                             ))}
                         </div>
+                    </Field>
 
-                        {canDiscount && (
-                            <>
-                                <span className={styles.label}>{t('sales.new_sale.discount')}</span>
-                                <Select
-                                    suffixIcon={null}
-                                    className={styles.selectAntd}
-                                    style={{ width: '100%' }}
-                                    value={descuentoPct}
-                                    onChange={setDescuentoPct}
-                                    options={discountOptions.map((d) => ({
-                                        value: d,
-                                        label: d === 0 ? t('sales.new_sale.no_discount') : `${d}%`,
-                                    }))}
-                                />
-                            </>
-                        )}
+                    {canDiscount && (
+                        <Field label={t('sales.new_sale.discount_label')}>
+                            <ChipGroup
+                                fill={discountOptions.length <= 4}
+                                label={t('sales.new_sale.discount_label')}
+                                value={descuentoPct}
+                                onChange={setDescuentoPct}
+                                options={discountOptions.map(d => ({
+                                    value: d,
+                                    label: d === 0 ? t('sales.new_sale.no_discount_short') : `${d}%`,
+                                }))}
+                            />
+                        </Field>
+                    )}
 
-                        <div className={styles.totalRow}>
-                            <span className={styles.totalLabel}>{t('sales.new_sale.subtotal')}</span>
-                            <span className={styles.totalValue}>{formatCurrency(precioAcordado)}</span>
+                    <Card>
+                        <div className={styles.priceRow}>
+                            <span>{t('sales.new_sale.list_price')}</span>
+                            <span>{formatCurrency(DEFAULT_PRICE[plan])}</span>
                         </div>
-
-                        {(linkPago || configPagos?.transferencia) && (
-                            <div className={styles.paymentInfoBox}>
-                                {linkPago && (
-                                    <div className={styles.paymentRow}>
-                                        <div className={styles.paymentRowText}>
-                                            <div className={styles.paymentRowLabel}>{t('sales.new_sale.payment_link')}</div>
-                                            <a className={styles.paymentLink} href={linkPago} target='_blank' rel='noreferrer'>{linkPago}</a>
-                                        </div>
-                                        <Button size='small' className={styles.copyBtn} onClick={() => handleCopy(linkPago)}>
-                                            {t('sales.new_sale.copy')}
-                                        </Button>
-                                    </div>
-                                )}
-
-                                {configPagos?.transferencia && (
-                                    <div className={styles.paymentRow}>
-                                        <div className={styles.paymentRowText}>
-                                            <div className={styles.paymentRowLabel}>CLABE</div>
-                                            <div className={styles.paymentValue}>{configPagos.transferencia.clabe}</div>
-                                        </div>
-                                        <Button size='small' className={styles.copyBtn} onClick={() => handleCopy(configPagos.transferencia.clabe)}>
-                                            {t('sales.new_sale.copy')}
-                                        </Button>
-                                    </div>
-                                )}
+                        {descuentoPct > 0 && (
+                            <div className={styles.priceRow}>
+                                <span>{t('sales.new_sale.discount_line', { pct: descuentoPct })}</span>
+                                <span>−{formatCurrency(DEFAULT_PRICE[plan] - precioAcordado)}</span>
                             </div>
                         )}
-                    </div>
-                </div>
+                        <div className={styles.priceTotal}>
+                            <span>{t('sales.new_sale.subtotal')}</span>
+                            <span className={styles.priceTotalValue}>{formatCurrency(precioAcordado)}</span>
+                        </div>
+                    </Card>
 
-                {error && <div className={styles.hintError}>{error}</div>}
-
-                <Button
-                    icon={<Check size={14}/>}
-                    block
-                    className={styles.submitBtn}
-                    loading={submitting}
-                    disabled={!formCompleto}
-                    onClick={handleSubmit}
-                    style={{minHeight:'44px'}}
-                >
-                    Checkout
-                </Button>
-
-            </div>
-        </div>
+                    {(linkPago || linksMeses.length > 0 || configPagos?.transferencia) && (
+                        <Field label={t('sales.new_sale.how_pays')}>
+                            <Card className={styles.listCard}>
+                                {linkPago && (
+                                    <CopyRow
+                                        primary
+                                        title={descuentoPct > 0
+                                            ? t('sales.new_sale.payment_link_plan_discount', { plan, pct: descuentoPct })
+                                            : t('sales.new_sale.payment_link_plan', { plan })}
+                                        value={linkPago.replace(/^https?:\/\//, '')}
+                                        href={linkPago}
+                                        copyLabel={t('sales.new_sale.copy')}
+                                        onCopy={() => handleCopy(linkPago)}
+                                    />
+                                )}
+                                {linksMeses.map(({ months, url, amount }) => (
+                                    <CopyRow
+                                        key={months}
+                                        title={`${t('sales.new_sale.installments_link', { plan, months })}${amount ? ` · ${formatMXN(amount)}` : ''}`}
+                                        value={url.replace(/^https?:\/\//, '')}
+                                        href={url}
+                                        copyLabel={t('sales.new_sale.copy')}
+                                        onCopy={() => handleCopy(url)}
+                                    />
+                                ))}
+                                {configPagos?.transferencia && (
+                                    <CopyRow
+                                        mono
+                                        title={t('sales.payment.transfer')}
+                                        value={formatClabe(configPagos.transferencia.clabe)}
+                                        copyLabel={t('sales.new_sale.copy')}
+                                        onCopy={() => handleCopy(configPagos.transferencia.clabe)}
+                                    />
+                                )}
+                            </Card>
+                        </Field>
+                    )}
+                </>
+            )}
+        </Screen>
     )
 }

@@ -1,51 +1,50 @@
 .wrapper {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--gray-bg);
-  padding: 24px;
-}
-
-.card {
-  width: 100%;
-  max-width: 360px;
-  background: #fff;
-  border-radius: 24px;
-  border: 0.5px solid var(--borders);
-  padding: 40px 28px;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: #1c3249;
+  color: #eeeadf;
+  font-family: 'Luxora Grotesk', 'Poppins', sans-serif;
   text-align: center;
 }
 
-.brand {
+.logo {
+  width: min(230px, 60vw);
+  height: auto;
+}
+
+.title {
+  margin: 56px 0 0;
   font-family: 'Denver-Serial', 'Poppins', sans-serif;
   font-weight: 700;
   font-size: 22px;
-  color: var(--mid-blue-500);
-  margin-bottom: 4px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #eeeadf;
 }
 
 .subtitle {
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  color: var(--gray-color);
-  margin-bottom: 24px;
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: rgba(238, 234, 223, 0.7);
 }
 
 .pinRow {
-  margin-bottom: 18px;
+  margin-top: 28px;
+}
+
+.status {
+  min-height: 20px;
+  margin: 20px 0 0;
+  font-size: 13px;
+  color: rgba(238, 234, 223, 0.5);
 }
 
 .error {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  color: var(--error-color);
-  margin-top: 4px;
-}
-
-.loading {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  color: var(--gray-color);
-  margin-top: 4px;
+  color: #F9BCBA;
+  font-weight: 600;
 }

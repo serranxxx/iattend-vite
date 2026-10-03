@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Input } from 'antd'
-import { Send, ThumbsUp, ThumbsDown, RotateCcw, Minus, Plus, Copy, Check, Maximize2, Minimize2, Lock } from 'lucide-react'
+import { SendHorizontal, ThumbsUp, ThumbsDown, RotateCcw, Minus, Plus, Copy, Check, Maximize2, Minimize2, Lock } from 'lucide-react'
 import axios from 'axios'
 import { useLia } from '../../context/LiaContext'
 import { supabase } from '../../lib/supabase'
@@ -95,17 +95,37 @@ const renderMarkdown = (text) => {
 
 // ── Sub-components ───────────────────────────────────────────
 
+const LiaMark = () => <span className="lia-mark" aria-hidden="true">✦</span>
+
 const TypingIndicator = ({ label }) => (
-    <div className="lia-typing-row" role="status" aria-label={label}>
-        <div className="lia-typing-bubble">
-            <div className="lia-typing-dot" />
-            <div className="lia-typing-dot" />
-            <div className="lia-typing-dot" />
+    <div className="lia-turn lia-turn--typing" role="status" aria-label={label || undefined}>
+        <LiaMark />
+        <div className="lia-typing">
+            <div className="lia-typing-dots">
+                <span className="lia-typing-dot" />
+                <span className="lia-typing-dot" />
+                <span className="lia-typing-dot" />
+            </div>
+            {label && <span className="lia-typing-label">{label}</span>}
         </div>
-        {label && <span className="lia-typing-label">{label}</span>}
     </div>
 )
 
+const IconButton = ({ icon, label, pressed, className = '', ...props }) => (
+    <button
+        type="button"
+        className={`lia-icon-btn${pressed ? ' is-pressed' : ''} ${className}`}
+        title={label}
+        aria-label={label}
+        aria-pressed={pressed}
+        {...props}
+    >
+        {icon}
+    </button>
+)
+
+// Las respuestas de Lia no van en burbuja: texto y bloques usan todo el ancho
+// junto a su marca. Solo los mensajes del organizador llevan burbuja.
 const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback, onAtajo, t }) => {
     const isUser = msg.role === 'user'
     const safeContent = typeof msg.content === 'string'
@@ -134,75 +154,44 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback, onAt
     // el indicador de "escribiendo" ocupa su lugar.
     if (msg.streaming && !safeContent && !msg.blocks?.length) return null
 
-    return (
-        <div className={`lia-message-row ${isUser ? 'user' : ''}`}>
+    if (isUser) return (
+        <div className="lia-turn lia-turn--user">
+            <div className="lia-bubble">{safeContent}</div>
+        </div>
+    )
 
-            <div className={`lia-bubble ${isUser ? 'user' : 'assistant'}`}>
-                {isUser ? safeContent : renderMarkdown(safeContent)}
-                {!isUser && <LiaBlocks blocks={msg.blocks} onAtajo={onAtajo} />}
-                {!isUser && !msg.streaming && (msg.message_id || msg.action_id) && (
-                    <div style={{ marginTop: 8 }}>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={<ThumbsUp size={13} />}
-                                onClick={handleThumbUp}
-                                title={t('lia.feedback_good')}
-                                aria-label={t('lia.feedback_good')}
-                                aria-pressed={isPositive}
-                                style={{
-                                    color: isPositive ? '#b8b8b8' : '#bfbfbf',
-                                    background: isPositive ? '#F5F3F240' : 'transparent',
-                                    border: isPositive ? '1px solid #b8b8b860' : '1px solid transparent',
-                                    borderRadius: '8px',
-                                }}
-                            />
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={<ThumbsDown size={13} />}
-                                onClick={handleThumbDown}
-                                title={t('lia.feedback_bad')}
-                                aria-label={t('lia.feedback_bad')}
-                                aria-pressed={isNegative}
-                                style={{
-                                    color: isNegative ? '#b8b8b8' : '#bfbfbf',
-                                    background: isNegative ? '#F5F3F240' : 'transparent',
-                                    border: isNegative ? '1px solid #b8b8b860' : '1px solid transparent',
-                                    borderRadius: '8px',
-                                }}
-                            />
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={copied ? <Check size={13} /> : <Copy size={13} />}
+    return (
+        <div className="lia-turn">
+            <LiaMark />
+            <div className="lia-answer">
+                {safeContent && <div className="lia-answer-text">{renderMarkdown(safeContent)}</div>}
+                <LiaBlocks blocks={msg.blocks} onAtajo={onAtajo} />
+                {!msg.streaming && (msg.message_id || msg.action_id) && (
+                    <>
+                        <div className="lia-answer-tools">
+                            <IconButton icon={<ThumbsUp size={14} />} label={t('lia.feedback_good')} pressed={isPositive} onClick={handleThumbUp} />
+                            <IconButton icon={<ThumbsDown size={14} />} label={t('lia.feedback_bad')} pressed={isNegative} onClick={handleThumbDown} />
+                            <IconButton
+                                icon={copied ? <Check size={14} /> : <Copy size={14} />}
+                                label={t('lia.copy')}
+                                className={copied ? 'is-done' : ''}
                                 onClick={handleCopy}
-                                title={t('lia.copy')}
-                                aria-label={t('lia.copy')}
-                                style={{
-                                    color: copied ? '#52c41a' : '#bfbfbf',
-                                    background: copied ? '#f6ffed' : 'transparent',
-                                    border: copied ? '1px solid #b7eb8f' : '1px solid transparent',
-                                    borderRadius: '8px',
-                                }}
                             />
                         </div>
                         {msg.showFeedbackInput && msg.message_id && (
-                            <div style={{ marginTop: 8 }}>
-                                <Input.TextArea
-                                    placeholder={t('lia.feedback_placeholder')}
-                                    aria-label={t('lia.feedback_placeholder')}
-                                    autoSize={{ minRows: 1, maxRows: 3 }}
-                                    onPressEnter={(e) => {
-                                        if (e.shiftKey) return
-                                        e.preventDefault()
-                                        onFeedbackNote(msg.message_id, e.target.value)
-                                    }}
-                                />
-                            </div>
+                            <Input.TextArea
+                                className="lia-feedback-note"
+                                placeholder={t('lia.feedback_placeholder')}
+                                aria-label={t('lia.feedback_placeholder')}
+                                autoSize={{ minRows: 1, maxRows: 3 }}
+                                onPressEnter={(e) => {
+                                    if (e.shiftKey) return
+                                    e.preventDefault()
+                                    onFeedbackNote(msg.message_id, e.target.value)
+                                }}
+                            />
                         )}
-                    </div>
+                    </>
                 )}
             </div>
         </div>
@@ -210,61 +199,64 @@ const MessageBubble = ({ msg, onFeedback, onFeedbackNote, onActionFeedback, onAt
 }
 
 const ActionCard = ({ action, onApprove, onStartReject, onConfirmReject, onCancelReject, isRejecting, rejectNote, onRejectNoteChange, busy, t }) => (
-    <div className="lia-action-card">
+    <div className="lia-action-card" role="group" aria-label={t('lia.approval_title')}>
+        <span className="lia-action-eyebrow">✦ {t('lia.approval_title')}</span>
         <span className="lia-action-text">{action.preview_text}</span>
-        {isRejecting ? (
-            <div style={{ marginTop: 8 }}>
-                <Input.TextArea
-                    placeholder={t('lia.reject_placeholder')}
-                    aria-label={t('lia.reject_placeholder')}
-                    autoSize={{ minRows: 1, maxRows: 2 }}
-                    value={rejectNote}
-                    onChange={(e) => onRejectNoteChange(e.target.value)}
-                />
-                <div className="lia-action-buttons" style={{ marginTop: 8 }}>
-                    <Button size="small" className="primarybutton--active" style={{ borderRadius: 99 }} loading={busy} onClick={() => onConfirmReject(action, rejectNote)}>
-                        {t('lia.confirm')}
-                    </Button>
-                    <Button size="small" className="primarybutton" style={{ borderRadius: 99 }} onClick={onCancelReject}>
-                        {t('lia.back')}
-                    </Button>
-                </div>
-            </div>
-        ) : (
-            <div className="lia-action-buttons">
-                <Button className="primarybutton--active" style={{ borderRadius: 99 }} loading={busy} onClick={() => onApprove(action)}>
-                    {t('lia.approve')}
-                </Button>
-                <Button className="primarybutton" style={{ borderRadius: 99 }} disabled={busy} onClick={() => onStartReject(action)}>
-                    {t('lia.cancel')}
-                </Button>
-            </div>
+        {isRejecting && (
+            <Input.TextArea
+                className="lia-feedback-note"
+                placeholder={t('lia.reject_placeholder')}
+                aria-label={t('lia.reject_placeholder')}
+                autoSize={{ minRows: 1, maxRows: 2 }}
+                value={rejectNote}
+                onChange={(e) => onRejectNoteChange(e.target.value)}
+            />
         )}
+        <div className="lia-action-buttons">
+            {isRejecting ? (
+                <>
+                    <button type="button" className="lia-pill-btn lia-pill-btn--ghost" disabled={busy} onClick={onCancelReject}>
+                        {t('lia.back')}
+                    </button>
+                    <button type="button" className="lia-pill-btn lia-pill-btn--primary" disabled={busy} onClick={() => onConfirmReject(action, rejectNote)}>
+                        {t('lia.confirm')}
+                    </button>
+                </>
+            ) : (
+                <>
+                    <button type="button" className="lia-pill-btn lia-pill-btn--ghost" disabled={busy} onClick={() => onStartReject(action)}>
+                        {t('lia.cancel')}
+                    </button>
+                    <button type="button" className="lia-pill-btn lia-pill-btn--primary" disabled={busy} aria-busy={busy} onClick={() => onApprove(action)}>
+                        {t('lia.approve')}
+                    </button>
+                </>
+            )}
+        </div>
     </div>
 )
 
-const CreditCircle = ({ freeRemaining, freeLimit, paidBalance, t }) => {
+// Tokens del día con etiqueta: anillo + "36 de 50 hoy". El anillo es lo que
+// queda disponible (gratis del día + comprados); si solo contara los gratis,
+// con la cuota agotada y saldo comprado se vería vacío aunque Lia responda.
+const TokenPill = ({ freeRemaining, freeLimit, paidBalance, t }) => {
     const [hovered, setHovered] = useState(false)
-    // El anillo es lo que queda disponible (gratis del día + comprados). Si
-    // solo contara los gratis, con la cuota agotada y saldo comprado se vería
-    // vacío aunque Lia siga respondiendo.
     const disponible = freeRemaining + paidBalance
     const capacidad = freeLimit + paidBalance
     const pct = capacidad > 0 ? Math.max(0, Math.min(1, disponible / capacidad)) : 1
-    // Mismo tamaño que el botón de atajos de al lado (25px)
-    const size = 25
-    const stroke = 3
+    const size = 16
+    const stroke = 2.5
     const radius = (size - stroke) / 2
     const circumference = 2 * Math.PI * radius
     const offset = circumference * (1 - pct)
     // Lila de Lia; en rojo suave cuando queda poco
-    const color = pct > 0.2 ? 'var(--brand-color-800, #D1BEDD)' : '#E57373'
+    const color = pct > 0.2 ? 'var(--brand-color-800, #E0D3E8)' : '#E57373'
 
     const resumen = `${freeRemaining} ${t('lia.tokens_today', { limit: freeLimit })}${paidBalance > 0 ? ` · +${paidBalance} ${t('lia.tokens_bought')}` : ''}`
 
     return (
         <div
-            style={{ position: 'relative', cursor: 'default', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="lia-token-pill"
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onFocus={() => setHovered(true)}
@@ -274,12 +266,7 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance, t }) => {
             aria-label={resumen}
         >
             <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
-                <circle
-                    cx={size / 2} cy={size / 2} r={radius}
-                    fill="none"
-                    stroke="var(--text-color-20)"
-                    strokeWidth={stroke}
-                />
+                <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--text-color-20)" strokeWidth={stroke} />
                 <circle
                     cx={size / 2} cy={size / 2} r={radius}
                     fill="none"
@@ -291,34 +278,20 @@ const CreditCircle = ({ freeRemaining, freeLimit, paidBalance, t }) => {
                     style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.4s ease' }}
                 />
             </svg>
+            <span aria-hidden="true">
+                {t('lia.tokens_pill', { n: freeRemaining, limit: freeLimit })}
+                {paidBalance > 0 && <span className="lia-token-extra"> +{paidBalance}</span>}
+            </span>
             {hovered && (
-                <div style={{
-                    position: 'absolute',
-                    bottom: 'calc(100% + 8px)',
-                    right: 0,
-                    background: 'var(--ft-color)',
-                    border: '1px solid var(--sc-color)',
-                    borderRadius: 10,
-                    padding: '8px 12px',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                    pointerEvents: 'none',
-                    zIndex: 20,
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: paidBalance > 0 ? 4 : 0 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '99px', background: color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, color: 'var(--text-color)' }}>
-                            <strong>{freeRemaining}</strong>
-                            <span style={{ color: 'var(--text-color-50)' }}> {t('lia.tokens_today', { limit: freeLimit })}</span>
-                        </span>
+                <div className="lia-token-tooltip">
+                    <div className="lia-token-tooltip-row">
+                        <span className="lia-token-tooltip-dot" style={{ background: color }} />
+                        <span><strong>{freeRemaining}</strong> <span className="lia-token-tooltip-muted">{t('lia.tokens_today', { limit: freeLimit })}</span></span>
                     </div>
                     {paidBalance > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '99px', background: 'var(--brand-color-800, #D1BEDD)', flexShrink: 0 }} />
-                            <span style={{ fontSize: 12, color: 'var(--text-color)' }}>
-                                <strong>+{paidBalance}</strong>
-                                <span style={{ color: 'var(--text-color-50)' }}> {t('lia.tokens_bought')}</span>
-                            </span>
+                        <div className="lia-token-tooltip-row">
+                            <span className="lia-token-tooltip-dot" />
+                            <span><strong>+{paidBalance}</strong> <span className="lia-token-tooltip-muted">{t('lia.tokens_bought')}</span></span>
                         </div>
                     )}
                 </div>
@@ -843,26 +816,27 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
     }, [showPromptMenu])
 
     const minimizeButton = onMinimize && (
-        <Button
-            size='small'
-            icon={<Minus size={12} />}
-            onClick={onMinimize}
-            title={t('lia.minimize')}
-            aria-label={t('lia.minimize')}
-            style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
-        />
+        <IconButton icon={<Minus size={14} />} label={t('lia.minimize')} onClick={onMinimize} />
+    )
+
+    // El contexto (qué pantalla ve el organizador) vive en el header, debajo
+    // del nombre: la caja de texto queda solo para escribir.
+    const header = (actions) => (
+        <header className="lia-chat-header">
+            <LiaMark />
+            <div className="lia-header-text">
+                <span className="lia-header-title">Lia</span>
+                <span className="lia-header-sub">{t('lia.viewing', { page: pageLabel })}</span>
+            </div>
+            <div className="lia-header-actions">{actions}</div>
+        </header>
     )
 
     if (!id) return <ErrorState icon="🔗" message={t('lia.missing_id')} />
     if (credits != null && credits.total_available <= 0) return (
         <div className="lia-page">
             <div className="lia-main">
-                <header className="lia-chat-header">
-                    <span className="lia-header-title">✦ Lia</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-                        {minimizeButton}
-                    </div>
-                </header>
+                {header(minimizeButton)}
                 <NoCreditsScreen invitationId={id} onPurchaseSuccess={fetchCredits} />
             </div>
         </div>
@@ -870,70 +844,61 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
 
     const streamingVisible = messages.some(m => m.streaming && (m.content || m.blocks?.length))
     const canSend = Boolean(input.trim()) && !loading && !locked
+    const hasActions = pendingActions.length > 0
 
     return (
         <div className="lia-page">
             <div className="lia-main">
-                <header className="lia-chat-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="lia-header-title">✦ Lia</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-                        <Button
-                            size='small'
-                            icon={<RotateCcw size={12} />}
-                            onClick={handleReset}
-                            title={t('lia.reset')}
-                            aria-label={t('lia.reset')}
-                            style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
-                        />
+                {header(
+                    <>
+                        <IconButton icon={<RotateCcw size={14} />} label={t('lia.reset')} onClick={handleReset} />
                         {onToggleExpand && (
-                            <Button
-                                size='small'
-                                icon={expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                            <IconButton
+                                icon={expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                label={expanded ? t('lia.collapse') : t('lia.expand')}
+                                pressed={expanded}
                                 onClick={onToggleExpand}
-                                title={expanded ? t('lia.collapse') : t('lia.expand')}
-                                aria-label={expanded ? t('lia.collapse') : t('lia.expand')}
-                                aria-pressed={expanded}
-                                style={{ color: 'var(--text-color-50)', borderRadius: 8 }}
                             />
                         )}
                         {minimizeButton}
-                    </div>
-                </header>
+                    </>
+                )}
 
                 {!conversationStarted ? (
-                    <div className={`scroll-invitation lia-landing${pendingActions.length > 0 ? ' lia-landing--actions' : ''}`}>
-                        {loading ? (
-                            <div className="lia-landing-content">
+                    <div className={`scroll-invitation lia-landing${hasActions ? ' lia-landing--actions' : ''}`}>
+                        <div className="lia-landing-content">
+                            {loading ? (
                                 <TypingIndicator />
-                            </div>
-                        ) : (
-                            <div className="lia-landing-content">
-                                {greetingText && (
-                                    <span className="lia-landing-greeting">{greetingText}</span>
-                                )}
-                                <div className="lia-cta-grid">
-                                    {CTAS.map(key => (
-                                        <button
-                                            key={key}
-                                            type="button"
-                                            className="lia-cta-btn"
-                                            disabled={locked}
-                                            onClick={() => handleSendMessage(t(`lia.prompts.${key}`))}
-                                        >
-                                            {t(`lia.prompts.${key}`)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                            ) : (
+                                <>
+                                    {greetingText && (
+                                        <span className="lia-landing-greeting">{greetingText}</span>
+                                    )}
+                                    <div className="lia-cta-group">
+                                        <span className="lia-eyebrow">{t('lia.shortcuts_label')}</span>
+                                        <div className="lia-cta-grid">
+                                            {CTAS.map(key => (
+                                                <button
+                                                    key={key}
+                                                    type="button"
+                                                    className="lia-cta-btn"
+                                                    disabled={locked}
+                                                    onClick={() => handleSendMessage(t(`lia.prompts.${key}`))}
+                                                >
+                                                    {t(`lia.prompts.${key}`)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                         <div ref={bottomRef} />
                     </div>
                 ) : (
                     <div
                         ref={messagesRef}
-                        className={`lia-messages-area scroll-invitation${pendingActions.length > 0 ? ' lia-messages-area--actions' : ''}`}
+                        className={`lia-messages-area scroll-invitation${hasActions ? ' lia-messages-area--actions' : ''}`}
                         role="log"
                         aria-live="polite"
                         aria-label={t('lia.messages_label')}
@@ -944,7 +909,7 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                     </div>
                 )}
 
-                {pendingActions.length > 0 && (
+                {hasActions && (
                     <div className="lia-actions-area">
                         {pendingActions.map(action => (
                             <ActionCard
@@ -964,7 +929,7 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                     </div>
                 )}
 
-                <footer className={`lia-footer${pendingActions.length > 0 ? ' lia-footer--hidden' : ''}`}>
+                <footer className={`lia-footer${hasActions ? ' lia-footer--hidden' : ''}`}>
                     <div ref={promptMenuRef} className="prompt-menu-container lia-input-card">
                         {showPromptMenu && (
                             <div className="lia-prompt-popup" role="menu" aria-label={t('lia.menu_title')}>
@@ -973,7 +938,7 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                                 </div>
                                 <div className="lia-prompt-popup-body scroll-invitation">
                                     {buildPromptMenu(eventData, t).map((section) => (
-                                        <div key={section.category} style={{ marginBottom: '8px' }}>
+                                        <div key={section.category} className="lia-prompt-section">
                                             <p className="lia-prompt-category">{section.category}</p>
                                             {section.prompts.map((prompt) => (
                                                 <button
@@ -983,8 +948,6 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                                                     className="lia-prompt-item"
                                                     disabled={loading}
                                                     onClick={() => { handleSendMessage(prompt); setShowPromptMenu(false) }}
-                                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--sc-color)'}
-                                                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
                                                 >
                                                     {prompt}
                                                 </button>
@@ -995,53 +958,15 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                             </div>
                         )}
 
-                        <div className="lia-input-bottom">
-                            <div className="lia-context-chip">
-                                <span className="lia-context-chip-dot" aria-hidden="true">✦</span>
-                                {pageLabel}
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', }}>
-                                {credits != null && (
-                                    <CreditCircle
-                                        t={t}
-                                        freeRemaining={credits?.free_remaining ?? 50}
-                                        freeLimit={credits?.free_limit ?? 50}
-                                        paidBalance={credits?.paid_balance ?? 0}
-                                    />
-                                )}
-
-                                <Button
-                                    style={{ maxHeight: '25px', width: '25px' }}
-                                    className='primarybutton'
-                                    icon={<Plus size={12} />}
-                                    onClick={() => setShowPromptMenu(prev => !prev)}
-                                    disabled={locked}
-                                    title={t('lia.shortcuts')}
-                                    aria-label={t('lia.shortcuts')}
-                                    aria-expanded={showPromptMenu}
-                                    aria-haspopup="menu"
-                                />
-
-                                <Button
-                                    className='lia-send-btn'
-                                    icon={<Send size={12} />}
-                                    onClick={() => handleSendMessage()}
-                                    disabled={!canSend}
-                                    title={t('lia.send')}
-                                    aria-label={t('lia.send')}
-                                />
-                            </div>
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
+                        {/* Se escribe arriba; los controles quedan abajo */}
+                        <div className="lia-textarea-wrap">
                             <textarea
                                 ref={textareaRef}
                                 className="lia-textarea scroll-invitation"
                                 placeholder={locked ? t('lia.placeholder_locked') : t('lia.placeholder')}
                                 aria-label={t('lia.input_label')}
                                 value={input}
-                                rows={3}
+                                rows={2}
                                 enterKeyHint="send"
                                 onChange={(e) => {
                                     setInput(e.target.value)
@@ -1051,13 +976,43 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                                 onKeyDown={handleKeyDown}
                                 disabled={loading || locked}
                             />
-                            {locked && (
-                                <Lock
-                                    size={14}
-                                    aria-hidden="true"
-                                    style={{ position: 'absolute', right: 10, bottom: 10, color: '#bfbfbf', pointerEvents: 'none' }}
-                                />
-                            )}
+                            {locked && <Lock size={14} aria-hidden="true" className="lia-textarea-lock" />}
+                        </div>
+
+                        <div className="lia-input-bottom">
+                            <div className="lia-input-tools">
+                                <button
+                                    type="button"
+                                    className={`lia-plus-btn${showPromptMenu ? ' is-active' : ''}`}
+                                    onClick={() => setShowPromptMenu(prev => !prev)}
+                                    disabled={locked}
+                                    title={t('lia.shortcuts')}
+                                    aria-label={t('lia.shortcuts')}
+                                    aria-expanded={showPromptMenu}
+                                    aria-haspopup="menu"
+                                >
+                                    <Plus size={14} />
+                                </button>
+                                {credits != null && (
+                                    <TokenPill
+                                        t={t}
+                                        freeRemaining={credits?.free_remaining ?? 50}
+                                        freeLimit={credits?.free_limit ?? 50}
+                                        paidBalance={credits?.paid_balance ?? 0}
+                                    />
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                className="lia-send-btn"
+                                onClick={() => handleSendMessage()}
+                                disabled={!canSend}
+                                title={t('lia.send')}
+                                aria-label={t('lia.send')}
+                            >
+                                <SendHorizontal size={14} />
+                            </button>
                         </div>
                     </div>
                     <span className="lia-disclaimer">{t('lia.disclaimer')}</span>

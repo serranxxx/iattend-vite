@@ -1,0 +1,52 @@
+.picker {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+    padding: 7px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.label {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.detail {
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* Drawers blancos */
+.light .option {
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    color: #374151;
+}
+
+.light .detail {
+    color: #9ca3af;
+}
+
+.light .option.selected {
+    border: 2px solid var(--brand-color-500);
+    background: var(--brand-color-500-20);
+    color: var(--brand-color-900);
+}
+
+.light .option.selected .detail {
+    color: inherit;
+}

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { InteresadosSection } from './InteresadosSection'
 import { IngresosSection } from './IngresosSection'
 import { VendedoresSection } from './VendedoresSection'
+import { StripeSection } from './StripeSection'
 import { MESES } from '../ventasCalculos'
 import styles from './VentasSection.module.css'
 
@@ -10,6 +11,7 @@ const TABS = [
     { key: 'historico', label: 'Histórico de ventas' },
     { key: 'vendedores', label: 'Vendedores' },
     { key: 'interesados', label: 'Interesados' },
+    { key: 'stripe', label: 'Stripe' },
 ]
 
 export const VentasSection = () => {
@@ -87,6 +89,7 @@ export const VentasSection = () => {
             )}
             {tab === 'vendedores' && <VendedoresSection />}
             {tab === 'interesados' && <InteresadosSection />}
+            {tab === 'stripe' && <StripeSection />}
         </div>
     )
 }
