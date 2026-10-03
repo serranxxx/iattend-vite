@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, Grid, message } from 'antd'
 
 const { useBreakpoint } = Grid
-import { Check, Shield, ShoppingCart, Sparkles } from 'lucide-react'
+import { Check, Shield, Sparkles } from 'lucide-react'
 import axios from 'axios'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { AuthModal } from '../PreviewMood/AuthModal'
 import { OnboardingWizard } from '../PreviewMood/OnboardingWizard'
 import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData'
-import { PLAN_FEATURE_GROUPS, planFeatures, usePlans } from '../../hooks/usePlans'
+import { PLAN_FEATURE_GROUPS, planFeatures, planTerms, usePlans } from '../../hooks/usePlans'
+import { PlanPricing } from '../../components/Payment/PlanPricing/PlanPricing'
 import { FooterApp } from '../../modules/Footer/FooterApp'
+import styles from './CheckoutPage.module.css'
 
 const API = import.meta.env.VITE_API_URL
 const PREVIEW_ID = '3cb0ab8b-41cb-428d-b383-ff9d5bbae17d'
@@ -102,6 +104,11 @@ export const CheckoutPage = () => {
     const selected = selectedPlan?.id ?? elegido
     // Solo el nombre del catálogo ("Pro", "Lite"), sin el prefijo "Plan".
     const planLabel = (plan) => plan?.name ?? ''
+    // Plazo elegido: 0 = contado, si no, meses sin intereses. Si el plan nuevo
+    // no tiene ese plazo (Lite no tiene 12) cae en contado.
+    const [meses, setMeses] = useState(0)
+    const terms = planTerms(selectedPlan)
+    const term = terms.find(t => t.months === meses) ?? terms[0] ?? null
     const [loading, setLoading] = useState(false)
     const [authOpen, setAuthOpen] = useState(false)
     const [onboardingOpen, setOnboardingOpen] = useState(() => searchParams.get('openWizard') === 'true')
@@ -127,15 +134,15 @@ export const CheckoutPage = () => {
         return () => clearInterval(timer)
     }, [])
 
-    const selectedPriceFormatted = selectedPlan?.price
-        ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(selectedPlan.price.amount)
-        : '…'
 
     const executePurchase = async () => {
         const session = getSession()
         if (!session?.user?.uid) { setAuthOpen(true); return }
 
+        // Contado manda el price del plan; MSI manda el lookup_key del plazo y
+        // el backend resuelve el price y prende las cuotas.
         const priceId = selectedPlan?.stripe_price_id
+        const lookupKey = term?.lookup_key ?? undefined
         if (!priceId) { messageApi.error('No se pudo obtener el precio del plan'); return }
 
         setLoading(true)
@@ -145,6 +152,7 @@ export const CheckoutPage = () => {
                 userId: session.user.uid,
                 userEmail: session.user.email,
                 priceId,
+                lookupKey,
                 previewData,
                 successUrl: `${window.location.origin}/invitations?welcome=1`,
                 cancelUrl: `${window.location.origin}/checkout`,
@@ -161,17 +169,30 @@ export const CheckoutPage = () => {
         }
     }
 
+    const planTabs = (
+        <div className={styles.planTabs}>
+            {checkoutPlans.map(plan => {
+                const isSelected = selected === plan.id
+                return (
+                    <button
+                        key={plan.id}
+                        type='button'
+                        onClick={() => setSelected(plan.id)}
+                        className={`${styles.planTab} ${isSelected ? styles.planTabSelected : ''}`}
+                    >
+                        {planLabel(plan)}
+                    </button>
+                )
+            })}
+        </div>
+    )
+
     return (
-        <div style={{
-                background: 'var(--dark-blue-500)',
-                display:'flex',alignItems:'center', justifyContent:'center',
-                width:'100%', height:'100vh', 
-                border:'1px solid red'
-            }}>
+        <div className={styles.page}>
                 {contextHolder}
 
                 {/* ── Video background ── */}
-                <div style={{ position: isMobile ? 'fixed' : 'absolute', inset: 0, zIndex: 0, background: '#0c171b' }}>
+                <div className={styles.videoBg}>
                     {VIDEOS.map((src, i) => (
                         <video
                             key={src}
@@ -187,152 +208,80 @@ export const CheckoutPage = () => {
                     <div className='login-video-overlay' />
                 </div>
 
-                {/* ── Card ── */}
-                <div style={{
-                    position: 'relative',
-                    height: '100%',width:'100%',
-                    maxHeight:'100vh',overflowY:'auto', 
-                     maxWidth: 480,
-                    background: 'rgba(255,255,255,0.06)',
-                    backdropFilter: 'blur(6px)',
-                    // WebkitBackdropFilter: 'blur(32px) saturate(1.3)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}>
+                {/* Móvil: una sola tarjeta que hace scroll (hero arriba, plan
+                    abajo). Web: hero a la izquierda sobre el video y el plan
+                    en un panel a la derecha. */}
+                <div className={`${styles.layout} ${styles.scrollArea}`}>
 
-                    {/* Scrollable content */}
-                    <div style={{
-                        
-                        padding: '32px 28px 0',
-                        flex:1
-                    }}>
+                    <section className={styles.hero}>
+                        {!isMobile && <img alt='I attend' src='/images/logo_cover.png' className={styles.logo} />}
 
-                        <h1 style={{
-                            fontSize: isMobile ? 38 : 58, fontWeight: 800, color: TEXT,
-                            fontFamily: 'Denver-Serial', textAlign: 'center',
-                            margin: '0', lineHeight: 1.1,
-                        }}>
-                            TU EVENTO,
-                        </h1>
-                        <h1 style={{
-                            fontSize: isMobile ? 30 : 44, fontWeight: 800, color: TEXT,
-                            fontFamily: 'Denver-Serial', textAlign: 'center',
-                            margin: '0px 0px', lineHeight: 1.1,
-                        }}>
-                            BAJO CONTROL
-                        </h1>
-                        <h1 style={{
-                            fontSize: isMobile ? 18 : 22, fontWeight: 500, color: TEXT,
-                            fontFamily: 'Michigan Signature', textAlign: 'center',
-                            margin: '0', lineHeight: 1,
-                            marginTop: '16px'
-                        }}>
-                            En menos de una tarde
-                        </h1>
+                        <div className={styles.heroCopy}>
+                            <h1 className={styles.titleMain}>TU EVENTO,</h1>
+                            <h1 className={styles.titleSub}>BAJO CONTROL</h1>
+                            <h2 className={styles.titleScript}>En menos de una tarde</h2>
 
-                        <button
-                            type='button'
-                            onClick={() => setOnboardingOpen(true)}
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                margin: '14px auto 24px', padding: '8px 18px',
-                                border: 'none', borderRadius: 99, cursor: 'pointer',
-                                background: '#aac187', color: '#1c3249',
-                                fontSize: 13, fontWeight: 700, fontFamily: 'Luxora Grotesk',
-                            }}
-                        >
-                            <Sparkles size={14} />
-                            Conoce I attend
-                        </button>
+                            <div className={styles.discover}>
+                                <button
+                                    type='button'
+                                    onClick={() => setOnboardingOpen(true)}
+                                    className={styles.discoverButton}
+                                >
+                                    <Sparkles size={14} />
+                                    Conoce I attend
+                                </button>
+                            </div>
+                        </div>
 
-                        <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-                            {checkoutPlans.map(plan => {
-                                const isSelected = selected === plan.id
-                                const planName = planLabel(plan)
+                        {!isMobile && (
+                            <div className={styles.heroFooter}>
+                                <Shield size={13} />
+                                <span>Pago seguro con Stripe · Pago único, activa para siempre</span>
+                            </div>
+                        )}
+                    </section>
+
+                    <aside className={`${styles.panel} ${styles.scrollArea}`}>
+                        <div className={styles.panelBody}>
+                            {!isMobile && (
+                                <>
+                                    <span className={styles.eyebrow}>Tu plan</span>
+                                    <h2 className={styles.panelTitle}>PLAN {planLabel(selectedPlan).toUpperCase()}</h2>
+                                    <SectionLabel>Elige tu plan</SectionLabel>
+                                </>
+                            )}
+
+                            {planTabs}
+
+                            {/* Checklist del catálogo (Admin → Planes): cada feature trae su
+                                grupo, y las que dependen de un número en 0 no salen. */}
+                            {PLAN_FEATURE_GROUPS.map(group => {
+                                const items = planFeatures(selectedPlan, { group: group.key })
+                                if (!items.length) return null
                                 return (
-                                    <button
-                                        key={plan.id}
-                                        onClick={() => setSelected(plan.id)}
-                                        style={{
-                                            flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
-                                            fontWeight: 600, fontSize: 14,
-                                            fontFamily: 'Luxora Grotesk',
-                                            border: isSelected
-                                                ? '2px solid rgba(210,191,221,0.8)'
-                                                : `1.5px solid ${TEXT_FAINT}`,
-                                            background: isSelected
-                                                ? 'rgba(210,191,221,0.18)'
-                                                : 'rgba(239,234,223,0.05)',
-                                            color: isSelected ? TEXT : TEXT_DIM,
-                                            transition: 'all 0.15s',
-                                        }}
-                                    >
-                                        {planName}
-                                    </button>
+                                    <div key={group.key}>
+                                        <SectionLabel>{group.label}</SectionLabel>
+                                        <div className={styles.checklist}>
+                                            {items.map((item, i) => <CheckItem key={i} label={item.text} />)}
+                                        </div>
+                                    </div>
                                 )
                             })}
                         </div>
 
-    
-                        {/* Checklist del catálogo (Admin → Planes): cada feature trae su
-                            grupo, y las que dependen de un número en 0 no salen. */}
-                        {PLAN_FEATURE_GROUPS.map(group => {
-                            const items = planFeatures(selectedPlan, { group: group.key })
-                            if (!items.length) return null
-                            return (
-                                <div key={group.key}>
-                                    <SectionLabel>{group.label}</SectionLabel>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
-                                        {items.map((item, i) => <CheckItem key={i} label={item.text} />)}
-                                    </div>
-                                </div>
-                            )
-                        })}
-
-                        <div style={{ height: 24 }} />
-                    </div>
-
-        
-                    <div style={{
-                        padding: '16px 28px 28px',
-                        borderTop: `1px solid ${TEXT_FAINT}`,
-                        background: 'rgba(0,0,0,0.15)',
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                            <span style={{ fontSize: 15, fontWeight: 500, color: TEXT_DIM, fontFamily: 'Luxora Grotesk' }}>
-                                {planLabel(selectedPlan)}
-                            </span>
-                            <span style={{ fontSize: 28, fontWeight: 800, color: TEXT, fontFamily: 'Windsor', lineHeight: 1 }}>
-                                {selectedPriceFormatted}
-                            </span>
+                        <div className={styles.panelPricing}>
+                            <PlanPricing
+                                plan={selectedPlan}
+                                terms={terms}
+                                term={term}
+                                onTermChange={setMeses}
+                                onBuy={executePurchase}
+                                loading={loading}
+                                disabled={checkoutPlans.length === 0}
+                                standalone={isMobile}
+                            />
                         </div>
-                        <span style={{ fontSize: 12, color: TEXT_DIM, display: 'block', marginBottom: 14, fontFamily: 'Luxora Grotesk' }}>
-                            Pago único · activa para siempre
-                        </span>
-
-                        <button
-                            disabled={checkoutPlans.length === 0 || loading}
-                            onClick={executePurchase}
-                            style={{
-                                width: '100%', height: 50, borderRadius: 12,
-                                background: loading || checkoutPlans.length === 0 ? 'rgba(239,234,223,0.4)' : TEXT,
-                                color: '#0c171b',
-                                border: 'none', cursor: checkoutPlans.length === 0 ? 'not-allowed' : 'pointer',
-                                fontSize: 16, fontWeight: 800, fontFamily: 'Windsor',
-                                letterSpacing: 0.5,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                transition: 'opacity 0.2s',
-                            }}
-                        >
-                            <ShoppingCart size={16} />
-                            {loading ? 'Procesando...' : `Comprar · ${selectedPriceFormatted}`}
-                        </button>
-
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 10, color: TEXT_DIM }}>
-                            <Shield size={13} />
-                            <span style={{ fontSize: 12, fontFamily: 'Luxora Grotesk' }}>Pago seguro con Stripe</span>
-                        </div>
-                    </div>
+                    </aside>
 
                 </div>
 
