@@ -705,6 +705,33 @@
     color: #787878;
 }
 
+.reactionFoot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.reactionDelete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #787878;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.reactionDelete:hover,
+.reactionDelete:focus-visible {
+    background: rgba(198, 67, 67, 0.1);
+    color: #C64343;
+}
+
 /* Área de la lista de invitados (ancla del blur del CTA PRO) */
 .sendArea {
     position: relative;

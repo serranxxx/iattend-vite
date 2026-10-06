@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { load } from '../../helpers/assets/images'
-import { Button, ColorPicker, DatePicker, Dropdown, Input, Segmented, Select, Slider, Switch, Tooltip, message } from 'antd'
+import { Button, ColorPicker, DatePicker, Dropdown, Input, Popconfirm, Segmented, Select, Slider, Switch, Tooltip, message } from 'antd'
 import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Eye, Film, Heart, ImagePlus, Link2, MessageCircle, MousePointerClick, Music, Plus, Search, Send, Trash2, Type, Upload, Video, X } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
 import dayjs from 'dayjs'
@@ -8,7 +8,9 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import axios from 'axios'
 import { supabase } from '../../lib/supabase'
+import { liaHeaders } from '../../pages/Lia/liaApi'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { formatAbsoluteDateEs } from '../../helpers/assets/eventDateTime'
 import { searchSpotifyTracks } from '../../helpers/services/spotify'
@@ -225,6 +227,22 @@ export const SaveTheDatePage = ({ demo = false }) => {
             return
         }
         setReactions(data ?? [])
+    }
+
+    // El organizador borra un mensaje que le dejaron. Pasa por el backend:
+    // la tabla no da DELETE a la anon key.
+    const deleteReaction = async (reactionId) => {
+        try {
+            await axios.delete(
+                `${import.meta.env.VITE_API_URL}/api/save-the-date/${id}/reactions/${reactionId}`,
+                { headers: await liaHeaders() }
+            )
+            setReactions((prev) => prev.filter((r) => r.id !== reactionId))
+            message.success(t('savethedate.message_deleted'))
+        } catch (error) {
+            console.error('Error al eliminar mensaje:', error)
+            message.error(t('savethedate.message_delete_error'))
+        }
     }
 
     const getGuests = async (invitationId) => {
@@ -1875,7 +1893,26 @@ export const SaveTheDatePage = ({ demo = false }) => {
                             {reactionMessages.map((r) => (
                                 <div key={r.id} className={styles.reactionMsg}>
                                     <span>{r.message}</span>
-                                    <span className={styles.reactionMeta}>{reactionDate(r.created_at)}</span>
+                                    <div className={styles.reactionFoot}>
+                                        <span className={styles.reactionMeta}>{reactionDate(r.created_at)}</span>
+                                        {!demo && (
+                                            <Popconfirm
+                                                title={t('savethedate.message_delete_confirm')}
+                                                okText={t('savethedate.message_delete')}
+                                                cancelText={t('savethedate.message_delete_cancel')}
+                                                okButtonProps={{ danger: true }}
+                                                onConfirm={() => deleteReaction(r.id)}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className={styles.reactionDelete}
+                                                    aria-label={t('savethedate.message_delete')}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </Popconfirm>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
