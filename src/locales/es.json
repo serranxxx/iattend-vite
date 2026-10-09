@@ -1402,6 +1402,7 @@
     "help": "Ayuda",
     "publish": "Publicar",
     "publish_tooltip": "Publicar cambios",
+    "scanner_tooltip": "Lector de pases",
     "write": "Escribir",
     "my_invitations": "Mis invitaciones",
     "unsaved_title": "Salir sin guardar",

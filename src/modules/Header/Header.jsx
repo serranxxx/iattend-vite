@@ -10,7 +10,7 @@ import { LuArrowLeft, LuBadgeHelp, LuCheck, LuClipboard, LuClipboardCheck, LuFol
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { ChevronDown, CircleQuestionMark, Menu, MessageCircle, Share, Sparkles } from "lucide-react";
+import { ChevronDown, CircleQuestionMark, Menu, MessageCircle, QrCode, Share, Sparkles } from "lucide-react";
 import { appContext } from '../../context';
 import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
@@ -677,6 +677,17 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                     <Button style={{ borderRadius: '99px' }} icon={<MessageCircle size={12} />} />
                                 </Badge>
                             </Dropdown>
+                        )}
+
+                        {!screens.xs && !isEditing && (
+                            <Tooltip title={t('dashboard_header.scanner_tooltip')}>
+                                <Button
+                                    style={{ borderRadius: '99px' }}
+                                    icon={<QrCode size={12} />}
+                                    aria-label={t('dashboard_header.scanner_tooltip')}
+                                    onClick={() => navigate(`/scanner?id=${id}`)}
+                                />
+                            </Tooltip>
                         )}
 
                         {screens.xs && !isEditing && (

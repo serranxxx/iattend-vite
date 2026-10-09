@@ -1402,6 +1402,7 @@
     "help": "Help",
     "publish": "Publish",
     "publish_tooltip": "Publish changes",
+    "scanner_tooltip": "Pass scanner",
     "write": "Write",
     "my_invitations": "My invitations",
     "unsaved_title": "Exit without saving",
