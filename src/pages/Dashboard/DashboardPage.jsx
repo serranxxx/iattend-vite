@@ -17,6 +17,7 @@ import { FeedbackModal } from '../../components/FeedbackPrompt/FeedbackModal'
 import { useFeedbackTrigger } from '../../components/FeedbackPrompt/useFeedbackTrigger'
 import { CountUp } from './CountUp'
 import { DashboardMobile } from './DashboardMobile'
+import { useBentoFit } from './useBentoFit'
 import { TablesSketch } from './TablesSketch'
 import { TablesPage } from '../../modules/GuestManagement/Tables/TablesPage'
 
@@ -351,6 +352,26 @@ export const DashboardPage = () => {
     // la celda del card de feedback la ocupa el CTA del plan.
     const hasCta = isFree || isLite;
     const isPaperless = plan === 'paperless';
+
+    // Escala del bento ajustada al viewport (tablet y desktop); ver useBentoFit.
+    // .bento_fit ocupa el tamaño ya escalado para que el flex lo centre.
+    const bodyRef = useRef(null)
+    const bentoRef = useRef(null)
+    const bentoFit = useBentoFit(bodyRef, bentoRef,
+        invitation && plan && !isMobile ? (isFree ? 'free' : 'grid') : null,
+        !isFree && !isPaperless)
+    const bentoStyle = isMobile ? undefined : { transform: `scale(${bentoFit.scale})` }
+    const fitWrap = (node) => isMobile ? node : (
+        <div
+            className='bento_fit'
+            style={{
+                width: bentoFit.width * bentoFit.scale,
+                height: bentoFit.height ? bentoFit.height * bentoFit.scale : undefined,
+            }}
+        >
+            {node}
+        </div>
+    )
     // Fuera de paperless la fila 3 es una fila flex (`.bento_row3`): Save the
     // Date crece con `flex: 1`, Acomodo de mesas mide una columna del bento y el
     // feedback / CTA queda topado por `max-width`. Paperless no tiene mesas y
@@ -466,7 +487,10 @@ export const DashboardPage = () => {
 
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1' /> */}
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1_1' /> */}
-                <div className={`dashboard_body${isMobile ? ' dashboard_body--mobile' : ''}`}>
+                <div
+                    ref={bodyRef}
+                    className={`dashboard_body${isMobile ? ' dashboard_body--mobile' : ''}${!isMobile && bentoFit.scroll ? ' dashboard_body--scroll' : ''}`}
+                >
 
                     {/* ── Gradient background ── */}
                     <div className="gradient-bg">
@@ -483,8 +507,8 @@ export const DashboardPage = () => {
 
                     <div className='dashboard_stack'>
 
-                        {isFree ? (
-                            <div className={`bento_free${isMobile ? ' bento_free--mobile' : ''}`}>
+                        {isFree ? fitWrap(
+                            <div ref={bentoRef} style={bentoStyle} className={`bento_free${isMobile ? ' bento_free--mobile' : ''}`}>
                                 {stdCard}
                                 {ctaCard}
                             </div>
@@ -514,7 +538,7 @@ export const DashboardPage = () => {
                             onShare={shareInvitation}
                             onOpen={openSection}
                             onOpenTables={openTables}
-                        /> : <div className='bento_grid'>
+                        /> : fitWrap(<div ref={bentoRef} style={bentoStyle} className={`bento_grid${bentoFit.portrait ? ' bento_grid--portrait' : ''}`}>
 
                             {/* ── Invitación Paperless — lila, alta ── */}
                             <div
@@ -629,7 +653,7 @@ export const DashboardPage = () => {
                                 : <div className='bento_row3'>{stdCard}{tablesCard}{feedbackCard}{ctaCard}</div>
                             }
 
-                        </div>}
+                        </div>)}
                     </div>
 
                 </div>
