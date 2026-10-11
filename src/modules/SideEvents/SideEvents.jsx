@@ -11,6 +11,7 @@ import { FaCheck, FaCoins, FaPaperPlane } from 'react-icons/fa'
 import { BsArrowReturnRight } from 'react-icons/bs'
 import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
+import { CreditController } from '../../components/Payment/CreditController/CreditController'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { dayjsToWallClock, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
@@ -147,7 +148,6 @@ export const SideEvents = () => {
     const [invPhone, setInvPhone] = useState(null)
     const [invOwners, setInvOwners] = useState([])
 
-    const hasPendingInfo = !invName || !invLabel || !invPhone || !invOwners?.length
     const [buyCreditsOpen, setBuyCreditsOpen] = useState(false)
     // Bulk shipment (espejo de GuestsPage): modo "Crear envío" + selección por
     // bloques + lote en backend con isla de progreso
@@ -195,6 +195,16 @@ export const SideEvents = () => {
     const stageRef = useRef(null)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
+    // Evento Flash (/dashboard/side?flash=<side_event_id>): un side event sin
+    // invitación. Abre directo su editor y apaga lo que depende de una
+    // invitación padre (plan, tope, importar invitados de la boda, etiquetas).
+    // Los créditos son los del propio evento (side_events.credits); los envíos
+    // por WhatsApp todavía no están disponibles para Flash.
+    const flashId = searchParams.get("flash");
+    const esFlash = !!flashId;
+    const creditsTable = esFlash ? 'side_events' : 'invitations';
+    const creditsOwnerId = esFlash ? flashId : id;
+    const hasPendingInfo = !esFlash && (!invName || !invLabel || !invPhone || !invOwners?.length)
     const navigate = useNavigate()
     const { subscribe } = useDashboardRealtime()
     const [drawerState, setDrawerState] = useState({
@@ -406,7 +416,8 @@ export const SideEvents = () => {
         setCreditSending(t('guests.reminder_sending_label'))
         try {
             const payload = {
-                invitationId: id,
+                // Un Evento Flash no tiene invitación: va solo con sideEventId
+                invitationId: esFlash ? null : id,
                 guestId: guest.id,
                 guestName: guest.name,
                 guestPhone: guest.phone_number.replace(/^\+/, ""),
@@ -635,11 +646,26 @@ export const SideEvents = () => {
 
     // Reserva de créditos del lote en un solo UPDATE; el backend reembolsa los
     // fallidos al cerrar el lote.
+    // Evento Flash: resta de un solo golpe (RPC consume_side_event_credits,
+    // migración 2026-10-10g del backend). null = el RPC aún no existe y se
+    // sigue con leer y escribir.
+    const consumirCreditosFlash = async (amount) => {
+        const { data, error } = await supabase.rpc('consume_side_event_credits', { p_side_event_id: Number(flashId), p_amount: amount })
+        if (error) {
+            if (error.code !== 'PGRST202') console.error('Error al descontar créditos del Evento Flash:', error)
+            return error.code === 'PGRST202' ? null : credits
+        }
+        const restantes = Array.isArray(data) ? data[0] : data
+        setCredits(restantes ?? 0)
+        return restantes ?? 0
+    }
+
     const onReserveCredits = async (amount) => {
+        if (esFlash && (await consumirCreditosFlash(amount)) != null) return
         const { data, error } = await supabase
-            .from('invitations')
+            .from(creditsTable)
             .select('credits')
-            .eq('id', id)
+            .eq('id', creditsOwnerId)
             .maybeSingle()
 
         if (error || !data) {
@@ -649,9 +675,9 @@ export const SideEvents = () => {
 
         const newCredits = Math.max((data.credits ?? 0) - amount, 0)
         const { error: updateError } = await supabase
-            .from('invitations')
+            .from(creditsTable)
             .update({ credits: newCredits })
-            .eq('id', id)
+            .eq('id', creditsOwnerId)
 
         if (updateError) {
             console.error('Error al reservar créditos:', updateError)
@@ -687,7 +713,7 @@ export const SideEvents = () => {
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/bulk`,
-                { invitationId: id, sideEventId: current.id, items }
+                { invitationId: esFlash ? null : id, sideEventId: current.id, items }
             )
 
             if (response.data.ok) {
@@ -1212,8 +1238,11 @@ export const SideEvents = () => {
                             companions: [],
                             visible: true
                         })}
-                        onFile={(file) => navigate(`/dashboard/guests/import?id=${id}&side_events_id=${current?.id}`, { state: { file } })}
-                        topExtra={
+                        onFile={(file) => esFlash
+                            ? message.info(t('side_events.flash_import_soon'))
+                            : navigate(`/dashboard/guests/import?id=${id}&side_events_id=${current?.id}`, { state: { file } })}
+                        // Copiar la lista de la boda: un Evento Flash no tiene boda.
+                        topExtra={esFlash ? null : (
                             <Dropdown
                                 key={1}
                                 trigger={['click']}
@@ -1283,7 +1312,7 @@ export const SideEvents = () => {
                                     </span>
                                 </button>
                             </Dropdown>
-                        }
+                        )}
                     />
                 )}
             >
@@ -1405,6 +1434,20 @@ export const SideEvents = () => {
     )
 
     const getMessagesUpdates = async () => {
+        // Un Evento Flash no tiene invitación para la RPC: el último envío de
+        // cada invitado sale directo de sus dispatches (vienen del más nuevo
+        // al más viejo, así que el primero por invitado es el vigente).
+        if (esFlash) {
+            const { data, error } = await supabase
+                .from('invitation_message_dispatches')
+                .select('guest_id, status, created_at')
+                .eq('side_event_id', flashId)
+                .order('created_at', { ascending: false })
+            if (error) return
+            const vistos = new Set()
+            setMessagesDispatch((data ?? []).filter(m => !vistos.has(m.guest_id) && vistos.add(m.guest_id)))
+            return
+        }
 
         try {
             const { data, error } = await supabase
@@ -1466,7 +1509,10 @@ export const SideEvents = () => {
             try {
                 const payload = {
 
-                    invitationId: id,
+                    invitationId: esFlash ? null : id,
+                    // Solo un Flash (sin invitación) necesita el side event
+                    // para el registro del envío.
+                    ...(esFlash ? { sideEventId: data.id } : {}),
                     guestId: guest.id,
                     guestName: guest.name,
                     guestPhone: guest.phone_number.replace(/^\+/, ""),
@@ -1568,10 +1614,8 @@ export const SideEvents = () => {
     };
 
     const getSideEvents = async () => {
-        const { data, error } = await supabase
-            .from('side_events')
-            .select('*')
-            .eq('invitation_id', id)
+        const base = supabase.from('side_events').select('*')
+        const { data, error } = await (esFlash ? base.eq('id', flashId) : base.eq('invitation_id', id))
 
         if (error) {
             console.error(error)
@@ -1613,6 +1657,14 @@ export const SideEvents = () => {
     }
 
     const getCredits = async () => {
+        if (esFlash) {
+            // Créditos propios del Evento Flash; sin plan ni tope que mostrar.
+            const { data } = await supabase.from('side_events').select('credits').eq('id', flashId).maybeSingle()
+            setPlan('pro')
+            setSideEventsCap(1)
+            setCredits(data?.credits ?? 0)
+            return
+        }
         const { data, error } = await supabase
             .from('invitations')
             .select('credits, plan, side_events_included, name, label, phone_number, owners')
@@ -1767,6 +1819,8 @@ export const SideEvents = () => {
     }
 
     const getMainGuests = async () => {
+        // Un Evento Flash no tiene invitación de donde copiar invitados.
+        if (esFlash) return
 
         try {
             const { data, error } = await supabase
@@ -2009,11 +2063,12 @@ export const SideEvents = () => {
     }
 
     const onUpdateCredits = async () => {
+        if (esFlash && (await consumirCreditosFlash(1)) != null) return
         // 1. Obtener créditos actuales
         const { data, error } = await supabase
-            .from('invitations')
+            .from(creditsTable)
             .select('credits')
-            .eq('id', id)
+            .eq('id', creditsOwnerId)
             .maybeSingle()
 
         if (error) {
@@ -2039,9 +2094,9 @@ export const SideEvents = () => {
 
         // 4. Guardar créditos actualizados
         const { data: updateCredits, error: updateError } = await supabase
-            .from('invitations')
+            .from(creditsTable)
             .update({ credits: newCredits })
-            .eq('id', id)
+            .eq('id', creditsOwnerId)
             .select()
 
         if (updateError) {
@@ -2119,7 +2174,12 @@ export const SideEvents = () => {
         getCredits()
         getSideEvents()
         getMessagesUpdates()
-    }, [id])
+    }, [id, flashId])
+
+    // Evento Flash: no hay listado, se entra directo a su editor.
+    useEffect(() => {
+        if (esFlash && sideEvent?.length && !current) openSideEvent(sideEvent[0])
+    }, [esFlash, sideEvent])
 
 
     // Si hay un lote de envío masivo en curso para este side event (p. ej. tras
@@ -2205,7 +2265,7 @@ export const SideEvents = () => {
     }, [sideEvent])
 
     useEffect(() => {
-        if (!id) return;
+        if (!id && !esFlash) return;
 
         const u1 = subscribe('side_events_guests', (payload) => {
             const sideEventId = payload.new?.side_events_id ?? payload.old?.side_events_id;
@@ -2218,7 +2278,8 @@ export const SideEvents = () => {
 
         const u2 = subscribe('invitation_message_dispatches', (payload) => {
             const row = payload.new || payload.old;
-            if (!row || String(row.invitation_id) !== String(id)) return;
+            if (!row) return;
+            if (esFlash ? String(row.side_event_id) !== String(flashId) : String(row.invitation_id) !== String(id)) return;
             getMessagesUpdates()
             getGuests(currentRef.current?.id)
         });
@@ -2358,6 +2419,8 @@ export const SideEvents = () => {
     }
 
     const closeToList = () => {
+        // Un Evento Flash no tiene listado: regresa a la página de invitaciones.
+        if (esFlash) return navigate('/invitations')
         startMorph('out', current)
         setMorphedIn(false)
         closeEditor()
@@ -2574,7 +2637,7 @@ export const SideEvents = () => {
                     </div>
                 }
                 <div className={ed.uploadTile}>
-                    <StorageImages invitationID={id} handleImage={handleImages} type={'side-events'} />
+                    <StorageImages invitationID={esFlash ? `flash-${flashId}` : id} handleImage={handleImages} type={'side-events'} />
                 </div>
             </div>
 
@@ -3430,7 +3493,7 @@ export const SideEvents = () => {
     /* ── Piezas que viven fuera del layout y se usan en las dos vistas ── */
     const globals = (
         <>
-                <GuestsCRUD rowData={rawData} invitationID={id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} />
+                <GuestsCRUD rowData={rawData} invitationID={esFlash ? null : id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} />
 
                 {/* Isla de progreso del envío masivo (estilo dynamic island) */}
                 {activeBatch && (
@@ -3486,7 +3549,9 @@ export const SideEvents = () => {
                         <span style={{ fontSize: 13, color: '#787878' }}>
                             {t('guests.reminder_buy_credits_body', { credits })}
                         </span>
-                        <CreditsComponent invitationID={id} creditsDisplay={credits} />
+                        {esFlash
+                            ? <span className={sl.railMeta}>{t('side_events.flash_credits', { count: credits ?? 0 })}</span>
+                            : <CreditsComponent invitationID={id} creditsDisplay={credits} />}
                     </div>
                 </Modal>
             {leaveDialog}
@@ -3668,7 +3733,7 @@ export const SideEvents = () => {
                             <ArrowLeft size={17} />
                         </button>
                         <span className={ed.crumb}>
-                            Side event · <strong>{current?.name || t('side_events.no_name')}</strong>
+                            {esFlash ? t('invitations.flash_badge') : 'Side event'} · <strong>{current?.name || t('side_events.no_name')}</strong>
                         </span>
                         <Tooltip title={t('guests_tour.replay')}>
                             <button
@@ -3680,6 +3745,15 @@ export const SideEvents = () => {
                                 <CircleHelp size={16} />
                             </button>
                         </Tooltip>
+                        {/* Evento Flash: sus créditos propios (en un side event
+                            normal viven en la invitación, en su header). */}
+                        {/* CreditController se centra absoluto en su contenedor (está
+                            hecho para el header): este le da su lugar. */}
+                        {esFlash && (
+                            <span style={{ position: 'relative', width: 122, height: 34, marginLeft: 4, flexShrink: 0 }}>
+                                <CreditController id={flashId} flash />
+                            </span>
+                        )}
                     </div>
 
                     <Segmented
@@ -3765,7 +3839,7 @@ export const SideEvents = () => {
                     backgroundColor: 'var(--ft-color)',
                     width: '100%',
                 }}>
-                <HeaderDashboard mode={'side'} />
+                {!esFlash && <HeaderDashboard mode={'side'} />}
                 <Layout className='build-invitation-layout' style={{
                     paddingTop: '0px',
                     position: 'relative',
@@ -3773,14 +3847,16 @@ export const SideEvents = () => {
                 }} >
 
                     <div className='guests-info-container' style={{ padding: isMobile ? '12px' : '24px', marginTop: '65px', paddingBottom: '24px', }}>
-                        {sideEvent
+                        {sideEvent && !esFlash
                             ? (isMobile ? sideEventsListMobile : sideEventsList)
-                            : <div className={sl.spin}><Spin /></div>}
+                            : sideEvent?.length === 0 && esFlash
+                                ? <div className={sl.spin}>{t('side_events.flash_not_found')}</div>
+                                : <div className={sl.spin}><Spin /></div>}
                     </div>
                 </Layout >
 
-                <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />
-                <ProModal open={proOpen} onClose={() => setProOpen(false)} invitationId={id} />
+                {!esFlash && <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />}
+                {!esFlash && <ProModal open={proOpen} onClose={() => setProOpen(false)} invitationId={id} />}
                 <FooterApp></FooterApp>
                 {globals}
             </Layout >

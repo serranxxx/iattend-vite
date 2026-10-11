@@ -1,0 +1,292 @@
+/* "¿Te falta algo?" (barra del planner) y su formulario. */
+
+.tarjeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 18px;
+    border: 1px solid #E4E1DC;
+    border-radius: 18px;
+    background: #fff;
+}
+
+.icono {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #EEF2E6;
+    color: #1c3249;
+}
+
+.titulo {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 19px;
+    font-weight: 400;
+    color: #1c3249;
+}
+
+.texto {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #4b5157;
+}
+
+.enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #1c3249;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.enlace:hover {
+    text-decoration: underline;
+}
+
+/* ── Formulario ── */
+
+.formulario {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 36px 36px 32px;
+    color: #1c3249;
+}
+
+.cerrar {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: #F4F3F1;
+    color: #1c3249;
+    cursor: pointer;
+}
+
+.formTitulo {
+    margin: 0 48px 0 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1.15;
+}
+
+.formIntro {
+    margin: 8px 0 22px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #5A6164;
+}
+
+.etiqueta {
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333C3F;
+}
+
+.tipos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.tipo {
+    height: 44px;
+    padding: 0 18px;
+    border: 1px solid #E4E1DC;
+    border-radius: 999px;
+    background: #fff;
+    color: #1c3249;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tipoActivo {
+    background: #1c3249;
+    border-color: #1c3249;
+    color: #fff;
+}
+
+.area {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 18px;
+    border: 1px solid #E4E1DC;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #1c3249;
+    resize: vertical;
+    outline: none;
+}
+
+.area:focus {
+    border-color: #1c3249;
+}
+
+.contacto {
+    margin: 18px 0 6px;
+    font-size: 14px;
+}
+
+.acciones {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.cancelar {
+    height: 48px;
+    padding: 0 18px;
+    border: none;
+    background: none;
+    color: #1c3249;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.enviar {
+    height: 52px;
+    padding: 0 30px;
+    border: none;
+    border-radius: 999px;
+    background: #1c3249;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.enviar[aria-disabled='true'] {
+    background: #9CA3AC;
+    cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+    .formulario {
+        padding: 28px 22px 24px;
+    }
+
+    .formTitulo {
+        font-size: 24px;
+    }
+}
+
+/* ── Fila compacta (dashboard en celular) ── */
+
+.fila {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 16px;
+    padding: 16px 18px;
+    border: none;
+    border-radius: 18px;
+    background: #F4F3F1;
+    color: #1c3249;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.filaIcono {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    color: #4f6b34;
+}
+
+.filaTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #4b5157;
+}
+
+.filaTexto .titulo {
+    font-size: 17px;
+}
+
+.filaCta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* ── Formulario como hoja inferior (celular) ── */
+
+.formularioHoja {
+    padding: 10px 22px calc(24px + env(safe-area-inset-bottom));
+}
+
+.asa {
+    align-self: center;
+    width: 40px;
+    height: 5px;
+    margin-bottom: 18px;
+    border-radius: 99px;
+    background: #E4E1DC;
+}
+
+.formularioHoja .formTitulo {
+    margin-right: 0;
+    font-size: 24px;
+}
+
+.formularioHoja .formIntro {
+    margin-bottom: 18px;
+    font-size: 14px;
+}
+
+/* En la hoja los chips y el campo bastan: sin etiquetas ni "Cancelar" (se
+   cierra deslizando o tocando afuera). */
+.formularioHoja .etiqueta,
+.formularioHoja .cancelar {
+    display: none;
+}
+
+.formularioHoja .tipos {
+    margin-bottom: 18px;
+}
+
+.formularioHoja .acciones {
+    margin-top: 12px;
+}
+
+.formularioHoja .enviar {
+    flex: 1;
+}

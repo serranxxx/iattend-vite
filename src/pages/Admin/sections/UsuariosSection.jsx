@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Input, Select, Tooltip, message } from 'antd'
+import { Input, InputNumber, Select, Tooltip, message } from 'antd'
 import { Lock, Mail, Pencil } from 'lucide-react'
 import { FcGoogle } from 'react-icons/fc'
 import { FaApple } from 'react-icons/fa'
-import { fetchProveedores, updateUsuario } from '../usuariosAdminApi'
+import { fetchBeneficiosPlanners, fetchProveedores, updateBeneficiosPlanner, updateUsuario } from '../usuariosAdminApi'
+import { esRolPlanner } from '../../../helpers/roles'
+import { NuevoPlanner } from './NuevoPlanner'
 import styles from './UsuariosSection.module.css'
 
 // El rol vive crudo en `profiles.role`; todo lo demás (etiqueta, color, orden del
@@ -75,24 +77,51 @@ const OPCIONES_ROL = [
 
 // Edición en línea: ocupa el lugar de la fila (en la tabla y en la lista de
 // celular). El correo se muestra pero no se edita: es el login de la cuenta.
-const EditorPerfil = ({ perfil, onCancelar, onGuardado }) => {
+// Planners: además de nombre y rol, sus beneficios (eventos gratis y % de
+// descuento en toda compra suya). Se guardan después del rol porque el
+// backend solo los acepta en cuentas que ya son planner.
+const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar, onGuardado, onBeneficiosGuardados }) => {
     const [nombre, setNombre] = useState(perfil.full_name ?? '')
     const [rol, setRol] = useState(ROLES[perfil.role] ? perfil.role : '')
+    const [eventosGratis, setEventosGratis] = useState(beneficios?.free_events ?? 0)
+    const [flashGratis, setFlashGratis] = useState(beneficios?.free_flash_events ?? 0)
+    const [descuento, setDescuento] = useState(beneficios?.discount_pct ?? 0)
     const [guardando, setGuardando] = useState(false)
 
     const rolOriginal = ROLES[perfil.role] ? perfil.role : ''
     const cambios = {}
     if (nombre.trim() !== (perfil.full_name ?? '')) cambios.full_name = nombre
     if (rol !== rolOriginal) cambios.role = rol || null
-    const sucio = Object.keys(cambios).length > 0
+    // Planner o Administración: mismas funciones, mismos beneficios.
+    const esPlanner = esRolPlanner(rol)
+    // Hasta que carguen los beneficios los campos arrancan en 0: guardar ahí
+    // los borraría. Sin cargar, no se mandan.
+    const beneficiosSucios = esPlanner && beneficiosListos && (
+        (eventosGratis ?? 0) !== (beneficios?.free_events ?? 0)
+        || (flashGratis ?? 0) !== (beneficios?.free_flash_events ?? 0)
+        || (descuento ?? 0) !== (beneficios?.discount_pct ?? 0)
+    )
+    const sucio = Object.keys(cambios).length > 0 || beneficiosSucios
 
     const guardar = async () => {
         if (!nombre.trim()) return message.warning('El nombre es requerido')
         if (!sucio) return onCancelar()
         setGuardando(true)
         try {
-            const { data } = await updateUsuario(perfil.user_id, cambios)
-            onGuardado(data.perfil)
+            let actualizado = perfil
+            if (Object.keys(cambios).length) {
+                const { data } = await updateUsuario(perfil.user_id, cambios)
+                actualizado = data.perfil
+            }
+            if (beneficiosSucios) {
+                const { data } = await updateBeneficiosPlanner(perfil.user_id, {
+                    free_events: eventosGratis ?? 0,
+                    free_flash_events: flashGratis ?? 0,
+                    discount_pct: descuento ?? 0,
+                })
+                onBeneficiosGuardados?.(data.beneficios)
+            }
+            onGuardado(actualizado)
             message.success('Usuario actualizado')
         } catch (error) {
             message.error(error?.response?.data?.msg || 'No se pudo actualizar el usuario')
@@ -130,6 +159,26 @@ const EditorPerfil = ({ perfil, onCancelar, onGuardado }) => {
                     {guardando ? 'Guardando…' : 'Guardar'}
                 </button>
             </div>
+            {esPlanner && (
+                <div className={styles.editorBeneficios}>
+                    <label className={styles.editorCampo}>
+                        <span>Eventos gratis</span>
+                        <InputNumber min={0} max={100} precision={0} value={eventosGratis} onChange={setEventosGratis} />
+                    </label>
+                    <label className={styles.editorCampo}>
+                        <span>Flash gratis</span>
+                        <InputNumber min={0} max={100} precision={0} value={flashGratis} onChange={setFlashGratis} />
+                    </label>
+                    <label className={styles.editorCampo}>
+                        <span>Descuento</span>
+                        <InputNumber min={0} max={90} precision={0} value={descuento} onChange={setDescuento} suffix='%' />
+                    </label>
+                    <small className={styles.editorBeneficiosNota}>
+                        Los eventos gratis son PRO y los Flash son side events sueltos; los dos le aparecen en su página de invitaciones. El descuento aplica en toda compra suya.
+                        {usados && ` Ya usó ${usados.gratis} gratis, compró ${usados.compra} y creó ${usados.flash ?? 0} Flash.`}
+                    </small>
+                </div>
+            )}
             {rol === 'sales' && rolOriginal !== 'sales' && (
                 <small className={styles.editorNota}>
                     Para que entre a Ventas también debe estar dado de alta como vendedor con este mismo correo.
@@ -139,15 +188,19 @@ const EditorPerfil = ({ perfil, onCancelar, onGuardado }) => {
     )
 }
 
-export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActualizado, query = '' }) => {
+export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActualizado, onUsuarioCreado, query = '' }) => {
     const [filtro, setFiltro] = useState('todos')
     const [editando, setEditando] = useState(null)
     const [proveedores, setProveedores] = useState({})
+    const [beneficios, setBeneficios] = useState({ beneficios: {}, usados: {}, listos: false })
 
     useEffect(() => {
         fetchProveedores()
             .then(({ data }) => setProveedores(data.proveedores ?? {}))
             .catch(error => console.error('No se pudo cargar cómo entra cada usuario:', error.response?.data || error.message))
+        fetchBeneficiosPlanners()
+            .then(({ data }) => setBeneficios({ beneficios: data.beneficios ?? {}, usados: data.usados ?? {}, listos: true }))
+            .catch(error => console.error('No se pudieron cargar los beneficios de planners:', error.response?.data || error.message))
     }, [])
 
     const copiar = async (texto) => {
@@ -197,7 +250,7 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
             type='button'
             className={`${styles.action} ${styles.actionIcono}`}
             aria-label={`Editar a ${perfil.full_name || perfil.user_email}`}
-            title='Editar nombre y rol'
+            title='Editar nombre, rol y beneficios'
             onClick={() => setEditando(perfil.user_id)}
         >
             <Pencil size={12} />
@@ -206,7 +259,14 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
 
     const editor = (perfil) => (
         <EditorPerfil
+            // Se vuelve a montar cuando llegan los beneficios: sus campos
+            // toman el valor real en vez del 0 inicial.
+            key={`${perfil.user_id}-${beneficios.listos}`}
             perfil={perfil}
+            beneficios={beneficios.beneficios[perfil.user_id]}
+            beneficiosListos={beneficios.listos}
+            usados={beneficios.usados[perfil.user_id]}
+            onBeneficiosGuardados={b => setBeneficios(prev => ({ ...prev, beneficios: { ...prev.beneficios, [b.planner_id]: b } }))}
             onCancelar={() => setEditando(null)}
             onGuardado={actualizado => {
                 onPerfilActualizado?.(actualizado)
@@ -215,9 +275,21 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
         />
     )
 
+    // En planners, sus beneficios junto al rol: "2 gratis · 15%".
     const badgeRol = (perfil) => {
         const rol = rolDe(perfil.role)
-        return <span className={`${styles.role} ${styles[rol.clase]}`}>{rol.label}</span>
+        const b = esRolPlanner(perfil.role) ? beneficios.beneficios[perfil.user_id] : null
+        const extras = [
+            b?.free_events ? `${b.free_events} gratis` : null,
+            b?.free_flash_events ? `${b.free_flash_events} flash` : null,
+            b?.discount_pct ? `${b.discount_pct}%` : null,
+        ].filter(Boolean).join(' · ')
+        return (
+            <span className={styles.rolCelda}>
+                <span className={`${styles.role} ${styles[rol.clase]}`}>{rol.label}</span>
+                {extras && <span className={styles.beneficios}>{extras}</span>}
+            </span>
+        )
     }
 
     return (
@@ -238,6 +310,13 @@ export const UsuariosSection = ({ profiles, onOpenNewInvitation, onPerfilActuali
                             </button>
                         ))}
                 </div>
+                <NuevoPlanner onCreado={() => {
+                    onUsuarioCreado?.()
+                    // El nuevo planner trae beneficios: se vuelven a pedir.
+                    fetchBeneficiosPlanners()
+                        .then(({ data }) => setBeneficios({ beneficios: data.beneficios ?? {}, usados: data.usados ?? {} }))
+                        .catch(() => {})
+                }} />
             </div>
 
             <div className={styles.card}>

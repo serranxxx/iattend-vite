@@ -26,6 +26,10 @@ export const tieneRol = (profile) => {
 // El filtro necesita los perfiles, así que se construye una vez y se pasa hecho
 // a quien lo ocupe, en vez de que cada pantalla vuelva a cruzar las dos listas.
 //
+// Además del dueño, cuenta `invitations.is_test`: la invitación de prueba de un
+// planner es de un cliente real, así que el dueño no basta para descartarla.
+// Ver iattend--backend/migrations/2026-10-10_invitations_is_test.sql.
+//
 // `TEST_EMAILS` se conserva como respaldo: cubre a las invitaciones cuyo dueño
 // ya no tiene fila en `profiles`, que de otro modo volverían a contar como
 // reales. Mientras los perfiles cargan, el filtro opera solo con esa lista y se
@@ -40,7 +44,9 @@ export const crearFiltroDePrueba = (profiles) => {
         if (perfil.user_id) ids.add(perfil.user_id)
     })
 
-    return (invitation) => correos.has(invitation?.user_email) || ids.has(invitation?.user_id)
+    return (invitation) => invitation?.is_test === true
+        || correos.has(invitation?.user_email)
+        || ids.has(invitation?.user_id)
 }
 
 // Un evento está activo si no tiene fecha todavía o si su fecha aún no pasa.

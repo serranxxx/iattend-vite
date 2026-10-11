@@ -21,7 +21,7 @@ const ORB_FLOW_SCALE = 0.36
 const ORB_FLOW_SCALE_HOVER = 1
 
 // El chat maneja su propio `open`, así que para abrirlo desde fuera (el botón
-// flotante de mobile) se usa un evento de ventana, igual que WhatsNewBanners.
+// flotante de mobile) se usa un evento de ventana.
 export const LIA_CHAT_OPEN_EVENT = 'lia:open-chat'
 // Y avisa cuando se abre o se cierra (detail: { open }), para que el botón
 // flotante de mobile no quede encima del chat a pantalla completa.

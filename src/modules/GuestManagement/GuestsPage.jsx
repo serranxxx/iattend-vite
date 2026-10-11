@@ -29,7 +29,6 @@ import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CircleHelp, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, Search, Send, Sparkles, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
-import { WHATS_NEW_OPEN_EVENT } from '../../components/WhatsNewBanners/WhatsNewBanners';
 import { GuestsOverview } from './GuestsOverview/GuestsOverview';
 import { GuestsTour, GUESTS_TOUR_STORAGE_KEY } from './GuestsTour';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';

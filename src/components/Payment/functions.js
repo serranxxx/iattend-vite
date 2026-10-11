@@ -1,4 +1,5 @@
 import axios from "axios";
+import { supabaseAuthHeaders } from "../../lib/authHeaders";
 
 export const fetchPrices = async (setPrices) => {
     const res = await axios.get(
@@ -52,7 +53,8 @@ export const handleCheckout = async (invitationID, priceId, userId) => {
                 invitationId: invitationID,
                 priceId: priceId,
                 userId: userId
-            }
+            },
+            { headers: await supabaseAuthHeaders() }
         );
 
         // Redirigir a Stripe Checkout
@@ -63,12 +65,28 @@ export const handleCheckout = async (invitationID, priceId, userId) => {
     }
 };
 
+// Créditos de un Evento Flash (side event sin invitación): el webhook los
+// suma a side_events.credits.
+export const handleCheckoutFlashCredits = async (sideEventId, priceId) => {
+    try {
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_URL}/api/payment/create-checkout`,
+            { sideEventId, priceId },
+            { headers: await supabaseAuthHeaders() }
+        );
+        window.location.href = response.data.url;
+    } catch (error) {
+        console.error("Error al iniciar el pago:", error.response?.data || error.message);
+    }
+};
+
 export const handleCheckoutInvitation = async (invitation, priceId) => {
     try {
         const response = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/payment/create-checkout-invitation`,
             // `http://localhost:4000/api/payment/create-checkout-invitation`,
-            { invitation, priceId }
+            { invitation, priceId },
+            { headers: await supabaseAuthHeaders() }
         );
         window.location.href = response.data.url;
     } catch (error) {
@@ -86,7 +104,8 @@ export const handleCheckoutPlan = async (userId, priceId, name, phoneNumber, lab
         const response = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/payment/create-checkout-plan`,
             // `http://localhost:4000/api/payment/create-checkout-plan`,
-            { userId, priceId, name, phoneNumber, label, userEmail }
+            { userId, priceId, name, phoneNumber, label, userEmail },
+            { headers: await supabaseAuthHeaders() }
         );
 
         window.location.href = response.data.url;
@@ -109,7 +128,8 @@ export const handleCheckoutGift = async (senderName, recipientName, email, giftM
     try {
         const response = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/payment/create-checkout-gift`,
-            { senderName, recipientName, email, giftMessage, priceId }
+            { senderName, recipientName, email, giftMessage, priceId },
+            { headers: await supabaseAuthHeaders() }
         );
         window.location.href = response.data.url;
     } catch (error) {

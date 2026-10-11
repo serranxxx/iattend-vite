@@ -5,8 +5,11 @@ import styles from './SalesUi.module.css'
 // del vendedor: acciones abajo al alcance del pulgar, inputs de 52px y texto
 // de 16px para que iOS no haga zoom al enfocar.
 
-export const Screen = ({ children, footer }) => (
-    <div className={styles.screen}>
+// `embedded`: dentro de un contenedor con su propio scroll (ej. el drawer de
+// alta de evento del planner): ocupa su alto y el footer se pega abajo dentro
+// del contenedor en vez de fijarse a la ventana.
+export const Screen = ({ children, footer, embedded }) => (
+    <div className={`${styles.screen} ${embedded ? styles.screenEmbedded : ''}`}>
         <div className={`${styles.body} ${footer ? styles.bodyWithFooter : ''}`}>{children}</div>
         {footer}
     </div>

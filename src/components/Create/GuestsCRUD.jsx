@@ -137,6 +137,8 @@ export const GuestsCRUD = ({
     }
 
     const getTags = async () => {
+        // Sin invitación (Evento Flash) no hay etiquetas ni novios.
+        if (!invitationID) return
         const { data, error } = await supabase
             .from('invitations')
             .select('tags, owners')
@@ -153,7 +155,7 @@ export const GuestsCRUD = ({
     }
 
     const addTagsToInvitation = async () => {
-        if (!newTag?.trim()) return
+        if (!newTag?.trim() || !invitationID) return
 
         const { data, error: fetchError } = await supabase
             .from('invitations')

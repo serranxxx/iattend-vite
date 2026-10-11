@@ -10,7 +10,9 @@ import { useLia } from '../../../context/LiaContext'
 import { useTranslation } from 'react-i18next'
 import { useDashboardRealtime } from '../../../context/DashboardRealtimeContext'
 
-export const CreditController = ({ id, mobile }) => {
+// `flash`: créditos de un Evento Flash (side_events.credits, id del side
+// event) en vez de los de una invitación; el "+" compra para ese evento.
+export const CreditController = ({ id, mobile, flash = false }) => {
     const [credits, setCredits] = useState(null)
     const [mobileOpen, setMobileOpen] = useState(false)
     const { creditState, creditAmount, creditSendingLabel } = useLia()
@@ -19,12 +21,12 @@ export const CreditController = ({ id, mobile }) => {
 
     const getCredits = async () => {
         const { data, error } = await supabase
-            .from("invitations")
+            .from(flash ? "side_events" : "invitations")
             .select("credits")
             .eq("id", id)
             .maybeSingle();
-        if (error) console.error("Error al obtener invitaciones:", error)
-        else setCredits(data.credits)
+        if (error) console.error("Error al obtener créditos:", error)
+        else setCredits(data?.credits ?? 0)
     }
 
     useEffect(() => { getCredits() }, [])
@@ -37,7 +39,7 @@ export const CreditController = ({ id, mobile }) => {
     // (ej. agregar un idioma extra en iattend-events) actualiza el contador
     // sin esperar a un refresh o a un evento de Lia.
     useEffect(() => {
-        return subscribe('invitations', (payload) => {
+        return subscribe(flash ? 'side_events' : 'invitations', (payload) => {
             const row = payload.new
             if (!row || String(row.id) !== String(id)) return
             setCredits(row.credits)
@@ -86,11 +88,12 @@ export const CreditController = ({ id, mobile }) => {
                 {!isSending && (
                     <Dropdown
                         trigger={['click']}
-                        placement='bottomRight'
+                        // En el editor del Evento Flash va a la izquierda de la barra: abre hacia la derecha.
+                        placement={flash ? 'bottomLeft' : 'bottomRight'}
                         arrow
                         popupClassName='credits-popup'
                         popupRender={() => (
-                            <CreditsComponent invitationID={id} isSingle={true} credits={credits} getType={getCredits} />
+                            <CreditsComponent invitationID={flash ? undefined : id} flashId={flash ? id : undefined} isSingle={true} credits={credits} getType={getCredits} />
                         )}>
                         <Button className="coins_btn" icon={<Plus size={14} style={{ marginTop: '2px' }} />}></Button>
                     </Dropdown>

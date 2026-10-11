@@ -295,6 +295,34 @@
     padding-bottom: 4px;
 }
 
+.editorBeneficios {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 130px 130px 130px minmax(0, 1fr);
+    gap: 12px;
+    align-items: end;
+}
+
+.editorBeneficiosNota {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    padding-bottom: 6px;
+}
+
+.rolCelda {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.beneficios {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-amber-text);
+    white-space: nowrap;
+}
+
 .editorNota {
     grid-column: 1 / -1;
     font-size: 11.5px;
@@ -308,6 +336,14 @@
 
     .editorAcciones {
         justify-content: flex-end;
+    }
+
+    .editorBeneficios {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .editorBeneficiosNota {
+        grid-column: 1 / -1;
     }
 }
 
@@ -377,4 +413,60 @@
     .mobileList {
         display: block;
     }
+}
+
+/* ── Agregar planner ── */
+
+.nuevoPlanner {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+}
+
+.plannerForm {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.plannerListo {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.plannerListo p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.plannerListo ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    color: var(--ac-muted);
+}
+
+.acceso {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.acceso span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.acceso code {
+    font-size: 13px;
+    word-break: break-all;
 }

@@ -13,6 +13,8 @@ const WATCHED_TABLES = [
     'whatsapp_incoming_messages',
     'whatsapp_freetext_dispatches',
     'side_events_guests',
+    // créditos de un Evento Flash (CreditController en modo flash)
+    'side_events',
     'invitations',
     'save_the_date_reactions',
 ]
@@ -20,6 +22,10 @@ const WATCHED_TABLES = [
 export const DashboardRealtimeProvider = ({ children }) => {
     const [searchParams] = useSearchParams()
     const id = searchParams.get('id')
+    // Un Evento Flash (/dashboard/side?flash=<id>) no trae invitación: el
+    // canal se abre por el side event y las notificaciones se filtran por él.
+    const flashId = searchParams.get('flash')
+    const canal = id || (flashId ? `flash-${flashId}` : null)
     const listenersRef = useRef({})
     const sideEventIdsRef = useRef(new Set())
     const { notify } = useLia()
@@ -33,7 +39,10 @@ export const DashboardRealtimeProvider = ({ children }) => {
 
     // Load side event IDs for this invitation so we can filter side_events_guests
     useEffect(() => {
-        if (!id) return
+        if (!id) {
+            sideEventIdsRef.current = new Set(flashId ? [String(flashId)] : [])
+            return
+        }
         sideEventIdsRef.current = new Set()
         supabase
             .from('side_events')
@@ -42,10 +51,10 @@ export const DashboardRealtimeProvider = ({ children }) => {
             .then(({ data }) => {
                 if (data) sideEventIdsRef.current = new Set(data.map(s => String(s.id)))
             })
-    }, [id])
+    }, [id, flashId])
 
     useEffect(() => {
-        if (!id) return
+        if (!canal) return
         const u1 = subscribe('guests', (payload) => {
             const row = payload.new || payload.old
             if (!row || String(row.invitation_id) !== String(id)) return
@@ -70,17 +79,18 @@ export const DashboardRealtimeProvider = ({ children }) => {
             if (!row || row.read || !row.dispatch_id) return
             const { data } = await supabase
                 .from('invitation_message_dispatches')
-                .select('invitation_id')
+                .select('invitation_id, side_event_id')
                 .eq('id', row.dispatch_id)
                 .single()
-            if (!data || String(data.invitation_id) !== String(id)) return
+            if (!data) return
+            if (id ? String(data.invitation_id) !== String(id) : String(data.side_event_id) !== String(flashId)) return
             notify({ type: 'info', title: row.contact_name || row.from_phone, body: row.message_body?.slice(0, 80) || 'Nuevo mensaje' })
         })
         return () => { u1(); u2(); u3() }
-    }, [id, subscribe, notify, t])
+    }, [id, flashId, canal, subscribe, notify, t])
 
     useEffect(() => {
-        if (!id) return
+        if (!canal) return
 
         // Use reduce to chain .on() calls properly, preserving the return value
         const channel = WATCHED_TABLES.reduce(
@@ -93,15 +103,15 @@ export const DashboardRealtimeProvider = ({ children }) => {
                         }
                     })
                 }),
-            supabase.channel(`dashboard_rt_${id}`)
+            supabase.channel(`dashboard_rt_${canal}`)
         )
 
         channel.subscribe((status) => {
-            console.log('[DashboardRealtime] status:', status, '| id:', id)
+            console.log('[DashboardRealtime] status:', status, '| id:', canal)
         })
 
         return () => { supabase.removeChannel(channel) }
-    }, [id])
+    }, [canal])
 
     return (
         <DashboardRealtimeContext.Provider value={{ subscribe }}>

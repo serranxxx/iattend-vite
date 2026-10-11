@@ -463,6 +463,7 @@ export const AdminLayout = () => {
                         profiles={newProfiles}
                         onOpenNewInvitation={onOpenNewInvitation}
                         onPerfilActualizado={perfil => setNewProfiles(prev => prev.map(p => (p.user_id === perfil.user_id ? perfil : p)))}
+                        onUsuarioCreado={getNewUsers}
                         query={globalQuery}
                     />
                 )

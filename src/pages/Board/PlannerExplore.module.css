@@ -1,0 +1,363 @@
+/* "Explora I attend" del planner: carrusel de funciones + invitación de ejemplo. */
+
+.explora {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── Carrusel ── foto a sangre completa con degradado, como el hero */
+
+.carrusel {
+    position: relative;
+    height: clamp(220px, 32vh, 340px);
+    border-radius: 28px;
+    overflow: hidden;
+    background: #141414;
+    color: #fff;
+    isolation: isolate;
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 48px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+}
+
+.slideActiva {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.slideFondo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.45) 50%, rgba(0, 0, 0, 0.1) 100%);
+    z-index: 1;
+}
+
+.slideTexto {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 620px;
+    padding-bottom: 40px;
+}
+
+.slideProducto {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.slideTitulo {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: clamp(28px, 4.2vh, 40px);
+    font-weight: 400;
+    line-height: 1.1;
+}
+
+.slideDesc {
+    margin: 0;
+    max-width: 520px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.controles {
+    position: absolute;
+    left: 48px;
+    right: 48px;
+    bottom: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 2;
+}
+
+.puntos {
+    display: flex;
+    gap: 7px;
+}
+
+.punto {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.puntoActivo {
+    width: 30px;
+    background: #fff;
+}
+
+.flechas {
+    display: flex;
+    gap: 10px;
+}
+
+.flecha {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.flecha:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .slide,
+    .punto {
+        transition: none;
+    }
+}
+
+/* ── Invitación de ejemplo ── */
+
+.ejemplo {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+/* La tarjeta de siempre, más chica: su alto sigue a la pantalla. */
+.ejemploTarjeta :global(.invitation-container) {
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+    min-height: clamp(300px, 36vh, 400px);
+}
+
+.ejemploTexto {
+    flex: 1 1 320px;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ejemploEtiqueta {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #4f6b34;
+}
+
+.ejemploTitulo {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #1c3249;
+}
+
+.ejemploDesc {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #4b5157;
+}
+
+.ejemploBotones {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.botonPrimario,
+.botonSecundario {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 50px;
+    padding: 0 22px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.botonPrimario {
+    background: #1c3249;
+    color: #fff;
+    border: none;
+}
+
+.botonPrimario:hover {
+    color: #fff;
+    background: #24405c;
+}
+
+.botonSecundario {
+    background: #fff;
+    color: #1c3249;
+    border: 1px solid #E4E1DC;
+}
+
+.botonSecundario:hover {
+    border-color: #1c3249;
+}
+
+@media (max-width: 900px) {
+    .carrusel {
+        height: 380px;
+    }
+
+    .slide {
+        align-items: flex-end;
+        padding: 0 22px 72px;
+    }
+
+    .slide::after {
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%);
+    }
+
+    .ejemploTarjeta :global(.invitation-container) {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .slideTitulo {
+        font-size: 30px;
+    }
+
+    .controles {
+        left: 22px;
+        right: 22px;
+    }
+
+    .ejemplo {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 24px;
+    }
+}
+
+/* Celular: como el mockup móvil — carrusel más bajo con una sola flecha, y el
+   ejemplo en una fila (miniatura + texto) sin descripción ni "Compartir". */
+@media (max-width: 767px) {
+    .explora {
+        gap: 20px;
+    }
+
+    .carrusel {
+        height: 340px;
+        border-radius: 24px;
+    }
+
+    .slide {
+        padding: 0 22px 76px;
+    }
+
+    .slideTitulo {
+        font-size: 28px;
+    }
+
+    .slideDesc {
+        font-size: 14px;
+    }
+
+    .flechaAtras {
+        display: none;
+    }
+
+    .ejemplo {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 16px;
+    }
+
+    .ejemploTarjeta {
+        flex-shrink: 0;
+    }
+
+    .ejemploTarjeta :global(.invitation-container) {
+        width: 112px;
+        min-width: 112px;
+        max-width: 112px;
+        min-height: 152px;
+        height: 152px;
+        border-radius: 16px;
+        padding: 0 10px;
+    }
+
+    .ejemploTarjeta :global(.invitation_name) {
+        font-size: 13px;
+    }
+
+    .ejemploTarjeta :global(.invitation_path),
+    .ejemploTarjeta :global(.invitation_status),
+    .ejemploTarjeta :global(.invitation_status--dot) {
+        display: none;
+    }
+
+    .ejemploTexto {
+        flex: 1;
+        gap: 8px;
+    }
+
+    .ejemploEtiqueta {
+        font-size: 11px;
+        letter-spacing: 0.14em;
+    }
+
+    .ejemploTitulo {
+        font-size: 20px;
+        line-height: 1.2;
+    }
+
+    .ejemploDesc,
+    .botonSecundario {
+        display: none;
+    }
+
+    .ejemploBotones {
+        margin-top: 4px;
+    }
+
+    .botonPrimario {
+        height: 44px;
+        padding: 0 16px;
+        font-size: 14px;
+    }
+}

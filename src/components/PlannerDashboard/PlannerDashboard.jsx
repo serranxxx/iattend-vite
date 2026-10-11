@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
-import { ConfigProvider, Select } from 'antd'
+import { ConfigProvider, Grid, Select } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { CalendarHeart } from 'lucide-react'
 import { buildPending, buildStats, fetchPlannerData } from './plannerData'
@@ -13,6 +13,7 @@ import { PlannerTimeline } from './PlannerTimeline'
 import { PlannerEventsTable } from './PlannerEventsTable'
 import { PlannerAgenda } from './PlannerAgenda'
 import { PlannerNotes } from './PlannerNotes'
+import { PlannerBoardMobile } from './PlannerBoardMobile'
 import styles from './PlannerDashboard.module.css'
 
 // Tokens del selector de eventos (pill con borde suave del handoff).
@@ -22,8 +23,8 @@ const FILTER_THEME = {
 
 const formatInt = (n, locale) => n.toLocaleString(locale === 'en' ? 'en-US' : 'es-MX')
 
-// filterSlot: nodo del encabezado de InvitationsPage donde se dibuja el filtro
-// de eventos (junto al Segmented). Sin él, el filtro va arriba del tablero.
+// filterSlot: nodo de la barra lateral (PlannerLayout) donde se dibuja el filtro
+// de eventos (bajo "Dashboard"). Sin él, el filtro va arriba del tablero.
 export const PlannerDashboard = ({ invitations, filterSlot, userId }) => {
     const { t } = useTranslation()
 
@@ -66,6 +67,7 @@ export const PlannerBoard = ({ invitations, data, filterSlot, userId }) => {
     const locale = i18n.language?.startsWith('en') ? 'en' : 'es'
     const navigate = useNavigate()
     const today = useMemo(() => dayjs().startOf('day'), [])
+    const celular = Grid.useBreakpoint().md === false
 
     // null = todos los eventos
     const [selectedId, setSelectedId] = useState(null)
@@ -73,7 +75,14 @@ export const PlannerBoard = ({ invitations, data, filterSlot, userId }) => {
     const [activeId, setActiveId] = useState(null)
     const [tableFilter, setTableFilter] = useState('all')
     const [timelineVisible, setTimelineVisible] = usePlannerStorage(userId, 'timeline', true)
-    const { notes, customEvents, addNote, toggleNote, addCustomEvent } = usePlannerNotes(userId)
+    const { notes: allNotes, customEvents, addNote, toggleNote, addCustomEvent } = usePlannerNotes(userId)
+    // Las notas son del planner, no del evento: las de un evento que el
+    // dashboard no muestra (su invitación de prueba, una vez que tiene eventos
+    // reales) se quedan fuera. Las que no van ligadas a ningún evento, sí.
+    const notes = useMemo(() => {
+        const visibles = new Set((invitations ?? []).map(i => i.id))
+        return allNotes.filter(n => !n.eventId || visibles.has(n.eventId))
+    }, [allNotes, invitations])
 
     const statsList = useMemo(() => (invitations ?? [])
         .map(inv => {
@@ -155,6 +164,25 @@ export const PlannerBoard = ({ invitations, data, filterSlot, userId }) => {
             />
         </ConfigProvider>
     )
+
+    if (celular) {
+        return (
+            <PlannerBoardMobile
+                kpis={kpis}
+                scope={scope}
+                statsList={statsList}
+                selectedId={selectedId}
+                onSelectEvent={(id) => { setSelectedId(id); setActiveId(null) }}
+                onOpen={openEvent}
+                locale={locale}
+                notes={shownNotes}
+                onAddNote={(text) => addNote(text, active?.invitation.id ?? null)}
+                onToggleNote={toggleNote}
+                active={active}
+                titleOf={(id) => titles.get(id)}
+            />
+        )
+    }
 
     return (
         <div className={`${styles.dashboard} ${timelineVisible ? '' : styles.dashboardCompact}`}>

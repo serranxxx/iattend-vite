@@ -15,23 +15,11 @@ devuelve la URL pública. Límite duro de **8 MB**; si el archivo pesa más, se 
 Se usa desde `BuildGenerals.jsx` (sección de generales del builder) para asociar una canción a
 la invitación.
 
-## Banners de novedades — `WhatsNewBanners` (commit `27b7c1b`, 22-ago)
+## Banners de novedades — `WhatsNewBanners` (eliminado el 2026-10-10)
 
-`src/components/WhatsNewBanners/WhatsNewBanners.jsx`. Se monta **una sola vez** en
-`DashboardLayout` (`AppRouter.jsx`), así que aparece como overlay fijo en cualquier ruta
-`/dashboard/*` hasta que el organizador lo cierra — el cierre se persiste por banner en
-`localStorage` (`iattend_wn_{key}_v1`), no hay tabla en Supabase para esto.
-
-Catálogo actual (`BANNERS`, hardcodeado en el archivo — agregar un banner nuevo es agregar una
-entrada aquí + sus keys de i18n bajo `whats_new.*`):
-
-- `reminders` — anuncia los recordatorios manuales de WhatsApp
-- `retry` — anuncia el reintento de envíos fallidos
-
-El botón "Lo nuevo" de `GuestsPage` los reabre disparando `WHATS_NEW_OPEN_EVENT` (un
-`CustomEvent` de `window`, solo en memoria — no vuelve a limpiar el `localStorage`, así que al
-cerrarlos de nuevo quedan descartados otra vez). El CTA "Ir a invitados" no se muestra si ya
-estás en `/dashboard/guests` (no tiene sentido navegar a donde ya estás).
+Overlay de "Lo nuevo" (recordatorios de WhatsApp y reintentos) que se montaba en
+`DashboardLayout`. Se quitó a pedido: ya no aparece en `/dashboard/*` y el componente, sus
+textos `whats_new.*` y las llaves `iattend_wn_*_v1` de `localStorage` dejaron de usarse.
 
 ## Calculadora de prioridad de invitados — `CalculateTier` reescrita (commit `068289c`, 2-ago)
 

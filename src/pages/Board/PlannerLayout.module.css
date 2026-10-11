@@ -1,0 +1,771 @@
+/* /invitations del planner: barra lateral con toda la navegación y contenido
+   en un solo nivel. Las tarjetas de invitación usan su CSS global
+   (my-invitations.css). */
+
+.layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+/* ── Barra lateral ── */
+
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 32px 22px 22px;
+    box-sizing: border-box;
+    background: #F7F6F4;
+    border-right: 1px solid #EFEDEA;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+.logo {
+    height: 40px;
+    width: auto;
+    align-self: flex-start;
+    object-fit: contain;
+    margin-left: 6px;
+}
+
+.acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.comprar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 52px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comprar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 14px rgba(28, 50, 73, 0.18);
+}
+
+.comprar {
+    background: #1c3249;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.comprarIcono {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--light-green-500, #AAC187);
+    color: #0c171b;
+    flex-shrink: 0;
+}
+
+.descuento {
+    margin-left: auto;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--light-green-500, #AAC187);
+    color: #16323d;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+/* Tarjeta "Tienes gratis": lila con el brillo que la recorre; una fila por
+   tipo de evento. */
+.regalos {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 10px 10px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #D1BEDD 0%, #b9a3cc 100%);
+    color: #1c3249;
+}
+
+.regalos::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: brillo 3.2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.regalosTitulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.regalo {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.55);
+    color: #1c3249;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.regalo:hover {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.regaloIcono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #1c3249;
+    color: #fff;
+}
+
+.regaloTexto {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.regaloCuenta {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.regaloFlecha {
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+
+.info {
+    display: inline-grid;
+    place-items: center;
+    color: #4f5f73;
+    cursor: help;
+}
+
+.queEsFlash {
+    max-width: 240px;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .regalos::after { animation: none; }
+}
+
+@keyframes brillo {
+    0%, 55% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.navTitulo {
+    padding: 0 14px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8A8E92;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 46px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #3B4045;
+    font-family: inherit;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.navItem:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.navItem small {
+    font-size: 13px;
+    color: #9A9EA2;
+}
+
+.navItemActivo {
+    background: #fff;
+    color: #0E1A22;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(14, 26, 34, 0.06);
+}
+
+.navItemActivo:hover {
+    background: #fff;
+}
+
+.navDashboard {
+    margin-top: 20px;
+}
+
+.navConIcono {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pie {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sugerencias {
+    width: 100%;
+}
+
+.usuario {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 14px;
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.usuario:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--light-green-500, #AAC187);
+    color: #16323d;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.usuarioNombre {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 17px;
+    color: #1c3249;
+}
+
+.menuCorreo {
+    font-size: 12px;
+    color: #787878;
+}
+
+/* ── Contenido ── */
+
+/* Centro del gradiente del fondo. @property deja animarlo suave; un navegador
+   sin soporte lo deja quieto en 50% 0%. */
+@property --planner-bg-x {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 50%;
+}
+
+@property --planner-bg-y {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+}
+
+/* Fondo decorativo (solo el contenido, no la barra): gradiente azul que nace
+   arriba y para el 70% ya es blanco, más una retícula de puntos navy que se
+   desvanece hacia abajo, como en el chat de Lia. El centro del gradiente
+   recorre un circuito cerrado a velocidad constante: nunca se detiene. Para
+   más o menos presencia de los puntos, mover su opacidad entre 0.10 y 0.18. */
+.main {
+    position: relative;
+    min-width: 0;
+    padding: 44px 56px 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(120% 70% at var(--planner-bg-x) var(--planner-bg-y), #DCE6F2 0%, #F1F5FA 35%, #FFFFFF 70%);
+    animation: deriva 36s linear infinite;
+}
+
+@keyframes deriva {
+    0% { --planner-bg-x: 50%; --planner-bg-y: 0%; }
+    25% { --planner-bg-x: 72%; --planner-bg-y: 8%; }
+    50% { --planner-bg-x: 50%; --planner-bg-y: 16%; }
+    75% { --planner-bg-x: 28%; --planner-bg-y: 8%; }
+    100% { --planner-bg-x: 50%; --planner-bg-y: 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .main {
+        animation: none;
+    }
+}
+
+.main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(#1E3149 1px, transparent 1.2px);
+    background-size: 22px 22px;
+    opacity: 0.14;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 55%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 55%, transparent 100%);
+}
+
+/* El contenido va encima de la retícula. */
+.main > * {
+    position: relative;
+}
+
+/* El encabezado se colapsa en el dashboard: grid de 1fr a 0fr para animar el
+   alto real y que el contenido suba suave. El espacio de abajo va dentro
+   (padding) para que también se colapse. */
+.encabezadoWrap {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition:
+        grid-template-rows 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s ease,
+        transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.encabezadoInner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.encabezadoOculto {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .encabezadoWrap {
+        transition: none;
+    }
+}
+
+.encabezado {
+    padding-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.titulo {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: #1c3249;
+}
+
+.conoce {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 46px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 999px;
+    background: var(--light-green-500, #AAC187);
+    color: #16323d;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.conoce:hover {
+    background: var(--light-green-400, #bfd1a3);
+}
+
+/* Bajo "Dashboard" en la barra: PlannerDashboard monta aquí su filtro de
+   eventos (portal). */
+.filtro {
+    display: flex;
+    padding: 6px 4px 0;
+    animation: aparecer 0.3s ease;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: none; }
+}
+
+.filtro :global(.ant-select) {
+    width: 100%;
+}
+
+.tarjetas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* Centrado en el espacio libre del contenido (main es columna flex y ocupa
+   todo el alto de la pantalla). */
+.vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: auto;
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    padding: 40px 24px;
+    border: 1.5px dashed #D3D8DE;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #1c3249;
+    text-align: center;
+}
+
+.vacio strong {
+    font-family: 'Windsor', var(--font-family);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.vacio > span {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #787878;
+}
+
+.vacioBoton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    height: 40px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 999px;
+    background: #1c3249;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ── Celular / tablet chica: la barra pasa arriba ── */
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        position: static;
+        height: auto;
+        gap: 20px;
+        padding: 20px 16px;
+        border-right: none;
+        border-bottom: 1px solid #EFEDEA;
+    }
+
+    .nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .navTitulo {
+        display: none;
+    }
+
+    .navItem {
+        height: 40px;
+        gap: 10px;
+    }
+
+    .navDashboard {
+        margin-top: 0;
+    }
+
+    .pie {
+        margin-top: 0;
+    }
+
+    .sugerencias {
+        display: none;
+    }
+
+    .main {
+        padding: 28px 16px 56px;
+    }
+
+    .encabezado {
+        padding-bottom: 24px;
+    }
+
+    .filtro {
+        width: 100%;
+    }
+
+    .titulo {
+        font-size: 30px;
+    }
+
+    .tarjetas {
+        flex-direction: column;
+    }
+
+    .vacio {
+        max-width: none;
+    }
+}
+
+/* ── Celular (< 768 px): sin barra lateral ──
+   Arriba logo/título + avatar; abajo la barra de pestañas fija con el "+" al
+   centro. El contenido deja espacio abajo para la barra. */
+
+.movil {
+    min-height: 100vh;
+}
+
+.mainMovil {
+    min-height: 100vh;
+    padding: calc(14px + env(safe-area-inset-top)) 18px calc(112px + env(safe-area-inset-bottom));
+    gap: 0;
+}
+
+.barraMovil {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+    margin-bottom: 18px;
+}
+
+.logoMovil {
+    height: 34px;
+    width: auto;
+    object-fit: contain;
+}
+
+.tituloMovilDashboard {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: #1c3249;
+}
+
+.barraMovil .avatar {
+    border: none;
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.mainMovil .titulo {
+    font-size: 30px;
+}
+
+.conoceMovil {
+    align-self: flex-start;
+    margin-top: 18px;
+}
+
+.contenidoMovil {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin-top: 24px;
+}
+
+.mainMovil .tarjetas {
+    flex-direction: column;
+}
+
+.mainMovil .vacio {
+    max-width: none;
+}
+
+.pestanas {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid #EFEDEA;
+}
+
+.pestana {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    color: #8A8E92;
+    font-family: inherit;
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.pestanaIcono {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 32px;
+    border-radius: 12px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.pestanaActiva {
+    color: #1c3249;
+    font-weight: 700;
+}
+
+.pestanaActiva .pestanaIcono {
+    background: #1c3249;
+    color: #fff;
+}
+
+.pestanaNuevo {
+    justify-self: center;
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    margin-top: -18px;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    background: #1c3249;
+    color: var(--light-green-500, #AAC187);
+    box-shadow: 0 6px 18px rgba(28, 50, 73, 0.28);
+    cursor: pointer;
+}
+
+/* Hoja del "+": comprar evento y sus gratis. */
+.hoja {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+}
+
+.hojaAsa {
+    align-self: center;
+    width: 40px;
+    height: 5px;
+    border-radius: 99px;
+    background: #E4E1DC;
+}
+
+.hojaCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0 4px;
+}
+
+.hojaTitulo {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: #1c3249;
+}
+
+.hojaCerrar {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: #F4F3F1;
+    color: #1c3249;
+    cursor: pointer;
+}

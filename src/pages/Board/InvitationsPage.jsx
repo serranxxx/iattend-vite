@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Input, Layout, Row, message, Button, notification, Segmented, ConfigProvider } from 'antd';
+import { Input, Layout, Row, message, Button, notification, Tooltip } from 'antd';
 import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -8,7 +8,7 @@ import { HeaderBuild } from '../../modules/Header/Header';
 import { load } from '../../helpers/assets/images';
 import { AdsCarousel } from '../../components/AdsCarousel/AdsCarousel'
 import { RegalaIAttend } from '../../components/RegalaIAttend/RegalaIAttend';
-import { ArrowRight, Calendar1, ClipboardList, Gift, Plus, Share } from 'lucide-react';
+import { ArrowRight, Calendar1, ClipboardList, FlaskConical, Gift, Plus, QrCode, Send, Share, Zap } from 'lucide-react';
 import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer';
 import { GiftDrawer } from '../../components/Gift/GiftDrawer';
 import { FooterApp } from '../../modules/Footer/FooterApp';
@@ -16,18 +16,14 @@ import { useTranslation } from 'react-i18next';
 import { OnboardingWizard } from '../PreviewMood/OnboardingWizard';
 import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData';
 import { PlannerDashboard } from '../../components/PlannerDashboard/PlannerDashboard';
+import { PlannerLayout } from './PlannerLayout';
+import { fetchBeneficios } from '../PlannerEvent/plannerEventApi';
+import { PlannerEventDrawer } from '../PlannerEvent/PlannerEventDrawer';
+import { PlannerSendDrawer } from '../PlannerEvent/PlannerSendDrawer';
+import { FLASH_PUBLIC_URL, fetchFlashEvents, flashComoInvitacion } from '../../helpers/invitation/flashEvents';
+import { esRolPlanner } from '../../helpers/roles';
 
 const { Content } = Layout;
-
-// Toggle Invitaciones / Dashboard del planner (handoff del dashboard de planners)
-const VIEW_TOGGLE_THEME = {
-    components: {
-        Segmented: {
-            trackBg: '#F4F3F1', trackPadding: 4, itemSelectedBg: '#FFFFFF', itemColor: '#5B6166',
-            itemSelectedColor: '#0E1A22', itemHoverColor: '#0E1A22', controlHeight: 32, fontSize: 14,
-        },
-    },
-};
 
 const baseProd = "https://www.iattend.events"
 
@@ -58,7 +54,8 @@ export const InvitationsPage = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const isPlanner = sessions?.user?.role === 'planner'
+    // Planner o Administración (mismas funciones, helpers/roles.js).
+    const isPlanner = esRolPlanner(sessions?.user?.role)
     // Vista del planner: sus invitaciones o la pestaña "Dashboard". Va en la
     // URL (?view=data) para que recargar no lo regrese a las cards.
     const view = isPlanner && searchParams.get('view') === 'data' ? 'data' : 'invitations'
@@ -71,10 +68,38 @@ export const InvitationsPage = () => {
     }
 
     // "Mis clientes" = eventos ajenos que organiza; "Mis eventos" = los suyos
-    // (incluido el free con el que nace su cuenta). "Dashboard" = todo evento
-    // donde está asignado como planner, aunque también sea el dueño.
+    // (incluida su invitación de prueba). "Dashboard" = todo evento donde está
+    // asignado como planner, aunque también sea el dueño. La invitación de
+    // prueba (`is_test`, copia de la plantilla de planners) solo entra mientras
+    // no tenga ningún evento real: después inflaría sus números.
     const esDeCliente = (inv) => inv.planner_id === sessions?.user?.uid && inv.user_id !== sessions?.user?.uid
-    const plannerInvitations = (invitationsNI ?? []).filter(inv => inv.planner_id === sessions?.user?.uid)
+    // Badge "Ejemplo" (y estado solo con punto): la invitación de prueba de un
+    // planner. Las de prueba de un admin son sus eventos de trabajo: sin badge.
+    // Solo en la página del planner: un cliente cuya invitación quedó marcada
+    // is_test (la de prueba de un planner es de un cliente real) la ve normal.
+    const esEjemplo = (inv) => isPlanner && inv.is_test && sessions?.user?.role !== 'Administration'
+    // Creado "para enviar después": todavía no tiene cliente (user_id vacío).
+    const esPorEnviar = (inv) => esDeCliente(inv) && !inv.user_id
+    // El dashboard del planner es de invitaciones: los Eventos Flash no entran.
+    const asignadas = (invitationsNI ?? []).filter(inv => inv.planner_id === sessions?.user?.uid && !inv._flash)
+    const plannerInvitations = asignadas.some(inv => !inv.is_test)
+        ? asignadas.filter(inv => !inv.is_test)
+        : asignadas
+
+    // Beneficios del planner (eventos gratis y descuento) para las acciones de
+    // arriba. Si fallan, la página sigue sin ellos.
+    const [beneficios, setBeneficios] = useState(null)
+    const cargarBeneficios = () => fetchBeneficios()
+        .then(({ data }) => setBeneficios(data.beneficios))
+        .catch(error => console.error('No se pudieron cargar los beneficios del planner:', error.response?.data || error.message))
+    useEffect(() => {
+        if (isPlanner) cargarBeneficios()
+    }, [isPlanner])
+
+    // Alta de evento del planner (drawer): 'compra' | 'gratis' | 'flash-gratis' | null.
+    const [altaEvento, setAltaEvento] = useState(null)
+    // Evento "para enviar después" que el planner le va a mandar a su cliente.
+    const [porEnviar, setPorEnviar] = useState(null)
 
     useEffect(() => {
         if (searchParams.get('welcome') === '1') {
@@ -138,7 +163,10 @@ export const InvitationsPage = () => {
         </div>
     )
 
-    const renderInvitationCard = (invitation) => (
+    // `sinBotones`: Explora I attend (PlannerExplore) ya tiene sus botones al lado.
+    // `stats`: tarjetas de Mis clientes del planner (PlannerLayout): días que
+    // faltan, confirmados y esperando, de buildStats (PlannerDashboard).
+    const renderInvitationCard = (invitation, { sinBotones = false, stats = null } = {}) => (
         <div
             key={invitation.id}
             className="invitation-container"
@@ -163,6 +191,8 @@ export const InvitationsPage = () => {
                 position: 'relative', zIndex: 1,
                 width: '100%', marginTop: 'auto',
                 display: 'flex', flexDirection: 'column', gap: '4px',
+                // Sin botones, el nombre quedaría pegado al borde de abajo.
+                paddingBottom: sinBotones ? '14px' : 0,
             }}>
                 <span className='invitation_name'>
                     {cardTitle(invitation)}
@@ -170,41 +200,111 @@ export const InvitationsPage = () => {
                 <span className='invitation_path'>
                     {invitation?.name}
                 </span>
-                <div className='invitation_btns_cont'>
+                {stats && (
+                    <div className='invitation_stats'>
+                        <div>
+                            <strong>
+                                {stats.daysLeft == null ? '—'
+                                    : stats.daysLeft > 0 ? stats.daysLeft
+                                        : stats.daysLeft === 0 ? t('invitations.stats_today') : '✓'}
+                            </strong>
+                            <span>
+                                {stats.daysLeft == null ? t('invitations.stats_no_date')
+                                    : stats.daysLeft > 0 ? t('invitations.stats_days', { count: stats.daysLeft })
+                                        : stats.daysLeft === 0 ? t('invitations.stats_is_today') : t('invitations.stats_done')}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>{stats.confirmed}</strong>
+                            <span>{t('invitations.stats_confirmed')}</span>
+                        </div>
+                        <div>
+                            <strong>{stats.waiting}</strong>
+                            <span>{t('invitations.stats_waiting')}</span>
+                        </div>
+                    </div>
+                )}
+                {!sinBotones && <div className='invitation_btns_cont'>
                     <Button
                         disabled={!invitation.active}
                         icon={<ArrowRight size={16} />}
                         className='invitation_start_button'
-                        onClick={() => handleMoode(invitation.id)}
+                        onClick={() => invitation._flash
+                            ? navigate(`/dashboard/side?flash=${invitation._flash.id}`)
+                            : handleMoode(invitation.id)}
                     >
                         {t('invitations.btn_start')}
                     </Button>
-                    <Button
-                        disabled={!invitation.active}
-                        icon={<Share size={16} />}
-                        className='invitation_url_button'
-                        onClick={() => copyToClipboard(`${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
-                    />
-                </div>
+                    {/* En Mis clientes del planner (llega `stats`): el lector de
+                        pases en lugar de compartir, o "enviar a mi cliente" si
+                        todavía no tiene cliente. */}
+                    {esPorEnviar(invitation) ? (
+                        <Tooltip title={t('invitations.send_to_client')}>
+                            <Button
+                                icon={<Send size={16} />}
+                                className='invitation_url_button'
+                                aria-label={t('invitations.send_to_client')}
+                                onClick={() => setPorEnviar(invitation)}
+                            />
+                        </Tooltip>
+                    ) : stats ? (
+                        <Tooltip title={t('invitations.open_scanner')}>
+                            <Button
+                                disabled={!invitation.active}
+                                icon={<QrCode size={16} />}
+                                className='invitation_url_button'
+                                aria-label={t('invitations.open_scanner')}
+                                onClick={() => navigate(`/scanner?id=${invitation.id}`)}
+                            />
+                        </Tooltip>
+                    ) : (
+                        <Button
+                            disabled={!invitation.active}
+                            icon={<Share size={16} />}
+                            className='invitation_url_button'
+                            onClick={() => copyToClipboard(invitation._flash
+                                ? FLASH_PUBLIC_URL(invitation._flash.id)
+                                : `${baseProd}/${invitation?.data?.generals?.event?.label}/${invitation?.data?.generals?.event?.name}`)}
+                        />
+                    )}
+                </div>}
             </div>
 
-            {/* Status badge */}
+            {/* Status badge. En la invitación de prueba va solo el punto: su
+                badge de la izquierda ("Ejemplo") ocupa más. */}
             <div
-                className='invitation_status'
+                className={`invitation_status${esEjemplo(invitation) ? ' invitation_status--dot' : ''}`}
                 style={{ position: 'absolute', top: '22px', right: '22px', zIndex: 2 }}
+                title={invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}
+                aria-label={invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}
             >
                 <div className='status_indicator' style={{ backgroundColor: invitation.active ? '#4ADE80' : '#FBBF24' }} />
-                <span>{invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}</span>
+                {!esEjemplo(invitation) && <span>{invitation.active ? t('invitations.status_active') : t('invitations.status_paused')}</span>}
             </div>
 
-            {/* Evento de un cliente que este usuario organiza como planner */}
-            {esDeCliente(invitation) && (
-                <div
-                    className='invitation_status'
-                    style={{ position: 'absolute', top: '22px', left: '22px', zIndex: 2 }}
-                >
-                    <ClipboardList size={12} />
-                    <span>{t('invitations.planner_badge')}</span>
+            {/* Esquina izquierda: invitación de prueba (`is_test`, no cuenta en
+                estadísticas) y evento de un cliente que este usuario organiza
+                como planner. Pueden coincidir, por eso van en fila. */}
+            {(esEjemplo(invitation) || invitation._flash || esDeCliente(invitation)) && (
+                <div style={{ position: 'absolute', top: '22px', left: '22px', zIndex: 2, display: 'flex', gap: '6px' }}>
+                    {invitation._flash && (
+                        <div className='invitation_status'>
+                            <Zap size={12} />
+                            <span>{t('invitations.flash_badge')}</span>
+                        </div>
+                    )}
+                    {esEjemplo(invitation) && (
+                        <div className='invitation_status'>
+                            <FlaskConical size={12} />
+                            <span>{t('invitations.test_badge')}</span>
+                        </div>
+                    )}
+                    {esDeCliente(invitation) && (!invitation._flash || esPorEnviar(invitation)) && (
+                        <div className='invitation_status'>
+                            {esPorEnviar(invitation) ? <Send size={12} /> : <ClipboardList size={12} />}
+                            <span>{esPorEnviar(invitation) ? t('invitations.pending_send_badge') : t('invitations.planner_badge')}</span>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -247,17 +347,22 @@ export const InvitationsPage = () => {
         // Se filtra por rol, igual que can_manage_invitation en la base.
         const uid = session.user.id
         let query = supabase.from("invitations").select("*")
-        query = sessions?.user?.role === 'planner'
+        query = isPlanner
             ? query.or(`user_id.eq.${uid},planner_id.eq.${uid}`)
             : query.eq("user_id", uid)
 
-        const { data, error } = await query;
+        // Los Eventos Flash (side events sin invitación) van en la misma lista,
+        // adaptados a la forma de una invitación (ver flashEvents.js).
+        const [{ data, error }, flash] = await Promise.all([
+            query,
+            fetchFlashEvents(uid, { esPlanner: isPlanner }),
+        ]);
 
         if (error) {
             console.error("Error al obtener invitaciones:", error);
         } else {
             setLoader(false)
-            setInvitationsNI(data)
+            setInvitationsNI([...(data ?? []), ...flash.map(flashComoInvitacion)])
         }
     };
 
@@ -274,6 +379,22 @@ export const InvitationsPage = () => {
             getNewInvitations()
         }
     }, [logged])
+
+    // Regreso de Stripe tras comprar un evento: el webhook lo crea por su
+    // cuenta, así que se avisa y se vuelve a pedir la lista en unos segundos.
+    useEffect(() => {
+        if (searchParams.get('evento_planner') !== 'ok') return
+        notification.success({
+            message: t('invitations.planner_paid_title'),
+            description: t('invitations.planner_paid_text'),
+            placement: 'topRight',
+            duration: 8,
+        })
+        searchParams.delete('evento_planner')
+        setSearchParams(searchParams, { replace: true })
+        const timer = setTimeout(() => getNewInvitations(), 5000)
+        return () => clearTimeout(timer)
+    }, [])
 
     useEffect(() => {
         if (searchParams.get("success") === "true") {
@@ -292,9 +413,62 @@ export const InvitationsPage = () => {
     const name = sessions?.user?.name?.split(' ')[0] || 'Usuario';
     const [greeting] = useState(() => getGreeting(name));
 
+    // Planner: layout propio con barra lateral (PlannerLayout). Los drawers y
+    // el onboarding son los mismos que en la página de siempre.
+    const modales = (
+        <>
+            <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: sessions?.user?.uid, user_email: sessions?.user?.email }} refreshInvitations={getNewInvitations} />
+            <RegalaIAttend visible={regalaVisible} onClose={() => setRegalaVisible(false)} />
+            <GiftDrawer visible={giftVisible} setVisible={setGiftVisible} />
+            <OnboardingWizard
+                open={onboardingOpen && !!demoInvitation}
+                onClose={() => setOnboardingOpen(false)}
+                invitation={demoInvitation}
+                buttons={demoButtons}
+                invitationID={demoInvitationID}
+            />
+        </>
+    )
 
-
-
+    if (isPlanner) {
+        return (
+            <>
+                <PlannerLayout
+                    greeting={greeting}
+                    user={sessions?.user}
+                    invitations={invitationsCopy}
+                    beneficios={beneficios}
+                    esDeCliente={esDeCliente}
+                    renderInvitationCard={renderInvitationCard}
+                    view={view}
+                    onViewChange={setView}
+                    dashboard={<PlannerDashboard invitations={plannerInvitations} filterSlot={filterSlot} userId={sessions?.user?.uid} />}
+                    setFilterSlot={setFilterSlot}
+                    loading={loader}
+                    onComprar={() => setAltaEvento('compra')}
+                    onGratis={() => setAltaEvento('gratis')}
+                    onGratisFlash={() => setAltaEvento('flash-gratis')}
+                    onEventoPersonal={() => navigate('/checkout')}
+                    onTour={() => setOnboardingOpen(true)}
+                    onLogout={() => { logout(); navigate('/login') }}
+                    onAbrir={(inv) => handleMoode(inv.id)}
+                    onCompartir={(inv) => copyToClipboard(`${baseProd}/${inv?.data?.generals?.event?.label}/${inv?.data?.generals?.event?.name}`)}
+                />
+                <PlannerEventDrawer
+                    open={!!altaEvento}
+                    modo={altaEvento ?? 'compra'}
+                    onClose={() => setAltaEvento(null)}
+                    onCreated={() => { getNewInvitations(); cargarBeneficios() }}
+                />
+                <PlannerSendDrawer
+                    invitation={porEnviar}
+                    onClose={() => setPorEnviar(null)}
+                    onSent={getNewInvitations}
+                />
+                {modales}
+            </>
+        )
+    }
 
     return (
         <div className='invitations-page-main-container'>
@@ -310,8 +484,7 @@ export const InvitationsPage = () => {
                     maxWidth: '100vw', padding: 0,
                     backgroundColor: 'transparent',
                 }} >
-                    {/* En el dashboard del planner el hero se colapsa (ver .inv-hero) */}
-                    <div className={`inv-hero${view === 'data' ? ' inv-hero--hidden' : ''}`} aria-hidden={view === 'data'}>
+                    <div className='inv-hero'>
                         <div className='inv-hero-inner'>
                             <AdsCarousel onRegalar={() => setRegalaVisible(true)} />
                         </div>
@@ -345,29 +518,10 @@ export const InvitationsPage = () => {
 
                                                 <span className='invitations_title'>{greeting}</span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                                                    {view === 'data' && (
-                                                        // PlannerDashboard dibuja aquí su filtro de eventos (portal)
-                                                        <div ref={setFilterSlot} className='inv-planner-filter' />
-                                                    )}
-                                                    {view === 'invitations' && (
-                                                        <Input
-                                                            placeholder={t('invitations.search_placeholder')}
-                                                            onChange={(e) => handleFilter(e.target.value)}
-                                                            className='invs-searcher' />
-                                                    )}
-                                                    {isPlanner && (
-                                                        <ConfigProvider theme={VIEW_TOGGLE_THEME}>
-                                                            <Segmented
-                                                                shape='round'
-                                                                value={view}
-                                                                onChange={setView}
-                                                                options={[
-                                                                    { value: 'invitations', label: t('planner.segment_invitations') },
-                                                                    { value: 'data', label: t('planner.segment_data') },
-                                                                ]}
-                                                            />
-                                                        </ConfigProvider>
-                                                    )}
+                                                    <Input
+                                                        placeholder={t('invitations.search_placeholder')}
+                                                        onChange={(e) => handleFilter(e.target.value)}
+                                                        className='invs-searcher' />
                                                 </div>
                                                 {/* <Button style={{ borderRadius: '99px' }} icon={<LuPlus />} type='primary'>Nuevo evento</Button> */}
 
@@ -377,33 +531,10 @@ export const InvitationsPage = () => {
 
                                         </div>
 
-                                        {view === 'data' ? (
-                                            <PlannerDashboard invitations={plannerInvitations} filterSlot={filterSlot} userId={sessions?.user?.uid} />
-                                        ) : isPlanner ? (
-                                            // Una sola fila: "nuevo evento" siempre primero a la izquierda y
-                                            // luego cada grupo con su título encima. Los vacíos no se pintan.
-                                            <div className='inv-invitations-container inv-invitations-grouped'>
-                                                {renderNewEventCard(invitationsCopy?.length ?? 0)}
-                                                {[
-                                                    { key: 'clients', title: t('invitations.section_clients'), items: (invitationsCopy ?? []).filter(esDeCliente) },
-                                                    { key: 'own', title: t('invitations.section_own'), items: (invitationsCopy ?? []).filter(inv => !esDeCliente(inv)) },
-                                                ].filter(group => group.items.length > 0).map(group => (
-                                                    <section key={group.key} className='inv-group'>
-                                                        <span className='inv-section-title'>
-                                                            {group.title} <small>{group.items.length}</small>
-                                                        </span>
-                                                        <div className='inv-group-cards'>
-                                                            {group.items.map(renderInvitationCard)}
-                                                        </div>
-                                                    </section>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className='inv-invitations-container'>
-                                                {renderNewEventCard(invitationsCopy?.length ?? 0)}
-                                                {invitationsCopy?.map(renderInvitationCard)}
-                                            </div>
-                                        )}
+                                        <div className='inv-invitations-container'>
+                                            {renderNewEventCard(invitationsCopy?.filter(inv => !inv._flash).length ?? 0)}
+                                            {invitationsCopy?.map(renderInvitationCard)}
+                                        </div>
 
                                         {/* <div className='banner_cont'>
                                             <div className="gift-banner">
@@ -436,16 +567,7 @@ export const InvitationsPage = () => {
                 </Layout>
 
             </Layout >
-            <NewInvitationDrawer visible={visible} setVisible={setVisible} user={{ user_id: sessions?.user?.uid, user_email: sessions?.user?.email }} refreshInvitations={getNewInvitations} />
-            <RegalaIAttend visible={regalaVisible} onClose={() => setRegalaVisible(false)} />
-            <GiftDrawer visible={giftVisible} setVisible={setGiftVisible} />
-            <OnboardingWizard
-                open={onboardingOpen && !!demoInvitation}
-                onClose={() => setOnboardingOpen(false)}
-                invitation={demoInvitation}
-                buttons={demoButtons}
-                invitationID={demoInvitationID}
-            />
+            {modales}
             <FooterApp></FooterApp>
 
         </div>

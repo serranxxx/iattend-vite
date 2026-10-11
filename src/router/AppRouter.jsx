@@ -3,21 +3,20 @@ import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Grid } from 'antd'
 import { ChatContainer } from '../components/ChatContainer/ChatContainer'
 import { DashboardRealtimeProvider } from '../context/DashboardRealtimeContext'
-import { WhatsNewBanners } from '../components/WhatsNewBanners/WhatsNewBanners'
 
 const DashboardChat = () => {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const screens = Grid.useBreakpoint()
   const isMobile = !screens.md
   if (!pathname.startsWith('/dashboard')) return null
+  // Lia vive dentro de una invitación; un Evento Flash no tiene.
+  if (new URLSearchParams(search).get('flash')) return null
   if (isMobile && pathname === '/dashboard/build') return null
   return <ChatContainer />
 }
 
 const DashboardLayout = () => (
   <DashboardRealtimeProvider>
-    {/* Novedades: overlay visible en todas las rutas /dashboard/* hasta cerrarse */}
-    <WhatsNewBanners />
     <Outlet />
   </DashboardRealtimeProvider>
 )

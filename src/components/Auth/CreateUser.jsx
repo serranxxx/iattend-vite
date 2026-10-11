@@ -67,6 +67,10 @@ export const CreateAccount = ({ refreshData, setVisible, setUserData }) => {
 
             if (data.ok) {
                 messageApi.success('Usuario creado correctamente')
+                // Planner: el backend le copia la invitación de prueba
+                if (data.plantilla?.ok === false) {
+                    messageApi.warning(`La cuenta se creó, pero no su invitación de prueba: ${data.plantilla.msg}`)
+                }
                 // console.log(data)
 
                 refreshData()

@@ -11,6 +11,7 @@ import { AdminModal } from '../AdminModal'
 import { actualizarCreditosAdmin, asignarPlannerAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
 import styles from './EventosSection.module.css'
+import { esRolPlanner } from '../../../helpers/roles'
 
 dayjs.locale('es')
 
@@ -85,7 +86,8 @@ export const EventosSection = ({ newInvitations, profiles, refreshEventos, query
 
     const planners = useMemo(
         () => (profiles ?? [])
-            .filter(p => p.role === 'planner')
+            // Administración también puede quedar como planner (helpers/roles.js).
+            .filter(p => esRolPlanner(p.role))
             .sort((a, b) => String(a.full_name ?? '').localeCompare(String(b.full_name ?? ''))),
         [profiles]
     )

@@ -3,6 +3,7 @@ import { Button, Drawer, message } from 'antd'
 import { Check, Image, Shield, ShoppingCart } from 'lucide-react'
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
+import { supabaseAuthHeaders } from '../../lib/authHeaders'
 import { AuthModal } from './AuthModal'
 import { fetchPrices, PRODUCTS } from '../../components/Payment/functions'
 import { formatMXN, termCaption, usePlans } from '../../hooks/usePlans'
@@ -116,7 +117,7 @@ export const PublishModal = ({ open, onClose, invitation }) => {
                 previewData,
                 successUrl: `${window.location.origin}/invitations?welcome=1`,
                 cancelUrl: `${window.location.origin}/preview`,
-            })
+            }, { headers: await supabaseAuthHeaders() })
 
             if (checkout?.url) {
                 window.location.href = checkout.url

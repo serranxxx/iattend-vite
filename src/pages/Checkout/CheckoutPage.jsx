@@ -6,6 +6,7 @@ import { Check, Shield, Sparkles } from 'lucide-react'
 import axios from 'axios'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { supabaseAuthHeaders } from '../../lib/authHeaders'
 import { AuthModal } from '../PreviewMood/AuthModal'
 import { OnboardingWizard } from '../PreviewMood/OnboardingWizard'
 import { useOnboardingDemoData } from '../PreviewMood/useOnboardingDemoData'
@@ -156,7 +157,7 @@ export const CheckoutPage = () => {
                 previewData,
                 successUrl: `${window.location.origin}/invitations?welcome=1`,
                 cancelUrl: `${window.location.origin}/checkout`,
-            })
+            }, { headers: await supabaseAuthHeaders() })
             if (checkout?.url) {
                 window.location.href = checkout.url
             } else {

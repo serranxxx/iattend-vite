@@ -32,6 +32,27 @@
   padding-bottom: calc(168px + env(safe-area-inset-bottom));
 }
 
+/* Embebida (drawer): columna del alto del contenedor, footer pegajoso abajo. */
+.screenEmbedded {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.screenEmbedded .body {
+  width: 100%;
+  padding-top: 20px;
+}
+
+.screenEmbedded .bodyWithFooter {
+  padding-bottom: 24px;
+}
+
+.screenEmbedded .footer {
+  position: sticky;
+  margin-top: auto;
+}
+
 /* ── Header de pantalla ── */
 
 .header {
