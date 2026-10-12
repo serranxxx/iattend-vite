@@ -1138,7 +1138,9 @@
     "flash_import_soon": "Excel import for Flash events is coming soon. For now, add your guests one by one.",
     "flash_credits_one": "{{count}} WhatsApp credit",
     "flash_credits_other": "{{count}} WhatsApp credits",
-    "flash_not_found": "We couldn't find this Flash event."
+    "flash_not_found": "We couldn't find this Flash event.",
+    "flash_no_credits": "No credits left: buy more with the + next to the counter.",
+    "flash_send_error": "The invitation could not be sent. Try again."
   },
   "tables": {
     "title": "Table Organization",

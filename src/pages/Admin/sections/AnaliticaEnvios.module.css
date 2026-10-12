@@ -1,0 +1,710 @@
+/*
+  Analítica › Envíos — salud histórica de los envíos (tablero 2v del handoff).
+
+  Alto fijo de 718 px sin scroll de página: hero de 184 px y dos filas que se
+  reparten el resto. Cada tarjeta recorta con `min-height: 0` y lo que no cabe
+  se desplaza dentro de ella. Debajo de ~1100 px se apila y el alto se libera.
+*/
+
+.tablero {
+    height: 718px;
+    display: grid;
+    grid-template-rows: 184px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.estado {
+    padding: 48px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+/* ------------------------------------------------------------ comunes --- */
+
+.label {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ac-text-3);
+    white-space: nowrap;
+}
+
+.labelOscuro {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.card {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+    padding: 16px 20px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 20px;
+    box-shadow: var(--ac-shadow-card);
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.headDato {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    white-space: nowrap;
+}
+
+.leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 11.5px;
+    color: var(--ac-text-2);
+}
+
+.leyendaChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.leyendaPunto {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+}
+
+.nota {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.vacio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ac-muted);
+}
+
+.codigo {
+    font-size: 10.5px;
+    color: var(--ac-muted-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: #eeeadf;
+    color: var(--ac-ink);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- hero --- */
+
+.hero {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1.5fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 28px;
+    padding: 18px 24px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #1C3249;
+    border-radius: 20px;
+    color: #FFFFFF;
+}
+
+.dona {
+    position: relative;
+    min-height: 0;
+}
+
+.donaCentro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.donaValor {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.donaValor small {
+    font-size: 15px;
+    opacity: 0.8;
+}
+
+.donaPie {
+    margin-top: 3px;
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.heroCentro {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.segmentos {
+    display: flex;
+    gap: 2px;
+    height: 10px;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.stat {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+}
+
+.statLabel i {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 3px;
+}
+
+.statValor {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.statPie {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.frase {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.frase b {
+    color: #FFFFFF;
+}
+
+.heroPeores {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-left: 24px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.heroVacio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.peores {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.peor {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr) 36px;
+    gap: 10px;
+    align-items: center;
+    font-size: 12.5px;
+}
+
+.peorNombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.peorBarra {
+    display: block;
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.peorBarra span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: #AAC187;
+}
+
+.peor b {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------ fila del medio --- */
+
+.filaMedia {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+/* chart.js necesita un contenedor con alto propio: `flex: 1` + `min-height: 0`
+   le da todo lo que sobra de la tarjeta sin empujarla. */
+.chart {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.causas {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.causa {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.causaTop {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    font-size: 12px;
+}
+
+.causaTitulo {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nuestro {
+    padding: 1px 7px;
+    border-radius: 99px;
+    background: #1C3249;
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.causaValor {
+    width: 30px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.barraCrema {
+    display: block;
+    height: 7px;
+    border-radius: 99px;
+    background: #eeeadf;
+    overflow: hidden;
+}
+
+.barraCrema span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+}
+
+/* ------------------------------------------------------- fila de abajo --- */
+
+.filaBaja {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+/* Reintentos */
+
+.reintentoCifra {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.cifra {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cifraPie {
+    padding-bottom: 3px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--ac-muted);
+}
+
+.reintentoBarra {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.barraPartida {
+    display: flex;
+    gap: 2px;
+    height: 22px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.parteNavy,
+.parteLila {
+    display: flex;
+    align-items: center;
+    padding: 0 9px;
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+}
+
+.parteNavy {
+    background: #1C3249;
+    color: #FFFFFF;
+}
+
+.parteLila {
+    background: #D1BEDD;
+    color: #1C3249;
+}
+
+.barraPie {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.barraPie b {
+    color: var(--ac-ink);
+}
+
+.reintentoMes {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--ac-surface-alt);
+    font-size: 12px;
+    color: var(--ac-text-2);
+}
+
+.reintentoMes b {
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Errores del mes */
+
+.selectCaja {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 4px 26px 4px 10px;
+    border: 1px solid var(--ac-line-control);
+    border-radius: 9px;
+    background: var(--ac-surface);
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--ac-ink);
+    cursor: pointer;
+}
+
+.select:focus-visible {
+    outline: 2px solid #D1BEDD;
+    outline-offset: 1px;
+}
+
+.selectIcono {
+    position: absolute;
+    right: 8px;
+    pointer-events: none;
+    color: var(--ac-muted);
+}
+
+.resumenMes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+.resumenMes b {
+    font-size: 15px;
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.errorFila {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1.3fr) 84px;
+    gap: 10px;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--ac-line-soft);
+    font-size: 12px;
+}
+
+.errorHead {
+    padding: 6px 0;
+    border-bottom-color: var(--ac-line-table);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ac-muted);
+}
+
+.derecha {
+    text-align: right;
+}
+
+.scroll {
+    flex: 1;
+    min-height: 0;
+    margin-top: -10px;
+    overflow-y: auto;
+}
+
+.celdaDoble {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.celdaFuerte,
+.celdaMotivo,
+.celdaEvento {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.celdaFuerte {
+    font-weight: 600;
+}
+
+.celdaEvento {
+    color: var(--ac-text-2);
+}
+
+.celdaTenue {
+    font-size: 10.5px;
+    color: var(--ac-muted-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.resultado {
+    justify-self: end;
+    padding: 2px 9px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.resultadoOk {
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet-ink);
+}
+
+.resultadoMal {
+    background: #1C3249;
+    color: #FFFFFF;
+}
+
+.resultadoTibio {
+    background: #eeeadf;
+    color: #1C3249;
+}
+
+/* Por tipo de envío */
+
+.tipos {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.tipo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tipoTop {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.tipoNombre {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tipoPct {
+    width: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.tipoBarra {
+    display: flex;
+    gap: 1px;
+    height: 7px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: #eeeadf;
+}
+
+/* --------------------------------------------------------- responsivo --- */
+
+@media (max-width: 1100px) {
+    .tablero {
+        height: auto;
+        grid-template-rows: none;
+    }
+
+    .hero {
+        grid-template-columns: 150px minmax(0, 1fr);
+        grid-template-rows: none;
+        row-gap: 18px;
+    }
+
+    .dona {
+        height: 148px;
+    }
+
+    .heroPeores {
+        grid-column: 1 / -1;
+        padding-left: 0;
+        padding-top: 16px;
+        border-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .filaMedia,
+    .filaBaja {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .filaMedia .card,
+    .filaBaja .card {
+        height: 320px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

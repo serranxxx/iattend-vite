@@ -1,5 +1,7 @@
-/* Pantalla "Hoy": rejilla de tarjetas. A la izquierda, en grande, el camino a
-   la meta (oscura) y la bandeja; a la derecha, lo que se lee de un vistazo. */
+/* Pantalla "Hoy" — una sola pantalla sin scroll (≈756 px):
+   arriba, a todo lo ancho, el punto de equilibrio (oscuro); abajo tres
+   columnas: ventas del mes, cobranza (saldo por cobrar + Stripe) y Save the
+   Date con Reportes. Lo que no cabe hace scroll dentro de su tarjeta. */
 
 .hoy {
     font-family: var(--ac-font-ui);
@@ -7,56 +9,46 @@
 }
 
 .grid {
+    height: 756px;
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-    grid-template-areas:
-        'equilibrio ventas'
-        'equilibrio saldo'
-        'bandeja std'
-        'bandeja reportes';
-    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: 330px minmax(0, 1fr);
+    gap: 14px;
 }
 
 .gridSinVentas {
-    grid-template-areas:
-        'bandeja std'
-        'bandeja reportes';
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    max-width: 520px;
 }
 
-.areaEquilibrio { grid-area: equilibrio; }
-.areaVentas { grid-area: ventas; }
-.areaSaldo { grid-area: saldo; }
-.areaBandeja { grid-area: bandeja; }
-.areaStd { grid-area: std; }
-.areaReportes { grid-area: reportes; }
+.areaEquilibrio {
+    grid-column: 1 / -1;
+}
+
+.columna {
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
 
 /* -------------------------------------------------------------- tarjeta --- */
 
 .card {
     min-width: 0;
+    min-height: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    padding: 22px 26px;
+    padding: 20px 22px;
     background: var(--ac-surface);
     border: 1px solid var(--ac-line);
     border-radius: 20px;
     box-shadow: var(--ac-shadow-card);
-    animation: hoy-entrada 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.areaVentas { animation-delay: 0.05s; }
-.areaSaldo { animation-delay: 0.1s; }
-.areaBandeja { animation-delay: 0.15s; }
-.areaStd { animation-delay: 0.2s; }
-.areaReportes { animation-delay: 0.25s; }
-
-@keyframes hoy-entrada {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .card { animation: none; }
+    box-sizing: border-box;
 }
 
 .cardHead {
@@ -64,23 +56,26 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    min-width: 0;
 }
 
 .label {
     margin: 0;
     display: inline-flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--ac-text-3);
+    white-space: nowrap;
 }
 
 .cardMeta {
     font-size: 13px;
     color: var(--ac-muted);
+    white-space: nowrap;
 }
 
 .enlace {
@@ -89,14 +84,11 @@
     background: none;
     padding: 0 0 2px;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--ac-ink);
     border-bottom: 1px solid currentColor;
     cursor: pointer;
-}
-
-.enlace:hover {
-    color: var(--blue-color);
+    white-space: nowrap;
 }
 
 .alFinal {
@@ -104,50 +96,27 @@
 }
 
 .vacio {
-    font-size: 13.5px;
+    padding: 10px 0;
+    font-size: 13px;
     color: var(--ac-muted-2);
 }
 
-.cifraGigante,
-.cifraGrande,
-.cifraMedia {
+.cifra {
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 0.9;
     font-variant-numeric: tabular-nums;
-}
-
-.cifraGigante {
-    font-size: 96px;
-}
-
-.cifraGigante small {
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: 0;
-    margin-left: 4px;
-    opacity: 0.8;
-}
-
-.cifraGrande {
-    font-size: 60px;
     color: var(--ac-ink);
+    white-space: nowrap;
 }
-
-.cifraMedia {
-    font-size: 36px;
-    color: var(--ac-ink);
-}
-
-.valorOk { color: #7ad69a; }
-.valorCorto { color: #f6c667; }
 
 /* ---------------------------------------------------- punto de equilibrio --- */
 
 .cardOscura {
-    padding: 28px 32px 24px;
+    gap: 18px;
+    padding: 22px 28px 18px;
     background: var(--ac-ink);
-    border-color: var(--ac-ink);
+    border: none;
     color: #fff;
 }
 
@@ -155,75 +124,189 @@
     color: rgba(255, 255, 255, 0.72);
 }
 
-.cardOscura .enlace {
-    color: #9dc3ff;
+.equilibrioHead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
 }
 
-.cardOscura .enlace:hover {
+.selectMes {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.selectMes select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 5px 30px 5px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
     color: #fff;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
 }
 
-.equilibrioCifras {
-    margin-top: 18px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
-    flex-wrap: wrap;
+.selectMes select option {
+    color: var(--ac-ink);
 }
 
-.equilibrioPrincipal {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-}
-
-.equilibrioDe {
-    padding-bottom: 8px;
-    font-size: 16px;
-    line-height: 1.6;
+.selectMes svg {
+    position: absolute;
+    right: 11px;
+    pointer-events: none;
     color: rgba(255, 255, 255, 0.7);
 }
 
-.equilibrioDatos {
+.pillOscura {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.segmentadoOscuro {
+    margin-left: auto;
     display: flex;
-    gap: 32px;
-    padding-bottom: 8px;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.segmentadoOscuro button {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.62);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.segmentadoOscuro .segmentoActivo {
+    background: #fff;
+    color: var(--ac-ink);
+}
+
+.equilibrioCuerpo {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 36px;
+}
+
+.equilibrioIzq {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.equilibrioCifra {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.equilibrioPct {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+}
+
+.equilibrioPct .cifra {
+    font-size: 84px;
+    color: #fff;
+}
+
+.equilibrioPct small {
+    margin-left: 4px;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0;
+    opacity: 0.8;
+}
+
+.equilibrioDe {
+    padding-bottom: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+}
+
+.barraOscura {
+    height: 6px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+
+.barraOscura span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--ac-lilac);
+}
+
+.equilibrioDatos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .equilibrioDatos div {
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-}
-
-.equilibrioDatos strong {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    font-variant-numeric: tabular-nums;
+    gap: 4px;
 }
 
 .equilibrioDatos span {
-    font-size: 14px;
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.62);
+    white-space: nowrap;
 }
 
-/* Gráfica: el SVG se estira a lo ancho; punto y etiquetas van encima en HTML. */
+.equilibrioDatos strong {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.valorOk { color: #AAC187; }
+.valorCorto { color: var(--ac-lilac); }
+
+/* Gráfica de la meta (SVG estirado + punto y etiquetas en HTML). */
 .grafica {
-    margin-top: 22px;
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-/* El lienzo mide lo mismo que el SVG: punto y etiqueta se ubican en % de él. */
 .graficaLienzo {
     position: relative;
     flex: 1;
-    min-height: 110px;
-    max-height: 150px;
+    min-height: 0;
 }
 
 .graficaSvg {
@@ -234,38 +317,38 @@
     overflow: visible;
 }
 
+.graficaSvg line,
+.graficaSvg path {
+    vector-effect: non-scaling-stroke;
+}
+
 .graficaMeta {
     stroke: rgba(255, 255, 255, 0.35);
     stroke-width: 1.2;
     stroke-dasharray: 5 6;
-    vector-effect: non-scaling-stroke;
 }
 
 .graficaRitmo {
     stroke: rgba(255, 255, 255, 0.22);
     stroke-width: 1;
-    vector-effect: non-scaling-stroke;
 }
 
 .graficaBase {
     stroke: rgba(255, 255, 255, 0.14);
     stroke-width: 1;
-    vector-effect: non-scaling-stroke;
 }
 
 .graficaLinea {
     fill: none;
-    stroke: #4f8cff;
+    stroke: #D1BEDD;
     stroke-width: 2.5;
     stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
 }
 
 .graficaProyeccion {
-    stroke: #f6c667;
+    stroke: #AAC187;
     stroke-width: 2;
     stroke-dasharray: 4 5;
-    vector-effect: non-scaling-stroke;
 }
 
 .graficaMetaLabel {
@@ -283,7 +366,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #4f8cff;
+    background: #D1BEDD;
     box-shadow: 0 0 0 3px var(--ac-ink);
     transform: translate(-50%, -50%);
 }
@@ -303,75 +386,136 @@
 .ejeCentro { transform: translateX(-50%); }
 .ejeFinal { transform: translateX(-100%); }
 
-/* ------------------------------------------------------ ventas del mes --- */
+/* ---------------------------------------------------------- ventas del mes --- */
 
-.ventasCuerpo {
+.ventasCifra {
+    margin-top: 16px;
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.ventasCifra .cifra {
+    font-size: 56px;
+}
+
+.ventasCifra span:last-child {
+    padding-bottom: 4px;
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+.barraPlanes {
     margin-top: 14px;
     display: flex;
+    gap: 3px;
+    height: 7px;
+}
+
+.barraPlanes span {
+    flex-basis: 0;
+    min-width: 6px;
+    border-radius: 999px;
+}
+
+.leyenda {
+    margin-top: 8px;
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+.leyenda span {
+    display: inline-flex;
     align-items: center;
-    gap: 28px;
-    min-height: 0;
+    gap: 6px;
+}
+
+.leyenda i,
+.saldoItem i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .ventasLista {
-    flex: 1;
-    min-width: 0;
-    max-height: 128px;
+    margin-top: 16px;
+    min-height: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 9px;
 }
 
 .fila {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 14px;
-    font-size: 14px;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--ac-line-soft);
+    font-size: 13.5px;
+    min-width: 0;
 }
 
-.filaNombre {
+.filaTexto {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.filaTexto b {
+    font-weight: 600;
     color: var(--ac-ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.filaMeta {
+.filaTexto span {
+    font-size: 12px;
     color: var(--ac-muted-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.filaValor {
+.filaFecha {
     flex-shrink: 0;
+    font-size: 12.5px;
     color: var(--ac-muted);
 }
 
-/* ------------------------------------------------------ saldo por cobrar --- */
+/* --------------------------------------------------------------- cobranza --- */
 
-.saldoCifras {
-    margin-top: 14px;
+.cobranza {
+    gap: 14px;
+}
+
+.cobranzaArriba {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.saldoCifra {
     display: flex;
     align-items: baseline;
-    gap: 20px;
-    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
 }
 
-.saldoCifras .cifraGrande {
-    font-size: 48px;
+.saldoCifra .cifra {
+    font-size: 36px;
 }
 
-.saldoCifras .cardMeta {
-    font-size: 14px;
-}
-
-/* Un segmento por venta, del tamaño de su saldo; 2px de aire entre ellos. */
 .saldoBarra {
-    margin-top: 16px;
     display: flex;
     gap: 3px;
-    height: 8px;
+    height: 7px;
 }
 
 .saldoBarra span {
@@ -380,107 +524,204 @@
     border-radius: 999px;
 }
 
-.saldoLeyenda {
-    margin-top: 12px;
+.saldoLista {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px 24px;
-    font-size: 13.5px;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 96px;
+    overflow-y: auto;
+    font-size: 12.5px;
     color: var(--ac-ink);
 }
 
 .saldoItem {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 10px;
-    white-space: nowrap;
+    gap: 8px;
+    min-width: 0;
 }
 
-.saldoItem i {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
+.saldoItem span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .saldoItem b {
     font-weight: 700;
 }
 
-.saldoPopup {
-    width: 380px;
-    max-height: 340px;
-    overflow-y: auto;
-    background: var(--ac-surface);
-    border: 1px solid var(--ac-line);
-    border-radius: 13px;
-    box-shadow: var(--ac-shadow-popup);
-    padding: 6px;
-    font-family: var(--ac-font-ui);
+.stripe {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--ac-surface-alt);
 }
 
-.saldoPopupHead {
+.stripe .saldoCifra .cifra {
+    font-size: 30px;
+}
+
+.stripeDatos {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 8px 10px 10px;
-    border-bottom: 1px solid var(--ac-line-soft);
-    margin-bottom: 4px;
-    font-size: 12px;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12.5px;
     color: var(--ac-muted);
 }
 
-.saldoPopupHead span {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--ac-amber);
-}
-
-.saldoRow {
+.stripeDatos div {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    padding: 8px 10px;
+    gap: 8px;
 }
 
-.saldoEvento {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    font-size: 12.5px;
-    font-weight: 600;
+.stripeDatos b {
+    font-weight: 700;
     color: var(--ac-ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
+}
+
+/* ---------------------------------------------------------- Save the Date --- */
+
+.std {
+    flex: 1;
+    gap: 14px;
+}
+
+.segmentado {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--ac-surface-alt);
+}
+
+.segmentado button {
+    padding: 3px 11px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--ac-muted);
+    cursor: pointer;
+}
+
+.segmentado .segmentoActivo {
+    background: var(--ac-ink);
+    color: #fff;
+}
+
+.stdCifra {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.stdCifra .cifra {
+    font-size: 56px;
+}
+
+.stdCifra span:last-child {
+    padding-bottom: 3px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--ac-text-3);
     white-space: nowrap;
 }
 
-.saldoMeta {
+.stdGrafica {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stdBarras {
+    flex: 1;
+    min-height: 40px;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    border-bottom: 1px solid var(--ac-line);
+}
+
+.stdBarra {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+}
+
+.stdBarra b {
     font-size: 11px;
-    font-weight: 400;
-    color: var(--ac-muted);
-}
-
-.saldoMonto {
-    flex-shrink: 0;
-    font-size: 13px;
     font-weight: 600;
-    color: var(--ac-amber);
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
 }
 
-/* ---------------------------------------------------------------- pills --- */
+.stdBarra span {
+    display: block;
+    width: 100%;
+    max-width: 26px;
+    min-height: 3px;
+    border-radius: 5px 5px 0 0;
+    background: var(--ac-ink);
+}
+
+.stdBarraVacia span {
+    background: #eeeadf;
+}
+
+.stdEje {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--ac-muted-2);
+}
+
+.stdPie {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ac-muted);
+    text-wrap: pretty;
+}
+
+/* --------------------------------------------------------------- reportes --- */
+
+.cardFila {
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 22px;
+}
+
+.cardFila .cifra {
+    font-size: 26px;
+}
 
 .pill {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 11px;
+    gap: 7px;
+    padding: 3px 10px;
     border-radius: 999px;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0;
-    text-transform: none;
     white-space: nowrap;
 }
 
@@ -489,11 +730,6 @@
     height: 7px;
     border-radius: 50%;
     background: currentColor;
-}
-
-.pillVioleta {
-    background: var(--ac-violet-soft);
-    color: var(--ac-violet);
 }
 
 .pillVerde {
@@ -506,266 +742,57 @@
     color: var(--ac-amber-text);
 }
 
-/* -------------------------------------------------------------- bandeja --- */
-
-.bandeja {
-    margin: 14px 0 0;
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--ac-line-soft);
-}
-
-.bandeja li {
-    border-bottom: 1px solid var(--ac-line-soft);
-}
-
-.bandeja li:last-child {
-    border-bottom: none;
-}
-
-.bandejaFila {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 40px minmax(120px, 0.9fr) minmax(0, 1.6fr) auto;
-    align-items: center;
-    gap: 16px;
-    padding: 11px 0;
-    border: none;
-    background: none;
-    font-family: inherit;
-    text-align: left;
-    color: var(--ac-ink);
-    cursor: pointer;
-}
-
-.bandejaFila:hover .bandejaQuien b {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    border-radius: 11px;
-    background: var(--ac-surface-alt);
-    font-size: 15px;
-    font-weight: 600;
-}
-
-.bandejaQuien {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.bandejaQuien b {
-    font-size: 14.5px;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.bandejaQuien span {
-    font-size: 12.5px;
-    color: var(--ac-violet);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.bandejaTexto {
-    min-width: 0;
-    font-size: 14px;
-    color: var(--ac-text-2);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.bandejaTexto > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.bandejaHora {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
-    color: var(--ac-muted);
-    white-space: nowrap;
-}
-
-.bandejaHora i {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    box-sizing: border-box;
-    display: grid;
-    place-items: center;
-    border-radius: 999px;
-    background: var(--ac-violet);
-    color: #fff;
-    font-size: 11px;
-    font-style: normal;
-    font-weight: 600;
-}
-
-.bandejaFilaNueva .bandejaTexto {
-    color: var(--ac-ink);
-    font-weight: 500;
-}
-
-/* -------------------------------------------------------- save the date --- */
-
-.segmentado {
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: 999px;
-    background: var(--ac-surface-alt);
-}
-
-.segmentado button {
-    border: none;
-    background: transparent;
-    border-radius: 999px;
-    padding: 4px 12px;
-    font-family: inherit;
-    font-size: 12.5px;
-    color: var(--ac-muted);
-    cursor: pointer;
-}
-
-.segmentado .segmentoActivo {
-    background: var(--ac-ink);
-    color: #fff;
-}
-
-/* En la tarjeta oscura el control va en blanco sobre tinta. */
-.segmentadoOscuro {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.segmentadoOscuro button {
-    color: rgba(255, 255, 255, 0.62);
-}
-
-.segmentadoOscuro .segmentoActivo {
-    background: #fff;
-    color: var(--ac-ink);
-}
-
-.cardHeadAcciones {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.stdCuerpo {
-    margin-top: 14px;
-    display: flex;
-    align-items: flex-end;
-    gap: 22px;
-}
-
-.stdTexto {
-    padding-bottom: 4px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--ac-text-3);
-    white-space: nowrap;
-}
-
-.sparkline {
-    flex: 1;
-    min-width: 0;
-    height: 48px;
-}
-
-.sparklineArea {
-    fill: rgba(79, 140, 255, 0.12);
-}
-
-.sparklineLinea {
-    fill: none;
-    stroke: #3b6fe0;
-    stroke-width: 2;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-}
-
-.stdPie {
-    margin: 12px 0 0;
+.sinPermiso {
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    border: 1px dashed var(--ac-line-control);
+    border-radius: 14px;
     font-size: 13px;
     color: var(--ac-muted);
 }
 
-/* ------------------------------------------------------------- reportes --- */
+/* ------------------------------------------------------------- responsive --- */
 
-.cardFila {
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-    padding-top: 16px;
-    padding-bottom: 16px;
-}
-
-/* ---------------------------------------------------------- sin permiso --- */
-
-.sinPermiso {
-    margin-bottom: 22px;
-    padding: 18px 22px;
-    border: 1px dashed var(--ac-line);
-    border-radius: 16px;
-    font-size: 13.5px;
-    color: var(--ac-muted);
-}
-
-/* ------------------------------------------------------------ responsive --- */
-
-@media (max-width: 1280px) {
-    .cifraGigante { font-size: 80px; }
-    .cifraGrande { font-size: 52px; }
-    .saldoCifras .cifraGrande { font-size: 42px; }
-    .equilibrioDatos { gap: 24px; }
-    .equilibrioDatos strong { font-size: 22px; }
-}
-
+/* Por debajo de esto no cabe en una pantalla: se apila y la página scrollea. */
 @media (max-width: 1080px) {
-    .grid,
-    .gridSinVentas {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-areas: none;
+    .grid {
+        height: auto;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto;
     }
 
-    .grid > * {
-        grid-area: auto;
+    .areaEquilibrio {
+        min-height: 330px;
+    }
+
+    .columna {
+        grid-column: 1 / -1;
+    }
+
+    .std {
+        min-height: 300px;
     }
 }
 
-@media (max-width: 640px) {
-    .grid { gap: 12px; }
-    .card { padding: 18px; border-radius: 16px; }
-    .cardOscura { padding: 20px 18px 16px; }
-    .cifraGigante { font-size: 68px; }
-    .cifraGigante small { font-size: 24px; }
-    .cifraGrande { font-size: 46px; }
-    .saldoCifras .cifraGrande { font-size: 38px; }
-    .equilibrioDe { font-size: 14px; }
-    .equilibrioDatos strong { font-size: 20px; }
-    .equilibrioDatos span { font-size: 12.5px; }
-    .ventasCuerpo { gap: 20px; }
-    .bandejaFila { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; }
-    .avatar { width: 36px; height: 36px; border-radius: 10px; font-size: 14px; }
-    .bandejaTexto { display: none; }
-    .stdCuerpo { flex-wrap: wrap; }
-    .sparkline { flex-basis: 100%; }
+@media (max-width: 700px) {
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .equilibrioCuerpo {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+    }
+
+    .grafica {
+        min-height: 180px;
+    }
+
+    .equilibrioHead {
+        flex-wrap: wrap;
+    }
+
+    .equilibrioPct .cifra {
+        font-size: 64px;
+    }
 }

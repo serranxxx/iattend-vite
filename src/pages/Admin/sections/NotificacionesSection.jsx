@@ -6,6 +6,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 import { updateSupportTicket } from '../supportTicketsAdminApi'
 import { ESTADOS, TEMAS } from '../supportTickets'
+import { EnTopbarFiltros, Segmentado } from '../AdminTopbar'
 import styles from './NotificacionesSection.module.css'
 
 dayjs.extend(relativeTime)
@@ -183,18 +184,15 @@ export const NotificacionesSection = ({ tickets, cargando, error, onActualizado,
 
     return (
         <div className={styles.notificaciones}>
-            <div className={styles.tabs}>
-                {FILTROS.map(({ key, label }) => (
-                    <button
-                        key={key}
-                        type='button'
-                        className={`${styles.tab} ${filtro === key ? styles.tabActive : ''}`}
-                        onClick={() => setFiltro(key)}
-                    >
-                        {label} {conteos[key]}
-                    </button>
-                ))}
-            </div>
+            {/* El filtro vive a la derecha de las pestañas del Buzón (topbar). */}
+            <EnTopbarFiltros>
+                <Segmentado
+                    ariaLabel='Estado del reporte'
+                    valor={filtro}
+                    onCambio={setFiltro}
+                    opciones={FILTROS.map(({ key, label }) => ({ value: key, label: `${label} ${conteos[key]}` }))}
+                />
+            </EnTopbarFiltros>
 
             {error ? (
                 <div className={styles.vacio}>{error}</div>

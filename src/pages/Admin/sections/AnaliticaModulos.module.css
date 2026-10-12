@@ -1,0 +1,423 @@
+/*
+  Analítica › Mesas y side events (tablero 2x). Alto fijo de 718 px sin scroll
+  de página: hero de 250 px y fila de tres tarjetas que toma el resto.
+*/
+
+.tablero {
+    height: 718px;
+    display: grid;
+    grid-template-rows: 250px minmax(0, 1fr);
+    gap: 12px;
+}
+
+.empty {
+    padding: 48px 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+/* --- Hero oscuro -------------------------------------------------------- */
+
+.hero {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 28px;
+    padding: 20px 26px;
+    background: var(--ac-ink);
+    border-radius: 20px;
+    color: #fff;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.embudos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.heroLabel {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.embudo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.embudoTitulo {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.paso {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) 74px;
+    gap: 12px;
+    align-items: center;
+    font-size: 12px;
+}
+
+.pasoLabel {
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pasoPista {
+    display: block;
+    height: 20px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+}
+
+.pasoBarra {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-left: 8px;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.pasoPct {
+    text-align: right;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.cifras {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    padding-left: 24px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.cifra {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cifraValor {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cifraValor small {
+    font-size: 16px;
+    letter-spacing: 0;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cifraLila { color: #D1BEDD; }
+.cifraVerde { color: #AAC187; }
+
+.cifraPie {
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+/* --- Fila de tarjetas --------------------------------------------------- */
+
+.fila {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: 12px;
+}
+
+.card {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 20px;
+    box-shadow: 0 0 12px rgba(12, 23, 27, 0.07);
+}
+
+.cardMapa { gap: 12px; }
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.cardLabel {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ac-text-3);
+}
+
+.cardMeta {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.nota {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--ac-muted);
+}
+
+.nota b { color: var(--ac-ink); }
+
+/* Waffle de mesas */
+
+.waffle {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    gap: 5px;
+    align-content: center;
+}
+
+.cuadro {
+    aspect-ratio: 1;
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 1px rgba(28, 50, 73, 0.06);
+}
+
+.leyenda {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--ac-text-2);
+}
+
+.leyendaItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.leyendaPunto {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px rgba(28, 50, 73, 0.08);
+}
+
+.leyendaNombre { flex: 1; }
+
+.leyendaValor {
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Side events por evento */
+
+.distribucion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.barraPartida {
+    display: flex;
+    gap: 3px;
+    height: 44px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.tramo {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 10px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.tramo b {
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+}
+
+.tramo span { font-size: 10.5px; }
+
+.planes {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.subLabel {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ac-text-3);
+}
+
+.plan {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 34px;
+    gap: 10px;
+    align-items: center;
+}
+
+.planBadge {
+    padding: 4px 0;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.planCuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.planPista {
+    display: block;
+    height: 10px;
+    border-radius: 99px;
+    background: var(--ac-surface-alt);
+    overflow: hidden;
+}
+
+.planBarra {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+}
+
+.planDetalle {
+    font-size: 11px;
+    color: var(--ac-muted);
+}
+
+.planValor {
+    text-align: right;
+    font-size: 18px;
+    letter-spacing: -0.03em;
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Treemap de temas */
+
+.mapa {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mapaArriba,
+.mapaAbajo {
+    min-height: 0;
+    display: flex;
+    gap: 4px;
+}
+
+.mapaArriba { flex: 3; }
+.mapaAbajo { flex: 2; }
+
+.mosaico {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.mosaicoLabel {
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mosaicoValor {
+    font-size: 24px;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.mosaicoChico { padding: 8px 9px; }
+.mosaicoChico .mosaicoLabel { font-size: 10.5px; }
+.mosaicoChico .mosaicoValor { font-size: 16px; letter-spacing: 0; }
+
+/* --- Pantallas angostas: se apila y se libera el alto ------------------- */
+
+@media (max-width: 1100px) {
+    .tablero {
+        height: auto;
+        grid-template-rows: auto auto;
+    }
+
+    .hero { grid-template-columns: 1fr; }
+
+    .cifras {
+        flex-direction: row;
+        padding-left: 0;
+        padding-top: 16px;
+        border-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .fila { grid-template-columns: 1fr; }
+
+    .card { min-height: 320px; }
+}

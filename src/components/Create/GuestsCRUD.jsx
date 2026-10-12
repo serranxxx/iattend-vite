@@ -614,6 +614,10 @@ export const GuestsCRUD = ({
             closable
             onClose={handleClose}
             open={drawerState.visible}
+            // Arriba de la barra del editor de side events (z-index 1200, ver
+            // SideEventEditor.module.css): si no, su "Guardar" tapa el de este
+            // panel y el invitado nunca se guarda.
+            zIndex={1300}
             width={screens.xs ? '100%' : '40%'}
             styles={{ body: { padding: '12px' } }}
             extra={

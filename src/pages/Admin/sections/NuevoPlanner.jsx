@@ -13,14 +13,18 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * invitación de ejemplo y, si se pide, le manda el correo de bienvenida de
  * planner con su acceso. Si no se manda, aquí se muestra la contraseña.
  */
-export const NuevoPlanner = ({ onCreado }) => {
+// renderBoton(abrir): botón propio (p. ej. la acción de la topbar en
+// Usuarios › Planners); sin él, el botón de siempre.
+export const NuevoPlanner = ({ onCreado, renderBoton }) => {
     const [abierto, setAbierto] = useState(false)
 
     return (
         <>
-            <button type='button' className={`${styles.action} ${styles.actionPrimaria} ${styles.nuevoPlanner}`} onClick={() => setAbierto(true)}>
-                <UserPlus size={13} /> Agregar planner
-            </button>
+            {renderBoton ? renderBoton(() => setAbierto(true)) : (
+                <button type='button' className={`${styles.action} ${styles.actionPrimaria} ${styles.nuevoPlanner}`} onClick={() => setAbierto(true)}>
+                    <UserPlus size={13} /> Agregar planner
+                </button>
+            )}
             {abierto && (
                 <Formulario
                     onClose={() => setAbierto(false)}

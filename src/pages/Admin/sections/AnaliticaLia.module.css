@@ -1,0 +1,418 @@
+/*
+  Analítica › Lia (tablero 2z).
+
+  Alto fijo de 718 px y sin scroll de página: la franja de KPIs toma lo suyo y
+  el resto se reparte entre la lista y el chat, que hacen scroll por dentro.
+  Debajo de 1100 px se apilan y cada tarjeta recupera un alto propio.
+*/
+
+.tablero {
+    height: 718px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    font-family: inherit;
+}
+
+.estado {
+    display: grid;
+    place-items: center;
+    min-height: 240px;
+    padding: 22px;
+    border: 1px solid var(--ac-line, #DDE3E9);
+    border-radius: 20px;
+    background: #FFFFFF;
+    color: var(--ac-muted, #5C6F84);
+    font-size: 13px;
+}
+
+/* --- Franja oscura de KPIs ------------------------------------------------- */
+
+.franja {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: hidden;
+    border-radius: 20px;
+    background: #1C3249;
+    color: #FFFFFF;
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 14px 20px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.kpi:first-child {
+    border-left: none;
+}
+
+.kpiLabel {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+}
+
+.kpiFila {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.kpiValor {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.kpiBlanco { color: #FFFFFF; }
+.kpiLila { color: #D1BEDD; }
+.kpiVerde { color: #AAC187; }
+
+.kpiPie {
+    overflow: hidden;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* --- Cuerpo: lista | chat -------------------------------------------------- */
+
+.cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 12px;
+    min-height: 0;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: 1px solid var(--ac-line, #DDE3E9);
+    border-radius: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 0 12px rgba(12, 23, 27, 0.07);
+}
+
+.label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ac-text-3, #556A7F);
+    white-space: nowrap;
+}
+
+.listaHead {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--ac-line-soft, #E8ECF0);
+}
+
+.listaTitulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cuenta {
+    font-size: 11.5px;
+    color: var(--ac-muted, #5C6F84);
+    font-variant-numeric: tabular-nums;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chip {
+    padding: 4px 10px;
+    border: 1px solid var(--ac-line, #DDE3E9);
+    border-radius: 999px;
+    background: #FFFFFF;
+    color: var(--ac-text-2, #3D5165);
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 400;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.chip:hover {
+    border-color: var(--ac-line-control, #D3DAE2);
+    background: var(--ac-surface-alt, #F6F7F9);
+}
+
+.chipActivo,
+.chipActivo:hover {
+    border-color: #1C3249;
+    background: #1C3249;
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.chipN {
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+.lista {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    list-style: none;
+}
+
+.conv {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    width: 100%;
+    padding: 12px 18px;
+    border: none;
+    border-bottom: 1px solid var(--ac-line-soft, #E8ECF0);
+    background: #FFFFFF;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.conv:hover {
+    background: var(--ac-surface-alt, #F6F7F9);
+}
+
+.convActiva,
+.convActiva:hover {
+    background: #F2EDF6;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #EEEADF;
+    color: #1C3249;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.convActiva .avatar,
+.avatarChat {
+    background: #1C3249;
+    color: #FFFFFF;
+}
+
+.avatarChat {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.convCuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.convFila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.convEvento {
+    overflow: hidden;
+    font-size: 13px;
+    color: #1C3249;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.badge {
+    flex-shrink: 0;
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: #EEEADF;
+    color: #1C3249;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.convPrevia {
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--ac-text-2, #3D5165);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.convMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--ac-muted-2, #64768A);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Chat ------------------------------------------------------------------ */
+
+.chatHead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--ac-line-soft, #E8ECF0);
+}
+
+.chatHead .badge {
+    padding: 3px 9px;
+    font-size: 10.5px;
+}
+
+.chatQuien {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.chatEvento {
+    overflow: hidden;
+    font-size: 14px;
+    color: #1C3249;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chatSub {
+    overflow: hidden;
+    font-size: 11.5px;
+    color: var(--ac-muted, #5C6F84);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.hilo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    padding: 18px 20px;
+    overflow: auto;
+    background: #FBFBFC;
+}
+
+.burbujaFila {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.filaOrganizador {
+    justify-content: flex-end;
+}
+
+.burbuja {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 14px;
+}
+
+.burbujaOrganizador {
+    background: #1C3249;
+    color: #FFFFFF;
+}
+
+.burbujaLia {
+    border: 1px solid var(--ac-line-soft, #E8ECF0);
+    background: #FFFFFF;
+    color: #1C3249;
+}
+
+.burbujaMeta {
+    font-size: 10.5px;
+    opacity: 0.7;
+}
+
+.burbujaTexto {
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+}
+
+.estadoChat {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    padding: 22px;
+    color: var(--ac-muted, #5C6F84);
+    font-size: 13px;
+}
+
+/* --- Pantallas angostas ---------------------------------------------------- */
+
+@media (max-width: 1100px) {
+    .tablero {
+        height: auto;
+    }
+
+    .franja {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kpi:nth-child(3) {
+        border-left: none;
+    }
+
+    .kpi:nth-child(n + 3) {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cuerpo {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cuerpo > .card {
+        height: 520px;
+    }
+}

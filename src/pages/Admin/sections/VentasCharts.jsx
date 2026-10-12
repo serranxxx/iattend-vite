@@ -11,50 +11,22 @@
   las que alimentan el título del tooltip.
 */
 
-import { Bar, Doughnut, Line } from 'react-chartjs-2'
+import { Bar, Line } from 'react-chartjs-2'
 import { MESES, formatCurrency } from '../ventasCalculos'
-import { ejeYOculto, opcionesBase, tooltipBase, useTokens } from '../adminCharts'
+import { COLOR_POR_ANIO, MARCA, ejeYOculto, opcionesBase, tooltipBase, tooltipOscuro, useTokens } from '../adminCharts'
 import styles from './VentasSection.module.css'
 
 const MESES_CORTOS = MESES.map(m => m.slice(0, 3))
 
+// Años encimados con la paleta de marca: el actual en navy, el previo en lila
+// y el más viejo en verde punteado. Sobre el hero oscuro: lila, verde y
+// blanco translúcido punteado.
 const ESTILO_SERIE = {
-    actual: { token: 'azul', width: 2.4, dash: undefined },
-    previo: { token: 'morado', width: 1.8, dash: undefined },
-    // Azul y morado son hues vecinos: el año viejo va en verde y además
-    // punteado, para que las tres series se distingan aunque se encimen.
-    viejo: { token: 'verde', width: 1.8, dash: [5, 5] },
+    actual: { ...COLOR_POR_ANIO.actual, width: 2.4, dash: undefined },
+    previo: { ...COLOR_POR_ANIO.previo, width: 1.8, dash: undefined },
+    viejo: { ...COLOR_POR_ANIO.viejo, width: 1.8, dash: [5, 5] },
 }
 
-// ------------------------------------------------------------ donut meta ---
-
-// Anillo de avance para la tarjeta de meta en Hoy. El porcentaje va en HTML
-// encima, no dibujado en el canvas: se lee más nítido y hereda la tipografía.
-export const MetaDonut = ({ avance }) => {
-    const tokens = useTokens()
-    const pct = Math.max(0, Math.min(1, avance))
-
-    return (
-        <Doughnut
-            data={{
-                datasets: [{
-                    data: [pct, 1 - pct],
-                    backgroundColor: [tokens.azul, 'rgba(255, 255, 255, 0.12)'],
-                    borderWidth: 0,
-                    circumference: 360,
-                    rotation: 0,
-                }],
-            }}
-            options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '74%',
-                animation: { animateRotate: true },
-                plugins: { legend: { display: false }, tooltip: { enabled: false } },
-            }}
-        />
-    )
-}
 
 // ------------------------------------------------------- proyección anual ---
 
@@ -71,14 +43,14 @@ export const ProyeccionChart = ({ series, labels }) => {
                     labels,
                     datasets: series.map(serie => {
                         const estilo = ESTILO_SERIE[serie.estilo] ?? ESTILO_SERIE.previo
-                        const color = tokens[estilo.token]
+                        const color = estilo.color
 
                         return {
                             label: String(serie.anio),
                             data: Array.from({ length: labels.length }, (_, i) =>
                                 i < serie.valores.length ? serie.valores[i] : null),
                             borderColor: color,
-                            backgroundColor: unaSola ? tokens[`${estilo.token}Bg`] : color,
+                            backgroundColor: unaSola ? MARCA.lilaRelleno : color,
                             borderWidth: estilo.width,
                             borderDash: estilo.dash,
                             fill: unaSola,
@@ -115,28 +87,30 @@ export const ProyeccionChart = ({ series, labels }) => {
 
 // Acepta varias series para encimar años, más la línea de meta. Igual que en la
 // proyección, el área solo se rellena cuando hay una sola serie.
-export const AcumuladoChart = ({ series, meta, labels }) => {
+// `oscuro`: versión para el hero navy de Ventas (lila / verde / blanco, grid
+// y meta en blanco translúcido, tooltip blanco).
+export const AcumuladoChart = ({ series, meta, labels, oscuro = false }) => {
     const tokens = useTokens()
     const unaSola = series.length === 1
 
     const datasets = series.map(serie => {
         const estilo = ESTILO_SERIE[serie.estilo] ?? ESTILO_SERIE.previo
-        const color = tokens[estilo.token]
+        const color = oscuro ? estilo.oscuro : estilo.color
 
         return {
             label: String(serie.anio),
             data: Array.from({ length: labels.length }, (_, i) =>
                 i < serie.valores.length ? serie.valores[i] : null),
             borderColor: color,
-            backgroundColor: unaSola ? tokens[`${estilo.token}Bg`] : color,
-            borderWidth: estilo.width,
+            backgroundColor: unaSola ? (oscuro ? MARCA.lilaRellenoSuave : MARCA.navyRelleno) : color,
+            borderWidth: serie.estilo === 'actual' && oscuro ? 2.5 : estilo.width,
             borderDash: estilo.dash,
             fill: unaSola,
             tension: 0.15,
             spanGaps: false,
             pointRadius: 0,
             pointHoverRadius: 4,
-            pointHoverBorderColor: tokens.surface,
+            pointHoverBorderColor: oscuro ? MARCA.navy : tokens.surface,
             pointHoverBorderWidth: 2,
             order: 1,
         }
@@ -146,9 +120,9 @@ export const AcumuladoChart = ({ series, meta, labels }) => {
         datasets.push({
             label: 'Meta',
             data: labels.map(() => meta),
-            borderColor: tokens.meta,
-            borderWidth: 1.6,
-            borderDash: [7, 6],
+            borderColor: oscuro ? MARCA.oscuroMeta : MARCA.contraste,
+            borderWidth: oscuro ? 1.4 : 1.6,
+            borderDash: [6, 6],
             fill: false,
             pointRadius: 0,
             pointHoverRadius: 0,
@@ -162,11 +136,16 @@ export const AcumuladoChart = ({ series, meta, labels }) => {
                 data={{ labels, datasets }}
                 options={{
                     ...opcionesBase,
-                    scales: { x: { display: false }, y: ejeYOculto(tokens) },
+                    scales: {
+                        x: { display: false },
+                        y: oscuro
+                            ? { ...ejeYOculto(tokens), grid: { color: MARCA.oscuroGrid, drawTicks: false } }
+                            : ejeYOculto(tokens),
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            ...tooltipBase(tokens),
+                            ...(oscuro ? tooltipOscuro(tokens) : tooltipBase(tokens)),
                             callbacks: {
                                 label: (ctx) => ctx.parsed.y === null
                                     ? null
@@ -192,7 +171,9 @@ export const ComparativaChart = ({ series }) => {
                     labels: MESES_CORTOS,
                     datasets: series.map(serie => {
                         const estilo = ESTILO_SERIE[serie.estilo] ?? ESTILO_SERIE.previo
-                        const color = tokens[estilo.token]
+                        const color = estilo.color
+                        // El año en curso va más grueso y con relleno lila.
+                        const actual = serie.estilo === 'actual'
 
                         return {
                             label: String(serie.anio),
@@ -202,11 +183,11 @@ export const ComparativaChart = ({ series }) => {
                             data: Array.from({ length: 12 }, (_, i) =>
                                 i < serie.valores.length ? serie.valores[i] : null),
                             borderColor: color,
-                            backgroundColor: color,
-                            borderWidth: estilo.width,
+                            backgroundColor: actual ? 'rgba(209, 190, 221, 0.35)' : color,
+                            borderWidth: actual ? 2.6 : 2,
                             borderDash: estilo.dash,
-                            fill: false,
-                            tension: 0.2,
+                            fill: actual ? 'origin' : false,
+                            tension: 0.3,
                             spanGaps: false,
                             pointRadius: 0,
                             pointHoverRadius: 4,
@@ -264,8 +245,12 @@ const etiquetasSobreBarras = {
     },
 }
 
+// Un año: barras lila con el mes en curso en navy. Varios años: un color por
+// año (navy / lila / verde).
 export const BarrasPorMes = ({ series }) => {
     const tokens = useTokens()
+    const mesActual = new Date().getMonth()
+    const anioActual = new Date().getFullYear()
 
     return (
         <div className={styles.bars}>
@@ -274,7 +259,9 @@ export const BarrasPorMes = ({ series }) => {
                     labels: MESES_CORTOS,
                     datasets: series.map(serie => {
                         const estilo = ESTILO_SERIE[serie.estilo] ?? ESTILO_SERIE.previo
-                        const color = tokens[estilo.token]
+                        const color = series.length === 1
+                            ? serie.valores.map((_, i) => (serie.anio === anioActual && i === mesActual ? MARCA.navy : MARCA.lila))
+                            : estilo.color
 
                         return {
                             label: String(serie.anio),
@@ -301,7 +288,10 @@ export const BarrasPorMes = ({ series }) => {
                             grid: { display: false },
                             ticks: {
                                 color: tokens.muted,
-                                font: { family: 'Poppins', size: 10.5 },
+                                font: { family: 'Poppins', size: 10 },
+                                maxRotation: 0,
+                                minRotation: 0,
+                                autoSkip: false,
                             },
                         },
                         y: { display: false, beginAtZero: true },

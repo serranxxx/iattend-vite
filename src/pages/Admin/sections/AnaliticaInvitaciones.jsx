@@ -7,10 +7,14 @@
 
   Las invitaciones de prueba quedan fuera en todos los números: son cuentas
   internas y meterlas movería la estacionalidad sin representar a nadie.
+
+  Tablero de alto fijo (rediseño del admin): franja de KPIs y dos filas de
+  tarjetas que caben sin scroll de página; lo que no cabe —la lista de
+  ciudades— hace scroll dentro de su tarjeta.
 */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Bar, Doughnut, Line, Scatter } from 'react-chartjs-2'
+import { Bar, Line } from 'react-chartjs-2'
 import { Dropdown } from 'antd'
 import { ChevronDown, MapPin } from 'lucide-react'
 import {
@@ -19,18 +23,21 @@ import {
 } from '../analiticaCalculos'
 import { traerTodo } from '../analiticaDatos'
 import { MESES } from '../ventasCalculos'
-import { ejeYOculto, opcionesBase, tooltipBase, useTokens } from '../adminCharts'
-import styles from './EventosAnalitica.module.css'
+import { MARCA, ejeTexto, ejeYOculto, opcionesBase, tooltipBase, useTokens } from '../adminCharts'
+import styles from './AnaliticaInvitaciones.module.css'
 
 const MESES_CORTOS = MESES.map(m => m.slice(0, 3))
 
-// Cuántas ciudades se listan antes de agrupar el resto en "otras".
-const CIUDADES_VISIBLES = 6
+// Eventos PRO en la gráfica de consumo; el resto vive en el dropdown.
+const CONSUMOS_VISIBLES = 7
 
-// Eventos PRO visibles en la lista de consumo; el resto vive en el dropdown.
-const CONSUMOS_VISIBLES = 10
+// Los nombres de invitación son slugs largos ("cristina&eduardo-2026"): en el
+// eje se cortan y el tooltip muestra el completo.
+const NOMBRE_EJE_MAX = 18
 
 const plural = (n, singular, pluralForma) => `${n} ${n === 1 ? singular : pluralForma}`
+
+const recortar = (texto, max) => (texto.length > max ? `${texto.slice(0, max - 1)}…` : texto)
 
 
 const useDatos = (reales, totales) => useMemo(() => {
@@ -77,9 +84,6 @@ const useDatos = (reales, totales) => useMemo(() => {
     // saber a cuántos eventos les falta el dato, no a cuántas direcciones.
     const sinPais = conUbicacion.filter(i => !ubicacionesDe(i).some(u => u.pais)).length
 
-    const topCiudades = ciudades.slice(0, CIUDADES_VISIBLES)
-    const otrasCiudades = ciudades.slice(CIUDADES_VISIBLES)
-
     return {
         totales: {
             reales: reales.length,
@@ -87,6 +91,7 @@ const useDatos = (reales, totales) => useMemo(() => {
             conFecha: conFecha.length,
             sinFecha: reales.length - conFecha.length,
             conUbicacion: conUbicacion.length,
+            sinUbicacion: reales.length - conUbicacion.length,
         },
         ventasPorMes,
         eventosPorMes,
@@ -95,14 +100,12 @@ const useDatos = (reales, totales) => useMemo(() => {
             muestra: anticipadas.length,
             retroactivas: retroactivas.length,
             histograma,
+            maximo: Math.max(0, ...histograma.map(h => h.total)),
         },
         ciudades: {
             lista: ciudades,
             distintas: ciudades.length,
-            top: topCiudades,
             maximo: ciudades[0]?.total ?? 0,
-            otras: otrasCiudades.reduce((acc, c) => acc + c.total, 0),
-            otrasDistintas: otrasCiudades.length,
         },
         paises: { lista: paises, sinPais, total: ubicaciones.length },
     }
@@ -163,139 +166,40 @@ const useCreditos = (reales) => {
             // El promedio se calcula sobre los que sí mandaron algo: 28 eventos
             // PRO todavía no envían nada y arrastrarían la media a la mitad.
             promedio: activos.length ? Math.round(consumos.reduce((a, b) => a + b, 0) / activos.length) : 0,
-            maximo: Math.max(0, ...consumos),
             porConsumo: [...activos].sort((a, b) => b.consumo - a.consumo),
-            // Con PRO de 300 y de 200 conviviendo, la diagonal se traza con el
-            // mayor: es la referencia del paquete más generoso vendido.
-            incluidos: Math.max(0, ...eventos.map(e => e.incluidos)),
         }
     }, [cobros, reales])
 }
 
-// Dispersión de consumo contra saldo: cada punto es un evento PRO.
-//
-// Se eligió dispersión y no otra barra porque la pregunta no es "quién gastó
-// más" —eso ya lo dice la lista de al lado— sino dónde está cada evento en dos
-// ejes a la vez: los de abajo a la derecha se están quedando sin créditos, los
-// de arriba a la izquierda compraron de más y no los usaron.
-const ConsumoContraSaldo = ({ eventos, incluidos }) => {
-    const tokens = useTokens()
-
-    // Los incluidos del plan: por debajo de esta diagonal el evento nunca
-    // compró créditos extra; por encima, sí.
-    const maximo = Math.max(incluidos, ...eventos.map(e => Math.max(e.consumo, e.saldo)))
-
-    return (
-        // Sin alto propio: es un item de rejilla estirado, así que mide lo que
-        // mida la lista de al lado.
-        <div className={styles.creditosGrafica}>
-            <Scatter
-                data={{
-                    datasets: [
-                        {
-                            label: 'Incluidos en el plan',
-                            data: [{ x: 0, y: incluidos }, { x: incluidos, y: 0 }],
-                            borderColor: tokens.grid,
-                            borderWidth: 1.5,
-                            borderDash: [6, 5],
-                            showLine: true,
-                            pointRadius: 0,
-                            order: 1,
-                        },
-                        {
-                            label: 'Eventos',
-                            data: eventos.map(e => ({ x: e.consumo, y: e.saldo, nombre: e.nombre })),
-                            backgroundColor: tokens.verde,
-                            borderColor: tokens.surface,
-                            borderWidth: 1.5,
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
-                            order: 0,
-                        },
-                    ],
-                }}
-                options={{
-                    ...opcionesBase,
-                    interaction: { mode: 'nearest', intersect: true },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            min: 0,
-                            suggestedMax: maximo,
-                            title: { display: true, text: 'créditos consumidos', color: tokens.muted, font: { family: 'Poppins', size: 10.5 } },
-                            border: { display: false },
-                            grid: { color: tokens.grid, drawTicks: false },
-                            ticks: { color: tokens.muted, font: { family: 'Poppins', size: 10 }, maxTicksLimit: 6 },
-                        },
-                        y: {
-                            type: 'linear',
-                            min: 0,
-                            suggestedMax: maximo,
-                            title: { display: true, text: 'saldo restante', color: tokens.muted, font: { family: 'Poppins', size: 10.5 } },
-                            border: { display: false },
-                            grid: { color: tokens.grid, drawTicks: false },
-                            ticks: { color: tokens.muted, font: { family: 'Poppins', size: 10 }, maxTicksLimit: 6 },
-                        },
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            ...tooltipBase(tokens),
-                            callbacks: {
-                                title: (items) => items[0].raw.nombre ?? '',
-                                label: (ctx) => (ctx.datasetIndex === 0
-                                    ? null
-                                    : `gastó ${ctx.parsed.x} · le quedan ${ctx.parsed.y}`),
-                            },
-                        },
-                    },
-                }}
-            />
-        </div>
-    )
-}
-
 // --------------------------------------------------------------- gráficas ---
 
+// Las dos series con área: vendidas en navy al fondo y celebrados en lila
+// encima, para que el lila no quede tapado por el relleno navy.
 const Estacionalidad = ({ ventas, eventos }) => {
     const tokens = useTokens()
 
+    const serie = (color, relleno) => ({
+        borderColor: color,
+        backgroundColor: relleno,
+        borderWidth: 2.4,
+        fill: 'origin',
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: color,
+        pointHoverBorderColor: tokens.surface,
+        pointHoverBorderWidth: 2,
+    })
+
     return (
-        <div className={styles.chart}>
+        <div className={styles.grafica}>
             <Line
                 data={{
                     labels: MESES_CORTOS,
                     datasets: [
-                        {
-                            label: 'Vendidas',
-                            data: ventas,
-                            borderColor: tokens.azul,
-                            backgroundColor: tokens.azulBg,
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.35,
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
-                            pointHoverBorderColor: tokens.surface,
-                            pointHoverBorderWidth: 2,
-                            // `order` alto = se dibuja primero, o sea al fondo:
-                            // si no, el área rellena tapa la otra línea.
-                            order: 1,
-                        },
-                        {
-                            label: 'Celebrados',
-                            data: eventos,
-                            borderColor: tokens.morado,
-                            backgroundColor: tokens.morado,
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
-                            pointHoverBorderColor: tokens.surface,
-                            pointHoverBorderWidth: 2,
-                            order: 0,
-                        },
+                        // `order` alto = se dibuja primero, o sea al fondo.
+                        { label: 'Vendidas', data: ventas, ...serie(MARCA.navy, MARCA.navyRelleno), order: 1 },
+                        { label: 'Celebrados', data: eventos, ...serie(MARCA.lila, 'rgba(209, 190, 221, 0.35)'), order: 0 },
                     ],
                 }}
                 options={{
@@ -304,7 +208,7 @@ const Estacionalidad = ({ ventas, eventos }) => {
                         x: {
                             border: { display: false },
                             grid: { display: false },
-                            ticks: { color: tokens.muted, font: { family: 'Poppins', size: 10.5 } },
+                            ticks: { ...ejeTexto(tokens), maxRotation: 0 },
                         },
                         y: ejeYOculto(tokens),
                     },
@@ -327,47 +231,61 @@ const Estacionalidad = ({ ventas, eventos }) => {
     )
 }
 
-// Barras horizontales: los rangos ("6 a 12 meses") no caben como etiqueta de un
-// eje X sin girarlos, y girados no se leen.
-const Anticipacion = ({ histograma }) => {
+// Consumidos contra saldo, apilados: el largo total es lo que el evento tuvo,
+// y el corte navy/lila dice cuánto de eso ya gastó.
+const ConsumoTop = ({ eventos }) => {
     const tokens = useTokens()
 
+    const barra = (label, data, color) => ({
+        label,
+        data,
+        backgroundColor: color,
+        hoverBackgroundColor: color,
+        borderRadius: 4,
+        borderSkipped: false,
+        barThickness: 14,
+        stack: 'creditos',
+    })
+
     return (
-        <div className={styles.chartCorto}>
+        <div className={styles.grafica}>
             <Bar
                 data={{
-                    labels: histograma.map(h => h.label),
-                    datasets: [{
-                        label: 'Invitaciones',
-                        data: histograma.map(h => h.total),
-                        backgroundColor: tokens.naranja,
-                        hoverBackgroundColor: tokens.naranja,
-                        borderRadius: { topLeft: 0, topRight: 4, bottomLeft: 0, bottomRight: 4 },
-                        borderSkipped: false,
-                        maxBarThickness: 16,
-                    }],
+                    labels: eventos.map(e => e.nombre),
+                    datasets: [
+                        barra('Consumidos', eventos.map(e => e.consumo), MARCA.navy),
+                        barra('Saldo', eventos.map(e => e.saldo), MARCA.lila),
+                    ],
                 }}
                 options={{
                     ...opcionesBase,
                     indexAxis: 'y',
-                    // `intersect: false` para que el tooltip salga en cualquier
-                    // punto de la fila, no solo encima de la barra pintada: las
-                    // barras cortas serían un blanco diminuto.
-                    interaction: { mode: 'index', intersect: false },
                     scales: {
-                        x: { display: false, beginAtZero: true },
+                        x: {
+                            stacked: true,
+                            beginAtZero: true,
+                            border: { display: false },
+                            grid: { color: tokens.grid, drawTicks: false },
+                            ticks: { ...ejeTexto(tokens), font: { family: 'Poppins', size: 10 }, maxTicksLimit: 6 },
+                        },
                         y: {
+                            stacked: true,
                             border: { display: false },
                             grid: { display: false },
-                            ticks: { color: tokens.muted, font: { family: 'Poppins', size: 11 } },
+                            ticks: {
+                                color: MARCA.navy,
+                                font: { family: 'Poppins', size: 11 },
+                                autoSkip: false,
+                                callback: (_, i) => recortar(eventos[i]?.nombre ?? '', NOMBRE_EJE_MAX),
+                            },
                         },
                     },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            ...tooltipBase(tokens, (v) => plural(v, 'invitación', 'invitaciones')),
+                            ...tooltipBase(tokens),
                             callbacks: {
-                                label: (ctx) => plural(ctx.parsed.x, 'invitación', 'invitaciones'),
+                                label: (ctx) => `${ctx.dataset.label}: ${plural(ctx.parsed.x, 'crédito', 'créditos')}`,
                             },
                         },
                     },
@@ -377,63 +295,44 @@ const Anticipacion = ({ histograma }) => {
     )
 }
 
-const Paises = ({ lista, total }) => {
-    const tokens = useTokens()
-    const colores = [tokens.azul, tokens.morado, tokens.verde, tokens.naranja, tokens.rojo]
-
-    return (
-        <div className={styles.paises}>
-            <div className={styles.donut}>
-                <Doughnut
-                    data={{
-                        labels: lista.map(p => p.label),
-                        datasets: [{
-                            data: lista.map(p => p.total),
-                            backgroundColor: lista.map((_, i) => colores[i % colores.length]),
-                            borderWidth: 0,
-                        }],
-                    }}
-                    options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '68%',
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                ...tooltipBase(tokens),
-                                callbacks: {
-                                    label: (ctx) => plural(ctx.parsed, 'evento', 'eventos'),
-                                },
-                            },
-                        },
-                    }}
-                />
+// Barras HTML y no chart.js: son cinco rangos fijos con su número al lado, y
+// así el alto de cada fila sigue al de la tarjeta sin recalcular el canvas.
+const Anticipacion = ({ histograma, maximo }) => (
+    <div className={styles.rangos}>
+        {histograma.map(rango => (
+            <div className={styles.rango} key={rango.label}>
+                <span className={styles.rangoLabel}>{rango.label}</span>
+                <span className={styles.rangoPista}>
+                    <span
+                        className={styles.rangoFill}
+                        style={{
+                            width: maximo ? `${(rango.total / maximo) * 100}%` : 0,
+                            // El rango más común en navy: es la respuesta.
+                            background: rango.total === maximo && maximo > 0 ? MARCA.navy : MARCA.verde,
+                        }}
+                    />
+                </span>
+                <b className={styles.rangoValor}>{rango.total}</b>
             </div>
+        ))}
+    </div>
+)
 
-            <ul className={styles.leyenda}>
-                {lista.map((pais, i) => (
-                    <li className={styles.leyendaItem} key={pais.clave}>
-                        <span
-                            className={styles.punto}
-                            style={{ background: colores[i % colores.length] }}
-                        />
-                        <span className={styles.leyendaNombre} title={pais.label}>{pais.label}</span>
-                        <span className={styles.leyendaValor}>
-                            {Math.round((pais.total / total) * 100)}%
-                        </span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    )
-}
+const Leyenda = ({ items }) => (
+    <div className={styles.leyenda}>
+        {items.map(({ label, color }) => (
+            <span className={styles.leyendaChip} key={label}>
+                <i className={styles.leyendaPunto} style={{ background: color }} /> {label}
+            </span>
+        ))}
+    </div>
+)
 
 // ----------------------------------------------------------------- panel ---
 
 export const AnaliticaInvitaciones = ({ invitacionesReales, totalInvitaciones }) => {
     const datos = useDatos(invitacionesReales, totalInvitaciones)
     const creditos = useCreditos(invitacionesReales)
-    const [listaAbierta, setListaAbierta] = useState(false)
     const [consumoAbierto, setConsumoAbierto] = useState(false)
 
     if (datos.totales.reales === 0) {
@@ -442,203 +341,91 @@ export const AnaliticaInvitaciones = ({ invitacionesReales, totalInvitaciones })
 
     const { totales, anticipacion, ciudades, paises } = datos
 
+    const kpis = [
+        {
+            label: 'Invitaciones',
+            valor: totales.reales,
+            pie: totales.pruebas > 0 ? `${totales.pruebas} de prueba fuera del cálculo` : 'sin invitaciones de prueba',
+        },
+        {
+            label: 'Anticipación mediana',
+            valor: anticipacion.medianaDias !== null ? `${anticipacion.medianaDias} días` : '—',
+            pie: anticipacion.medianaDias !== null
+                ? `≈ ${Math.round(anticipacion.medianaDias / 30)} meses entre venta y evento`
+                : 'sin fechas suficientes',
+        },
+        {
+            label: 'Ciudades',
+            valor: ciudades.distintas,
+            pie: `${plural(totales.conUbicacion, 'evento ubicado', 'eventos ubicados')} de ${totales.reales}`,
+        },
+        {
+            label: 'Países',
+            valor: paises.lista.length,
+            pie: paises.sinPais > 0
+                ? `${plural(paises.sinPais, 'evento', 'eventos')} sin país capturado`
+                : 'todos los eventos ubicados traen país',
+        },
+    ]
+
+    const top = creditos.porConsumo?.slice(0, CONSUMOS_VISIBLES) ?? []
+
     return (
-        <div className={styles.analitica}>
+        <div className={styles.tablero}>
             <div className={styles.kpis}>
-                <div className={styles.kpi}>
-                    <span className={styles.kpiLabel}>Invitaciones</span>
-                    <span className={styles.kpiValue}>{totales.reales}</span>
-                    <span className={styles.kpiFoot}>
-                        {totales.pruebas > 0 ? `${totales.pruebas} de prueba fuera del cálculo` : 'sin invitaciones de prueba'}
-                    </span>
-                </div>
-
-                <div className={styles.kpi}>
-                    <span className={styles.kpiLabel}>Anticipación mediana</span>
-                    <span className={styles.kpiValue}>
-                        {anticipacion.medianaDias ?? '—'}
-                        {anticipacion.medianaDias !== null && <small> días</small>}
-                    </span>
-                    <span className={styles.kpiFoot}>
-                        {anticipacion.medianaDias !== null
-                            ? `≈ ${Math.round(anticipacion.medianaDias / 30)} meses entre la venta y el evento`
-                            : 'sin fechas suficientes'}
-                    </span>
-                </div>
-
-                <div className={styles.kpi}>
-                    <span className={styles.kpiLabel}>Ciudades</span>
-                    <span className={styles.kpiValue}>{ciudades.distintas}</span>
-                    <span className={styles.kpiFoot}>
-                        {plural(totales.conUbicacion, 'evento ubicado', 'eventos ubicados')} de {totales.reales}
-                    </span>
-                </div>
-
-                <div className={styles.kpi}>
-                    <span className={styles.kpiLabel}>Países</span>
-                    <span className={styles.kpiValue}>{paises.lista.length}</span>
-                    <span className={styles.kpiFoot}>
-                        {paises.sinPais > 0
-                            ? `${plural(paises.sinPais, 'evento', 'eventos')} sin país capturado`
-                            : 'todos los eventos ubicados traen país'}
-                    </span>
-                </div>
+                {kpis.map(k => (
+                    <div className={styles.kpi} key={k.label}>
+                        <span className={styles.label}>{k.label}</span>
+                        <div className={styles.kpiFila}>
+                            <span className={styles.kpiValor}>{k.valor}</span>
+                            <span className={styles.kpiPie} title={k.pie}>{k.pie}</span>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            <div className={styles.bento}>
+            <div className={styles.fila}>
                 <section className={styles.card}>
                     <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Cuándo se vende y cuándo se celebra</h2>
-                            <p className={styles.cardSub}>
-                                Por mes del calendario, todos los años juntos
-                            </p>
-                        </div>
-                        <div className={styles.leyendaInline}>
-                            <span className={styles.leyendaChip}>
-                                <span className={`${styles.punto} ${styles.puntoAzul}`} /> Vendidas
-                            </span>
-                            <span className={styles.leyendaChip}>
-                                <span className={`${styles.punto} ${styles.puntoMorado}`} /> Celebrados
-                            </span>
-                        </div>
+                        <h2 className={styles.label}>Cuándo se vende y cuándo se celebra</h2>
+                        <Leyenda items={[
+                            { label: 'Vendidas', color: MARCA.navy },
+                            { label: 'Celebrados', color: MARCA.lila },
+                        ]} />
                     </header>
 
                     <Estacionalidad ventas={datos.ventasPorMes} eventos={datos.eventosPorMes} />
 
-                    <footer className={styles.cardFoot}>
-                        {totales.sinFecha > 0
-                            ? `${plural(totales.sinFecha, 'invitación', 'invitaciones')} sin fecha de evento`
-                            : 'Todas las invitaciones tienen fecha de evento'}
-                    </footer>
+                    <p className={styles.cardPie}>
+                        Por mes del calendario, todos los años juntos
+                        {totales.sinFecha > 0 && ` · ${plural(totales.sinFecha, 'invitación', 'invitaciones')} sin fecha de evento`}
+                    </p>
                 </section>
 
                 <section className={styles.card}>
                     <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Anticipación de compra</h2>
-                            <p className={styles.cardSub}>
-                                Cuánto falta para el evento cuando compran
-                            </p>
-                        </div>
+                        <h2 className={styles.label}>Anticipación de compra</h2>
+                        {anticipacion.medianaDias !== null && (
+                            <span className={styles.cardNota}>mediana {anticipacion.medianaDias} días</span>
+                        )}
                     </header>
 
-                    <Anticipacion histograma={anticipacion.histograma} />
+                    <Anticipacion histograma={anticipacion.histograma} maximo={anticipacion.maximo} />
 
-                    <footer className={styles.cardFoot}>
+                    <p className={styles.cardPie}>
+                        Cuánto falta para el evento cuando compran ·{' '}
                         {anticipacion.retroactivas > 0
-                            ? `${plural(anticipacion.retroactivas, 'invitación creada', 'invitaciones creadas')} después del evento, fuera del cálculo`
-                            : `Sobre ${plural(anticipacion.muestra, 'invitación', 'invitaciones')}`}
-                    </footer>
+                            ? `${plural(anticipacion.retroactivas, 'creada', 'creadas')} después del evento, fuera del cálculo`
+                            : `sobre ${plural(anticipacion.muestra, 'invitación', 'invitaciones')}`}
+                    </p>
                 </section>
+            </div>
 
+            <div className={`${styles.fila} ${styles.filaBaja}`}>
                 <section className={styles.card}>
                     <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Ciudades</h2>
-                            <p className={styles.cardSub}>
-                                Sede del evento, una vez por invitación
-                            </p>
-                        </div>
-                    </header>
-
-                    {ciudades.top.length === 0 ? (
-                        <div className={styles.vacio}>
-                            <MapPin size={16} /> Ninguna invitación tiene ubicación capturada.
-                        </div>
-                    ) : (
-                        <ul className={styles.ranking}>
-                            {ciudades.top.map(ciudad => (
-                                <li className={styles.rankingItem} key={ciudad.clave}>
-                                    {/* El nombre se trunca con ellipsis; el
-                                        title deja leerlo completo al pasar el
-                                        mouse ("Antigua Guatemala" no cabe). */}
-                                    <span className={styles.rankingNombre} title={ciudad.label}>
-                                        {ciudad.label}
-                                    </span>
-                                    <span className={styles.rankingBarra}>
-                                        <span
-                                            className={styles.rankingFill}
-                                            style={{ width: `${(ciudad.total / ciudades.maximo) * 100}%` }}
-                                        />
-                                    </span>
-                                    <span className={styles.rankingValor}>{ciudad.total}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-
-                    <footer className={styles.cardFoot}>
-                        {/* La tarjeta solo muestra el top: el resto vive en un
-                            popup para no estirar la altura de la fila del bento. */}
-                        <Dropdown
-                            trigger={['click']}
-                            open={listaAbierta}
-                            onOpenChange={setListaAbierta}
-                            placement='bottomLeft'
-                            disabled={ciudades.distintas === 0}
-                            popupRender={() => (
-                                <div className={styles.listaPopup}>
-                                    <div className={styles.listaHead}>
-                                        {plural(ciudades.distintas, 'ciudad', 'ciudades')} · {plural(totales.conUbicacion, 'evento', 'eventos')}
-                                    </div>
-                                    <ul className={styles.lista}>
-                                        {ciudades.lista.map((ciudad, i) => (
-                                            <li className={styles.listaItem} key={ciudad.clave}>
-                                                <span className={styles.listaPos}>{i + 1}</span>
-                                                <span className={styles.listaNombre}>{ciudad.label}</span>
-                                                <span className={styles.listaValor}>{ciudad.total}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        >
-                            <button type='button' className={styles.verTodas} aria-expanded={listaAbierta}>
-                                {ciudades.otrasDistintas > 0
-                                    ? `Ver las ${ciudades.distintas} ciudades`
-                                    : 'Ver la lista completa'}
-                                <ChevronDown
-                                    size={12}
-                                    className={`${styles.chevron} ${listaAbierta ? styles.chevronOpen : ''}`}
-                                />
-                            </button>
-                        </Dropdown>
-                    </footer>
-                </section>
-
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Países</h2>
-                            <p className={styles.cardSub}>Dónde se celebran los eventos</p>
-                        </div>
-                    </header>
-
-                    {paises.lista.length === 0 ? (
-                        <div className={styles.vacio}>
-                            <MapPin size={16} /> Ninguna invitación tiene país capturado.
-                        </div>
-                    ) : (
-                        <Paises
-                            lista={paises.lista}
-                            total={paises.lista.reduce((acc, p) => acc + p.total, 0)}
-                        />
-                    )}
-
-                    <footer className={styles.cardFoot}>
-                        El país solo se captura cuando la dirección viene del buscador de mapas
-                    </footer>
-                </section>
-
-                <section className={`${styles.card} ${styles.cardAncha}`}>
-                    <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Créditos</h2>
-                            <p className={styles.cardSub}>
-                                Solo eventos PRO · Lite y Paperless no usan créditos
-                            </p>
-                        </div>
+                        <h2 className={styles.label}>Uso de créditos</h2>
+                        <span className={styles.cardNota}>solo eventos PRO · Lite y Paperless no usan créditos</span>
                     </header>
 
                     {creditos.cargando ? (
@@ -647,38 +434,33 @@ export const AnaliticaInvitaciones = ({ invitacionesReales, totalInvitaciones })
                         <div className={styles.vacio}>Todavía no hay eventos PRO.</div>
                     ) : (
                         <>
-                            <div className={styles.creditoPromedio}>
-                                <span className={styles.creditoPromedioValor}>{creditos.promedio}</span>
-                                <span className={styles.creditoPromedioTexto}>
-                                    créditos de consumo promedio, sobre los {creditos.activos} de{' '}
-                                    {creditos.totalPro} eventos PRO que ya enviaron
-                                </span>
+                            <div className={styles.resumen}>
+                                <div className={styles.resumenCifra}>
+                                    <span className={styles.resumenValor}>{creditos.promedio}</span>
+                                    <span className={styles.resumenTexto}>créditos promedio<br />por evento</span>
+                                </div>
+                                <div className={styles.resumenAvance}>
+                                    <div className={styles.avance}>
+                                        <span style={{ flex: creditos.activos, background: MARCA.navy }} />
+                                        <span style={{ flex: creditos.totalPro - creditos.activos, background: MARCA.verde }} />
+                                    </div>
+                                    <div className={styles.avanceTexto}>
+                                        <span><b>{creditos.activos}</b> de {creditos.totalPro} eventos PRO ya enviaron</span>
+                                        <span><b>{creditos.totalPro - creditos.activos}</b> sin enviar todavía</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className={styles.creditosSplit}>
-                                <ConsumoContraSaldo
-                                    eventos={creditos.porConsumo}
-                                    incluidos={creditos.incluidos}
-                                />
+                            {creditos.error && (
+                                <div className={styles.aviso}>
+                                    No se pudieron cargar los envíos: el consumo puede salir en cero.
+                                </div>
+                            )}
 
-                                {/* La lista sin barras: la proporción ya la cuenta
-                                    la dispersión y repetirla sería lo mismo dos
-                                    veces. Aquí solo interesan los números. */}
-                                <ul className={styles.consumos}>
-                                    {creditos.porConsumo.slice(0, CONSUMOS_VISIBLES).map(evento => (
-                                        <li className={styles.consumoFila} key={evento.id}>
-                                            <span className={styles.consumoNombre} title={evento.email ?? evento.nombre}>
-                                                {evento.nombre}
-                                            </span>
-                                            <span className={styles.consumoSaldo}>saldo {evento.saldo}</span>
-                                            <span className={styles.consumoValor}>{evento.consumo}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            <footer className={styles.cardFoot}>
+                            <div className={styles.subHead}>
                                 {creditos.porConsumo.length > CONSUMOS_VISIBLES ? (
+                                    // La gráfica solo muestra el top: el resto vive
+                                    // en un popup para no romper el alto fijo.
                                     <Dropdown
                                         trigger={['click']}
                                         open={consumoAbierto}
@@ -696,6 +478,7 @@ export const AnaliticaInvitaciones = ({ invitacionesReales, totalInvitaciones })
                                                             <span className={styles.listaNombre} title={evento.email ?? evento.nombre}>
                                                                 {evento.nombre}
                                                             </span>
+                                                            <span className={styles.listaSaldo}>saldo {evento.saldo}</span>
                                                             <span className={styles.listaValor}>{evento.consumo}</span>
                                                         </li>
                                                     ))}
@@ -704,7 +487,7 @@ export const AnaliticaInvitaciones = ({ invitacionesReales, totalInvitaciones })
                                         )}
                                     >
                                         <button type='button' className={styles.verTodas} aria-expanded={consumoAbierto}>
-                                            Ver los {creditos.porConsumo.length} eventos
+                                            Top {CONSUMOS_VISIBLES} por consumo · ver los {creditos.porConsumo.length}
                                             <ChevronDown
                                                 size={12}
                                                 className={`${styles.chevron} ${consumoAbierto ? styles.chevronOpen : ''}`}
@@ -712,11 +495,62 @@ export const AnaliticaInvitaciones = ({ invitacionesReales, totalInvitaciones })
                                         </button>
                                     </Dropdown>
                                 ) : (
-                                    'Consumo = envíos que no fallaron más recordatorios cobrados.'
+                                    <span className={styles.cardNota}>Por consumo · lo que gastaron contra lo que les queda</span>
                                 )}
-                            </footer>
+                                <Leyenda items={[
+                                    { label: 'consumidos', color: MARCA.navy },
+                                    { label: 'saldo', color: MARCA.lila },
+                                ]} />
+                            </div>
+
+                            {top.length === 0 ? (
+                                <div className={styles.vacio}>Ningún evento PRO ha enviado todavía.</div>
+                            ) : (
+                                <ConsumoTop eventos={top} />
+                            )}
                         </>
                     )}
+                </section>
+
+                <section className={styles.card}>
+                    <header className={styles.cardHead}>
+                        <h2 className={styles.label}>Ciudades</h2>
+                        <span className={styles.cardNota}>
+                            {plural(ciudades.distintas, 'ciudad', 'ciudades')} · {plural(totales.conUbicacion, 'evento ubicado', 'eventos ubicados')}
+                        </span>
+                    </header>
+
+                    {ciudades.lista.length === 0 ? (
+                        <div className={styles.vacio}>
+                            <MapPin size={16} /> Ninguna invitación tiene ubicación capturada.
+                        </div>
+                    ) : (
+                        <ul className={styles.ciudades}>
+                            {ciudades.lista.map((ciudad, i) => (
+                                <li className={styles.ciudad} key={ciudad.clave}>
+                                    {/* El nombre se trunca con ellipsis; el
+                                        title deja leerlo completo al pasar el
+                                        mouse ("Antigua Guatemala" no cabe). */}
+                                    <span className={styles.ciudadNombre} title={ciudad.label}>{ciudad.label}</span>
+                                    <span className={styles.ciudadPista}>
+                                        <span
+                                            className={styles.ciudadFill}
+                                            style={{
+                                                width: `${(ciudad.total / ciudades.maximo) * 100}%`,
+                                                background: i === 0 ? MARCA.navy : MARCA.lila,
+                                            }}
+                                        />
+                                    </span>
+                                    <b className={styles.ciudadValor}>{ciudad.total}</b>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <p className={styles.cardPie}>
+                        Sede del evento, una vez por invitación
+                        {totales.sinUbicacion > 0 && ` · ${totales.sinUbicacion} sin ubicación`}
+                    </p>
                 </section>
             </div>
         </div>

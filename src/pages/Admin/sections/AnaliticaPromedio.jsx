@@ -1,8 +1,10 @@
 /*
-  Analítica de producto — Evento promedio.
+  Analítica de producto — Perfil (antes "Target" / "Evento promedio").
 
   No es una etapa del roadmap: es el retrato de cómo es un evento de I attend
-  hoy, armado cruzando lo que ya miden las otras pestañas.
+  hoy, armado cruzando lo que ya miden las otras pestañas. Arriba la frase;
+  abajo ocho rasgos, cada uno con su valor dominante y las tres categorías que
+  más pesan.
 
   Tres decisiones que lo sostienen:
 
@@ -10,25 +12,25 @@
     da un promedio que no describe a ninguno de los dos.
 
   · La ventana por defecto son los últimos seis meses, porque la pregunta es
-    cómo es el cliente HOY. Con un solo mes quedan cuatro eventos y una mediana
-    sobre eso no es un retrato, es una anécdota.
+    cómo es el cliente HOY. Todos los rasgos se recalculan con la ventana, por
+    eso el selector sigue vivo (discreto, dentro del hero).
 
-  · Cada número lleva su muestra. Con 25 eventos en la ventana, unas cosas se
-    miden sobre los 25 y otras sobre 9; presentarlas con la misma seguridad
-    sería mentir. Por debajo de `MUESTRA_MINIMA` el dato se marca.
+  · Cada número lleva su muestra. Unas cosas se miden sobre todos los eventos y
+    otras sobre los que tienen el dato; por debajo de `MUESTRA_MINIMA` el
+    subtítulo se marca.
 */
 
 import { useEffect, useMemo, useState } from 'react'
 import {
-    ETIQUETA_TIPO, MUESTRA_MINIMA, VENTANAS, acumuladoDe, esAtajoDeLia, esMesaReal,
-    masComun, mediana, temaDePregunta, ubicacionesDe,
+    ETIQUETA_TIPO, MUESTRA_MINIMA, RANGOS_ANTICIPACION, VENTANAS, contarCiudades, esMesaReal,
+    masComun, mediana, ubicacionesDe,
 } from '../analiticaCalculos'
 import { traerTodo } from '../analiticaDatos'
 import { fetchDatosLiaAdmin } from '../catalogoAdminApi'
-import { Bar } from 'react-chartjs-2'
-import { ejeTexto, opcionesBase, tooltipBase, useTokens } from '../adminCharts'
-import { BarrasApiladas, BarrasConAcumulado, Leyenda } from './AnaliticaPiezas'
-import styles from './EventosAnalitica.module.css'
+import { fetchAdminVentas } from '../salesAdminApi'
+import { fetchProveedores } from '../usuariosAdminApi'
+import { MARCA } from '../adminCharts'
+import styles from './AnaliticaPromedio.module.css'
 
 const MS_POR_DIA = 86_400_000
 
@@ -47,6 +49,73 @@ const diaDelEvento = (invitacion) => (invitacion?.event_date
     ? new Date(String(invitacion.event_date).slice(0, 10))
     : null)
 
+// Las tres barras de cada rasgo, en el orden de la marca sobre blanco.
+const COLORES_RASGO = [MARCA.navy, MARCA.lila, MARCA.verde]
+
+// Cortes del tamaño de lista. Los del prototipo: debajo de 150 es una fiesta
+// chica, arriba de 300 una boda grande.
+const RANGOS_TAMANO = [
+    { label: 'Menos de 150', hasta: 149 },
+    { label: '150 a 300', hasta: 300 },
+    { label: 'Más de 300', hasta: Infinity },
+]
+
+const enRango = (rangos, valor) => rangos.find(r => valor <= r.hasta)?.label
+
+// Cuenta etiquetas y las ordena de mayor a menor. `universo` permite medir
+// contra algo distinto de la suma (en Funciones un evento usa varias cosas).
+const distribucion = (etiquetas, universo = etiquetas.length) => {
+    const cuenta = new Map()
+    etiquetas.filter(Boolean).forEach(e => cuenta.set(e, (cuenta.get(e) ?? 0) + 1))
+
+    return [...cuenta.entries()]
+        .map(([label, total]) => ({ label, total, pct: pct(total, universo) }))
+        .sort((a, b) => b.total - a.total)
+}
+
+// --------------------------------------------------------- canal y acceso ---
+
+const CANALES = {
+    ecommerce: { label: 'Ecommerce', frase: 'directo en línea' },
+    vendedor: { label: 'Vendedor', frase: 'con un vendedor' },
+    planner: { label: 'Planner', frase: 'a través de un planner' },
+}
+
+const PROVEEDORES = { google: 'Google', apple: 'Apple', email: 'Correo' }
+
+// Las ventas se cruzan con su invitación por `invitation_id` (lo devuelve
+// `/api/admin/ventas`). Respaldo para un backend que aún no lo mande: el nombre
+// del evento armado como `owners.join(' & ')` o `name`. El `label` a secas
+// ("wedding") no sirve de llave: lo comparten decenas de eventos.
+const nombreDeVenta = (invitacion) => {
+    const owners = invitacion?.owners
+    if (Array.isArray(owners) && owners.length) return owners.join(' & ')
+    return invitacion?.name || null
+}
+
+/*
+  Planner manda: si el evento tiene planner, el planner es el canal aunque la
+  compra pasara por Stripe. Luego la venta registrada (vendedor vs. el vendedor
+  "Ecommerce" del webhook). Sin venta registrada se cuenta como ecommerce: el
+  registro automático de las compras en línea empezó en septiembre de 2026 y lo
+  anterior quedó sin fila, mientras que las de vendedor siempre se capturaron.
+*/
+const canalDe = (invitacion, ventasPorId, ventasPorNombre) => {
+    if (invitacion.planner_id) return 'planner'
+    const venta = ventasPorId.get(invitacion.id) ?? ventasPorNombre.get(nombreDeVenta(invitacion))
+    if (venta && venta.vendedor_tipo !== 'ecommerce') return 'vendedor'
+    return 'ecommerce'
+}
+
+// Una cuenta puede tener varios proveedores vinculados; se cuenta el social
+// primero porque el correo suele ser el respaldo, no la forma de entrar.
+const accesoDe = (lista) => {
+    if (!Array.isArray(lista) || lista.length === 0) return null
+    if (lista.includes('google')) return 'google'
+    if (lista.includes('apple')) return 'apple'
+    return 'email'
+}
+
 // ------------------------------------------------------------------ datos ---
 
 const useRetrato = (invitacionesReales, ventana) => {
@@ -56,15 +125,24 @@ const useRetrato = (invitacionesReales, ventana) => {
     useEffect(() => {
         let cancelado = false
 
+        // Ventas y proveedores salen del backend y son opcionales: si fallan,
+        // sus dos tarjetas quedan "sin datos" y el resto del retrato sigue.
+        const opcional = (promesa, etiqueta) => promesa.catch(fallo => {
+            console.error(`Perfil: no se pudieron traer ${etiqueta}:`, fallo)
+            return null
+        })
+
         Promise.all([
             traerTodo('guests', 'id,invitation_id,state'),
             traerTodo('invitation_message_dispatches', 'invitation_id,guest_id,status,created_at'),
             traerTodo('tables', 'invitation_id,size'),
             traerTodo('side_events', 'invitation_id'),
             fetchDatosLiaAdmin(['conversaciones']).then(d => d.conversaciones),
+            opcional(fetchAdminVentas().then(r => r.data?.ventas ?? []), 'las ventas'),
+            opcional(fetchProveedores().then(r => r.data?.proveedores ?? {}), 'los proveedores'),
         ])
-            .then(([invitados, envios, mesas, sides, conversaciones]) => {
-                if (!cancelado) setCrudo({ invitados, envios, mesas, sides, conversaciones })
+            .then(([invitados, envios, mesas, sides, conversaciones, ventas, proveedores]) => {
+                if (!cancelado) setCrudo({ invitados, envios, mesas, sides, conversaciones, ventas, proveedores })
             })
             .catch(fallo => {
                 console.error('Error al armar el retrato:', fallo)
@@ -88,11 +166,16 @@ const useRetrato = (invitacionesReales, ventana) => {
 
         const ids = new Set(eventos.map(i => i.id))
         const porId = new Map(eventos.map(i => [i.id, i]))
+        const n = eventos.length
 
         // --- quién es ---
         const plan = masComun(eventos.map(i => String(i.plan ?? '').toUpperCase()))
         const tipo = masComun(eventos.map(i => ETIQUETA_TIPO[i.label] ?? i.label))
-        const ciudad = masComun(eventos.flatMap(i => ubicacionesDe(i).map(u => u.ciudad)))
+
+        const ciudades = eventos.flatMap(i => ubicacionesDe(i).map(u => u.ciudad))
+        const conteoCiudades = contarCiudades(ciudades)
+        const totalCiudades = conteoCiudades.reduce((acc, c) => acc + c.total, 0)
+        const eventosUbicados = eventos.filter(i => ubicacionesDe(i).length > 0).length
 
         // --- cuándo compra ---
         const anticipacion = eventos
@@ -133,7 +216,7 @@ const useRetrato = (invitacionesReales, ventana) => {
         })
 
         // Los dos tiempos se miden sobre el MISMO grupo —los que enviaron y
-        // tienen fecha— para que la línea de tiempo cuadre consigo misma.
+        // tienen fecha— para que la frase cuadre consigo misma.
         const conEnvio = [...primerEnvio.entries()]
             .map(([id, momento]) => {
                 const invitacion = porId.get(id)
@@ -148,163 +231,162 @@ const useRetrato = (invitacionesReales, ventana) => {
             .filter(Boolean)
 
         // --- qué del producto usa ---
-        const mesasPorEvento = new Map()
-        crudo.mesas.filter(esMesaReal).forEach(m => {
-            if (!ids.has(m.invitation_id)) return
-            mesasPorEvento.set(m.invitation_id, (mesasPorEvento.get(m.invitation_id) ?? 0) + 1)
-        })
-
-        const sidesPorEvento = new Map()
-        crudo.sides.forEach(se => {
-            if (!ids.has(se.invitation_id)) return
-            sidesPorEvento.set(se.invitation_id, (sidesPorEvento.get(se.invitation_id) ?? 0) + 1)
-        })
-
-        // --- qué le pregunta a Lia ---
-        // Un clic en un chip de la interfaz no es una duda: si se contara
-        // junto con lo escrito a mano, "Mis notificaciones" saldría como la
-        // pregunta más frecuente del producto. Abrir Lia y escribirle se
-        // miden por separado.
-        const abrenLia = new Set()
-        const escritasPorEvento = new Map()
-        const temas = new Map()
-
-        crudo.conversaciones
+        // "Usa" = abrió el módulo: tiene al menos una mesa real, un side event o
+        // le escribió algo a Lia (chips incluidos: abrirla ya es usarla).
+        const conMesas = new Set(crudo.mesas.filter(esMesaReal).map(m => m.invitation_id).filter(id => ids.has(id)))
+        const conSides = new Set(crudo.sides.map(se => se.invitation_id).filter(id => ids.has(id)))
+        const conLia = new Set(crudo.conversaciones
             .filter(c => c.role === 'user' && ids.has(c.invitation_id))
-            .forEach(c => {
-                abrenLia.add(c.invitation_id)
-                if (esAtajoDeLia(c.content)) return
+            .map(c => c.invitation_id))
 
-                escritasPorEvento.set(c.invitation_id, (escritasPorEvento.get(c.invitation_id) ?? 0) + 1)
-                const tema = temaDePregunta(c.content)
-                if (tema) temas.set(tema, (temas.get(tema) ?? 0) + 1)
-            })
+        const FUNCIONES = [
+            { label: 'Mesas', usan: conMesas },
+            { label: 'Side events', usan: conSides },
+            { label: 'Lia', usan: conLia },
+        ]
 
-        const temasOrdenados = [...temas.entries()]
-            .map(([tema, total]) => ({ tema, total }))
+        // La combinación más común dice cómo es el evento típico; el reparto
+        // por función (no suma 100: un evento usa varias) dice qué tan común es cada una.
+        const combinaciones = eventos.map(i => {
+            const usa = FUNCIONES.filter(f => f.usan.has(i.id)).map(f => f.label)
+            return usa.length ? usa.join(' + ') : 'Ninguna'
+        })
+
+        const funciones = FUNCIONES
+            .map(f => ({ label: f.label, total: f.usan.size, pct: pct(f.usan.size, n) }))
             .sort((a, b) => b.total - a.total)
 
+        // --- canal de compra ---
+        let canal = null
+        if (crudo.ventas) {
+            // Nombres repetidos (dos "Ana & Luis") no se pueden atribuir: se
+            // descartan en vez de adivinar cuál de las dos es.
+            const ventasPorId = new Map(crudo.ventas.filter(v => v.invitation_id).map(v => [v.invitation_id, v]))
+            const ventasPorNombre = new Map()
+            const repetidos = new Set()
+            crudo.ventas.forEach(v => {
+                if (v.invitation_id || !v.evento) return
+                if (ventasPorNombre.has(v.evento)) repetidos.add(v.evento)
+                ventasPorNombre.set(v.evento, v)
+            })
+            repetidos.forEach(nombre => ventasPorNombre.delete(nombre))
+
+            const canales = eventos.map(i => canalDe(i, ventasPorId, ventasPorNombre))
+            canal = { reparto: distribucion(canales.map(c => CANALES[c].label)), clave: masComun(canales) }
+        }
+
+        // --- cómo entra ---
+        let acceso = null
+        if (crudo.proveedores) {
+            // Invitaciones "por enviar" del planner no tienen cliente todavía.
+            const conCuenta = eventos.filter(i => i.user_id)
+            const accesos = conCuenta.map(i => accesoDe(crudo.proveedores[i.user_id])).filter(Boolean)
+            acceso = { reparto: distribucion(accesos.map(a => PROVEEDORES[a])), muestra: accesos.length }
+        }
+
         return {
-            eventos: eventos.length,
-            plan,
-            tipo,
-            ciudad,
-            compra: { dias: mediana(anticipacion), muestra: anticipacion.length },
-            invitados: { mediana: mediana(listas), muestra: listas.length, maximo: Math.max(0, ...listas) },
+            eventos: n,
+            plan: { dominante: plan, reparto: distribucion(eventos.map(i => String(i.plan ?? '').toUpperCase())) },
+            tipo: { dominante: tipo, reparto: distribucion(eventos.map(i => ETIQUETA_TIPO[i.label] ?? i.label)) },
+            ciudad: {
+                reparto: conteoCiudades.map(c => ({ label: c.label, total: c.total, pct: pct(c.total, totalCiudades) })),
+                muestra: eventosUbicados,
+            },
+            compra: {
+                dias: mediana(anticipacion),
+                muestra: anticipacion.length,
+                reparto: distribucion(anticipacion.map(d => enRango(RANGOS_ANTICIPACION, d))),
+            },
+            invitados: {
+                mediana: mediana(listas),
+                muestra: listas.length,
+                reparto: distribucion(listas.map(t => enRango(RANGOS_TAMANO, t))),
+            },
             confirmacion: { pct: mediana(tasas), muestra: tasas.length },
             envio: {
                 trasComprar: mediana(conEnvio.map(e => e.trasComprar)),
                 antesDelEvento: mediana(conEnvio.map(e => e.antesDelEvento)),
                 muestra: conEnvio.length,
             },
-            mesas: { usan: mesasPorEvento.size, mediana: mediana([...mesasPorEvento.values()]) },
-            sides: { usan: sidesPorEvento.size, mediana: mediana([...sidesPorEvento.values()]) },
-            lia: {
-                usan: abrenLia.size,
-                escriben: escritasPorEvento.size,
-                mediana: mediana([...escritasPorEvento.values()]),
-                temas: temasOrdenados,
-            },
+            funciones: { combinacion: masComun(combinaciones), reparto: funciones },
+            canal,
+            acceso,
         }
     }, [crudo, error, invitacionesReales, ventana])
 }
 
-// ------------------------------------------------------------ calendario ---
-
-const DIAS_POR_MES = 30
+// ----------------------------------------------------------------- piezas ---
 
 /*
-  La vida de un evento en una sola escala: meses ANTES de la fiesta, contando
-  hacia atrás. El eje va invertido para que el tiempo corra de izquierda a
-  derecha como se lee, con el evento al final.
-
-  Son barras flotantes (cada una con inicio y fin) y no una barra apilada
-  porque los dos tramos no comparten origen: uno empieza en la compra y el otro
-  en el envío.
+  Una tarjeta de rasgo: label, valor dominante con su subtítulo y las tres
+  categorías que más pesan. Sin `reparto` (dato no disponible) la tarjeta se
+  queda con "sin datos" en vez de desaparecer: el hueco también informa.
 */
-const LineaDeTiempo = ({ compraDias, envioDias }) => {
-    const tokens = useTokens()
-
-    const compra = compraDias / DIAS_POR_MES
-    const envio = envioDias / DIAS_POR_MES
+const Rasgo = ({ titulo, valor, sub, reparto, nuevo, corta }) => {
+    const top = (reparto ?? []).slice(0, 3)
+    const sinDatos = top.length === 0
 
     return (
-        <div className={styles.chartFlexible} style={{ height: 150 }}>
-            <Bar
-                data={{
-                    labels: ['Esperando para enviar', 'Invitación en la calle'],
-                    datasets: [{
-                        data: [[compra, envio], [envio, 0]],
-                        backgroundColor: [tokens.morado, tokens.azul],
-                        hoverBackgroundColor: [tokens.morado, tokens.azul],
-                        borderRadius: 5,
-                        borderSkipped: false,
-                        maxBarThickness: 26,
-                    }],
-                }}
-                options={{
-                    ...opcionesBase,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            reverse: true,
-                            min: 0,
-                            max: compra,
-                            border: { display: false },
-                            grid: { color: tokens.grid, drawTicks: false },
-                            ticks: {
-                                ...ejeTexto(tokens),
-                                maxTicksLimit: 9,
-                                callback: (v) => (v === 0 ? 'Evento' : `${Math.round(v)} m`),
-                            },
-                        },
-                        y: {
-                            border: { display: false },
-                            grid: { display: false },
-                            ticks: ejeTexto(tokens),
-                        },
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            ...tooltipBase(tokens),
-                            callbacks: {
-                                label: (ctx) => {
-                                    const [desde, hasta] = ctx.raw
-                                    return `de ${desde.toFixed(1)} a ${hasta.toFixed(1)} meses antes`
-                                },
-                            },
-                        },
-                    },
-                }}
-            />
-        </div>
+        <section className={styles.rasgo}>
+            <header className={styles.rasgoHead}>
+                <h3 className={styles.rasgoLabel}>{titulo}</h3>
+                {nuevo && <span className={styles.nuevo}>nuevo</span>}
+            </header>
+
+            <div className={styles.rasgoValor}>
+                <span className={`${styles.valor} ${sinDatos ? styles.valorVacio : ''}`}>
+                    {sinDatos ? 'Sin datos' : valor}
+                </span>
+                {sub && (
+                    <span className={`${styles.sub} ${corta ? styles.subCorta : ''}`}>
+                        {corta ? '⚠ ' : ''}{sub}
+                    </span>
+                )}
+            </div>
+
+            <ul className={styles.dist}>
+                {top.map((d, i) => (
+                    <li key={d.label} className={styles.distFila}>
+                        <div className={styles.distTexto}>
+                            <span className={styles.distLabel} title={d.label}>{d.label}</span>
+                            <span className={styles.distPista}>
+                                <span
+                                    className={styles.distBarra}
+                                    style={{ width: `${Math.max(d.pct, 2)}%`, background: COLORES_RASGO[i] }}
+                                />
+                            </span>
+                        </div>
+                        <b className={styles.distPct}>{d.pct}%</b>
+                    </li>
+                ))}
+            </ul>
+        </section>
     )
+}
+
+// Une ["Mesas", "Side events"] como "mesas y side events" para la frase.
+const enFrase = (combinacion) => {
+    const partes = combinacion.split(' + ').map(p => (p === 'Lia' ? p : p.toLowerCase()))
+    if (partes.length === 1) return partes[0]
+    return `${partes.slice(0, -1).join(', ')} y ${partes.at(-1)}`
 }
 
 // ----------------------------------------------------------------- panel ---
 
-// Un dato con muestra corta no se esconde, se marca: sigue siendo lo único que
-// hay, pero no se presenta con la misma seguridad que el resto.
-const Muestra = ({ n, de }) => (
-    <span className={`${styles.muestra} ${n < MUESTRA_MINIMA ? styles.muestraCorta : ''}`}>
-        {n < MUESTRA_MINIMA ? '⚠ ' : ''}
-        {de ? `${n} de ${de}` : plural(n, 'evento', 'eventos')}
-    </span>
-)
-
 export const AnaliticaPromedio = ({ invitacionesReales }) => {
     const [ventana, setVentana] = useState('6')
     const datos = useRetrato(invitacionesReales, ventana)
-    const tokens = useTokens()
 
-    const chips = (
-        <div className={styles.chipGrupo}>
+    const etiquetaVentana = VENTANAS.find(v => v.key === ventana)?.label ?? ''
+
+    const selector = (
+        <div className={styles.ventanas} role='group' aria-label='Ventana del retrato'>
             {VENTANAS.map(({ key, label }) => (
                 <button
                     key={key}
                     type='button'
-                    className={`${styles.chip} ${ventana === key ? styles.chipActivo : ''}`}
+                    className={`${styles.ventana} ${ventana === key ? styles.ventanaActiva : ''}`}
+                    aria-pressed={ventana === key}
                     onClick={() => setVentana(key)}
                 >
                     {label}
@@ -313,306 +395,116 @@ export const AnaliticaPromedio = ({ invitacionesReales }) => {
         </div>
     )
 
-    if (datos.cargando) return <div className={styles.empty}>Armando el retrato…</div>
-    if (datos.error) return <div className={styles.empty}>No se pudo armar: {datos.error}</div>
+    if (datos.cargando) return <div className={styles.estado}>Armando el retrato…</div>
+    if (datos.error) return <div className={styles.estado}>No se pudo armar: {datos.error}</div>
 
     if (datos.vacio) {
         return (
-            <div className={styles.analitica}>
-                <div className={styles.chips}>{chips}</div>
-                <div className={styles.empty}>No hay eventos creados en esta ventana.</div>
+            <div className={styles.perfil}>
+                <section className={styles.hero}>
+                    <div className={styles.heroHead}>
+                        <h2 className={styles.heroLabel}>El retrato</h2>
+                        {selector}
+                    </div>
+                    <p className={styles.heroTexto}>No hay eventos creados en esta ventana.</p>
+                </section>
             </div>
         )
     }
 
-    const { plan, tipo, ciudad, compra, invitados, confirmacion, envio, mesas, sides, lia } = datos
-    const temaPrincipal = lia.temas[0]
-    const escritas = lia.temas.reduce((acc, t) => acc + t.total, 0)
-
-    // Cuánto de la muestra comparte cada rasgo del retrato. Un retrato armado
-    // con cuatro medianas puede no describir a nadie en concreto; esto dice
-    // qué tan de verdad es típico cada trazo.
-    const rasgos = [
-        { nombre: tipo?.valor ?? 'Tipo', pct: tipo?.porcentaje ?? 0 },
-        { nombre: plan ? `Plan ${plan.valor}` : 'Plan', pct: plan?.porcentaje ?? 0 },
-        { nombre: ciudad?.valor ?? 'Sede', pct: ciudad?.porcentaje ?? 0 },
-        { nombre: 'Tiene lista', pct: pct(invitados.muestra, datos.eventos) },
-    ]
-
-    const modulos = [
-        { nombre: 'Side events', usan: sides.usan },
-        { nombre: 'Lia', usan: lia.usan },
-        { nombre: 'Acomodo de mesas', usan: mesas.usan },
-    ].sort((a, b) => b.usan - a.usan)
-
-    // Pareto de temas. "Otros" en gris porque no es un tema: es lo que la lista
-    // de patrones no supo clasificar.
-    const rangoReal = (tema, i) => lia.temas.slice(0, i).filter(t => t.tema !== 'Otros').length
-    const colorDeTema = (tema, i) => {
-        if (tema.tema === 'Otros') return tokens.grid
-        return rangoReal(tema, i) < 2 ? tokens.azul : tokens.azulMedio
-    }
-
-    const filasDeTemas = lia.temas.map(t => ({ label: t.tema, total: t.total }))
-    const acumuladoTemas = acumuladoDe(filasDeTemas, escritas)
+    const { eventos, plan, tipo, ciudad, compra, invitados, confirmacion, envio, funciones, canal, acceso } = datos
+    const ciudadTop = ciudad.reparto[0]
+    const canalTop = canal?.clave ? CANALES[canal.clave.valor] : null
+    const combinacion = funciones.combinacion?.valor
+    const usaAlgo = combinacion && combinacion !== 'Ninguna'
 
     return (
-        <div className={styles.analitica}>
-            <div className={styles.chips}>
-                <span className={styles.filtroEtiqueta}>
-                    Eventos creados en los últimos
-                </span>
-                {chips}
-                <span className={styles.filtroEtiqueta}>
-                    · {plural(datos.eventos, 'evento', 'eventos')}
-                </span>
-            </div>
+        <div className={styles.perfil}>
+            {/* El retrato en una frase: los mismos números de las tarjetas, dichos
+                como se los contarías a alguien. */}
+            <section className={styles.hero}>
+                <div className={styles.heroHead}>
+                    <h2 className={styles.heroLabel}>
+                        El retrato de los {eventos} eventos · creados en {ventana === 'todo' ? 'total' : `los últimos ${etiquetaVentana}`}
+                    </h2>
+                    {selector}
+                </div>
 
-            {/* El retrato en una frase: los mismos números de abajo, dichos como
-                se los contarías a alguien. */}
-            <section className={styles.retratoOscuro}>
-                <span className={styles.retratoEtiqueta}>
-                    El retrato de los {datos.eventos} eventos
-                </span>
-                <p className={styles.retratoTexto}>
-                    Una <b>{tipo?.valor ?? 'celebración'}</b>
-                    {plan && <> con plan <b>{plan.valor}</b></>}
-                    {ciudad && <> en <b>{ciudad.valor}</b></>}
-                    , que se vendió <b>{enMeses(compra.dias)}</b> antes del evento
+                <p className={styles.heroTexto}>
+                    Una <b>{tipo.dominante?.valor ?? 'celebración'}</b>
+                    {plan.dominante && <> con plan <b>{plan.dominante.valor}</b></>}
+                    {ciudadTop && <> en <b>{ciudadTop.label}</b></>}
+                    , que compró{canalTop && <> <b>{canalTop.frase}</b></>}
+                    {compra.dias !== null && <> <b>{enMeses(compra.dias)}</b> antes del evento</>}
                     {invitados.mediana !== null && <>, con <b>{miles(invitados.mediana)} invitados</b></>}
                     {envio.antesDelEvento !== null && (
                         <>. Manda sus invitaciones <b>{enMeses(envio.trasComprar)}</b> después de comprar
                         y <b>{enMeses(envio.antesDelEvento)}</b> antes de la fiesta</>
                     )}
+                    {usaAlgo && <>, usa <b className={styles.lila}>{enFrase(combinacion)}</b></>}
                     {confirmacion.pct !== null && (
-                        <>, y consigue <b className={styles.retratoVerde}>{confirmacion.pct}% de confirmación</b></>
+                        <>, y consigue <b className={styles.verde}>{confirmacion.pct}% de confirmación</b></>
                     )}
                     .
                 </p>
             </section>
 
-            <div className={`${styles.bento} ${styles.bentoPar}`}>
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Qué tan típico es el típico</h2>
-                            <p className={styles.cardSub}>
-                                Qué parte de los {datos.eventos} eventos comparte cada rasgo del retrato
-                            </p>
-                        </div>
-                    </header>
-
-                    <BarrasApiladas
-                        alto={34 + rasgos.length * 40}
-                        maximo={100}
-                        paso={25}
-                        sufijo='%'
-                        labels={rasgos.map(r => r.nombre)}
-                        series={[
-                            {
-                                label: 'Comparte el rasgo',
-                                color: tokens.azul,
-                                valores: rasgos.map(r => r.pct),
-                            },
-                            {
-                                label: 'Es distinto',
-                                color: tokens.grid,
-                                valores: rasgos.map(r => 100 - r.pct),
-                            },
-                        ]}
-                    />
-
-                    <Leyenda entradas={[
-                        { label: 'Comparte el rasgo', color: tokens.azul },
-                        { label: 'Es distinto', color: tokens.grid },
-                    ]} />
-
-                    <ul className={styles.rasgos}>
-                        <li className={styles.rasgo}>
-                            <span className={styles.rasgoLabel}>Celebra</span>
-                            <span className={styles.rasgoValor}>{tipo?.valor ?? '—'}</span>
-                            <span className={styles.rasgoNota}>
-                                {tipo ? `${tipo.total} de ${datos.eventos}` : ''}
-                            </span>
-                        </li>
-                        <li className={styles.rasgo}>
-                            <span className={styles.rasgoLabel}>Plan</span>
-                            <span className={styles.rasgoValor}>{plan?.valor ?? '—'}</span>
-                            <span className={styles.rasgoNota}>
-                                {plan ? `${plan.total} de ${datos.eventos}` : ''}
-                            </span>
-                        </li>
-                        <li className={styles.rasgo}>
-                            <span className={styles.rasgoLabel}>Sede</span>
-                            <span className={styles.rasgoValor}>{ciudad?.valor ?? 'sin ubicación'}</span>
-                            <span className={styles.rasgoNota}>
-                                {ciudad ? `${ciudad.porcentaje}% de las capturadas` : ''}
-                            </span>
-                        </li>
-                        <li className={styles.rasgo}>
-                            <span className={styles.rasgoLabel}>Invita a</span>
-                            <span className={styles.rasgoValor}>
-                                {invitados.mediana !== null ? `${miles(invitados.mediana)} personas` : '—'}
-                            </span>
-                            <span className={styles.rasgoNota}>
-                                <Muestra n={invitados.muestra} de={datos.eventos} /> con lista
-                            </span>
-                        </li>
-                    </ul>
-
-                    <footer className={styles.cardFoot}>
-                        El tipo de evento y el plan describen a casi todos. La sede no: solo una parte de
-                        los eventos tiene sede capturada, así que ese {ciudad?.porcentaje ?? 0}% es sobre
-                        un subconjunto.
-                    </footer>
-                </section>
-
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Su calendario</h2>
-                            <p className={styles.cardSub}>
-                                De la compra a la fiesta, en meses antes del evento
-                            </p>
-                        </div>
-                    </header>
-
-                    {compra.dias !== null && envio.antesDelEvento !== null ? (
-                        <LineaDeTiempo compraDias={compra.dias} envioDias={envio.antesDelEvento} />
-                    ) : (
-                        <div className={styles.vacio}>Sin fechas suficientes para la línea de tiempo.</div>
-                    )}
-
-                    <ul className={styles.desglose}>
-                        <li className={styles.desgloseItem}>
-                            <span className={`${styles.punto} ${styles.puntoAzul}`} />
-                            <span className={styles.desgloseNombre}>Compra antes del evento</span>
-                            <span className={styles.desgloseValor}>{enMeses(compra.dias)}</span>
-                            <Muestra n={compra.muestra} de={datos.eventos} />
-                        </li>
-                        <li className={styles.desgloseItem}>
-                            <span className={`${styles.punto} ${styles.puntoMorado}`} />
-                            <span className={styles.desgloseNombre}>Tarda en mandar invitaciones</span>
-                            <span className={styles.desgloseValor}>{enMeses(envio.trasComprar)}</span>
-                            <Muestra n={envio.muestra} de={datos.eventos} />
-                        </li>
-                        <li className={`${styles.desgloseItem} ${styles.desgloseLogro}`}>
-                            <span className={`${styles.punto} ${styles.puntoVerde}`} />
-                            <span className={styles.desgloseNombre}>Confirmación que consigue</span>
-                            <span className={styles.desgloseValor}>
-                                {confirmacion.pct !== null ? `${confirmacion.pct}%` : '—'}
-                            </span>
-                            <Muestra n={confirmacion.muestra} de={datos.eventos} />
-                        </li>
-                    </ul>
-
-                    <footer className={styles.cardFoot}>
-                        La invitación pasa {enMeses(envio.antesDelEvento)} en la calle: hay margen de sobra
-                        para insistirle a quien no contesta. Cada renglón se calcula sobre los eventos que
-                        tienen ese dato, por eso los denominadores cambian.
-                    </footer>
-                </section>
-
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Qué del producto usa</h2>
-                            <p className={styles.cardSub}>
-                                Cuántos de los {datos.eventos} abren cada módulo · y qué tanto arman los
-                                que lo abren
-                            </p>
-                        </div>
-                    </header>
-
-                    <BarrasApiladas
-                        alto={34 + modulos.length * 40}
-                        maximo={datos.eventos}
-                        labels={modulos.map(m => m.nombre)}
-                        series={[
-                            {
-                                label: 'Lo abrieron',
-                                color: tokens.azul,
-                                valores: modulos.map(m => m.usan),
-                            },
-                            {
-                                label: 'Nunca lo abrieron',
-                                color: tokens.grid,
-                                valores: modulos.map(m => datos.eventos - m.usan),
-                            },
-                        ]}
-                    />
-
-                    <Leyenda entradas={[
-                        { label: 'Lo abrieron', color: tokens.azul },
-                        { label: 'Nunca lo abrieron', color: tokens.grid },
-                    ]} />
-
-                    <div className={styles.trio}>
-                        <div className={styles.trioItem}>
-                            <span className={styles.trioValor}>{sides.mediana ?? 0}</span>
-                            <span className={styles.trioLabel}>
-                                {sides.mediana === 1 ? 'side event arma' : 'side events arma'} quien lo abre
-                            </span>
-                        </div>
-                        <div className={styles.trioItem}>
-                            <span className={styles.trioValor}>{mesas.mediana ?? 0}</span>
-                            <span className={styles.trioLabel}>mesas arma quien abre el acomodo</span>
-                        </div>
-                        <div className={styles.trioItem}>
-                            <span className={styles.trioValor}>{lia.mediana ?? 0}</span>
-                            <span className={styles.trioLabel}>dudas le escribe quien abre Lia</span>
-                        </div>
-                    </div>
-
-                    <footer className={styles.cardFoot}>
-                        {modulos[0].nombre} es lo más abierto y lo menos trabajado: uno solo por evento. El
-                        acomodo lo abren menos, pero quien entra sí lo arma completo.
-                    </footer>
-                </section>
-
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div>
-                            <h2 className={styles.cardTitle}>Sus dudas con Lia</h2>
-                            <p className={styles.cardSub}>
-                                Barras: preguntas escritas · línea: acumulado sobre las {miles(escritas)}
-                            </p>
-                        </div>
-                    </header>
-
-                    {lia.temas.length === 0 ? (
-                        <div className={styles.vacio}>Sin preguntas escritas en la ventana elegida.</div>
-                    ) : (
-                        <>
-                            <div className={styles.titular}>
-                                <span className={`${styles.titularValor} ${styles.titularAzul}`}>
-                                    {pct(temaPrincipal.total, escritas)}%
-                                </span>
-                                <span className={styles.titularTexto}>
-                                    de lo que escribe es sobre {temaPrincipal.tema.toLowerCase()} ·{' '}
-                                    {lia.usan} de {datos.eventos} abrieron Lia y {lia.escriben} le
-                                    escribieron
-                                </span>
-                            </div>
-
-                            <BarrasConAcumulado
-                                horizontal
-                                histograma={filasDeTemas}
-                                acumulado={acumuladoTemas}
-                                unidad='preguntas'
-                                colores={lia.temas.map(colorDeTema)}
-                            />
-                        </>
-                    )}
-
-                    <footer className={styles.cardFoot}>
-                        Los chips de la interfaz no cuentan aquí: un clic no es una duda.
-                        {lia.temas.some(t => t.tema === 'Otros') && (
-                            <> "Otros" son {lia.temas.find(t => t.tema === 'Otros').total} preguntas que la
-                            lista de patrones no supo clasificar.</>
-                        )}
-                    </footer>
-                </section>
+            <div className={styles.rasgos}>
+                <Rasgo
+                    titulo='Tipo de evento'
+                    valor={tipo.dominante?.valor}
+                    sub={tipo.dominante && `${tipo.dominante.porcentaje}% de los eventos`}
+                    reparto={tipo.reparto}
+                />
+                <Rasgo
+                    titulo='Plan'
+                    valor={plan.dominante?.valor}
+                    sub={plan.dominante && `${plan.dominante.porcentaje}% lo elige`}
+                    reparto={plan.reparto}
+                />
+                <Rasgo
+                    titulo='Ciudad'
+                    valor={ciudadTop?.label}
+                    sub={ciudadTop && `${ciudadTop.pct}% de los ubicados · ${ciudad.muestra} de ${eventos} con sede`}
+                    corta={ciudad.muestra < MUESTRA_MINIMA}
+                    reparto={ciudad.reparto}
+                />
+                <Rasgo
+                    titulo='Anticipación de compra'
+                    valor={enMeses(compra.dias)}
+                    sub={`mediana antes del evento · ${compra.muestra} de ${eventos}`}
+                    corta={compra.muestra < MUESTRA_MINIMA}
+                    reparto={compra.reparto}
+                />
+                <Rasgo
+                    titulo='Tamaño'
+                    valor={invitados.mediana !== null ? miles(invitados.mediana) : null}
+                    sub={`invitados (mediana) · ${invitados.muestra} de ${eventos} con lista`}
+                    corta={invitados.muestra < MUESTRA_MINIMA}
+                    reparto={invitados.reparto}
+                />
+                <Rasgo
+                    nuevo
+                    titulo='Canal de compra'
+                    valor={canal?.clave ? CANALES[canal.clave.valor].label : null}
+                    sub={canal?.clave && `${canal.clave.porcentaje}% · sin venta registrada cuenta como ecommerce`}
+                    reparto={canal?.reparto}
+                />
+                <Rasgo
+                    nuevo
+                    titulo='Funciones que usa'
+                    valor={combinacion}
+                    sub={funciones.combinacion && `${funciones.combinacion.porcentaje}% de los eventos · barras: cuántos usan cada una`}
+                    reparto={funciones.reparto}
+                />
+                <Rasgo
+                    nuevo
+                    titulo='Cómo entra'
+                    valor={acceso?.reparto[0]?.label}
+                    sub={acceso && `acceso a la cuenta · ${acceso.muestra} de ${eventos} con cuenta`}
+                    corta={acceso && acceso.muestra < MUESTRA_MINIMA}
+                    reparto={acceso?.reparto}
+                />
             </div>
         </div>
     )

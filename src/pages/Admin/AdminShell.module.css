@@ -12,12 +12,12 @@
 /* ---------------------------------------------------------------- rail --- */
 
 /*
-  El rail vive siempre colapsado: solo iconos, 72px, claro y a ras del borde.
-  En móvil sí se expande, porque ahí entra como overlay y el tooltip (que es
-  hover) no existe en táctil: sin etiquetas no habría forma de navegar.
+  Rail expandido (232px, --ac-rail-w) con etiquetas y grupos: con Usuarios
+  dividido por rol son 14 destinos, que ya no se reconocen solo por icono.
+  En móvil entra como overlay (ver ≤900px).
 */
 .rail {
-    width: 72px;
+    width: var(--ac-rail-w);
     flex-shrink: 0;
     position: sticky;
     top: 0;
@@ -30,19 +30,12 @@
     box-sizing: border-box;
 }
 
-.railItemLabel,
-.railCount,
-.railGroupLabel,
-.userName,
-.userChevron {
-    display: none;
-}
-
 .railHeader {
-    padding: 20px 0 14px;
+    padding: 20px 18px 14px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 9px;
 }
 
 /* Salida del panel de vuelta al listado de invitaciones del usuario. */
@@ -97,7 +90,7 @@
     cursor: pointer;
     text-align: left;
     box-sizing: border-box;
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
 }
 
@@ -126,14 +119,11 @@
     color: var(--ac-rail-count);
 }
 
-/* Sin etiqueta al lado, el badge se monta sobre la esquina del icono. */
+/* Mensajes sin leer + reportes pendientes, al final de la fila. */
 .railBadge {
-    position: absolute;
-    top: 3px;
-    right: 8px;
-    font-size: 9.5px;
+    font-size: 11px;
     line-height: 1;
-    padding: 2px 4px;
+    padding: 3px 7px;
     font-weight: 600;
     color: #fff;
     background: var(--ac-amber);
@@ -159,9 +149,9 @@
     gap: 9px;
     background: transparent;
     border-radius: 10px;
-    padding: 7px 0;
+    padding: 7px 11px;
     color: var(--ac-text-2);
-    justify-content: center;
+    justify-content: flex-start;
     font-size: 13px;
     font-weight: 500;
 }
@@ -205,14 +195,150 @@
     background: var(--ac-surface);
     border-bottom: 1px solid var(--ac-line);
     display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+}
+
+/* Con pestañas, el subrayado de la activa se apoya en el borde inferior. */
+.topbarConPestanas {
+    padding-bottom: 0;
+}
+
+.topbarFila {
+    display: flex;
     gap: 14px;
     align-items: center;
-    box-sizing: border-box;
 }
 
 .topbarTitles {
     flex: 1;
     min-width: 0;
+}
+
+.topbarMiga {
+    font-size: 11.5px;
+    color: var(--ac-muted-2);
+    line-height: 1.3;
+}
+
+/* Fila 2: pestañas con subrayado a la izquierda y, a la derecha, los filtros
+   de la pestaña (las secciones los dibujan aquí con un portal). */
+.topbarPestanas {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+}
+
+.subtabs {
+    display: flex;
+    gap: 24px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.subtabs::-webkit-scrollbar {
+    display: none;
+}
+
+.subtab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 0 11px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.subtab:hover {
+    color: var(--ac-ink);
+}
+
+.subtabActiva {
+    border-bottom-color: var(--ac-ink);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.topbarFiltros {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.topbarFiltros:empty,
+.topbarAccion:empty {
+    display: none;
+}
+
+.topbarAccion {
+    display: flex;
+    flex-shrink: 0;
+}
+
+/* Vendedores: Registrados / Solicitudes va arriba del contenido. */
+.conSegmentado {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.conSegmentado > :last-child {
+    align-self: stretch;
+}
+
+/* Filtros compactos que las secciones ponen en la fila de pestañas. */
+.segmentado {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--ac-tint);
+}
+
+.segmento {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-family: var(--ac-font-ui);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ac-muted);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.segmentoActivo {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-pill);
+    color: var(--ac-ink);
+    font-weight: 600;
+}
+
+.selectFiltro {
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--ac-line-control);
+    border-radius: 9px;
+    background: var(--ac-surface);
+    font-family: var(--ac-font-ui);
+    font-size: 12.5px;
+    color: var(--ac-ink);
+    cursor: pointer;
 }
 
 .topbarTitle {
@@ -239,7 +365,7 @@
 }
 
 .search {
-    width: 340px;
+    width: 300px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -472,35 +598,8 @@
         transition: transform 0.18s ease;
     }
 
-    /* Overlay táctil: sin hover no hay tooltip, así que vuelven las etiquetas. */
-    .rail .railItemLabel,
-    .rail .railCount,
-    .rail .railGroupLabel,
-    .rail .userName,
-    .rail .userChevron {
-        display: initial;
-    }
-
-    .railHeader {
-        padding: 20px 18px 14px;
-        justify-content: flex-start;
-        gap: 9px;
-    }
-
     .railNav {
         padding: 0 10px 10px;
-    }
-
-    .railItem,
-    .userChip {
-        justify-content: flex-start;
-        padding-inline: 11px;
-    }
-
-    .railBadge {
-        position: static;
-        padding: 3px 7px;
-        font-size: 11px;
     }
 
     .railOpen {
@@ -520,7 +619,18 @@
         display: flex;
     }
 
-    .topbar {
+    .topbarFila {
+        flex-wrap: wrap;
+    }
+
+    .topbarPestanas {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .topbarFiltros {
+        padding-bottom: 10px;
         flex-wrap: wrap;
     }
 

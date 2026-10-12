@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, DatePicker, Dropdown, Form, Input, InputNumber,  Select, Tooltip, Upload, message } from 'antd'
-import { MoreHorizontal, Upload as UploadIcon } from 'lucide-react'
+import { MoreHorizontal, Plus, Upload as UploadIcon } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
 import {
@@ -11,7 +11,9 @@ import { AdminModal } from '../AdminModal'
 import { MESES, calcularCargosPorVenta, calcularKpis, formatCurrency, netoPromedioPorVenta } from '../ventasCalculos'
 import { AcumuladoChart, BarrasPorMes, ComparativaChart, MESES_CORTOS, ProyeccionChart } from './VentasCharts'
 import { MetaDelMes } from './MetaDelMes'
+import { COLOR_POR_ANIO } from '../adminCharts'
 import styles from './VentasSection.module.css'
+import iv from './Ingresos.module.css'
 
 
 const METODOS_PAGO = [
@@ -535,397 +537,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     // --------------------------------------------------------------- render ---
 
 
-    return (
-        <div className={styles.ventas}>
-            {!soloHistorico && (
-                <>
-                <div className={styles.kpis}>
-                    <div className={styles.kpi}>
-                        <div className={styles.kpiLabel}>Ventas del mes</div>
-                        <div className={styles.kpiValue}>
-                            {kpis.ventasCount}
-                            <span className={styles.kpiAnual}>{kpisAnuales.ventasCount} en {year}</span>
-                        </div>
-                        <div className={`${styles.kpiFoot} ${styles.kpiFootGreen}`}>
-                            {kpis.proCount} PRO · {kpis.liteCount} Lite
-                        </div>
-                    </div>
-
-                    <div className={styles.kpi}>
-                        <div className={styles.kpiLabel}>Ingreso bruto</div>
-                        <div className={styles.kpiValue}>
-                            {formatCurrency(kpis.ingresoBruto)}
-                            <span className={styles.kpiAnual}>{formatCurrency(kpisAnuales.ingresoBruto)} en {year}</span>
-                        </div>
-                        <div className={styles.kpiFoot}>todos los ingresos</div>
-                    </div>
-
-                    <div className={styles.kpi}>
-                        <div className={styles.kpiLabel}>Ingreso neto</div>
-                        <div className={styles.kpiValue}>
-                            {formatCurrency(kpis.ingresoNeto)}
-                            <span className={styles.kpiAnual}>{formatCurrency(kpisAnuales.ingresoNeto)} en {year}</span>
-                        </div>
-                        <div className={styles.kpiFoot}>
-                            IVA {formatCurrency(kpis.iva)} · comisiones {formatCurrency(kpis.comisiones)}
-                        </div>
-                    </div>
-
-                    <Dropdown
-                        trigger={['click']}
-                        placement='bottomRight'
-                        disabled={saldoAnual.detalle.length === 0}
-                        popupRender={() => (
-                            <div className={styles.saldoPopup}>
-                                <div className={styles.saldoPopupHead}>
-                                    Saldos por cobrar · {year}
-                                    <span>{formatCurrency(saldoAnual.monto)}</span>
-                                </div>
-                                {saldoAnual.detalle.map(venta => (
-                                    <button
-                                        key={venta.venta_id}
-                                        type='button'
-                                        className={styles.saldoRow}
-                                        onClick={() => openPay(venta)}
-                                    >
-                                        <span className={styles.saldoEvento}>
-                                            {venta.evento}
-                                            <span className={styles.saldoMeta}>
-                                                {dayjs(venta.fecha_venta).format('D MMM')}
-                                                {venta.vendedor ? ` · ${venta.vendedor}` : ''}
-                                                {venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
-                                            </span>
-                                        </span>
-                                        <span className={styles.saldoMonto}>{formatCurrency(venta.saldo_pendiente)}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    >
-                        <button type='button' className={`${styles.kpi} ${styles.kpiAmber} ${styles.kpiClickable}`}>
-                            <span className={styles.kpiLabel}>Saldo pendiente · {year}</span>
-                            <span className={styles.kpiValue}>{formatCurrency(saldoAnual.monto)}</span>
-                            <span className={styles.kpiFoot}>
-                                {saldoAnual.ventas} {saldoAnual.ventas === 1 ? 'venta' : 'ventas'} con apartado · ver detalle
-                            </span>
-                        </button>
-                    </Dropdown>
-                </div>
-
-                <div className={styles.bento}>
-                    <div className={styles.bentoLeft}>
-                        <div className={styles.card}>
-                            <div className={styles.cardHead}>
-                                <div>
-                                    <h2 className={styles.cardTitle}>Proyección anual · {year}</h2>
-                                    <div className={styles.cardSub}>
-                                        Cierre estimado si se mantiene el ritmo de {proyeccion.principal.mesesCerrados} meses
-                                    </div>
-                                    <div className={styles.chips} style={{ marginTop: 8 }}>
-                                        {anios.slice(0, 3).map((anio, i) => {
-                                            const activo = aniosProyeccion.includes(anio)
-                                            const estiloChip = [styles.chipActual, styles.chipPrevio, styles.chipViejo][i]
-                                            return (
-                                                <button
-                                                    key={anio}
-                                                    type='button'
-                                                    className={`${styles.chip} ${activo ? estiloChip : ''}`}
-                                                    onClick={() => toggleAnioProyeccion(anio)}
-                                                >
-                                                    {anio}
-                                                </button>
-                                            )
-                                        })}
-                                    </div>
-                                </div>
-                                <div className={styles.cardHeadRight}>
-                                    <div className={styles.bigValue}>{formatCurrency(proyeccion.principal.cierreEstimado)}</div>
-                                    <div className={styles.bigValueSub}>
-                                        ≈ {proyeccion.principal.invitaciones} invitaciones
-                                    </div>
-                                    <div className={`${styles.delta} ${proyeccion.delta < 0 ? styles.deltaDown : ''}`}>
-                                        {proyeccion.totalPrevio > 0
-                                            ? `${proyeccion.delta >= 0 ? '+' : ''}${proyeccion.delta.toFixed(0)}% vs ${proyeccion.anioPrevio}`
-                                            : `sin cierre de ${proyeccion.anioPrevio} para comparar`}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <ProyeccionChart series={proyeccion.series} labels={proyeccion.labels} />
-
-                            <div className={styles.monthLabels}>
-                                {MESES_CORTOS.map(m => (
-                                    <span className={styles.monthLabel} key={m}>{m}</span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className={styles.card}>
-                            <div className={styles.cardHead}>
-                                <div>
-                                    <h2 className={styles.cardTitle}>
-                                        Ingreso {descontarIva ? 'neto' : 'sin IVA'} acumulado · {acumuladoModo === 'anio' ? year : MESES[month - 1].toLowerCase()}
-                                    </h2>
-                                    <div className={styles.cardSub}>
-                                        {acumuladoModo === 'anio'
-                                            ? 'Avance mensual contra el punto de equilibrio del año'
-                                            : 'Avance diario contra el punto de equilibrio del mes'}
-                                        {!descontarIva && ' · sin descontar IVA'}
-                                    </div>
-                                </div>
-                                <div className={styles.cardHeadRight}>
-                                    <div className={styles.bigValue}>{formatCurrency(acumulado.total)}</div>
-                                    <div className={styles.headSwitches}>
-                                        <div className={`${styles.tabs} ${styles.tabsCompact}`}>
-                                            {[['mes', 'Mes'], ['anio', 'Año']].map(([key, label]) => (
-                                                <button
-                                                    key={key}
-                                                    type='button'
-                                                    className={`${styles.tab} ${acumuladoModo === key ? styles.tabActive : ''}`}
-                                                    onClick={() => setAcumuladoModo(key)}
-                                                >
-                                                    {label}
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        {/* Dos opciones con nombre en vez de un botón que se tacha:
-                                            "IVA" tachado no decía si estaba puesto o quitado. */}
-                                        <div className={`${styles.tabs} ${styles.tabsCompact}`}>
-                                            {[
-                                                [true, 'Neto', 'Descontando IVA y comisiones'],
-                                                [false, 'Sin IVA', 'Sin descontar IVA — la comisión sí se resta'],
-                                            ].map(([valor, label, ayuda]) => (
-                                                <Tooltip key={label} title={ayuda}>
-                                                    <button
-                                                        type='button'
-                                                        className={`${styles.tab} ${descontarIva === valor ? styles.tabActive : ''}`}
-                                                        onClick={() => setDescontarIva(valor)}
-                                                    >
-                                                        {label}
-                                                    </button>
-                                                </Tooltip>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={styles.legend}>
-                                <div className={styles.chips}>
-                                    {anios.slice(0, 3).map((anio, i) => {
-                                        const activo = aniosAcumulado.includes(anio)
-                                        const estiloChip = [styles.chipActual, styles.chipPrevio, styles.chipViejo][i]
-                                        return (
-                                            <button
-                                                key={anio}
-                                                type='button'
-                                                className={`${styles.chip} ${activo ? estiloChip : ''}`}
-                                                onClick={() => toggleAnioAcumulado(anio)}
-                                            >
-                                                {anio}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                                <span className={styles.legendItem}>
-                                    <span className={styles.legendLine} /> meta {formatCurrency(metaDelChart)}
-                                </span>
-                            </div>
-
-                            <AcumuladoChart
-                                series={acumulado.series}
-                                meta={metaDelChart}
-                                labels={acumulado.labels}
-                            />
-
-                            <div className={styles.axisX}>
-                                {acumulado.eje.map((d, i) => <span key={`${d}-${i}`}>{d}</span>)}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className={styles.bentoRight}>
-                        <div className={styles.card}>
-                            <div className={styles.cardHead}>
-                                <div>
-                                    <h2 className={styles.cardTitle}>Ventas por mes</h2>
-                                    <div className={styles.cardSub}>
-                                        {barras.series.map(s => `${s.total} en ${s.anio}`).join(' · ')}
-                                        {barras.series.length === 1 ? ` · ${formatCurrency(barras.series[0].neto)} neto` : ''}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={styles.chips}>
-                                {anios.slice(0, 3).map((anio, i) => {
-                                    const activo = aniosBarras.includes(anio)
-                                    const estiloChip = [styles.chipActual, styles.chipPrevio, styles.chipViejo][i]
-                                    return (
-                                        <button
-                                            key={anio}
-                                            type='button'
-                                            className={`${styles.chip} ${activo ? estiloChip : ''}`}
-                                            onClick={() => toggleAnioBarras(anio)}
-                                        >
-                                            {anio}
-                                        </button>
-                                    )
-                                })}
-                            </div>
-
-                            <BarrasPorMes series={barras.series} />
-                        </div>
-
-                        <MetaDelMes
-                            anio={year}
-                            mes={month}
-                            ingresoNeto={ingresoContraMeta}
-                            // Siempre las del mes de la calculadora, aunque el panel
-                            // esté mostrando el año: los costos por venta son mensuales.
-                            ventasDelMes={ventasPorMes.get(`${year}-${month - 1}`) || 0}
-                            netoPromedio={netoPromedio}
-                            onMetaChange={setMeta}
-                        />
-
-                        <div className={styles.card}>
-                            <div className={styles.cardHead}>
-                                <div>
-                                    <h2 className={styles.cardTitle}>Comparativa anual · ingreso neto</h2>
-                                    <div className={styles.cardSub}>Mismos meses, años encimados</div>
-                                </div>
-                            </div>
-
-                            <div className={styles.chips}>
-                                {anios.slice(0, 3).map((anio, i) => {
-                                    const activo = aniosComparativa.includes(anio)
-                                    const estiloChip = [styles.chipActual, styles.chipPrevio, styles.chipViejo][i]
-                                    return (
-                                        <button
-                                            key={anio}
-                                            type='button'
-                                            className={`${styles.chip} ${activo ? estiloChip : ''}`}
-                                            onClick={() => toggleAnioComparativa(anio)}
-                                        >
-                                            {anio}
-                                        </button>
-                                    )
-                                })}
-                            </div>
-
-                            <ComparativaChart series={comparativa} />
-
-                            <div className={styles.monthLabels}>
-                                {MESES_CORTOS.map(m => (
-                                    <span className={styles.monthLabel} key={m}>{m}</span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {comprobantesPendientes.length > 0 && (
-                    <div className={styles.banner}>
-                        {comprobantesPendientes.length} {comprobantesPendientes.length === 1 ? 'venta' : 'ventas'} con abonos sin comprobante.
-                    </div>
-                )}
-                </>
-            )}
-
-            <div className={styles.tableCard}>
-                <div className={styles.tableHead}>
-                    <span className={styles.tableTitle}>
-                        {soloHistorico
-                            ? `Histórico de ventas (${historico.length})`
-                            : 'Ventas del mes'}
-                    </span>
-                    <button type='button' className={styles.outlineBtn} onClick={() => setManualSaleOpen(true)}>
-                        Registrar venta manual
-                    </button>
-                </div>
-
-                {loading ? (
-                    <div className={styles.empty}>Cargando ventas…</div>
-                ) : filasDeLaTabla.length === 0 ? (
-                    <div className={styles.empty}>
-                        {soloHistorico ? 'Todavía no hay ventas registradas.' : 'No hay ventas en este periodo.'}
-                    </div>
-                ) : (
-                    <div className={styles.scroller}>
-                        <div className={`${styles.table} ${soloHistorico ? styles.tablaHistorico : ''}`}>
-                            <div className={`${styles.row} ${styles.rowHead}`}>
-                                {soloHistorico && <span className={styles.cell}>Fecha</span>}
-                                <span className={styles.cell}>Evento</span>
-                                <span className={styles.cell}>Vendedor</span>
-                                <span className={styles.cell}>Plan</span>
-                                <span className={`${styles.cell} ${styles.cellNum}`}>Acordado</span>
-                                <span className={`${styles.cell} ${styles.cellNum}`}>Pagado</span>
-                                <span className={`${styles.cell} ${styles.cellNum}`}>Saldo</span>
-                                <span className={styles.cell}>Pago</span>
-                                <span className={styles.cell}>Comprobante</span>
-                                <span className={styles.cell} />
-                            </div>
-
-                            {filasDeLaTabla.map(venta => {
-                                const saldo = Number(venta.saldo_pendiente || 0)
-                                const completo = venta.estado_pago === 'completo'
-                                const faltaComprobante = venta.abonos_sin_comprobante > 0
-
-                                return (
-                                    <div className={styles.row} key={venta.venta_id}>
-                                        {soloHistorico && (
-                                            <span className={`${styles.cell} ${styles.celdaTenue}`}>
-                                                {dayjs(venta.fecha_venta).format('D MMM YY')}
-                                            </span>
-                                        )}
-                                        <span className={`${styles.cell} ${styles.evento}`}>{venta.evento}</span>
-                                        <span className={`${styles.cell} ${styles.vendedor}`}>{venta.vendedor || '—'}</span>
-                                        <span className={styles.cell}>
-                                            <span className={`${styles.plan} ${venta.plan === 'Lite' ? styles.planLite : ''}`}>
-                                                {venta.plan}
-                                            </span>
-                                        </span>
-                                        <span className={`${styles.cell} ${styles.cellNum}`}>{formatCurrency(venta.precio_acordado)}</span>
-                                        <span className={`${styles.cell} ${styles.cellNum}`}>{formatCurrency(venta.total_pagado)}</span>
-                                        <span className={`${styles.cell} ${saldo > 0 ? styles.saldoDebe : styles.saldoOk}`}>
-                                            {formatCurrency(saldo)}
-                                        </span>
-                                        <span className={styles.cell}>
-                                            <span className={`${styles.badge} ${completo ? styles.badgeOk : styles.badgeWarn}`}>
-                                                {completo ? 'completo' : venta.estado_pago === 'apartado' ? 'apartado' : 'sin pago'}
-                                            </span>
-                                        </span>
-                                        <span className={`${styles.cell} ${faltaComprobante ? styles.comprobanteFalta : styles.comprobanteOk}`}>
-                                            {faltaComprobante ? 'falta' : 'ok'}
-                                        </span>
-                                        <span className={styles.cell}>
-                                            <Dropdown
-                                                trigger={['click']}
-                                                placement='bottomRight'
-                                                popupRender={() => (
-                                                    <div className={styles.popup}>
-                                                        <button type='button' className={styles.popupItem} onClick={() => openEdit(venta)}>
-                                                            Editar venta
-                                                        </button>
-                                                        <button type='button' className={styles.popupItem} onClick={() => openPay(venta)}>
-                                                            Registrar abono
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            >
-                                                <button type='button' aria-label='Acciones' className={styles.iconBtn}>
-                                                    <MoreHorizontal size={15} />
-                                                </button>
-                                            </Dropdown>
-                                        </span>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
-                )}
-            </div>
-
+    const modales = (
+        <>
             <AdminModal
                 open={!!editingVenta}
                 onClose={() => setEditingVenta(null)}
@@ -1010,6 +623,405 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     </Form.Item>
                 </Form>
             </AdminModal>
+        </>
+    )
+
+    const chipsDeAnios = (activos, alternar, oscuro = false) => anios.slice(0, 3).map((anio, i) => {
+        const activo = activos.includes(anio)
+        const color = COLOR_POR_ANIO[ESTILO_POR_POSICION[i]][oscuro ? 'oscuro' : 'color']
+        return (
+            <button
+                key={anio}
+                type='button'
+                className={oscuro
+                    ? `${iv.chipOscuro} ${activo ? iv.chipOscuroActivo : ''}`
+                    : `${iv.chip} ${activo ? iv.chipActivo : ''}`}
+                style={activo ? { borderColor: color } : undefined}
+                onClick={() => alternar(anio)}
+            >
+                {anio}
+            </button>
+        )
+    })
+
+    const menuVenta = (venta) => (
+        <Dropdown
+            trigger={['click']}
+            placement='bottomRight'
+            popupRender={() => (
+                <div className={styles.popup}>
+                    <button type='button' className={styles.popupItem} onClick={() => openEdit(venta)}>Editar venta</button>
+                    <button type='button' className={styles.popupItem} onClick={() => openPay(venta)}>Registrar abono</button>
+                </div>
+            )}
+        >
+            <button type='button' aria-label='Acciones' className={iv.mas}>
+                <MoreHorizontal size={15} />
+            </button>
+        </Dropdown>
+    )
+
+    const cuerpoTabla = (
+        <>
+                {loading ? (
+                    <div className={styles.empty}>Cargando ventas…</div>
+                ) : filasDeLaTabla.length === 0 ? (
+                    <div className={styles.empty}>
+                        {soloHistorico ? 'Todavía no hay ventas registradas.' : 'No hay ventas en este periodo.'}
+                    </div>
+                ) : (
+                    <div className={styles.scroller}>
+                        <div className={`${styles.table} ${soloHistorico ? styles.tablaHistorico : ''}`}>
+                            <div className={`${styles.row} ${styles.rowHead}`}>
+                                {soloHistorico && <span className={styles.cell}>Fecha</span>}
+                                <span className={styles.cell}>Evento</span>
+                                <span className={styles.cell}>Vendedor</span>
+                                <span className={styles.cell}>Plan</span>
+                                <span className={`${styles.cell} ${styles.cellNum}`}>Acordado</span>
+                                <span className={`${styles.cell} ${styles.cellNum}`}>Pagado</span>
+                                <span className={`${styles.cell} ${styles.cellNum}`}>Saldo</span>
+                                <span className={styles.cell}>Pago</span>
+                                <span className={styles.cell}>Comprobante</span>
+                                <span className={styles.cell} />
+                            </div>
+
+                            {filasDeLaTabla.map(venta => {
+                                const saldo = Number(venta.saldo_pendiente || 0)
+                                const completo = venta.estado_pago === 'completo'
+                                const faltaComprobante = venta.abonos_sin_comprobante > 0
+
+                                return (
+                                    <div className={styles.row} key={venta.venta_id}>
+                                        {soloHistorico && (
+                                            <span className={`${styles.cell} ${styles.celdaTenue}`}>
+                                                {dayjs(venta.fecha_venta).format('D MMM YY')}
+                                            </span>
+                                        )}
+                                        <span className={`${styles.cell} ${styles.evento}`}>{venta.evento}</span>
+                                        <span className={`${styles.cell} ${styles.vendedor}`}>{venta.vendedor || '—'}</span>
+                                        <span className={styles.cell}>
+                                            <span className={`${styles.plan} ${venta.plan === 'Lite' ? styles.planLite : ''}`}>
+                                                {venta.plan}
+                                            </span>
+                                        </span>
+                                        <span className={`${styles.cell} ${styles.cellNum}`}>{formatCurrency(venta.precio_acordado)}</span>
+                                        <span className={`${styles.cell} ${styles.cellNum}`}>{formatCurrency(venta.total_pagado)}</span>
+                                        <span className={`${styles.cell} ${saldo > 0 ? styles.saldoDebe : styles.saldoOk}`}>
+                                            {formatCurrency(saldo)}
+                                        </span>
+                                        <span className={styles.cell}>
+                                            <span className={`${styles.badge} ${completo ? styles.badgeOk : styles.badgeWarn}`}>
+                                                {completo ? 'completo' : venta.estado_pago === 'apartado' ? 'apartado' : 'sin pago'}
+                                            </span>
+                                        </span>
+                                        <span className={`${styles.cell} ${faltaComprobante ? styles.comprobanteFalta : styles.comprobanteOk}`}>
+                                            {faltaComprobante ? 'falta' : 'ok'}
+                                        </span>
+                                        <span className={styles.cell}>
+                                            <Dropdown
+                                                trigger={['click']}
+                                                placement='bottomRight'
+                                                popupRender={() => (
+                                                    <div className={styles.popup}>
+                                                        <button type='button' className={styles.popupItem} onClick={() => openEdit(venta)}>
+                                                            Editar venta
+                                                        </button>
+                                                        <button type='button' className={styles.popupItem} onClick={() => openPay(venta)}>
+                                                            Registrar abono
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            >
+                                                <button type='button' aria-label='Acciones' className={styles.iconBtn}>
+                                                    <MoreHorizontal size={15} />
+                                                </button>
+                                            </Dropdown>
+                                        </span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+        </>
+    )
+
+    // ------------------------------------------------------------ histórico ---
+
+    if (soloHistorico) {
+        return (
+            <div className={styles.ventas}>
+                <div className={`${iv.tarjeta} ${iv.historico}`}>
+                    <div className={iv.historicoHead}>
+                        <h2 className={iv.label}>Histórico de ventas · {historico.length}</h2>
+                        <span className={iv.empuje} />
+                        <button type='button' className={iv.botonNavy} onClick={() => setManualSaleOpen(true)}>
+                            <Plus size={13} /> Venta manual
+                        </button>
+                    </div>
+                    <div className={iv.historicoCuerpo}>{cuerpoTabla}</div>
+                </div>
+                {modales}
+            </div>
+        )
+    }
+
+    // ------------------------------------------------- ingresos y comisiones ---
+
+    const totalesComparativa = [...comparativa]
+        .sort((a, b) => b.anio - a.anio)
+        .map(serie => ({
+            anio: serie.anio,
+            total: serie.valores.reduce((a, b) => a + b, 0),
+            color: COLOR_POR_ANIO[serie.estilo]?.color ?? COLOR_POR_ANIO.viejo.color,
+            enCurso: serie.anio === new Date().getFullYear(),
+        }))
+    const barrasDelAnio = barras.series.find(s => s.anio === year) ?? barras.series[0]
+
+    return (
+        <div className={styles.ventas}>
+            <div className={iv.vista}>
+                <div className={iv.kpis}>
+                    <div className={iv.kpi}>
+                        <span className={iv.kpiLabel}>Ventas del mes</span>
+                        <div className={iv.kpiLinea}>
+                            <span className={iv.kpiValor}>{kpis.ventasCount}</span>
+                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite · {kpisAnuales.ventasCount} en {year}</span>
+                        </div>
+                    </div>
+                    <div className={iv.kpi}>
+                        <span className={iv.kpiLabel}>Ingreso bruto</span>
+                        <div className={iv.kpiLinea}>
+                            <span className={iv.kpiValor}>{formatCurrency(kpis.ingresoBruto)}</span>
+                            <span className={iv.kpiNota}>{formatCurrency(kpisAnuales.ingresoBruto)} en {year}</span>
+                        </div>
+                    </div>
+                    <div className={iv.kpi}>
+                        <span className={iv.kpiLabel}>Ingreso neto</span>
+                        <div className={iv.kpiLinea}>
+                            <span className={iv.kpiValor}>{formatCurrency(kpis.ingresoNeto)}</span>
+                            <span className={iv.kpiNota}>IVA {formatCurrency(kpis.iva)} · comisiones {formatCurrency(kpis.comisiones)}</span>
+                        </div>
+                    </div>
+                    <Dropdown
+                        trigger={['click']}
+                        placement='bottomRight'
+                        disabled={saldoAnual.detalle.length === 0}
+                        popupRender={() => (
+                            <div className={styles.saldoPopup}>
+                                <div className={styles.saldoPopupHead}>
+                                    Saldos por cobrar · {year}
+                                    <span>{formatCurrency(saldoAnual.monto)}</span>
+                                </div>
+                                {saldoAnual.detalle.map(venta => (
+                                    <button key={venta.venta_id} type='button' className={styles.saldoRow} onClick={() => openPay(venta)}>
+                                        <span className={styles.saldoEvento}>
+                                            {venta.evento}
+                                            <span className={styles.saldoMeta}>
+                                                {dayjs(venta.fecha_venta).format('D MMM')}
+                                                {venta.vendedor ? ` · ${venta.vendedor}` : ''}
+                                                {venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
+                                            </span>
+                                        </span>
+                                        <span className={styles.saldoMonto}>{formatCurrency(venta.saldo_pendiente)}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    >
+                        <button type='button' className={`${iv.kpi} ${iv.kpiAmbar}`}>
+                            <span className={iv.kpiLabel}>Saldo pendiente · {year}</span>
+                            <div className={iv.kpiLinea}>
+                                <span className={iv.kpiValor}>{formatCurrency(saldoAnual.monto)}</span>
+                                <span className={iv.kpiNota}>{saldoAnual.ventas} {saldoAnual.ventas === 1 ? 'venta' : 'ventas'} con apartado · ver detalle</span>
+                            </div>
+                        </button>
+                    </Dropdown>
+                </div>
+
+                <div className={iv.filaMedia}>
+                    <section className={iv.hero}>
+                        <header className={iv.heroHead}>
+                            <h2 className={iv.heroTitulo}>
+                                Ingreso {descontarIva ? 'neto' : 'sin IVA'} acumulado · {acumuladoModo === 'anio' ? year : MESES[month - 1].toLowerCase()}
+                            </h2>
+                            <div className={iv.chipsOscuros}>{chipsDeAnios(aniosAcumulado, toggleAnioAcumulado, true)}</div>
+                            <span className={iv.empuje} />
+                            <div className={iv.segOscuro} role='radiogroup' aria-label='Periodo'>
+                                {[['mes', 'Mes'], ['anio', 'Año']].map(([key, label]) => (
+                                    <button key={key} type='button' role='radio' aria-checked={acumuladoModo === key}
+                                        className={acumuladoModo === key ? iv.segActivo : ''} onClick={() => setAcumuladoModo(key)}>
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className={iv.segOscuro} role='radiogroup' aria-label='IVA'>
+                                {[
+                                    [true, 'Neto', 'Descontando IVA y comisiones'],
+                                    [false, 'Sin IVA', 'Sin descontar IVA — la comisión sí se resta'],
+                                ].map(([valor, label, ayuda]) => (
+                                    <Tooltip key={label} title={ayuda}>
+                                        <button type='button' role='radio' aria-checked={descontarIva === valor}
+                                            className={descontarIva === valor ? iv.segActivo : ''} onClick={() => setDescontarIva(valor)}>
+                                            {label}
+                                        </button>
+                                    </Tooltip>
+                                ))}
+                            </div>
+                        </header>
+
+                        <div className={iv.heroCuerpo}>
+                            <MetaDelMes
+                                anio={year}
+                                mes={month}
+                                modo={acumuladoModo}
+                                total={acumulado.total}
+                                ingresoNeto={ingresoContraMeta}
+                                ingresoAnio={acumulado.total}
+                                // Siempre las del mes de la calculadora, aunque el panel
+                                // esté mostrando el año: los costos por venta son mensuales.
+                                ventasDelMes={ventasPorMes.get(`${year}-${month - 1}`) || 0}
+                                netoPromedio={netoPromedio}
+                                onMetaChange={setMeta}
+                            />
+                            <div className={iv.heroGrafica}>
+                                <AcumuladoChart series={acumulado.series} meta={metaDelChart} labels={acumulado.labels} oscuro />
+                                <div className={iv.heroEje}>
+                                    {acumulado.eje.map((d, i) => <span key={`${d}-${i}`}>{d}</span>)}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className={iv.tarjeta}>
+                        <header className={iv.listaHead}>
+                            <h2 className={iv.label}>Ventas del mes · {ventasDelPeriodo.length}</h2>
+                            <span className={iv.empuje} />
+                            <button type='button' className={iv.botonNavy} onClick={() => setManualSaleOpen(true)}>
+                                <Plus size={13} /> Venta manual
+                            </button>
+                        </header>
+                        {comprobantesPendientes.length > 0 && (
+                            <div className={iv.aviso}>
+                                <span className={iv.pillAmbar}>
+                                    <i /> {comprobantesPendientes.length} {comprobantesPendientes.length === 1 ? 'venta' : 'ventas'} con abonos sin comprobante
+                                </span>
+                            </div>
+                        )}
+                        <div className={iv.listaScroll}>
+                            {loading ? (
+                                <div className={iv.vacio}>Cargando ventas…</div>
+                            ) : ventasDelPeriodo.length === 0 ? (
+                                <div className={iv.vacio}>No hay ventas en este periodo.</div>
+                            ) : [...ventasDelPeriodo]
+                                .sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta))
+                                .map(venta => {
+                                    const saldo = Number(venta.saldo_pendiente || 0)
+                                    const completo = venta.estado_pago === 'completo'
+                                    return (
+                                        <div key={venta.venta_id} className={iv.venta}>
+                                            <div className={iv.ventaTexto}>
+                                                <div className={iv.ventaNombre}>
+                                                    <b>{venta.evento}</b>
+                                                    <span className={venta.plan === 'Lite' ? iv.planLite : iv.planPro}>{venta.plan}</span>
+                                                </div>
+                                                <span className={iv.ventaMeta}>
+                                                    {venta.vendedor || '—'} · {dayjs(venta.fecha_venta).format('D MMM')}
+                                                    {venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
+                                                </span>
+                                            </div>
+                                            <div className={iv.ventaMonto}>
+                                                <b>{formatCurrency(venta.precio_acordado)}</b>
+                                                <span className={completo ? iv.estadoOk : iv.estadoDebe}>
+                                                    {completo ? 'completo' : `${venta.estado_pago === 'apartado' ? 'apartado' : 'sin pago'} · debe ${formatCurrency(saldo)}`}
+                                                </span>
+                                            </div>
+                                            {menuVenta(venta)}
+                                        </div>
+                                    )
+                                })}
+
+                            {saldoAnual.detalle.length > 0 && (
+                                <>
+                                    <div className={iv.porCobrarHead}>
+                                        <h3>Por cobrar · {year}</h3>
+                                        <b>{formatCurrency(saldoAnual.monto)}</b>
+                                    </div>
+                                    {saldoAnual.detalle.map(venta => (
+                                        <button key={venta.venta_id} type='button' className={iv.saldo} onClick={() => openPay(venta)}>
+                                            <span>
+                                                <b>{venta.evento}</b>
+                                                <small>
+                                                    {dayjs(venta.fecha_venta).format('D MMM')} · {venta.vendedor || '—'}
+                                                    {venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
+                                                </small>
+                                            </span>
+                                            <span className={iv.saldoMonto}>{formatCurrency(venta.saldo_pendiente)}</span>
+                                        </button>
+                                    ))}
+                                </>
+                            )}
+                        </div>
+                    </section>
+                </div>
+
+                <div className={iv.filaBaja}>
+                    <section className={`${iv.tarjeta} ${iv.grafica}`}>
+                        <h2 className={iv.label}>Proyección anual</h2>
+                        <div className={iv.graficaCifra}>
+                            <span className={iv.cifra}>{formatCurrency(proyeccion.principal.cierreEstimado)}</span>
+                            <span className={proyeccion.delta < 0 ? iv.deltaMal : iv.deltaOk}>
+                                {proyeccion.totalPrevio > 0
+                                    ? `${proyeccion.delta >= 0 ? '+' : ''}${proyeccion.delta.toFixed(0)}% vs ${proyeccion.anioPrevio}`
+                                    : `sin cierre de ${proyeccion.anioPrevio}`}
+                            </span>
+                        </div>
+                        <span className={iv.graficaNota}>
+                            ≈ {proyeccion.principal.invitaciones} invitaciones · cierre estimado al ritmo de {proyeccion.principal.mesesCerrados} meses
+                        </span>
+                        <div className={iv.chips}>{chipsDeAnios(aniosProyeccion, toggleAnioProyeccion)}</div>
+                        <div className={iv.graficaLienzo}>
+                            <ProyeccionChart series={proyeccion.series} labels={proyeccion.labels} />
+                        </div>
+                        <div className={iv.meses}>{MESES_CORTOS.map(m => <span key={m}>{m}</span>)}</div>
+                    </section>
+
+                    <section className={`${iv.tarjeta} ${iv.grafica}`}>
+                        <h2 className={iv.label}>Ventas por mes</h2>
+                        <div className={iv.graficaCifra}>
+                            <span className={iv.cifra}>{barrasDelAnio?.total ?? 0}</span>
+                            <span className={iv.graficaNota}>ventas en {year}</span>
+                        </div>
+                        <span className={iv.graficaNota}>
+                            {barras.series.map(s => `${s.total} en ${s.anio}`).join(' · ')}
+                            {barras.series.length === 1 ? ` · ${formatCurrency(barras.series[0].neto)} neto` : ''}
+                        </span>
+                        <div className={iv.chips}>{chipsDeAnios(aniosBarras, toggleAnioBarras)}</div>
+                        <div className={iv.graficaLienzo}>
+                            <BarrasPorMes series={barras.series} />
+                        </div>
+                    </section>
+
+                    <section className={`${iv.tarjeta} ${iv.grafica}`}>
+                        <h2 className={iv.label}>Comparativa anual</h2>
+                        <div className={iv.totales}>
+                            {totalesComparativa.map(t => (
+                                <div key={t.anio}>
+                                    <i style={{ background: t.color }} />
+                                    <span>{t.enCurso ? `${t.anio} · a la fecha` : t.anio}</span>
+                                    <b>{formatCurrency(t.total)}</b>
+                                </div>
+                            ))}
+                        </div>
+                        <div className={iv.chips}>{chipsDeAnios(aniosComparativa, toggleAnioComparativa)}</div>
+                        <div className={iv.graficaLienzo}>
+                            <ComparativaChart series={comparativa} />
+                        </div>
+                        <div className={iv.meses}>{MESES_CORTOS.map(m => <span key={m}>{m}</span>)}</div>
+                    </section>
+                </div>
+            </div>
+            {modales}
         </div>
     )
 }

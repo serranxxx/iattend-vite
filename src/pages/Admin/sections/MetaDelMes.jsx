@@ -1,18 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Dropdown, Tooltip, message } from 'antd'
-import { CalendarDays, ChevronDown, Plus, Ticket, X } from 'lucide-react'
+import { CalendarDays, Plus, Ticket, X } from 'lucide-react'
 import {
     costoPorVenta, esPorVenta, fetchGastosFijos, guardarGastosFijos, montoFijo,
     sumarMeta, ventasQueFaltan,
 } from '../gastosFijosApi'
 import { formatCurrency } from '../ventasCalculos'
 import styles from './VentasSection.module.css'
+import iv from './Ingresos.module.css'
 
 // Espera a que el usuario deje de teclear antes de persistir: la calculadora
 // recalcula en vivo, pero no vale la pena un PUT por cada dígito.
 const GUARDADO_DEBOUNCE_MS = 800
 
-export const MetaDelMes = ({ anio, mes, ingresoNeto, ventasDelMes = 0, netoPromedio, onMetaChange }) => {
+/**
+ * Columna izquierda del hero "Ingreso neto acumulado" (Ventas › Ingresos):
+ * el total, la meta (punto de equilibrio), la barra con la marca del ritmo, la
+ * nota de ritmo, lo que falta y la calculadora de gastos fijos.
+ *   modo 'mes': contra el equilibrio del mes (ingresoNeto).
+ *   modo 'anio': contra meta × 12 (ingresoAnio); el ritmo es la fracción del
+ *   año transcurrida.
+ * `total` es la cifra grande (el acumulado que dibuja la gráfica).
+ */
+export const MetaDelMes = ({ anio, mes, ingresoNeto, ingresoAnio = 0, total = 0, modo = 'mes', ventasDelMes = 0, netoPromedio, onMetaChange }) => {
     const [gastos, setGastos] = useState(null)
     const [abierta, setAbierta] = useState(false)
 
@@ -94,30 +104,39 @@ export const MetaDelMes = ({ anio, mes, ingresoNeto, ventasDelMes = 0, netoProme
         aplicar({ ...gastos, conceptos: conceptos.filter((_, i) => i !== indice) })
     }
 
-    // Ritmo del mes: dónde deberías ir hoy si el punto de equilibrio se
-    // repartiera parejo entre los días. Un 58% el día 5 es excelente y el día 28 es malo — el porcentaje
-    // solo no lo dice, por eso la barra lleva una marca en el ritmo esperado.
+    // Ritmo: dónde deberías ir si el punto de equilibrio se repartiera parejo.
+    // Un 58% el día 5 es excelente y el día 28 es malo — el porcentaje solo no
+    // lo dice, por eso la barra lleva una marca en el ritmo esperado.
     const hoy = new Date()
     const diasDelMes = new Date(anio, mes, 0).getDate()
     const esMesEnCurso = anio === hoy.getFullYear() && mes === hoy.getMonth() + 1
     const diaDelMes = esMesEnCurso ? hoy.getDate() : diasDelMes
 
-    const ritmo = diaDelMes / diasDelMes
-    const esperadoHoy = meta * ritmo
-    const diferencia = ingresoNeto - esperadoHoy
+    const enAnio = modo === 'anio'
+    // En el año todo se compara contra meta × 12 (mismo gasto fijo cada mes).
+    const metaVista = enAnio ? meta * 12 : meta
+    const ingresoVista = enAnio ? ingresoAnio : ingresoNeto
+    const mesesTranscurridos = anio === hoy.getFullYear()
+        ? hoy.getMonth() + hoy.getDate() / new Date(anio, hoy.getMonth() + 1, 0).getDate()
+        : 12
+    const ritmo = enAnio ? mesesTranscurridos / 12 : diaDelMes / diasDelMes
+    const esperado = metaVista * ritmo
+    const diferencia = ingresoVista - esperado
 
-    const avance = meta > 0 ? Math.min(1, ingresoNeto / meta) : 0
-    const faltante = Math.max(0, meta - ingresoNeto)
+    const avance = metaVista > 0 ? Math.min(1, ingresoVista / metaVista) : 0
+    const faltante = Math.max(0, metaVista - ingresoVista)
     const faltanVentas = gastos ? ventasQueFaltan(gastos, netoVenta, faltante) : null
 
-    if (!gastos) {
-        return (
-            <div className={`${styles.card} ${styles.metaCard}`}>
-                <h2 className={styles.cardTitle}>Punto de equilibrio</h2>
-                <div className={styles.cardSub}>No se pudieron cargar los gastos fijos.</div>
-            </div>
-        )
-    }
+    const nota = enAnio
+        ? (faltante === 0
+            ? 'Punto de equilibrio del año cubierto'
+            : `${Math.round(avance * 100)}% del año · ${diferencia >= 0 ? 'vas' : 'te faltan'} ${formatCurrency(Math.abs(diferencia))} ${diferencia >= 0 ? 'sobre' : 'para'} el ritmo`)
+        : (faltante === 0
+            ? `Cubierto el día ${diaDelMes} de ${diasDelMes}`
+            : `Día ${diaDelMes} de ${diasDelMes} · ${diferencia >= 0 ? 'vas' : 'te faltan'} ${formatCurrency(Math.abs(diferencia))} ${diferencia >= 0 ? 'sobre' : 'para'} el ritmo`)
+    const sub = faltante === 0
+        ? (enAnio ? 'Equilibrio anual cubierto' : 'Punto de equilibrio cubierto')
+        : `${faltanVentas ? `faltan ${faltanVentas} ${faltanVentas === 1 ? 'venta' : 'ventas'} · ` : ''}${formatCurrency(faltante)} por generar${enAnio ? ` en ${anio}` : ''}`
 
     // La calculadora vive en un popup: abrirla no debe empujar el bento ni
     // cambiar la altura de la tarjeta.
@@ -210,53 +229,46 @@ export const MetaDelMes = ({ anio, mes, ingresoNeto, ventasDelMes = 0, netoProme
     )
 
     return (
-        <div className={`${styles.card} ${styles.metaCard}`}>
-            <div className={styles.metaHead}>
-                <h2 className={styles.cardTitle}>Punto de equilibrio</h2>
-                <span className={styles.metaValue}>{formatCurrency(meta)}</span>
+        <div className={iv.heroIzq}>
+            <div className={iv.heroArriba}>
+                <span className={iv.heroTotal}>{formatCurrency(total)}</span>
+                <span className={iv.heroDe}>
+                    {gastos
+                        ? `de ${formatCurrency(metaVista)} · punto de equilibrio del ${enAnio ? 'año' : 'mes'}`
+                        : 'Cargando gastos fijos…'}
+                </span>
+                {gastos && (
+                    <>
+                        <div className={iv.heroBarra}>
+                            <div style={{ width: `${avance * 100}%` }} />
+                            <span
+                                style={{ left: `${ritmo * 100}%` }}
+                                title={enAnio
+                                    ? `A esta altura del año deberías llevar ${formatCurrency(esperado)}`
+                                    : `Al día ${diaDelMes} deberías llevar ${formatCurrency(esperado)}`}
+                            />
+                        </div>
+                        <span className={`${iv.heroNota} ${diferencia < 0 && faltante > 0 ? iv.heroNotaAtras : iv.heroNotaOk}`}>{nota}</span>
+                    </>
+                )}
             </div>
 
-            <div className={styles.cardSub}>
-                {faltante === 0
-                    ? 'Punto de equilibrio cubierto'
-                    : `${faltanVentas ? `faltan ${faltanVentas} ${faltanVentas === 1 ? 'venta' : 'ventas'} · ` : ''}${formatCurrency(faltante)} por generar`}
+            <div className={iv.heroAbajo}>
+                {gastos && <span>{sub}</span>}
+                {gastos && (
+                    <Dropdown
+                        trigger={['click']}
+                        open={abierta}
+                        onOpenChange={setAbierta}
+                        placement='bottomLeft'
+                        popupRender={calculadora}
+                    >
+                        <button type='button' className={iv.heroEnlace} aria-expanded={abierta}>
+                            calculadora de gastos fijos
+                        </button>
+                    </Dropdown>
+                )}
             </div>
-
-            <div className={styles.track}>
-                <div className={styles.fill} style={{ width: `${avance * 100}%` }} />
-                {/* Marca del ritmo esperado: separa "llevo 58%" de "voy a tiempo". */}
-                <span
-                    className={styles.ritmoMarca}
-                    style={{ left: `${ritmo * 100}%` }}
-                    title={`Al día ${diaDelMes} deberías llevar ${formatCurrency(esperadoHoy)}`}
-                />
-            </div>
-
-            <div className={styles.metaFoot}>
-                {formatCurrency(ingresoNeto)} de {formatCurrency(meta)} · {Math.round(avance * 100)}% del punto de equilibrio
-            </div>
-
-            <div className={`${styles.ritmoNota} ${diferencia < 0 ? styles.ritmoAtras : styles.ritmoAdelante}`}>
-                {faltante === 0
-                    ? `Cubierto el día ${diaDelMes} de ${diasDelMes}`
-                    : `Día ${diaDelMes} de ${diasDelMes} · ${diferencia >= 0 ? 'vas' : 'te faltan'} ${formatCurrency(Math.abs(diferencia))} ${diferencia >= 0 ? 'sobre' : 'para'} el ritmo`}
-            </div>
-
-            <Dropdown
-                trigger={['click']}
-                open={abierta}
-                onOpenChange={setAbierta}
-                placement='bottomRight'
-                popupRender={calculadora}
-            >
-                <button type='button' className={styles.disclosure} aria-expanded={abierta}>
-                    Calculadora de gastos fijos
-                    <ChevronDown
-                        size={13}
-                        className={`${styles.chevron} ${abierta ? styles.chevronOpen : ''}`}
-                    />
-                </button>
-            </Dropdown>
         </div>
     )
 }

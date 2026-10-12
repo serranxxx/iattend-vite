@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { Checkbox, Form, Input, InputNumber, Select, Switch, message } from 'antd'
 import { Copy, Pencil, Plus } from 'lucide-react'
 import { AdminModal } from '../AdminModal'
+import { AccionTopbar, EnTopbarAccion } from '../AdminTopbar'
 import { createAdminVendedor, fetchAdminVendedores, updateAdminVendedor } from '../salesAdminApi'
 import styles from './VentasSection.module.css'
 
@@ -21,7 +22,9 @@ const TIPOS = [
     { value: 'externo', label: 'Externo' },
 ]
 
-export const VendedoresSection = () => {
+// altaInicial: datos de una solicitud aceptada (Solicitudes → "Dar de alta"):
+// abre el alta ya llenada. onAltaUsada avisa que ya se tomó.
+export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
     const [vendedores, setVendedores] = useState(null)
     // `editando` guarda el vendedor en edición, o `'nuevo'` cuando es un alta.
     const [editando, setEditando] = useState(null)
@@ -42,6 +45,16 @@ export const VendedoresSection = () => {
     }
 
     useEffect(() => { cargar() }, [])
+
+    useEffect(() => {
+        if (!altaInicial) return
+        form.setFieldsValue({
+            nombre: altaInicial.nombre ?? '', tipo: 'externo', telefono: altaInicial.telefono ?? '',
+            email: altaInicial.email ?? '', descuento_max_pct: 0, crear_cuenta: !!altaInicial.email,
+        })
+        setEditando('nuevo')
+        onAltaUsada?.()
+    }, [altaInicial])
 
     const abrirAlta = () => {
         form.setFieldsValue({
@@ -100,9 +113,10 @@ export const VendedoresSection = () => {
                 <span className={styles.tableTitle}>
                     Vendedores {vendedores ? `(${vendedores.length})` : ''}
                 </span>
-                <button type='button' className={styles.outlineBtn} onClick={abrirAlta}>
-                    <Plus size={14} /> Agregar vendedor
-                </button>
+                {/* El alta es la acción principal de Usuarios › Vendedores (topbar). */}
+                <EnTopbarAccion>
+                    <AccionTopbar onClick={abrirAlta}>Nuevo vendedor</AccionTopbar>
+                </EnTopbarAccion>
             </div>
 
             {vendedores === null ? (

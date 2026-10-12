@@ -1,0 +1,371 @@
+/*
+  Analítica › Funciones nuevas (tablero 2y del handoff "Admin Reorganización").
+  Alto fijo de 718 px sin scroll de página: hero navy de 180 px arriba y la
+  fila de tarjetas ocupa el resto. Debajo de 1100 px se apila y deja de tener
+  alto fijo.
+*/
+
+.tablero {
+    height: 718px;
+    display: grid;
+    grid-template-rows: 180px minmax(0, 1fr);
+    gap: 12px;
+}
+
+.empty {
+    padding: 48px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+/* ----------------------------------------------------------------- hero --- */
+
+.hero {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px;
+    padding: 20px 26px;
+    background: var(--ac-ink);
+    border-radius: 20px;
+    color: #FFFFFF;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.heroMitad {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 20px;
+    align-items: center;
+    min-width: 0;
+}
+
+.heroMitadDerecha {
+    padding-left: 32px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.dona {
+    position: relative;
+    height: 120px;
+    width: 120px;
+}
+
+.donaCentro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.donaValor {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.donaEtiqueta {
+    margin-top: 2px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.heroDatos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.heroLabel {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+    white-space: nowrap;
+}
+
+.heroFila {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.heroCifra {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.heroTexto {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* -------------------------------------------------------------- tarjetas --- */
+
+.fila {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+.card {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 20px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 20px;
+    box-shadow: 0 0 12px rgba(12, 23, 27, 0.07);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.cardLabel {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ac-text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cardNota {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.leyenda {
+    flex-shrink: 0;
+    display: flex;
+    gap: 14px;
+    font-size: 11.5px;
+    color: var(--ac-text-2);
+}
+
+.leyenda span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.leyenda i {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px rgba(28, 50, 73, 0.08);
+}
+
+.vacio {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 24px 12px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ac-muted);
+}
+
+.grafica {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ---- barra de "cuánto tardan en armarlo" ---- */
+
+.armado {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ac-line-soft);
+}
+
+.armadoHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.armadoTitulo {
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+.armadoBarra {
+    display: flex;
+    height: 26px;
+    gap: 2px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.armadoTramo {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* ---- waffle del photo wall ---- */
+
+.waffleScroll {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.waffle {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.waffleCuadro {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(28, 50, 73, 0.06);
+}
+
+.destacado {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #eeeadf;
+}
+
+.destacadoIcono {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--ac-ink);
+    color: #FFFFFF;
+}
+
+.destacadoNombre {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.destacadoNombre b {
+    font-size: 13.5px;
+    color: var(--ac-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.destacadoNombre span {
+    font-size: 11.5px;
+    color: var(--ac-text-2);
+}
+
+.destacadoCifra {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.destacadoCifra b {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ac-ink);
+}
+
+.destacadoCifra span {
+    font-size: 10.5px;
+    color: var(--ac-muted);
+    white-space: nowrap;
+}
+
+.pie {
+    margin: auto 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--ac-line-soft);
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--ac-muted);
+}
+
+/* ------------------------------------------------------------ apilado --- */
+
+@media (max-width: 1100px) {
+    .tablero {
+        height: auto;
+        grid-template-rows: auto auto;
+    }
+
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+    }
+
+    .heroMitadDerecha {
+        padding-left: 0;
+        padding-top: 20px;
+        border-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .fila {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .grafica {
+        flex: none;
+        height: 320px;
+    }
+}

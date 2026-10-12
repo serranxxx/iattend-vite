@@ -11,35 +11,20 @@ import { useCallback, useMemo, useState } from 'react'
 import { AnaliticaEnvios } from './AnaliticaEnvios'
 import { AnaliticaInvitaciones } from './AnaliticaInvitaciones'
 import { AnaliticaLia } from './AnaliticaLia'
-import { AnaliticaMesas } from './AnaliticaMesas'
+import { AnaliticaModulos } from './AnaliticaModulos'
 import { AnaliticaPromedio } from './AnaliticaPromedio'
 import { AnaliticaResumen } from './AnaliticaResumen'
-import { AjusteDeVentana, PresetsDeVentana } from './VentanaDeDias'
 import { AnaliticaRespuestas } from './AnaliticaRespuestas'
 import { AnaliticaFuncionesNuevas } from './AnaliticaFuncionesNuevas'
-import { AnaliticaSideEvents } from './AnaliticaSideEvents'
 import { nombreDeMes } from '../analiticaCalculos'
+import { EnTopbarFiltros, Segmentado, SelectFiltro } from '../AdminTopbar'
 import styles from './EventosAnalitica.module.css'
 
-const ETAPAS = [
-    // Va primero y con ventana propia de 30 días corridos: es el parte de
-    // resultados, no una etapa del roadmap. No entra en el selector de Periodo
-    // porque ahí solo hay meses de calendario, que es justo lo que no mide.
-    { key: 'resumen', label: 'Últimos 30 días' },
-    { key: 'eventos', label: 'Eventos' },
-    { key: 'envios', label: 'Envíos' },
-    { key: 'respuestas', label: 'Respuestas' },
-    { key: 'mesas', label: 'Mesas' },
-    { key: 'side', label: 'Side events' },
-    // Save the date y Photo wall van juntas: son las dos funciones más nuevas y
-    // ninguna tiene todavía volumen para una pestaña propia.
-    { key: 'nuevas', label: 'Funciones nuevas' },
-    { key: 'lia', label: 'Lia' },
-    // Va al final porque no es una etapa más: es el retrato que resume en una
-    // frase lo que las anteriores desglosan. Tiene ventana propia (3/6/12
-    // meses) y por eso no entra en el selector de Periodo de la barra.
-    { key: 'promedio', label: 'Target' },
-]
+// Las pestañas viven en la topbar del admin (AdminLayout → SUBTABS.analitica)
+// y llegan en `etapa`:
+//   envios (Últimos 30 días) · eventos · historial (Envíos) · respuestas ·
+//   modulos (Mesas y side events) · nuevas · lia · promedio (Perfil)
+// Sus filtros (ventana de días, periodo) se dibujan a la derecha de esa fila.
 
 // Estado de un filtro de periodo. Las opciones no se conocen hasta que la
 // etapa carga sus datos, así que las reporta ella; la guarda de identidad evita
@@ -56,10 +41,7 @@ const usePeriodo = () => {
     return { mes, setMes, meses, recibirMeses }
 }
 
-export const EventosAnalitica = ({ invitations, esPrueba }) => {
-    // Abre en el resumen: es la lectura que contesta "cómo vamos" sin pedir
-    // que nadie elija una etapa primero.
-    const [etapa, setEtapa] = useState('resumen')
+export const EventosAnalitica = ({ etapa = 'envios', invitations, esPrueba }) => {
 
     // Envíos y respuestas se cruzan contra las invitaciones reales, así que el
     // filtro de pruebas se resuelve aquí una sola vez y no en cada etapa.
@@ -78,80 +60,42 @@ export const EventosAnalitica = ({ invitations, esPrueba }) => {
     const [ventanaDias, setVentanaDias] = useState(30)
 
     const respuestas = usePeriodo()
-    const mesas = usePeriodo()
-    const side = usePeriodo()
+    // Mesas y side events comparten periodo (los meses los reporta Mesas).
+    const modulos = usePeriodo()
     const nuevas = usePeriodo()
     const lia = usePeriodo()
 
-    const periodoActivo = { respuestas, mesas, side, nuevas, lia }[etapa] ?? null
+    const periodoActivo = { respuestas, modulos, nuevas, lia }[etapa] ?? null
 
-    // Rango que cubre la ventana. Es aritmética de fechas, no un dato del
-    // backend, así que se arma aquí en vez de subirlo desde el resumen.
-    const rango = useMemo(() => {
-        const hasta = new Date()
-        const desde = new Date(hasta.getTime() - ventanaDias * 86_400_000)
-        const cruzaDeAnio = desde.getFullYear() !== hasta.getFullYear()
-
-        const texto = (valor) => valor.toLocaleDateString('es-MX', {
-            day: 'numeric',
-            month: 'short',
-            year: cruzaDeAnio ? 'numeric' : undefined,
-        }).replace('.', '')
-
-        return { desde: texto(desde), hasta: texto(hasta) }
-    }, [ventanaDias])
 
     return (
         <div className={styles.contenedor}>
-            <div className={styles.nav}>
-                <div className={styles.navFila}>
-                    <div className={styles.etapas}>
-                        {ETAPAS.map(({ key, label }) => (
-                            <button
-                                key={key}
-                                type='button'
-                                className={`${styles.etapa} ${etapa === key ? styles.etapaActiva : ''}`}
-                                onClick={() => setEtapa(key)}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {etapa === 'resumen' && (
-                        <PresetsDeVentana dias={ventanaDias} onCambio={setVentanaDias} />
-                    )}
-
-                    {periodoActivo && (
-                        <div className={styles.filtroGeneral}>
-                            <span className={styles.filtroEtiqueta}>Periodo</span>
-                            <select
-                                className={styles.selectorMes}
-                                value={periodoActivo.mes}
-                                onChange={(e) => periodoActivo.setMes(e.target.value)}
-                                aria-label='Periodo'
-                            >
-                                <option value='todo'>Todo el histórico</option>
-                                {periodoActivo.meses.map(clave => (
-                                    <option key={clave} value={clave}>{nombreDeMes(clave)}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-                </div>
-
-                {etapa === 'resumen' && (
-                    <div className={styles.navPie}>
-                        <span>
-                            Días corridos hasta hoy · <b>{rango.desde}</b> → <b>{rango.hasta}</b>
-                        </span>
-                        <AjusteDeVentana dias={ventanaDias} onCambio={setVentanaDias} />
-                    </div>
+            <EnTopbarFiltros>
+                {etapa === 'envios' && (
+                    <Segmentado
+                        ariaLabel='Ventana de días'
+                        valor={ventanaDias}
+                        onCambio={setVentanaDias}
+                        opciones={[[7, '7 d'], [30, '30 d'], [90, '90 d'], [365, '1 año']].map(([value, label]) => ({ value, label }))}
+                    />
                 )}
-            </div>
+                {periodoActivo && (
+                    <SelectFiltro
+                        value={periodoActivo.mes}
+                        onChange={(e) => periodoActivo.setMes(e.target.value)}
+                        aria-label='Periodo'
+                    >
+                        <option value='todo'>Todo el histórico</option>
+                        {periodoActivo.meses.map(clave => (
+                            <option key={clave} value={clave}>{nombreDeMes(clave)}</option>
+                        ))}
+                    </SelectFiltro>
+                )}
+            </EnTopbarFiltros>
+
 
             {etapa === 'promedio' && <AnaliticaPromedio invitacionesReales={reales} />}
-            {etapa === 'resumen' && (
+            {etapa === 'envios' && (
                 <AnaliticaResumen invitacionesReales={reales} dias={ventanaDias} />
             )}
             {etapa === 'eventos' && (
@@ -160,12 +104,12 @@ export const EventosAnalitica = ({ invitations, esPrueba }) => {
                     totalInvitaciones={(invitations ?? []).length}
                 />
             )}
-            {etapa === 'envios' && <AnaliticaEnvios invitacionesReales={reales} />}
-            {etapa === 'mesas' && (
-                <AnaliticaMesas
+            {etapa === 'historial' && <AnaliticaEnvios invitacionesReales={reales} />}
+            {etapa === 'modulos' && (
+                <AnaliticaModulos
                     invitacionesReales={reales}
-                    mes={mesas.mes}
-                    onMesesDisponibles={mesas.recibirMeses}
+                    mes={modulos.mes}
+                    onMesesDisponibles={modulos.recibirMeses}
                 />
             )}
             {etapa === 'lia' && (
@@ -180,13 +124,6 @@ export const EventosAnalitica = ({ invitations, esPrueba }) => {
                     invitacionesReales={reales}
                     mes={nuevas.mes}
                     onMesesDisponibles={nuevas.recibirMeses}
-                />
-            )}
-            {etapa === 'side' && (
-                <AnaliticaSideEvents
-                    invitacionesReales={reales}
-                    mes={side.mes}
-                    onMesesDisponibles={side.recibirMeses}
                 />
             )}
             {etapa === 'respuestas' && (

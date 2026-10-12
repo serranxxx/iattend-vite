@@ -688,11 +688,11 @@
 }
 
 .tablaColaboradores {
-    min-width: 980px;
+    min-width: 1100px;
 }
 
 .tablaColaboradores .row {
-    grid-template-columns: 1.2fr 150px 1.4fr 1fr 1.2fr 80px 100px 90px;
+    grid-template-columns: 1.2fr 150px 1.4fr 1fr 1.2fr 80px 100px 90px 120px;
 }
 
 /* Texto secundario dentro de una celda: correos, teléfonos, fechas. */

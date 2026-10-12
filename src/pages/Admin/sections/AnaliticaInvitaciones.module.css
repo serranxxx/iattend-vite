@@ -1,0 +1,470 @@
+/*
+  Analítica › Eventos (tablero 2q del rediseño del admin).
+
+  Alto fijo de 718px sin scroll de página: KPIs arriba y dos filas de tarjetas
+  (1fr | 1.1fr). Lo que no cabe hace scroll dentro de su tarjeta. Debajo de
+  1100px las tarjetas se apilan y la página vuelve a hacer scroll.
+*/
+
+.tablero {
+    height: 718px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 12px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.empty {
+    padding: 48px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ac-muted);
+}
+
+/* Etiqueta de sección: misma para KPIs y títulos de tarjeta. */
+.label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ac-text-3);
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ franja KPI --- */
+
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 16px;
+    box-shadow: 0 0 12px rgba(12, 23, 27, 0.07);
+    overflow: hidden;
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 11px 18px;
+    border-left: 1px solid var(--ac-line-soft);
+    min-width: 0;
+}
+
+.kpi:first-child {
+    border-left: none;
+}
+
+.kpi .label {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+}
+
+.kpiFila {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.kpiValor {
+    font-size: 22px;
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--ac-ink);
+}
+
+.kpiPie {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- tarjetas --- */
+
+.fila {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+.card {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+    padding: 18px 22px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 20px;
+    box-shadow: 0 0 12px rgba(12, 23, 27, 0.07);
+}
+
+.filaBaja .card {
+    gap: 12px;
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.cardNota {
+    font-size: 11.5px;
+    color: var(--ac-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cardPie {
+    margin: 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--ac-line-soft);
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.vacio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--ac-muted);
+}
+
+.aviso {
+    font-size: 11.5px;
+    color: var(--ac-amber);
+}
+
+/* El canvas llena lo que sobra de la tarjeta: `min-height: 0` deja que el
+   flex lo encoja en vez de empujar el alto de la fila. */
+.grafica {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.leyenda {
+    display: flex;
+    gap: 14px;
+    font-size: 11.5px;
+    color: var(--ac-text-2);
+    white-space: nowrap;
+}
+
+.leyendaChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.leyendaPunto {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+}
+
+/* ----------------------------------------------------------- anticipación --- */
+
+.rangos {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 6px;
+}
+
+.rango {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 28px;
+    gap: 10px;
+    align-items: center;
+    font-size: 12.5px;
+}
+
+.rangoLabel {
+    color: var(--ac-text-2);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.rangoPista {
+    display: block;
+    height: 14px;
+    border-radius: 5px;
+    background: #eeeadf;
+    overflow: hidden;
+}
+
+.rangoFill {
+    display: block;
+    height: 100%;
+    border-radius: 5px;
+}
+
+.rangoValor {
+    font-variant-numeric: tabular-nums;
+    color: var(--ac-ink);
+}
+
+/* --------------------------------------------------------------- créditos --- */
+
+.resumen {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 22px;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #eeeadf;
+}
+
+.resumenCifra {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.resumenValor {
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ac-ink);
+}
+
+.resumenTexto {
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--ac-text-2);
+}
+
+.resumenAvance {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.avance {
+    display: flex;
+    gap: 2px;
+    height: 10px;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.avanceTexto {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--ac-text-2);
+}
+
+.avanceTexto b {
+    color: var(--ac-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.subHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--ac-muted);
+}
+
+.verTodas {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.verTodas:hover,
+.verTodas[aria-expanded='true'] {
+    color: var(--ac-ink);
+}
+
+.chevron {
+    transition: transform 0.16s ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+/* El popup se portalea a <body>: los tokens que usa son los de :root. */
+.listaPopup {
+    min-width: 280px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 12px;
+    box-shadow: var(--ac-shadow-popup);
+    padding: 10px 6px 6px;
+    font-family: var(--ac-font-ui);
+    color: var(--ac-ink);
+}
+
+.listaHead {
+    padding: 0 10px 8px;
+    font-size: 11px;
+    color: var(--ac-muted);
+    border-bottom: 1px solid var(--ac-line-soft);
+}
+
+.lista {
+    display: flex;
+    flex-direction: column;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.listaItem {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+
+.listaItem:hover {
+    background: var(--ac-surface-alt);
+}
+
+.listaPos,
+.listaSaldo {
+    font-size: 11px;
+    color: var(--ac-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.listaNombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.listaValor {
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- ciudades --- */
+
+.ciudades {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 0;
+    padding: 0 2px 0 0;
+    list-style: none;
+}
+
+.ciudad {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr) 26px;
+    gap: 10px;
+    align-items: center;
+    font-size: 12.5px;
+}
+
+.ciudadNombre {
+    color: var(--ac-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ciudadPista {
+    display: block;
+    height: 10px;
+    border-radius: 99px;
+    background: #eeeadf;
+    overflow: hidden;
+}
+
+.ciudadFill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+}
+
+.ciudadValor {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ac-ink);
+}
+
+/* ------------------------------------------------------------ responsivo --- */
+
+@media (max-width: 1100px) {
+    .tablero {
+        height: auto;
+        grid-template-rows: none;
+    }
+
+    .kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kpi:nth-child(3) {
+        border-left: none;
+    }
+
+    .kpi:nth-child(n + 3) {
+        border-top: 1px solid var(--ac-line-soft);
+    }
+
+    .fila {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* Apiladas, las tarjetas con canvas necesitan un alto propio: sin la
+       rejilla de alto fijo, el flex ya no les reparte nada. */
+    .card {
+        min-height: 280px;
+    }
+
+    .ciudades {
+        max-height: 320px;
+    }
+}

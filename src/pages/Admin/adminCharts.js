@@ -96,6 +96,41 @@ export const useTokens = () => useMemo(() => {
     }
 }, [])
 
+// Paleta de marca i attend para las gráficas del admin (rediseño del panel):
+// sobre blanco la serie principal va en navy, la secundaria en lila y la
+// terciaria en verde; "resto"/neutro en crema y referencias en contraste.
+// Sobre navy: principal lila, secundaria verde, neutro blanco translúcido.
+export const MARCA = {
+    navy: '#1c3249',
+    lila: '#D1BEDD',
+    verde: '#AAC187',
+    crema: '#eeeadf',
+    contraste: '#0c171b',
+    lilaRelleno: 'rgba(209, 190, 221, 0.55)',
+    lilaRellenoSuave: 'rgba(209, 190, 221, 0.18)',
+    navyRelleno: 'rgba(28, 50, 73, 0.08)',
+    verdeRelleno: 'rgba(170, 193, 135, 0.30)',
+    // Sobre fondo navy
+    oscuroGrid: 'rgba(255, 255, 255, 0.08)',
+    oscuroNeutro: 'rgba(255, 255, 255, 0.5)',
+    oscuroMeta: 'rgba(255, 255, 255, 0.55)',
+}
+
+// Años encimados (Ventas): actual / previo / viejo, sobre blanco y sobre navy.
+export const COLOR_POR_ANIO = {
+    actual: { color: MARCA.navy, oscuro: MARCA.lila },
+    previo: { color: MARCA.lila, oscuro: MARCA.verde },
+    viejo: { color: MARCA.verde, oscuro: MARCA.oscuroNeutro },
+}
+
+// Tooltip para gráficas sobre fondo navy: blanco con texto navy.
+export const tooltipOscuro = (tokens, formato) => ({
+    ...tooltipBase(tokens, formato),
+    backgroundColor: '#FFFFFF',
+    titleColor: MARCA.navy,
+    bodyColor: MARCA.navy,
+})
+
 // Con `mode: 'index'` el tooltip agarra el punto más cercano en X aunque el
 // cursor no esté justo encima de la línea.
 export const tooltipBase = (tokens, formato = formatCurrency) => ({

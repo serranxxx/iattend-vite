@@ -1,23 +1,16 @@
 import { useCallback, useState } from 'react'
-import { InteresadosSection } from './InteresadosSection'
 import { IngresosSection } from './IngresosSection'
-import { VendedoresSection } from './VendedoresSection'
 import { StripeSection } from './StripeSection'
 import { MESES } from '../ventasCalculos'
+import { EnTopbarFiltros, SelectFiltro } from '../AdminTopbar'
 import styles from './VentasSection.module.css'
 
-const TABS = [
-    { key: 'ventas', label: 'Ingresos y comisiones' },
-    { key: 'historico', label: 'Histórico de ventas' },
-    { key: 'vendedores', label: 'Vendedores' },
-    { key: 'interesados', label: 'Interesados' },
-    { key: 'stripe', label: 'Stripe' },
-]
-
-export const VentasSection = () => {
+// Las pestañas (Ingresos y comisiones · Histórico · Stripe) viven en la topbar
+// del admin y llegan en `tab`; Mes y Año se dibujan a su derecha. Vendedores e
+// Interesados se mudaron a Usuarios › Vendedores.
+export const VentasSection = ({ tab = 'ingresos' }) => {
     const now = new Date()
 
-    const [tab, setTab] = useState('ventas')
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
     const [anios, setAnios] = useState([now.getFullYear()])
@@ -32,48 +25,18 @@ export const VentasSection = () => {
 
     return (
         <div className={styles.ventas}>
-            <div className={styles.controls}>
-                <div className={styles.tabs}>
-                    {TABS.map(({ key, label }) => (
-                        <button
-                            key={key}
-                            type='button'
-                            className={`${styles.tab} ${tab === key ? styles.tabActive : ''}`}
-                            onClick={() => setTab(key)}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
+            {tab === 'ingresos' && (
+                <EnTopbarFiltros>
+                    <SelectFiltro value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label='Mes'>
+                        {MESES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                    </SelectFiltro>
+                    <SelectFiltro value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label='Año'>
+                        {anios.map(a => <option key={a} value={a}>{a}</option>)}
+                    </SelectFiltro>
+                </EnTopbarFiltros>
+            )}
 
-                <div className={styles.spacer} />
-
-                {tab === 'ventas' && (
-                    <>
-                        <select
-                            className={styles.select}
-                            value={month}
-                            onChange={(e) => setMonth(Number(e.target.value))}
-                            aria-label='Mes'
-                        >
-                            {MESES.map((m, i) => (
-                                <option key={m} value={i + 1}>{m}</option>
-                            ))}
-                        </select>
-
-                        <select
-                            className={styles.select}
-                            value={year}
-                            onChange={(e) => setYear(Number(e.target.value))}
-                            aria-label='Año'
-                        >
-                            {anios.map(a => <option key={a} value={a}>{a}</option>)}
-                        </select>
-                    </>
-                )}
-            </div>
-
-            {tab === 'ventas' && (
+            {tab === 'ingresos' && (
                 <IngresosSection year={year} month={month} onAniosDisponibles={handleAnios} />
             )}
             {/* El histórico reusa el mismo componente: comparte la carga de
@@ -87,8 +50,6 @@ export const VentasSection = () => {
                     vista='historico'
                 />
             )}
-            {tab === 'vendedores' && <VendedoresSection />}
-            {tab === 'interesados' && <InteresadosSection />}
             {tab === 'stripe' && <StripeSection />}
         </div>
     )

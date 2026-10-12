@@ -1,78 +1,43 @@
 /*
-  Analítica de producto — Últimos 30 días.
+  Analítica de producto — Últimos 30 días (tablero 2p del rediseño).
 
-  Un parte de resultados, no un tablero: números y una frase que los ata, sin
-  una sola gráfica. Las otras pestañas sirven para entender POR QUÉ pasa algo;
-  esta contesta QUÉ pasó, de un vistazo.
+  Qué pasó con los mensajes de WhatsApp en la ventana: cuántos salieron, cuántos
+  llegaron, de qué eran, por qué fallaron y qué se rescató al reintentar. La
+  vista cabe completa en 718 px sin scroll de página; lo que no quepa hace
+  scroll dentro de su tarjeta. El histórico completo vive en la pestaña Envíos.
 
-  La ventana son días corridos hacia atrás desde hoy —30 por defecto—, no el
-  mes de calendario. La diferencia importa: un día 3 de mes, "este mes" son tres
-  días de datos y el resumen no dice nada. El slider mueve el tamaño de esa
-  ventana sin cambiar dónde termina: hoy siempre es el borde derecho.
+  La ventana son días corridos hacia atrás desde hoy —30 por defecto, la elige
+  el contenedor en la topbar—, no el mes de calendario: un día 3 de mes, "este
+  mes" son tres días de datos y el tablero no dice nada. Hoy siempre es el
+  borde derecho.
 
-  Cada bloque se recorta por la fecha que le corresponde, y no todas son la
-  misma:
-
-  · Eventos se corta por la venta (`created_at`) y por la celebración
-    (`event_date`), que son dos preguntas distintas sobre la misma tabla.
-  · Envíos y recordatorios, por la fecha del mensaje.
-  · Respuestas, por la fecha del envío que las provocó.
-  · Mesas, por la fecha de la PRIMERA mesa del evento: la ventana es "quién se
-    puso a acomodar en estos 30 días", no "quién compró".
-  · Side events, por su creación.
-
-  Todas las cifras de esta pantalla van en PROMEDIO, no en mediana. Es la
-  excepción del panel —las demás pestañas usan mediana— y tiene su razón: la
-  ventana es corta y con cuatro o cinco valores la mediana ignora los extremos
-  y acaba siendo el valor de uno solo. Cada etiqueta lo dice.
+  Todo se recorta por la fecha del mensaje (envíos y recordatorios), y cada
+  intento cuenta: cada uno se cobra.
 */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Bar, Chart, Line } from 'react-chartjs-2'
-import {
-    ESTADOS_PENDIENTE, claveDeInvitado, esMesaReal, esPro, promedio,
-} from '../analiticaCalculos'
+import { Bar, Doughnut } from 'react-chartjs-2'
+import { claveDeInvitado } from '../analiticaCalculos'
 import { traerTodo } from '../analiticaDatos'
-import { ejeTexto, opcionesBase, tooltipBase, useTokens } from '../adminCharts'
-import { Leyenda } from './AnaliticaPiezas'
+import { MARCA, opcionesBase, tooltipBase, tooltipOscuro, useTokens } from '../adminCharts'
 import { useTipoDeCambio } from '../tipoDeCambio'
-import styles from './EventosAnalitica.module.css'
+import styles from './AnaliticaResumen.module.css'
 
 const DIAS_POR_DEFECTO = 30
 
-// Los topes del slider. Por debajo de una semana casi ningún bloque junta
-// muestra suficiente para decir nada; por encima del año el "resumen de lo
-// reciente" deja de serlo y para eso están las otras pestañas.
-const DIAS_MINIMOS = 7
-const DIAS_MAXIMOS = 365
-
 const MS_POR_DIA = 86_400_000
-const MS_POR_HORA = 3_600_000
 
-// Mismo criterio que la pestaña de Mesas: un acomodo cuenta como real a partir
-// de 30 invitados sentados, y por debajo del 20% de ocupación se considera
-// abandonado.
-const SENTADOS_PARA_ACOMODO_REAL = 30
-const OCUPACION_ABANDONO = 0.2
+// Hasta 90 días cada barra es un día; con la ventana de un año serían 365
+// barras de un píxel, así que ahí cada barra es una semana.
+const DIAS_CON_BARRA_DIARIA = 90
 
 // Las mismas tarifas de Meta que usa la pestaña de Envíos.
 const TARIFA_USD = { marketing: 0.025, utility: 0.004 }
 
 const LLEGO = new Set(['delivered', 'read'])
 
-// Planes que son una venta. `free` y las invitaciones sin plan se crean desde
-// el panel sin cobrar, así que contarlas como vendidas hacía que el resumen
-// dijera 5 donde Ventas decía 4.
-const PLANES_DE_PAGO = new Set(['pro', 'lite', 'paperless'])
-
-const esVenta = (invitacion) =>
-    PLANES_DE_PAGO.has(String(invitacion?.plan ?? '').toLowerCase())
-
-// Doce tramos siempre, sea la ventana de una semana o de un año: la forma de la
-// curva se lee igual y el eje se etiqueta según lo ancho que salga el tramo.
-const TRAMOS = 12
-
-const ETIQUETA_PLAN = { pro: 'PRO', lite: 'Lite', paperless: 'Paperless' }
+// Neutro sobre navy: lo que salió pero Meta todavía no confirma.
+const NEUTRO_OSCURO = 'rgba(255, 255, 255, 0.18)'
 
 // Los títulos que manda Meta son frases largas en inglés ("This message was not
 // delivered to maintain healthy ecosystem engagement.") que en una leyenda de
@@ -108,7 +73,6 @@ const COLUMNAS_RECORDATORIO = [
     // tipo: sin él, `LLEGO.has(undefined)` es falso y la tabla mostraba 0% de
     // entrega en las dos filas de recordatorio.
     'status',
-    'credit_charged',
     // Esta tabla SÍ dice a qué va dirigido el mensaje: nulo es recordatorio de
     // la invitación, con valor es de un side event. En
     // `invitation_message_dispatches` no existe la columna y hay que deducirlo.
@@ -117,7 +81,22 @@ const COLUMNAS_RECORDATORIO = [
     'facturable:raw_webhook->pricing->>billable',
 ].join(',')
 
-const plural = (n, singular, pluralForma) => `${n} ${n === 1 ? singular : pluralForma}`
+/*
+  Cada tipo de envío tiene su color fijo —no el de su posición— para que un
+  tipo no cambie de color al reordenarse cuando otro lo rebasa. Sobre blanco:
+  navy, lila, verde, crema y contraste, en ese orden de peso habitual.
+*/
+const TIPOS = [
+    { clave: 'invitacion', label: 'Invitación', color: MARCA.navy },
+    { clave: 'recordatorio', label: 'Recordatorio de invitación', color: MARCA.lila },
+    { clave: 'borrado', label: 'Invitado ya borrado', color: MARCA.verde },
+    { clave: 'side', label: 'Side event', color: MARCA.crema },
+    { clave: 'recordatorioSide', label: 'Recordatorio de side event', color: MARCA.contraste },
+]
+
+// Causas de fallo: las tres primeras en la paleta de marca y "otras" en crema.
+const COLOR_CAUSA = [MARCA.navy, MARCA.lila, MARCA.verde, MARCA.crema]
+
 const pct = (parte, total) => (total > 0 ? Math.round((parte / total) * 100) : 0)
 const miles = (n) => new Intl.NumberFormat('es-MX').format(n)
 
@@ -133,18 +112,9 @@ const mxn = (n) => new Intl.NumberFormat('es-MX', {
     style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
 }).format(n)
 
-const enHoras = (horas) => {
-    if (horas === null) return '—'
-    if (horas < 1) return `${Math.round(horas * 60)} min`
-    if (horas < 48) return `${Math.round(horas)} h`
-    return `${Math.round(horas / 24)} días`
-}
-
-// `event_date` es timestamptz a medianoche UTC: representa un día de
-// calendario, no un instante. Leerlo como fecha local le resta un día en México.
-const diaDelEvento = (invitacion) => (invitacion?.event_date
-    ? new Date(String(invitacion.event_date).slice(0, 10))
-    : null)
+const fechaCorta = (fecha, conAnio = false) => fecha
+    .toLocaleDateString('es-MX', { day: 'numeric', month: 'short', ...(conAnio ? { year: '2-digit' } : {}) })
+    .replace('.', '')
 
 // ------------------------------------------------------------------ datos ---
 
@@ -155,16 +125,17 @@ const useResumen = (invitacionesReales, dias) => {
     useEffect(() => {
         let cancelado = false
 
+        // Solo lo que pide el tablero de envíos: invitados y side events hacen
+        // falta para deducir de qué es cada envío (ver `tipoDeEnvio`).
         Promise.all([
-            traerTodo('guests', 'id,invitation_id,state,table,last_update_date,reminder_count'),
+            traerTodo('guests', 'id,invitation_id'),
             traerTodo('invitation_message_dispatches', COLUMNAS_ENVIO),
             traerTodo('invitation_reminder_dispatches', COLUMNAS_RECORDATORIO),
-            traerTodo('tables', 'id,invitation_id,size,created_at'),
-            traerTodo('side_events', 'id,invitation_id,created_at'),
+            traerTodo('side_events', 'id,invitation_id'),
             traerTodo('side_events_guests', 'id,side_events_id'),
         ])
-            .then(([invitados, envios, recordatorios, mesas, sides, sideGuests]) => {
-                if (!cancelado) setCrudo({ invitados, envios, recordatorios, mesas, sides, sideGuests })
+            .then(([invitados, envios, recordatorios, sides, sideGuests]) => {
+                if (!cancelado) setCrudo({ invitados, envios, recordatorios, sides, sideGuests })
             })
             .catch(fallo => {
                 console.error('Error al cargar el resumen:', fallo)
@@ -182,53 +153,21 @@ const useResumen = (invitacionesReales, dias) => {
         const desde = new Date(hasta.getTime() - dias * MS_POR_DIA)
         const enVentana = (fecha) => fecha !== null && fecha >= desde && fecha <= hasta
 
-        // Ventana inmediatamente anterior, del mismo largo: es contra lo que se
-        // comparan las variaciones de las tarjetas de arriba.
-        const desdePrevio = new Date(desde.getTime() - dias * MS_POR_DIA)
-        const enPrevia = (fecha) => fecha !== null && fecha >= desdePrevio && fecha < desde
-
-        const anchoTramo = (dias * MS_POR_DIA) / TRAMOS
+        const anchoTramo = dias <= DIAS_CON_BARRA_DIARIA ? MS_POR_DIA : 7 * MS_POR_DIA
+        const tramos = Math.ceil((dias * MS_POR_DIA) / anchoTramo)
         const tramoDe = (fecha) => Math.min(
-            TRAMOS - 1,
+            tramos - 1,
             Math.max(0, Math.floor((fecha - desde) / anchoTramo)),
         )
 
-        const serieVacia = () => Array.from({ length: TRAMOS }, () => 0)
+        const serieVacia = () => Array.from({ length: tramos }, () => 0)
 
-        // La etiqueta del tramo depende de lo ancho que salga: con la ventana en
-        // un año cada tramo es un mes y basta el nombre; con 30 días son dos
-        // días y hace falta el número.
-        const etiquetas = Array.from({ length: TRAMOS }, (_, i) => {
+        const etiquetas = Array.from({ length: tramos }, (_, i) => {
             const inicio = new Date(desde.getTime() + i * anchoTramo)
-            return anchoTramo >= 25 * MS_POR_DIA
-                ? inicio.toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')
-                : inicio.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }).replace('.', '')
+            return anchoTramo > MS_POR_DIA ? `semana del ${fechaCorta(inicio)}` : fechaCorta(inicio)
         })
 
         const idsReales = new Set(invitacionesReales.map(i => i.id))
-        const porId = new Map(invitacionesReales.map(i => [i.id, i]))
-
-        // ----------------------------------------------------------- eventos ---
-        const creados = invitacionesReales.filter(i => enVentana(new Date(i.created_at)))
-        const vendidos = creados.filter(esVenta)
-        const gratis = creados.length - vendidos.length
-        const celebrados = invitacionesReales.filter(i => enVentana(diaDelEvento(i)))
-
-        const vendidosPrevios = invitacionesReales
-            .filter(i => enPrevia(new Date(i.created_at)) && esVenta(i)).length
-
-        const serieVendidos = serieVacia()
-        const serieCelebrados = serieVacia()
-
-        vendidos.forEach(i => { serieVendidos[tramoDe(new Date(i.created_at))] += 1 })
-        celebrados.forEach(i => { serieCelebrados[tramoDe(diaDelEvento(i))] += 1 })
-
-        const anticipaciones = vendidos
-            .map(i => {
-                const evento = diaDelEvento(i)
-                return evento ? Math.round((evento - new Date(i.created_at)) / MS_POR_DIA) : null
-            })
-            .filter(d => d !== null && d >= 0)
 
         // ------------------------------------------------------------ envíos ---
         /*
@@ -266,17 +205,6 @@ const useResumen = (invitacionesReales, dias) => {
         const recordatoriosVentana = crudo.recordatorios
             .filter(r => idsReales.has(r.invitation_id) && enVentana(new Date(r.created_at)))
 
-        const fallidos = enviosVentana.filter(e => e.status === 'failed')
-
-        const causas = new Map()
-        fallidos.forEach(fallo => {
-            const codigo = fallo.codigo ?? 'sin código'
-            const causa = causas.get(codigo)
-                ?? { codigo, titulo: tituloCorto(fallo.titulo) ?? 'sin causa registrada', total: 0 }
-            causa.total += 1
-            causas.set(codigo, causa)
-        })
-
         // Todo lo que salió por WhatsApp en la ventana, por tipo. Incluye los
         // recordatorios porque es el desglose de lo que Meta cobra, y ahí no
         // distingue entre una invitación y un recordatorio: los cuenta igual.
@@ -311,24 +239,19 @@ const useResumen = (invitacionesReales, dias) => {
             fallaron: acc.fallaron + cubo.fallaron,
         }), { llegaron: 0, fallaron: 0 })
 
-        const causasPrincipales = [...causas.values()].sort((a, b) => b.total - a.total)
+        // Envíos por día, partidos por cómo terminaron. Cuenta MENSAJES —envíos
+        // y recordatorios— igual que la dona de al lado, para que las barras
+        // sumen lo mismo que el centro de la dona.
+        const serieLlegaron = serieVacia()
+        const serieSinConfirmar = serieVacia()
+        const serieFallaron = serieVacia()
 
-        // Top tres causas y el resto en un cajón: la cola son códigos de un solo
-        // caso que no cambian ninguna decisión.
-        const cola = causasPrincipales.slice(3)
-        const causasResumidas = [
-            ...causasPrincipales.slice(0, 3),
-            ...(cola.length > 0
-                ? [{ codigo: 'otras', titulo: 'Otras causas', total: cola.reduce((a, c) => a + c.total, 0) }]
-                : []),
-        ]
-
-        // La serie cuenta MENSAJES —envíos y recordatorios— igual que la
-        // tarjeta: con el KPI contando solo envíos, uno decía 279 y la otra 479
-        // sin que nada explicara la diferencia.
-        const serieEnvios = serieVacia()
-        enviosVentana.forEach(e => { serieEnvios[tramoDe(new Date(e.created_at))] += 1 })
-        recordatoriosVentana.forEach(r => { serieEnvios[tramoDe(new Date(r.created_at))] += 1 })
+        ;[...enviosVentana, ...recordatoriosVentana].forEach(m => {
+            const tramo = tramoDe(new Date(m.created_at))
+            if (LLEGO.has(m.status)) serieLlegaron[tramo] += 1
+            else if (m.status === 'failed') serieFallaron[tramo] += 1
+            else serieSinConfirmar[tramo] += 1
+        })
 
         // --- intentos por invitado ---
         // Una invitación es un invitado, no una fila: si falló y se reintentó
@@ -452,458 +375,129 @@ const useResumen = (invitacionesReales, dias) => {
         const gastoUsd = facturables.reduce((acc, m) => acc + (TARIFA_USD[m.categoria] ?? 0), 0)
         const sinTarifa = facturables.filter(m => TARIFA_USD[m.categoria] === undefined).length
 
-        // --------------------------------------------------------- créditos ---
-        // El consumo se cuenta por lo que se cobró DENTRO de la ventana, no por
-        // los eventos vendidos en ella: quien compra hoy manda sus invitaciones
-        // semanas después, así que medir el consumo de los recién vendidos da
-        // cero y no dice nada.
-        //
-        // Un crédito es un envío de invitación que no falló (los fallidos se
-        // reembolsan) más cada recordatorio que sí se cobró.
-        const creditos = { total: 0, porEvento: new Map() }
-
-        const cobrarCredito = (invitationId) => {
-            creditos.total += 1
-            creditos.porEvento.set(invitationId, (creditos.porEvento.get(invitationId) ?? 0) + 1)
-        }
-
-        enviosVentana
-            .filter(e => e.status !== 'failed' && esPro(porId.get(e.invitation_id)))
-            .forEach(e => cobrarCredito(e.invitation_id))
-
-        recordatoriosVentana
-            .filter(r => r.credit_charged && esPro(porId.get(r.invitation_id)))
-            .forEach(r => cobrarCredito(r.invitation_id))
-
-        // -------------------------------------------------------- respuestas ---
-        // Primer envío que no falló de cada invitado: desde ahí se mide todo.
-        const primerEnvio = new Map()
-
-        crudo.envios
-            .filter(e => idsReales.has(e.invitation_id) && e.status !== 'failed')
-            .forEach(e => {
-                const clave = claveDeInvitado(e.invitation_id, e.guest_id)
-                const momento = new Date(e.created_at)
-                const previo = primerEnvio.get(clave)
-                if (!previo || momento < previo) primerEnvio.set(clave, momento)
-            })
-
-        const invitadosDeLaVentana = crudo.invitados.filter(g => {
-            const envio = primerEnvio.get(claveDeInvitado(g.invitation_id, g.id))
-            return envio !== undefined && enVentana(envio)
-        })
-
-        const tiempos = invitadosDeLaVentana
-            .filter(g => !ESTADOS_PENDIENTE.has(g.state) && g.last_update_date)
-            .map(g => (new Date(g.last_update_date)
-                - primerEnvio.get(claveDeInvitado(g.invitation_id, g.id))) / MS_POR_HORA)
-            .filter(h => h >= 0)
-
-        const serieRecibidos = serieVacia()
-        const serieRespondieron = serieVacia()
-
-        invitadosDeLaVentana.forEach(g => {
-            const tramo = tramoDe(primerEnvio.get(claveDeInvitado(g.invitation_id, g.id)))
-            serieRecibidos[tramo] += 1
-            if (!ESTADOS_PENDIENTE.has(g.state)) serieRespondieron[tramo] += 1
-        })
-
-        const serieTasa = serieRecibidos.map((total, i) => pct(serieRespondieron[i], total))
-
-        // Tasa de respuesta de la ventana anterior, para la variación en puntos.
-        const invitadosPrevios = crudo.invitados.filter(g => {
-            const envio = primerEnvio.get(claveDeInvitado(g.invitation_id, g.id))
-            return envio !== undefined && enPrevia(envio)
-        })
-
-        const tasaPrevia = pct(
-            invitadosPrevios.filter(g => !ESTADOS_PENDIENTE.has(g.state)).length,
-            invitadosPrevios.length,
-        )
-
-        const conRecordatorio = invitadosDeLaVentana.filter(g => Number(g.reminder_count) > 0)
-        const recordatorioQueMovio = conRecordatorio.filter(g => !ESTADOS_PENDIENTE.has(g.state)).length
-
-        // ------------------------------------------------------------- mesas ---
-        const mesasPorEvento = new Map()
-
-        crudo.mesas.filter(esMesaReal).forEach(m => {
-            if (!idsReales.has(m.invitation_id)) return
-
-            const cubo = mesasPorEvento.get(m.invitation_id) ?? { mesas: 0, primera: null }
-            cubo.mesas += 1
-
-            const creada = new Date(m.created_at)
-            if (!cubo.primera || creada < cubo.primera) cubo.primera = creada
-
-            mesasPorEvento.set(m.invitation_id, cubo)
-        })
-
-        const sentadosPorEvento = new Map()
-        const listaPorEvento = new Map()
-
-        crudo.invitados.forEach(g => {
-            if (!idsReales.has(g.invitation_id)) return
-            listaPorEvento.set(g.invitation_id, (listaPorEvento.get(g.invitation_id) ?? 0) + 1)
-            if (g.table !== null && g.table !== undefined) {
-                sentadosPorEvento.set(g.invitation_id, (sentadosPorEvento.get(g.invitation_id) ?? 0) + 1)
-            }
-        })
-
-        // Los que EMPEZARON a acomodar dentro de la ventana.
-        const arrancaronMesas = [...mesasPorEvento.entries()]
-            .filter(([, cubo]) => enVentana(cubo.primera))
-            .map(([id, cubo]) => {
-                const lista = listaPorEvento.get(id) ?? 0
-                const sentados = sentadosPorEvento.get(id) ?? 0
-
-                return {
-                    id,
-                    primera: cubo.primera,
-                    mesas: cubo.mesas,
-                    sentados,
-                    ocupacion: lista > 0 ? sentados / lista : 0,
-                    diasHastaLaPrimera: Math.max(0, Math.round(
-                        (cubo.primera - new Date(porId.get(id).created_at)) / MS_POR_DIA,
-                    )),
-                }
-            })
-
-        // Los tres destinos son excluyentes a propósito: un evento con 400
-        // invitados y 35 sentados llega a los 30 y aun así está casi vacío, así
-        // que sin la condición de ocupación los dos cubos se solaparían y la
-        // barra apilada sumaría más eventos de los que hay.
-        const abandonaron = arrancaronMesas.filter(e => e.ocupacion < OCUPACION_ABANDONO)
-        const acomodoReal = arrancaronMesas.filter(e =>
-            e.ocupacion >= OCUPACION_ABANDONO && e.sentados >= SENTADOS_PARA_ACOMODO_REAL)
-        const acomodoParcial = arrancaronMesas.filter(e =>
-            e.ocupacion >= OCUPACION_ABANDONO && e.sentados < SENTADOS_PARA_ACOMODO_REAL)
-
-        // La serie cuenta EVENTOS que empezaron a acomodar en cada tramo, no
-        // mesas: un evento que arma 40 de una sentada no es cuarenta veces la
-        // señal de adopción que uno que arma una.
-        const serieMesas = serieVacia()
-        arrancaronMesas.forEach(e => { serieMesas[tramoDe(e.primera)] += 1 })
-
-        // ------------------------------------------------------- side events ---
-        const sidesVentana = crudo.sides
-            .filter(s => idsReales.has(s.invitation_id) && enVentana(new Date(s.created_at)))
-
-        const sidesPorEvento = new Map()
-        sidesVentana.forEach(s => {
-            sidesPorEvento.set(s.invitation_id, (sidesPorEvento.get(s.invitation_id) ?? 0) + 1)
-        })
-
-        const cubosDePlan = new Map()
-        sidesPorEvento.forEach((total, id) => {
-            const plan = String(porId.get(id)?.plan ?? '').toLowerCase() || 'sin plan'
-            const cubo = cubosDePlan.get(plan) ?? { plan, eventos: 0, sides: 0 }
-            cubo.eventos += 1
-            cubo.sides += total
-            cubosDePlan.set(plan, cubo)
-        })
-
-        // PRO y Lite se listan siempre, aunque uno de los dos no haya creado
-        // ninguno: un cero es una respuesta —"ese plan no los usa"— y quitar la
-        // fila hace que parezca que no se midió.
-        const PLANES_FIJOS = ['pro', 'lite']
-
-        PLANES_FIJOS.forEach(plan => {
-            if (!cubosDePlan.has(plan)) cubosDePlan.set(plan, { plan, eventos: 0, sides: 0 })
-        })
-
-        const sidesPorPlan = [...cubosDePlan.values()]
-            .map(cubo => ({
-                ...cubo,
-                porEvento: cubo.eventos > 0 ? cubo.sides / cubo.eventos : 0,
-            }))
-            .sort((a, b) => b.sides - a.sides)
 
         return {
             desde,
-            hasta,
             etiquetas,
-            eventos: {
-                serie: serieVendidos,
-                serieCelebrados,
-                previos: vendidosPrevios,
-                gratis,
-                vendidos: vendidos.length,
-                celebrados: celebrados.length,
-                anticipacion: promedio(anticipaciones),
-                anticipacionMuestra: anticipaciones.length,
-                creditos: promedio([...creditos.porEvento.values()]),
-                creditosMuestra: creditos.porEvento.size,
-            },
-            envios: {
-                serie: serieEnvios,
-                causasResumidas,
-                total: enviosVentana.length,
-                mensajes: mensajesDeLaVentana,
-                totales,
-                porTipo,
-                mandadas: intentosPorInvitado.size,
-                mandadasQueLlegaron,
-                reintentos,
-                conReintento,
-                reintentoQueLlego,
-                fallosReintentados,
-                envio,
-                reintento,
-                reenvio,
-                causasDelEnvio: causasDelEnvioOrdenadas,
-                causasDelReintento: causasDelReintentoOrdenadas,
-                fallidos: fallidos.length,
-                causas: causasPrincipales,
-                recordatorios: recordatoriosVentana.length,
-                gastoUsd,
-                mensajesCobrados: facturables.length - sinTarifa,
-                sinTarifa,
-            },
-            respuestas: {
-                serie: serieTasa,
-                tasaPrevia,
-                invitados: invitadosDeLaVentana.length,
-                respondieron: invitadosDeLaVentana.filter(g => !ESTADOS_PENDIENTE.has(g.state)).length,
-                tiempo: promedio(tiempos),
-                tiempoMuestra: tiempos.length,
-                recordatoriosEnviados: conRecordatorio.length,
-                recordatoriosQueMovieron: recordatorioQueMovio,
-            },
-            mesas: {
-                serie: serieMesas,
-                arrancaron: arrancaronMesas.length,
-                acomodoReal: acomodoReal.length,
-                acomodoParcial: acomodoParcial.length,
-                abandonaron: abandonaron.length,
-                // Crear mesas y usarlas son dos cosas distintas: un evento que
-                // armó veinte y no sentó a nadie creó, no usó. "Usaron" es el
-                // que dejó sentada al menos una quinta parte de su lista.
-                usaron: arrancaronMesas.length - abandonaron.length,
-                eficiencia: pct(arrancaronMesas.length - abandonaron.length, arrancaronMesas.length),
-                mesasCreadas: arrancaronMesas.reduce((acc, e) => acc + e.mesas, 0),
-                diasHastaLaPrimera: promedio(arrancaronMesas.map(e => e.diasHastaLaPrimera)),
-            },
-            side: {
-                creados: sidesVentana.length,
-                eventos: sidesPorEvento.size,
-                porPlan: sidesPorPlan,
-            },
+            serie: { llegaron: serieLlegaron, sinConfirmar: serieSinConfirmar, fallaron: serieFallaron },
+            mensajes: mensajesDeLaVentana,
+            totales,
+            porTipo,
+            mandadas: intentosPorInvitado.size,
+            mandadasQueLlegaron,
+            reintentos,
+            conReintento,
+            reintentoQueLlego,
+            fallosReintentados,
+            envio,
+            reintento,
+            reenvio,
+            causasDelEnvio: causasDelEnvioOrdenadas,
+            causasDelReintento: causasDelReintentoOrdenadas,
+            recordatorios: recordatoriosVentana.length,
+            gastoUsd,
+            mensajesCobrados: facturables.length - sinTarifa,
         }
     }, [crudo, error, invitacionesReales, dias])
 }
 
 // --------------------------------------------------------------- piezas ---
 
-// Curva de la tarjeta de arriba. Sin ejes ni rejilla a propósito: no se lee un
-// valor, se lee una forma — pero el valor de cada tramo sí está a un hover de
-// distancia, que es lo que convierte la forma en un dato.
-const Chispa = ({ serie, etiquetas, formato, color, relleno }) => {
-    const tokens = useTokens()
+// Dona sin leyenda propia: la leyenda vive al lado (o en las barras), y el
+// centro lo pinta quien la usa encima, como HTML.
+const Dona = ({ partes, corte, oscuro, tokens }) => {
+    const total = partes.reduce((acc, p) => acc + p.valor, 0)
+
+    // Sin datos chart.js no dibuja nada y queda un hueco: un anillo neutro
+    // dice "no hubo" sin inventar una proporción.
+    const datos = total > 0
+        ? partes
+        : [{ label: 'Sin datos', valor: 1, color: oscuro ? NEUTRO_OSCURO : MARCA.crema }]
+
+    const tooltip = oscuro ? tooltipOscuro(tokens) : tooltipBase(tokens)
 
     return (
-        <div className={styles.chispa}>
-            <Line
-                data={{
-                    labels: etiquetas,
-                    datasets: [{
-                        label: '',
-                        data: serie,
-                        borderColor: color,
-                        backgroundColor: relleno,
-                        borderWidth: 1.8,
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 0,
-                        pointHoverRadius: 3.5,
-                        pointHoverBackgroundColor: color,
-                        pointHoverBorderColor: '#fff',
-                        pointHoverBorderWidth: 1.5,
-                    }],
-                }}
-                options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 600 },
-                    // `intersect: false` es lo que hace usable un sparkline de
-                    // 42px de alto: sin él hay que acertarle a la línea.
-                    interaction: { mode: 'index', intersect: false },
-                    scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            ...tooltipBase(tokens, formato),
-                            displayColors: false,
-                            callbacks: { label: (ctx) => formato(ctx.parsed.y) },
-                        },
+        <Doughnut
+            data={{
+                labels: datos.map(p => p.label),
+                datasets: [{
+                    data: datos.map(p => p.valor),
+                    backgroundColor: datos.map(p => p.color),
+                    borderWidth: 0,
+                    spacing: total > 0 ? 2 : 0,
+                }],
+            }}
+            options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: corte,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tooltip,
+                        enabled: total > 0,
+                        callbacks: { label: (ctx) => `${ctx.label}: ${miles(ctx.parsed)}` },
                     },
-                }}
-            />
-        </div>
+                },
+            }}
+        />
     )
 }
 
-const MiniBarras = ({ etiquetas, series, alto = 118 }) => {
-    const tokens = useTokens()
-
-    return (
-        <div className={styles.miniChart} style={{ height: alto }}>
-            <Bar
-                data={{
-                    labels: etiquetas,
-                    datasets: series.map(serie => ({
-                        label: serie.label,
-                        data: serie.valores,
-                        backgroundColor: serie.color,
-                        hoverBackgroundColor: serie.color,
-                        borderRadius: { topLeft: 3, topRight: 3, bottomLeft: 0, bottomRight: 0 },
-                        borderSkipped: false,
-                        maxBarThickness: 26,
-                    })),
-                }}
-                options={{
-                    ...opcionesBase,
-                    scales: {
-                        x: {
-                            border: { display: false },
-                            grid: { display: false },
-                            ticks: { ...ejeTexto(tokens), maxRotation: 0, autoSkipPadding: 12 },
-                        },
-                        // Sin eje de valores: el número exacto está en las
-                        // cifras de arriba, aquí solo interesa el perfil.
-                        y: { display: false, beginAtZero: true },
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            ...tooltipBase(tokens),
-                            callbacks: { label: (ctx) => `${ctx.dataset.label}: ${miles(ctx.parsed.y)}` },
-                        },
-                    },
-                }}
-            />
-        </div>
-    )
-}
-
-/*
-  Los tipos de mensaje, en tabla. Cinco filas con tres cifras cada una no caben
-  en una barra apilada sin perder la mitad: la cuota visual de "Recordatorio de
-  side event" no dice nada, y el 0 de fallos —que es el dato— desaparece.
-*/
-const TablaDeTipos = ({ filas }) => (
-    <div className={styles.tablaCaja}>
-        <table className={styles.tablaTipos}>
-            <thead>
-                <tr>
-                    <th scope='col' />
-                    <th scope='col'>Mensajes</th>
-                    <th scope='col'>Llegaron</th>
-                    <th scope='col'>Fallaron</th>
-                </tr>
-            </thead>
-            <tbody>
-                {filas.map(fila => (
-                    <tr key={fila.label}>
-                        <th scope='row'>{fila.label}</th>
-                        <td>{miles(fila.total)}</td>
-                        <td>{porcentaje(fila.llegaron, fila.total)}</td>
-                        {/* El cero se marca: que un tipo NO falle nunca es tan
-                            informativo como que falle mucho. */}
-                        <td className={fila.fallaron === 0 ? styles.tablaCero : ''}>
-                            {miles(fila.fallaron)}
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
+const Etiqueta = ({ children, oscuro }) => (
+    <h2 className={`${styles.etiqueta} ${oscuro ? styles.etiquetaOscura : ''}`}>{children}</h2>
 )
 
-// Barra apilada de cuotas más su leyenda. Es HTML y no un canvas porque son
-// tres o cuatro tramos con su cifra al lado: una gráfica aquí solo agregaría
-// ejes que nadie necesita.
-const Reparto = ({ titulo, partes }) => {
-    const total = partes.reduce((acc, p) => acc + p.total, 0)
+// Barras apiladas por día sobre navy. Sin ejes: el número exacto está a un
+// hover, aquí se lee el perfil y dónde se concentran los fallos.
+const BarrasPorDia = ({ etiquetas, serie, tokens }) => (
+    <Bar
+        data={{
+            labels: etiquetas,
+            datasets: [
+                { label: 'Llegaron', data: serie.llegaron, backgroundColor: MARCA.lila },
+                { label: 'Sin confirmar', data: serie.sinConfirmar, backgroundColor: 'rgba(255, 255, 255, 0.22)' },
+                { label: 'Fallaron', data: serie.fallaron, backgroundColor: MARCA.verde },
+            ].map(d => ({
+                ...d,
+                hoverBackgroundColor: d.backgroundColor,
+                borderRadius: 3,
+                borderSkipped: false,
+                maxBarThickness: 16,
+                stack: 'mensajes',
+            })),
+        }}
+        options={{
+            ...opcionesBase,
+            scales: {
+                x: { stacked: true, display: false },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    border: { display: false },
+                    grid: { color: MARCA.oscuroGrid, drawTicks: false },
+                    ticks: { display: false },
+                },
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    ...tooltipOscuro(tokens),
+                    callbacks: { label: (ctx) => `${ctx.dataset.label}: ${miles(ctx.parsed.y)}` },
+                },
+            },
+        }}
+    />
+)
 
-    if (total === 0) return null
-
-    return (
-        <div className={styles.repartoBloque}>
-            <span className={styles.miniTitulo}>{titulo}</span>
-
-            <div className={styles.reparto}>
-                {partes.filter(p => p.total > 0).map(parte => (
-                    <span
-                        key={parte.label}
-                        className={styles.repartoSeg}
-                        style={{ width: `${(parte.total / total) * 100}%`, background: parte.color }}
-                        title={`${parte.label}: ${miles(parte.total)}`}
-                    />
-                ))}
-            </div>
-
-            <ul className={styles.repartoLista}>
-                {/* Un renglón en cero no explica nada y empuja a los que sí. */}
-                {partes.filter(parte => parte.total > 0).map(parte => (
-                    <li className={styles.repartoFila} key={parte.label}>
-                        <span className={styles.leyendaPunto} style={{ background: parte.color }} />
-                        <span className={styles.repartoNombre}>{parte.label}</span>
-                        <span className={styles.repartoValor}>{miles(parte.total)}</span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    )
-}
+const PuntoLeyenda = ({ color, children, oscuro }) => (
+    <span className={oscuro ? styles.leyendaOscura : styles.leyenda}>
+        <i className={styles.punto} style={{ background: color }} />
+        {children}
+    </span>
+)
 
 // ----------------------------------------------------------------- panel ---
-
-const Dato = ({ valor, label, tono }) => (
-    <div className={styles.trioItem}>
-        <span className={`${styles.trioValor} ${tono ? styles[tono] : ''}`}>{valor}</span>
-        <span className={styles.trioLabel}>{label}</span>
-    </div>
-)
-
-// Variación contra la ventana anterior del mismo largo. Sin dato previo no se
-// inventa un 100%: no se muestra nada.
-const Variacion = ({ actual, previo, unidad = '%' }) => {
-    if (previo === 0 || previo === null || previo === undefined) return null
-
-    const delta = unidad === 'pts'
-        ? actual - previo
-        : Math.round(((actual - previo) / previo) * 100)
-
-    if (delta === 0) return null
-
-    return (
-        <span className={`${styles.variacion} ${delta > 0 ? styles.sube : styles.baja}`}>
-            {delta > 0 ? '▲' : '▼'} {Math.abs(delta)}{unidad === 'pts' ? ' pts' : '%'}
-        </span>
-    )
-}
-
-const Kpi = ({ label, valor, nota, notaTono, pie, serie, etiquetas, formato, color, relleno, oscuro }) => (
-    <section className={`${styles.kpiResumen} ${oscuro ? styles.kpiOscuro : ''}`}>
-        <span className={styles.kpiResumenLabel}>{label}</span>
-
-        <div className={styles.kpiResumenFila}>
-            <span className={styles.kpiResumenValor}>{valor}</span>
-            {nota && <span className={`${styles.kpiResumenNota} ${notaTono ? styles[notaTono] : ''}`}>{nota}</span>}
-        </div>
-
-        <Chispa
-            serie={serie}
-            etiquetas={etiquetas}
-            formato={formato}
-            color={color}
-            relleno={relleno}
-        />
-
-        <span className={styles.kpiResumenPie}>{pie}</span>
-    </section>
-)
 
 export const AnaliticaResumen = ({ invitacionesReales, dias = DIAS_POR_DEFECTO }) => {
     const datos = useResumen(invitacionesReales, dias)
@@ -913,250 +507,326 @@ export const AnaliticaResumen = ({ invitacionesReales, dias = DIAS_POR_DEFECTO }
     if (datos.cargando) return <div className={styles.empty}>Armando el resumen…</div>
     if (datos.error) return <div className={styles.empty}>No se pudo armar: {datos.error}</div>
 
-    const { eventos, envios, respuestas, mesas, side, etiquetas } = datos
+    const { mensajes, totales, porTipo, envio, reintento, reenvio } = datos
 
-    const tasa = pct(respuestas.respondieron, respuestas.invitados)
+    // Lo que salió y Meta no ha confirmado ni rechazado: enviado, aceptado o
+    // sin webhook todavía. Es la resta, no un estado propio.
+    const sinConfirmar = Math.max(0, mensajes - totales.llegaron - totales.fallaron)
+
+    // Tipos ordenados por volumen; la barra se escala contra el mayor para que
+    // los chicos no se vean llenos. Un tipo en cero se queda, atenuado: el cero
+    // también es la respuesta ("no se mandó ninguno").
+    const tipos = TIPOS
+        .map(tipo => ({ ...tipo, ...porTipo[tipo.clave] }))
+        .sort((a, b) => b.total - a.total)
+    const mayorTipo = Math.max(1, ...tipos.map(t => t.total))
+
+    const causas = datos.causasDelEnvio.map((c, i) => ({
+        label: c.titulo, valor: c.total, color: COLOR_CAUSA[i] ?? MARCA.crema,
+    }))
+
+    // Un reintento que ni llegó ni falló sigue en vuelo: va aparte, en crema,
+    // para que las dos cifras de abajo sumen lo que dicen.
+    const reintentoEnVuelo = Math.max(0, reintento.total - reintento.llegaron - reintento.fallaron)
+    const causaDelReintento = datos.causasDelReintento[0]
+
+    const composicion = [
+        { label: 'primeros intentos', valor: envio.total, color: MARCA.navy, texto: '#fff' },
+        { label: 'recordatorios', valor: datos.recordatorios, color: MARCA.lila, texto: MARCA.navy },
+        { label: 'reintentos y reenvíos', valor: reintento.total + reenvio.total, color: MARCA.verde, texto: MARCA.navy },
+    ]
+
+    const perdidos = datos.conReintento - datos.reintentoQueLlego
+
+    const pasos = [
+        {
+            paso: '1 · Primer intento',
+            valor: miles(envio.total),
+            nota: 'invitaciones mandadas por primera vez',
+        },
+        {
+            paso: '2 · Llegaron',
+            valor: porcentaje(envio.llegaron, envio.total),
+            nota: `al primer intento · ${miles(envio.llegaron)} mensajes`,
+        },
+        {
+            paso: '3 · Fallaron',
+            valor: miles(envio.fallaron),
+            nota: `del primer intento · ${miles(datos.conReintento)} se reintentaron`,
+        },
+        {
+            paso: '4 · Rescatados',
+            valor: miles(datos.reintentoQueLlego),
+            nota: `llegaron al reintentar · ${miles(perdidos)} se ${perdidos === 1 ? 'perdió' : 'perdieron'}`,
+        },
+    ]
 
     return (
-        <div className={styles.analitica}>
-            <div className={styles.kpisResumen}>
-                <Kpi
-                    oscuro
-                    label='Eventos vendidos'
-                    valor={miles(eventos.vendidos)}
-                    nota={<Variacion actual={eventos.vendidos} previo={eventos.previos} />}
-                    serie={eventos.serie}
-                    etiquetas={etiquetas}
-                    formato={(v) => `${miles(v)} ${v === 1 ? 'vendido' : 'vendidos'}`}
-                    color={tokens.verde}
-                    relleno='rgba(55, 194, 92, 0.22)'
-                    pie={`${eventos.celebrados} ya celebrados${eventos.gratis > 0 ? ` · ${eventos.gratis} gratis fuera de la cuenta` : ''}`}
-                />
-                <Kpi
-                    label='Mensajes enviados'
-                    valor={miles(envios.mensajes)}
-                    nota={envios.totales.fallaron > 0 ? `${miles(envios.totales.fallaron)} fallaron` : null}
-                    notaTono='notaRoja'
-                    serie={envios.serie}
-                    etiquetas={etiquetas}
-                    formato={(v) => `${miles(v)} ${v === 1 ? 'mensaje' : 'mensajes'}`}
-                    color={tokens.azul}
-                    relleno={tokens.azulBg}
-                    pie={`invitaciones, side events y recordatorios · ${porcentaje(envios.totales.llegaron, envios.mensajes)} llegó`}
-                />
-                <Kpi
-                    label='Tasa de respuesta'
-                    valor={`${tasa}%`}
-                    nota={<Variacion actual={tasa} previo={respuestas.tasaPrevia} unidad='pts' />}
-                    serie={respuestas.serie}
-                    etiquetas={etiquetas}
-                    formato={(v) => `${v}% respondió`}
-                    color={tokens.verde}
-                    relleno='rgba(55, 194, 92, 0.18)'
-                    pie={`${miles(respuestas.respondieron)} de ${miles(respuestas.invitados)} invitados · ${enHoras(respuestas.tiempo)} en promedio`}
-                />
-                <Kpi
-                    label='Eventos con mesas'
-                    valor={miles(mesas.arrancaron)}
-                    nota={`${miles(mesas.usaron)} las usaron de verdad`}
-                    notaTono='notaVerde'
-                    serie={mesas.serie}
-                    etiquetas={etiquetas}
-                    formato={(v) => `${miles(v)} ${v === 1 ? 'evento' : 'eventos'}`}
-                    color={tokens.naranja}
-                    relleno={tokens.naranjaBg}
-                    pie={`${mesas.abandonaron} abandonaron · ${miles(mesas.mesasCreadas)} mesas armadas`}
-                />
-            </div>
-
-            <div className={`${styles.bento} ${styles.bentoPar}`}>
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div><h2 className={styles.cardTitle}>Eventos</h2></div>
-                    </header>
-
-                    <div className={styles.datos}>
-                        <Dato valor={miles(eventos.vendidos)} label='eventos vendidos' />
-                        <Dato valor={eventos.celebrados} label='celebrados' />
-                        <Dato
-                            valor={eventos.anticipacion !== null ? `${eventos.anticipacion} d` : '—'}
-                            label={`anticipación promedio · ${eventos.anticipacionMuestra} con fecha`}
+        <div className={styles.tablero}>
+            {/* ------------------------------------------------------ hero --- */}
+            <section className={styles.hero}>
+                <div className={styles.heroDona}>
+                    <Etiqueta oscuro>Llegaron a su destino</Etiqueta>
+                    <div className={styles.donaCaja}>
+                        <Dona
+                            oscuro
+                            corte='76%'
+                            tokens={tokens}
+                            partes={[
+                                { label: 'Llegaron', valor: totales.llegaron, color: MARCA.lila },
+                                { label: 'Sin confirmar', valor: sinConfirmar, color: NEUTRO_OSCURO },
+                                { label: 'Fallaron', valor: totales.fallaron, color: MARCA.verde },
+                            ]}
                         />
+                        <div className={styles.donaCentro}>
+                            <span className={`${styles.cifra} ${styles.cifraHero}`}>
+                                {mensajes > 0 ? <>{pct(totales.llegaron, mensajes)}<small>%</small></> : '—'}
+                            </span>
+                            <span className={styles.donaNotaOscura}>
+                                {miles(totales.llegaron)} de {miles(mensajes)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.heroDatos}>
+                    <div className={styles.pills}>
+                        <span className={styles.pillOscura}>
+                            {porcentaje(totales.llegaron, mensajes)} de eficiencia
+                        </span>
+                        <span className={`${styles.pillOscura} ${styles.pillOscuraSuave}`}>
+                            {miles(datos.mensajesCobrados)} cobrados
+                        </span>
                     </div>
 
-                    <span className={styles.miniTitulo}>Ventas en el periodo</span>
+                    <div className={styles.stats}>
+                        <div className={styles.stat}>
+                            <span className={styles.cifra}>{miles(mensajes)}</span>
+                            <span className={styles.statLabel}>mensajes enviados</span>
+                        </div>
+                        <div className={styles.stat}>
+                            <span className={styles.cifra} style={{ color: MARCA.verde }}>
+                                {miles(totales.fallaron)}
+                            </span>
+                            <span className={styles.statLabel}>
+                                fallaron · {porcentaje(totales.fallaron, mensajes)}
+                            </span>
+                        </div>
+                        <div className={styles.stat}>
+                            <span className={styles.cifra}>{usd(datos.gastoUsd)}</span>
+                            <span className={styles.statLabel}>
+                                gasto · ≈ {mxn(datos.gastoUsd * cambio.valor)}
+                            </span>
+                        </div>
+                        <div className={styles.stat}>
+                            <span className={styles.cifra} style={{ color: 'rgba(255, 255, 255, 0.75)' }}>
+                                {miles(sinConfirmar)}
+                            </span>
+                            <span className={styles.statLabel}>sin confirmar</span>
+                        </div>
+                    </div>
+                </div>
 
-                    <MiniBarras
-                        etiquetas={etiquetas}
-                        series={[
-                            { label: 'Vendidos', color: tokens.azul, valores: eventos.serie },
-                            { label: 'Celebrados', color: tokens.grid, valores: eventos.serieCelebrados },
-                        ]}
-                    />
+                <div className={styles.heroBarras}>
+                    <div className={styles.heroBarrasHead}>
+                        <Etiqueta oscuro>
+                            {dias > DIAS_CON_BARRA_DIARIA ? 'Envíos por semana' : 'Envíos por día'}
+                        </Etiqueta>
+                        <div className={styles.leyendas}>
+                            <PuntoLeyenda oscuro color={MARCA.lila}>llegaron</PuntoLeyenda>
+                            <PuntoLeyenda oscuro color='rgba(255, 255, 255, 0.22)'>sin confirmar</PuntoLeyenda>
+                            <PuntoLeyenda oscuro color={MARCA.verde}>fallaron</PuntoLeyenda>
+                        </div>
+                    </div>
+                    <div className={styles.barrasCaja}>
+                        <BarrasPorDia etiquetas={datos.etiquetas} serie={datos.serie} tokens={tokens} />
+                    </div>
+                    <div className={styles.barrasPie}>
+                        <span>{fechaCorta(datos.desde, dias > DIAS_CON_BARRA_DIARIA)}</span>
+                        <span>hoy · {fechaCorta(new Date())}</span>
+                    </div>
+                </div>
+            </section>
 
-                    <Leyenda entradas={[
-                        { label: 'vendidos', color: tokens.azul },
-                        { label: 'celebrados', color: tokens.grid },
-                    ]} />
+            {/* ------------------------------------------------- tarjetas --- */}
+            <div className={styles.fila}>
+                <section className={styles.card}>
+                    <header className={styles.cardHead}>
+                        <Etiqueta>De qué son los {miles(mensajes)}</Etiqueta>
+                        <span className={styles.cardNota}>llegaron</span>
+                    </header>
+
+                    <ul className={styles.tipos}>
+                        {tipos.map(tipo => {
+                            const pctLlegaron = tipo.total > 0 ? pct(tipo.llegaron, tipo.total) : null
+                            return (
+                                <li
+                                    key={tipo.clave}
+                                    className={styles.tipo}
+                                    style={{ opacity: tipo.total > 0 ? 1 : 0.45 }}
+                                >
+                                    <div className={styles.tipoFila}>
+                                        <span className={styles.tipoNombre}>{tipo.label}</span>
+                                        <span className={styles.tipoTotal}>{miles(tipo.total)}</span>
+                                        <span
+                                            className={styles.tipoPct}
+                                            style={{
+                                                color: pctLlegaron === null
+                                                    ? 'var(--ac-muted-2)'
+                                                    : pctLlegaron >= 95 ? 'var(--ac-green-ink)' : 'var(--ac-ink)',
+                                            }}
+                                        >
+                                            {pctLlegaron === null ? '—' : `${pctLlegaron}%`}
+                                        </span>
+                                    </div>
+                                    {/* Lo que llegó en el color del tipo y lo que
+                                        falló en contraste; el hueco es lo que
+                                        sigue sin confirmar. */}
+                                    <div
+                                        className={styles.tipoPista}
+                                        title={`${miles(tipo.llegaron)} llegaron · ${miles(tipo.fallaron)} fallaron`}
+                                    >
+                                        <span style={{ width: `${(tipo.llegaron / mayorTipo) * 100}%`, background: tipo.color }} />
+                                        <span style={{ width: `${(tipo.fallaron / mayorTipo) * 100}%`, background: MARCA.contraste }} />
+                                    </div>
+                                </li>
+                            )
+                        })}
+                    </ul>
                 </section>
 
                 <section className={styles.card}>
                     <header className={styles.cardHead}>
-                        <div><h2 className={styles.cardTitle}>Side events</h2></div>
-                        <span className={styles.insignia}>
-                            {side.creados} en {plural(side.eventos, 'evento', 'eventos')}
+                        <Etiqueta>Por qué fallaron</Etiqueta>
+                        <span className={styles.cardNota}>primer intento</span>
+                    </header>
+
+                    <div className={styles.donaCaja}>
+                        <Dona corte='72%' tokens={tokens} partes={causas} />
+                        <div className={styles.donaCentro}>
+                            <span className={`${styles.cifra} ${styles.cifraFallos}`}>{miles(envio.fallaron)}</span>
+                            <span className={styles.donaNota}>{envio.fallaron === 1 ? 'fallo' : 'fallos'}</span>
+                        </div>
+                    </div>
+
+                    {causas.length > 0 ? (
+                        <ul className={styles.lista}>
+                            {causas.map(causa => (
+                                <li key={causa.label} className={styles.listaFila}>
+                                    <i className={styles.puntoGrande} style={{ background: causa.color }} />
+                                    <span className={styles.listaNombre}>{causa.label}</span>
+                                    <b className={styles.listaValor}>{miles(causa.valor)}</b>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className={styles.vacio}>Ningún primer intento falló en la ventana.</p>
+                    )}
+                </section>
+
+                <section className={styles.card}>
+                    <header className={styles.cardHead}>
+                        <Etiqueta>Reintentos</Etiqueta>
+                        <span className={styles.pillVerde}>
+                            {porcentaje(reintento.llegaron, reintento.total)} de eficiencia
                         </span>
                     </header>
 
-                    <div className={styles.datos}>
-                        <Dato valor={side.creados} label='side events creados' />
-                        <Dato valor={side.eventos} label='eventos que crearon alguno' />
+                    <div className={styles.reintentoCifra}>
+                        <span className={`${styles.cifra} ${styles.cifraReintento}`}>{miles(reintento.total)}</span>
+                        <span className={styles.reintentoNota}>
+                            {reintento.total === 1 ? 'reintento' : 'reintentos'}<br />tras un fallo
+                        </span>
                     </div>
 
-                    <span className={styles.miniTitulo}>Promedio por evento</span>
-
-                    <ul className={styles.planes}>
-                        {side.porPlan.map(cubo => (
-                            <li className={styles.planFila} key={cubo.plan}>
-                                <span className={styles.planNombre}>
-                                    {ETIQUETA_PLAN[cubo.plan] ?? cubo.plan}
-                                    <small> · {plural(cubo.eventos, 'evento', 'eventos')}</small>
-                                </span>
-                                <span className={styles.planPista}>
+                    {reintento.total > 0 ? (
+                        <div className={styles.reintentoBarra}>
+                            <div className={styles.barraGruesa}>
+                                {[
+                                    { valor: reintento.llegaron, color: MARCA.navy, texto: '#fff', label: 'llegaron' },
+                                    { valor: reintento.fallaron, color: MARCA.lila, texto: MARCA.navy, label: 'volvieron a fallar' },
+                                    { valor: reintentoEnVuelo, color: MARCA.crema, texto: MARCA.navy, label: 'sin confirmar' },
+                                ].filter(s => s.valor > 0).map(s => (
                                     <span
-                                        className={styles.planFill}
-                                        style={{
-                                            width: `${pct(cubo.porEvento, Math.max(...side.porPlan.map(c => c.porEvento)))}%`,
-                                        }}
-                                    />
+                                        key={s.label}
+                                        style={{ flex: s.valor, background: s.color, color: s.texto }}
+                                        title={`${miles(s.valor)} ${s.label}`}
+                                    >
+                                        {miles(s.valor)}
+                                    </span>
+                                ))}
+                            </div>
+                            <div className={styles.reintentoPie}>
+                                <span>
+                                    <b style={{ color: 'var(--ac-green-ink)' }}>
+                                        {porcentaje(reintento.llegaron, reintento.total)}
+                                    </b> llegaron al reintentar
                                 </span>
-                                <span className={styles.planValor}>{cubo.porEvento.toFixed(1)}</span>
-                            </li>
-                        ))}
-                    </ul>
-
-                    {side.porPlan[0]?.sides > 0 && (
-                        <footer className={styles.cardFoot}>
-                            {side.porPlan[0].sides} de los {side.creados} salieron de eventos{' '}
-                            {ETIQUETA_PLAN[side.porPlan[0].plan] ?? side.porPlan[0].plan}.
-                        </footer>
+                                <span>
+                                    <b style={{ color: '#9A4A3E' }}>
+                                        {porcentaje(reintento.fallaron, reintento.total)}
+                                    </b> volvieron a fallar
+                                </span>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className={styles.vacio}>No hubo reintentos tras un fallo en la ventana.</p>
                     )}
+
+                    <ul className={`${styles.lista} ${styles.listaPie}`}>
+                        {causaDelReintento && (
+                            <li className={styles.listaFila} title='Causa principal de los reintentos que volvieron a fallar'>
+                                <i className={styles.puntoGrande} style={{ background: MARCA.lila }} />
+                                <span className={styles.listaNombre}>{causaDelReintento.titulo}</span>
+                                <b className={styles.listaValor}>{miles(causaDelReintento.total)}</b>
+                            </li>
+                        )}
+                        {/* Reintentos y reenvíos: el reenvío (a quien YA lo
+                            había recibido) no arregla nada pero se cobra igual. */}
+                        <li className={styles.listaFila} title={`${miles(reenvio.total)} reenvíos a quien ya lo tenía`}>
+                            <i className={styles.puntoGrande} style={{ background: 'var(--ac-line)' }} />
+                            <span className={styles.listaNombre}>Costo de volver a mandar</span>
+                            <b className={styles.listaValor}>{usd(reintento.usd + reenvio.usd)}</b>
+                        </li>
+                    </ul>
                 </section>
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div><h2 className={styles.cardTitle}>Envíos</h2></div>
-                        <div className={styles.insignias}>
-                            <span className={`${styles.insignia} ${styles.insigniaVerde}`}>
-                                {porcentaje(envios.totales.llegaron, envios.mensajes)} de eficiencia
-                            </span>
-                            <span className={styles.insignia}>
-                                {usd(envios.gastoUsd)} · {miles(envios.mensajesCobrados)} mensajes cobrados
-                            </span>
-                        </div>
-                    </header>
-
-                    <div className={styles.datos}>
-                        <Dato valor={miles(envios.mensajes)} label='mensajes enviados' />
-                        <Dato
-                            valor={miles(envios.totales.fallaron)}
-                            label={`fallaron · ${porcentaje(envios.totales.fallaron, envios.mensajes)}`}
-                            tono='valorRojo'
-                        />
-                        <Dato
-                            valor={porcentaje(envios.totales.llegaron, envios.mensajes)}
-                            label='llegaron a su destino'
-                            tono='valorVerde'
-                        />
-                        <Dato
-                            valor={usd(envios.gastoUsd)}
-                            label={`gasto de la ventana · ≈ ${mxn(envios.gastoUsd * cambio.valor)}`}
-                        />
-                    </div>
-
-                    <span className={styles.miniTitulo}>
-                        De qué son los {miles(envios.mensajes)} mensajes
-                    </span>
-
-                    <TablaDeTipos
-                        filas={[
-                            { label: 'Invitación', ...envios.porTipo.invitacion },
-                            { label: 'Side event', ...envios.porTipo.side },
-                            { label: 'Recordatorio de invitación', ...envios.porTipo.recordatorio },
-                            { label: 'Recordatorio de side event', ...envios.porTipo.recordatorioSide },
-                            { label: 'Invitado ya borrado', ...envios.porTipo.borrado },
-                        ]}
-                    />
-
-                    <Reparto
-                        titulo={`Por qué fallaron · ${miles(envios.envio.fallaron)} del primer intento`}
-                        partes={envios.causasDelEnvio.map((c, i) => ({
-                            label: c.titulo,
-                            total: c.total,
-                            color: [tokens.rojo, tokens.naranja, tokens.meta, tokens.grid][i] ?? tokens.grid,
-                        }))}
-                    />
-
-                    <footer className={styles.cardFoot}>
-                        Los {miles(envios.mensajes)} mensajes son{' '}
-                        {miles(envios.envio.total)} primeros intentos, más{' '}
-                        {miles(envios.reintento.total + envios.reenvio.total)} reintentos y reenvíos, más{' '}
-                        {miles(envios.recordatorios)} recordatorios: cada intento cuenta porque cada uno
-                        se cobra. Al primer intento llega el{' '}
-                        {porcentaje(envios.envio.llegaron, envios.envio.total)}, y ahí fallan{' '}
-                        {miles(envios.envio.fallaron)} — el resto de los fallos son reintentos que
-                        volvieron a caer. Los recordatorios traen columna propia
-                        (<code>side_event_id</code>) que dice a qué van dirigidos; en los envíos no
-                        existe y el destino se deduce de a quién iba el mensaje. Los "ya borrados" son
-                        invitados eliminados de la lista después de recibirlo.
-                    </footer>
-                </section>
-
-                <section className={styles.card}>
-                    <header className={styles.cardHead}>
-                        <div><h2 className={styles.cardTitle}>Reintentos</h2></div>
-                        <div className={styles.insignias}>
-                            <span className={`${styles.insignia} ${styles.insigniaVerde}`}>
-                                {porcentaje(envios.reintento.llegaron, envios.reintento.total)} de eficiencia
-                            </span>
-                            <span className={styles.insignia}>
-                                {usd(envios.reintento.usd + envios.reenvio.usd)} en volver a mandar
-                            </span>
-                        </div>
-                    </header>
-
-                    <div className={styles.datos}>
-                        <Dato valor={miles(envios.reintento.total)} label='reintentos · tras un fallo' />
-                        <Dato
-                            valor={miles(envios.reintento.fallaron)}
-                            label={`volvieron a fallar · ${porcentaje(envios.reintento.fallaron, envios.reintento.total)}`}
-                            tono='valorRojo'
-                        />
-                        <Dato
-                            valor={miles(envios.reintento.llegaron)}
-                            label={`llegaron tras reintentar · ${porcentaje(envios.reintento.llegaron, envios.reintento.total)}`}
-                            tono='valorVerde'
-                        />
-                    </div>
-
-                    <Reparto
-                        titulo={`Por qué volvieron a fallar · ${miles(envios.reintento.fallaron)}`}
-                        partes={envios.causasDelReintento.map((c, i) => ({
-                            label: c.titulo,
-                            total: c.total,
-                            color: [tokens.rojo, tokens.naranja, tokens.meta, tokens.grid][i] ?? tokens.grid,
-                        }))}
-                    />
-
-                    <footer className={styles.cardFoot}>
-                        Un <b>reintento</b> sigue a un intento que falló; un <b>reenvío</b> sigue a uno
-                        que YA había llegado y no arregla nada, pero cuesta igual. Por eso hay más
-                        reintentos ({miles(envios.reintento.total)}) que fallos de primer intento
-                        ({miles(envios.envio.fallaron)}): a un mismo invitado se le puede insistir
-                        varias veces.
-                    </footer>
-                </section>
-
             </div>
+
+            {/* ------------------------------------------------ recorrido --- */}
+            <section className={`${styles.card} ${styles.recorrido}`}>
+                <header className={styles.cardHead}>
+                    <Etiqueta>Recorrido de los {miles(mensajes)} mensajes</Etiqueta>
+                    <div className={styles.leyendas}>
+                        {composicion.map(c => (
+                            <PuntoLeyenda key={c.label} color={c.color}>{c.label}</PuntoLeyenda>
+                        ))}
+                    </div>
+                </header>
+
+                <div className={styles.composicion}>
+                    {composicion.filter(c => c.valor > 0).map(c => (
+                        <span
+                            key={c.label}
+                            style={{ flex: c.valor, background: c.color, color: c.texto }}
+                            title={`${miles(c.valor)} ${c.label}`}
+                        >
+                            {miles(c.valor)}
+                        </span>
+                    ))}
+                </div>
+
+                <div className={styles.pasos}>
+                    {pasos.map(p => (
+                        <div key={p.paso} className={styles.paso}>
+                            <span className={`${styles.cifra} ${styles.cifraPaso}`}>{p.valor}</span>
+                            <span className={styles.pasoTexto}>
+                                <span className={styles.pasoNombre}>{p.paso}</span>
+                                <span className={styles.pasoNota}>{p.nota}</span>
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </section>
         </div>
     )
 }

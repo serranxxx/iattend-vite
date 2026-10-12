@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowUpRight, Mail, RefreshCw, Receipt } from 'lucide-re
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
 import { fetchStripeResumen } from '../stripeAdminApi'
+import { EnTopbarFiltros } from '../AdminTopbar'
 import styles from './StripeSection.module.css'
 
 dayjs.locale('es')
@@ -80,7 +81,8 @@ export const StripeSection = () => {
 
     return (
         <div className={styles.stripe}>
-            <div className={styles.barra}>
+            {/* Actualizar y Abrir Stripe van a la derecha de las pestañas de Ventas. */}
+            <EnTopbarFiltros>
                 {datos.modo === 'test' && <span className={styles.modoPrueba}>Modo prueba</span>}
                 <button type='button' className={styles.accion} onClick={cargar} disabled={cargando}>
                     <RefreshCw size={13} className={cargando ? styles.girando : ''} /> Actualizar
@@ -88,7 +90,7 @@ export const StripeSection = () => {
                 <a className={styles.accion} href={DASHBOARD} target='_blank' rel='noreferrer'>
                     <ArrowUpRight size={13} /> Abrir Stripe
                 </a>
-            </div>
+            </EnTopbarFiltros>
 
             {urgentes.length > 0 && (
                 <div className={styles.alerta} role='alert'>
@@ -146,7 +148,8 @@ export const StripeSection = () => {
                 </div>
             </div>
 
-            <section className={styles.card}>
+            <div className={styles.abajo}>
+            <section className={`${styles.card} ${styles.pagos}`}>
                 <header className={styles.cardHead}>
                     <h2>Pagos recientes</h2>
                     <span>últimos {datos.pagos.length}</span>
@@ -164,7 +167,6 @@ export const StripeSection = () => {
                                     <th className={styles.num}>Comisión</th>
                                     <th className={styles.num}>Neto</th>
                                     <th>Estado</th>
-                                    <th>Tarjeta</th>
                                     <th />
                                 </tr>
                             </thead>
@@ -182,7 +184,6 @@ export const StripeSection = () => {
                                             <td className={`${styles.num} ${styles.tenue}`}>{pago.comision !== null ? `-${dinero(pago.comision)}` : '—'}</td>
                                             <td className={`${styles.num} ${styles.fuerte}`}>{pago.neto !== null ? dinero(pago.neto) : '—'}</td>
                                             <td><span className={`${styles.estado} ${styles[`estado_${estado.clase}`]}`}>{estado.label}</span></td>
-                                            <td className={styles.tenue}>{pago.tarjeta || '—'}</td>
                                             <td className={styles.accionesFila}>
                                                 {pago.recibo && (
                                                     <Tooltip title='Recibo'>
@@ -202,7 +203,7 @@ export const StripeSection = () => {
                 )}
             </section>
 
-            <div className={styles.dosColumnas}>
+            <div className={styles.lateral}>
                 <section className={styles.card}>
                     <header className={styles.cardHead}>
                         <h2>Disputas abiertas</h2>
@@ -250,6 +251,7 @@ export const StripeSection = () => {
                         </ul>
                     )}
                 </section>
+            </div>
             </div>
         </div>
     )

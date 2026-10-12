@@ -21,7 +21,9 @@ const numeroDeWhatsapp = (telefono) => {
     return digitos.startsWith('52') ? digitos : `52${digitos}`
 }
 
-export const InteresadosSection = () => {
+// onDarDeAlta(colaborador): abre el alta de vendedor con sus datos (Usuarios ›
+// Vendedores › Registrados). Solo se ofrece cuando ya aceptó.
+export const InteresadosSection = ({ onDarDeAlta }) => {
     // La tabla sigue siendo `colaboradores_interesados`; la pantalla se llama
     // Interesados, que es lo que son hasta que aceptan.
     const [colaboradores, setColaboradores] = useState(null)
@@ -100,6 +102,7 @@ export const InteresadosSection = () => {
                             <span className={styles.cell}>Fecha</span>
                             <span className={styles.cell}>Contactado</span>
                             <span className={styles.cell}>Aceptó</span>
+                            <span className={styles.cell} />
                         </div>
 
                         {colaboradores.map(colaborador => {
@@ -153,6 +156,14 @@ export const InteresadosSection = () => {
                                             () => alternar(colaborador.id, 'acepto', colaborador.acepto),
                                             `Marcar aceptado a ${colaborador.nombre}`,
                                             styles.marcaBtnMorado,
+                                        )}
+                                    </span>
+
+                                    <span className={styles.cell}>
+                                        {colaborador.acepto && onDarDeAlta && (
+                                            <button type='button' className={styles.outlineBtn} onClick={() => onDarDeAlta(colaborador)}>
+                                                Dar de alta
+                                            </button>
                                         )}
                                     </span>
                                 </div>

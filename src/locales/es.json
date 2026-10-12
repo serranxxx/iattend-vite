@@ -1138,7 +1138,9 @@
     "flash_import_soon": "Importar desde Excel en Eventos Flash llega muy pronto. Por ahora agrega a tus invitados uno por uno.",
     "flash_credits_one": "{{count}} crédito de WhatsApp",
     "flash_credits_other": "{{count}} créditos de WhatsApp",
-    "flash_not_found": "No encontramos este Evento Flash."
+    "flash_not_found": "No encontramos este Evento Flash.",
+    "flash_no_credits": "Sin créditos: compra más con el + junto al contador.",
+    "flash_send_error": "No se pudo enviar la invitación. Intenta de nuevo."
   },
   "tables": {
     "title": "Organización por mesas",

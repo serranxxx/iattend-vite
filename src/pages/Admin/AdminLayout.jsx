@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button, Dropdown, Select, Tooltip, message } from 'antd'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-    BarChart3, Calendar, ChevronDown, FlaskConical, Settings, Home, Inbox, Landmark,
-    Menu as MenuIcon, ArrowLeft, Copy, Plus, Search, Users, X,
+    BadgeDollarSign, BarChart3, Briefcase, Calendar, ChevronDown, FlaskConical, Settings, Home, Inbox, Landmark,
+    Megaphone, Menu as MenuIcon, ArrowLeft, Copy, Plus, Search, ShieldCheck, TestTube, Users,
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
@@ -22,6 +22,9 @@ import { HoySection } from './sections/HoySection'
 import { PlanesSection } from './sections/PlanesSection'
 import { OnboardingSection } from './sections/OnboardingSection'
 import { NotificacionesSection } from './sections/NotificacionesSection'
+import { VendedoresSection } from './sections/VendedoresSection'
+import { InteresadosSection } from './sections/InteresadosSection'
+import { AdminTopbarProvider, Segmentado } from './AdminTopbar'
 import { fetchSupportTickets } from './supportTicketsAdminApi'
 import { pendientes } from './supportTickets'
 import { crearFiltroDePrueba, esEventoActivo } from './adminConstants'
@@ -33,27 +36,58 @@ dayjs.locale('es')
 // Pantallas reservadas al dueño: números de negocio, reviews de clientes y el
 // catálogo de planes. Cualquier otro admin ve el resto del panel, pero no estas.
 const CORREO_DEL_DUENIO = 'albserrano8@gmail.com'
-const RUTAS_RESERVADAS = new Set(['ventas', 'analitica'])
+// Vendedores vivía en Ventas: sigue siendo solo del dueño.
+const RUTAS_RESERVADAS = new Set(['ventas', 'analitica', 'vendedores'])
 const SUBS_RESERVADAS = new Set(['reviews', 'planes'])
 
-const ROUTES = ['hoy', 'buzon', 'eventos', 'usuarios', 'ventas', 'analitica', 'lab', 'configuracion']
+// Usuarios es una ruta por rol (profiles.role; Cliente = sin rol conocido).
+const ROLES_USUARIOS = ['clientes', 'planners', 'vendedores', 'admin', 'mkt', 'test']
 
-// Pantallas con pestañas. La primera que se pueda ver es la de entrada.
-//  · Buzón: todo lo que llega de fuera (mensajes, reportes de soporte, reviews).
-//  · Configuración: catálogos que se tocan poco (planes y onboarding).
+const ROUTES = ['hoy', 'buzon', 'eventos', ...ROLES_USUARIOS, 'ventas', 'analitica', 'lab', 'configuracion']
+
+// Pestañas de cada ruta: viven en la topbar, con subrayado. La primera que se
+// pueda ver es la de entrada. Vendedores es la excepción: su Registrados /
+// Solicitudes va en el contenido (SUBTABS_EN_CONTENIDO), pero también queda en
+// la URL.
 const SUBTABS = {
     buzon: [
         { key: 'mensajes', label: 'Mensajes' },
         { key: 'reportes', label: 'Reportes' },
         { key: 'reviews', label: 'Reviews' },
     ],
+    eventos: [
+        { key: 'calendario', label: 'Calendario' },
+        { key: 'activos', label: 'Activos' },
+        { key: 'todos', label: 'Todos' },
+        { key: 'pruebas', label: 'Pruebas' },
+    ],
+    vendedores: [
+        { key: 'registrados', label: 'Registrados' },
+        { key: 'solicitudes', label: 'Solicitudes' },
+    ],
+    ventas: [
+        { key: 'ingresos', label: 'Ingresos y comisiones' },
+        { key: 'historico', label: 'Histórico' },
+        { key: 'stripe', label: 'Stripe' },
+    ],
+    analitica: [
+        { key: 'envios', label: 'Últimos 30 días' },
+        { key: 'eventos', label: 'Eventos' },
+        { key: 'historial', label: 'Envíos' },
+        { key: 'respuestas', label: 'Respuestas' },
+        { key: 'modulos', label: 'Mesas y side events' },
+        { key: 'nuevas', label: 'Funciones nuevas' },
+        { key: 'lia', label: 'Lia' },
+        { key: 'promedio', label: 'Perfil' },
+    ],
     configuracion: [
         { key: 'planes', label: 'Planes' },
         { key: 'onboarding', label: 'Onboarding' },
     ],
 }
+const SUBTABS_EN_CONTENIDO = new Set(['vendedores'])
 
-// Enlaces que ya circulan (?tab=planes, ?tab=feedback, ?tab=herramientas…)
+// Enlaces que ya circulan (?tab=planes, ?tab=feedback, ?tab=usuarios…)
 // siguen funcionando: caen en su pantalla y pestaña nuevas.
 const RUTAS_LEGADAS = {
     notificaciones: ['buzon', 'reportes'],
@@ -62,6 +96,12 @@ const RUTAS_LEGADAS = {
     planes: ['configuracion', 'planes'],
     onboarding: ['configuracion', 'onboarding'],
     herramientas: ['lab', null],
+    usuarios: ['clientes', null],
+}
+// Pestañas que cambiaron de nombre dentro de su ruta.
+const SUBS_LEGADAS = {
+    ventas: { ventas: 'ingresos' },
+    analitica: { resumen: 'envios', mesas: 'modulos', side: 'modulos' },
 }
 
 const NAV_GROUPS = [
@@ -71,7 +111,17 @@ const NAV_GROUPS = [
             { key: 'hoy', label: 'Hoy', icon: Home },
             { key: 'buzon', label: 'Buzón', icon: Inbox },
             { key: 'eventos', label: 'Eventos', icon: Calendar },
-            { key: 'usuarios', label: 'Usuarios', icon: Users },
+        ],
+    },
+    {
+        label: 'Usuarios',
+        items: [
+            { key: 'clientes', label: 'Clientes', icon: Users },
+            { key: 'planners', label: 'Planners', icon: Briefcase },
+            { key: 'vendedores', label: 'Vendedores', icon: BadgeDollarSign },
+            { key: 'admin', label: 'Administración', icon: ShieldCheck },
+            { key: 'mkt', label: 'Marketing', icon: Megaphone },
+            { key: 'test', label: 'Pruebas', icon: TestTube },
         ],
     },
     {
@@ -89,6 +139,12 @@ const NAV_GROUPS = [
     },
 ]
 
+// Miga de la topbar: el grupo del rail al que pertenece la ruta.
+const GRUPO = Object.fromEntries([
+    ...NAV_GROUPS.flatMap(g => g.items.map(i => [i.key, g.label])),
+    ['configuracion', 'Configuración'],
+])
+
 const TAB_BAR = [
     { key: 'hoy', label: 'Hoy', icon: Home },
     { key: 'buzon', label: 'Buzón', icon: Inbox },
@@ -96,11 +152,19 @@ const TAB_BAR = [
     { key: 'ventas', label: 'Ventas', icon: Landmark },
 ]
 
+// Rol de cada ruta de Usuarios (profiles.role). Clientes = ninguno de estos.
+const ROL_DE_RUTA = { planners: 'planner', vendedores: 'sales', admin: 'Administration', mkt: 'mkt', test: 'test' }
+const rutaDePerfil = (perfil) => Object.keys(ROL_DE_RUTA).find(r => ROL_DE_RUTA[r] === perfil.role) ?? 'clientes'
+
 // Devuelve [ruta, pestaña] a partir de lo que venga en la URL o de un goTo().
 const resolverRuta = (tab, sub) => {
     if (RUTAS_LEGADAS[tab]) return RUTAS_LEGADAS[tab]
+    // Vendedores e Interesados vivían como pestañas de Ventas.
+    if (tab === 'ventas' && sub === 'vendedores') return ['vendedores', 'registrados']
+    if (tab === 'ventas' && sub === 'interesados') return ['vendedores', 'solicitudes']
     if (!ROUTES.includes(tab)) return [null, null]
-    return [tab, SUBTABS[tab]?.some(s => s.key === sub) ? sub : null]
+    const pestana = SUBS_LEGADAS[tab]?.[sub] ?? sub
+    return [tab, SUBTABS[tab]?.some(s => s.key === pestana) ? pestana : null]
 }
 
 export const AdminLayout = () => {
@@ -129,17 +193,13 @@ export const AdminLayout = () => {
 
     const [route, setRoute] = useState(initialRoute)
     const [sub, setSub] = useState(() => subValida(initialRoute, subPedida))
-    const [drawerOpen, setDrawerOpen] = useState(false)
-    // Conversación con la que se abre el buzón (desde la bandeja de Hoy).
-    const [buzonInicial, setBuzonInicial] = useState(null)
-    // Desde Hoy: una conversación se abre en el drawer para contestar sin salir;
-    // "abrir bandeja" lleva a la pantalla del Buzón.
-    const abrirBuzon = (conversacionId = null) => {
-        if (!conversacionId) return goTo('buzon', 'mensajes')
-        setBuzonInicial(conversacionId)
-        setDrawerOpen(true)
-    }
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
+    // Ranuras de la topbar donde cada sección dibuja sus filtros y su acción
+    // (AdminTopbar.jsx).
+    const [filtrosSlot, setFiltrosSlot] = useState(null)
+    const [accionSlot, setAccionSlot] = useState(null)
+    // Solicitud aceptada que se da de alta como vendedor (Solicitudes → Registrados).
+    const [altaVendedor, setAltaVendedor] = useState(null)
     const [globalQuery, setGlobalQuery] = useState('')
     const [pickerOpen, setPickerOpen] = useState(false)
     const [nuevoUsuarioOpen, setNuevoUsuarioOpen] = useState(false)
@@ -284,13 +344,15 @@ export const AdminLayout = () => {
         const invitaciones = newInvitations ?? []
         const reales = invitaciones.filter(i => !esPrueba(i))
 
+        const porRol = Object.fromEntries(ROLES_USUARIOS.map(r => [r, 0]))
+        ;(newProfiles ?? []).forEach(p => { porRol[rutaDePerfil(p)] += 1 })
+
         return {
             eventosActivos: reales.filter(i => esEventoActivo(i)).length,
             eventosTotales: reales.length,
             eventosPrueba: invitaciones.length - reales.length,
             usuarios: (newProfiles ?? []).length,
-            admins: (newProfiles ?? []).filter(p => p.role === 'Administration').length,
-            vendedores: (newProfiles ?? []).filter(p => p.role === 'sales').length,
+            porRol,
         }
     }, [newInvitations, newProfiles])
 
@@ -312,15 +374,24 @@ export const AdminLayout = () => {
             // declara `wrap` en vez de un `onClick` suelto.
             action: { label: 'Agregar evento', wrap: (boton) => pickerAgregarEvento(boton) },
         },
-        usuarios: {
-            title: 'Usuarios',
-            subtitle: `${conteos.usuarios} cuentas · ${conteos.admins} admin · ${conteos.vendedores} vendedores · ${conteos.usuarios - conteos.admins - conteos.vendedores} clientes`,
+        clientes: {
+            title: 'Clientes',
+            subtitle: 'Parejas y anfitriones que compran directo · sin rol en profiles',
             action: { label: 'Nuevo usuario', wrap: (boton) => pickerNuevoUsuario(boton) },
+        },
+        // "Nuevo planner" y "Nuevo vendedor" los pone su sección en la topbar.
+        planners: { title: 'Planners', subtitle: 'Clientes B2B · cada alta incluye 1 evento PRO y 1 Flash gratis' },
+        vendedores: { title: 'Vendedores', subtitle: 'Equipo comercial · las comisiones del mes viven en Ventas' },
+        admin: { title: 'Administración', subtitle: 'Acceso completo al panel · mismas funciones que un planner en /invitations' },
+        mkt: { title: 'Marketing', subtitle: 'Cuentas del equipo de marketing' },
+        test: {
+            title: 'Cuentas de prueba',
+            subtitle: 'Sus invitaciones no cuentan en Eventos, Ventas ni Analítica',
+            action: { label: 'Nueva cuenta', wrap: (boton) => pickerNuevoUsuario(boton) },
         },
         buzon: {
             title: 'Buzón',
             subtitle: `${unAnswer} mensajes sin leer · ${pendientes(tickets).length} reportes sin resolver`,
-            action: sub === 'reportes' ? { label: 'Actualizar', onClick: getTickets } : null,
         },
         ventas: { title: 'Ventas', subtitle: 'Ingresos, comisiones y cobranza' },
         analitica: {
@@ -354,7 +425,7 @@ export const AdminLayout = () => {
 
     const counterFor = (key) => {
         if (key === 'eventos') return conteos.eventosActivos || null
-        if (key === 'usuarios') return conteos.usuarios || null
+        if (ROLES_USUARIOS.includes(key)) return newProfiles ? conteos.porRol[key] : null
         return null
     }
 
@@ -417,31 +488,6 @@ export const AdminLayout = () => {
         return null
     }
 
-    // Pestañas de Buzón y Configuración, arriba del contenido.
-    const conPestanas = (contenido) => (
-        <div className={styles.conPestanas}>
-            <div className={styles.pestanas} role='tablist'>
-                {subsDe(route).map(({ key, label }) => {
-                    const conteo = conteoDeSub(key)
-                    return (
-                        <button
-                            key={key}
-                            type='button'
-                            role='tab'
-                            aria-selected={sub === key}
-                            className={`${styles.pestana} ${sub === key ? styles.pestanaActiva : ''}`}
-                            onClick={() => goTo(route, key)}
-                        >
-                            {label}
-                            {conteo !== null && <span className={styles.pestanaConteo}>{conteo}</span>}
-                        </button>
-                    )
-                })}
-            </div>
-            {contenido}
-        </div>
-    )
-
     const renderSection = () => {
         switch (route) {
             case 'hoy':
@@ -450,31 +496,51 @@ export const AdminLayout = () => {
                         onNavigate={goTo}
                         canSeeVentas={esDuenio}
                         tickets={tickets}
-                        conversations={conversations}
                         invitations={newInvitations}
                         profiles={newProfiles}
                         esPrueba={esPrueba}
-                        onAbrirBuzon={abrirBuzon}
                     />
                 )
-            case 'usuarios':
+            case 'clientes':
+            case 'planners':
+            case 'admin':
+            case 'mkt':
+            case 'test':
                 return (
                     <UsuariosSection
-                        profiles={newProfiles}
+                        key={route}
+                        rol={route}
+                        profiles={(newProfiles ?? null) && newProfiles.filter(p => rutaDePerfil(p) === route)}
+                        invitations={newInvitations}
+                        esPrueba={esPrueba}
                         onOpenNewInvitation={onOpenNewInvitation}
                         onPerfilActualizado={perfil => setNewProfiles(prev => prev.map(p => (p.user_id === perfil.user_id ? perfil : p)))}
                         onUsuarioCreado={getNewUsers}
                         query={globalQuery}
                     />
                 )
+            case 'vendedores':
+                return puedeVer('vendedores') ? (
+                    <div className={styles.conSegmentado}>
+                        <Segmentado
+                            ariaLabel='Vendedores'
+                            valor={sub}
+                            onCambio={(clave) => goTo('vendedores', clave)}
+                            opciones={SUBTABS.vendedores.map(t => ({ value: t.key, label: t.label }))}
+                        />
+                        {sub === 'solicitudes'
+                            ? <InteresadosSection onDarDeAlta={(colaborador) => { setAltaVendedor(colaborador); goTo('vendedores', 'registrados') }} />
+                            : <VendedoresSection altaInicial={altaVendedor} onAltaUsada={() => setAltaVendedor(null)} />}
+                    </div>
+                ) : null
             case 'ventas':
-                return puedeVer('ventas') ? <VentasSection /> : null
+                return puedeVer('ventas') ? <VentasSection tab={sub} /> : null
             case 'analitica':
                 return puedeVer('analitica')
-                    ? <EventosAnalitica invitations={newInvitations} esPrueba={esPrueba} />
+                    ? <EventosAnalitica etapa={sub} invitations={newInvitations} esPrueba={esPrueba} />
                     : null
             case 'buzon':
-                return conPestanas(
+                return (
                     sub === 'reportes' ? (
                         <NotificacionesSection
                             tickets={tickets}
@@ -492,15 +558,14 @@ export const AdminLayout = () => {
                     )
                 )
             case 'configuracion':
-                return conPestanas(
-                    sub === 'planes' ? (puedeVerSub('planes') ? <PlanesSection /> : null) : <OnboardingSection />
-                )
+                return sub === 'planes' ? (puedeVerSub('planes') ? <PlanesSection /> : null) : <OnboardingSection />
             case 'lab':
                 return <LaboratorioSection invitations={newInvitations} />
             case 'eventos':
             default:
                 return (
                     <EventosSection
+                        tab={sub}
                         newInvitations={newInvitations}
                         profiles={newProfiles}
                         refreshEventos={refreshEventos}
@@ -546,20 +611,20 @@ export const AdminLayout = () => {
                                 const counter = counterFor(key)
                                 const pendientesBuzon = key === 'buzon' ? unAnswer + pendientes(tickets).length : 0
                                 return (
-                                    <Tooltip key={key} title={label} placement='right'>
-                                        <button
-                                            type='button'
-                                            className={`${styles.railItem} ${route === key ? styles.railItemActive : ''}`}
-                                            onClick={() => goTo(key)}
-                                        >
-                                            <Icon size={17} strokeWidth={1.7} />
-                                            <span className={styles.railItemLabel}>{label}</span>
-                                            {counter !== null && <span className={styles.railCount}>{counter}</span>}
-                                            {pendientesBuzon > 0 && (
-                                                <span className={`${styles.railBadge} ${styles.railBadgeViolet}`}>{pendientesBuzon}</span>
-                                            )}
-                                        </button>
-                                    </Tooltip>
+                                    <button
+                                        key={key}
+                                        type='button'
+                                        className={`${styles.railItem} ${route === key ? styles.railItemActive : ''}`}
+                                        aria-current={route === key ? 'page' : undefined}
+                                        onClick={() => goTo(key)}
+                                    >
+                                        <Icon size={17} strokeWidth={1.7} />
+                                        <span className={styles.railItemLabel}>{label}</span>
+                                        {counter !== null && <span className={styles.railCount}>{counter}</span>}
+                                        {pendientesBuzon > 0 && (
+                                            <span className={`${styles.railBadge} ${styles.railBadgeViolet}`}>{pendientesBuzon}</span>
+                                        )}
+                                    </button>
                                 )
                             })}
                         </div>
@@ -567,16 +632,15 @@ export const AdminLayout = () => {
                 </nav>
 
                 <div className={styles.railFooter}>
-                    <Tooltip title='Configuración' placement='right'>
-                        <button
-                            type='button'
-                            className={`${styles.railItem} ${route === 'configuracion' ? styles.railItemActive : ''}`}
-                            onClick={() => goTo('configuracion')}
-                        >
-                            <Settings size={17} strokeWidth={1.7} />
-                            <span className={styles.railItemLabel}>Configuración</span>
-                        </button>
-                    </Tooltip>
+                    <button
+                        type='button'
+                        className={`${styles.railItem} ${route === 'configuracion' ? styles.railItemActive : ''}`}
+                        aria-current={route === 'configuracion' ? 'page' : undefined}
+                        onClick={() => goTo('configuracion')}
+                    >
+                        <Settings size={17} strokeWidth={1.7} />
+                        <span className={styles.railItemLabel}>Configuración</span>
+                    </button>
 
                     <div className={styles.userChip}>
                         <span className={styles.avatar}>{userName.charAt(0)}</span>
@@ -587,81 +651,87 @@ export const AdminLayout = () => {
             </aside>
 
             <div className={styles.main}>
-                <header className={styles.topbar}>
-                    <button
-                        type='button'
-                        aria-label='Abrir navegación'
-                        className={styles.hamburger}
-                        onClick={() => setMobileNavOpen(true)}
-                    >
-                        <MenuIcon size={18} strokeWidth={1.7} />
-                    </button>
+                {(() => {
+                    const pestanas = SUBTABS_EN_CONTENIDO.has(route) ? [] : subsDe(route)
+                    const ranuraFiltros = <div ref={setFiltrosSlot} className={styles.topbarFiltros} />
+                    return (
+                        <header className={`${styles.topbar} ${pestanas.length ? styles.topbarConPestanas : ''}`}>
+                            <div className={styles.topbarFila}>
+                                <button
+                                    type='button'
+                                    aria-label='Abrir navegación'
+                                    className={styles.hamburger}
+                                    onClick={() => setMobileNavOpen(true)}
+                                >
+                                    <MenuIcon size={18} strokeWidth={1.7} />
+                                </button>
 
-                    <div className={styles.topbarTitles}>
-                        <h1 className={styles.topbarTitle}>{head.title}</h1>
-                        <div className={styles.topbarSubtitle}>{head.subtitle}</div>
-                    </div>
+                                <div className={styles.topbarTitles}>
+                                    {GRUPO[route] && <div className={styles.topbarMiga}>{GRUPO[route]}</div>}
+                                    <h1 className={styles.topbarTitle}>{head.title}</h1>
+                                    <div className={styles.topbarSubtitle}>{head.subtitle}</div>
+                                </div>
 
-                    <div className={styles.search}>
-                        <Search size={15} strokeWidth={1.7} />
-                        <input
-                            className={styles.searchInput}
-                            placeholder='Buscar evento, usuario, venta…'
-                            value={globalQuery}
-                            onChange={(e) => setGlobalQuery(e.target.value)}
-                        />
-                        <span className={styles.searchHint}>⌘K</span>
-                    </div>
+                                {/* Sin pestañas, los filtros de la sección van en esta fila. */}
+                                {!pestanas.length && ranuraFiltros}
 
-                    {head.action && (() => {
-                        const boton = (
-                            <button type='button' className={styles.primaryAction} onClick={head.action.onClick}>
-                                <Plus size={15} strokeWidth={2.2} />
-                                {head.action.label}
-                            </button>
-                        )
-                        return head.action.wrap ? head.action.wrap(boton) : boton
-                    })()}
-                </header>
+                                <div className={styles.search}>
+                                    <Search size={15} strokeWidth={1.7} />
+                                    <input
+                                        className={styles.searchInput}
+                                        placeholder='Buscar evento, usuario, venta…'
+                                        value={globalQuery}
+                                        onChange={(e) => setGlobalQuery(e.target.value)}
+                                    />
+                                    <span className={styles.searchHint}>⌘K</span>
+                                </div>
+
+                                {head.action && (() => {
+                                    const boton = (
+                                        <button type='button' className={styles.primaryAction} onClick={head.action.onClick}>
+                                            <Plus size={15} strokeWidth={2.2} />
+                                            {head.action.label}
+                                        </button>
+                                    )
+                                    return head.action.wrap ? head.action.wrap(boton) : boton
+                                })()}
+                                {/* Acción que pone la propia sección (p. ej. "Nuevo planner"). */}
+                                <div ref={setAccionSlot} className={styles.topbarAccion} />
+                            </div>
+
+                            {pestanas.length > 0 && (
+                                <div className={styles.topbarPestanas}>
+                                    <div className={styles.subtabs} role='tablist'>
+                                        {pestanas.map(({ key, label }) => {
+                                            const conteo = conteoDeSub(key)
+                                            return (
+                                                <button
+                                                    key={key}
+                                                    type='button'
+                                                    role='tab'
+                                                    aria-selected={sub === key}
+                                                    className={`${styles.subtab} ${sub === key ? styles.subtabActiva : ''}`}
+                                                    onClick={() => goTo(route, key)}
+                                                >
+                                                    {label}
+                                                    {conteo !== null && <span className={styles.pestanaConteo}>{conteo}</span>}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                    {ranuraFiltros}
+                                </div>
+                            )}
+                        </header>
+                    )
+                })()}
 
                 <main className={styles.content}>
-                    {renderSection()}
+                    <AdminTopbarProvider value={{ filtrosSlot, accionSlot }}>
+                        {renderSection()}
+                    </AdminTopbarProvider>
                 </main>
             </div>
-
-            {/* Montado siempre: es lo que permite animar el cierre además de la
-                apertura. `inert` lo saca del tab order y del lector de pantalla
-                mientras está cerrado, que es lo que antes daba gratis el
-                desmontaje. */}
-            <aside
-                className={`${styles.drawer} ${drawerOpen ? '' : styles.drawerCerrado}`}
-                inert={!drawerOpen}
-            >
-                <div className={styles.drawerPanel}>
-                    <div className={styles.drawerHeader}>
-                        <span className={styles.drawerTitle}>Buzón</span>
-                        {unAnswer > 0 && (
-                            <span className={styles.drawerCount}>{unAnswer} sin responder</span>
-                        )}
-                        <button
-                            type='button'
-                            aria-label='Cerrar buzón'
-                            className={styles.drawerClose}
-                            onClick={() => setDrawerOpen(false)}
-                        >
-                            <X size={15} strokeWidth={1.7} />
-                        </button>
-                    </div>
-                    <div className={styles.drawerBody}>
-                        <BuzonDrawer
-                            key={buzonInicial ?? 'lista'}
-                            conversations={conversations}
-                            invitationsById={invitationsById}
-                            inicial={buzonInicial}
-                        />
-                    </div>
-                </div>
-            </aside>
 
             <nav className={styles.tabbar}>
                 {TAB_BAR

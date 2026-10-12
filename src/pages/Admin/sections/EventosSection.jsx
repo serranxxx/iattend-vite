@@ -65,8 +65,11 @@ const formatFecha = (invitation) => {
     return null
 }
 
-export const EventosSection = ({ newInvitations, profiles, refreshEventos, query = '', esPrueba }) => {
-    const [tab, setTab] = useState('calendario')
+// `tab`: la pestaña la elige la topbar del admin (AdminLayout). Sin ella, la
+// sección dibuja sus propias pestañas.
+export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, refreshEventos, query = '', esPrueba }) => {
+    const [tabLocal, setTab] = useState('calendario')
+    const tab = tabDeTopbar ?? tabLocal
     const [ownerInputs, setOwnerInputs] = useState({})
     const [radiografia, setRadiografia] = useState({})
     // Evento abierto desde el calendario; su tarjeta se muestra en un modal.
@@ -518,7 +521,7 @@ export const EventosSection = ({ newInvitations, profiles, refreshEventos, query
 
     return (
         <div className={styles.eventos}>
-            <div className={styles.toolbar}>
+            {!tabDeTopbar && <div className={styles.toolbar}>
                 <div className={styles.tabs}>
                     {TABS.map(({ key, label }) => (
                         <button
@@ -531,7 +534,7 @@ export const EventosSection = ({ newInvitations, profiles, refreshEventos, query
                         </button>
                     ))}
                 </div>
-            </div>
+            </div>}
 
             {tab === 'calendario' ? (
                 <EventosCalendario

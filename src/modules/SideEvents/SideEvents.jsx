@@ -38,6 +38,7 @@ import SideCanvas from './SideCanvas'
 import { ColorField, DateField, FontPicker } from '../../components/MobileFields/MobileFields'
 import { SideEventsTour, SIDE_TOUR_STORAGE_KEY } from './SideEventsTour'
 import ed from './SideEventEditor.module.css'
+import { EVENTO_CREDITOS_FLASH } from '../../components/Payment/CreditController/creditosFlash'
 import sl from './SideEventsList.module.css'
 
 
@@ -472,7 +473,7 @@ export const SideEvents = () => {
             if (response.data.ok) {
                 // Cobrar solo tras éxito; el backend ya actualizó los contadores
                 // en side_events_guests.
-                onUpdateCredits()
+                await onUpdateCredits()
                 setCreditSuccess()
                 getGuests()
             }
@@ -615,7 +616,8 @@ export const SideEvents = () => {
         to: guest?.phone_number?.replace(/^\+/, ""),
         type: "template",
         template: {
-            name: current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
+            // Evento Flash: siempre invitation_retry (solo el nombre del evento).
+            name: esFlash ? "invitation_retry" : current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
             language: { code: "es_MX" },
             components: [
                 {
@@ -626,11 +628,13 @@ export const SideEvents = () => {
                 },
                 {
                     type: "body",
-                    parameters: [
-                        { type: "text", text: `${current?.name}`.replace(/[\n\r]/g, " ") },
-                        { type: "text", text: guest?.name },
-                        ...(current?.rsvp_deadline ? [{ type: "text", text: formatAbsoluteDateEs(current.rsvp_deadline) }] : []),
-                    ],
+                    parameters: esFlash
+                        ? [{ type: "text", text: `${current?.name}`.replace(/[\n\r]/g, " ") }]
+                        : [
+                            { type: "text", text: `${current?.name}`.replace(/[\n\r]/g, " ") },
+                            { type: "text", text: guest?.name },
+                            ...(current?.rsvp_deadline ? [{ type: "text", text: formatAbsoluteDateEs(current.rsvp_deadline) }] : []),
+                        ],
                 },
                 {
                     type: "button",
@@ -657,6 +661,9 @@ export const SideEvents = () => {
         }
         const restantes = Array.isArray(data) ? data[0] : data
         setCredits(restantes ?? 0)
+        // El contador de la barra (CreditController) no recibe Realtime de
+        // side_events: se le avisa directo con el saldo nuevo.
+        window.dispatchEvent(new CustomEvent(EVENTO_CREDITOS_FLASH, { detail: { id: String(flashId), credits: restantes ?? 0 } }))
         return restantes ?? 0
     }
 
@@ -892,7 +899,7 @@ export const SideEvents = () => {
         if (record.companion_id !== null && record.companion_id !== undefined) return null
         if (SHOW_BULK_SEND && sendMode) return isSendableGuest(record) ? renderBulkCheck(record) : null
 
-        return (
+        const marcar = (
             <Tooltip placement="topRight" color="var(--brand-color-500)" title={t('guests.mark_arrow_tooltip')}>
                 <button
                     type="button"
@@ -903,6 +910,39 @@ export const SideEvents = () => {
                     <Check size={15} />
                 </button>
             </Tooltip>
+        )
+
+        // Un Evento Flash no tiene otro lugar desde donde mandar su WhatsApp
+        // (en los side events normales solo se marca a mano): aquí lleva el
+        // botón de envío, con sus créditos propios. aria-disabled para que el
+        // Tooltip con el motivo se vea.
+        if (!esFlash) return marcar
+
+        const nacional = /^\+52\d+/.test(record.phone_number ?? '')
+        const motivo = !nacional
+            ? t('guests.tooltip_national_only')
+            : credits <= 0
+                ? t('side_events.flash_no_credits')
+                : ''
+
+        return (
+            <>
+                <Tooltip placement="topRight" color="var(--brand-color-500)" title={motivo}>
+                    <button
+                        type="button"
+                        className="gx-btn gx-btn--accent gx-btn--sm"
+                        aria-disabled={!!motivo}
+                        onClick={() => {
+                            if (motivo) return
+                            onSedingInvitation(current, record)
+                                .catch(() => message.error(t('side_events.flash_send_error')))
+                        }}
+                    >
+                        {t('guests.btn_send_invitation')}
+                    </button>
+                </Tooltip>
+                {marcar}
+            </>
         )
     }
 
@@ -1489,6 +1529,10 @@ export const SideEvents = () => {
     }
 
     const onSedingInvitation = async (data, guest, retry = false) => {
+        // Plantilla invitation_retry: la de los reintentos y la de todo envío de
+        // un Evento Flash. El crédito sí se cobra en un Flash (solo el reintento
+        // es gratis).
+        const plantillaCorta = retry || esFlash
         if (hasPendingInfo) {
             message.warning('Completa la información pendiente de tu invitación antes de enviar.')
             return
@@ -1523,9 +1567,10 @@ export const SideEvents = () => {
                     // Tres variantes sobre el mismo endpoint/registro (igual que
                     // GuestsPage): retry → invitation_retry; con rsvp_deadline del
                     // side event → invitation_deadline ({{3}} = fecha límite);
-                    // sin fecha → invitation_v2.
+                    // sin fecha → invitation_v2. Los Eventos Flash siempre van
+                    // con invitation_retry (solo {{1}} = nombre del evento).
                     template: {
-                        name: retry ? "invitation_retry" : current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
+                        name: plantillaCorta ? "invitation_retry" : current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
                         language: {
                             code: "es_MX",
                         },
@@ -1543,7 +1588,7 @@ export const SideEvents = () => {
                             },
                             {
                                 type: "body",
-                                parameters: retry
+                                parameters: plantillaCorta
                                     ? [
                                         {
                                             type: "text",
@@ -1593,7 +1638,7 @@ export const SideEvents = () => {
                 if (response.data.ok) {
                     // Un reintento no consume créditos (igual que en GuestsPage)
                     if (!retry) {
-                        onUpdateCredits()
+                        await onUpdateCredits()
                     }
                     setCreditSuccess()
                     onSendInvitation(guest)

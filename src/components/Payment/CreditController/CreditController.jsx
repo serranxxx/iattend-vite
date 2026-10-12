@@ -9,6 +9,7 @@ import { FaPaperPlane } from 'react-icons/fa'
 import { useLia } from '../../../context/LiaContext'
 import { useTranslation } from 'react-i18next'
 import { useDashboardRealtime } from '../../../context/DashboardRealtimeContext'
+import { EVENTO_CREDITOS_FLASH } from './creditosFlash'
 
 // `flash`: créditos de un Evento Flash (side_events.credits, id del side
 // event) en vez de los de una invitación; el "+" compra para ese evento.
@@ -45,6 +46,14 @@ export const CreditController = ({ id, mobile, flash = false }) => {
             setCredits(row.credits)
         })
     }, [id, subscribe])
+
+    // Evento Flash: SideEvents avisa el saldo al descontar (ver creditosFlash.js).
+    useEffect(() => {
+        if (!flash) return
+        const alCambiar = (e) => { if (e.detail?.id === String(id)) setCredits(e.detail.credits) }
+        window.addEventListener(EVENTO_CREDITOS_FLASH, alCambiar)
+        return () => window.removeEventListener(EVENTO_CREDITOS_FLASH, alCambiar)
+    }, [flash, id])
 
     const isSending = creditState === 'sending'
     const isBubble  = creditState === 'bubble'

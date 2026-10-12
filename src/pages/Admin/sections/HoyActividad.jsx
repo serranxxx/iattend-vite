@@ -3,9 +3,6 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 import { supabase } from '../../../lib/supabase'
-import { Vistazo } from '../BuzonDrawer'
-import { enMilisegundos, idDe, sinLeer, ultimoEntrante, ultimoMensaje } from '../buzonConversaciones'
-import { phoneFormatter } from '../../../modules/GuestManagement/WhatsappMessages/phone'
 import { pendientes } from '../supportTickets'
 import { useContador } from '../useContador'
 import styles from './HoySection.module.css'
@@ -13,81 +10,10 @@ import styles from './HoySection.module.css'
 dayjs.extend(relativeTime)
 dayjs.locale('es')
 
-// Tarjetas de abajo de Hoy: lo que entra (mensajes, Save the Dates y reportes).
+// Tarjetas de la columna derecha de Hoy: Save the Dates y reportes. (La
+// bandeja de mensajes salió de Hoy: vive en Buzón.)
 
 const mapaPor = (lista, llave) => new Map((lista ?? []).map(item => [item[llave], item]))
-
-// ------------------------------------------------------------- Bandeja ---
-
-const FILAS_BANDEJA = 4
-// Solo conversaciones de eventos cuyo dueño es gente de casa (ventas, admin y
-// pruebas): lo que el admin revisa desde Hoy. El buzón completo sigue en el rail.
-const ROLES_DE_BANDEJA = new Set(['sales', 'Administration', 'test'])
-
-export const BandejaCard = ({ className, conversations, invitations, profiles, onAbrirBuzon }) => {
-    const invitationsById = useMemo(() => mapaPor(invitations, 'id'), [invitations])
-    const perfilesPorId = useMemo(() => mapaPor(profiles, 'user_id'), [profiles])
-
-    // Sin leer primero y, dentro de cada bloque, lo más reciente arriba (igual
-    // que el buzón).
-    const deCasa = useMemo(() => {
-        const puntaje = (c) => enMilisegundos(sinLeer(c) > 0 ? ultimoEntrante(c) : ultimoMensaje(c))
-        return (conversations ?? [])
-            .filter(c => {
-                const invitacion = invitationsById.get(c.invitation_id)
-                return ROLES_DE_BANDEJA.has(perfilesPorId.get(invitacion?.user_id)?.role)
-            })
-            .sort((a, b) => (Math.sign(sinLeer(b)) - Math.sign(sinLeer(a))) || (puntaje(b) - puntaje(a)))
-    }, [conversations, invitationsById, perfilesPorId])
-
-    const totalSinLeer = deCasa.reduce((acc, c) => acc + sinLeer(c), 0)
-
-    return (
-        <section className={`${styles.card} ${className ?? ''}`}>
-            <header className={styles.cardHead}>
-                <h2 className={styles.label}>
-                    Bandeja
-                    {totalSinLeer > 0 && <span className={`${styles.pill} ${styles.pillVioleta}`}>{totalSinLeer} sin leer</span>}
-                </h2>
-                <button type='button' className={styles.enlace} onClick={() => onAbrirBuzon?.()}>abrir bandeja</button>
-            </header>
-
-            {deCasa.length === 0 ? (
-                <div className={styles.vacio}>Sin mensajes de cuentas de ventas, admin o pruebas.</div>
-            ) : (
-                <ul className={styles.bandeja}>
-                    {deCasa.slice(0, FILAS_BANDEJA).map(conversacion => {
-                        const ultimo = ultimoMensaje(conversacion)
-                        const nombre = ultimo?.contact_name ?? conversacion.messages?.[0]?.contact_name
-                        const evento = invitationsById.get(conversacion.invitation_id)?.name
-                        const noLeidos = sinLeer(conversacion)
-
-                        return (
-                            <li key={idDe(conversacion)}>
-                                <button
-                                    type='button'
-                                    className={`${styles.bandejaFila} ${noLeidos > 0 ? styles.bandejaFilaNueva : ''}`}
-                                    onClick={() => onAbrirBuzon?.(idDe(conversacion))}
-                                >
-                                    <span className={styles.avatar}>{(nombre ?? '?').trim().charAt(0).toUpperCase()}</span>
-                                    <span className={styles.bandejaQuien}>
-                                        <b>{nombre ?? phoneFormatter(conversacion.phone)}</b>
-                                        {evento && <span>{evento}</span>}
-                                    </span>
-                                    <span className={styles.bandejaTexto}><Vistazo mensaje={ultimo} /></span>
-                                    <span className={styles.bandejaHora}>
-                                        {ultimo?.timestamp ? dayjs(ultimo.timestamp).format('D MMM') : ''}
-                                        {noLeidos > 0 && <i>{noLeidos}</i>}
-                                    </span>
-                                </button>
-                            </li>
-                        )
-                    })}
-                </ul>
-            )}
-        </section>
-    )
-}
 
 // ------------------------------------------------------- Save the Date ---
 
@@ -99,23 +25,24 @@ const VENTANAS = [
     { dias: 90, tramo: 7 },
 ]
 
-const Sparkline = ({ valores }) => {
-    const w = 300
-    const h = 64
-    const tope = Math.max(...valores, 1)
-    const paso = valores.length > 1 ? w / (valores.length - 1) : w
-    const puntos = valores.map((v, i) => [i * paso, h - 3 - (v / tope) * (h - 8)])
-    const linea = puntos.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
+const ETIQUETA_TRAMO = { 1: 'por día', 3: 'cada 3 días', 7: 'por semana' }
 
+// Barras por tramo: la cifra encima de cada una; tramo vacío, raya crema.
+const Barras = ({ valores }) => {
+    const tope = Math.max(...valores, 1)
     return (
-        <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio='none' className={styles.sparkline} aria-hidden='true'>
-            <path d={`${linea} L${w},${h} L0,${h} Z`} className={styles.sparklineArea} />
-            <path d={linea} className={styles.sparklineLinea} />
-        </svg>
+        <div className={styles.stdBarras}>
+            {valores.map((v, i) => (
+                <div key={i} className={`${styles.stdBarra} ${v ? '' : styles.stdBarraVacia}`} title={`${v} ${v === 1 ? 'creado' : 'creados'}`}>
+                    {v > 0 && <b>{v}</b>}
+                    <span style={{ height: `${(v / tope) * 78}%` }} />
+                </div>
+            ))}
+        </div>
     )
 }
 
-export const SaveTheDateCard = ({ className, invitations, profiles, esPrueba }) => {
+export const SaveTheDateCard = ({ invitations, profiles, esPrueba }) => {
     const [filas, setFilas] = useState(null)
     const [dias, setDias] = useState(30)
 
@@ -171,7 +98,7 @@ export const SaveTheDateCard = ({ className, invitations, profiles, esPrueba }) 
     const ultimo = reales[0]
 
     return (
-        <section className={`${styles.card} ${className ?? ''}`}>
+        <section className={`${styles.card} ${styles.std}`}>
             <header className={styles.cardHead}>
                 <h2 className={styles.label}>Save the Date</h2>
                 <div className={styles.segmentado} role='radiogroup' aria-label='Ventana de días'>
@@ -190,13 +117,21 @@ export const SaveTheDateCard = ({ className, invitations, profiles, esPrueba }) 
                 </div>
             </header>
 
-            <div className={styles.stdCuerpo}>
-                <span className={styles.cifraGrande}>{Math.round(contados)}</span>
-                <span className={styles.stdTexto}>
+            <div className={styles.stdCifra}>
+                <span className={styles.cifra}>{Math.round(contados)}</span>
+                <span>
                     {enVentana.length === 1 ? 'creado' : 'creados'}
                     <br />por {personas} {personas === 1 ? 'persona' : 'personas'}
                 </span>
-                <Sparkline valores={serie} />
+            </div>
+
+            <div className={styles.stdGrafica}>
+                <Barras valores={serie} />
+                <div className={styles.stdEje}>
+                    <span>{desde.format('D MMM')}</span>
+                    <span>{ETIQUETA_TRAMO[tramo]}</span>
+                    <span>hoy</span>
+                </div>
             </div>
 
             <p className={styles.stdPie}>
@@ -214,7 +149,7 @@ export const SaveTheDateCard = ({ className, invitations, profiles, esPrueba }) 
 
 // ------------------------------------------------------------ Reportes ---
 
-export const ReportesCard = ({ className, tickets, onNavigate }) => {
+export const ReportesCard = ({ tickets, onNavigate }) => {
     const abiertos = useMemo(
         () => pendientes(tickets).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
         [tickets],
@@ -222,18 +157,18 @@ export const ReportesCard = ({ className, tickets, onNavigate }) => {
     const contados = useContador(abiertos.length)
 
     return (
-        <section className={`${styles.card} ${styles.cardFila} ${className ?? ''}`}>
+        <section className={`${styles.card} ${styles.cardFila}`}>
             <h2 className={styles.label}>Reportes</h2>
-            <span className={styles.cifraMedia}>{Math.round(contados)}</span>
+            <span className={styles.cifra}>{Math.round(contados)}</span>
             {tickets === null ? null : abiertos.length === 0 ? (
                 <span className={`${styles.pill} ${styles.pillVerde}`}><i /> todo en orden</span>
             ) : (
                 <span className={`${styles.pill} ${styles.pillAmbar}`}>
-                    <i /> sin resolver · último {dayjs(abiertos[0].created_at).fromNow()}
+                    <i /> sin resolver · {dayjs(abiertos[0].created_at).fromNow()}
                 </span>
             )}
             <button type='button' className={`${styles.enlace} ${styles.alFinal}`} onClick={() => onNavigate('buzon', 'reportes')}>
-                ver reportes
+                ver
             </button>
         </section>
     )
