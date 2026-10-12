@@ -314,6 +314,9 @@ export const AnaliticaRespuestas = ({ invitacionesReales, mes, onMesesDisponible
     const base = datos.conInvitacion
 
     const tasaGeneral = pct(datos.confirmados, base)
+    // El dato principal: cuántos respondieron, confirmen o rechacen. La tasa
+    // de confirmación queda en su propia cifra, abajo.
+    const tasaRespuesta = pct(datos.confirmados + datos.rechazados, base)
 
     const hero = [
         {
@@ -382,15 +385,15 @@ export const AnaliticaRespuestas = ({ invitacionesReales, mes, onMesesDisponible
                     />
                     <div className={styles.donaCentro}>
                         <span className={`${styles.cifra} ${styles.cifraHero}`}>
-                            {tasaGeneral}<small>%</small>
+                            {tasaRespuesta}<small>%</small>
                         </span>
-                        <span className={styles.donaPie}>confirmaron</span>
+                        <span className={styles.donaPie}>respondieron</span>
                     </div>
                 </div>
 
                 <div className={styles.heroCuerpo}>
                     <h2 className={`${styles.label} ${styles.labelOscuro}`}>
-                        Respuestas de {miles(base)} invitados que recibieron su invitación
+                        Respuestas de {miles(base)} invitados que recibieron su invitación · {miles(datos.confirmados + datos.rechazados)} respondieron
                     </h2>
 
                     <div className={styles.segmentada}>

@@ -36,8 +36,9 @@ dayjs.locale('es')
 // Pantallas reservadas al dueño: números de negocio, reviews de clientes y el
 // catálogo de planes. Cualquier otro admin ve el resto del panel, pero no estas.
 const CORREO_DEL_DUENIO = 'albserrano8@gmail.com'
-// Vendedores vivía en Ventas: sigue siendo solo del dueño.
-const RUTAS_RESERVADAS = new Set(['ventas', 'analitica', 'vendedores'])
+// Solo el dueño: Ventas y Vendedores (que vivía en Ventas). Analítica y Hoy
+// son para cualquier admin.
+const RUTAS_RESERVADAS = new Set(['ventas', 'vendedores'])
 const SUBS_RESERVADAS = new Set(['reviews', 'planes'])
 
 // Usuarios es una ruta por rol (profiles.role; Cliente = sin rol conocido).
@@ -494,7 +495,7 @@ export const AdminLayout = () => {
                 return (
                     <HoySection
                         onNavigate={goTo}
-                        canSeeVentas={esDuenio}
+                        puedeAbrirVentas={esDuenio}
                         tickets={tickets}
                         invitations={newInvitations}
                         profiles={newProfiles}

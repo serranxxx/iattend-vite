@@ -90,7 +90,9 @@ const GraficaMeta = ({ serie, meta, proyeccion, diasDelMes, corto, etiquetaFinal
 
 // ------------------------------------------------------------- pantalla ---
 
-export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, profiles, esPrueba }) => {
+// Hoy lo ve cualquier admin. `puedeAbrirVentas` (solo el dueño): los enlaces
+// a Ventas y el recuadro "Saldo en Stripe", cuya API también es solo del dueño.
+export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations, profiles, esPrueba }) => {
     const hoy = useMemo(() => dayjs(), [])
     const [mes, setMes] = useState(() => hoy.format('YYYY-MM'))
     // Sin IVA (lo que de verdad queda) o con IVA (lo cobrado menos comisiones).
@@ -115,7 +117,6 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, pro
     }), [hoy])
 
     useEffect(() => {
-        if (!canSeeVentas) return
         let cancelado = false
         const anios = [...new Set([hoy.year(), periodo.anio])].filter(a => !ventasPorAnio[a])
         anios.forEach(anio => {
@@ -133,14 +134,14 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, pro
             .then(({ data }) => { if (!cancelado) setStripePorDia(data.porDia ?? {}) })
             .catch(error => console.error('No se pudo leer la comisión de Stripe:', error.response?.data || error.message))
         return () => { cancelado = true }
-    }, [canSeeVentas, periodo])
+    }, [periodo])
 
     useEffect(() => {
-        if (!canSeeVentas) return
+        if (!puedeAbrirVentas) return
         fetchStripeResumen()
             .then(({ data }) => setStripe(data))
             .catch(error => console.error('No se pudo leer el saldo de Stripe:', error.response?.data || error.message))
-    }, [canSeeVentas])
+    }, [puedeAbrirVentas])
 
     const ventasDelAnio = ventasPorAnio[periodo.anio] ?? []
     const ventasAnioEnCurso = ventasPorAnio[hoy.year()] ?? []
@@ -205,17 +206,6 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, pro
             <ReportesCard tickets={tickets} onNavigate={onNavigate} />
         </div>
     )
-
-    // Los números de venta son del dueño. Sin permiso no se piden al backend,
-    // así que pintarlos daría ceros que se leen como "no vendimos nada".
-    if (!canSeeVentas) {
-        return (
-            <div className={styles.hoy}>
-                <div className={styles.sinPermiso}>Los números de venta son privados.</div>
-                <div className={`${styles.grid} ${styles.gridSinVentas}`}>{columnaActividad}</div>
-            </div>
-        )
-    }
 
     const disponible = principal(stripe?.saldo?.disponible)
     const porLiberar = principal(stripe?.saldo?.pendiente)
@@ -306,7 +296,7 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, pro
                 <section className={styles.card}>
                     <header className={styles.cardHead}>
                         <h2 className={styles.label}>Ventas del mes</h2>
-                        <button type='button' className={styles.enlace} onClick={() => onNavigate('ventas', 'ingresos')}>ver ventas</button>
+                        {puedeAbrirVentas && <button type='button' className={styles.enlace} onClick={() => onNavigate('ventas', 'ingresos')}>ver ventas</button>}
                     </header>
 
                     <div className={styles.ventasCifra}>
@@ -341,7 +331,7 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, pro
                     <div className={styles.cobranzaArriba}>
                         <header className={styles.cardHead}>
                             <h2 className={styles.label}>Saldo por cobrar</h2>
-                            <button type='button' className={styles.enlace} onClick={() => onNavigate('ventas', 'ingresos')}>ver cobranza</button>
+                            {puedeAbrirVentas && <button type='button' className={styles.enlace} onClick={() => onNavigate('ventas', 'ingresos')}>ver cobranza</button>}
                         </header>
                         <div className={styles.saldoCifra}>
                             <span className={styles.cifra}>{formatCurrency(saldoContado)}</span>
@@ -373,7 +363,7 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, pro
                         )}
                     </div>
 
-                    <div className={styles.stripe}>
+                    {puedeAbrirVentas && <div className={styles.stripe}>
                         <header className={styles.cardHead}>
                             <h2 className={styles.label}>Saldo en Stripe</h2>
                             <button type='button' className={styles.enlace} onClick={() => onNavigate('ventas', 'stripe')}>ver Stripe</button>
@@ -397,7 +387,7 @@ export const HoySection = ({ onNavigate, canSeeVentas, tickets, invitations, pro
                         ) : (
                             <span className={styles.vacio}>Leyendo Stripe…</span>
                         )}
-                    </div>
+                    </div>}
                 </section>
 
                 {columnaActividad}
