@@ -123,6 +123,8 @@ export const buildStats = (invitation, { guests, tables, sideEvents }, today) =>
         rsvpDaysLeft: rsvp ? dayjs(rsvp).diff(today, 'day') : null,
         total: own.length,
         confirmed: confirmed.length,
+        // Llegaron (lector de pases): state 'asistente'.
+        attended: count('asistente'),
         declined,
         waiting,
         notSent,

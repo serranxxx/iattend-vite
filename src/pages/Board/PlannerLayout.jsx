@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { CalendarHeart, ChevronRight, Compass, Gift, Info, LayoutDashboard, LogOut, Plus, Shield, Sparkles, Users, X, Zap } from 'lucide-react'
 import { PlannerExplore } from './PlannerExplore'
 import { PlannerFeedback } from './PlannerFeedback'
+import { PlannerEventList } from './PlannerEventList'
 import { buildStats, fetchPlannerData } from '../../components/PlannerDashboard/plannerData'
 import logoBlue from '/images/logo_blue.png'
 import styles from './PlannerLayout.module.css'
@@ -17,8 +18,8 @@ import styles from './PlannerLayout.module.css'
  *   - Comprar evento y, si tiene, sus eventos gratis → drawer de alta
  *     (PlannerEventDrawer).
  *   - Invitaciones: Explora I attend (carrusel + su invitación de ejemplo
- *     `is_test`, si la tiene), Mis clientes y Mis eventos. Siempre se entra a
- *     Explora I attend.
+ *     `is_test`, si la tiene), Mis clientes y Mis eventos (PlannerEventList:
+ *     Próximos + Historial). Siempre se entra a Explora I attend.
  *   - Dashboard (?view=data) → PlannerDashboard.
  *   - Administración: además, Administrador bajo Dashboard.
  *   - Abajo, "¿Te falta algo?" (PlannerFeedback, solicitudes que llegan a
@@ -63,25 +64,27 @@ export const PlannerLayout = ({
     // Siempre se entra a Explora I attend; después, la que elija.
     const activa = secciones.find(s => s.key === (elegida ?? 'test'))
 
-    // Números de las tarjetas de Mis clientes (mismo cálculo que el dashboard).
-    const clientes = secciones.find(s => s.key === 'clients').items
-    const clientesKey = clientes.map(i => i.id).join(',')
-    const [datosClientes, setDatosClientes] = useState(null)
+    // Números de las tarjetas de Mis clientes y Mis eventos (mismo cálculo
+    // que el dashboard). Sin números para los Flash: con stats la tarjeta
+    // pinta el lector de pases, que solo sabe abrir invitaciones.
+    const conNumeros = secciones
+        .filter(s => s.key === 'clients' || s.key === 'own')
+        .flatMap(s => s.items)
+        .filter(i => !i._flash)
+    const conNumerosKey = conNumeros.map(i => i.id).join(',')
+    const [datosEventos, setDatosEventos] = useState(null)
     useEffect(() => {
         let vivo = true
-        // Los Eventos Flash no son invitaciones: no tienen esos números.
-        fetchPlannerData(clientes.filter(i => !i._flash).map(i => i.id))
-            .then(datos => { if (vivo) setDatosClientes(datos) })
-            .catch(error => console.error('No se pudieron cargar los números de los clientes:', error))
+        fetchPlannerData(conNumeros.map(i => i.id))
+            .then(datos => { if (vivo) setDatosEventos(datos) })
+            .catch(error => console.error('No se pudieron cargar los números de los eventos:', error))
         return () => { vivo = false }
-    }, [clientesKey])
+    }, [conNumerosKey])
     const statsPorId = useMemo(() => {
-        if (!datosClientes) return {}
+        if (!datosEventos) return {}
         const hoy = dayjs().startOf('day')
-        // Sin números para los Flash: con stats la tarjeta pinta el lector de
-        // pases, que solo sabe abrir invitaciones (sin stats lleva Compartir).
-        return Object.fromEntries(clientes.filter(inv => !inv._flash).map(inv => [inv.id, buildStats(inv, datosClientes, hoy)]))
-    }, [datosClientes, clientesKey])
+        return Object.fromEntries(conNumeros.map(inv => [inv.id, buildStats(inv, datosEventos, hoy)]))
+    }, [datosEventos, conNumerosKey])
     const enDashboard = view === 'data'
 
     const gratis = beneficios?.free_events ?? 0
@@ -161,9 +164,13 @@ export const PlannerLayout = ({
             onCompartir={() => onCompartir(activa.items[0])}
         />
     ) : activa?.items.length > 0 ? (
-        <div className={styles.tarjetas}>
-            {activa.items.map(inv => renderInvitationCard(inv, activa.key === 'clients' ? { stats: statsPorId[inv.id] } : undefined))}
-        </div>
+        <PlannerEventList
+            key={activa.key}
+            items={activa.items}
+            statsPorId={statsPorId}
+            renderInvitationCard={renderInvitationCard}
+            onAbrir={onAbrir}
+        />
     ) : activa?.key === 'own' ? (
         <div className={styles.vacio}>
             <CalendarHeart size={28} />

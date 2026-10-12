@@ -274,7 +274,59 @@
     justify-content: flex-start;
 }
 
-/* ── Gradient blob background ──────────────────────────── */
+/* ── Fondo del dashboard ──────────────────────────────────
+   El mismo de la página del planner (pages/Board/PlannerLayout.module.css →
+   .main), pero es un radial morado I attend (#D1BEDD) al centro que para el 80% ya es blanco, con su
+   centro recorriendo un circuito a velocidad constante, más una retícula de
+   puntos navy que se desvanece hacia abajo. Para más o menos presencia de
+   los puntos, mover su opacidad entre 0.10 y 0.18. */
+@property --dash-bg-x {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 50%;
+}
+
+@property --dash-bg-y {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 50%;
+}
+
+.dashboard_bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(70% 70% at var(--dash-bg-x) var(--dash-bg-y), #DCCDE7 0%, #F3EEF7 45%, #FFFFFF 80%);
+    animation: dash-deriva 36s linear infinite;
+}
+
+.dashboard_bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(#1E3149 1px, transparent 1.2px);
+    background-size: 22px 22px;
+    opacity: 0.14;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 55%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 55%, transparent 100%);
+}
+
+@keyframes dash-deriva {
+    0% { --dash-bg-x: 50%; --dash-bg-y: 42%; }
+    25% { --dash-bg-x: 62%; --dash-bg-y: 50%; }
+    50% { --dash-bg-x: 50%; --dash-bg-y: 58%; }
+    75% { --dash-bg-x: 38%; --dash-bg-y: 50%; }
+    100% { --dash-bg-x: 50%; --dash-bg-y: 42%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard_bg {
+        animation: none;
+    }
+}
+
+/* ── Gradient blob background (Photo Wall) ─────────────── */
 :root {
     --dash-bg1: #ffffff;
     --dash-bg2: #f8f6f0;
@@ -390,7 +442,8 @@
     opacity: 0.5;
 }
 
-.dashboard_body > *:not(.gradient-bg) {
+/* El contenido va encima del fondo (que es absoluto y no debe tocarse aquí). */
+.dashboard_body > *:not(.gradient-bg):not(.dashboard_bg) {
     position: relative;
     z-index: 1;
 }
@@ -689,12 +742,14 @@
     flex-direction: column;
     gap: 14px;
     box-sizing: border-box;
+    /* Sombra suave en reposo para despegarlas del fondo; más marcada al pasar. */
+    box-shadow: 0 2px 6px rgba(28, 50, 73, 0.05), 0 10px 28px rgba(28, 50, 73, 0.08);
     transition: box-shadow 0.3s ease;
 }
 
-/* Hover: glow leve sin offset, estilo de la casa */
+/* Hover: la misma sombra, un poco más marcada */
 .bento_card:hover {
-    box-shadow: 0 0 16px rgba(28, 50, 73, 0.18);
+    box-shadow: 0 4px 10px rgba(28, 50, 73, 0.08), 0 16px 36px rgba(28, 50, 73, 0.14);
 }
 
 .bento_title {

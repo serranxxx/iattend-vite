@@ -2318,7 +2318,7 @@
     "free_cta_other": "Tienes {{count}} Eventos Flash gratis",
     "kind_regular": "Evento regular",
     "kind_regular_text": "La invitación completa: diseño, invitados, confirmaciones, mesas, side events y más.",
-    "kind_flash_text": "Un evento rápido para un brunch, una cena o una reunión con amigos: su propia invitación, invitados y confirmaciones.",
+    "kind_flash_text": "Un evento rápido para un brunch, una cena o una reunión con amigos.",
     "price_error": "No se pudo cargar el precio: {{msg}}"
   },
   "planner_free": {
@@ -2327,5 +2327,22 @@
     "flash": "Evento Flash",
     "flash_what_title": "¿Qué es un Evento Flash?",
     "flash_what": "Una invitación rápida y sencilla para un brunch, una cena o una reunión con amigos: con su propia lista de invitados y confirmaciones, sin armar una invitación completa."
+  },
+  "planner_list": {
+    "upcoming": "Próximos",
+    "upcoming_hint": "ordenados por fecha",
+    "no_upcoming": "No hay eventos próximos.",
+    "history": "Historial",
+    "history_count_one": "{{count}} evento finalizado",
+    "history_count_other": "{{count}} eventos finalizados",
+    "show_history": "Ver historial",
+    "hide_history": "Ocultar historial",
+    "ended": "Finalizó {{date}}",
+    "finished": "Finalizado",
+    "attended_one": "de {{count}} invitado asistió",
+    "attended_other": "de {{count}} invitados asistieron",
+    "confirmed_one": "de {{count}} invitado confirmó",
+    "confirmed_other": "de {{count}} invitados confirmaron",
+    "no_data": "Sin lista de invitados"
   }
 }

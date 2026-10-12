@@ -21,6 +21,9 @@ import { useBentoFit } from './useBentoFit'
 import { TablesSketch } from './TablesSketch'
 import { TablesPage } from '../../modules/GuestManagement/Tables/TablesPage'
 
+// Foto fija de la tarjeta del Save the Date (bento y versión móvil).
+const STD_CARD_IMG = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/f282bb98-6d9c-446d-8ef6-1dacff261732/1788881927563-savethed.jpg'
+
 
 const LANDING = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/landing';
 
@@ -55,7 +58,6 @@ export const DashboardPage = () => {
     const [activation, setActivation] = useState(null)
     const [activatedPlan, setActivatedPlan] = useState(null)
     const [tablesOpen, setTablesOpen] = useState(false)
-    const interBubbleRef = useRef(null)
 
     // El feedback dejó de vivir en el header: ahora es un banner del dashboard.
     const {
@@ -79,23 +81,6 @@ export const DashboardPage = () => {
         mq.addEventListener('change', onChange)
         return () => mq.removeEventListener('change', onChange)
     }, [])
-
-    useEffect(() => {
-        const el = interBubbleRef.current
-        if (!el) return
-        let curX = 0, curY = 0, tgX = 0, tgY = 0
-        let rafId
-        const move = () => {
-            curX += (tgX - curX) / 20
-            curY += (tgY - curY) / 20
-            el.style.transform = `translate(${Math.round(curX)}px, ${Math.round(curY)}px)`
-            rafId = requestAnimationFrame(move)
-        }
-        const onMouseMove = (e) => { tgX = e.clientX; tgY = e.clientY }
-        window.addEventListener('mousemove', onMouseMove)
-        move()
-        return () => { window.removeEventListener('mousemove', onMouseMove); cancelAnimationFrame(rafId) }
-    }, [invitation, plan])
 
     const getData = async (invitation_id) => {
 
@@ -321,13 +306,10 @@ export const DashboardPage = () => {
     const coverTitle = invitation?.cover?.title?.text?.value ?? '';
     const coverChip = invitation?.cover?.date?.value ? fmtChip(invitation.cover.date.value) : null;
 
-    // Con fondo de video no hay imagen que mostrar: se usa la "imagen para el
-    // link" que el editor pide en ese caso.
-    const stdMediaList = Array.isArray(saveTheDate?.cover?.image?.prod)
-        ? saveTheDate.cover.image.prod
-        : [toFirstString(saveTheDate?.cover?.image?.prod)].filter(Boolean);
-    const stdFirstImage = stdMediaList.find((u) => typeof u === 'string' && !/\.(mp4|webm|mov|m4v)(\?|$)/i.test(u));
-    const stdImg = saveTheDate?.cover?.image?.poster || stdFirstImage || realCoverImg;
+    // La tarjeta del Save the Date siempre lleva la misma foto, sin importar
+    // el diseño del evento (antes tomaba la portada del Save the Date o de la
+    // invitación).
+    const stdImg = STD_CARD_IMG;
     const stdChip = saveTheDate?.event_date ? fmtChip(saveTheDate.event_date) : null;
 
     const stats = { confirmed, waiting, available };
@@ -492,18 +474,8 @@ export const DashboardPage = () => {
                     className={`dashboard_body${isMobile ? ' dashboard_body--mobile' : ''}${!isMobile && bentoFit.scroll ? ' dashboard_body--scroll' : ''}`}
                 >
 
-                    {/* ── Gradient background ── */}
-                    <div className="gradient-bg">
-
-                        <div className="gradients-container">
-                            <div className="g1" />
-                            <div className="g2" />
-                            <div className="g3" />
-                            <div className="g4" />
-                            <div className="g5" />
-                            <div className="interactive" ref={interBubbleRef} />
-                        </div>
-                    </div>
+                    {/* Fondo: el mismo de la página del planner (dashboard.css → .dashboard_bg) */}
+                    <div className='dashboard_bg' aria-hidden='true' />
 
                     <div className='dashboard_stack'>
 

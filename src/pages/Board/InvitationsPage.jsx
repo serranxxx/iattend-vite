@@ -229,9 +229,7 @@ export const InvitationsPage = () => {
                         disabled={!invitation.active}
                         icon={<ArrowRight size={16} />}
                         className='invitation_start_button'
-                        onClick={() => invitation._flash
-                            ? navigate(`/dashboard/side?flash=${invitation._flash.id}`)
-                            : handleMoode(invitation.id)}
+                        onClick={() => abrirEvento(invitation)}
                     >
                         {t('invitations.btn_start')}
                     </Button>
@@ -314,6 +312,12 @@ export const InvitationsPage = () => {
         const params = new URLSearchParams({ id });
         navigate(`/dashboard?${params.toString()}`);
     };
+
+    // Un Evento Flash no tiene dashboard de invitación: se abre su editor
+    // (su id `flash-…` no es un uuid de invitations).
+    const abrirEvento = (inv) => (inv._flash
+        ? navigate(`/dashboard/side?flash=${inv._flash.id}`)
+        : handleMoode(inv.id))
 
     const getNewInvitations = async () => {
 
@@ -451,7 +455,7 @@ export const InvitationsPage = () => {
                     onEventoPersonal={() => navigate('/checkout')}
                     onTour={() => setOnboardingOpen(true)}
                     onLogout={() => { logout(); navigate('/login') }}
-                    onAbrir={(inv) => handleMoode(inv.id)}
+                    onAbrir={abrirEvento}
                     onCompartir={(inv) => copyToClipboard(`${baseProd}/${inv?.data?.generals?.event?.label}/${inv?.data?.generals?.event?.name}`)}
                 />
                 <PlannerEventDrawer

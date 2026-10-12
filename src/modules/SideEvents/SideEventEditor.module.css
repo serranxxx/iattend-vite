@@ -297,7 +297,7 @@
 .sendCol {
     display: flex;
     flex-direction: column;
-    margin-left: 24px;
+    margin-left: 16px;
     flex-shrink: 0;
     opacity: 0;
     transform: translateX(14px);
@@ -333,6 +333,13 @@
     align-items: center;
     gap: 18px;
     padding: 8px 24px 48px;
+}
+
+/* En Envío la pieza va pegada a la lista: 8 px de cada lado (CANVAS_PAD en
+   SideEvents.jsx) + 16 px de margen de la lista = 24 px entre las dos. */
+.canvasWrapSend {
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 /* Reserva el tamaño ya escalado (el scale no afecta al layout) */
@@ -677,27 +684,6 @@
 /* Descartar se separa de las otras dos acciones */
 .modalActions > *:first-child {
     margin-right: auto;
-}
-
-/* ── Angosto ── */
-@media (max-width: 1080px) {
-    .stageRow {
-        flex-wrap: wrap;
-    }
-
-    .sendSlot {
-        width: 100% !important;
-    }
-
-    .sendCol {
-        width: 100%;
-        margin: 16px 0 0;
-        height: auto !important;
-    }
-
-    .sendBody {
-        overflow: visible;
-    }
 }
 
 @media (max-width: 900px) {

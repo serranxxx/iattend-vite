@@ -2499,7 +2499,8 @@ export const SideEvents = () => {
     // una herramienta de diseño. Se mide alto y ancho: con la columna de
     // Envío abierta queda menos ancho disponible.
     useEffect(() => {
-        const fit = () => setAvailable({ h: window.innerHeight - 190, w: window.innerWidth })
+        // clientWidth: sin la barra de scroll, que también ocupa ancho
+        const fit = () => setAvailable({ h: window.innerHeight - 190, w: document.documentElement.clientWidth })
         fit()
         window.addEventListener('resize', fit)
         return () => window.removeEventListener('resize', fit)
@@ -2588,12 +2589,18 @@ export const SideEvents = () => {
     const fitH = (h) => Math.max(0.55, Math.min(1, available.h / h))
     const fitBoth = (w, h) => Math.max(0.55, Math.min(1, Math.min(available.h / h, Math.max(320, available.w - 160) / w)))
     const cardScale = fitBoth(CARD_W, CARD_H)
-    const deviceScale = sendOpen ? fitH(DEVICE_H) : fitBoth(DEVICE_W, DEVICE_H)
-
     // Ancho del hueco: lo que queda después de la pieza (más el padding del
     // lienzo) y un respiro parejo a los lados.
     const STAGE_EDGE = 20
-    const sendWidth = Math.max(420, available.w - (DEVICE_W * deviceScale + 48) - STAGE_EDGE * 2)
+    const SEND_MIN = 420
+    // En Envío la pieza y la lista van siempre lado a lado: en pantallas
+    // angostas (iPad, 768–1080 px) la pieza también se achica por ancho para
+    // dejarle a la lista sus 420 px mínimos.
+    // Relleno a los lados de la pieza: en Envío, más pegado a la lista.
+    const CANVAS_PAD = sendOpen ? 16 : 48
+    const fitSend = () => Math.max(0.55, Math.min(fitH(DEVICE_H), (available.w - SEND_MIN - CANVAS_PAD - STAGE_EDGE * 2) / DEVICE_W))
+    const deviceScale = sendOpen ? fitSend() : fitBoth(DEVICE_W, DEVICE_H)
+    const sendWidth = Math.max(SEND_MIN, available.w - (DEVICE_W * deviceScale + CANVAS_PAD) - STAGE_EDGE * 2)
 
     const publicUrl = `https://www.iattend.events/side-event/${current?.id}`
 
@@ -2847,7 +2854,7 @@ export const SideEvents = () => {
 
     /* ── Lienzo flotante: se comparte entre Diseño y Envío ── */
     const canvasBlock = (
-        <div className={ed.canvasWrap} data-tour="canvas">
+        <div className={`${ed.canvasWrap} ${sendOpen ? ed.canvasWrapSend : ''}`} data-tour="canvas">
             {live ? (
                 <div
                     key='live'
@@ -2900,7 +2907,9 @@ export const SideEvents = () => {
                 </div>
             )}
 
-            <span className={ed.canvasCaption}>
+            {/* En Envío no puede ser más ancha que la pieza: en pantallas
+                angostas la pieza se achica y el texto empujaba la lista fuera. */}
+            <span className={ed.canvasCaption} style={sendOpen ? { maxWidth: DEVICE_W * deviceScale } : undefined}>
                 {live ? t('side_events.live_caption') : t('side_events.canvas_caption')}
             </span>
         </div>
@@ -2956,7 +2965,7 @@ export const SideEvents = () => {
         <div
             className={`${ed.block} ${ed.sendCol} ${sendIn || tourOpen ? ed.sendColIn : ''} ${tourOpen ? ed.noAnim : ''}`}
             data-tour="guests"
-            style={{ width: Math.max(320, sendWidth - 24), height: DEVICE_H * deviceScale }}
+            style={{ width: Math.max(320, sendWidth - 16), height: DEVICE_H * deviceScale }}
         >
             {blockHead(
                 <Send size={16} />,

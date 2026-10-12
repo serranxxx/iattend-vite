@@ -470,12 +470,6 @@
     width: 100%;
 }
 
-.tarjetas {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
 /* Centrado en el espacio libre del contenido (main es columna flex y ocupa
    todo el alto de la pantalla). */
 .vacio {
@@ -584,10 +578,6 @@
         font-size: 30px;
     }
 
-    .tarjetas {
-        flex-direction: column;
-    }
-
     .vacio {
         max-width: none;
     }
@@ -652,10 +642,6 @@
     flex-direction: column;
     flex: 1;
     margin-top: 24px;
-}
-
-.mainMovil .tarjetas {
-    flex-direction: column;
 }
 
 .mainMovil .vacio {

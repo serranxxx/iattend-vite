@@ -2318,7 +2318,7 @@
     "free_cta_other": "You have {{count}} free Flash events",
     "kind_regular": "Regular event",
     "kind_regular_text": "The full invitation: design, guests, RSVPs, seating, side events and more.",
-    "kind_flash_text": "A quick event for a brunch, a dinner or a get-together with friends: its own invitation, guests and RSVPs.",
+    "kind_flash_text": "A quick event for a brunch, a dinner or a get-together with friends.",
     "price_error": "Couldn't load the price: {{msg}}"
   },
   "planner_free": {
@@ -2327,5 +2327,22 @@
     "flash": "Flash event",
     "flash_what_title": "What is a Flash event?",
     "flash_what": "A quick, simple invitation for a brunch, a dinner or a get-together with friends: with its own guest list and RSVPs, without building a full invitation."
+  },
+  "planner_list": {
+    "upcoming": "Upcoming",
+    "upcoming_hint": "sorted by date",
+    "no_upcoming": "No upcoming events.",
+    "history": "History",
+    "history_count_one": "{{count}} finished event",
+    "history_count_other": "{{count}} finished events",
+    "show_history": "Show history",
+    "hide_history": "Hide history",
+    "ended": "Ended {{date}}",
+    "finished": "Finished",
+    "attended_one": "of {{count}} guest attended",
+    "attended_other": "of {{count}} guests attended",
+    "confirmed_one": "of {{count}} guest confirmed",
+    "confirmed_other": "of {{count}} guests confirmed",
+    "no_data": "No guest list"
   }
 }
