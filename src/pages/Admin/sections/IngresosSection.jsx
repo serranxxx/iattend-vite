@@ -16,6 +16,14 @@ import styles from './VentasSection.module.css'
 import iv from './Ingresos.module.css'
 
 
+// Cómo se pagó la venta. Las digitales (Stripe / en línea) no piden
+// comprobante: el cobro mismo lo es (vista ventas_comprobante_pendiente).
+const METODOS_DE_VENTA = [
+    { value: 'transferencia', label: 'Transferencia' },
+    { value: 'digital', label: 'Pago digital' },
+]
+const esDigital = (venta) => venta?.metodo_pago === 'digital'
+
 const METODOS_PAGO = [
     { value: 'transferencia', label: 'Transferencia' },
     { value: 'stripe', label: 'Stripe' },
@@ -433,6 +441,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             precio_acordado: venta.precio_acordado,
             plan: venta.plan,
             vendedor_id: venta.vendedor_id,
+            metodo_pago: venta.metodo_pago || 'transferencia',
         })
     }
 
@@ -452,6 +461,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         setPayingVenta(venta)
         setPayFile(null)
         payForm.resetFields()
+        payForm.setFieldValue('metodo', esDigital(venta) ? 'stripe' : 'transferencia')
     }
 
     const handleRegistrarPago = async () => {
@@ -463,7 +473,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                 metodo: values.metodo,
             })
 
-            if (payFile) {
+            if (payFile && !esDigital(payingVenta)) {
                 try {
                     await subirAdminComprobante(data.pago_id, payFile)
                 } catch {
@@ -555,6 +565,9 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     <Form.Item name='vendedor_id' label='Vendedor asignado' rules={[{ required: true }]}>
                         <Select options={vendedorOptions} />
                     </Form.Item>
+                    <Form.Item name='metodo_pago' label='Método de pago' rules={[{ required: true }]} extra='Pago digital no pide comprobante.'>
+                        <Select options={METODOS_DE_VENTA} />
+                    </Form.Item>
                 </Form>
             </AdminModal>
 
@@ -574,7 +587,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     <Form.Item name='metodo' label='Método' rules={[{ required: true }]} initialValue='transferencia'>
                         <Select options={METODOS_PAGO} />
                     </Form.Item>
-                    <Form.Item label='Comprobante (opcional)'>
+                    {!esDigital(payingVenta) && <Form.Item label='Comprobante (opcional)'>
                         <Upload
                             beforeUpload={(file) => { setPayFile(file); return false }}
                             onRemove={() => setPayFile(null)}
@@ -583,7 +596,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         >
                             <Button icon={<UploadIcon size={14} />}>Subir foto o PDF</Button>
                         </Upload>
-                    </Form.Item>
+                    </Form.Item>}
                 </Form>
             </AdminModal>
 
@@ -614,6 +627,9 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     </Form.Item>
                     <Form.Item name='precio_acordado' label='Precio acordado' rules={[{ required: true }]}>
                         <InputNumber style={{ width: '100%' }} min={0} />
+                    </Form.Item>
+                    <Form.Item name='metodo_pago' label='Método de pago' rules={[{ required: true }]} initialValue='transferencia' extra='Pago digital no pide comprobante.'>
+                        <Select options={METODOS_DE_VENTA} />
                     </Form.Item>
                     <Form.Item name='fecha_venta' label='Fecha de venta'>
                         <DatePicker style={{ width: '100%' }} />
@@ -714,8 +730,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                                 {completo ? 'completo' : venta.estado_pago === 'apartado' ? 'apartado' : 'sin pago'}
                                             </span>
                                         </span>
-                                        <span className={`${styles.cell} ${faltaComprobante ? styles.comprobanteFalta : styles.comprobanteOk}`}>
-                                            {faltaComprobante ? 'falta' : 'ok'}
+                                        <span className={`${styles.cell} ${esDigital(venta) ? styles.celdaTenue : faltaComprobante ? styles.comprobanteFalta : styles.comprobanteOk}`}>
+                                            {esDigital(venta) ? 'digital' : faltaComprobante ? 'falta' : 'ok'}
                                         </span>
                                         <span className={styles.cell}>
                                             <Dropdown
@@ -927,11 +943,18 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                                 </div>
                                                 <span className={iv.ventaMeta}>
                                                     {venta.vendedor || '—'} · {dayjs(venta.fecha_venta).format('D MMM')}
-                                                    {venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
+                                                    {esDigital(venta) ? ' · pago digital' : venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
                                                 </span>
                                             </div>
                                             <div className={iv.ventaMonto}>
-                                                <b>{formatCurrency(venta.precio_acordado)}</b>
+                                                {/* Lo que llega a la cuenta: en las de Stripe, sin su comisión. */}
+                                                {Number(venta.comision_stripe) > 0 ? (
+                                                    <Tooltip title={`Cobrado ${formatCurrency(venta.precio_acordado)} · Stripe −${formatCurrency(venta.comision_stripe)}`}>
+                                                        <b>{formatCurrency(venta.precio_acordado - venta.comision_stripe)}</b>
+                                                    </Tooltip>
+                                                ) : (
+                                                    <b>{formatCurrency(venta.precio_acordado)}</b>
+                                                )}
                                                 <span className={completo ? iv.estadoOk : iv.estadoDebe}>
                                                     {completo ? 'completo' : `${venta.estado_pago === 'apartado' ? 'apartado' : 'sin pago'} · debe ${formatCurrency(saldo)}`}
                                                 </span>
