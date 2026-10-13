@@ -859,7 +859,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     <section className={iv.hero}>
                         <header className={iv.heroHead}>
                             <h2 className={iv.heroTitulo}>
-                                Ingreso {descontarIva ? 'neto' : 'sin IVA'} acumulado · {acumuladoModo === 'anio' ? year : MESES[month - 1].toLowerCase()}
+                                Ingreso {descontarIva ? 'neto' : 'con IVA'} acumulado · {acumuladoModo === 'anio' ? year : MESES[month - 1].toLowerCase()}
                             </h2>
                             <div className={iv.chipsOscuros}>{chipsDeAnios(aniosAcumulado, toggleAnioAcumulado, true)}</div>
                             <span className={iv.empuje} />
@@ -874,7 +874,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             <div className={iv.segOscuro} role='radiogroup' aria-label='IVA'>
                                 {[
                                     [true, 'Neto', 'Descontando IVA, comisiones y Stripe'],
-                                    [false, 'Sin IVA', 'Sin descontar IVA — la comisión sí se resta'],
+                                    [false, 'Con IVA', 'Sin descontar el IVA — comisiones y Stripe sí se restan'],
                                 ].map(([valor, label, ayuda]) => (
                                     <Tooltip key={label} title={ayuda}>
                                         <button type='button' role='radio' aria-checked={descontarIva === valor}
