@@ -138,7 +138,9 @@ export const calcularKpis = (ventas, cargosPorVenta) => {
         comisiones,
         comisionStripe,
         ingresoNeto: ingresoBruto - iva - comisiones - comisionStripe,
-        saldoPendiente: ventas.reduce((acc, v) => acc + Number(v.saldo_pendiente || 0), 0),
+        // Solo lo que se debe: una venta pagada de más (saldo negativo) no
+        // descuenta lo que deben las demás.
+        saldoPendiente: ventas.reduce((acc, v) => acc + Math.max(0, Number(v.saldo_pendiente || 0)), 0),
         ventasConApartado: ventas.filter(v => v.estado_pago === 'apartado').length,
     }
 }

@@ -162,7 +162,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             .sort((a, b) => Number(b.saldo_pendiente) - Number(a.saldo_pendiente))
 
         return {
-            monto: ventasDelAnio.reduce((acc, v) => acc + Number(v.saldo_pendiente || 0), 0),
+            // Solo lo que se debe: un saldo negativo (pagado de más) no resta.
+            monto: detalle.reduce((acc, v) => acc + Number(v.saldo_pendiente || 0), 0),
             ventas: ventasDelAnio.filter(v => v.estado_pago === 'apartado').length,
             detalle,
         }
