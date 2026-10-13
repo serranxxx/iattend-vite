@@ -826,9 +826,22 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <span className={iv.kpiLabel}>Ingreso neto</span>
                         <div className={iv.kpiLinea}>
                             <span className={iv.kpiValor}>{formatCurrency(kpis.ingresoNeto)}</span>
-                            <span className={iv.kpiNota}>IVA {formatCurrency(kpis.iva)} · comisiones {formatCurrency(kpis.comisiones)}{kpis.comisionStripe > 0 ? ` · Stripe ${formatCurrency(kpis.comisionStripe)}` : ''}</span>
+                            <span className={iv.kpiNota}>IVA {formatCurrency(kpis.iva)} · {formatCurrency(kpisAnuales.ingresoNeto)} en {year}</span>
                         </div>
                     </div>
+                    {/* La diferencia entre lo cobrado y lo que queda, además del IVA. */}
+                    <Tooltip
+                        placement='bottom'
+                        title={`En ${year}: vendedores ${formatCurrency(kpisAnuales.comisiones)} · Stripe ${formatCurrency(kpisAnuales.comisionStripe)} · total ${formatCurrency(kpisAnuales.comisiones + kpisAnuales.comisionStripe)}`}
+                    >
+                        <div className={iv.kpi}>
+                            <span className={iv.kpiLabel}>Comisiones</span>
+                            <div className={iv.kpiLinea}>
+                                <span className={iv.kpiValor}>{formatCurrency(kpis.comisiones + kpis.comisionStripe)}</span>
+                                <span className={iv.kpiNota}>vendedores {formatCurrency(kpis.comisiones)} · Stripe {formatCurrency(kpis.comisionStripe)}</span>
+                            </div>
+                        </div>
+                    </Tooltip>
                     <Dropdown
                         trigger={['click']}
                         placement='bottomRight'
