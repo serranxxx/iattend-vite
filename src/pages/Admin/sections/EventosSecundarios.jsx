@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Dropdown } from 'antd'
 import { Link2, MoreHorizontal, PencilLine } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
-import { traerTodo } from '../analiticaDatos'
+import { fechaDeSide } from './useSideEventsAdmin'
 import styles from './EventosSection.module.css'
 
 dayjs.locale('es')
@@ -16,44 +16,13 @@ dayjs.locale('es')
   · Todos / Pruebas: un side event es de prueba si su invitación lo es; un Flash,
     con la misma regla aplicada a su dueño (o a su planner si es "por enviar").
 
-  La fecha sale de `body.hour`, string "wall-clock" (YYYY-MM-DD HH:mm:00): se
-  toma el día tal cual, sin zona horaria (ver helpers/assets/eventDateTime.js).
+  Los datos llegan cargados de EventosSection (useSideEventsAdmin), que también
+  los usa el calendario.
 */
-
-const fechaDe = (side) => {
-    const hora = side?.body?.hour
-    return typeof hora === 'string' && /^\d{4}-\d{2}-\d{2}/.test(hora) ? hora.slice(0, 10) : null
-}
 
 const hoyIso = () => dayjs().format('YYYY-MM-DD')
 
-export const EventosSecundarios = ({ tipo, tab, invitaciones, esPrueba, nombrePlanner, query = '' }) => {
-    const [sides, setSides] = useState(null)
-    const [invitadosPorSide, setInvitadosPorSide] = useState(new Map())
-    const [error, setError] = useState(null)
-
-    // Una sola carga para las dos vistas: separar side events de Flash es solo
-    // ver si tienen invitation_id.
-    useEffect(() => {
-        let cancelado = false
-        Promise.all([
-            traerTodo('side_events', 'id,name,invitation_id,planner_id,user_id,user_email,credits,body,created_at'),
-            traerTodo('side_events_guests', 'id,side_events_id'),
-        ])
-            .then(([filas, invitados]) => {
-                if (cancelado) return
-                const conteo = new Map()
-                invitados.forEach(g => conteo.set(g.side_events_id, (conteo.get(g.side_events_id) || 0) + 1))
-                setInvitadosPorSide(conteo)
-                setSides(filas)
-            })
-            .catch(e => {
-                console.error('Error al cargar side events:', e)
-                if (!cancelado) setError('No se pudieron cargar los side events.')
-            })
-        return () => { cancelado = true }
-    }, [])
-
+export const EventosSecundarios = ({ tipo, tab, sides, invitadosPorSide, error, invitaciones, esPrueba, nombrePlanner, query = '' }) => {
     const invitacionPorId = useMemo(
         () => new Map((invitaciones ?? []).map(i => [i.id, i])),
         [invitaciones]
@@ -71,7 +40,7 @@ export const EventosSecundarios = ({ tipo, tab, invitaciones, esPrueba, nombrePl
                 return {
                     ...s,
                     invitacion,
-                    fecha: fechaDe(s),
+                    fecha: fechaDeSide(s),
                     // Un Flash "por enviar" no tiene dueño: se juzga por su planner.
                     prueba: esFlash
                         ? esPrueba({ user_id: s.user_id ?? s.planner_id, user_email: s.user_email })

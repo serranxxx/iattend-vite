@@ -14,16 +14,18 @@
     así que `startOf('week')` desalinearía la rejilla un día entero respecto a
     los encabezados; por eso `domingoDe`.
 
-  · Cada evento se queda siempre con el mismo color (por su id): no codifica un
-    dato, sirve para reconocerlo de una semana a otra. Los días pasados van en
-    gris.
+  · El color dice el tipo: invitaciones en azul, side events en violeta y
+    Eventos Flash en verde. Los días pasados van en gris, con la barra del
+    color de su tipo.
+
+  · Cada evento llega armado desde EventosSection: { key, tipo, nombre, fecha,
+    titulo }.
 */
 
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
-import { fechaDeEvento } from '../adminConstants'
 import styles from './EventosCalendario.module.css'
 
 dayjs.locale('es')
@@ -32,14 +34,12 @@ const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const SEMANAS = 5
 const SALTO = 4
 
-const COLORES = ['rojo', 'azul', 'ambar', 'verde', 'violeta']
-
-const colorDeEvento = (id) => {
-    const texto = String(id ?? '')
-    let suma = 0
-    for (let i = 0; i < texto.length; i += 1) suma = (suma + texto.charCodeAt(i)) % 9973
-    return COLORES[suma % COLORES.length]
-}
+const TIPOS = [
+    { tipo: 'invitacion', label: 'Invitaciones', color: 'azul' },
+    { tipo: 'side', label: 'Side events', color: 'violeta' },
+    { tipo: 'flash', label: 'Flash', color: 'verde' },
+]
+const COLOR_POR_TIPO = Object.fromEntries(TIPOS.map(t => [t.tipo, t.color]))
 
 // `day()` devuelve 0 para domingo sin importar el locale.
 const domingoDe = (fecha) => fecha.subtract(fecha.day(), 'day').startOf('day')
@@ -52,7 +52,7 @@ export const EventosCalendario = ({ eventos, onSelect, seleccionado }) => {
     const porDia = useMemo(() => {
         const mapa = new Map()
         eventos.forEach(evento => {
-            const clave = fechaDeEvento(evento)
+            const clave = evento.fecha
             if (!clave) return
             mapa.set(clave, [...(mapa.get(clave) ?? []), evento])
         })
@@ -70,6 +70,11 @@ export const EventosCalendario = ({ eventos, onSelect, seleccionado }) => {
                 <h2 className={styles.mes}>
                     {enMedio.format('MMMM')} <span>{enMedio.format('YYYY')}</span>
                 </h2>
+                <div className={styles.leyenda}>
+                    {TIPOS.map(t => (
+                        <span key={t.tipo}><i className={styles[t.color]} />{t.label}</span>
+                    ))}
+                </div>
                 <button type='button' aria-label='Semanas anteriores' className={styles.boton} onClick={() => setDesfase(d => d - SALTO)}>
                     <ChevronLeft size={16} />
                 </button>
@@ -104,12 +109,12 @@ export const EventosCalendario = ({ eventos, onSelect, seleccionado }) => {
                             {delDia.map(evento => (
                                 <button
                                     type='button'
-                                    key={evento.id}
-                                    className={`${styles.evento} ${pasado ? styles.eventoPasado : styles[colorDeEvento(evento.id)]} ${seleccionado?.id === evento.id ? styles.eventoActivo : ''}`}
+                                    key={evento.key}
+                                    className={`${styles.evento} ${styles[COLOR_POR_TIPO[evento.tipo]]} ${pasado ? styles.eventoPasado : ''} ${seleccionado === evento.key ? styles.eventoActivo : ''}`}
                                     onClick={() => onSelect(evento)}
-                                    title={`${evento.name} · ${evento.user_email ?? ''}`}
+                                    title={evento.titulo}
                                 >
-                                    {evento.name}
+                                    {evento.nombre}
                                 </button>
                             ))}
                         </div>

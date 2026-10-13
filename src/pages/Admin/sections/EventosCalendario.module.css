@@ -157,10 +157,32 @@
 .verde { background: #E3F7E8; color: #1E7A3C; border-left-color: #2EB35A; }
 .violeta { background: #EFE8FD; color: #5B2BB5; border-left-color: #7C4DFF; }
 
+/* Pasado: gris, pero la barra conserva el color de su tipo. */
 .eventoPasado {
     background: var(--ac-surface-alt);
     color: var(--ac-muted-2);
-    border-left-color: var(--ac-line-control);
+}
+
+.leyenda {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-right: 8px;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
+
+.leyenda span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.leyenda i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    border-left: 3px solid;
 }
 
 @media (max-width: 900px) {

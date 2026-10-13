@@ -11,6 +11,7 @@ import { AdminModal } from '../AdminModal'
 import { actualizarCreditosAdmin, asignarPlannerAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
 import { EventosSecundarios } from './EventosSecundarios'
+import { fechaDeSide, useSideEventsAdmin } from './useSideEventsAdmin'
 import { EnTopbarFiltros, Segmentado } from '../AdminTopbar'
 import styles from './EventosSection.module.css'
 import { esRolPlanner } from '../../../helpers/roles'
@@ -80,6 +81,8 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
     const [tabLocal, setTab] = useState('calendario')
     const tab = tabDeTopbar ?? tabLocal
     const [tipo, setTipo] = useState('invitaciones')
+    // Side events y Flash: los ocupan el calendario y sus propias tablas.
+    const { sides, invitadosPorSide, error: errorSides } = useSideEventsAdmin(tab === 'calendario' || tipo !== 'invitaciones')
     const [ownerInputs, setOwnerInputs] = useState({})
     const [radiografia, setRadiografia] = useState({})
     // Evento abierto desde el calendario; su tarjeta se muestra en un modal.
@@ -336,6 +339,61 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
             .some(campo => String(campo ?? '').toLowerCase().includes(texto)))
     }, [porTab, tab, query, perfilesPorId])
 
+    // Calendario: invitaciones, side events y Flash, cada tipo con su color. Solo
+    // los que tienen nombre y fecha, y sin los de prueba.
+    const eventosCalendario = useMemo(() => {
+        const texto = query.trim().toLowerCase()
+        const coincide = (...campos) => !texto || campos.some(c => String(c ?? '').toLowerCase().includes(texto))
+        const conNombre = (n) => Boolean(String(n ?? '').trim())
+        const invitacionPorId = new Map((newInvitations ?? []).map(i => [i.id, i]))
+
+        const deInvitaciones = porTab.calendario
+            .filter(i => conNombre(i.name) && coincide(i.name, i.user_email, ...(i.owners ?? [])))
+            .map(i => ({
+                key: `inv-${i.id}`,
+                tipo: 'invitacion',
+                nombre: i.name,
+                fecha: fechaDeEvento(i),
+                titulo: `${i.name} · ${i.user_email ?? ''}`,
+                invitacion: i,
+            }))
+
+        const deSides = (sides ?? [])
+            .filter(s => conNombre(s.name) && fechaDeSide(s))
+            .map(s => {
+                const invitacion = s.invitation_id ? invitacionPorId.get(s.invitation_id) : null
+                const flash = !s.invitation_id
+                return { s, invitacion, flash }
+            })
+            .filter(({ s, invitacion, flash }) => flash
+                ? !esPrueba({ user_id: s.user_id ?? s.planner_id, user_email: s.user_email })
+                : !(invitacion && esPrueba(invitacion)))
+            .filter(({ s, invitacion }) => coincide(s.name, s.user_email, invitacion?.name, ...(invitacion?.owners ?? [])))
+            .map(({ s, invitacion, flash }) => ({
+                key: `${flash ? 'flash' : 'side'}-${s.id}`,
+                tipo: flash ? 'flash' : 'side',
+                nombre: s.name,
+                fecha: fechaDeSide(s),
+                titulo: flash
+                    ? `Flash · ${s.name}${s.user_email ? ` · ${s.user_email}` : ''}`
+                    : `Side event · ${s.name}${invitacion ? ` · de ${invitacion.name}` : ''}`,
+                invitacion,
+                sideId: s.id,
+            }))
+
+        return [...deInvitaciones, ...deSides]
+    }, [porTab, sides, newInvitations, esPrueba, query])
+
+    // Invitación y side event abren la tarjeta de la invitación; un Flash no
+    // tiene invitación, así que abre su editor.
+    const abrirDelCalendario = (evento) => {
+        if (evento.tipo === 'flash') {
+            window.open(`https://www.iattend.site/dashboard/side?flash=${evento.sideId}`, '_blank', 'noopener')
+            return
+        }
+        if (evento.invitacion) setAbierto(evento.invitacion)
+    }
+
     const accionesPopup = (record) => (
         <div className={styles.popup}>
             <Link
@@ -554,6 +612,9 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
 
             {tab !== 'calendario' && tipo !== 'invitaciones' ? (
                 <EventosSecundarios
+                    sides={sides}
+                    invitadosPorSide={invitadosPorSide}
+                    error={errorSides}
                     tipo={tipo}
                     tab={tab}
                     invitaciones={newInvitations}
@@ -563,9 +624,9 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
                 />
             ) : tab === 'calendario' ? (
                 <EventosCalendario
-                    eventos={visibles}
-                    onSelect={setAbierto}
-                    seleccionado={abierto}
+                    eventos={eventosCalendario}
+                    onSelect={abrirDelCalendario}
+                    seleccionado={abierto ? `inv-${abierto.id}` : null}
                 />
             ) : (
             <div className={styles.card}>
