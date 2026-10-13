@@ -334,6 +334,16 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         return ventasDelPeriodo.reduce((acc, v) => acc + valorDe(v), 0)
     }, [ventasDelPeriodo, descontarIva, netoDe, netoDeSinIva])
 
+    // Del bruto (el KPI de arriba) al número grande del acumulado.
+    const desgloseAcumulado = useMemo(() => {
+        const k = acumuladoModo === 'anio' ? kpisAnuales : kpis
+        const partes = [`Bruto ${formatCurrency(k.ingresoBruto)}`]
+        if (descontarIva) partes.push(`IVA −${formatCurrency(k.iva)}`)
+        partes.push(`comisiones −${formatCurrency(k.comisiones)}`)
+        if (k.comisionStripe > 0) partes.push(`Stripe −${formatCurrency(k.comisionStripe)}`)
+        return partes.join(' · ')
+    }, [acumuladoModo, kpis, kpisAnuales, descontarIva])
+
     const aniosBarras = barYears ?? [year]
 
     const barras = useMemo(() => {
@@ -894,6 +904,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                 total={acumulado.total}
                                 ingresoNeto={ingresoContraMeta}
                                 ingresoAnio={acumulado.total}
+                                desglose={desgloseAcumulado}
                                 // Siempre las del mes de la calculadora, aunque el panel
                                 // esté mostrando el año: los costos por venta son mensuales.
                                 ventasDelMes={ventasPorMes.get(`${year}-${month - 1}`) || 0}
