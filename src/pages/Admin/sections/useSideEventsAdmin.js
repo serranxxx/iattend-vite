@@ -15,6 +15,26 @@ export const fechaDeSide = (side) => {
     return typeof hora === 'string' && /^\d{4}-\d{2}-\d{2}/.test(hora) ? hora.slice(0, 10) : null
 }
 
+// Lo que comparten la tabla, el calendario y el resumen de la topbar: si es
+// Flash, su invitación, si es de prueba y su fecha. Un side event es de prueba
+// si su invitación lo es; un Flash, por su dueño (o su planner si es "por
+// enviar"). Activo = fecha de hoy en adelante o sin fecha, como las invitaciones.
+export const clasificarSide = (side, invitacionPorId, esPrueba, hoy = new Date()) => {
+    const flash = !side.invitation_id
+    const invitacion = flash ? null : invitacionPorId.get(side.invitation_id) ?? null
+    const fecha = fechaDeSide(side)
+    const corte = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
+    return {
+        flash,
+        invitacion,
+        fecha,
+        prueba: flash
+            ? esPrueba({ user_id: side.user_id ?? side.planner_id, user_email: side.user_email })
+            : Boolean(invitacion && esPrueba(invitacion)),
+        activo: !fecha || fecha >= corte,
+    }
+}
+
 export const useSideEventsAdmin = (activo) => {
     const [estado, setEstado] = useState({ sides: null, invitadosPorSide: new Map(), error: null })
 

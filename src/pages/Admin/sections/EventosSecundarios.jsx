@@ -3,7 +3,7 @@ import { Dropdown } from 'antd'
 import { Link2, MoreHorizontal, PencilLine } from 'lucide-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
-import { fechaDeSide } from './useSideEventsAdmin'
+import { clasificarSide } from './useSideEventsAdmin'
 import styles from './EventosSection.module.css'
 
 dayjs.locale('es')
@@ -16,11 +16,9 @@ dayjs.locale('es')
   · Todos / Pruebas: un side event es de prueba si su invitación lo es; un Flash,
     con la misma regla aplicada a su dueño (o a su planner si es "por enviar").
 
-  Los datos llegan cargados de EventosSection (useSideEventsAdmin), que también
-  los usa el calendario.
+  Los datos los carga AdminLayout (useSideEventsAdmin): también los usan el
+  calendario y el resumen de la topbar.
 */
-
-const hoyIso = () => dayjs().format('YYYY-MM-DD')
 
 export const EventosSecundarios = ({ tipo, tab, sides, invitadosPorSide, error, invitaciones, esPrueba, nombrePlanner, query = '' }) => {
     const invitacionPorId = useMemo(
@@ -31,23 +29,11 @@ export const EventosSecundarios = ({ tipo, tab, sides, invitadosPorSide, error, 
     const filas = useMemo(() => {
         if (!sides) return []
         const esFlash = tipo === 'flash'
-        const hoy = hoyIso()
 
         const delTipo = sides
-            .filter(s => (esFlash ? !s.invitation_id : Boolean(s.invitation_id)))
-            .map(s => {
-                const invitacion = s.invitation_id ? invitacionPorId.get(s.invitation_id) : null
-                return {
-                    ...s,
-                    invitacion,
-                    fecha: fechaDeSide(s),
-                    // Un Flash "por enviar" no tiene dueño: se juzga por su planner.
-                    prueba: esFlash
-                        ? esPrueba({ user_id: s.user_id ?? s.planner_id, user_email: s.user_email })
-                        : Boolean(invitacion && esPrueba(invitacion)),
-                    plannerId: esFlash ? s.planner_id : invitacion?.planner_id,
-                }
-            })
+            .map(s => ({ ...s, ...clasificarSide(s, invitacionPorId, esPrueba) }))
+            .filter(s => s.flash === esFlash)
+            .map(s => ({ ...s, plannerId: esFlash ? s.planner_id : s.invitacion?.planner_id }))
 
         const reales = delTipo.filter(s => !s.prueba)
         const porCreacion = (a, b) => new Date(b.created_at) - new Date(a.created_at)
@@ -55,7 +41,7 @@ export const EventosSecundarios = ({ tipo, tab, sides, invitadosPorSide, error, 
         if (tab === 'pruebas') return delTipo.filter(s => s.prueba).sort(porCreacion)
         if (tab === 'activos') {
             return reales
-                .filter(s => !s.fecha || s.fecha >= hoy)
+                .filter(s => s.activo)
                 .sort((a, b) => {
                     if (a.fecha && b.fecha) return a.fecha.localeCompare(b.fecha)
                     if (a.fecha) return -1

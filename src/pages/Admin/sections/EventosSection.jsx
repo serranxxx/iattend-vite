@@ -11,7 +11,7 @@ import { AdminModal } from '../AdminModal'
 import { actualizarCreditosAdmin, asignarPlannerAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
 import { EventosSecundarios } from './EventosSecundarios'
-import { fechaDeSide, useSideEventsAdmin } from './useSideEventsAdmin'
+import { clasificarSide } from './useSideEventsAdmin'
 import { EnTopbarFiltros, Segmentado } from '../AdminTopbar'
 import styles from './EventosSection.module.css'
 import { esRolPlanner } from '../../../helpers/roles'
@@ -77,12 +77,12 @@ const formatFecha = (invitation) => {
 
 // `tab`: la pestaña la elige la topbar del admin (AdminLayout). Sin ella, la
 // sección dibuja sus propias pestañas.
-export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, refreshEventos, query = '', esPrueba }) => {
+export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, refreshEventos, query = '', esPrueba, sideEvents }) => {
     const [tabLocal, setTab] = useState('calendario')
     const tab = tabDeTopbar ?? tabLocal
     const [tipo, setTipo] = useState('invitaciones')
-    // Side events y Flash: los ocupan el calendario y sus propias tablas.
-    const { sides, invitadosPorSide, error: errorSides } = useSideEventsAdmin(tab === 'calendario' || tipo !== 'invitaciones')
+    // Side events y Flash (los carga AdminLayout): calendario y sus tablas.
+    const { sides, invitadosPorSide, error: errorSides } = sideEvents ?? {}
     const [ownerInputs, setOwnerInputs] = useState({})
     const [radiografia, setRadiografia] = useState({})
     // Evento abierto desde el calendario; su tarjeta se muestra en un modal.
@@ -359,21 +359,14 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
             }))
 
         const deSides = (sides ?? [])
-            .filter(s => conNombre(s.name) && fechaDeSide(s))
-            .map(s => {
-                const invitacion = s.invitation_id ? invitacionPorId.get(s.invitation_id) : null
-                const flash = !s.invitation_id
-                return { s, invitacion, flash }
-            })
-            .filter(({ s, invitacion, flash }) => flash
-                ? !esPrueba({ user_id: s.user_id ?? s.planner_id, user_email: s.user_email })
-                : !(invitacion && esPrueba(invitacion)))
+            .map(s => ({ s, ...clasificarSide(s, invitacionPorId, esPrueba) }))
+            .filter(({ s, fecha, prueba }) => conNombre(s.name) && fecha && !prueba)
             .filter(({ s, invitacion }) => coincide(s.name, s.user_email, invitacion?.name, ...(invitacion?.owners ?? [])))
-            .map(({ s, invitacion, flash }) => ({
+            .map(({ s, invitacion, flash, fecha }) => ({
                 key: `${flash ? 'flash' : 'side'}-${s.id}`,
                 tipo: flash ? 'flash' : 'side',
                 nombre: s.name,
-                fecha: fechaDeSide(s),
+                fecha,
                 titulo: flash
                     ? `Flash · ${s.name}${s.user_email ? ` · ${s.user_email}` : ''}`
                     : `Side event · ${s.name}${invitacion ? ` · de ${invitacion.name}` : ''}`,

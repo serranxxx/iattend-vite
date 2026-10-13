@@ -14,6 +14,7 @@ import { NewInvitationDrawer } from '../../components/Create/NewInvitationDrawer
 import { CreateAccount } from '../../components/Auth/CreateUser'
 import { EventosAnalitica } from './sections/EventosAnalitica'
 import { EventosSection } from './sections/EventosSection'
+import { clasificarSide, useSideEventsAdmin } from './sections/useSideEventsAdmin'
 import { UsuariosSection } from './sections/UsuariosSection'
 import { VentasSection } from './sections/VentasSection'
 import { LaboratorioSection } from './sections/LaboratorioSection'
@@ -339,6 +340,10 @@ export const AdminLayout = () => {
         getTickets()
     }, [])
 
+    // Side events y Flash: Eventos los muestra (tablas, calendario) y la topbar
+    // los resume. Se piden al entrar a Eventos.
+    const sideEvents = useSideEventsAdmin(route === 'eventos')
+
     // ------------------------------------------------- contadores del rail ---
 
     const conteos = useMemo(() => {
@@ -348,14 +353,27 @@ export const AdminLayout = () => {
         const porRol = Object.fromEntries(ROLES_USUARIOS.map(r => [r, 0]))
         ;(newProfiles ?? []).forEach(p => { porRol[rutaDePerfil(p)] += 1 })
 
+        // Side events y Flash, con las mismas reglas de activo y prueba.
+        const sides = { activos: 0, total: 0, prueba: 0 }
+        const flash = { activos: 0, total: 0, prueba: 0 }
+        ;(sideEvents.sides ?? []).forEach(s => {
+            const c = clasificarSide(s, invitationsById, esPrueba)
+            const grupo = c.flash ? flash : sides
+            if (c.prueba) { grupo.prueba += 1; return }
+            grupo.total += 1
+            if (c.activo) grupo.activos += 1
+        })
+
         return {
+            sides: sideEvents.sides ? sides : null,
+            flash: sideEvents.sides ? flash : null,
             eventosActivos: reales.filter(i => esEventoActivo(i)).length,
             eventosTotales: reales.length,
             eventosPrueba: invitaciones.length - reales.length,
             usuarios: (newProfiles ?? []).length,
             porRol,
         }
-    }, [newInvitations, newProfiles])
+    }, [newInvitations, newProfiles, sideEvents.sides, invitationsById, esPrueba])
 
     // ---------------------------------------------------- copy de la topbar ---
 
@@ -370,7 +388,10 @@ export const AdminLayout = () => {
         },
         eventos: {
             title: 'Eventos',
-            subtitle: `${conteos.eventosActivos} activos · ${conteos.eventosTotales} en total · ${conteos.eventosPrueba} pruebas`,
+            // Activos de cada tipo sobre su total; las pruebas, de los tres juntos.
+            subtitle: conteos.sides
+                ? `Invitaciones ${conteos.eventosActivos} activas de ${conteos.eventosTotales} · Side events ${conteos.sides.activos} de ${conteos.sides.total} · Flash ${conteos.flash.activos} de ${conteos.flash.total} · ${conteos.eventosPrueba + conteos.sides.prueba + conteos.flash.prueba} pruebas`
+                : `${conteos.eventosActivos} activos · ${conteos.eventosTotales} en total · ${conteos.eventosPrueba} pruebas`,
             // El picker de usuario necesita envolver al botón, así que esta ruta
             // declara `wrap` en vez de un `onClick` suelto.
             action: { label: 'Agregar evento', wrap: (boton) => pickerAgregarEvento(boton) },
@@ -572,6 +593,7 @@ export const AdminLayout = () => {
                         refreshEventos={refreshEventos}
                         query={globalQuery}
                         esPrueba={esPrueba}
+                        sideEvents={sideEvents}
                     />
                 )
         }
