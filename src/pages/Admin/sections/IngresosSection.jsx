@@ -96,14 +96,14 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
 
     const netoDe = useCallback((venta) => {
         const c = cargos.get(venta.venta_id)
-        return c ? c.bruto - c.iva - c.comision : 0
+        return c ? c.bruto - c.iva - c.comision - c.stripe : 0
     }, [cargos])
 
-    // Variante sin descontar IVA, para el switch del acumulado. La comisión sí
-    // se sigue restando: es dinero que efectivamente sale.
+    // Variante sin descontar IVA, para el switch del acumulado. La comisión y
+    // lo de Stripe sí se siguen restando: es dinero que efectivamente sale.
     const netoDeSinIva = useCallback((venta) => {
         const c = cargos.get(venta.venta_id)
-        return c ? c.bruto - c.comision : 0
+        return c ? c.bruto - c.comision - c.stripe : 0
     }, [cargos])
 
     const anios = useMemo(() => {
@@ -800,7 +800,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <span className={iv.kpiLabel}>Ingreso neto</span>
                         <div className={iv.kpiLinea}>
                             <span className={iv.kpiValor}>{formatCurrency(kpis.ingresoNeto)}</span>
-                            <span className={iv.kpiNota}>IVA {formatCurrency(kpis.iva)} · comisiones {formatCurrency(kpis.comisiones)}</span>
+                            <span className={iv.kpiNota}>IVA {formatCurrency(kpis.iva)} · comisiones {formatCurrency(kpis.comisiones)}{kpis.comisionStripe > 0 ? ` · Stripe ${formatCurrency(kpis.comisionStripe)}` : ''}</span>
                         </div>
                     </div>
                     <Dropdown
@@ -857,7 +857,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             </div>
                             <div className={iv.segOscuro} role='radiogroup' aria-label='IVA'>
                                 {[
-                                    [true, 'Neto', 'Descontando IVA y comisiones'],
+                                    [true, 'Neto', 'Descontando IVA, comisiones y Stripe'],
                                     [false, 'Sin IVA', 'Sin descontar IVA — la comisión sí se resta'],
                                 ].map(([valor, label, ayuda]) => (
                                     <Tooltip key={label} title={ayuda}>

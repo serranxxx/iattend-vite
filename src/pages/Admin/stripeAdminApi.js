@@ -14,8 +14,3 @@ export const fetchStripeResumen = async () => {
     const headers = await authHeaders()
     return axios.get(`${API_URL}/api/admin/stripe/resumen`, { headers })
 }
-
-export const fetchStripeComisiones = async ({ anio, mes }) => {
-    const headers = await authHeaders()
-    return axios.get(`${API_URL}/api/admin/stripe/comisiones`, { headers, params: { anio, mes } })
-}
