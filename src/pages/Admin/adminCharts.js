@@ -123,6 +123,10 @@ export const COLOR_POR_ANIO = {
     viejo: { color: MARCA.verde, oscuro: MARCA.oscuroNeutro },
 }
 
+// Ventas por plan (barras apiladas de un año en Ventas).
+export const PLANES_DE_VENTA = ['PRO', 'Lite', 'Flash']
+export const COLOR_POR_PLAN = { PRO: MARCA.navy, Lite: MARCA.lila, Flash: MARCA.verde }
+
 // Tooltip para gráficas sobre fondo navy: blanco con texto navy.
 export const tooltipOscuro = (tokens, formato) => ({
     ...tooltipBase(tokens, formato),

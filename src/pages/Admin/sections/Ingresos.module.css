@@ -706,6 +706,26 @@
     overflow: auto;
 }
 
+/* Leyenda de "Ventas por mes" con un solo año: un punto por plan. */
+.leyendaPlanes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+}
+
+.leyendaPlanes > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.leyendaPlanes i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+
 /* ---------------------------------------------------------------- responsive --- */
 
 @media (max-width: 1180px) {

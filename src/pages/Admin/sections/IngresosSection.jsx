@@ -11,7 +11,7 @@ import { AdminModal } from '../AdminModal'
 import { MESES, calcularCargosPorVenta, calcularKpis, formatCurrency, netoPromedioPorVenta } from '../ventasCalculos'
 import { AcumuladoChart, BarrasPorMes, ComparativaChart, MESES_CORTOS, ProyeccionChart } from './VentasCharts'
 import { MetaDelMes } from './MetaDelMes'
-import { COLOR_POR_ANIO } from '../adminCharts'
+import { COLOR_POR_ANIO, COLOR_POR_PLAN, PLANES_DE_VENTA } from '../adminCharts'
 import styles from './VentasSection.module.css'
 import iv from './Ingresos.module.css'
 
@@ -364,18 +364,22 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         const series = aniosBarras
             .map(anio => {
                 const conteo = Array(12).fill(0)
+                // Para apilar por plan cuando se ve un solo año.
+                const porPlan = Object.fromEntries(PLANES_DE_VENTA.map(p => [p, Array(12).fill(0)]))
                 let neto = 0
 
                 todas.forEach(v => {
                     const d = new Date(v.fecha_venta)
                     if (d.getFullYear() !== anio) return
                     conteo[d.getMonth()] += 1
-                    neto += netoDe(v)
+                    if (porPlan[v.plan]) porPlan[v.plan][d.getMonth()] += 1
+                    neto += descontarIva ? netoDe(v) : netoDeSinIva(v)
                 })
 
                 return {
                     anio,
                     valores: conteo,
+                    porPlan,
                     total: conteo.reduce((a, b) => a + b, 0),
                     neto,
                     estilo: ESTILO_POR_POSICION[anios.indexOf(anio)] ?? 'viejo',
@@ -384,7 +388,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             .sort((a, b) => b.anio - a.anio)
 
         return { series }
-    }, [aniosBarras, anios, todas, netoDe])
+    }, [aniosBarras, anios, todas, descontarIva, netoDe, netoDeSinIva])
 
     // Neto por venta real: promedio del mes de la calculadora. Si ese mes todavía
     // no tiene ventas cae al mes anterior, y si tampoco hay, la calculadora usa
@@ -426,8 +430,11 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     const comparativa = useMemo(() => {
         const hoy = new Date()
 
+        // Sigue el switch Neto / Con IVA del acumulado, como la proyección.
+        const mapa = descontarIva ? netoPorMes : netoPorMesSinIva
+
         return aniosComparativa.map((anio, i) => {
-            const valores = Array.from({ length: 12 }, (_, m) => netoPorMes.get(`${anio}-${m}`) || 0)
+            const valores = Array.from({ length: 12 }, (_, m) => mapa.get(`${anio}-${m}`) || 0)
 
             // El año en curso se corta en el último mes cerrado: dibujar ceros de
             // meses futuros haría ver una caída que no existe.
@@ -442,7 +449,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                 _pos: i,
             }
         })
-    }, [aniosComparativa, anios, netoPorMes])
+    }, [aniosComparativa, anios, descontarIva, netoPorMes, netoPorMesSinIva])
 
     const toggleAnioComparativa = (anio) => {
         const base = aniosComparativa
@@ -1077,10 +1084,22 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             <span className={iv.cifra}>{barrasDelAnio?.total ?? 0}</span>
                             <span className={iv.graficaNota}>ventas en {year}</span>
                         </div>
-                        <span className={iv.graficaNota}>
-                            {barras.series.map(s => `${s.total} en ${s.anio}`).join(' · ')}
-                            {barras.series.length === 1 ? ` · ${formatCurrency(barras.series[0].neto)} neto` : ''}
-                        </span>
+                        {barras.series.length === 1 ? (
+                            // Un año: la leyenda de la pila por plan.
+                            <span className={`${iv.graficaNota} ${iv.leyendaPlanes}`}>
+                                {PLANES_DE_VENTA
+                                    .map(plan => [plan, barras.series[0].porPlan[plan].reduce((a, b) => a + b, 0)])
+                                    .filter(([, n]) => n > 0)
+                                    .map(([plan, n]) => (
+                                        <span key={plan}><i style={{ background: COLOR_POR_PLAN[plan] }} />{n} {plan}</span>
+                                    ))}
+                                <span>{formatCurrency(barras.series[0].neto)} {descontarIva ? 'neto' : 'con IVA'}</span>
+                            </span>
+                        ) : (
+                            <span className={iv.graficaNota}>
+                                {barras.series.map(s => `${s.total} en ${s.anio}`).join(' · ')}
+                            </span>
+                        )}
                         <div className={iv.chips}>{chipsDeAnios(aniosBarras, toggleAnioBarras)}</div>
                         <div className={iv.graficaLienzo}>
                             <BarrasPorMes series={barras.series} />
@@ -1088,7 +1107,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     </section>
 
                     <section className={`${iv.tarjeta} ${iv.grafica}`}>
-                        <h2 className={iv.label}>Comparativa anual</h2>
+                        <h2 className={iv.label}>Comparativa anual · {descontarIva ? 'neto' : 'con IVA'}</h2>
                         <div className={iv.totales}>
                             {totalesComparativa.map(t => (
                                 <div key={t.anio}>
