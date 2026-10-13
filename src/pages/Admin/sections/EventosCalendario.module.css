@@ -1,4 +1,5 @@
-/* Calendario de Eventos: 5 semanas, eventos como bloques pastel con barra. */
+/* Calendario de Eventos: scroll continuo de semanas, eventos como renglones
+   pastel con barra del color de su tipo. */
 
 .calendario {
     background: var(--ac-surface);
@@ -11,13 +12,15 @@
 
 .barra {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 8px 12px;
     padding: 16px 16px 8px 20px;
 }
 
 .mes {
     flex: 1;
+    white-space: nowrap;
     margin: 0;
     font-size: 22px;
     font-weight: 700;
@@ -68,22 +71,34 @@
     text-align: right;
 }
 
+.scroll {
+    /* Alto del bento: lo demás de la pantalla es topbar y encabezados. */
+    height: max(420px, calc(100vh - 290px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
 .rejilla {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .dia {
-    height: 96px;
+    min-height: 0;
     padding: 6px;
     border-right: 1px solid var(--ac-line-soft);
     border-bottom: 1px solid var(--ac-line-soft);
     background: var(--ac-surface);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     box-sizing: border-box;
     overflow: hidden;
+}
+
+/* Primera semana de cada mes: una raya arriba marca dónde empieza. */
+.inicioDeMes {
+    border-top: 2px solid var(--ac-line-table);
 }
 
 .dia:nth-child(7n) {
@@ -95,8 +110,10 @@
 }
 
 .numeroFila {
+    flex-shrink: 0;
     display: flex;
     justify-content: flex-end;
+    margin-bottom: 1px;
 }
 
 .numero {
@@ -125,14 +142,15 @@
 }
 
 .evento {
-    flex: 1;
-    min-height: 0;
-    max-height: 64px;
+    /* Renglón de alto fijo: el texto nunca se aplasta (ALTO_EVENTO en el jsx). */
+    flex-shrink: 0;
+    height: 20px;
+    line-height: 20px;
     display: block;
-    padding: 4px 8px 4px 10px;
+    padding: 0 8px 0 8px;
     border: none;
     border-left: 3px solid;
-    border-radius: 8px;
+    border-radius: 6px;
     font-family: inherit;
     font-size: 11.5px;
     font-weight: 600;
@@ -163,11 +181,61 @@
     color: var(--ac-muted-2);
 }
 
+.mas {
+    flex-shrink: 0;
+    height: 20px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-muted);
+    text-align: left;
+    cursor: pointer;
+}
+
+.mas:hover {
+    background: var(--ac-tint);
+    color: var(--ac-ink);
+}
+
+.masLista {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 240px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--ac-surface);
+    border: 1px solid var(--ac-line);
+    border-radius: 12px;
+    box-shadow: var(--ac-shadow-card);
+    font-family: var(--ac-font-ui);
+}
+
+.masTitulo {
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac-ink);
+}
+
+/* Solo la primera letra ("Sábado 17 de octubre", no "De Octubre"). */
+.masTitulo::first-letter {
+    text-transform: uppercase;
+}
+
+.eventoEnLista {
+    width: 100%;
+}
+
 .leyenda {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-right: 8px;
     font-size: 12px;
     color: var(--ac-muted);
 }
@@ -187,13 +255,16 @@
 
 @media (max-width: 900px) {
     .dia {
-        height: 76px;
         padding: 4px;
     }
 
     .evento {
-        padding: 2px 4px 2px 6px;
+        padding: 0 4px 0 5px;
         font-size: 10.5px;
+    }
+
+    .leyenda {
+        display: none;
     }
 
     .encabezadoDias span {
