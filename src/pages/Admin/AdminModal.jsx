@@ -38,12 +38,17 @@ export const AdminModal = ({
 }) => {
     const panelRef = useRef(null)
     const telonRef = useRef(null)
+    // onClose suele llegar como función nueva en cada render: si el efecto
+    // dependiera de ella, se volvería a correr al teclear y le quitaría el foco
+    // al campo para dárselo al panel.
+    const onCloseRef = useRef(onClose)
+    useEffect(() => { onCloseRef.current = onClose })
 
     useEffect(() => {
         if (!open) return
 
         const alTeclear = (evento) => {
-            if (evento.key === 'Escape') onClose?.()
+            if (evento.key === 'Escape') onCloseRef.current?.()
         }
 
         const overflowPrevio = document.body.style.overflow
@@ -55,7 +60,7 @@ export const AdminModal = ({
             document.body.style.overflow = overflowPrevio
             document.removeEventListener('keydown', alTeclear)
         }
-    }, [open, onClose])
+    }, [open])
 
     if (!open) return null
 
