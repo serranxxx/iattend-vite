@@ -198,34 +198,45 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     }, [todas])
 
     // Proyección anual: a qué cierre llega el año si se mantiene el ritmo. Para
-    // cada mes cerrado se toma el promedio mensual acumulado hasta ahí y se lleva
-    // a 12. La curva arranca ruidosa (un mes bueno dispara la proyección) y se
-    // aplana conforme avanza el año, que es justo lo que se quiere leer.
+    // cada mes se toma el promedio mensual acumulado hasta ahí y se lleva a 12.
+    // La curva arranca ruidosa (un mes bueno dispara la proyección) y se aplana
+    // conforme avanza el año, que es justo lo que se quiere leer.
+    //
+    // El mes en curso cuenta solo los días que van (el 13 de octubre son 9.4
+    // meses, no 10): contarlo completo repartía lo vendido entre más meses de
+    // los que han pasado y bajaba la proyección. Sigue el switch Neto / Con IVA
+    // del acumulado para que las dos tarjetas hablen de la misma cifra.
     //
     // Antes esta tarjeta mostraba la suma móvil de 12 meses: como siempre crece,
     // se leía igual que el acumulado de al lado y no aportaba nada distinto.
     const proyeccionDe = useCallback((anio) => {
         const hoy = new Date()
-        const ultimoMesCerrado = anio === hoy.getFullYear() ? hoy.getMonth() : 11
+        const enCurso = anio === hoy.getFullYear()
+        const ultimoMes = enCurso ? hoy.getMonth() : 11
+        const mapa = descontarIva ? netoPorMes : netoPorMesSinIva
 
         const valores = []
         let netoAcc = 0
         let ventasAcc = 0
+        let meses = 0
 
-        for (let m = 0; m <= ultimoMesCerrado; m++) {
-            netoAcc += netoPorMes.get(`${anio}-${m}`) || 0
+        for (let m = 0; m <= ultimoMes; m++) {
+            netoAcc += mapa.get(`${anio}-${m}`) || 0
             ventasAcc += ventasPorMes.get(`${anio}-${m}`) || 0
-            valores.push((netoAcc / (m + 1)) * 12)
+            meses += enCurso && m === ultimoMes
+                ? hoy.getDate() / new Date(anio, m + 1, 0).getDate()
+                : 1
+            valores.push((netoAcc / meses) * 12)
         }
 
         return {
             anio,
             valores,
             cierreEstimado: valores[valores.length - 1] ?? 0,
-            invitaciones: Math.round((ventasAcc / (ultimoMesCerrado + 1)) * 12),
-            mesesCerrados: ultimoMesCerrado + 1,
+            invitaciones: meses ? Math.round((ventasAcc / meses) * 12) : 0,
+            mesesCerrados: Math.round(meses * 10) / 10,
         }
-    }, [netoPorMes, ventasPorMes])
+    }, [descontarIva, netoPorMes, netoPorMesSinIva, ventasPorMes])
 
     // Los tres años más recientes arrancan disponibles; solo el actual encendido.
     const [proyYears, setProyYears] = useState(null)
@@ -240,7 +251,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         // control, esté o no encendido su chip.
         const principal = proyeccionDe(year)
         const anioPrevio = year - 1
-        const totalPrevio = Array.from({ length: 12 }, (_, m) => netoPorMes.get(`${anioPrevio}-${m}`) || 0)
+        const mapa = descontarIva ? netoPorMes : netoPorMesSinIva
+        const totalPrevio = Array.from({ length: 12 }, (_, m) => mapa.get(`${anioPrevio}-${m}`) || 0)
             .reduce((a, b) => a + b, 0)
 
         return {
@@ -251,7 +263,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             totalPrevio,
             delta: totalPrevio > 0 ? ((principal.cierreEstimado - totalPrevio) / totalPrevio) * 100 : 0,
         }
-    }, [aniosProyeccion, anios, proyeccionDe, year, netoPorMes])
+    }, [aniosProyeccion, anios, proyeccionDe, year, descontarIva, netoPorMes, netoPorMesSinIva])
 
     const toggleAnioProyeccion = (anio) => {
         const siguiente = aniosProyeccion.includes(anio)
@@ -1039,7 +1051,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
 
                 <div className={iv.filaBaja}>
                     <section className={`${iv.tarjeta} ${iv.grafica}`}>
-                        <h2 className={iv.label}>Proyección anual</h2>
+                        <h2 className={iv.label}>Proyección anual · {descontarIva ? 'neto' : 'con IVA'}</h2>
                         <div className={iv.graficaCifra}>
                             <span className={iv.cifra}>{formatCurrency(proyeccion.principal.cierreEstimado)}</span>
                             <span className={proyeccion.delta < 0 ? iv.deltaMal : iv.deltaOk}>
@@ -1049,7 +1061,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             </span>
                         </div>
                         <span className={iv.graficaNota}>
-                            ≈ {proyeccion.principal.invitaciones} invitaciones · cierre estimado al ritmo de {proyeccion.principal.mesesCerrados} meses
+                            ≈ {proyeccion.principal.invitaciones} invitaciones · cierre estimado al ritmo de {proyeccion.principal.mesesCerrados.toLocaleString('es-MX')} meses
                         </span>
                         <div className={iv.chips}>{chipsDeAnios(aniosProyeccion, toggleAnioProyeccion)}</div>
                         <div className={iv.graficaLienzo}>
