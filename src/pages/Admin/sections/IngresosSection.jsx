@@ -22,6 +22,7 @@ const METODOS_DE_VENTA = [
     { value: 'transferencia', label: 'Transferencia' },
     { value: 'digital', label: 'Pago digital' },
 ]
+const PLANES_DE_INVITACION = [{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }]
 const esDigital = (venta) => venta?.metodo_pago === 'digital'
 
 const METODOS_PAGO = [
@@ -513,6 +514,14 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             try {
                 const { data } = await searchAdminInvitations(q.trim())
                 setInvitationOptions((data?.invitations || []).map(inv => {
+                    // Eventos Flash: sin invitación, van por side_event_id.
+                    if (inv.side_event_id) {
+                        return {
+                            value: `flash-${inv.side_event_id}`,
+                            label: `⚡ ${inv.name} — ${inv.planner ? `planner ${inv.planner}` : (inv.user_email || 'sin correo')} (Evento Flash)`,
+                            plan: 'Flash',
+                        }
+                    }
                     const evento = Array.isArray(inv.owners) && inv.owners.length
                         ? inv.owners.join(' & ')
                         : inv.name
@@ -532,7 +541,9 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
 
     const handleSelectInvitation = (invitationId) => {
         const selected = invitationOptions.find(o => o.value === invitationId)
-        if (selected?.plan) {
+        if (selected?.plan === 'Flash') {
+            manualForm.setFieldValue('plan', 'Flash')
+        } else if (selected?.plan) {
             manualForm.setFieldValue('plan', selected.plan.toUpperCase() === 'PRO' ? 'PRO' : 'Lite')
         }
     }
@@ -540,8 +551,11 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     const handleCreateManualSale = async () => {
         const values = await manualForm.validateFields()
         try {
+            const flash = String(values.invitation_id).startsWith('flash-')
             await createAdminVentaManual({
                 ...values,
+                invitation_id: flash ? undefined : values.invitation_id,
+                side_event_id: flash ? Number(values.invitation_id.slice(6)) : undefined,
                 fecha_venta: values.fecha_venta ? values.fecha_venta.toISOString() : undefined,
             })
             message.success('Venta registrada')
@@ -570,7 +584,10 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <InputNumber style={{ width: '100%' }} min={0} />
                     </Form.Item>
                     <Form.Item name='plan' label='Plan' rules={[{ required: true }]}>
-                        <Select options={[{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }]} />
+                        <Select
+                            disabled={editingVenta?.plan === 'Flash'}
+                            options={editingVenta?.plan === 'Flash' ? [{ value: 'Flash', label: 'Flash' }] : PLANES_DE_INVITACION}
+                        />
                     </Form.Item>
                     <Form.Item name='vendedor_id' label='Vendedor asignado' rules={[{ required: true }]}>
                         <Select options={vendedorOptions} />
@@ -626,14 +643,22 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             onSelect={handleSelectInvitation}
                             notFoundContent={searchingInvitations ? 'Buscando…' : 'Escribe al menos 3 letras'}
                             options={invitationOptions}
-                            placeholder='Buscar por evento o correo'
+                            placeholder='Buscar invitación o Evento Flash por nombre o correo'
                         />
                     </Form.Item>
                     <Form.Item name='vendedor_id' label='Vendedor' rules={[{ required: true }]}>
                         <Select options={vendedorOptions} />
                     </Form.Item>
-                    <Form.Item name='plan' label='Plan' rules={[{ required: true }]}>
-                        <Select options={[{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }]} />
+                    <Form.Item noStyle shouldUpdate={(a, b) => a.invitation_id !== b.invitation_id}>
+                        {({ getFieldValue }) => {
+                            const flash = String(getFieldValue('invitation_id') || '').startsWith('flash-')
+                            return (
+                                <Form.Item name='plan' label='Plan' rules={[{ required: true }]}
+                                    extra={flash ? 'Los Flash no pagan comisión a vendedores.' : undefined}>
+                                    <Select disabled={flash} options={flash ? [{ value: 'Flash', label: 'Flash' }] : PLANES_DE_INVITACION} />
+                                </Form.Item>
+                            )
+                        }}
                     </Form.Item>
                     <Form.Item name='precio_acordado' label='Precio acordado' rules={[{ required: true }]}>
                         <InputNumber style={{ width: '100%' }} min={0} />
@@ -726,7 +751,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                         <span className={`${styles.cell} ${styles.evento}`}>{venta.evento}</span>
                                         <span className={`${styles.cell} ${styles.vendedor}`}>{venta.vendedor || '—'}</span>
                                         <span className={styles.cell}>
-                                            <span className={`${styles.plan} ${venta.plan === 'Lite' ? styles.planLite : ''}`}>
+                                            <span className={`${styles.plan} ${venta.plan !== 'PRO' ? styles.planLite : ''}`}>
                                                 {venta.plan}
                                             </span>
                                         </span>
@@ -812,7 +837,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <span className={iv.kpiLabel}>Ventas del mes</span>
                         <div className={iv.kpiLinea}>
                             <span className={iv.kpiValor}>{kpis.ventasCount}</span>
-                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite · {kpisAnuales.ventasCount} en {year}</span>
+                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite{kpis.flashCount ? ` · ${kpis.flashCount} Flash` : ''} · {kpisAnuales.ventasCount} en {year}</span>
                         </div>
                     </div>
                     <div className={iv.kpi}>
@@ -963,7 +988,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                             <div className={iv.ventaTexto}>
                                                 <div className={iv.ventaNombre}>
                                                     <b>{venta.evento}</b>
-                                                    <span className={venta.plan === 'Lite' ? iv.planLite : iv.planPro}>{venta.plan}</span>
+                                                    <span className={venta.plan !== 'PRO' ? iv.planLite : iv.planPro}>{venta.plan}</span>
                                                 </div>
                                                 <span className={iv.ventaMeta}>
                                                     {venta.vendedor || '—'} · {dayjs(venta.fecha_venta).format('D MMM')}
