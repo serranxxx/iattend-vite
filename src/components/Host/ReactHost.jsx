@@ -11,6 +11,10 @@ const ALLOWED_ORIGINS = new Set([
 
 export default function ReactHost({
   config, onHide, screens, scrollToSection, onSectionChange, textureOverride, fontOverride, activeLang,
+  // Opcional: cambia cada vez que el host pide ir a scrollToSection, aunque
+  // sea la misma sección (el builder ya no sigue el scroll del invitado, así
+  // que volver a tocar el mismo módulo tiene que regresar el preview).
+  scrollNonce,
   // Se llama una vez cuando el remoto avisa que ya cargó (REMOTE_READY). El
   // onboarding lo usa para quitar la portada de carga.
   onReady,
@@ -21,6 +25,7 @@ export default function ReactHost({
   const lastReceivedSectionRef = useRef(null);
   const onSectionChangeRef = useRef(onSectionChange);
   const isFirstScrollRef = useRef(true);
+  const lastNonceRef = useRef(scrollNonce);
 
   const onReadyRef = useRef(onReady);
 
@@ -114,7 +119,9 @@ export default function ReactHost({
       return;
     }
 
-    if (!scrollToSection || scrollToSection === lastSentSectionRef.current) return;
+    const nonceNuevo = scrollNonce !== lastNonceRef.current;
+    lastNonceRef.current = scrollNonce;
+    if (!scrollToSection || (scrollToSection === lastSentSectionRef.current && !nonceNuevo)) return;
 
     // Si este valor llegó como eco del propio scroll del invitado, no hay que reenviarlo
     if (scrollToSection === lastReceivedSectionRef.current) {
@@ -125,7 +132,7 @@ export default function ReactHost({
 
     lastSentSectionRef.current = scrollToSection;
     postScrollTo(scrollToSection);
-  }, [scrollToSection, targetOrigin]);
+  }, [scrollToSection, scrollNonce, targetOrigin]);
 
   // 3) (Opcional) al cargar/navegar el iframe, vuelve a enviar
   useEffect(() => {

@@ -114,12 +114,12 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                     <>
                                         <span className='simple-content-label'>{t('build_family.label_title')}</span>
 
-                                        <Input
+                                        <Input data-lia="people-title"
                                             onChange={onChangeTitle}
                                             value={invitation.people.title}
                                             className='gc-input-text' />
 
-                                        <Button style={{ margin: '16px 0px' }} icon={<IoMdAdd />} onClick={addNewPersona} className='primarybutton--active'>
+                                        <Button data-lia="people-personas-agregar" style={{ margin: '16px 0px' }} icon={<IoMdAdd />} onClick={addNewPersona} className='primarybutton--active'>
                                             {t('build_family.btn_add')}
                                         </Button>
                                         <div style={{
@@ -128,12 +128,11 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                         }}>
                                             {
                                                 invitation.people.personas.map((persona, index) => (
-                                                    <div style={{
+                                                    <div key={index} data-lia={`people-personas-${index}`} style={{
                                                         display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexDirection: 'column',
                                                         alignSelf: 'stretch', 
                                                     }}>
                                                         <Col
-                                                            key={index}
                                                             className='regular-card'
                                                             style={{
                                                                 borderRadius: '16px 16px 0px 0px', padding: '12px',
@@ -143,6 +142,7 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                                             <span className='simple-content-label'>{t('build_family.label_title')}</span>
 
                                                             <Input
+                                                                data-lia={`people-personas-${index}-title`}
                                                                 onChange={(e) => changeTitlePersona(index, e.target.value)}
                                                                 value={persona.title}
                                                                 placeholder={t('build_family.placeholder_title')}
@@ -152,7 +152,7 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                                             <span style={{ marginTop: '8px' }} className='simple-content-label'>{t('build_family.label_name')}</span>
 
                                                             <Input
-                                                                // onChange={onChangeTitle}
+                                                                data-lia={`people-personas-${index}-description`}
                                                                 onChange={(e) => changeNamePersona(index, e.target.value)}
                                                                 value={persona.description}
                                                                 style={{ borderRadius: '8px' }}
@@ -165,6 +165,7 @@ export const BuildFamily = ({ invitation, setInvitation, setSaved, invitationID 
                                                             alignSelf: 'stretch'
                                                         }}>
                                                             <Button
+                                                                data-lia={`people-personas-${index}-quitar`}
                                                                 className='primarybutton'
                                                                 onClick={() => deletePersonaByIndex(index)}
                                                                 style={{ width: '100%', borderRadius: '0px 0px 16px 16px', maxHeight: '24px', color: '#CCC' }}

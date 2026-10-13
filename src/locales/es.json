@@ -1417,7 +1417,12 @@
     "notices": "Avisos",
     "gallery": "Galería",
     "msg_saved": "Cambios guardados",
-    "msg_written": "Cambios escritos"
+    "msg_written": "Cambios escritos",
+    "translations_title": "Cambiaste textos en español",
+    "translations_desc": "Tus traducciones no se actualizan solas: revísalas después de guardar para que estén al día.",
+    "translations_cancel": "Cancelar",
+    "translations_publish": "Publicar de todas formas",
+    "translations_write": "Guardar de todas formas"
   },
   "storage": {
     "type_cover": "Portada",
@@ -2114,7 +2119,9 @@
       "support_email": "Correo",
       "bar_mesas_of": "de {{total}} lugares ocupados",
       "bar_confirmaciones_of": "de {{total}} confirmados",
-      "bar_pases_of": "de {{total}} pases usados"
+      "bar_pases_of": "de {{total}} pases usados",
+      "text_copy": "Copiar",
+      "text_copied": "Copiado"
     },
     "prompts": {
       "summary": "Resumen del evento",
@@ -2150,8 +2157,8 @@
     "input_label": "Mensaje para Lia",
     "send": "Enviar",
     "reset": "Reiniciar chat",
-    "expand": "Pantalla completa",
-    "collapse": "Tamaño normal",
+    "expand": "Fijar a un lado",
+    "collapse": "Volver a flotante",
     "minimize": "Minimizar",
     "shortcuts": "Atajos rápidos",
     "disclaimer": "Lia puede cometer errores. Por favor verifica las respuestas.",
@@ -2194,7 +2201,25 @@
     "viewing": "Viendo: {{page}}",
     "shortcuts_label": "Atajos",
     "approval_title": "Lia necesita tu aprobación",
-    "tokens_pill": "{{n}} de {{limit}} hoy"
+    "tokens_pill": "{{n}} de {{limit}} hoy",
+    "agent": {
+      "status_start": "Lia va a editar {{seccion}}",
+      "status_open": "Abriendo {{seccion}}",
+      "status_activar": "Activando {{seccion}}",
+      "status_desactivar": "Desactivando {{seccion}}",
+      "status_agregar": "Agregando en {{seccion}}",
+      "status_escribir": "Escribiendo en {{seccion}}",
+      "status_quitar": "Quitando de {{seccion}}",
+      "stop": "Detener",
+      "final_title": "Listo, ya hice los cambios",
+      "final_stopped": "Me detuve a la mitad",
+      "final_none": "No encontré qué cambiar; revisa el editor",
+      "final_skipped_one": "{{count}} cambio no aplicaba al borrador y lo omití",
+      "final_skipped_other": "{{count}} cambios no aplicaban al borrador y los omití",
+      "undo": "Deshacer",
+      "close": "Cerrar",
+      "status_cambiar": "Cambiando {{seccion}}"
+    }
   },
   "planner_event": {
     "title_free": "Evento gratis",
@@ -2346,5 +2371,103 @@
     "confirmed_one": "de {{count}} invitado confirmó",
     "confirmed_other": "de {{count}} invitados confirmaron",
     "no_data": "Sin lista de invitados"
+  },
+  "lia_onboarding": {
+    "header_sub": "Creando: tu invitación · Paso {{n}} de 3",
+    "close": "Cerrar",
+    "d_title": "¡Hola! Cuéntame cómo sueñas tu boda",
+    "d_sub": "Con lo que me cuentes te armo un primer borrador: textos, colores, tipografías y orden. Es solo el punto de partida, después la editas a tu gusto.",
+    "placeholder": "Ej. Nos casamos en una hacienda en Chihuahua al atardecer. Algo elegante pero cálido, con tonos tierra y mucha música…",
+    "names": "Nombres",
+    "date": "Fecha",
+    "send": "Crear borrador",
+    "ideas_label": "Ideas para empezar",
+    "ideas": {
+      "playa": {
+        "label": "Playa al atardecer",
+        "text": "Boda en la playa al atardecer, relajada y descalza, con tonos arena."
+      },
+      "hacienda": {
+        "label": "Hacienda mexicana",
+        "text": "Boda en una hacienda, elegante pero cálida, con mariachi y colores tierra."
+      },
+      "jardin": {
+        "label": "Jardín boho",
+        "text": "Boda de día en un jardín, estilo boho con flores silvestres y tonos verdes."
+      },
+      "ciudad": {
+        "label": "Moderna en la ciudad",
+        "text": "Boda de noche en un rooftop, minimalista y moderna, en blanco y negro."
+      },
+      "clasica": {
+        "label": "Clásica en iglesia",
+        "text": "Boda clásica en iglesia, muy elegante, en marfil y dorado."
+      },
+      "vinedo": {
+        "label": "Viñedo",
+        "text": "Boda en un viñedo al atardecer, cálida y elegante, con tonos vino y verde olivo."
+      },
+      "pueblo": {
+        "label": "Pueblo mágico",
+        "text": "Boda de destino en un pueblo mágico, con calles empedradas, colores vivos y callejoneada."
+      },
+      "gala": {
+        "label": "Noche de gala",
+        "text": "Boda de noche, de etiqueta rigurosa, muy formal y sofisticada, en negro y dorado."
+      },
+      "intima": {
+        "label": "Íntima en casa",
+        "text": "Boda pequeña e íntima en casa, solo familia y amigos cercanos, sencilla y cálida."
+      },
+      "bosque": {
+        "label": "Bosque o montaña",
+        "text": "Boda en el bosque o la montaña, rodeada de árboles, natural y acogedora, en tonos verdes y madera."
+      }
+    },
+    "tone_label": "Tono de los textos",
+    "tones": {
+      "romantico": "Romántico",
+      "divertido": "Divertido",
+      "elegante": "Elegante",
+      "sencillo": "Sencillo"
+    },
+    "promise_1": "Te armo un primer borrador en segundos",
+    "promise_2": "Después puedes cambiar cada texto, color y sección para hacerla tuya",
+    "promise_3": "No publico nada sin que tú lo decidas",
+    "g_title": "Estoy armando tu borrador…",
+    "g_sub": "Mira cómo toma forma a la derecha. En un momento es tuyo.",
+    "log_reading": "Leyendo tu historia",
+    "log_adjusting": "Entendido, ajustando tu borrador",
+    "log_palette": "Elegí una paleta: {{nombre}}",
+    "log_fonts": "Combiné {{portada}} con {{cuerpo}}",
+    "log_order": "Ordené las secciones para contar tu historia",
+    "log_texts": "Escribiendo cada sección en tono {{tono}}",
+    "r_eyebrow": "Borrador listo",
+    "r_title": "Listo. Ahora hazla tuya.",
+    "before": "Antes",
+    "after": "Ahora",
+    "before_value": "Una invitación en blanco",
+    "after_value": "Un borrador listo para editar",
+    "palette_label": "Paleta · {{nombre}}",
+    "fonts_label": "Tipografías",
+    "order_label": "Orden de secciones · toca para verla",
+    "refine_placeholder": "Pídele un ajuste a Lia: «más formal», «colores más cálidos»…",
+    "refine": {
+      "formal": "Más formal",
+      "divertido": "Más divertido",
+      "calidos": "Colores más cálidos",
+      "tipografia": "Otra tipografía"
+    },
+    "cta": "Hacerla mía en el editor",
+    "caption_describe": "Vista previa · las fotos son de prueba",
+    "caption_generating": "Lia está armando tu borrador",
+    "caption_result": "Borrador · después agregas tus fotos y tus datos",
+    "disclaimer": "Lia puede cometer errores. Revisa tu invitación antes de publicarla.",
+    "error": "No pude armar el borrador. Intenta de nuevo.",
+    "dev_button": "Abrir el onboarding de Lia (solo admin)",
+    "photos_note": "Las fotografías son de prueba. Una vez que comiences podrás agregar tus fotos y tus datos importantes: lugares, horarios, mesa de regalos y más.",
+    "log_palette_texture": "Elegí una paleta: {{nombre}} y la textura {{textura}}",
+    "texture_label": "Textura · {{nombre}}",
+    "texture_none": "sin textura"
   }
 }

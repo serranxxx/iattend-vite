@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, Mail, MessageCircle } from 'lucide-react'
+import { ArrowRight, Check, Copy, Mail, MessageCircle } from 'lucide-react'
 import { ADVISOR_WHATSAPP, SUPPORT_EMAIL, advisorWhatsappUrl } from '../../helpers/contact'
 import { DESTINOS } from './liaDestinos'
 import styles from './LiaBlocks.module.css'
@@ -174,8 +175,10 @@ const Mesas = ({ block, t }) => {
     const mesas = block.mesas
         .map(m => ({ ...m, libres: Math.max(0, m.size - m.seated) }))
         .sort((a, b) => b.libres - a.libres)
-    const lugares = mesas.reduce((acc, m) => acc + Number(m.size || 0), 0)
-    const ocupados = mesas.reduce((acc, m) => acc + Math.min(m.seated, m.size), 0)
+    // El backend manda el total de TODAS las mesas (la lista trae solo
+    // algunas); los bloques viejos del historial no lo traen.
+    const lugares = block.resumen?.lugares ?? mesas.reduce((acc, m) => acc + Number(m.size || 0), 0)
+    const ocupados = block.resumen?.ocupados ?? mesas.reduce((acc, m) => acc + Math.min(m.seated, m.size), 0)
 
     return (
         <div className={styles.card}>
@@ -281,6 +284,32 @@ const Soporte = ({ block, t }) => (
     </div>
 )
 
+// Texto que redactó Lia (redactar_texto): se ve completo y se copia solo ese
+const Texto = ({ block, t }) => {
+    const [copiado, setCopiado] = useState(false)
+    const copiar = async () => {
+        try {
+            await navigator.clipboard.writeText(block.texto)
+            setCopiado(true)
+            setTimeout(() => setCopiado(false), 1600)
+        } catch (err) {
+            console.error('No se pudo copiar el texto de Lia:', err)
+        }
+    }
+    return (
+        <div className={styles.card}>
+            <div className={styles.textoHead}>
+                <span className={styles.label}>{block.titulo}</span>
+                <button type="button" className={styles.copiar} onClick={copiar} aria-live="polite">
+                    {copiado ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+                    <span>{copiado ? t('lia.blocks.text_copied') : t('lia.blocks.text_copy')}</span>
+                </button>
+            </div>
+            <p className={styles.textoCuerpo}>{block.texto}</p>
+        </div>
+    )
+}
+
 const COMPONENTES = {
     lista_invitados: ListaInvitados,
     barra: Barra,
@@ -290,6 +319,7 @@ const COMPONENTES = {
     side_events: SideEvents,
     atajo: Atajo,
     soporte: Soporte,
+    texto: Texto,
 }
 
 export const LiaBlocks = ({ blocks, onAtajo }) => {

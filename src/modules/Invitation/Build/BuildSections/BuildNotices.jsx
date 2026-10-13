@@ -86,7 +86,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                             {
                                 invitation.notices.active ?
                                     <>
-                                        <div className='build-generals-simple-column'>
+                                        <div className='build-generals-simple-column' data-lia="notices-title">
                                             <span className='gc-content-label'>{t('build_notices.label_title')}</span>
 
                                             <Input
@@ -97,6 +97,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                         </div>
 
                                         <Button
+                                            data-lia="notices-notices-agregar"
                                             style={{ margin: '16px 0px' }}
                                             className='primarybutton--active' icon={<IoMdAdd />} onClick={addNewNotice}>
                                             {t('build_notices.btn_new')}
@@ -111,12 +112,11 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                                 invitation.notices.notices ?
                                                     invitation.notices.notices.map((notice, index) => (
 
-                                                        <div style={{
+                                                        <div key={index} data-lia={`notices-notices-${index}`} style={{
                                                             display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start',
                                                             flexDirection: 'column', alignSelf:'stretch'
                                                         }}>
                                                             <div
-                                                                key={index}
                                                                 style={{
                                                                     width: '100%', position: 'relative',
                                                                     // paddingLeft: '7px'
@@ -140,6 +140,7 @@ export const BuildNotices = ({ invitation, setInvitation, setSaved, invitationID
                                                                 alignSelf:'stretch'
                                                             }}>
                                                                 <Button
+                                                                    data-lia={`notices-notices-${index}-quitar`}
                                                                     className='primarybutton'
                                                                     onClick={() => deleteNoticeByIndex(index)}
                                                                     style={{width:'100%', borderRadius:'0px 0px 16px 16px', maxHeight:'24px', color:'#CCC'}}

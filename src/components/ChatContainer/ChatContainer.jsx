@@ -27,14 +27,19 @@ export const LIA_CHAT_OPEN_EVENT = 'lia:open-chat'
 // flotante de mobile no quede encima del chat a pantalla completa.
 export const LIA_CHAT_STATE_EVENT = 'lia:chat-state'
 
+// Popups de antd que se portalean a <body> (ver el efecto de acoplado)
+const POPUPS_ANTD = '.ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-picker-dropdown, .ant-tooltip, .ant-cascader-dropdown'
+
 // Enter o espacio en un div con role="button"
 const isActivateKey = (e) => e.key === 'Enter' || e.key === ' '
 
 export const ChatContainer = () => {
     const { t } = useTranslation()
     const [open, setOpen] = useState(false)
-    // Pantalla completa de alto (el ancho se mantiene). Solo escritorio: en
-    // mobile el chat ya ocupa toda la pantalla.
+    // Acoplado: en vez de flotar, Lia se vuelve una columna a la derecha y el
+    // contenido de la página se recorre para hacerle lugar (clase lia-acoplada
+    // en <html>, ver ChatContainer.css). Solo escritorio: en mobile el chat ya
+    // ocupa toda la pantalla.
     const [expanded, setExpanded] = useState(false)
     const [mounted, setMounted] = useState(false)
     const [notifVisible, setNotifVisible] = useState(false)
@@ -57,6 +62,50 @@ export const ChatContainer = () => {
     const containerRef = useRef(null)
 
     useEffect(() => { openRef.current = open }, [open])
+
+    const docked = open && expanded && !isMobileViewport
+
+    useEffect(() => {
+        if (!docked) return
+        document.documentElement.classList.add('lia-acoplada')
+        // Lo que mide el viewport con JS (bento del dashboard, canvas de mesas)
+        // se vuelve a medir con el ancho nuevo.
+        window.dispatchEvent(new Event('resize'))
+        return () => {
+            document.documentElement.classList.remove('lia-acoplada')
+            window.dispatchEvent(new Event('resize'))
+        }
+    }, [docked])
+
+    // Acoplado, los popups de antd (dropdowns, popovers, selects, pickers)
+    // calculan su lugar contra toda la ventana y no saben que la columna de
+    // Lia ocupa la derecha: los que se meten en ella se recorren a la
+    // izquierda con `translate` (no `transform`, que antd usa en sus
+    // animaciones). Se guarda el corrimiento en data-lia-dx para medir la
+    // posición natural y no entrar en un ciclo con el propio observer.
+    useEffect(() => {
+        if (!docked) return
+        const limite = () => containerRef.current?.getBoundingClientRect().left ?? window.innerWidth
+        const ajustar = (el) => {
+            const previo = Number(el.dataset.liaDx || 0)
+            const derecha = el.getBoundingClientRect().right - previo
+            const dx = derecha > limite() - 8 ? Math.round(limite() - 8 - derecha) : 0
+            if (dx === previo) return
+            el.dataset.liaDx = String(dx)
+            el.style.translate = dx ? `${dx}px 0` : ''
+        }
+        const revisar = () => document.querySelectorAll(POPUPS_ANTD).forEach(ajustar)
+        const observer = new MutationObserver(revisar)
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] })
+        revisar()
+        return () => {
+            observer.disconnect()
+            document.querySelectorAll('[data-lia-dx]').forEach(el => {
+                el.style.translate = ''
+                delete el.dataset.liaDx
+            })
+        }
+    }, [docked])
 
     useEffect(() => {
         window.dispatchEvent(new CustomEvent(LIA_CHAT_STATE_EVENT, { detail: { open } }))
@@ -105,6 +154,10 @@ export const ChatContainer = () => {
     useEffect(() => {
         if (!open) return
         const onClickOutside = (e) => {
+            // Acoplado, Lia es parte de la pantalla: trabajar en la página no la cierra
+            if (docked) return
+            // La tarjeta final del modo agente (LiaAgente) convive con el chat abierto
+            if (e.target.closest?.('[data-lia-conserva-chat]')) return
             if (containerRef.current && !containerRef.current.contains(e.target)) {
                 handleToggle()
             }
@@ -116,7 +169,7 @@ export const ChatContainer = () => {
             document.removeEventListener('mousedown', onClickOutside)
             document.removeEventListener('keydown', onEscape)
         }
-    }, [open, handleToggle])
+    }, [open, docked, handleToggle])
 
     useEffect(() => {
         const isMob = window.innerWidth <= MOBILE_BP
@@ -152,7 +205,7 @@ export const ChatContainer = () => {
     return (
        <div
             ref={containerRef}
-            className={`chat-morph-shell chat-morph-shell--${morphState}${expanded && !isMobileViewport ? ' chat-morph-shell--expanded' : ''}`}
+            className={`chat-morph-shell chat-morph-shell--${morphState}${docked ? ' chat-morph-shell--docked' : ''}`}
             style={hiddenOnMobile ? { display: 'none' } : isMobileOpen ? {
                 inset: 0,
                 width: '100vw',

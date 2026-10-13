@@ -11,6 +11,7 @@
         height        0.38s cubic-bezier(0.34, 1.15, 0.64, 1),
         border-radius 0.38s ease,
         padding       0.38s ease,
+        right         0.38s ease,
         transform     0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
@@ -35,11 +36,50 @@
     
 }
 
-.chat-morph-shell--open.chat-morph-shell--expanded {
-    /* Toda la altura de la ventana (menos el margen de 24px arriba y abajo)
-       y un 15% más de ancho que el panel normal (404px). */
-    width: calc(404px * 1.15);
-    height: calc(100dvh - 48px);
+/* ── Acoplado: columna a la derecha, en fila con la página ──
+   ChatContainer pone .lia-acoplada en <html> mientras está acoplado. El
+   contenido normal se recorre con el margen de #root; lo que es position:
+   fixed (headers, drawers de la derecha, barras centradas) no lo ve, así que
+   se corrige aquí o usa var(--lia-dock) directamente. */
+:root {
+    --lia-dock: 0px;
+}
+
+html.lia-acoplada {
+    --lia-dock: 440px;
+}
+
+html.lia-acoplada #root {
+    margin-right: var(--lia-dock);
+}
+
+html.lia-acoplada .header-main-container,
+html.lia-acoplada .header-dashboard-main-container {
+    left: 0;
+    right: var(--lia-dock);
+    width: auto;
+}
+
+/* Todo drawer de antd (izquierda, derecha, arriba o abajo) vive en el área
+   de la página: su raíz termina donde empieza Lia, así un drawer de 95% de
+   ancho (las mesas) mide 95% de la página y no se mete debajo de Lia. */
+html.lia-acoplada .ant-drawer {
+    right: var(--lia-dock) !important;
+}
+
+.chat-morph-shell--open.chat-morph-shell--docked {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--lia-dock);
+    height: 100dvh;
+    padding: 0;
+    border-radius: 0;
+}
+
+.chat-morph-shell--docked .chat-morph--open {
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .chat-morph-shell--notif {

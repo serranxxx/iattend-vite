@@ -8,7 +8,7 @@ import ios_settings from '../../../../assets/images/iphone-settings.svg'
 import android_settings from '../../../../assets/images/android-settings.png'
 import ReactHost from '../../../../components/Host/ReactHost';
 import { LuArrowLeft, LuMinus, LuMonitorSmartphone, LuPlus, LuRedo2, LuUndo2 } from 'react-icons/lu';
-import { ChevronLeft, CircleHelp, Ellipsis, Mic, Search } from 'lucide-react';
+import { ChevronLeft, CircleHelp, Ellipsis, Mic, Search, Sparkles } from 'lucide-react';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { LanguageSelector } from '../../../../components/LanguageSelector/LanguageSelector';
 
@@ -29,7 +29,7 @@ const devices = [
 
 
 export const BuildContent = ({
-    positionY, setPositionY, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride, fontOverride,
+    positionY, setPositionY, scrollNonce, invitation, coverUpdated, currentDevice, setDevice, invitationID, onHide, setOnHide, onSectionChange, textureOverride, fontOverride, onOpenOnboarding,
     languages, disabledLanguages, activeLang, onActiveLangChange, onAddLanguage, onToggleLanguageEnabled, onRetranslate, translating, minimalControls = false, onBack,
     onUndo, onRedo, canUndo, canRedo, onReplayTour, tourOpen,
     // `pantalla` sustituye a la invitación dentro del marco del teléfono. El
@@ -188,6 +188,18 @@ export const BuildContent = ({
                             <LuMinus />
                         </div>
 
+                        {/* Solo admins (rol Administration): abre el onboarding con
+                            Lia, que por ahora no se le muestra a ningún usuario. */}
+                        {onOpenOnboarding && (
+                            <Tooltip placement='left' title={t('lia_onboarding.dev_button')}>
+                                <Button
+                                    className='full-screen-button'
+                                    aria-label={t('lia_onboarding.dev_button')}
+                                    onClick={onOpenOnboarding}
+                                    icon={<Sparkles size={16} style={{ marginTop: '2px' }} />} />
+                            </Tooltip>
+                        )}
+
                         {/* Relanza el tour del editor (BuildTour). */}
                         {onReplayTour && (
                             <Tooltip placement='left' title={t('build_tour.replay')}>
@@ -239,7 +251,7 @@ export const BuildContent = ({
 
                                 <div className='ios26-screen'>
                                     <div ref={scrollableContentRef} className='scroll-invitation ios26-content'>
-                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} />}
+                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} scrollNonce={scrollNonce} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} />}
                                     </div>
 
                                     {hostOverlay}
@@ -289,7 +301,7 @@ export const BuildContent = ({
                                     </div>
 
                                     <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
-                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />}
+                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} scrollNonce={scrollNonce} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />}
 
                                     </div>
                                     <div className={`inv-light-space-${currentDevice}`} />
@@ -306,7 +318,7 @@ export const BuildContent = ({
                         `pantalla` prestada se montaría dos veces —y si trae un iframe,
                         el sitio recibe dos visitas por cada prueba—, así que ahí se
                         deja solo el marco. */}
-                    {pantalla ? null : <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang}/>}
+                    {pantalla ? null : <ReactHost config={invitation} onHide={onHide} screens={screens.xs} scrollToSection={positionY} scrollNonce={scrollNonce} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang}/>}
                 </div>
             </>
             : <></>

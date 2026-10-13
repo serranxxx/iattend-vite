@@ -398,7 +398,7 @@ export const BuildMenu = ({ invitation, label, setInvitation, setSaved, invitati
                 </div >
             )}
         >
-            <Button type='text' icon={<EllipsisVertical size={18} />}>
+            <Button type='text' data-lia={`${label}-menu`} icon={<EllipsisVertical size={18} />}>
 
             </Button>
         </Dropdown >

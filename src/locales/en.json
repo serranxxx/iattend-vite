@@ -1417,7 +1417,12 @@
     "notices": "Notices",
     "gallery": "Gallery",
     "msg_saved": "Changes saved",
-    "msg_written": "Changes written"
+    "msg_written": "Changes written",
+    "translations_title": "You changed texts in Spanish",
+    "translations_desc": "Your translations don't update on their own: review them after saving so they stay current.",
+    "translations_cancel": "Cancel",
+    "translations_publish": "Publish anyway",
+    "translations_write": "Save anyway"
   },
   "storage": {
     "type_cover": "Cover",
@@ -2114,7 +2119,9 @@
       "support_email": "Email",
       "bar_mesas_of": "of {{total}} seats taken",
       "bar_confirmaciones_of": "of {{total}} confirmed",
-      "bar_pases_of": "of {{total}} passes used"
+      "bar_pases_of": "of {{total}} passes used",
+      "text_copy": "Copy",
+      "text_copied": "Copied"
     },
     "prompts": {
       "summary": "Event summary",
@@ -2150,8 +2157,8 @@
     "input_label": "Message for Lia",
     "send": "Send",
     "reset": "Restart chat",
-    "expand": "Full screen",
-    "collapse": "Normal size",
+    "expand": "Dock to the side",
+    "collapse": "Make floating",
     "minimize": "Minimize",
     "shortcuts": "Quick shortcuts",
     "disclaimer": "Lia can make mistakes. Please double-check her answers.",
@@ -2194,7 +2201,25 @@
     "viewing": "Viewing: {{page}}",
     "shortcuts_label": "Shortcuts",
     "approval_title": "Lia needs your approval",
-    "tokens_pill": "{{n}} of {{limit}} today"
+    "tokens_pill": "{{n}} of {{limit}} today",
+    "agent": {
+      "status_start": "Lia is about to edit {{seccion}}",
+      "status_open": "Opening {{seccion}}",
+      "status_activar": "Turning on {{seccion}}",
+      "status_desactivar": "Turning off {{seccion}}",
+      "status_agregar": "Adding to {{seccion}}",
+      "status_escribir": "Writing in {{seccion}}",
+      "status_quitar": "Removing from {{seccion}}",
+      "stop": "Stop",
+      "final_title": "Done, the changes are in",
+      "final_stopped": "I stopped halfway",
+      "final_none": "I couldn't find anything to change; check the editor",
+      "final_skipped_one": "{{count}} change didn't match the draft, so I skipped it",
+      "final_skipped_other": "{{count}} changes didn't match the draft, so I skipped them",
+      "undo": "Undo",
+      "close": "Close",
+      "status_cambiar": "Updating {{seccion}}"
+    }
   },
   "planner_event": {
     "title_free": "Free event",
@@ -2346,5 +2371,103 @@
     "confirmed_one": "of {{count}} guest confirmed",
     "confirmed_other": "of {{count}} guests confirmed",
     "no_data": "No guest list"
+  },
+  "lia_onboarding": {
+    "header_sub": "Creating: your invitation · Step {{n}} of 3",
+    "close": "Close",
+    "d_title": "Hi! Tell me how you dream your wedding",
+    "d_sub": "With what you tell me I'll build a first draft: texts, colors, fonts and order. It's just a starting point; you edit it your way afterwards.",
+    "placeholder": "E.g. We're getting married at a hacienda in Chihuahua at sunset. Elegant but warm, earthy tones and lots of music…",
+    "names": "Names",
+    "date": "Date",
+    "send": "Create draft",
+    "ideas_label": "Ideas to start",
+    "ideas": {
+      "playa": {
+        "label": "Beach at sunset",
+        "text": "Beach wedding at sunset, relaxed and barefoot, in sand tones."
+      },
+      "hacienda": {
+        "label": "Mexican hacienda",
+        "text": "Wedding at a hacienda, elegant but warm, with mariachi and earthy colors."
+      },
+      "jardin": {
+        "label": "Boho garden",
+        "text": "Daytime garden wedding, boho style with wildflowers and green tones."
+      },
+      "ciudad": {
+        "label": "Modern in the city",
+        "text": "Night wedding on a rooftop, minimal and modern, in black and white."
+      },
+      "clasica": {
+        "label": "Classic church",
+        "text": "Classic church wedding, very elegant, in ivory and gold."
+      },
+      "vinedo": {
+        "label": "Vineyard",
+        "text": "Vineyard wedding at sunset, warm and elegant, in wine and olive tones."
+      },
+      "pueblo": {
+        "label": "Charming town",
+        "text": "Destination wedding in a charming Mexican town, with cobblestone streets, bright colors and a street parade."
+      },
+      "gala": {
+        "label": "Gala night",
+        "text": "Black-tie evening wedding, very formal and sophisticated, in black and gold."
+      },
+      "intima": {
+        "label": "Intimate at home",
+        "text": "Small, intimate wedding at home, just family and close friends, simple and warm."
+      },
+      "bosque": {
+        "label": "Forest or mountain",
+        "text": "Wedding in the forest or mountains, surrounded by trees, natural and cozy, in green and wood tones."
+      }
+    },
+    "tone_label": "Tone of the texts",
+    "tones": {
+      "romantico": "Romantic",
+      "divertido": "Fun",
+      "elegante": "Elegant",
+      "sencillo": "Simple"
+    },
+    "promise_1": "I'll build a first draft in seconds",
+    "promise_2": "Then you can change every text, color and section to make it yours",
+    "promise_3": "I won't publish anything unless you decide to",
+    "g_title": "I'm building your draft…",
+    "g_sub": "Watch it take shape on the right. It'll be yours in a moment.",
+    "log_reading": "Reading your story",
+    "log_adjusting": "Got it, adjusting your draft",
+    "log_palette": "I picked a palette: {{nombre}}",
+    "log_fonts": "I paired {{portada}} with {{cuerpo}}",
+    "log_order": "I ordered the sections to tell your story",
+    "log_texts": "Writing each section in a {{tono}} tone",
+    "r_eyebrow": "Draft ready",
+    "r_title": "Done. Now make it yours.",
+    "before": "Before",
+    "after": "Now",
+    "before_value": "A blank invitation",
+    "after_value": "A draft ready to edit",
+    "palette_label": "Palette · {{nombre}}",
+    "fonts_label": "Fonts",
+    "order_label": "Section order · tap to see it",
+    "refine_placeholder": "Ask Lia for a tweak: “more formal”, “warmer colors”…",
+    "refine": {
+      "formal": "More formal",
+      "divertido": "More fun",
+      "calidos": "Warmer colors",
+      "tipografia": "Another font"
+    },
+    "cta": "Make it mine in the editor",
+    "caption_describe": "Preview · the photos are samples",
+    "caption_generating": "Lia is building your draft",
+    "caption_result": "Draft · add your photos and details afterwards",
+    "disclaimer": "Lia can make mistakes. Review your invitation before publishing it.",
+    "error": "I couldn't build the draft. Please try again.",
+    "dev_button": "Open Lia onboarding (admin only)",
+    "photos_note": "The photos are just samples. Once you start you can add your own photos and your key details: venues, times, gift registry and more.",
+    "log_palette_texture": "I picked a palette: {{nombre}} and the {{textura}} texture",
+    "texture_label": "Texture · {{nombre}}",
+    "texture_none": "no texture"
   }
 }

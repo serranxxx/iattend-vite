@@ -1,0 +1,76 @@
+.aviso {
+    position: fixed;
+    z-index: 10004;
+    display: flex;
+    gap: 12px;
+    width: min(360px, calc(100vw - 24px));
+    padding: 16px;
+    border-radius: 24px;
+    background: #fff;
+    color: var(--text-color);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    animation: entrar 200ms ease-out;
+}
+
+/* Sin botón de origen (lo pidió la tarjeta de Lia): abajo al centro */
+.centrado {
+    left: calc((100vw - var(--lia-dock, 0px)) / 2);
+    bottom: 24px;
+    transform: translateX(-50%);
+    animation-name: entrarCentrado;
+}
+
+.icono {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: #F1F1F1;
+    color: var(--text-color);
+}
+
+.cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    line-height: 1.45;
+}
+
+.cuerpo span {
+    color: #787878;
+    font-size: 13px;
+}
+
+.acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+@keyframes entrar {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes entrarCentrado {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (max-width: 480px) {
+    .centrado {
+        bottom: 72px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aviso {
+        animation: none;
+    }
+}

@@ -1,4 +1,4 @@
-import { Layout, Modal, message } from 'antd'
+import { Layout, message } from 'antd'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './build-invitation.css'
@@ -17,6 +17,10 @@ import { UpgradeBanner } from '../../../../components/Payment/UpgradeBanner/Upgr
 import { translateInvitation } from '../../../../helpers/services/translationApi'
 import { sha1 } from '../../../../helpers/services/sha1'
 import { useLia } from '../../../../context/LiaContext'
+import { LiaAgente } from '../LiaAgent/LiaAgente'
+import { AvisoTraducciones } from './AvisoTraducciones'
+import { LiaOnboarding } from '../LiaOnboarding/LiaOnboarding'
+import { LIA_ONBOARDING_AUTOMATICO, LIA_ONBOARDING_STORAGE_KEY } from '../LiaOnboarding/liaOnboardingDatos'
 
 // Mismo mirror dev<->prod que ya usa el resto de este archivo (cover/quote/
 // dresscode/gallery), factorizado para poder aplicarlo también al contenido
@@ -159,7 +163,7 @@ const mergeSourceIntoTranslation = (translationContent, newSource) => {
 export const BuildPage = () => {
 
     const { t } = useTranslation()
-    const { setCreditSending, setCreditSuccess, clearCreditState } = useLia()
+    const { setCreditSending, setCreditSuccess, clearCreditState, uiAction, clearUiAction, registrarBorrador } = useLia()
 
     const size = 16
     const buttons = [
@@ -291,7 +295,9 @@ export const BuildPage = () => {
     const [activeLang, setActiveLang] = useState(null) // null = idioma original (español)
     const [translating, setTranslating] = useState(false)
     const [staleSections, setStaleSections] = useState(new Set())
-    const [translationWarning, setTranslationWarning] = useState(false)
+    // Aviso de traducciones atrasadas: { modo: 'write' | 'save', ancla } o null.
+    // ancla es el botón que pidió guardar, para colocar el aviso junto a él.
+    const [translationWarning, setTranslationWarning] = useState(null)
 
     // Undo/redo de sesión (Ctrl+Z / Ctrl+Shift+Z). Nunca se persiste — vive y
     // muere con la pestaña. Se reinicia al cambiar de idioma activo porque es,
@@ -304,20 +310,46 @@ export const BuildPage = () => {
     // entra a construir y se puede relanzar desde el "?" de la columna de
     // herramientas.
     const [tourOpen, setTourOpen] = useState(false)
+    // Onboarding con Lia ("Crea tu invitación con IA"): va antes del tour en
+    // una invitación nueva. `onboardingVez` reinicia su estado en cada apertura.
+    const [onboardingOpen, setOnboardingOpen] = useState(false)
+    const [onboardingVez, setOnboardingVez] = useState(0)
+    const abrirOnboarding = () => {
+        setOnboardingVez(v => v + 1)
+        setOnboardingOpen(true)
+    }
     // Solo escritorio: en móvil la máscara de antd mide anclajes que viven en
     // drawers y hojas, y la columna de herramientas —donde está el "?"— no se
     // pinta. Ver docs/rediseno-editor-side-events.md.
     const [tourAvailable, setTourAvailable] = useState(() => !window.matchMedia('(max-width: 750px)').matches)
-    // Candado del sync de secciones del preview (ver closeTour). Se levanta en
-    // cuanto el usuario vuelve a tocar el teléfono o elige un módulo.
-    const previewSyncLocked = useRef(false)
-    const unlockPreviewSync = () => { previewSyncLocked.current = false }
+    // La barra de módulos mueve el preview, pero el scroll del preview ya no
+    // cambia el módulo (un solo sentido). `scrollVez` hace que volver a tocar
+    // el mismo módulo regrese el preview a su sección aunque ya fuera esa.
+    const [scrollVez, setScrollVez] = useState(0)
 
     const lastSavedTextsRef = useRef(null)
-    const pendingSaveRef = useRef(null) // 'write' | 'save'
 
     const session = JSON.parse(localStorage.getItem("session"));
     const menuTimerRef = useRef(null);
+
+    // Modo agente de Lia: la ui_action edit_invitation trae { seccion, cambios }
+    // y LiaAgente los actúa en pantalla. Siempre sobre el español: si estaba
+    // editando una traducción, se regresa al original.
+    const [liaTarea, setLiaTarea] = useState(null)
+    const copyRef = useRef(null)
+    copyRef.current = copy
+
+    useEffect(() => {
+        if (uiAction?.type !== 'edit_invitation' || !copy) return
+        clearUiAction()
+        if (Date.now() - (uiAction._ts ?? 0) > 60 * 1000) return
+        setActiveLang(null)
+        setLiaTarea({ lote: uiAction.payload?.lote ?? [uiAction.payload], id: uiAction._ts })
+    }, [uiAction, copy])
+
+    // Lia lee el borrador en español completo: el backend arma con él un
+    // resumen de toda la invitación (sin imágenes ni estilos) como contexto.
+    useEffect(() => registrarBorrador(() => copyRef.current ?? null), [registrarBorrador])
 
     const getActiveInvitation = () => {
         if (activeLang && translations[activeLang]) return translations[activeLang].content
@@ -555,9 +587,12 @@ export const BuildPage = () => {
     }, []);
 
     const handleClick = (item) => {
-        unlockPreviewSync()
         setCurrentSection(item.value)
+        // Ajustes generales no es una sección de la invitación: el preview se
+        // queda donde está.
+        if (item.type === 'generals') return
         setPositionY(item.type)
+        setScrollVez(v => v + 1)
     }
 
     // El tour se abre solo la PRIMERA vez que se edita la invitación; el
@@ -571,9 +606,13 @@ export const BuildPage = () => {
         return () => mq.removeEventListener('change', sync)
     }, [])
 
+    // Primera vez en el editor: primero el onboarding con Lia, al cerrarlo el
+    // tour y después el editor libre. Cada uno se marca visto al cerrarse.
     useEffect(() => {
         if (!copy || !id || !tourAvailable) return
-        if (localStorage.getItem(BUILD_TOUR_STORAGE_KEY)) return
+        if (onboardingOpen || tourOpen) return
+        const faltaOnboarding = LIA_ONBOARDING_AUTOMATICO && !localStorage.getItem(LIA_ONBOARDING_STORAGE_KEY)
+        if (!faltaOnboarding && localStorage.getItem(BUILD_TOUR_STORAGE_KEY)) return
 
         let cancelled = false
         let timer = null
@@ -590,14 +629,31 @@ export const BuildPage = () => {
                 if (error || (data?.length ?? 0) > 0) return
                 // Pequeña espera para que la invitación ya esté pintada cuando
                 // el primer paso resuelva su anclaje.
-                timer = setTimeout(() => setTourOpen(true), 800)
+                timer = setTimeout(() => (faltaOnboarding ? abrirOnboarding() : setTourOpen(true)), 800)
             })
 
         return () => {
             cancelled = true
             if (timer) clearTimeout(timer)
         }
-    }, [copy, id, tourAvailable])
+    }, [copy, id, tourAvailable, onboardingOpen, tourOpen])
+
+    const cerrarOnboarding = () => {
+        localStorage.setItem(LIA_ONBOARDING_STORAGE_KEY, '1')
+        setOnboardingOpen(false)
+    }
+
+    // "Hacerla mía en el editor": el borrador de Lia pasa al editor sin
+    // guardar (con undo), igual que cualquier cambio del organizador.
+    // Siempre sobre el español (copy), aunque estuviera viendo una traducción.
+    const aplicarOnboarding = (borrador) => {
+        setUndoStack(prev => [...prev, copy].slice(-UNDO_LIMIT))
+        setRedoStack([])
+        setActiveLang(null)
+        setCopy(borrador)
+        setSaved(false)
+        cerrarOnboarding()
+    }
 
     const closeTour = () => {
         localStorage.setItem(BUILD_TOUR_STORAGE_KEY, '1')
@@ -608,13 +664,6 @@ export const BuildPage = () => {
         // Solo cambia el módulo, no positionY: "generals" no es una sección real
         // de la invitación, así que mandar el preview ahí deja el teléfono en
         // una posición vacía. El teléfono se queda donde el tour lo dejó.
-        //
-        // Su scroll, eso sí, sigue corriendo un buen rato después del último
-        // paso y va reportando las secciones por las que pasa — cualquiera de
-        // esos avisos regresaría el menú a otro módulo. Queda trabado en
-        // Generales hasta que el usuario vuelva a tocar el preview o elija otro
-        // módulo de la barra.
-        previewSyncLocked.current = true
         setCurrentSection(1)
     }
 
@@ -623,12 +672,6 @@ export const BuildPage = () => {
         if (!item) return
         setCurrentSection(item.value)
         setPositionY(item.type)
-    }
-
-    // El preview avisa qué sección está visible y el menú la sigue.
-    const handleSectionChange = (type) => {
-        if (previewSyncLocked.current) return
-        selectSection(type)
     }
 
     // Tras guardar el español, propaga los campos no-texto a todas las traducciones
@@ -692,7 +735,7 @@ export const BuildPage = () => {
         }
     }
 
-    const onWriteChanges = async () => {
+    const onWriteChanges = async (e) => {
         if (activeLang) {
             try {
                 await onSaveTranslation(activeLang)
@@ -705,15 +748,14 @@ export const BuildPage = () => {
         }
 
         if (lastSavedTextsRef.current !== extractTextFields(copy) && Object.keys(translations).length > 0) {
-            pendingSaveRef.current = 'write'
-            setTranslationWarning(true)
+            setTranslationWarning({ modo: 'write', ancla: e?.currentTarget ?? null })
             return
         }
 
         await proceedWithSpanishSave('write')
     }
 
-    const onSaveChanges = async () => {
+    const onSaveChanges = async (e) => {
         if (activeLang) {
             try {
                 await onSaveTranslation(activeLang)
@@ -726,8 +768,7 @@ export const BuildPage = () => {
         }
 
         if (lastSavedTextsRef.current !== extractTextFields(copy) && Object.keys(translations).length > 0) {
-            pendingSaveRef.current = 'save'
-            setTranslationWarning(true)
+            setTranslationWarning({ modo: 'save', ancla: e?.currentTarget ?? null })
             return
         }
 
@@ -918,25 +959,17 @@ export const BuildPage = () => {
         <>
             {contextHolder}
 
-            <Modal
-                open={translationWarning}
-                title="Textos modificados"
-                okText="Guardar de todas formas"
-                cancelText="Cancelar"
-                onOk={async () => {
-                    setTranslationWarning(false)
-                    await proceedWithSpanishSave(pendingSaveRef.current)
-                    pendingSaveRef.current = null
+            <AvisoTraducciones
+                open={!!translationWarning}
+                ancla={translationWarning?.ancla}
+                modo={translationWarning?.modo}
+                onConfirmar={async () => {
+                    const { modo } = translationWarning
+                    setTranslationWarning(null)
+                    await proceedWithSpanishSave(modo)
                 }}
-                onCancel={() => {
-                    setTranslationWarning(false)
-                    pendingSaveRef.current = null
-                }}
-            >
-                <p style={{ margin: 0 }}>
-                    Modificaste textos en la versión en español. Revisa tus traducciones después de guardar para que estén al día.
-                </p>
-            </Modal>
+                onCancelar={() => setTranslationWarning(null)}
+            />
 
             {
                 copy ?
@@ -959,19 +992,13 @@ export const BuildPage = () => {
 
                             </div>
 
-                            <div
-                                style={{ display: 'contents' }}
-                                onWheelCapture={unlockPreviewSync}
-                                onTouchMoveCapture={unlockPreviewSync}
-                                onMouseDownCapture={unlockPreviewSync}
-                            >
                             <BuildContent invitationID={id} onHide={onHide} setOnHide={setOnHide}
-                                setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} invitation={getActiveInvitation()} onSectionChange={handleSectionChange}
+                                setDevice={setDevice} currentDevice={device} coverUpdated={coverUpdated} positionY={positionY} setPositionY={setPositionY} scrollNonce={scrollVez} invitation={getActiveInvitation()}
                                 languages={copy?.generals?.languages ?? []} disabledLanguages={copy?.generals?.disabledLanguages ?? []} activeLang={activeLang} onActiveLangChange={setActiveLang}
                                 onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating}
                                 onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0}
-                                onReplayTour={tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen} />
-                            </div>
+                                onReplayTour={tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen}
+                                onOpenOnboarding={tourAvailable && session?.user?.role === 'Administration' ? abrirOnboarding : undefined} />
 
                         </div>
 
@@ -981,6 +1008,24 @@ export const BuildPage = () => {
                         {/* Tour del editor: recorre la barra de módulos explicando
                             qué vive en cada uno (Generales, Portada, Bienvenida...). */}
                         <BuildTour open={tourOpen && tourAvailable} onClose={closeTour} onSelectSection={selectSection} />
+
+                        <LiaOnboarding
+                            key={onboardingVez}
+                            open={onboardingOpen}
+                            invitation={copy}
+                            invitationId={id}
+                            onAplicar={aplicarOnboarding}
+                            onCerrar={cerrarOnboarding}
+                        />
+
+                        <LiaAgente
+                            tarea={liaTarea}
+                            getCopy={() => copyRef.current}
+                            setActiveField={setActiveField}
+                            saved={saved}
+                            onRestaurar={(snapshot, wasSaved) => { setCopy(snapshot); setSaved(wasSaved) }}
+                            onTerminar={() => setLiaTarea(null)}
+                        />
                     </Layout >
                     : <div className='build-loading-container'>
                         <img alt='' src={load} style={{

@@ -241,12 +241,12 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
 
                                     <>
                                         <span className='gc-content-label'>{t('build_gifts.label_title')}</span>
-                                        <Input className='gc-input-text'
+                                        <Input data-lia="gifts-title" className='gc-input-text'
                                             onChange={onChangeTitle}
                                             value={invitation.gifts.title} />
 
                                         <span className='gc-content-label'>{t('build_gifts.label_description')}</span>
-                                        <Input.TextArea className={`gc-input-text ${onGeneration ? 'magic-effect' : ''}`}
+                                        <Input.TextArea data-lia="gifts-description" className={`gc-input-text ${onGeneration ? 'magic-effect' : ''}`}
                                             style={{ borderRadius: '16px' }}
                                             value={descriptionValue}
                                             onChange={onChangeDescription}
@@ -285,6 +285,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                     style={{
                                                         width: '180px', borderRadius: '99px'
                                                     }}
+                                                    data-lia="gifts-cards-agregar-banco"
                                                     onClick={() => addNewCard(false)}
                                                     disabled={brandsLoading || banks.length === 0}
                                                     icon={<IoMdAdd />}
@@ -297,6 +298,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
                                                     style={{
                                                         width: '180px', borderRadius: '99px'
                                                     }}
+                                                    data-lia="gifts-cards-agregar-tienda"
                                                     onClick={() => addNewCard(true)}
                                                     disabled={brandsLoading || stores.length === 0}
                                                     icon={<IoMdAdd />}
@@ -319,6 +321,7 @@ export const BuildGifts = ({ invitation, setInvitation, setSaved, invitationID }
 
                                                     <div
                                                         className='regular-card'
+                                                        data-lia={`gifts-cards-${index}`}
                                                         style={{
                                                             width: '100%', padding: '0px', overflow: 'hidden',
                                                             borderRadius: '16px'

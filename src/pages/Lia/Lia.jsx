@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Input } from 'antd'
-import { SendHorizontal, ThumbsUp, ThumbsDown, RotateCcw, Minus, Plus, Copy, Check, Maximize2, Minimize2, Lock } from 'lucide-react'
+import { SendHorizontal, ThumbsUp, ThumbsDown, RotateCcw, Minus, Plus, Copy, Check, PanelRightOpen, PanelRightClose, Lock } from 'lucide-react'
 import axios from 'axios'
 import { useLia } from '../../context/LiaContext'
 import { supabase } from '../../lib/supabase'
@@ -412,7 +412,7 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
     const id = idProp ?? searchParams.get('id')
     const navigate = useNavigate()
     const pageLabel = getPageLabel(pathname, t)
-    const { setUiAction } = useLia()
+    const { setUiAction, leerBorrador } = useLia()
 
     const [messages, setMessages] = useState([])
     const [pendingActions, setPendingActions] = useState([])
@@ -490,8 +490,19 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
 
     // Las ui_actions las ejecuta GuestsPage: si el organizador está en otra
     // pantalla, se le lleva a Invitados para que la acción se vea.
+    // edit_invitation (modo agente) la actúa el editor: se lleva al
+    // organizador ahí. El chat se queda abierto mientras Lia trabaja.
     const dispatchUiActions = (actions) => {
         if (!actions?.length) return
+        // Varias ediciones (secciones distintas) van en un solo lote para que
+        // Lia las haga en un recorrido; las repetidas idénticas se descartan.
+        const ediciones = actions.filter(a => a.type === 'edit_invitation')
+        if (ediciones.length) {
+            const lote = [...new Map(ediciones.map(a => [JSON.stringify(a.payload), a.payload])).values()]
+            setUiAction({ type: 'edit_invitation', payload: { lote } })
+            if (!pathname.startsWith('/dashboard/build')) navigate(`/dashboard/build?id=${id}`)
+            return
+        }
         actions.forEach(action => setUiAction(action))
         if (!pathname.startsWith('/dashboard/guests')) navigate(`/dashboard/guests?id=${id}`)
     }
@@ -588,6 +599,8 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                     lang: i18n.language,
                     stream: true,
                     conversation_history: history,
+                    // Lo que hay en el editor si está abierto (ver LiaContext)
+                    invitation_draft: leerBorrador() ?? undefined,
                 }),
                 signal: ctrl.signal,
             })
@@ -854,7 +867,7 @@ export default function Lia({ id: idProp, onMinimize, expanded = false, onToggle
                         <IconButton icon={<RotateCcw size={14} />} label={t('lia.reset')} onClick={handleReset} />
                         {onToggleExpand && (
                             <IconButton
-                                icon={expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                icon={expanded ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
                                 label={expanded ? t('lia.collapse') : t('lia.expand')}
                                 pressed={expanded}
                                 onClick={onToggleExpand}

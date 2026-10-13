@@ -502,6 +502,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                                     <>
                                         <div className='general-cards-single-row' style={{ width: '100%', gap: '4px' }}>
                                             <Input
+                                                data-lia="cover-title"
                                                 placeholder={t('build_cover.placeholder_title')}
                                                 value={invitation.cover.title.text?.value}
                                                 onChange={onChangeTitle}
@@ -644,6 +645,7 @@ export const BuildCover = ({ invitation, setInvitation, setSaved, invitationID, 
                             <span className='gc-content-label'>{t('build_cover.label_event_date')}</span>
 
                             <DatePicker
+                                data-lia="cover-fecha"
                                 className='gc-date-picker'
                                 style={{
                                     marginBottom: datePosition ? '0px' : '5px',

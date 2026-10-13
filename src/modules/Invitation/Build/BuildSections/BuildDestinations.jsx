@@ -445,9 +445,9 @@ export const BuildDestinations = ({ invitationID, invitation, setInvitation, set
                         {invitation.destinations.active ?
                             <>
                                 <span className='gc-content-label'>{t('build_destinations.label_title')}</span>
-                                <Input className='gc-input-text' onChange={onChangeTitle} value={invitation.destinations.title} />
+                                <Input data-lia="destinations-title" className='gc-input-text' onChange={onChangeTitle} value={invitation.destinations.title} />
                                 <span className='gc-content-label'>{t('build_destinations.label_description')}</span>
-                                <Input.TextArea className='gc-input-text' style={{ borderRadius: '16px' }}
+                                <Input.TextArea data-lia="destinations-description" className='gc-input-text' style={{ borderRadius: '16px' }}
                                     value={descriptionValue} onChange={onChangeDescription} autoSize={{ minRows: 3, maxRows: 5 }} />
                             </>
                             : <div />

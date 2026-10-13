@@ -309,6 +309,7 @@ export const BuildQuote = ({ invitation, setInvitation, setSaved, invitationID, 
 
                                     <div className='quote-settings-container'>
                                         <Input.TextArea
+                                            data-lia="quote-texto"
                                             // value={invitation.quote.description}
                                             value={quoteValue}
                                             autoSize={{ minRows: invitation.quote.image ? 3 : 10, maxRows: invitation.quote.image ? 5 : 15 }}

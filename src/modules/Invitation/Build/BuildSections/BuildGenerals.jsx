@@ -946,7 +946,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, invitationI
                             )}
 
 
-                            <div className='single_row' style={{ gap: '0px' }}>
+                            <div className='single_row' style={{ gap: '0px' }} data-lia="generals-paleta">
                                 <div className='generl-card-color-item' style={{ padding: '0', border: 'none' }}>
                                     <span >{t('build_generals.label_bg')}</span>
                                     <div className='general-cards-single-row' >
@@ -1153,7 +1153,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, invitationI
 
                             </Row>
 
-                            <div className='build-generals-simple-column' style={{ gap: '12x' }}>
+                            <div className='build-generals-simple-column' style={{ gap: '12x' }} data-lia="generals-orden">
                                 {
                                     invitation.generals.positions.map((item, index) => (
                                         <div
@@ -1172,6 +1172,7 @@ export const BuildGenerals = ({ invitation, setInvitation, setSaved, invitationI
                             <span className={'gc-content-label'}
                             >{t('build_generals.label_textures')}</span>
                             <div
+                                data-lia="generals-textura"
                                 style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%',
                                     height: '80px', borderRadius: '12px', overflow: 'hidden',

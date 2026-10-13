@@ -71,7 +71,7 @@ export const BuildGallery = ({ invitation, setInvitation, invitationID, setSaved
                                     <div className='build-generals-simple-column'>
                                         <span className='gc-content-label'>{t('build_gallery.label_title')}</span>
 
-                                        <Input
+                                        <Input data-lia="gallery-title"
                                             onChange={onChangeTitle}
                                             value={invitation.gallery.title}
                                             style={{ width: '100%', transition: 'all 0.3s ease' }}

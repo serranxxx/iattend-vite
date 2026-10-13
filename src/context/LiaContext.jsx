@@ -11,6 +11,17 @@ export const LiaProvider = ({ children }) => {
     const [creditSendingLabel, setCreditSendingLabel] = useState(null)
     const timersRef = useRef({})
     const creditTimerRef = useRef(null)
+    // El editor (BuildPage) registra aquí cómo leer su borrador; el chat lo
+    // manda con cada mensaje para que Lia vea lo que hay en pantalla y no
+    // solo lo publicado.
+    const borradorRef = useRef(null)
+
+    const registrarBorrador = useCallback((leer) => {
+        borradorRef.current = leer
+        return () => { if (borradorRef.current === leer) borradorRef.current = null }
+    }, [])
+
+    const leerBorrador = useCallback(() => borradorRef.current?.() ?? null, [])
 
     const setUiAction = useCallback((action) => {
         setUiActionRaw({ ...action, _ts: Date.now() })
@@ -60,7 +71,7 @@ export const LiaProvider = ({ children }) => {
     }, [])
 
     return (
-        <LiaContext.Provider value={{ uiAction, setUiAction, clearUiAction, notifications, notify, dismissNotif, dismissAll, creditState, creditAmount, creditSendingLabel, setCreditSending, setCreditSuccess, clearCreditState }}>
+        <LiaContext.Provider value={{ uiAction, setUiAction, clearUiAction, registrarBorrador, leerBorrador, notifications, notify, dismissNotif, dismissAll, creditState, creditAmount, creditSendingLabel, setCreditSending, setCreditSuccess, clearCreditState }}>
             {children}
         </LiaContext.Provider>
     )

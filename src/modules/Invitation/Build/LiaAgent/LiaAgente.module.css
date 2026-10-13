@@ -1,0 +1,185 @@
+/* Paleta de Lia: la misma del orb del chat (ChatContainer.jsx) */
+@property --liaAngulo {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+.glow {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    pointer-events: none;
+    box-shadow:
+        inset 0 0 28px 6px rgba(109, 60, 250, 0.32),
+        inset 0 0 90px 20px rgba(170, 193, 135, 0.2);
+    animation: respirar 2.4s ease-in-out infinite;
+}
+
+/* Borde de 3 px con un degradado que gira */
+.glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 3px;
+    background: conic-gradient(from var(--liaAngulo), #6D3CFA, #aac187, #4526A3, #E0E9D4, #6D3CFA);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: girar 4s linear infinite;
+}
+
+/* Mientras Lia trabaja, los clics del organizador no llegan al editor */
+.bloqueo {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    cursor: progress;
+}
+
+.cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10003;
+    pointer-events: none;
+    transition-property: transform;
+    transition-timing-function: cubic-bezier(0.22, 0.8, 0.26, 1);
+    will-change: transform;
+}
+
+.flecha {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    filter: drop-shadow(0 2px 4px rgba(36, 19, 87, 0.35));
+}
+
+.etiqueta {
+    position: absolute;
+    top: 20px;
+    left: 16px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #6D3CFA;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(36, 19, 87, 0.3);
+}
+
+.onda {
+    position: absolute;
+    top: -14px;
+    left: -14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #6D3CFA;
+    animation: onda 420ms ease-out forwards;
+}
+
+.barra {
+    position: fixed;
+    /* Centrada en el espacio de la página (sin la columna de Lia acoplada) */
+    left: calc((100vw - var(--lia-dock, 0px)) / 2);
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100vw - 32px);
+    padding: 10px 12px 10px 14px;
+    border-radius: 24px;
+    background: #fff;
+    color: var(--text-color);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    animation: entrar 280ms ease-out;
+}
+
+.orb {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: conic-gradient(from var(--liaAngulo), #6D3CFA, #aac187, #4526A3, #6D3CFA);
+    animation: girar 2s linear infinite;
+}
+
+.texto {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.final {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.finalTexto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 180px;
+}
+
+.nota {
+    font-size: 12px;
+    color: #787878;
+}
+
+.acciones {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@keyframes girar {
+    to { --liaAngulo: 360deg; }
+}
+
+@keyframes respirar {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+@keyframes onda {
+    from { transform: scale(0.3); opacity: 1; }
+    to { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes entrar {
+    from { opacity: 0; transform: translate(-50%, 12px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (max-width: 480px) {
+    .barra {
+        bottom: 72px;
+        width: calc(100vw - 24px);
+    }
+
+    .final {
+        width: 100%;
+    }
+
+    .acciones {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glow,
+    .glow::before,
+    .orb {
+        animation: none;
+    }
+}

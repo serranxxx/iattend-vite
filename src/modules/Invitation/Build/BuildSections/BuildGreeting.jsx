@@ -119,7 +119,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved, invitationI
                                 invitation.greeting.active ?
 
                                     <>
-                                        <div className='build-generals-simple-column'>
+                                        <div className='build-generals-simple-column' data-lia="greeting-title">
                                             <span className='gc-content-label'>{t('build_greeting.label_title')}</span>
 
                                             <Input.TextArea
@@ -132,7 +132,7 @@ export const BuildGreeting = ({ invitation, setInvitation, setSaved, invitationI
 
 
 
-                                        <div className='build-generals-simple-column'>
+                                        <div className='build-generals-simple-column' data-lia="greeting-description">
                                             <span className='gc-content-label'>{t('build_greeting.label_description')}</span>
                                             <Input.TextArea
                                                 value={descriptionValue}

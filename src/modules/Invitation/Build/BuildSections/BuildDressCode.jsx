@@ -293,14 +293,14 @@ export const BuildDressCode = ({ invitation, setInvitation, invitationID, setSav
                                 <>
                                     <span className='gc-content-label'>{t('build_dresscode.label_title')}</span>
 
-                                    <Input
+                                    <Input data-lia="dresscode-title"
                                         placeholder={t('build_dresscode.label_title')}
                                         className='gc-input-text'
                                         onChange={onChangeTitle}
                                         value={invitation.dresscode.title} />
 
                                     <span className='gc-content-label'>{t('build_dresscode.label_description')}</span>
-                                    <Input.TextArea
+                                    <Input.TextArea data-lia="dresscode-description"
                                         placeholder={t('build_dresscode.label_description')}
                                         value={descriptionValue}
                                         onChange={onChangeDescription}

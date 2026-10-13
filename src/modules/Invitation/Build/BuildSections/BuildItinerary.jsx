@@ -800,7 +800,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
 
                             <div className='build-generals-simple-column'>
                                 <span className='gc-content-label'>{t('build_itinerary.label_title')}</span>
-                                <Input
+                                <Input data-lia="itinerary-title"
                                     onChange={onChangeTitle}
                                     value={invitation.itinerary.title}
                                     style={{ width: '100%', transition: 'all 0.3s ease' }}
@@ -824,9 +824,10 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                         {
                             invitation.itinerary.active ?
                                 <div className='build-component-elements'>
-                                    {invitation.itinerary.object.map((item) => (
+                                    {invitation.itinerary.object.map((item, index) => (
                                         <div
                                             key={item.id}
+                                            data-lia={`itinerary-momentos-${index}`}
                                             className={`generl-card-color-item ${!currentItem && 'general-hover-card'}`}
                                             style={{ cursor: 'pointer', flexDirection: 'column', gap: '12px', width: '100%', borderRadius: '12px', padding: '12px' }}
                                         >

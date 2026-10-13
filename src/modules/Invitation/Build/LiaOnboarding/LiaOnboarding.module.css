@@ -1,0 +1,712 @@
+/* Onboarding "Crea tu invitación con IA". Valores del handoff
+   design_handoff_lia_onboarding (lenguaje visual de Lia: lia.css,
+   LiaPlanModal.module.css). */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(12, 23, 27, .55);
+    backdrop-filter: blur(4px);
+    animation: fade .18s ease;
+}
+
+.modal {
+    width: min(1240px, calc(100vw - 48px));
+    height: min(800px, calc(100vh - 48px));
+    min-height: min(640px, calc(100vh - 48px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 24px;
+    color: #F5F3F7;
+    font-family: 'Poppins', sans-serif;
+    background:
+        radial-gradient(rgba(255, 255, 255, .07) 1px, transparent 1.5px) 0 0 / 22px 22px,
+        radial-gradient(120% 100% at 100% 0%, #2E2050 0%, #17161B 55%) #17161B;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .45);
+    animation: rise .22s ease;
+}
+
+/* ── Header ── */
+
+.header {
+    flex-shrink: 0;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px 0 20px;
+    border-bottom: 1px solid #2C2536;
+    background: rgba(30, 25, 38, .6);
+    backdrop-filter: blur(8px);
+}
+
+.headerTexto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.headerTexto strong {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .3px;
+}
+
+.headerTexto span {
+    font-size: 11px;
+    color: #F5F3F780;
+}
+
+.cerrar {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .04);
+    color: rgba(255, 255, 255, .6);
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+
+.cerrar:hover {
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+}
+
+/* ── Cuerpo ── */
+
+.cuerpo {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.columna {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #352D41 transparent;
+}
+
+.contenido {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 680px;
+    box-sizing: border-box;
+    padding: 44px 56px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+    gap: 22px;
+}
+
+/* Si se encogen, la caja de texto colapsa */
+.contenido > * {
+    flex-shrink: 0;
+}
+
+.pie {
+    margin: 0;
+    padding: 0 56px 18px;
+    font-size: 12px;
+    color: #F5F3F780;
+}
+
+.h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+}
+
+.h1Medio { font-size: 36px; }
+.h1Chico { font-size: 34px; }
+
+.sub {
+    margin: 0;
+    max-width: 52ch;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #F5F3F7AA;
+}
+
+.error {
+    margin: 0;
+    font-size: 13px;
+    color: #E6961F;
+}
+
+/* ── Caja de texto (.lia-input-card) ── */
+
+.caja {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 12px 10px;
+    border-radius: 20px;
+    background: rgba(30, 25, 38, .82);
+    border: 1px solid rgba(255, 255, 255, .08);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, .3);
+    backdrop-filter: blur(12px);
+    transition: border-color .2s ease;
+}
+
+.caja:focus-within {
+    border-color: rgba(210, 191, 221, .35);
+}
+
+.textarea {
+    min-height: 72px;
+    padding: 0 4px;
+    resize: none;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #F5F3F7;
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.textarea::placeholder { color: #F5F3F780; }
+
+.cajaFila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pill {
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .04);
+    color: #F5F3F7CC;
+    font-size: 13.5px;
+}
+
+.pill input {
+    min-width: 0;
+    width: 150px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #F5F3F7;
+    font: inherit;
+    color-scheme: dark;
+}
+
+.pill input::placeholder { color: #F5F3F780; }
+
+.pillEtiqueta { color: #F5F3F780; }
+
+.enviar,
+.enviarChico {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .1);
+    color: #F5F3F780;
+    cursor: not-allowed;
+    transition: background .2s ease, color .2s ease;
+}
+
+.enviarChico {
+    width: 38px;
+    height: 38px;
+}
+
+.enviarActivo {
+    background: #AAC187;
+    color: #0C171B;
+    cursor: pointer;
+}
+
+.enviarActivo:hover {
+    background: #C5D5AD;
+}
+
+/* ── Chips ── */
+
+.grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.etiqueta {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #F5F3F780;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip {
+    padding: 8px 16px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(30, 25, 38, .6);
+    color: #F5F3F7;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.chip:hover { background: rgba(255, 255, 255, .08); }
+
+.chipActivo,
+.chipActivo:hover {
+    background: #D2BFDD;
+    border-color: #D2BFDD;
+    color: #161218;
+    font-weight: 600;
+}
+
+.promesas {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    font-size: 14.5px;
+}
+
+.promesas li {
+    display: flex;
+    gap: 10px;
+}
+
+.si { color: #37C25C; font-weight: 700; }
+.no { color: #E6961F; font-weight: 700; }
+.promesaNo { color: #B9C2C7; }
+
+/* Aviso: las fotos del preview son de prueba */
+.notaFotos {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(210, 191, 221, .08);
+    border: 1px solid rgba(210, 191, 221, .2);
+    color: #E0D3E8;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.notaFotos svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ── Generando ── */
+
+.barra {
+    height: 6px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .08);
+    overflow: hidden;
+}
+
+.barraRelleno {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #6D3CFA, #D2BFDD);
+    transition: width .6s cubic-bezier(.22, 1, .36, 1);
+}
+
+.conversacion {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    font-size: 14px;
+}
+
+.burbujaUsuario {
+    align-self: flex-end;
+    max-width: 80%;
+    padding: 9px 14px;
+    border-radius: 18px 18px 6px 18px;
+    background: #D2BFDD;
+    color: #161218;
+    animation: liaIn 240ms ease;
+}
+
+.turnoLia {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 10px;
+    align-items: start;
+    animation: liaIn 240ms ease;
+}
+
+.marca {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #2C2536;
+    color: #E0D3E8;
+    font-size: 11px;
+}
+
+.turnoActivo { color: #F5F3F7; line-height: 24px; }
+.turnoHecho { color: #F5F3F7AA; line-height: 24px; }
+.check { color: #43B75D; }
+
+.puntos {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.puntos i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #D2BFDD;
+    animation: liaPulse 1.2s ease-in-out infinite;
+}
+
+.puntos i:nth-child(2) { animation-delay: .2s; }
+.puntos i:nth-child(3) { animation-delay: .4s; }
+
+/* ── Resultado ── */
+
+.eyebrowFila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #E0D3E8;
+}
+
+.cambio {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cambioCaja {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .07);
+    text-align: center;
+}
+
+.cambioCaja strong { font-size: 17px; font-weight: 700; }
+.lila { color: #D2BFDD; }
+
+.kicker {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #7C8B92;
+}
+
+.flecha { font-size: 20px; color: #7C8B92; }
+
+.rejilla {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #1E1926;
+    border: 1px solid #2C2536;
+}
+
+.tarjetaAncha { grid-column: 1 / -1; }
+
+.etiquetaTarjeta {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #F5F3F780;
+}
+
+.muestras {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.muestra {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.muestra span {
+    height: 28px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    transition: background .6s ease;
+}
+
+.muestra small,
+.fuente small {
+    font-size: 10.5px;
+    color: #F5F3F7AA;
+}
+
+.textura {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.textura img,
+.texturaVacia {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    object-fit: cover;
+}
+
+.texturaVacia {
+    background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .06) 0 4px, transparent 4px 8px);
+}
+
+.textura small {
+    font-size: 11.5px;
+    color: #F5F3F7AA;
+}
+
+.fuentes {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+}
+
+.fuente {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.fuente small {
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chipOrden {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 6px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(30, 25, 38, .6);
+    color: #F5F3F7;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.chipOrden:hover { background: rgba(255, 255, 255, .08); }
+
+.chipOrden span {
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #2C2536;
+    color: #E0D3E8;
+    font-size: 11px;
+}
+
+.ajusteCaja {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 16px;
+    border-radius: 20px;
+    background: rgba(30, 25, 38, .82);
+    border: 1px solid rgba(255, 255, 255, .08);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, .3);
+}
+
+.ajusteCaja:focus-within { border-color: rgba(210, 191, 221, .35); }
+
+.ajusteCaja input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #F5F3F7;
+    font: inherit;
+    font-size: 14px;
+}
+
+.ajusteCaja input::placeholder { color: #F5F3F780; }
+
+.cta {
+    height: 34px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 999px;
+    background: #AAC187;
+    color: #0C171B;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    animation: fade .2s ease;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.cta:hover { background: #C5D5AD; }
+
+/* ── Vista previa ── */
+
+.preview {
+    position: relative;
+    flex: 0 0 40%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.glow {
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(109, 60, 250, .45), rgba(69, 38, 163, .18) 45%, transparent 70%);
+    animation: aiGlow 5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.glowRapido { animation-duration: 1.6s; }
+
+/* El mockup ios26-device (371×777: pantalla 357×763 + riel de 7px por
+   lado) a 0.8 */
+.telefonoCaja {
+    position: relative;
+    width: 297px;
+    height: 622px;
+}
+
+.telefono {
+    transform: scale(.8);
+    transform-origin: top left;
+}
+
+/* En el editor el chasis lleva margin-left: -40px y se estira al ancho de
+   su contenedor; aquí tiene que medir exactamente lo que su pantalla. */
+.telefono :global(.ios26-device) {
+    width: max-content;
+    margin-left: 0;
+    cursor: default;
+}
+
+/* Portada de carga del teléfono (tapa la pantalla de acceso del host) */
+.cargando {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    background: #17161B;
+}
+
+/* Brillo mientras Lia arma el borrador, encima de la invitación */
+.brillo {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 30%, rgba(109, 60, 250, .22) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: aiShimmer 1.6s linear infinite;
+}
+
+.caption {
+    position: relative;
+    padding: 6px 14px;
+    border-radius: 99px;
+    background: rgba(30, 25, 38, .7);
+    border: 1px solid #2C2536;
+    font-size: 12px;
+    color: #F5F3F7CC;
+}
+
+.caption b {
+    color: #D2BFDD;
+    font-weight: 400;
+}
+
+@keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes rise { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+@keyframes liaIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+@keyframes liaPulse { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
+@keyframes aiGlow { 0%, 100% { opacity: .45; transform: scale(.95) } 50% { opacity: .9; transform: scale(1.05) } }
+@keyframes aiShimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+
+@media (prefers-reduced-motion: reduce) {
+    .overlay, .modal, .glow, .brillo, .puntos i, .burbujaUsuario, .turnoLia { animation: none; }
+}

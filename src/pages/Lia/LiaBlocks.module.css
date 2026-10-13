@@ -530,3 +530,41 @@
 @media (prefers-reduced-motion: reduce) {
     .block, .fill, .segments span { animation: none; }
 }
+
+/* ── Texto redactado (con botón de copiar) ── */
+
+.textoHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.copiar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--brand-color-100);
+    background: transparent;
+    color: var(--text-color);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.copiar:hover {
+    background: var(--brand-color-100);
+}
+
+.textoCuerpo {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    color: var(--text-color);
+}
