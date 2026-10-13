@@ -10,10 +10,19 @@ import { esEventoActivo, fechaDeEvento } from '../adminConstants'
 import { AdminModal } from '../AdminModal'
 import { actualizarCreditosAdmin, asignarPlannerAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
+import { EventosSecundarios } from './EventosSecundarios'
+import { EnTopbarFiltros, Segmentado } from '../AdminTopbar'
 import styles from './EventosSection.module.css'
 import { esRolPlanner } from '../../../helpers/roles'
 
 dayjs.locale('es')
+
+// Subdivisión de Activos / Todos / Pruebas (el calendario es solo de invitaciones).
+const TIPOS = [
+    { value: 'invitaciones', label: 'Invitaciones' },
+    { value: 'side', label: 'Side events' },
+    { value: 'flash', label: 'Flash' },
+]
 
 const TABS = [
     { key: 'calendario', label: 'Calendario' },
@@ -70,6 +79,7 @@ const formatFecha = (invitation) => {
 export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, refreshEventos, query = '', esPrueba }) => {
     const [tabLocal, setTab] = useState('calendario')
     const tab = tabDeTopbar ?? tabLocal
+    const [tipo, setTipo] = useState('invitaciones')
     const [ownerInputs, setOwnerInputs] = useState({})
     const [radiografia, setRadiografia] = useState({})
     // Evento abierto desde el calendario; su tarjeta se muestra en un modal.
@@ -536,7 +546,22 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
                 </div>
             </div>}
 
-            {tab === 'calendario' ? (
+            {tab !== 'calendario' && (
+                <EnTopbarFiltros>
+                    <Segmentado ariaLabel='Tipo de evento' valor={tipo} onCambio={setTipo} opciones={TIPOS} />
+                </EnTopbarFiltros>
+            )}
+
+            {tab !== 'calendario' && tipo !== 'invitaciones' ? (
+                <EventosSecundarios
+                    tipo={tipo}
+                    tab={tab}
+                    invitaciones={newInvitations}
+                    esPrueba={esPrueba}
+                    nombrePlanner={nombrePlanner}
+                    query={query}
+                />
+            ) : tab === 'calendario' ? (
                 <EventosCalendario
                     eventos={visibles}
                     onSelect={setAbierto}
