@@ -53,6 +53,8 @@ const ALTO_EVENTO = 20
 const GAP = 3
 const CABECERA_DIA = 6 + 20 + 4 + 6
 const TAMANO_KEY = 'iattend_admin_calendario_tamano'
+// Duración del cambio de tamaño; igual a la transición de `.dia` en el CSS.
+const TRANSICION_MS = 320
 
 // Margen alrededor de hoy aunque no haya eventos ahí.
 const SEMANAS_ATRAS = 8
@@ -66,6 +68,19 @@ export const EventosCalendario = ({ eventos, onSelect, seleccionado }) => {
     const [tamano, setTamano] = useState(() => localStorage.getItem(TAMANO_KEY) || 'normal')
     const altoSemana = (TAMANOS.find(t => t.value === tamano) ?? TAMANOS[1]).alto
     const caben = Math.max(1, Math.floor((altoSemana - CABECERA_DIA + GAP) / (ALTO_EVENTO + GAP)))
+
+    // Al agrandar, los renglones extra aparecen de una vez y se van
+    // descubriendo mientras crece la celda; al achicar, se quitan cuando la
+    // celda ya terminó de encogerse (si no, desaparecerían antes de tiempo).
+    const [cabenMostrados, setCabenMostrados] = useState(caben)
+    useEffect(() => {
+        if (caben >= cabenMostrados) {
+            setCabenMostrados(caben)
+            return
+        }
+        const t = setTimeout(() => setCabenMostrados(caben), TRANSICION_MS)
+        return () => clearTimeout(t)
+    }, [caben])
 
     useEffect(() => { localStorage.setItem(TAMANO_KEY, tamano) }, [tamano])
 
@@ -100,19 +115,55 @@ export const EventosCalendario = ({ eventos, onSelect, seleccionado }) => {
 
     const indiceDeHoy = semanaDeHoy.diff(inicio, 'week')
     const [semanaArriba, setSemanaArriba] = useState(indiceDeHoy)
+    const semanaArribaRef = useRef(indiceDeHoy)
+    // Mientras cambia el tamaño el scroll lo maneja el ancla, no el usuario.
+    const anclandoRef = useRef(false)
 
     const irA = (indice, suave = true) => {
+        // El ref se fija aquí y no solo en el scroll: si el aviso de scroll llega
+        // mientras el ancla está activa, se ignoraría y quedaría viejo.
+        semanaArribaRef.current = Math.max(0, indice)
+        setSemanaArriba(Math.max(0, indice))
         scrollRef.current?.scrollTo({ top: Math.max(0, indice) * altoSemana, behavior: suave ? 'smooth' : 'auto' })
     }
 
     // Abre en la semana actual, y la conserva al cambiar de tamaño.
-    useLayoutEffect(() => { irA(semanaArriba, false) }, [altoSemana])
+    // Al cambiar de tamaño, la semana de arriba se queda arriba durante toda la
+    // transición: cada frame se recoloca el scroll con el alto real de la celda.
+    const montadoRef = useRef(false)
+    useLayoutEffect(() => {
+        // Al abrir no hay transición que acompañar: lo coloca el efecto de abajo.
+        if (!montadoRef.current) {
+            montadoRef.current = true
+            return
+        }
+        const semana = semanaArribaRef.current
+        const fin = performance.now() + TRANSICION_MS + 80
+        anclandoRef.current = true
+        let id
+        const paso = () => {
+            const contenedor = scrollRef.current
+            const celda = contenedor?.firstElementChild?.firstElementChild
+            const alto = celda?.getBoundingClientRect().height || altoSemana
+            if (contenedor) contenedor.scrollTop = semana * alto
+            if (performance.now() < fin) id = requestAnimationFrame(paso)
+            else anclandoRef.current = false
+        }
+        paso()
+        return () => {
+            cancelAnimationFrame(id)
+            anclandoRef.current = false
+        }
+    }, [altoSemana])
     const inicioMs = inicio.valueOf()
     useLayoutEffect(() => { irA(indiceDeHoy, false) }, [inicioMs])
 
     const alScroll = () => {
+        if (anclandoRef.current) return
         const top = scrollRef.current?.scrollTop ?? 0
-        setSemanaArriba(Math.round(top / altoSemana))
+        const semana = Math.round(top / altoSemana)
+        semanaArribaRef.current = semana
+        setSemanaArriba(semana)
     }
 
     // El mes del título: el del jueves de la semana de arriba (la que más días
@@ -153,7 +204,7 @@ export const EventosCalendario = ({ eventos, onSelect, seleccionado }) => {
             </div>
 
             <div className={styles.scroll} ref={scrollRef} onScroll={alScroll}>
-                <div className={styles.rejilla} style={{ gridAutoRows: `${altoSemana}px` }}>
+                <div className={styles.rejilla} style={{ '--alto-semana': `${altoSemana}px` }}>
                     {Array.from({ length: semanas * 7 }, (_, i) => {
                         const dia = inicio.add(i, 'day')
                         const clave = dia.format('YYYY-MM-DD')
@@ -161,7 +212,7 @@ export const EventosCalendario = ({ eventos, onSelect, seleccionado }) => {
                         const esHoy = dia.isSame(hoy, 'day')
                         const pasado = dia.isBefore(hoy, 'day')
                         // Si no caben todos, el último renglón es "+N más".
-                        const visibles = delDia.length > caben ? delDia.slice(0, caben - 1) : delDia
+                        const visibles = delDia.length > cabenMostrados ? delDia.slice(0, cabenMostrados - 1) : delDia
                         const resto = delDia.length - visibles.length
 
                         return (

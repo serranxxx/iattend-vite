@@ -84,6 +84,10 @@
 }
 
 .dia {
+    /* El alto lo pone el tamaño elegido (--alto-semana) y cambia suave;
+       TRANSICION_MS en el jsx es la misma duración. */
+    height: var(--alto-semana, 124px);
+    transition: height 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
     min-height: 0;
     padding: 6px;
     border-right: 1px solid var(--ac-line-soft);
@@ -163,6 +167,12 @@
 
 .evento:hover {
     filter: brightness(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dia {
+        transition: none;
+    }
 }
 
 .eventoActivo {
