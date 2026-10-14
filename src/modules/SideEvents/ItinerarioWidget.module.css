@@ -3,12 +3,17 @@
    tiempo. Contraparte en iattend-events: components/SideEvent/itinerario-widget.module.css. */
 
 .panel {
+  /* Texto sobre blanco (pestaña elegida, etiquetas, ícono en curso): el color
+     de tema oscurecido para que se lea. */
+  --itinerario-acento: color-mix(in srgb, var(--blur-color, #1c344e) 45%, #000);
   width: 100%;
   max-width: 450px;
   box-sizing: border-box;
   padding: 20px 18px 14px;
   border-radius: 28px;
-  background: rgba(28, 52, 78, 0.32);
+  /* El color de tema del evento, como Cómo llegar y el clima (--blur-color--dark
+     lo pone la pieza). El azul del handoff queda de respaldo. */
+  background: var(--blur-color--dark, rgba(28, 52, 78, 0.32));
   backdrop-filter: blur(22px) saturate(140%);
   -webkit-backdrop-filter: blur(22px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -77,7 +82,7 @@
 }
 
 .pestanaActiva {
-  color: #1c344e;
+  color: var(--itinerario-acento);
 }
 
 .pestanaDow {
@@ -161,7 +166,7 @@
 
 .filaEnCurso .circulo {
   background: #fff;
-  color: #1c344e;
+  color: var(--itinerario-acento);
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25);
 }
 
@@ -192,7 +197,7 @@
   padding: 2px 8px;
   border-radius: 999px;
   background: #fff;
-  color: #1c344e;
+  color: var(--itinerario-acento);
 }
 
 .lugar {
