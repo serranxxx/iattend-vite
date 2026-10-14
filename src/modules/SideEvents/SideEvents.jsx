@@ -2735,13 +2735,27 @@ export const SideEvents = () => {
                     </div>
                     {!current?.body?.video && <span className={ed.hint}>{t('side_events.video_hint')}</span>}
 
+                    {/* Imagen para el link: es la que se comparte (url_image, la
+                        misma de "Personaliza tu link") y también el cuadro fijo
+                        del video mientras carga (body.image). */}
                     <div className={ed.fieldStack}>
                         <span className={ed.fieldLabel}>{t('savethedate.poster_label')}</span>
                         <span className={ed.hint}>{t('savethedate.poster_hint')}</span>
                         <div className={ed.thumbRow}>
-                            {miniaturaImagen(t('side_events.remove_image'))}
+                            {(current?.url_image || current?.body?.image) &&
+                                <div className={ed.thumb}>
+                                    <img src={current.url_image || current.body.image} alt='' />
+                                </div>
+                            }
                             <div className={ed.uploadTile}>
-                                <StorageImages invitationID={`flash-${flashId}`} handleImage={handleImages} type={'side-events'} />
+                                <StorageImages
+                                    invitationID={`flash-${flashId}`}
+                                    handleImage={(url) => {
+                                        if (!url) return
+                                        updateCurrent((prev) => ({ ...prev, url_image: url, body: { ...prev.body, image: url } }))
+                                    }}
+                                    type={'side-events'}
+                                />
                             </div>
                         </div>
                     </div>
@@ -3973,7 +3987,8 @@ export const SideEvents = () => {
                             backuImage={current?.body?.image}
                             urlImage={current?.url_image}
                             url={publicUrl}
-                            id={id}
+                            // Un Flash guarda sus imágenes en flash-<id>, no en la invitación.
+                            id={esFlash ? `flash-${flashId}` : id}
                             handleImage={updateURLimage}
                             name={current?.name}
                             setupRequired={hasPendingInfo}

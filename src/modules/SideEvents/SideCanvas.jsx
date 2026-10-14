@@ -221,7 +221,7 @@ export const SideCanvas = ({
     return (
         <div
             ref={cardRef}
-            className={`${styles.card} ${fullBleed ? styles.cardFull : ''} ${readOnly ? styles.cardReadOnly : ''}`}
+            className={`${styles.card} ${fullBleed ? styles.cardFull : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
             style={{ '--blur-color': themeColor, '--blur-color--dark': tint }}
             onClick={() => { if (!readOnly) onSelect(null) }}
         >
@@ -230,7 +230,7 @@ export const SideCanvas = ({
             <div className={cls('background', styles.hero)} onClick={pick('background')}>
                 {/* Flash con video de fondo: la imagen es su cuadro fijo. */}
                 {body.video
-                    ? <video src={body.video} poster={body.image || undefined} autoPlay muted loop playsInline className={styles.heroBg} />
+                    ? <video src={body.video} poster={body.image || undefined} autoPlay muted loop playsInline preload='auto' className={styles.heroBg} />
                     : body.image
                     ? <img src={body.image} alt='' className={styles.heroBg} />
                     : (

@@ -332,11 +332,15 @@ export const uploadEventVideo = async ({ file, invitationID, setVideos }) => {
 
     const filePath = `${invitationID}/video/${Date.now()}-${file.name}`;
 
+    // Un año de caché: el nombre lleva la hora de subida, así que nunca cambia
+    // de contenido. Sin esto Storage lo sirve con no-cache y el invitado lo
+    // vuelve a bajar completo en cada visita.
     const { error } = await supabase.storage
         .from('user_images')
         .upload(filePath, file, {
             upsert: true,
             contentType: file.type,
+            cacheControl: '31536000',
         });
 
     if (error) throw error;

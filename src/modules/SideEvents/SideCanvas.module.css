@@ -507,3 +507,10 @@
     border-color: #FF4FA3;
     border-style: solid;
 }
+
+/* Video de fondo: sin desenfoques en vivo (se recalculan en cada cuadro y
+   traban el video). Igual que el remoto (.con_video). */
+.cardVideo * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
