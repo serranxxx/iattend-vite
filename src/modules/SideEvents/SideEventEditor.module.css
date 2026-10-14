@@ -1040,6 +1040,12 @@
     min-width: 0;
 }
 
+.momentoLugar {
+    grid-column: 1 / -1;
+    margin-left: 4px;
+    width: calc(100% - 4px);
+}
+
 .momentoFila {
     grid-column: 1 / -1;
     padding-left: 4px;

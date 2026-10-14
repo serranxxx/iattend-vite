@@ -131,13 +131,13 @@ export function lineasDeFechas(body, opts = {}) {
 // icon, date "YYYY-MM-DD" si hay varias fechas }), en el orden en que el
 // organizador lo acomodó (drag and drop en el editor).
 // Con varias fechas se agrupa por día, cada grupo con su título ("jue. 26 de
-// noviembre"); con una sola fecha va un solo grupo sin título. Los momentos
+// noviembre"); con una sola fecha va un solo grupo sin título (con su día). Los momentos
 // sin nombre no se muestran. Contraparte: `itinerarioPorDia` en iattend-events.
 export function itinerarioPorDia(body) {
   const momentos = (Array.isArray(body?.itinerary) ? body.itinerary : []).filter((m) => String(m?.name ?? "").trim());
   if (!momentos.length) return [];
   const dias = [...new Set(fechasDelEvento(body).map((f) => String(f).slice(0, 10)))];
-  if (dias.length < 2) return [{ dia: null, titulo: null, momentos }];
+  if (dias.length < 2) return [{ dia: dias[0] ?? null, titulo: null, momentos }];
 
   return dias
     .map((dia) => {

@@ -1,5 +1,4 @@
 import { DynamicIcon } from 'lucide-react/dynamic'
-import { LuBadgeHelp } from 'react-icons/lu'
 import { iconsItinerary } from '../../helpers/services/menuIcons'
 
 /*
@@ -12,10 +11,15 @@ import { iconsItinerary } from '../../helpers/services/menuIcons'
 
 export const PREFIJO_LUCIDE = 'lucide:'
 
+// Sin ícono (o uno que ya no existe): un punto, no el "?" genérico de antes.
+const Punto = ({ size }) => (
+    <span style={{ width: Math.round(size / 3), height: Math.round(size / 3), borderRadius: '50%', background: 'currentColor', display: 'block' }} />
+)
+
 export const IconoMomento = ({ icon, size = 18 }) => {
     if (typeof icon === 'string' && icon.startsWith(PREFIJO_LUCIDE)) {
-        return <DynamicIcon name={icon.slice(PREFIJO_LUCIDE.length)} size={size} fallback={() => <LuBadgeHelp size={size} />} />
+        return <DynamicIcon name={icon.slice(PREFIJO_LUCIDE.length)} size={size} fallback={() => <Punto size={size} />} />
     }
     const Clasico = iconsItinerary.find(i => i.index === icon)?.value
-    return Clasico ? <Clasico size={size} /> : <LuBadgeHelp size={size} />
+    return Clasico ? <Clasico size={size} /> : <Punto size={size} />
 }

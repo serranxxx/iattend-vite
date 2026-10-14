@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { CircleCheck, CircleX, CloudSun, ImagePlus, MapPin } from 'lucide-react'
-import { IconoMomento } from './IconoMomento'
+import { ItinerarioWidget } from './ItinerarioWidget'
 import { useTranslation } from 'react-i18next'
 import { darker } from '../../helpers/assets/functions'
 import { itinerarioPorDia, lineasDeFechas } from '../../helpers/assets/eventDateTime'
@@ -302,22 +302,10 @@ export const SideCanvas = ({
                         </div>
                     </div>
 
-                    {/* Mini itinerario (Flash): arriba de Cómo llegar, como en el remoto. */}
+                    {/* Itinerario de un Flash: el mismo widget que el remoto, arriba de Cómo llegar. */}
                     {itinerarioPorDia(body).length > 0 &&
-                        <div className={cls('itinerary', `${styles.block} ${styles.itineraryBlock}`)} data-zone='itinerary' onClick={pick('itinerary')}>
-                            <span className={styles.mapLabel}>{t('side_events.canvas_itinerary')}</span>
-                            {itinerarioPorDia(body).map(grupo => (
-                                <div className={styles.itineraryDia} key={grupo.dia ?? 'unico'}>
-                                    {grupo.titulo && <span className={styles.itineraryDiaTitulo}>{grupo.titulo}</span>}
-                                    {grupo.momentos.map(m => (
-                                        <div className={styles.itineraryMomento} key={m.id}>
-                                            <span className={styles.itineraryIcono}><IconoMomento icon={m.icon} /></span>
-                                            <span className={styles.itineraryNombre}>{m.name}</span>
-                                            {m.time && <span className={styles.itineraryHora}>{m.time}</span>}
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
+                        <div className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
+                            <ItinerarioWidget body={body} />
                         </div>
                     }
 

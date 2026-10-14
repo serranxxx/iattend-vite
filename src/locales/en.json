@@ -1083,6 +1083,7 @@
     "panel_itinerary_hint": "Event moments with their time; shown above How to get there",
     "dock_itinerary": "Itinerary",
     "itinerary_add": "Add moment",
+    "itinerary_place": "Place or detail (optional)",
     "icons_search": "Search (coffee, bus, music…)",
     "icons_empty": "No results. Try another word.",
     "icons_count_one": "{{count}} icon",

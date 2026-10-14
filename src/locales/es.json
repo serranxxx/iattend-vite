@@ -1083,6 +1083,7 @@
     "panel_itinerary_hint": "Momentos del evento con su hora; se ven arriba de Cómo llegar",
     "dock_itinerary": "Itinerario",
     "itinerary_add": "Agregar momento",
+    "itinerary_place": "Lugar o detalle (opcional)",
     "icons_search": "Buscar en inglés: coffee, bus, music…",
     "icons_empty": "Sin resultados. Prueba otra palabra en inglés.",
     "icons_count_one": "{{count}} ícono",
