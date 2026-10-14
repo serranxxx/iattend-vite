@@ -159,7 +159,8 @@ export const SideCanvas = ({
     // Mismo cálculo del tinte que el remoto. `darker` devuelve null si el hex
     // no trae los 6 dígitos, así que el default va completo.
     const themeColor = body.color || '#000000'
-    const tint = `${darker(themeColor, 0.8) ?? '#000000'}80`
+    // Con video no hay desenfoque detrás de las tarjetas: más opacas (85%).
+    const tint = `${darker(themeColor, 0.8) ?? '#000000'}${body.video ? 'D9' : '80'}`
 
     const pick = (section) => (e) => {
         if (readOnly) return
