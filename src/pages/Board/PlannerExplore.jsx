@@ -17,6 +17,9 @@ const AVANCE_MS = 6000
 export const PlannerExplore = ({ ejemplo, renderInvitationCard, onVer, onCompartir }) => {
     const { t } = useTranslation()
     const [activa, setActiva] = useState(0)
+    // Fotos del carrusel ya descargadas: aparecen suave en vez de pintarse a
+    // pedazos sobre el fondo oscuro.
+    const [cargadas, setCargadas] = useState(() => new Set())
 
     // Cada cambio manual reinicia la cuenta: no salta justo después de un clic.
     useEffect(() => {
@@ -35,7 +38,14 @@ export const PlannerExplore = ({ ejemplo, renderInvitationCard, onVer, onCompart
                         className={`${styles.slide} ${i === activa ? styles.slideActiva : ''}`}
                         aria-hidden={i !== activa}
                     >
-                        <img src={slide.img} alt='' className={styles.slideFondo} />
+                        <img
+                            src={slide.img}
+                            alt=''
+                            className={`${styles.slideFondo} ${cargadas.has(slide.id) ? styles.slideFondoLista : ''}`}
+                            // La primera llega antes; las demás no estorban.
+                            fetchPriority={i === 0 ? 'high' : 'low'}
+                            onLoad={() => setCargadas(prev => new Set(prev).add(slide.id))}
+                        />
                         <div className={styles.slideTexto}>
                             <span className={styles.slideProducto}>{slide.product}</span>
                             <h2 className={styles.slideTitulo}>{slide.headline}</h2>

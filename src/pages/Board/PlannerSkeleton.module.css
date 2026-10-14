@@ -1,0 +1,142 @@
+/* Esqueleto del planner: mismas medidas que PlannerExplore y PlannerEventList
+   para que al cargar no brinque el layout. */
+
+.bloque {
+    display: block;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #ececea 25%, #f6f6f4 50%, #ececea 75%);
+    background-size: 200% 100%;
+    animation: brillo 1.4s ease-in-out infinite;
+}
+
+@keyframes brillo {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bloque {
+        animation: none;
+    }
+}
+
+/* Explora */
+.explora {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.carrusel {
+    height: clamp(220px, 32vh, 340px);
+    border-radius: 28px;
+}
+
+.ejemplo {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.tarjeta {
+    width: 240px;
+    min-height: clamp(300px, 36vh, 400px);
+    border-radius: 28px;
+}
+
+.ejemploTexto {
+    flex: 1 1 320px;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.etiqueta {
+    width: 160px;
+    height: 12px;
+}
+
+.titulo {
+    width: 75%;
+    height: 32px;
+    margin-bottom: 6px;
+}
+
+.linea {
+    width: 100%;
+    height: 14px;
+}
+
+.botones {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.boton {
+    width: 170px;
+    height: 48px;
+    border-radius: 12px;
+}
+
+/* Lista */
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cabeza {
+    width: 180px;
+    height: 18px;
+    margin-bottom: 8px;
+}
+
+.fila {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid #efefed;
+    border-radius: 18px;
+    background: #fff;
+}
+
+.miniatura {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+}
+
+.textos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lineaChica {
+    width: 35%;
+    height: 12px;
+}
+
+.pastilla {
+    flex-shrink: 0;
+    width: 90px;
+    height: 28px;
+    border-radius: 999px;
+}
+
+@media (max-width: 720px) {
+    .ejemplo {
+        gap: 20px;
+    }
+
+    .botones {
+        flex-wrap: wrap;
+    }
+}
