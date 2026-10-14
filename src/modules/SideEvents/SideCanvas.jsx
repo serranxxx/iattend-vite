@@ -288,20 +288,6 @@ export const SideCanvas = ({
                         </span>
                     </div>
 
-                    {/* Notas */}
-                    <div className={cls('extras', styles.block)} data-zone='extras' onClick={pick('extras')}>
-                        <div
-                            className={styles.extrasInput}
-                            contentEditable={!readOnly}
-                            suppressContentEditableWarning
-                            spellCheck={false}
-                            data-placeholder={t('side_events.extras_placeholder')}
-                            onInput={(e) => setExtras(e.currentTarget.innerText)}
-                        >
-                            {initialExtras}
-                        </div>
-                    </div>
-
                     {/* Itinerario de un Flash: el mismo widget que el remoto, arriba de Cómo llegar. */}
                     {itinerarioPorDia(body).length > 0 &&
                         <div className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
@@ -319,6 +305,20 @@ export const SideCanvas = ({
                             </div>
                         </div>
                     }
+
+                    {/* Notas: debajo de Cómo llegar */}
+                    <div className={cls('extras', styles.block)} data-zone='extras' onClick={pick('extras')}>
+                        <div
+                            className={styles.extrasInput}
+                            contentEditable={!readOnly}
+                            suppressContentEditableWarning
+                            spellCheck={false}
+                            data-placeholder={t('side_events.extras_placeholder')}
+                            onInput={(e) => setExtras(e.currentTarget.innerText)}
+                        >
+                            {initialExtras}
+                        </div>
+                    </div>
 
                     {/* Clima: mismo criterio que el remoto (ciudad y no oculto).
                         Se edita desde Lugar, que es lo que lo condiciona. */}
