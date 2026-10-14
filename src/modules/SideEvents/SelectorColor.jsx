@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { message } from 'antd'
+import { Pipette } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import styles from './SelectorColor.module.css'
 
 /*
@@ -6,7 +9,27 @@ import styles from './SelectorColor.module.css'
   de saturación/brillo, barra de tono y campo hex, siempre visibles. Sustituye
   al cuadrito que abría el popup de antd, que casi no se veía. Funciona con
   mouse y con el dedo (pointer events), así que sirve igual en la hoja móvil.
+
+  Gotero: con EyeDropper (Chrome y Edge) toma el color de cualquier cosa en
+  pantalla. Donde no existe (Safari, celulares), muestra la imagen de fondo
+  para tocar un punto y leer su pixel (Storage de Supabase manda CORS *).
 */
+
+const tieneGotero = () => typeof window !== 'undefined' && 'EyeDropper' in window
+
+// Color del pixel tocado en una <img> (coordenadas del clic sobre la imagen).
+const pixelDe = (img, ev) => {
+    const r = img.getBoundingClientRect()
+    const x = Math.floor(((ev.clientX - r.left) / r.width) * img.naturalWidth)
+    const y = Math.floor(((ev.clientY - r.top) / r.height) * img.naturalHeight)
+    const lienzo = document.createElement('canvas')
+    lienzo.width = 1
+    lienzo.height = 1
+    const ctx = lienzo.getContext('2d')
+    ctx.drawImage(img, x, y, 1, 1, 0, 0, 1, 1)
+    const [rr, g, b] = ctx.getImageData(0, 0, 1, 1).data
+    return `#${[rr, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`
+}
 
 const limitar = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v))
 
@@ -54,7 +77,9 @@ const usarArrastre = (alMover) => (e) => {
     el.addEventListener('pointercancel', soltar)
 }
 
-export const SelectorColor = ({ value, onChange }) => {
+export const SelectorColor = ({ value, onChange, imagenFondo }) => {
+    const { t } = useTranslation()
+    const [muestreo, setMuestreo] = useState(false)
     // El tono se guarda aparte: en grises (s = 0) el hex no lo conserva y la
     // barra brincaría a rojo.
     const [hsv, setHsv] = useState(() => hexAHsv(value))
@@ -81,6 +106,31 @@ export const SelectorColor = ({ value, onChange }) => {
 
     const hexTono = hsvAHex({ h: hsv.h, s: 1, v: 1 })
 
+    const ponerHex = (hex) => {
+        const nuevo = hexAHsv(hex)
+        setHsv(prev => (nuevo.s === 0 ? { ...nuevo, h: prev.h } : nuevo))
+        ultimo.current = hex
+        setTexto(hex)
+        onChange(hex)
+    }
+
+    const usarGotero = async () => {
+        if (tieneGotero()) {
+            try {
+                const { sRGBHex } = await new window.EyeDropper().open()
+                if (sRGBHex) ponerHex(sRGBHex.toLowerCase())
+            } catch {
+                // Cerró el gotero con Esc: no pasa nada.
+            }
+            return
+        }
+        if (!imagenFondo) {
+            message.info(t('side_events.eyedropper_unsupported'))
+            return
+        }
+        setMuestreo(m => !m)
+    }
+
     return (
         <div className={styles.selector}>
             <div
@@ -103,7 +153,37 @@ export const SelectorColor = ({ value, onChange }) => {
                 <span className={styles.tonoCursor} style={{ left: `${(hsv.h / 360) * 100}%`, background: hexTono }} />
             </div>
 
+            {muestreo && imagenFondo && (
+                <div className={styles.muestreo}>
+                    <span className={styles.muestreoAyuda}>{t('side_events.eyedropper_tap')}</span>
+                    <img
+                        src={imagenFondo}
+                        alt=''
+                        crossOrigin='anonymous'
+                        draggable={false}
+                        className={styles.muestreoImagen}
+                        onClick={(e) => {
+                            try {
+                                ponerHex(pixelDe(e.currentTarget, e))
+                                setMuestreo(false)
+                            } catch {
+                                message.error(t('side_events.eyedropper_error'))
+                            }
+                        }}
+                    />
+                </div>
+            )}
+
             <div className={styles.fila}>
+                <button
+                    type='button'
+                    className={`${styles.gotero} ${muestreo ? styles.goteroActivo : ''}`}
+                    onClick={usarGotero}
+                    aria-label={t('side_events.eyedropper')}
+                    title={t('side_events.eyedropper')}
+                >
+                    <Pipette size={15} />
+                </button>
                 <span className={styles.muestra} style={{ background: hsvAHex(hsv) }} />
                 <input
                     className={styles.hex}

@@ -2770,6 +2770,7 @@ export const SideEvents = () => {
             <SelectorColor
                 value={current?.body?.color ?? '#000000'}
                 onChange={(hex) => setBody({ color: hex })}
+                imagenFondo={current?.body?.image}
             />
 
             <div className={ed.swatchRow}>
