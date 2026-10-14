@@ -1072,7 +1072,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 264px;
+    width: 300px;
     padding: 8px;
     background: #FFF;
     border: 1px solid #EBEBEB;
@@ -1082,10 +1082,16 @@
 
 .iconosGrid {
     display: grid;
-    grid-template-columns: repeat(6, 36px);
+    grid-template-columns: repeat(7, 36px);
     gap: 4px;
-    max-height: 240px;
+    max-height: 280px;
     overflow-y: auto;
+}
+
+.iconosConteo {
+    font-size: 11px;
+    color: #a3a3a3;
+    text-align: right;
 }
 
 .iconosVacio {
