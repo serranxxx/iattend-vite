@@ -1080,7 +1080,7 @@
     "date_add": "Agregar otra fecha",
     "date_remove": "Quitar esta fecha",
     "panel_itinerary": "Itinerario",
-    "panel_itinerary_hint": "Momentos del evento con su hora; se ven debajo de Cómo llegar",
+    "panel_itinerary_hint": "Momentos del evento con su hora; se ven arriba de Cómo llegar",
     "dock_itinerary": "Itinerario",
     "itinerary_add": "Agregar momento",
     "itinerary_drag": "Arrastrar para reordenar",

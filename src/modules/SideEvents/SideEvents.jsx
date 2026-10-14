@@ -2978,7 +2978,7 @@ export const SideEvents = () => {
         </>
     )
 
-    // Mini itinerario de un Flash (ItinerarioFlash.jsx): se muestra debajo de
+    // Mini itinerario de un Flash (ItinerarioFlash.jsx): se muestra arriba de
     // "Cómo llegar" en el orden en que se acomoda.
     const diasDelFlash = [...new Set(fechasDelEvento(current?.body).map(f => String(f).slice(0, 10)))]
     const itinerario = Array.isArray(current?.body?.itinerary) ? current.body.itinerary : []

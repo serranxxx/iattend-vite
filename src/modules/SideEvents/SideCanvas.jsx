@@ -303,18 +303,7 @@ export const SideCanvas = ({
                         </div>
                     </div>
 
-                    {/* Mapa: aparece igual que en el remoto, solo con dirección completa */}
-                    {hasFullAddress(address) &&
-                        <div className={cls('place', `${styles.block} ${styles.mapBlock}`)} onClick={pick('place')}>
-                            <span className={styles.mapLabel}>{t('side_events.canvas_map')}</span>
-                            <div className={styles.mapPreview}>
-                                <MapPin size={16} />
-                                <span>{[address.street, address.number, address.city].filter(Boolean).join(' ')}</span>
-                            </div>
-                        </div>
-                    }
-
-                    {/* Mini itinerario (Flash): debajo de Cómo llegar, como en el remoto. */}
+                    {/* Mini itinerario (Flash): arriba de Cómo llegar, como en el remoto. */}
                     {itinerarioPorDia(body).length > 0 &&
                         <div className={cls('itinerary', `${styles.block} ${styles.itineraryBlock}`)} data-zone='itinerary' onClick={pick('itinerary')}>
                             <span className={styles.mapLabel}>{t('side_events.canvas_itinerary')}</span>
@@ -333,6 +322,17 @@ export const SideCanvas = ({
                                     })}
                                 </div>
                             ))}
+                        </div>
+                    }
+
+                    {/* Mapa: aparece igual que en el remoto, solo con dirección completa */}
+                    {hasFullAddress(address) &&
+                        <div className={cls('place', `${styles.block} ${styles.mapBlock}`)} onClick={pick('place')}>
+                            <span className={styles.mapLabel}>{t('side_events.canvas_map')}</span>
+                            <div className={styles.mapPreview}>
+                                <MapPin size={16} />
+                                <span>{[address.street, address.number, address.city].filter(Boolean).join(' ')}</span>
+                            </div>
                         </div>
                     }
 
