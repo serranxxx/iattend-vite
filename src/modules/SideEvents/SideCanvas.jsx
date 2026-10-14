@@ -174,6 +174,10 @@ export const SideCanvas = ({
     // PNG de un Flash (body.stickers, ver StickersFlash.jsx): se arrastran en
     // la pieza; x/y en % de la capa (ancho y alto de la pantalla).
     const stickers = Array.isArray(body.stickers) ? body.stickers : []
+    // Mientras se arrastra: líneas guía del centro. Cerca del centro (±1.5%)
+    // el PNG se imanta y la línea se marca.
+    const [guias, setGuias] = useState(null)
+    const IMAN = 1.5
     const arrastrarSticker = (s) => (e) => {
         if (readOnly) return
         e.stopPropagation()
@@ -183,15 +187,19 @@ export const SideCanvas = ({
         const capa = e.currentTarget.parentElement.getBoundingClientRect()
         const inicio = { px: e.clientX, py: e.clientY, x: s.x, y: s.y }
         const limitar = (v) => Math.min(100, Math.max(0, Math.round(v * 10) / 10))
+        const imantar = (v) => (Math.abs(v - 50) <= IMAN ? 50 : v)
+        setGuias({ x: s.x === 50, y: s.y === 50 })
         const mover = (ev) => {
-            const x = limitar(inicio.x + ((ev.clientX - inicio.px) / capa.width) * 100)
-            const y = limitar(inicio.y + ((ev.clientY - inicio.py) / capa.height) * 100)
+            const x = imantar(limitar(inicio.x + ((ev.clientX - inicio.px) / capa.width) * 100))
+            const y = imantar(limitar(inicio.y + ((ev.clientY - inicio.py) / capa.height) * 100))
+            setGuias({ x: x === 50, y: y === 50 })
             onChange((prev) => ({
                 ...prev,
                 body: { ...prev.body, stickers: (prev.body?.stickers ?? []).map(o => (o.id === s.id ? { ...o, x, y } : o)) },
             }))
         }
         const soltar = () => {
+            setGuias(null)
             window.removeEventListener('pointermove', mover)
             window.removeEventListener('pointerup', soltar)
         }
@@ -263,6 +271,14 @@ export const SideCanvas = ({
                 {/* PNG de un Flash sobre la portada: capa del alto de la
                     pantalla que se mueve con la página; "detrás" queda entre
                     el fondo y las tarjetas. Se arrastran para acomodarlos. */}
+                {/* Guías del centro mientras se arrastra un PNG */}
+                {guias && (
+                    <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`}>
+                        <span className={`${styles.guiaV} ${guias.x ? styles.guiaActiva : ''}`} />
+                        <span className={`${styles.guiaH} ${guias.y ? styles.guiaActiva : ''}`} />
+                    </div>
+                )}
+
                 {stickers.length > 0 && ['back', 'front'].map(capa => (
                     <div key={capa} aria-hidden className={`${styles.stickersCapa} ${capa === 'back' ? styles.stickersAtras : styles.stickersDelante}`}>
                         {stickers.filter(s => (s.z === 'back' ? 'back' : 'front') === capa).map(s => (

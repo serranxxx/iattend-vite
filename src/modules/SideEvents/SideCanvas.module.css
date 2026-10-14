@@ -470,3 +470,40 @@
     outline: 1.5px dashed #FFFFFF;
     outline-offset: 4px;
 }
+
+/* Líneas guía del centro al arrastrar un PNG: punteadas y tenues; sólidas
+   cuando el PNG queda imantado al centro. */
+.guias {
+    z-index: 4;
+}
+
+.guiaV,
+.guiaH {
+    position: absolute;
+    opacity: 0.55;
+    transition: opacity 120ms ease;
+}
+
+.guiaV {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    border-left: 1px dashed #FFFFFF;
+    transform: translateX(-0.5px);
+}
+
+.guiaH {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 0;
+    border-top: 1px dashed #FFFFFF;
+    transform: translateY(-0.5px);
+}
+
+.guiaActiva {
+    opacity: 1;
+    border-color: #FF4FA3;
+    border-style: solid;
+}
