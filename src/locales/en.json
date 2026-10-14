@@ -1079,6 +1079,8 @@
     "panel_date_hint": "The time you pick is the time your guests will see",
     "date_add": "Add another date",
     "date_remove": "Remove this date",
+    "media_image": "Image",
+    "video_hint": "MP4 or similar, up to 25 MB and 5 seconds. It loops, muted.",
     "panel_place": "Place",
     "panel_place_hint": "Venue name and the address for the map",
     "panel_notes": "Notes",

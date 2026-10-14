@@ -1079,6 +1079,8 @@
     "panel_date_hint": "La hora que elijas es la que verán tus invitados",
     "date_add": "Agregar otra fecha",
     "date_remove": "Quitar esta fecha",
+    "media_image": "Imagen",
+    "video_hint": "MP4 o similar, máximo 25 MB y 5 segundos. Se repite en bucle y sin sonido.",
     "panel_place": "Lugar",
     "panel_place_hint": "El nombre del lugar y la dirección del mapa",
     "panel_notes": "Notas",

@@ -189,7 +189,10 @@ export const SideCanvas = ({
 
             {/* ── Hero ── */}
             <div className={cls('background', styles.hero)} onClick={pick('background')}>
-                {body.image
+                {/* Flash con video de fondo: la imagen es su cuadro fijo. */}
+                {body.video
+                    ? <video src={body.video} poster={body.image || undefined} autoPlay muted loop playsInline className={styles.heroBg} />
+                    : body.image
                     ? <img src={body.image} alt='' className={styles.heroBg} />
                     : (
                         <div className={styles.heroEmpty}>

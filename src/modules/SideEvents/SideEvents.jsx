@@ -24,7 +24,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, ImagePlus, Info, Landmark, Link2, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, ImagePlus, Info, Landmark, Link2, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -2662,38 +2662,98 @@ export const SideEvents = () => {
     )
 
     /* ── Atajos de escritura sobre `current` ── */
+    // Imagen o video de fondo de un Flash; null = lo que diga el evento.
+    const [modoFondoElegido, setModoFondoElegido] = useState(null)
     const setBody = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, ...patch } }))
     const setTitleProp = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body?.title, ...patch } } }))
     const setAddress = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body?.address, ...patch } } }))
 
     /* ── Paneles del inspector: uno por elemento del lienzo ── */
 
+    // Fondo de un Flash: imagen o video (como el Save the Date). El video va en
+    // `body.video`; con video, `body.image` es la imagen fija: se ve mientras
+    // carga y es la que sale al compartir el link (WhatsApp no reproduce
+    // video). Los side events de una boda siguen solo con imagen.
+    const modoFondo = modoFondoElegido ?? (current?.body?.video ? 'video' : 'image')
+    const miniaturaImagen = (labelQuitar) => current?.body?.image &&
+        <div className={ed.thumb}>
+            <img src={current.body.image} alt='' />
+            <div className={ed.thumbActions}>
+                <Button
+                    size='small'
+                    type='text'
+                    aria-label={labelQuitar}
+                    style={{ color: '#FFF' }}
+                    icon={<Trash2 size={16} />}
+                    onClick={() => setBody({ image: null })}
+                />
+            </div>
+        </div>
+
     const panelBackground = (
         <>
             {blockHead(<ImagePlus size={16} />, t('side_events.panel_background'), t('side_events.panel_background_hint'))}
 
-            <div className={ed.thumbRow}>
-                {current?.body?.image &&
-                    <div className={ed.thumb}>
-                        <img src={current.body.image} alt='' />
-                        <div className={ed.thumbActions}>
-                            <Button
-                                size='small'
-                                type='text'
-                                aria-label={t('side_events.remove_image')}
-                                style={{ color: '#FFF' }}
-                                icon={<Trash2 size={16} />}
-                                onClick={() => setBody({ image: null })}
+            {esFlash && (
+                <Segmented
+                    block
+                    value={modoFondo}
+                    onChange={(valor) => {
+                        setModoFondoElegido(valor)
+                        // Volver a imagen quita el video; la imagen se queda.
+                        if (valor === 'image' && current?.body?.video) setBody({ video: null })
+                    }}
+                    options={[
+                        { value: 'image', label: t('side_events.media_image'), icon: <ImagePlus size={14} /> },
+                        { value: 'video', label: t('savethedate.media_video'), icon: <Film size={14} /> },
+                    ]}
+                />
+            )}
+
+            {modoFondo === 'video' ? (
+                <>
+                    <div className={ed.thumbRow}>
+                        {current?.body?.video &&
+                            <div className={ed.thumb}>
+                                <video src={current.body.video} muted playsInline preload='metadata' />
+                                <div className={ed.thumbActions}>
+                                    <Button size='small' type='text' aria-label={t('savethedate.remove_video')} style={{ color: '#FFF' }} icon={<Trash2 size={16} />} onClick={() => setBody({ video: null })} />
+                                </div>
+                            </div>
+                        }
+                        <div className={ed.uploadTile}>
+                            <StorageImages
+                                invitationID={`flash-${flashId}`}
+                                mediaType='video'
+                                handleImage={(url) => { if (url) setBody({ video: url }) }}
                             />
                         </div>
                     </div>
-                }
-                <div className={ed.uploadTile}>
-                    <StorageImages invitationID={esFlash ? `flash-${flashId}` : id} handleImage={handleImages} type={'side-events'} />
-                </div>
-            </div>
+                    {!current?.body?.video && <span className={ed.hint}>{t('side_events.video_hint')}</span>}
 
-            <span className={ed.hint}>{t('side_events.panel_background_note')}</span>
+                    <div className={ed.fieldStack}>
+                        <span className={ed.fieldLabel}>{t('savethedate.poster_label')}</span>
+                        <span className={ed.hint}>{t('savethedate.poster_hint')}</span>
+                        <div className={ed.thumbRow}>
+                            {miniaturaImagen(t('side_events.remove_image'))}
+                            <div className={ed.uploadTile}>
+                                <StorageImages invitationID={`flash-${flashId}`} handleImage={handleImages} type={'side-events'} />
+                            </div>
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className={ed.thumbRow}>
+                        {miniaturaImagen(t('side_events.remove_image'))}
+                        <div className={ed.uploadTile}>
+                            <StorageImages invitationID={esFlash ? `flash-${flashId}` : id} handleImage={handleImages} type={'side-events'} />
+                        </div>
+                    </div>
+
+                    <span className={ed.hint}>{t('side_events.panel_background_note')}</span>
+                </>
+            )}
         </>
     )
 
