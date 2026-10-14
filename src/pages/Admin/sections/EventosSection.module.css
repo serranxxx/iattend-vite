@@ -756,3 +756,19 @@
     flex: 1;
     min-width: 0;
 }
+
+/* Side events y Flash (EventosSecundarios): otras columnas y, en móvil, la
+   misma tabla con scroll lateral en vez de la lista de tarjetas. */
+.rowSecundario {
+    grid-template-columns: 1.3fr 1.5fr 1.3fr 80px 124px 1fr 90px 40px;
+}
+
+@media (max-width: 900px) {
+    .scroller.scrollerSiempre {
+        display: block;
+    }
+
+    .scrollerSiempre .table {
+        min-width: 900px;
+    }
+}

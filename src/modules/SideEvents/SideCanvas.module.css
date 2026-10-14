@@ -206,6 +206,8 @@
 /* ── Columna de info (.info_cont del remoto) ── */
 .infoCont {
     position: relative;
+    /* Encima de los PNG "detrás" (z 0) y debajo de los "delante" (z 2). */
+    z-index: 1;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -422,4 +424,93 @@
 .cardReadOnly .titleInput,
 .cardReadOnly .extrasInput {
     cursor: default;
+}
+
+/* Zona del itinerario de un Flash: el widget trae su propio panel. */
+.itineraryZona {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    justify-content: center;
+    border-radius: 28px;
+}
+
+/* PNG de un Flash sobre la portada (StickersFlash): capa del alto visible del
+   scroller que se mueve con el contenido. Misma receta que el remoto. */
+.stickersCapa {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.stickersAtras {
+    z-index: 0;
+}
+
+.stickersDelante {
+    z-index: 2;
+}
+
+.sticker {
+    position: absolute;
+    height: auto;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.sticker:active {
+    cursor: grabbing;
+}
+
+.stickerSel {
+    outline: 1.5px dashed #FFFFFF;
+    outline-offset: 4px;
+}
+
+/* Líneas guía del centro al arrastrar un PNG: punteadas y tenues; sólidas
+   cuando el PNG queda imantado al centro. */
+.guias {
+    z-index: 4;
+}
+
+.guiaV,
+.guiaH {
+    position: absolute;
+    opacity: 0.55;
+    transition: opacity 120ms ease;
+}
+
+.guiaV {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    border-left: 1px dashed #FFFFFF;
+    transform: translateX(-0.5px);
+}
+
+.guiaH {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 0;
+    border-top: 1px dashed #FFFFFF;
+    transform: translateY(-0.5px);
+}
+
+.guiaActiva {
+    opacity: 1;
+    border-color: #FF4FA3;
+    border-style: solid;
+}
+
+/* Video de fondo: sin desenfoques en vivo (se recalculan en cada cuadro y
+   traban el video). Igual que el remoto (.con_video). */
+.cardVideo * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
 }

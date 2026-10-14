@@ -16,7 +16,7 @@
     de texto desde adentro y soltar afuera no debe cerrar nada.
 */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import styles from './AdminModal.module.css'
@@ -38,12 +38,36 @@ export const AdminModal = ({
 }) => {
     const panelRef = useRef(null)
     const telonRef = useRef(null)
+    // onClose suele llegar como función nueva en cada render: si el efecto
+    // dependiera de ella, se volvería a correr al teclear y le quitaría el foco
+    // al campo para dárselo al panel.
+    const onCloseRef = useRef(onClose)
+    useEffect(() => { onCloseRef.current = onClose })
+
+    // Mientras onConfirm (async) no termina, los clics de más no cuentan: un
+    // doble clic en "Registrar" llegó a guardar el mismo abono tres veces. El
+    // ref corta en el mismo instante; el estado deshabilita el botón.
+    const ocupadoRef = useRef(false)
+    const [ocupado, setOcupado] = useState(false)
+    const confirmar = async () => {
+        if (ocupadoRef.current) return
+        ocupadoRef.current = true
+        setOcupado(true)
+        try {
+            await onConfirm?.()
+        } catch {
+            // Validación del formulario u otro error ya avisado por el handler.
+        } finally {
+            ocupadoRef.current = false
+            setOcupado(false)
+        }
+    }
 
     useEffect(() => {
         if (!open) return
 
         const alTeclear = (evento) => {
-            if (evento.key === 'Escape') onClose?.()
+            if (evento.key === 'Escape') onCloseRef.current?.()
         }
 
         const overflowPrevio = document.body.style.overflow
@@ -55,7 +79,7 @@ export const AdminModal = ({
             document.body.style.overflow = overflowPrevio
             document.removeEventListener('keydown', alTeclear)
         }
-    }, [open, onClose])
+    }, [open])
 
     if (!open) return null
 
@@ -115,10 +139,10 @@ export const AdminModal = ({
                         <button
                             type='button'
                             className={styles.btnPrimario}
-                            onClick={onConfirm}
-                            disabled={confirmDisabled || loading}
+                            onClick={confirmar}
+                            disabled={confirmDisabled || loading || ocupado}
                         >
-                            {loading ? 'Guardando…' : confirmLabel}
+                            {loading || ocupado ? 'Guardando…' : confirmLabel}
                         </button>
                     </footer>
                 )}

@@ -1,4 +1,4 @@
-import { Badge, Button, Checkbox, ColorPicker, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Slider, Spin, Switch, Tooltip } from 'antd'
+import { Badge, Button, Checkbox, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Slider, Spin, Switch, Tooltip } from 'antd'
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import '../GuestManagement/guests-redesign.css'
@@ -13,8 +13,7 @@ import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import { CreditController } from '../../components/Payment/CreditController/CreditController'
 import SideEventHost from '../../components/Host/SideEventHost'
-import { colorFactoryToHex } from '../../helpers/assets/functions'
-import { dayjsToWallClock, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
+import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
 import { useFonts } from '../../context/FontsContext'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
@@ -24,7 +23,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, ImagePlus, Info, Landmark, Link2, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, Shapes, ImagePlus, Info, Landmark, Link2, ListOrdered, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ItinerarioFlash } from './ItinerarioFlash'
+import { StickersFlash } from './StickersFlash'
+import { SelectorColor } from './SelectorColor'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -35,7 +37,7 @@ import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import SideCanvas from './SideCanvas'
-import { ColorField, DateField, FontPicker } from '../../components/MobileFields/MobileFields'
+import { DateField, FontPicker } from '../../components/MobileFields/MobileFields'
 import { SideEventsTour, SIDE_TOUR_STORAGE_KEY } from './SideEventsTour'
 import ed from './SideEventEditor.module.css'
 import { EVENTO_CREDITOS_FLASH } from '../../components/Payment/CreditController/creditosFlash'
@@ -2662,38 +2664,114 @@ export const SideEvents = () => {
     )
 
     /* ── Atajos de escritura sobre `current` ── */
+    // PNG seleccionado de un Flash: lo comparten la pieza (arrastrar) y el panel.
+    const [stickerSel, setStickerSel] = useState(null)
+    // Imagen o video de fondo de un Flash; null = lo que diga el evento.
+    const [modoFondoElegido, setModoFondoElegido] = useState(null)
     const setBody = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, ...patch } }))
     const setTitleProp = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body?.title, ...patch } } }))
     const setAddress = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body?.address, ...patch } } }))
 
     /* ── Paneles del inspector: uno por elemento del lienzo ── */
 
+    // Fondo de un Flash: imagen o video (como el Save the Date). El video va en
+    // `body.video`; con video, `body.image` es la imagen fija: se ve mientras
+    // carga y es la que sale al compartir el link (WhatsApp no reproduce
+    // video). Los side events de una boda siguen solo con imagen.
+    const modoFondo = modoFondoElegido ?? (current?.body?.video ? 'video' : 'image')
+    const miniaturaImagen = (labelQuitar) => current?.body?.image &&
+        <div className={ed.thumb}>
+            <img src={current.body.image} alt='' />
+            <div className={ed.thumbActions}>
+                <Button
+                    size='small'
+                    type='text'
+                    aria-label={labelQuitar}
+                    style={{ color: '#FFF' }}
+                    icon={<Trash2 size={16} />}
+                    onClick={() => setBody({ image: null })}
+                />
+            </div>
+        </div>
+
     const panelBackground = (
         <>
             {blockHead(<ImagePlus size={16} />, t('side_events.panel_background'), t('side_events.panel_background_hint'))}
 
-            <div className={ed.thumbRow}>
-                {current?.body?.image &&
-                    <div className={ed.thumb}>
-                        <img src={current.body.image} alt='' />
-                        <div className={ed.thumbActions}>
-                            <Button
-                                size='small'
-                                type='text'
-                                aria-label={t('side_events.remove_image')}
-                                style={{ color: '#FFF' }}
-                                icon={<Trash2 size={16} />}
-                                onClick={() => setBody({ image: null })}
+            {esFlash && (
+                <Segmented
+                    block
+                    value={modoFondo}
+                    onChange={(valor) => {
+                        setModoFondoElegido(valor)
+                        // Volver a imagen quita el video; la imagen se queda.
+                        if (valor === 'image' && current?.body?.video) setBody({ video: null })
+                    }}
+                    options={[
+                        { value: 'image', label: t('side_events.media_image'), icon: <ImagePlus size={14} /> },
+                        { value: 'video', label: t('savethedate.media_video'), icon: <Film size={14} /> },
+                    ]}
+                />
+            )}
+
+            {modoFondo === 'video' ? (
+                <>
+                    <div className={ed.thumbRow}>
+                        {current?.body?.video &&
+                            <div className={ed.thumb}>
+                                <video src={current.body.video} muted playsInline preload='metadata' />
+                                <div className={ed.thumbActions}>
+                                    <Button size='small' type='text' aria-label={t('savethedate.remove_video')} style={{ color: '#FFF' }} icon={<Trash2 size={16} />} onClick={() => setBody({ video: null })} />
+                                </div>
+                            </div>
+                        }
+                        <div className={ed.uploadTile}>
+                            <StorageImages
+                                invitationID={`flash-${flashId}`}
+                                mediaType='video'
+                                handleImage={(url) => { if (url) setBody({ video: url }) }}
                             />
                         </div>
                     </div>
-                }
-                <div className={ed.uploadTile}>
-                    <StorageImages invitationID={esFlash ? `flash-${flashId}` : id} handleImage={handleImages} type={'side-events'} />
-                </div>
-            </div>
+                    {!current?.body?.video && <span className={ed.hint}>{t('side_events.video_hint')}</span>}
 
-            <span className={ed.hint}>{t('side_events.panel_background_note')}</span>
+                    {/* Imagen para el link: es la que se comparte (url_image, la
+                        misma de "Personaliza tu link") y también el cuadro fijo
+                        del video mientras carga (body.image). */}
+                    <div className={ed.fieldStack}>
+                        <span className={ed.fieldLabel}>{t('savethedate.poster_label')}</span>
+                        <span className={ed.hint}>{t('savethedate.poster_hint')}</span>
+                        <div className={ed.thumbRow}>
+                            {(current?.url_image || current?.body?.image) &&
+                                <div className={ed.thumb}>
+                                    <img src={current.url_image || current.body.image} alt='' />
+                                </div>
+                            }
+                            <div className={ed.uploadTile}>
+                                <StorageImages
+                                    invitationID={`flash-${flashId}`}
+                                    handleImage={(url) => {
+                                        if (!url) return
+                                        updateCurrent((prev) => ({ ...prev, url_image: url, body: { ...prev.body, image: url } }))
+                                    }}
+                                    type={'side-events'}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className={ed.thumbRow}>
+                        {miniaturaImagen(t('side_events.remove_image'))}
+                        <div className={ed.uploadTile}>
+                            <StorageImages invitationID={esFlash ? `flash-${flashId}` : id} handleImage={handleImages} type={'side-events'} />
+                        </div>
+                    </div>
+
+                    <span className={ed.hint}>{t('side_events.panel_background_note')}</span>
+                </>
+            )}
         </>
     )
 
@@ -2701,22 +2779,13 @@ export const SideEvents = () => {
         <>
             {blockHead(<Palette size={16} />, t('side_events.theme_color'), t('side_events.panel_color_hint'))}
 
-            <div className={ed.fieldRow}>
-                <span className={ed.fieldLabel}>{t('side_events.panel_color_pick')}</span>
-                {/* En móvil, controles nativos en vez de popups de antd: dentro
-                    de la hoja los popups se abren donde pueden y su scroll pelea
-                    con el de la pieza (ver components/MobileFields). */}
-                {isMobile
-                    ? <ColorField
-                        value={current?.body?.color ?? '#000000'}
-                        onChange={(hex) => setBody({ color: hex })}
-                    />
-                    : <ColorPicker
-                        value={current?.body?.color ?? '#000000'}
-                        onChange={(e) => setBody({ color: colorFactoryToHex(e) })}
-                    />
-                }
-            </div>
+            {/* Selector en línea (sin popup): el cuadrito que abría el de antd
+                casi no se veía. Sirve igual en la hoja móvil. */}
+            <SelectorColor
+                value={current?.body?.color ?? '#000000'}
+                onChange={(hex) => setBody({ color: hex })}
+                imagenFondo={current?.body?.image}
+            />
 
             <div className={ed.swatchRow}>
                 {THEME_SWATCHES.map((c) => (
@@ -2782,23 +2851,61 @@ export const SideEvents = () => {
             {blockHead(<CalendarDays size={16} />, t('side_events.panel_date'), t('side_events.panel_date_hint'))}
 
             {/* Hora de pared: lo que se ve en el picker es lo que se guarda,
-                sin conversión de timezone (helpers/assets/eventDateTime.js) */}
-            {isMobile
-                ? <DateField
-                    type="datetime-local"
-                    /* `datetime-local` entrega YYYY-MM-DDTHH:mm sin zona: es la
-                       misma hora de pared que se guarda, solo cambia el separador */
-                    value={wallClockToDayjs(current?.body?.hour)?.format('YYYY-MM-DDTHH:mm') ?? ''}
-                    onChange={(v) => setBody({ hour: v ? `${v.replace('T', ' ')}:00` : null })}
-                />
-                : <DatePicker
-                    style={{ width: '100%' }}
-                    showTime={{ format: 'HH:mm' }}
-                    format='DD/MM/YYYY HH:mm'
-                    value={wallClockToDayjs(current?.body?.hour)}
-                    onChange={(e) => setBody({ hour: dayjsToWallClock(e) })}
-                />
-            }
+                sin conversión de timezone (helpers/assets/eventDateTime.js).
+                Un Flash puede tener varias fechas, cada una con su hora. */}
+            {(esFlash ? (fechasDelEvento(current?.body).length ? fechasDelEvento(current?.body) : [null]) : [current?.body?.hour]).map((raw, i, lista) => {
+                const cambiar = (valor) => {
+                    if (!esFlash) return setBody({ hour: valor })
+                    const nuevas = [...lista]
+                    nuevas[i] = valor
+                    setBody(cuerpoConFechas(nuevas))
+                }
+                return (
+                    <div className={esFlash ? ed.fechaFila : undefined} key={`${i}-${raw ?? 'vacia'}`}>
+                        {isMobile
+                            ? <DateField
+                                type="datetime-local"
+                                /* `datetime-local` entrega YYYY-MM-DDTHH:mm sin zona: es la
+                                   misma hora de pared que se guarda, solo cambia el separador */
+                                value={wallClockToDayjs(raw)?.format('YYYY-MM-DDTHH:mm') ?? ''}
+                                onChange={(v) => cambiar(v ? `${v.replace('T', ' ')}:00` : null)}
+                            />
+                            : <DatePicker
+                                style={{ width: '100%' }}
+                                showTime={{ format: 'HH:mm' }}
+                                format='DD/MM/YYYY HH:mm'
+                                value={wallClockToDayjs(raw)}
+                                onChange={(e) => cambiar(dayjsToWallClock(e))}
+                            />
+                        }
+                        {esFlash && lista.length > 1 && (
+                            <button
+                                type='button'
+                                className={ed.fechaQuitar}
+                                aria-label={t('side_events.date_remove')}
+                                onClick={() => setBody(cuerpoConFechas(lista.filter((_, j) => j !== i)))}
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+                )
+            })}
+
+            {/* Otra fecha: el día siguiente a la última, a la misma hora. */}
+            {esFlash && current?.body?.hour && (
+                <button
+                    type='button'
+                    className={ed.fechaAgregar}
+                    onClick={() => {
+                        const lista = fechasDelEvento(current?.body)
+                        const ultima = wallClockToDayjs(lista[lista.length - 1])
+                        setBody(cuerpoConFechas([...lista, ultima ? dayjsToWallClock(ultima.add(1, 'day')) : null]))
+                    }}
+                >
+                    <Plus size={14} /> {t('side_events.date_add')}
+                </button>
+            )}
 
             {current?.body?.hour && !wallClockToDayjs(current.body.hour) &&
                 <span className={ed.hint}>
@@ -2879,7 +2986,39 @@ export const SideEvents = () => {
         </>
     )
 
+    // Mini itinerario de un Flash (ItinerarioFlash.jsx): se muestra arriba de
+    // "Cómo llegar" en el orden en que se acomoda.
+    const diasDelFlash = [...new Set(fechasDelEvento(current?.body).map(f => String(f).slice(0, 10)))]
+    const itinerario = Array.isArray(current?.body?.itinerary) ? current.body.itinerary : []
+
+    const panelItinerary = (
+        <>
+            {blockHead(<ListOrdered size={16} />, t('side_events.panel_itinerary'), t('side_events.panel_itinerary_hint'))}
+            <ItinerarioFlash
+                itinerario={itinerario}
+                dias={diasDelFlash}
+                onChange={(lista) => setBody({ itinerary: lista.length ? lista : null })}
+            />
+        </>
+    )
+
+    // PNG sobre la portada de un Flash (StickersFlash.jsx).
+    const panelStickers = (
+        <>
+            {blockHead(<Shapes size={16} />, t('side_events.panel_stickers'), t('side_events.panel_stickers_hint'))}
+            <StickersFlash
+                stickers={Array.isArray(current?.body?.stickers) ? current.body.stickers : []}
+                onChange={(lista) => setBody({ stickers: lista.length ? lista : null })}
+                seleccionado={stickerSel}
+                onSeleccionar={setStickerSel}
+                carpeta={`flash-${flashId}`}
+            />
+        </>
+    )
+
     const PANELS = {
+        stickers: panelStickers,
+        itinerary: panelItinerary,
         background: panelBackground,
         color: panelColor,
         title: panelTitle,
@@ -2895,6 +3034,11 @@ export const SideEvents = () => {
         { key: 'date', icon: <CalendarDays size={18} />, label: t('side_events.panel_date'), short: t('side_events.dock_date') },
         { key: 'place', icon: <Landmark size={18} />, label: t('side_events.panel_place'), short: t('side_events.dock_place') },
         { key: 'extras', icon: <StickyNote size={18} />, label: t('side_events.panel_notes'), short: t('side_events.dock_notes') },
+        // El mini itinerario es solo de los Flash.
+        ...(esFlash ? [
+            { key: 'itinerary', icon: <ListOrdered size={18} />, label: t('side_events.panel_itinerary'), short: t('side_events.dock_itinerary') },
+            { key: 'stickers', icon: <Shapes size={18} />, label: t('side_events.panel_stickers'), short: t('side_events.dock_stickers') },
+        ] : []),
     ]
 
     /* ── Lienzo flotante: se comparte entre Diseño y Envío ── */
@@ -2947,6 +3091,8 @@ export const SideEvents = () => {
                             selected={section}
                             onSelect={setSection}
                             readOnly={activeTab !== 'diseno'}
+                            stickerSel={stickerSel}
+                            onStickerSel={setStickerSel}
                         />
                     </div>
                 </div>
@@ -3724,6 +3870,8 @@ export const SideEvents = () => {
                                         onSelect={setSection}
                                         fullBleed
                                         liftBottom={contentLift}
+                                        stickerSel={stickerSel}
+                                        onStickerSel={setStickerSel}
                                     />
                                 )
                             }
@@ -3839,7 +3987,8 @@ export const SideEvents = () => {
                             backuImage={current?.body?.image}
                             urlImage={current?.url_image}
                             url={publicUrl}
-                            id={id}
+                            // Un Flash guarda sus imágenes en flash-<id>, no en la invitación.
+                            id={esFlash ? `flash-${flashId}` : id}
                             handleImage={updateURLimage}
                             name={current?.name}
                             setupRequired={hasPendingInfo}

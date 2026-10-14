@@ -10,10 +10,20 @@ import { esEventoActivo, fechaDeEvento } from '../adminConstants'
 import { AdminModal } from '../AdminModal'
 import { actualizarCreditosAdmin, asignarPlannerAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
+import { EventosSecundarios } from './EventosSecundarios'
+import { clasificarSide } from './useSideEventsAdmin'
+import { EnTopbarFiltros, Segmentado } from '../AdminTopbar'
 import styles from './EventosSection.module.css'
 import { esRolPlanner } from '../../../helpers/roles'
 
 dayjs.locale('es')
+
+// Subdivisión de Activos / Todos / Pruebas (el calendario es solo de invitaciones).
+const TIPOS = [
+    { value: 'invitaciones', label: 'Invitaciones' },
+    { value: 'side', label: 'Side events' },
+    { value: 'flash', label: 'Flash' },
+]
 
 const TABS = [
     { key: 'calendario', label: 'Calendario' },
@@ -67,9 +77,12 @@ const formatFecha = (invitation) => {
 
 // `tab`: la pestaña la elige la topbar del admin (AdminLayout). Sin ella, la
 // sección dibuja sus propias pestañas.
-export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, refreshEventos, query = '', esPrueba }) => {
+export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, refreshEventos, query = '', esPrueba, sideEvents }) => {
     const [tabLocal, setTab] = useState('calendario')
     const tab = tabDeTopbar ?? tabLocal
+    const [tipo, setTipo] = useState('invitaciones')
+    // Side events y Flash (los carga AdminLayout): calendario y sus tablas.
+    const { sides, invitadosPorSide, error: errorSides } = sideEvents ?? {}
     const [ownerInputs, setOwnerInputs] = useState({})
     const [radiografia, setRadiografia] = useState({})
     // Evento abierto desde el calendario; su tarjeta se muestra en un modal.
@@ -326,6 +339,55 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
             .some(campo => String(campo ?? '').toLowerCase().includes(texto)))
     }, [porTab, tab, query, perfilesPorId])
 
+    // Calendario: invitaciones, side events y Flash, cada tipo con su color. Solo
+    // los que tienen nombre y fecha, y sin los de prueba.
+    const eventosCalendario = useMemo(() => {
+        const texto = query.trim().toLowerCase()
+        const coincide = (...campos) => !texto || campos.some(c => String(c ?? '').toLowerCase().includes(texto))
+        const conNombre = (n) => Boolean(String(n ?? '').trim())
+        const invitacionPorId = new Map((newInvitations ?? []).map(i => [i.id, i]))
+
+        const deInvitaciones = porTab.calendario
+            .filter(i => conNombre(i.name) && coincide(i.name, i.user_email, ...(i.owners ?? [])))
+            .map(i => ({
+                key: `inv-${i.id}`,
+                tipo: 'invitacion',
+                nombre: i.name,
+                fecha: fechaDeEvento(i),
+                titulo: `${i.name} · ${i.user_email ?? ''}`,
+                invitacion: i,
+            }))
+
+        const deSides = (sides ?? [])
+            .map(s => ({ s, ...clasificarSide(s, invitacionPorId, esPrueba) }))
+            .filter(({ s, fecha, prueba }) => conNombre(s.name) && fecha && !prueba)
+            .filter(({ s, invitacion }) => coincide(s.name, s.user_email, invitacion?.name, ...(invitacion?.owners ?? [])))
+            // Un Flash con varias fechas sale en cada una.
+            .flatMap(({ s, invitacion, flash, fechas }) => fechas.map(fecha => ({
+                key: `${flash ? 'flash' : 'side'}-${s.id}-${fecha}`,
+                tipo: flash ? 'flash' : 'side',
+                nombre: s.name,
+                fecha,
+                titulo: flash
+                    ? `Flash · ${s.name}${s.user_email ? ` · ${s.user_email}` : ''}`
+                    : `Side event · ${s.name}${invitacion ? ` · de ${invitacion.name}` : ''}`,
+                invitacion,
+                sideId: s.id,
+            })))
+
+        return [...deInvitaciones, ...deSides]
+    }, [porTab, sides, newInvitations, esPrueba, query])
+
+    // Invitación y side event abren la tarjeta de la invitación; un Flash no
+    // tiene invitación, así que abre su editor.
+    const abrirDelCalendario = (evento) => {
+        if (evento.tipo === 'flash') {
+            window.open(`https://www.iattend.site/dashboard/side?flash=${evento.sideId}`, '_blank', 'noopener')
+            return
+        }
+        if (evento.invitacion) setAbierto(evento.invitacion)
+    }
+
     const accionesPopup = (record) => (
         <div className={styles.popup}>
             <Link
@@ -536,11 +598,29 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
                 </div>
             </div>}
 
-            {tab === 'calendario' ? (
+            {tab !== 'calendario' && (
+                <EnTopbarFiltros>
+                    <Segmentado ariaLabel='Tipo de evento' valor={tipo} onCambio={setTipo} opciones={TIPOS} />
+                </EnTopbarFiltros>
+            )}
+
+            {tab !== 'calendario' && tipo !== 'invitaciones' ? (
+                <EventosSecundarios
+                    sides={sides}
+                    invitadosPorSide={invitadosPorSide}
+                    error={errorSides}
+                    tipo={tipo}
+                    tab={tab}
+                    invitaciones={newInvitations}
+                    esPrueba={esPrueba}
+                    nombrePlanner={nombrePlanner}
+                    query={query}
+                />
+            ) : tab === 'calendario' ? (
                 <EventosCalendario
-                    eventos={visibles}
-                    onSelect={setAbierto}
-                    seleccionado={abierto}
+                    eventos={eventosCalendario}
+                    onSelect={abrirDelCalendario}
+                    seleccionado={abierto ? `inv-${abierto.id}` : null}
                 />
             ) : (
             <div className={styles.card}>

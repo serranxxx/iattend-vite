@@ -523,7 +523,8 @@
     flex-shrink: 0;
 }
 
-.thumb img {
+.thumb img,
+.thumb video {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -916,4 +917,240 @@
 /* La hoja (BottomSheet) ya trae su cabecera: el panel no repite el título */
 .editorSheet .blockHead {
     display: none;
+}
+
+/* Eventos Flash con varias fechas: un picker por fecha, con su botón para
+   quitarla, y "Agregar otra fecha" abajo. */
+.fechaFila {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fechaFila > :first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+.fechaQuitar {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #787878;
+    cursor: pointer;
+}
+
+.fechaQuitar:hover {
+    background: #f1f1f1;
+    color: #1f1f1f;
+}
+
+.fechaAgregar {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px dashed #d4d4d4;
+    border-radius: 8px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1f1f1f;
+    cursor: pointer;
+}
+
+.fechaAgregar:hover {
+    background: #f6f6f6;
+}
+
+/* Mini itinerario de un Flash: un renglón por momento (ícono · nombre y hora
+   · quitar). */
+.momento {
+    /* Renglón 1: manija · ícono · nombre. Renglón 2 (a todo lo ancho):
+       hora · día · quitar. */
+    display: grid;
+    grid-template-columns: 18px 36px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    padding: 8px 8px 8px 4px;
+    border: 1px solid #EBEBEB;
+    border-radius: 12px;
+}
+
+.momentoArrastrando {
+    position: relative;
+    z-index: 2;
+    background: #FFF;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+/* Manija para arrastrar: lo único que mueve el momento. */
+.momentoManija {
+    flex-shrink: 0;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #a3a3a3;
+    cursor: grab;
+    touch-action: none;
+}
+
+.momentoManija:active {
+    cursor: grabbing;
+}
+
+.momentoIcono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #EBEBEB;
+    border-radius: 10px;
+    background: #FFF;
+    color: #1f1f1f;
+    cursor: pointer;
+}
+
+.momentoIcono:hover {
+    background: #f6f6f6;
+}
+
+.momentoCampos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.momentoNombre {
+    min-width: 0;
+}
+
+.momentoLugar {
+    grid-column: 1 / -1;
+    margin-left: 4px;
+    width: calc(100% - 4px);
+}
+
+.momentoFila {
+    grid-column: 1 / -1;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.momentoQuitar {
+    width: 24px;
+    height: 24px;
+    margin-left: auto;
+}
+
+.momentoHora {
+    flex-shrink: 0;
+    width: 78px;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    color: #1f1f1f;
+    background: #FFF;
+}
+
+.iconosPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 300px;
+    padding: 8px;
+    background: #FFF;
+    border: 1px solid #EBEBEB;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.iconosGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 36px);
+    gap: 4px;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.iconosConteo {
+    font-size: 11px;
+    color: #a3a3a3;
+    text-align: right;
+}
+
+.iconosVacio {
+    grid-column: 1 / -1;
+    padding: 12px 4px;
+    font-size: 12px;
+    color: #787878;
+    text-align: center;
+}
+
+.iconoOpcion {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #1f1f1f;
+    cursor: pointer;
+}
+
+.iconoOpcion:hover {
+    background: #f1f1f1;
+}
+
+.iconoOpcionActivo {
+    background: #1f1f1f;
+    color: #FFF;
+}
+
+.iconoOpcionActivo:hover {
+    background: #1f1f1f;
+}
+
+/* Miniaturas de los PNG de un Flash (StickersFlash): la elegida, con borde. */
+.stickerThumb {
+    width: 64px;
+    height: 64px;
+    padding: 6px;
+    border: 1px solid #EBEBEB;
+    border-radius: 12px;
+    background: repeating-conic-gradient(#f3f3f3 0% 25%, #fff 0% 50%) 50% / 12px 12px;
+    cursor: pointer;
+}
+
+.stickerThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.stickerThumbActivo {
+    border: 2px solid #1f1f1f;
 }

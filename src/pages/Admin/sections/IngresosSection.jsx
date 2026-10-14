@@ -11,10 +11,19 @@ import { AdminModal } from '../AdminModal'
 import { MESES, calcularCargosPorVenta, calcularKpis, formatCurrency, netoPromedioPorVenta } from '../ventasCalculos'
 import { AcumuladoChart, BarrasPorMes, ComparativaChart, MESES_CORTOS, ProyeccionChart } from './VentasCharts'
 import { MetaDelMes } from './MetaDelMes'
-import { COLOR_POR_ANIO } from '../adminCharts'
+import { COLOR_POR_ANIO, COLOR_POR_PLAN, PLANES_DE_VENTA } from '../adminCharts'
 import styles from './VentasSection.module.css'
 import iv from './Ingresos.module.css'
 
+
+// Cómo se pagó la venta. Las digitales (Stripe / en línea) no piden
+// comprobante: el cobro mismo lo es (vista ventas_comprobante_pendiente).
+const METODOS_DE_VENTA = [
+    { value: 'transferencia', label: 'Transferencia' },
+    { value: 'digital', label: 'Pago digital' },
+]
+const PLANES_DE_INVITACION = [{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }]
+const esDigital = (venta) => venta?.metodo_pago === 'digital'
 
 const METODOS_PAGO = [
     { value: 'transferencia', label: 'Transferencia' },
@@ -96,14 +105,14 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
 
     const netoDe = useCallback((venta) => {
         const c = cargos.get(venta.venta_id)
-        return c ? c.bruto - c.iva - c.comision : 0
+        return c ? c.bruto - c.iva - c.comision - c.stripe : 0
     }, [cargos])
 
-    // Variante sin descontar IVA, para el switch del acumulado. La comisión sí
-    // se sigue restando: es dinero que efectivamente sale.
+    // Variante sin descontar IVA, para el switch del acumulado. La comisión y
+    // lo de Stripe sí se siguen restando: es dinero que efectivamente sale.
     const netoDeSinIva = useCallback((venta) => {
         const c = cargos.get(venta.venta_id)
-        return c ? c.bruto - c.comision : 0
+        return c ? c.bruto - c.comision - c.stripe : 0
     }, [cargos])
 
     const anios = useMemo(() => {
@@ -153,7 +162,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             .sort((a, b) => Number(b.saldo_pendiente) - Number(a.saldo_pendiente))
 
         return {
-            monto: ventasDelAnio.reduce((acc, v) => acc + Number(v.saldo_pendiente || 0), 0),
+            // Solo lo que se debe: un saldo negativo (pagado de más) no resta.
+            monto: detalle.reduce((acc, v) => acc + Number(v.saldo_pendiente || 0), 0),
             ventas: ventasDelAnio.filter(v => v.estado_pago === 'apartado').length,
             detalle,
         }
@@ -189,34 +199,45 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     }, [todas])
 
     // Proyección anual: a qué cierre llega el año si se mantiene el ritmo. Para
-    // cada mes cerrado se toma el promedio mensual acumulado hasta ahí y se lleva
-    // a 12. La curva arranca ruidosa (un mes bueno dispara la proyección) y se
-    // aplana conforme avanza el año, que es justo lo que se quiere leer.
+    // cada mes se toma el promedio mensual acumulado hasta ahí y se lleva a 12.
+    // La curva arranca ruidosa (un mes bueno dispara la proyección) y se aplana
+    // conforme avanza el año, que es justo lo que se quiere leer.
+    //
+    // El mes en curso cuenta solo los días que van (el 13 de octubre son 9.4
+    // meses, no 10): contarlo completo repartía lo vendido entre más meses de
+    // los que han pasado y bajaba la proyección. Sigue el switch Neto / Con IVA
+    // del acumulado para que las dos tarjetas hablen de la misma cifra.
     //
     // Antes esta tarjeta mostraba la suma móvil de 12 meses: como siempre crece,
     // se leía igual que el acumulado de al lado y no aportaba nada distinto.
     const proyeccionDe = useCallback((anio) => {
         const hoy = new Date()
-        const ultimoMesCerrado = anio === hoy.getFullYear() ? hoy.getMonth() : 11
+        const enCurso = anio === hoy.getFullYear()
+        const ultimoMes = enCurso ? hoy.getMonth() : 11
+        const mapa = descontarIva ? netoPorMes : netoPorMesSinIva
 
         const valores = []
         let netoAcc = 0
         let ventasAcc = 0
+        let meses = 0
 
-        for (let m = 0; m <= ultimoMesCerrado; m++) {
-            netoAcc += netoPorMes.get(`${anio}-${m}`) || 0
+        for (let m = 0; m <= ultimoMes; m++) {
+            netoAcc += mapa.get(`${anio}-${m}`) || 0
             ventasAcc += ventasPorMes.get(`${anio}-${m}`) || 0
-            valores.push((netoAcc / (m + 1)) * 12)
+            meses += enCurso && m === ultimoMes
+                ? hoy.getDate() / new Date(anio, m + 1, 0).getDate()
+                : 1
+            valores.push((netoAcc / meses) * 12)
         }
 
         return {
             anio,
             valores,
             cierreEstimado: valores[valores.length - 1] ?? 0,
-            invitaciones: Math.round((ventasAcc / (ultimoMesCerrado + 1)) * 12),
-            mesesCerrados: ultimoMesCerrado + 1,
+            invitaciones: meses ? Math.round((ventasAcc / meses) * 12) : 0,
+            mesesCerrados: Math.round(meses * 10) / 10,
         }
-    }, [netoPorMes, ventasPorMes])
+    }, [descontarIva, netoPorMes, netoPorMesSinIva, ventasPorMes])
 
     // Los tres años más recientes arrancan disponibles; solo el actual encendido.
     const [proyYears, setProyYears] = useState(null)
@@ -231,7 +252,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         // control, esté o no encendido su chip.
         const principal = proyeccionDe(year)
         const anioPrevio = year - 1
-        const totalPrevio = Array.from({ length: 12 }, (_, m) => netoPorMes.get(`${anioPrevio}-${m}`) || 0)
+        const mapa = descontarIva ? netoPorMes : netoPorMesSinIva
+        const totalPrevio = Array.from({ length: 12 }, (_, m) => mapa.get(`${anioPrevio}-${m}`) || 0)
             .reduce((a, b) => a + b, 0)
 
         return {
@@ -242,7 +264,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             totalPrevio,
             delta: totalPrevio > 0 ? ((principal.cierreEstimado - totalPrevio) / totalPrevio) * 100 : 0,
         }
-    }, [aniosProyeccion, anios, proyeccionDe, year, netoPorMes])
+    }, [aniosProyeccion, anios, proyeccionDe, year, descontarIva, netoPorMes, netoPorMesSinIva])
 
     const toggleAnioProyeccion = (anio) => {
         const siguiente = aniosProyeccion.includes(anio)
@@ -326,24 +348,38 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         return ventasDelPeriodo.reduce((acc, v) => acc + valorDe(v), 0)
     }, [ventasDelPeriodo, descontarIva, netoDe, netoDeSinIva])
 
+    // Del bruto (el KPI de arriba) al número grande del acumulado.
+    const desgloseAcumulado = useMemo(() => {
+        const k = acumuladoModo === 'anio' ? kpisAnuales : kpis
+        const partes = [`Bruto ${formatCurrency(k.ingresoBruto)}`]
+        if (descontarIva) partes.push(`IVA −${formatCurrency(k.iva)}`)
+        partes.push(`comisiones −${formatCurrency(k.comisiones)}`)
+        if (k.comisionStripe > 0) partes.push(`Stripe −${formatCurrency(k.comisionStripe)}`)
+        return partes.join(' · ')
+    }, [acumuladoModo, kpis, kpisAnuales, descontarIva])
+
     const aniosBarras = barYears ?? [year]
 
     const barras = useMemo(() => {
         const series = aniosBarras
             .map(anio => {
                 const conteo = Array(12).fill(0)
+                // Para apilar por plan cuando se ve un solo año.
+                const porPlan = Object.fromEntries(PLANES_DE_VENTA.map(p => [p, Array(12).fill(0)]))
                 let neto = 0
 
                 todas.forEach(v => {
                     const d = new Date(v.fecha_venta)
                     if (d.getFullYear() !== anio) return
                     conteo[d.getMonth()] += 1
-                    neto += netoDe(v)
+                    if (porPlan[v.plan]) porPlan[v.plan][d.getMonth()] += 1
+                    neto += descontarIva ? netoDe(v) : netoDeSinIva(v)
                 })
 
                 return {
                     anio,
                     valores: conteo,
+                    porPlan,
                     total: conteo.reduce((a, b) => a + b, 0),
                     neto,
                     estilo: ESTILO_POR_POSICION[anios.indexOf(anio)] ?? 'viejo',
@@ -352,7 +388,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             .sort((a, b) => b.anio - a.anio)
 
         return { series }
-    }, [aniosBarras, anios, todas, netoDe])
+    }, [aniosBarras, anios, todas, descontarIva, netoDe, netoDeSinIva])
 
     // Neto por venta real: promedio del mes de la calculadora. Si ese mes todavía
     // no tiene ventas cae al mes anterior, y si tampoco hay, la calculadora usa
@@ -394,8 +430,11 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     const comparativa = useMemo(() => {
         const hoy = new Date()
 
+        // Sigue el switch Neto / Con IVA del acumulado, como la proyección.
+        const mapa = descontarIva ? netoPorMes : netoPorMesSinIva
+
         return aniosComparativa.map((anio, i) => {
-            const valores = Array.from({ length: 12 }, (_, m) => netoPorMes.get(`${anio}-${m}`) || 0)
+            const valores = Array.from({ length: 12 }, (_, m) => mapa.get(`${anio}-${m}`) || 0)
 
             // El año en curso se corta en el último mes cerrado: dibujar ceros de
             // meses futuros haría ver una caída que no existe.
@@ -410,7 +449,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                 _pos: i,
             }
         })
-    }, [aniosComparativa, anios, netoPorMes])
+    }, [aniosComparativa, anios, descontarIva, netoPorMes, netoPorMesSinIva])
 
     const toggleAnioComparativa = (anio) => {
         const base = aniosComparativa
@@ -433,6 +472,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             precio_acordado: venta.precio_acordado,
             plan: venta.plan,
             vendedor_id: venta.vendedor_id,
+            metodo_pago: venta.metodo_pago || 'transferencia',
         })
     }
 
@@ -452,6 +492,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         setPayingVenta(venta)
         setPayFile(null)
         payForm.resetFields()
+        payForm.setFieldValue('metodo', esDigital(venta) ? 'stripe' : 'transferencia')
     }
 
     const handleRegistrarPago = async () => {
@@ -463,7 +504,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                 metodo: values.metodo,
             })
 
-            if (payFile) {
+            if (payFile && !esDigital(payingVenta)) {
                 try {
                     await subirAdminComprobante(data.pago_id, payFile)
                 } catch {
@@ -493,6 +534,14 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             try {
                 const { data } = await searchAdminInvitations(q.trim())
                 setInvitationOptions((data?.invitations || []).map(inv => {
+                    // Eventos Flash: sin invitación, van por side_event_id.
+                    if (inv.side_event_id) {
+                        return {
+                            value: `flash-${inv.side_event_id}`,
+                            label: `⚡ ${inv.name} — ${inv.planner ? `planner ${inv.planner}` : (inv.user_email || 'sin correo')} (Evento Flash)`,
+                            plan: 'Flash',
+                        }
+                    }
                     const evento = Array.isArray(inv.owners) && inv.owners.length
                         ? inv.owners.join(' & ')
                         : inv.name
@@ -512,7 +561,9 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
 
     const handleSelectInvitation = (invitationId) => {
         const selected = invitationOptions.find(o => o.value === invitationId)
-        if (selected?.plan) {
+        if (selected?.plan === 'Flash') {
+            manualForm.setFieldValue('plan', 'Flash')
+        } else if (selected?.plan) {
             manualForm.setFieldValue('plan', selected.plan.toUpperCase() === 'PRO' ? 'PRO' : 'Lite')
         }
     }
@@ -520,8 +571,11 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     const handleCreateManualSale = async () => {
         const values = await manualForm.validateFields()
         try {
+            const flash = String(values.invitation_id).startsWith('flash-')
             await createAdminVentaManual({
                 ...values,
+                invitation_id: flash ? undefined : values.invitation_id,
+                side_event_id: flash ? Number(values.invitation_id.slice(6)) : undefined,
                 fecha_venta: values.fecha_venta ? values.fecha_venta.toISOString() : undefined,
             })
             message.success('Venta registrada')
@@ -550,10 +604,16 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <InputNumber style={{ width: '100%' }} min={0} />
                     </Form.Item>
                     <Form.Item name='plan' label='Plan' rules={[{ required: true }]}>
-                        <Select options={[{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }]} />
+                        <Select
+                            disabled={editingVenta?.plan === 'Flash'}
+                            options={editingVenta?.plan === 'Flash' ? [{ value: 'Flash', label: 'Flash' }] : PLANES_DE_INVITACION}
+                        />
                     </Form.Item>
                     <Form.Item name='vendedor_id' label='Vendedor asignado' rules={[{ required: true }]}>
                         <Select options={vendedorOptions} />
+                    </Form.Item>
+                    <Form.Item name='metodo_pago' label='Método de pago' rules={[{ required: true }]} extra='Pago digital no pide comprobante.'>
+                        <Select options={METODOS_DE_VENTA} />
                     </Form.Item>
                 </Form>
             </AdminModal>
@@ -574,7 +634,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     <Form.Item name='metodo' label='Método' rules={[{ required: true }]} initialValue='transferencia'>
                         <Select options={METODOS_PAGO} />
                     </Form.Item>
-                    <Form.Item label='Comprobante (opcional)'>
+                    {!esDigital(payingVenta) && <Form.Item label='Comprobante (opcional)'>
                         <Upload
                             beforeUpload={(file) => { setPayFile(file); return false }}
                             onRemove={() => setPayFile(null)}
@@ -583,7 +643,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         >
                             <Button icon={<UploadIcon size={14} />}>Subir foto o PDF</Button>
                         </Upload>
-                    </Form.Item>
+                    </Form.Item>}
                 </Form>
             </AdminModal>
 
@@ -603,17 +663,28 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             onSelect={handleSelectInvitation}
                             notFoundContent={searchingInvitations ? 'Buscando…' : 'Escribe al menos 3 letras'}
                             options={invitationOptions}
-                            placeholder='Buscar por evento o correo'
+                            placeholder='Buscar invitación o Evento Flash por nombre o correo'
                         />
                     </Form.Item>
                     <Form.Item name='vendedor_id' label='Vendedor' rules={[{ required: true }]}>
                         <Select options={vendedorOptions} />
                     </Form.Item>
-                    <Form.Item name='plan' label='Plan' rules={[{ required: true }]}>
-                        <Select options={[{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }]} />
+                    <Form.Item noStyle shouldUpdate={(a, b) => a.invitation_id !== b.invitation_id}>
+                        {({ getFieldValue }) => {
+                            const flash = String(getFieldValue('invitation_id') || '').startsWith('flash-')
+                            return (
+                                <Form.Item name='plan' label='Plan' rules={[{ required: true }]}
+                                    extra={flash ? 'Los Flash no pagan comisión a vendedores.' : undefined}>
+                                    <Select disabled={flash} options={flash ? [{ value: 'Flash', label: 'Flash' }] : PLANES_DE_INVITACION} />
+                                </Form.Item>
+                            )
+                        }}
                     </Form.Item>
                     <Form.Item name='precio_acordado' label='Precio acordado' rules={[{ required: true }]}>
                         <InputNumber style={{ width: '100%' }} min={0} />
+                    </Form.Item>
+                    <Form.Item name='metodo_pago' label='Método de pago' rules={[{ required: true }]} initialValue='transferencia' extra='Pago digital no pide comprobante.'>
+                        <Select options={METODOS_DE_VENTA} />
                     </Form.Item>
                     <Form.Item name='fecha_venta' label='Fecha de venta'>
                         <DatePicker style={{ width: '100%' }} />
@@ -700,7 +771,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                         <span className={`${styles.cell} ${styles.evento}`}>{venta.evento}</span>
                                         <span className={`${styles.cell} ${styles.vendedor}`}>{venta.vendedor || '—'}</span>
                                         <span className={styles.cell}>
-                                            <span className={`${styles.plan} ${venta.plan === 'Lite' ? styles.planLite : ''}`}>
+                                            <span className={`${styles.plan} ${venta.plan !== 'PRO' ? styles.planLite : ''}`}>
                                                 {venta.plan}
                                             </span>
                                         </span>
@@ -714,8 +785,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                                 {completo ? 'completo' : venta.estado_pago === 'apartado' ? 'apartado' : 'sin pago'}
                                             </span>
                                         </span>
-                                        <span className={`${styles.cell} ${faltaComprobante ? styles.comprobanteFalta : styles.comprobanteOk}`}>
-                                            {faltaComprobante ? 'falta' : 'ok'}
+                                        <span className={`${styles.cell} ${esDigital(venta) ? styles.celdaTenue : faltaComprobante ? styles.comprobanteFalta : styles.comprobanteOk}`}>
+                                            {esDigital(venta) ? 'digital' : faltaComprobante ? 'falta' : 'ok'}
                                         </span>
                                         <span className={styles.cell}>
                                             <Dropdown
@@ -786,7 +857,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <span className={iv.kpiLabel}>Ventas del mes</span>
                         <div className={iv.kpiLinea}>
                             <span className={iv.kpiValor}>{kpis.ventasCount}</span>
-                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite · {kpisAnuales.ventasCount} en {year}</span>
+                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite{kpis.flashCount ? ` · ${kpis.flashCount} Flash` : ''} · {kpisAnuales.ventasCount} en {year}</span>
                         </div>
                     </div>
                     <div className={iv.kpi}>
@@ -800,9 +871,22 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <span className={iv.kpiLabel}>Ingreso neto</span>
                         <div className={iv.kpiLinea}>
                             <span className={iv.kpiValor}>{formatCurrency(kpis.ingresoNeto)}</span>
-                            <span className={iv.kpiNota}>IVA {formatCurrency(kpis.iva)} · comisiones {formatCurrency(kpis.comisiones)}</span>
+                            <span className={iv.kpiNota}>IVA {formatCurrency(kpis.iva)} · {formatCurrency(kpisAnuales.ingresoNeto)} en {year}</span>
                         </div>
                     </div>
+                    {/* La diferencia entre lo cobrado y lo que queda, además del IVA. */}
+                    <Tooltip
+                        placement='bottom'
+                        title={`En ${year}: vendedores ${formatCurrency(kpisAnuales.comisiones)} · Stripe ${formatCurrency(kpisAnuales.comisionStripe)} · total ${formatCurrency(kpisAnuales.comisiones + kpisAnuales.comisionStripe)}`}
+                    >
+                        <div className={iv.kpi}>
+                            <span className={iv.kpiLabel}>Comisiones</span>
+                            <div className={iv.kpiLinea}>
+                                <span className={iv.kpiValor}>{formatCurrency(kpis.comisiones + kpis.comisionStripe)}</span>
+                                <span className={iv.kpiNota}>vendedores {formatCurrency(kpis.comisiones)} · Stripe {formatCurrency(kpis.comisionStripe)}</span>
+                            </div>
+                        </div>
+                    </Tooltip>
                     <Dropdown
                         trigger={['click']}
                         placement='bottomRight'
@@ -843,7 +927,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     <section className={iv.hero}>
                         <header className={iv.heroHead}>
                             <h2 className={iv.heroTitulo}>
-                                Ingreso {descontarIva ? 'neto' : 'sin IVA'} acumulado · {acumuladoModo === 'anio' ? year : MESES[month - 1].toLowerCase()}
+                                Ingreso {descontarIva ? 'neto' : 'con IVA'} acumulado · {acumuladoModo === 'anio' ? year : MESES[month - 1].toLowerCase()}
                             </h2>
                             <div className={iv.chipsOscuros}>{chipsDeAnios(aniosAcumulado, toggleAnioAcumulado, true)}</div>
                             <span className={iv.empuje} />
@@ -857,8 +941,8 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             </div>
                             <div className={iv.segOscuro} role='radiogroup' aria-label='IVA'>
                                 {[
-                                    [true, 'Neto', 'Descontando IVA y comisiones'],
-                                    [false, 'Sin IVA', 'Sin descontar IVA — la comisión sí se resta'],
+                                    [true, 'Neto', 'Descontando IVA, comisiones y Stripe'],
+                                    [false, 'Con IVA', 'Sin descontar el IVA — comisiones y Stripe sí se restan'],
                                 ].map(([valor, label, ayuda]) => (
                                     <Tooltip key={label} title={ayuda}>
                                         <button type='button' role='radio' aria-checked={descontarIva === valor}
@@ -878,6 +962,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                 total={acumulado.total}
                                 ingresoNeto={ingresoContraMeta}
                                 ingresoAnio={acumulado.total}
+                                desglose={desgloseAcumulado}
                                 // Siempre las del mes de la calculadora, aunque el panel
                                 // esté mostrando el año: los costos por venta son mensuales.
                                 ventasDelMes={ventasPorMes.get(`${year}-${month - 1}`) || 0}
@@ -923,15 +1008,22 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                             <div className={iv.ventaTexto}>
                                                 <div className={iv.ventaNombre}>
                                                     <b>{venta.evento}</b>
-                                                    <span className={venta.plan === 'Lite' ? iv.planLite : iv.planPro}>{venta.plan}</span>
+                                                    <span className={venta.plan !== 'PRO' ? iv.planLite : iv.planPro}>{venta.plan}</span>
                                                 </div>
                                                 <span className={iv.ventaMeta}>
                                                     {venta.vendedor || '—'} · {dayjs(venta.fecha_venta).format('D MMM')}
-                                                    {venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
+                                                    {esDigital(venta) ? ' · pago digital' : venta.abonos_sin_comprobante > 0 ? ' · sin comprobante' : ''}
                                                 </span>
                                             </div>
                                             <div className={iv.ventaMonto}>
-                                                <b>{formatCurrency(venta.precio_acordado)}</b>
+                                                {/* Lo que llega a la cuenta: en las de Stripe, sin su comisión. */}
+                                                {Number(venta.comision_stripe) > 0 ? (
+                                                    <Tooltip title={`Cobrado ${formatCurrency(venta.precio_acordado)} · Stripe −${formatCurrency(venta.comision_stripe)}`}>
+                                                        <b>{formatCurrency(venta.precio_acordado - venta.comision_stripe)}</b>
+                                                    </Tooltip>
+                                                ) : (
+                                                    <b>{formatCurrency(venta.precio_acordado)}</b>
+                                                )}
                                                 <span className={completo ? iv.estadoOk : iv.estadoDebe}>
                                                     {completo ? 'completo' : `${venta.estado_pago === 'apartado' ? 'apartado' : 'sin pago'} · debe ${formatCurrency(saldo)}`}
                                                 </span>
@@ -967,7 +1059,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
 
                 <div className={iv.filaBaja}>
                     <section className={`${iv.tarjeta} ${iv.grafica}`}>
-                        <h2 className={iv.label}>Proyección anual</h2>
+                        <h2 className={iv.label}>Proyección anual · {descontarIva ? 'neto' : 'con IVA'}</h2>
                         <div className={iv.graficaCifra}>
                             <span className={iv.cifra}>{formatCurrency(proyeccion.principal.cierreEstimado)}</span>
                             <span className={proyeccion.delta < 0 ? iv.deltaMal : iv.deltaOk}>
@@ -977,7 +1069,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             </span>
                         </div>
                         <span className={iv.graficaNota}>
-                            ≈ {proyeccion.principal.invitaciones} invitaciones · cierre estimado al ritmo de {proyeccion.principal.mesesCerrados} meses
+                            ≈ {proyeccion.principal.invitaciones} invitaciones · cierre estimado al ritmo de {proyeccion.principal.mesesCerrados.toLocaleString('es-MX')} meses
                         </span>
                         <div className={iv.chips}>{chipsDeAnios(aniosProyeccion, toggleAnioProyeccion)}</div>
                         <div className={iv.graficaLienzo}>
@@ -992,10 +1084,22 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             <span className={iv.cifra}>{barrasDelAnio?.total ?? 0}</span>
                             <span className={iv.graficaNota}>ventas en {year}</span>
                         </div>
-                        <span className={iv.graficaNota}>
-                            {barras.series.map(s => `${s.total} en ${s.anio}`).join(' · ')}
-                            {barras.series.length === 1 ? ` · ${formatCurrency(barras.series[0].neto)} neto` : ''}
-                        </span>
+                        {barras.series.length === 1 ? (
+                            // Un año: la leyenda de la pila por plan.
+                            <span className={`${iv.graficaNota} ${iv.leyendaPlanes}`}>
+                                {PLANES_DE_VENTA
+                                    .map(plan => [plan, barras.series[0].porPlan[plan].reduce((a, b) => a + b, 0)])
+                                    .filter(([, n]) => n > 0)
+                                    .map(([plan, n]) => (
+                                        <span key={plan}><i style={{ background: COLOR_POR_PLAN[plan] }} />{n} {plan}</span>
+                                    ))}
+                                <span>{formatCurrency(barras.series[0].neto)} {descontarIva ? 'neto' : 'con IVA'}</span>
+                            </span>
+                        ) : (
+                            <span className={iv.graficaNota}>
+                                {barras.series.map(s => `${s.total} en ${s.anio}`).join(' · ')}
+                            </span>
+                        )}
                         <div className={iv.chips}>{chipsDeAnios(aniosBarras, toggleAnioBarras)}</div>
                         <div className={iv.graficaLienzo}>
                             <BarrasPorMes series={barras.series} />
@@ -1003,7 +1107,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     </section>
 
                     <section className={`${iv.tarjeta} ${iv.grafica}`}>
-                        <h2 className={iv.label}>Comparativa anual</h2>
+                        <h2 className={iv.label}>Comparativa anual · {descontarIva ? 'neto' : 'con IVA'}</h2>
                         <div className={iv.totales}>
                             {totalesComparativa.map(t => (
                                 <div key={t.anio}>

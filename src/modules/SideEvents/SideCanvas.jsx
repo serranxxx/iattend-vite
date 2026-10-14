@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { CircleCheck, CircleX, CloudSun, ImagePlus, MapPin } from 'lucide-react'
+import { ItinerarioWidget } from './ItinerarioWidget'
 import { useTranslation } from 'react-i18next'
 import { darker } from '../../helpers/assets/functions'
-import { formatEventDateTime } from '../../helpers/assets/eventDateTime'
+import { itinerarioPorDia, lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
 
 /**
@@ -64,6 +65,8 @@ export const SideCanvas = ({
     readOnly = false,
     fullBleed = false,       // móvil: la pieza ocupa toda la pantalla
     liftBottom = 0,          // móvil: cuánto sube el contenido para librar la hoja
+    stickerSel = null,       // Flash: PNG seleccionado (StickersFlash)
+    onStickerSel,
 }) => {
 
     const { t } = useTranslation()
@@ -156,7 +159,8 @@ export const SideCanvas = ({
     // Mismo cálculo del tinte que el remoto. `darker` devuelve null si el hex
     // no trae los 6 dígitos, así que el default va completo.
     const themeColor = body.color || '#000000'
-    const tint = `${darker(themeColor, 0.8) ?? '#000000'}80`
+    // Con video no hay desenfoque detrás de las tarjetas: más opacas (85%).
+    const tint = `${darker(themeColor, 0.8) ?? '#000000'}${body.video ? 'D9' : '80'}`
 
     const pick = (section) => (e) => {
         if (readOnly) return
@@ -168,10 +172,47 @@ export const SideCanvas = ({
         ? base
         : `${base} ${styles.pickable} ${selected === section ? styles.picked : ''}`)
 
+    // PNG de un Flash (body.stickers, ver StickersFlash.jsx): se arrastran en
+    // la pieza; x/y en % de la capa (ancho y alto de la pantalla).
+    const stickers = Array.isArray(body.stickers) ? body.stickers : []
+    // Mientras se arrastra: líneas guía del centro. Cerca del centro (±1.5%)
+    // el PNG se imanta y la línea se marca.
+    const [guias, setGuias] = useState(null)
+    const IMAN = 1.5
+    const arrastrarSticker = (s) => (e) => {
+        if (readOnly) return
+        e.stopPropagation()
+        e.preventDefault()
+        onStickerSel?.(s.id)
+        onSelect('stickers')
+        const capa = e.currentTarget.parentElement.getBoundingClientRect()
+        const inicio = { px: e.clientX, py: e.clientY, x: s.x, y: s.y }
+        const limitar = (v) => Math.min(100, Math.max(0, Math.round(v * 10) / 10))
+        const imantar = (v) => (Math.abs(v - 50) <= IMAN ? 50 : v)
+        setGuias({ x: s.x === 50, y: s.y === 50 })
+        const mover = (ev) => {
+            const x = imantar(limitar(inicio.x + ((ev.clientX - inicio.px) / capa.width) * 100))
+            const y = imantar(limitar(inicio.y + ((ev.clientY - inicio.py) / capa.height) * 100))
+            setGuias({ x: x === 50, y: y === 50 })
+            onChange((prev) => ({
+                ...prev,
+                body: { ...prev.body, stickers: (prev.body?.stickers ?? []).map(o => (o.id === s.id ? { ...o, x, y } : o)) },
+            }))
+        }
+        const soltar = () => {
+            setGuias(null)
+            window.removeEventListener('pointermove', mover)
+            window.removeEventListener('pointerup', soltar)
+        }
+        window.addEventListener('pointermove', mover)
+        window.addEventListener('pointerup', soltar)
+    }
+
     const setName = (value) => onChange((prev) => ({ ...prev, name: value }))
     const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }))
 
-    const dateLabel = formatEventDateTime(body.hour, { state: address.state, timezone: body.timezone })
+    // Un Flash puede tener varias fechas: las de mismo mes y hora van juntas.
+    const dateLabels = lineasDeFechas(body, { state: address.state, timezone: body.timezone })
     const placeLabel = body.place_name
         || (address.street && address.number ? `${address.street} ${address.number}` : null)
     const regionLabel = !body.place_name && (address.state || address.country)
@@ -181,14 +222,17 @@ export const SideCanvas = ({
     return (
         <div
             ref={cardRef}
-            className={`${styles.card} ${fullBleed ? styles.cardFull : ''} ${readOnly ? styles.cardReadOnly : ''}`}
+            className={`${styles.card} ${fullBleed ? styles.cardFull : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
             style={{ '--blur-color': themeColor, '--blur-color--dark': tint }}
             onClick={() => { if (!readOnly) onSelect(null) }}
         >
 
             {/* ── Hero ── */}
             <div className={cls('background', styles.hero)} onClick={pick('background')}>
-                {body.image
+                {/* Flash con video de fondo: la imagen es su cuadro fijo. */}
+                {body.video
+                    ? <video src={body.video} poster={body.image || undefined} autoPlay muted loop playsInline preload='auto' className={styles.heroBg} />
+                    : body.image
                     ? <img src={body.image} alt='' className={styles.heroBg} />
                     : (
                         <div className={styles.heroEmpty}>
@@ -225,6 +269,41 @@ export const SideCanvas = ({
             {/* ── Columna de info, encima del hero ── */}
             <div ref={scrollRef} className={`${styles.scrollArea} scroll-invitation`}>
 
+                {/* PNG de un Flash sobre la portada: capa del alto de la
+                    pantalla que se mueve con la página; "detrás" queda entre
+                    el fondo y las tarjetas. Se arrastran para acomodarlos. */}
+                {/* Guías del centro mientras se arrastra un PNG */}
+                {guias && (
+                    <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`}>
+                        <span className={`${styles.guiaV} ${guias.x ? styles.guiaActiva : ''}`} />
+                        <span className={`${styles.guiaH} ${guias.y ? styles.guiaActiva : ''}`} />
+                    </div>
+                )}
+
+                {stickers.length > 0 && ['back', 'front'].map(capa => (
+                    <div key={capa} aria-hidden className={`${styles.stickersCapa} ${capa === 'back' ? styles.stickersAtras : styles.stickersDelante}`}>
+                        {stickers.filter(s => (s.z === 'back' ? 'back' : 'front') === capa).map(s => (
+                            <img
+                                key={s.id}
+                                src={s.url}
+                                alt=''
+                                draggable={false}
+                                className={`${styles.sticker} ${!readOnly && stickerSel === s.id ? styles.stickerSel : ''}`}
+                                style={{
+                                    left: `${s.x}%`,
+                                    top: `${s.y}%`,
+                                    width: `${s.w}%`,
+                                    transform: `translate(-50%, -50%) rotate(${s.rot ?? 0}deg)`,
+                                    opacity: s.opacity ?? 1,
+                                    pointerEvents: readOnly ? 'none' : 'auto',
+                                }}
+                                onPointerDown={arrastrarSticker(s)}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ))}
+                    </div>
+                ))}
+
                 {/* Hueco transparente: deja ver el hero, y tocarlo también lo selecciona */}
                 <div className={styles.heroGap} onClick={pick('background')} />
 
@@ -256,8 +335,8 @@ export const SideCanvas = ({
 
                     {/* Fecha */}
                     <div className={cls('date', styles.col)} data-zone='date' onClick={pick('date')}>
-                        {dateLabel
-                            ? <span>{dateLabel}</span>
+                        {dateLabels.length
+                            ? dateLabels.map(label => <span key={label}>{label}</span>)
                             : <span className={styles.colMuted}>{t('side_events.datetime_label')}</span>
                         }
                     </div>
@@ -283,7 +362,25 @@ export const SideCanvas = ({
                         </span>
                     </div>
 
-                    {/* Notas */}
+                    {/* Itinerario de un Flash: el mismo widget que el remoto, arriba de Cómo llegar. */}
+                    {itinerarioPorDia(body).length > 0 &&
+                        <div className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
+                            <ItinerarioWidget body={body} />
+                        </div>
+                    }
+
+                    {/* Mapa: aparece igual que en el remoto, solo con dirección completa */}
+                    {hasFullAddress(address) &&
+                        <div className={cls('place', `${styles.block} ${styles.mapBlock}`)} onClick={pick('place')}>
+                            <span className={styles.mapLabel}>{t('side_events.canvas_map')}</span>
+                            <div className={styles.mapPreview}>
+                                <MapPin size={16} />
+                                <span>{[address.street, address.number, address.city].filter(Boolean).join(' ')}</span>
+                            </div>
+                        </div>
+                    }
+
+                    {/* Notas: debajo de Cómo llegar */}
                     <div className={cls('extras', styles.block)} data-zone='extras' onClick={pick('extras')}>
                         <div
                             className={styles.extrasInput}
@@ -296,17 +393,6 @@ export const SideCanvas = ({
                             {initialExtras}
                         </div>
                     </div>
-
-                    {/* Mapa: aparece igual que en el remoto, solo con dirección completa */}
-                    {hasFullAddress(address) &&
-                        <div className={cls('place', `${styles.block} ${styles.mapBlock}`)} onClick={pick('place')}>
-                            <span className={styles.mapLabel}>{t('side_events.canvas_map')}</span>
-                            <div className={styles.mapPreview}>
-                                <MapPin size={16} />
-                                <span>{[address.street, address.number, address.city].filter(Boolean).join(' ')}</span>
-                            </div>
-                        </div>
-                    }
 
                     {/* Clima: mismo criterio que el remoto (ciudad y no oculto).
                         Se edita desde Lugar, que es lo que lo condiciona. */}

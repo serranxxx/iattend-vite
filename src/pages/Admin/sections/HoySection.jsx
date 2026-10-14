@@ -4,7 +4,7 @@ import 'dayjs/locale/es'
 import { ChevronDown } from 'lucide-react'
 import { fetchAdminVentas } from '../salesAdminApi'
 import { fetchGastosFijos, sumarMeta } from '../gastosFijosApi'
-import { fetchStripeComisiones, fetchStripeResumen } from '../stripeAdminApi'
+import { fetchStripeResumen } from '../stripeAdminApi'
 import { calcularCargosPorVenta, calcularKpis, formatCurrency, netoDeVenta } from '../ventasCalculos'
 import { useContador } from '../useContador'
 import { ReportesCard, SaveTheDateCard } from './HoyActividad'
@@ -104,7 +104,6 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
     const [ventasPorAnio, setVentasPorAnio] = useState({})
     const [gastos, setGastos] = useState(null)
     // Comisión de Stripe del mes por día ({ 'YYYY-MM-DD': monto }).
-    const [stripePorDia, setStripePorDia] = useState({})
     const [stripe, setStripe] = useState(null)
 
     const fecha = dayjs(`${mes}-01`)
@@ -128,11 +127,6 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
         fetchGastosFijos(periodo)
             .then(({ data }) => { if (!cancelado) setGastos(data.gastos) })
             .catch(error => console.error('Error al cargar los gastos fijos:', error))
-        // Aparte: si Stripe no responde, Hoy se ve igual, solo sin descontarla.
-        setStripePorDia({})
-        fetchStripeComisiones(periodo)
-            .then(({ data }) => { if (!cancelado) setStripePorDia(data.porDia ?? {}) })
-            .catch(error => console.error('No se pudo leer la comisión de Stripe:', error.response?.data || error.message))
         return () => { cancelado = true }
     }, [periodo])
 
@@ -161,8 +155,8 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
         return { monto: detalle.reduce((acc, v) => acc + Number(v.saldo_pendiente || 0), 0), detalle }
     }, [ventasAnioEnCurso])
 
-    const comisionStripe = Object.values(stripePorDia).reduce((acc, v) => acc + v, 0)
-    const ingreso = (conIva ? kpis.ingresoNeto + kpis.iva : kpis.ingresoNeto) - comisionStripe
+    // Lo de Stripe ya viene descontado por venta (comision_stripe del pago).
+    const ingreso = conIva ? kpis.ingresoNeto + kpis.iva : kpis.ingresoNeto
     const meta = gastos ? sumarMeta(gastos, kpis.ventasCount) : 0
     const avance = meta > 0 ? ingreso / meta : 0
 
@@ -174,10 +168,6 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
     // Neto acumulado día por día.
     const serie = useMemo(() => {
         const porDia = Array(diasTranscurridos).fill(0)
-        Object.entries(stripePorDia).forEach(([dia, monto]) => {
-            const d = Number(dia.slice(8, 10))
-            if (d <= diasTranscurridos) porDia[d - 1] -= monto
-        })
         ventas.forEach(v => {
             const d = new Date(v.fecha_venta).getDate()
             if (d <= diasTranscurridos) {
@@ -185,7 +175,7 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
             }
         })
         return porDia.reduce((acc, valor, i) => [...acc, (acc[i - 1] ?? 0) + valor], [])
-    }, [ventas, cargosPorVenta, diasTranscurridos, conIva, stripePorDia])
+    }, [ventas, cargosPorVenta, diasTranscurridos, conIva])
 
     const ventasOrdenadas = useMemo(
         () => [...ventas].sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta)),

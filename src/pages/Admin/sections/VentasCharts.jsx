@@ -13,7 +13,7 @@
 
 import { Bar, Line } from 'react-chartjs-2'
 import { MESES, formatCurrency } from '../ventasCalculos'
-import { COLOR_POR_ANIO, MARCA, ejeYOculto, opcionesBase, tooltipBase, tooltipOscuro, useTokens } from '../adminCharts'
+import { COLOR_POR_ANIO, COLOR_POR_PLAN, MARCA, PLANES_DE_VENTA, ejeYOculto, opcionesBase, tooltipBase, tooltipOscuro, useTokens } from '../adminCharts'
 import styles from './VentasSection.module.css'
 
 const MESES_CORTOS = MESES.map(m => m.slice(0, 3))
@@ -223,10 +223,12 @@ export const ComparativaChart = ({ series }) => {
 // El mock pone el número encima de cada barra; chart.js no lo hace de fábrica.
 // Con varios años las barras se agrupan y quedan muy angostas: ahí los números
 // se encimarían, así que solo se dibujan cuando hay un año seleccionado.
+// Con barras apiladas (un año, por plan) la cifra va arriba de la pila completa.
 const etiquetasSobreBarras = {
     id: 'etiquetasSobreBarras',
     afterDatasetsDraw(chart, _args, opciones) {
-        if (chart.data.datasets.length !== 1) return
+        const apiladas = Boolean(opciones?.apiladas)
+        if (!apiladas && chart.data.datasets.length !== 1) return
 
         const { ctx } = chart
         ctx.save()
@@ -235,33 +237,60 @@ const etiquetasSobreBarras = {
         ctx.textAlign = 'center'
         ctx.textBaseline = 'bottom'
 
+        const total = (i) => chart.data.datasets.reduce((acc, ds) => acc + (Number(ds.data[i]) || 0), 0)
         chart.getDatasetMeta(0).data.forEach((barra, i) => {
-            const valor = chart.data.datasets[0].data[i]
+            const valor = apiladas ? total(i) : chart.data.datasets[0].data[i]
             if (!valor) return
-            ctx.fillText(String(valor), barra.x, barra.y - 5)
+            // La punta de la pila: el y más alto (menor) entre los segmentos.
+            const y = apiladas
+                ? Math.min(...chart.data.datasets.map((_, d) => chart.getDatasetMeta(d).data[i]?.y ?? Infinity))
+                : barra.y
+            ctx.fillText(String(valor), barra.x, y - 5)
         })
 
         ctx.restore()
     },
 }
 
-// Un año: barras lila con el mes en curso en navy. Varios años: un color por
-// año (navy / lila / verde).
+// Un año: barras apiladas por plan (PRO navy, Lite lila, Flash verde) con el
+// total arriba. Varios años: un color por año (navy / lila / verde).
 export const BarrasPorMes = ({ series }) => {
     const tokens = useTokens()
-    const mesActual = new Date().getMonth()
-    const anioActual = new Date().getFullYear()
+    const apiladas = series.length === 1 && Boolean(series[0].porPlan)
+
+    // Solo la punta de cada pila lleva las esquinas redondeadas.
+    const radioDeLaPunta = (dsIndex) => (contexto) => {
+        const i = contexto.dataIndex
+        const datasets = contexto.chart.data.datasets
+        const arriba = datasets.findLastIndex(ds => Number(ds.data[i]) > 0)
+        return dsIndex === arriba
+            ? { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 }
+            : 0
+    }
+
+    const datasetsApilados = apiladas
+        ? PLANES_DE_VENTA
+            .filter(plan => series[0].porPlan[plan]?.some(Boolean))
+            .map((plan, dsIndex) => ({
+                label: plan,
+                data: series[0].porPlan[plan],
+                backgroundColor: COLOR_POR_PLAN[plan],
+                hoverBackgroundColor: COLOR_POR_PLAN[plan],
+                borderRadius: radioDeLaPunta(dsIndex),
+                borderSkipped: false,
+                maxBarThickness: 34,
+                stack: 'plan',
+            }))
+        : null
 
     return (
         <div className={styles.bars}>
             <Bar
                 data={{
                     labels: MESES_CORTOS,
-                    datasets: series.map(serie => {
+                    datasets: datasetsApilados ?? series.map(serie => {
                         const estilo = ESTILO_SERIE[serie.estilo] ?? ESTILO_SERIE.previo
-                        const color = series.length === 1
-                            ? serie.valores.map((_, i) => (serie.anio === anioActual && i === mesActual ? MARCA.navy : MARCA.lila))
-                            : estilo.color
+                        const color = series.length === 1 ? MARCA.lila : estilo.color
 
                         return {
                             label: String(serie.anio),
@@ -278,12 +307,14 @@ export const BarrasPorMes = ({ series }) => {
                     ...opcionesBase,
                     // Con barras agrupadas conviene el modo índice: el tooltip
                     // compara los años del mismo mes de un solo hover.
-                    interaction: series.length > 1
+                    // Apiladas también: un hover muestra los planes del mes.
+                    interaction: series.length > 1 || apiladas
                         ? { mode: 'index', intersect: false }
                         : { mode: 'nearest', intersect: true },
                     layout: { padding: { top: 18 } },
                     scales: {
                         x: {
+                            stacked: apiladas,
                             border: { display: false },
                             grid: { display: false },
                             ticks: {
@@ -294,15 +325,17 @@ export const BarrasPorMes = ({ series }) => {
                                 autoSkip: false,
                             },
                         },
-                        y: { display: false, beginAtZero: true },
+                        y: { display: false, beginAtZero: true, stacked: apiladas },
                     },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
                             ...tooltipBase(tokens, (v) => `${v} ${v === 1 ? 'venta' : 'ventas'}`),
-                            displayColors: series.length > 1,
+                            displayColors: series.length > 1 || apiladas,
+                            // En apiladas, un plan sin ventas ese mes no aparece.
+                            filter: (item) => !apiladas || Number(item.raw) > 0,
                         },
-                        etiquetasSobreBarras: { color: tokens.ink },
+                        etiquetasSobreBarras: { color: tokens.ink, apiladas },
                     },
                 }}
                 plugins={[etiquetasSobreBarras]}

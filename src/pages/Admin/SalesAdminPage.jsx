@@ -453,13 +453,14 @@ export const SalesAdminPage = ({ forcedView, hideToggle = false } = {}) => {
                             <div>
                                 <div>IVA: {formatCurrency(kpis.iva)}</div>
                                 <div>Comisiones: {formatCurrency(kpis.comisiones)}</div>
+                                {kpis.comisionStripe > 0 && <div>Stripe: {formatCurrency(kpis.comisionStripe)}</div>}
                             </div>
                         }
                     >
                         <div className={`${styles.statCard} ${styles.statCardHover}`}>
                             <div className={styles.statLabel}>Ingreso neto</div>
                             <div className={styles.statValue}>{formatCurrency(kpis.ingresoNeto)}</div>
-                            <div className={styles.statSub}>bruto − IVA − comisiones</div>
+                            <div className={styles.statSub}>bruto − IVA − comisiones − Stripe</div>
                         </div>
                     </Tooltip>
                     <div className={`${styles.statCard} ${styles.statCardWarn}`}>

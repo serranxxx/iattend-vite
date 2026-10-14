@@ -22,7 +22,7 @@ const GUARDADO_DEBOUNCE_MS = 800
  *   año transcurrida.
  * `total` es la cifra grande (el acumulado que dibuja la gráfica).
  */
-export const MetaDelMes = ({ anio, mes, ingresoNeto, ingresoAnio = 0, total = 0, modo = 'mes', ventasDelMes = 0, netoPromedio, onMetaChange }) => {
+export const MetaDelMes = ({ anio, mes, ingresoNeto, ingresoAnio = 0, total = 0, desglose, modo = 'mes', ventasDelMes = 0, netoPromedio, onMetaChange }) => {
     const [gastos, setGastos] = useState(null)
     const [abierta, setAbierta] = useState(false)
 
@@ -231,7 +231,10 @@ export const MetaDelMes = ({ anio, mes, ingresoNeto, ingresoAnio = 0, total = 0,
     return (
         <div className={iv.heroIzq}>
             <div className={iv.heroArriba}>
-                <span className={iv.heroTotal}>{formatCurrency(total)}</span>
+                {/* Cómo se llega del bruto a esta cifra: arriba el KPI es el bruto. */}
+                <Tooltip title={desglose} placement='bottomLeft'>
+                    <span className={iv.heroTotal} style={desglose ? { cursor: 'help' } : undefined}>{formatCurrency(total)}</span>
+                </Tooltip>
                 <span className={iv.heroDe}>
                     {gastos
                         ? `de ${formatCurrency(metaVista)} · punto de equilibrio del ${enAnio ? 'año' : 'mes'}`

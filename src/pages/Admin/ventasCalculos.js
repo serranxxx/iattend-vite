@@ -17,7 +17,9 @@ export const IVA_RATE = 0.16
 // Comisión por plan. Paperless va explícito en 0 y no por el mínimo de monto:
 // hoy cuesta $899 y el mínimo lo excluye solo, pero si algún día sube de $1,000
 // empezaría a comisionar sin que nadie lo decidiera.
-const COMISION_POR_PLAN = { PRO: 1000, Lite: 750, Paperless: 0 }
+// Flash (Eventos Flash de planners) no comisiona a nadie ni cuenta para los
+// hitos del bono; si se compró con Stripe, solo se descuenta lo de Stripe.
+const COMISION_POR_PLAN = { PRO: 1000, Lite: 750, Paperless: 0, Flash: 0 }
 const COMISION_POR_DEFECTO = 1000
 const COMISION_MONTO_MINIMO = 1000
 
@@ -41,7 +43,9 @@ export const formatCurrency = (value) =>
 const comisionBaseVenta = (venta) =>
     COMISION_POR_PLAN[venta.plan] ?? COMISION_POR_DEFECTO
 
-// Devuelve un Map<venta_id, { bruto, iva, comision }>. Las ventas elegibles
+// Devuelve un Map<venta_id, { bruto, iva, comision, stripe }>. `stripe` es lo
+// que se quedó Stripe de los pagos en línea (cargo + MSI + Climate, con IVA; lo
+// calcula el backend), así el neto es lo que llega a la cuenta. Las ventas elegibles
 // (posteriores al corte y con precio_acordado >= $1,000) se agrupan de dos formas:
 // por vendedor + mes calendario (para el conteo de "primeras 3" de Paulina), y por
 // mes calendario general (para los hitos de bono, que dependen del total de la
@@ -55,20 +59,22 @@ export const calcularCargosPorVenta = (ventas) => {
     ventas.forEach(v => {
         const fecha = new Date(v.fecha_venta)
         const bruto = Number(v.precio_acordado || 0)
+        const stripe = Number(v.comision_stripe || 0)
 
         if (fecha < CUTOFF_IVA_COMISION) {
-            cargosPorVentaId.set(v.venta_id, { bruto, iva: 0, comision: 0 })
+            cargosPorVentaId.set(v.venta_id, { bruto, iva: 0, comision: 0, stripe })
             return
         }
 
         const iva = bruto - bruto / (1 + IVA_RATE)
-        cargosPorVentaId.set(v.venta_id, { bruto, iva, comision: 0 })
+        cargosPorVentaId.set(v.venta_id, { bruto, iva, comision: 0, stripe })
 
         if (bruto < COMISION_MONTO_MINIMO) return
 
         // Ecommerce (compras en línea con Stripe) no comisiona ni cuenta para
         // los hitos del bono: no la vendió nadie.
         if (v.vendedor_tipo === 'ecommerce') return
+        if (v.plan === 'Flash') return
 
         const mesKey = `${fecha.getFullYear()}-${fecha.getMonth()}`
 
@@ -112,31 +118,37 @@ export const calcularKpis = (ventas, cargosPorVenta) => {
     let ingresoBruto = 0
     let iva = 0
     let comisiones = 0
+    let comisionStripe = 0
 
     ventas.forEach(v => {
-        const cargos = cargosPorVenta.get(v.venta_id) || { bruto: 0, iva: 0, comision: 0 }
+        const cargos = cargosPorVenta.get(v.venta_id) || { bruto: 0, iva: 0, comision: 0, stripe: 0 }
         ingresoBruto += cargos.bruto
         iva += cargos.iva
         comisiones += cargos.comision
+        comisionStripe += cargos.stripe
     })
 
     return {
         ventasCount: ventas.length,
         proCount: ventas.filter(v => v.plan === 'PRO').length,
         liteCount: ventas.filter(v => v.plan === 'Lite').length,
+        flashCount: ventas.filter(v => v.plan === 'Flash').length,
         ingresoBruto,
         iva,
         comisiones,
-        ingresoNeto: ingresoBruto - iva - comisiones,
-        saldoPendiente: ventas.reduce((acc, v) => acc + Number(v.saldo_pendiente || 0), 0),
+        comisionStripe,
+        ingresoNeto: ingresoBruto - iva - comisiones - comisionStripe,
+        // Solo lo que se debe: una venta pagada de más (saldo negativo) no
+        // descuenta lo que deben las demás.
+        saldoPendiente: ventas.reduce((acc, v) => acc + Math.max(0, Number(v.saldo_pendiente || 0)), 0),
         ventasConApartado: ventas.filter(v => v.estado_pago === 'apartado').length,
     }
 }
 
-// Neto real de una venta: lo cobrado menos IVA y comisión.
+// Neto real de una venta: lo cobrado menos IVA, comisión y lo de Stripe.
 export const netoDeVenta = (venta, cargosPorVenta) => {
     const c = cargosPorVenta.get(venta.venta_id)
-    return c ? c.bruto - c.iva - c.comision : 0
+    return c ? c.bruto - c.iva - c.comision - c.stripe : 0
 }
 
 // Promedio de neto por venta de un conjunto. Es lo que reemplaza al "neto por
