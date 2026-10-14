@@ -1,18 +1,20 @@
-import { Dropdown, Input, Select } from 'antd'
+import { useMemo, useState } from 'react'
+import { Dropdown, Input, Segmented, Select } from 'antd'
 import { GripVertical, Plus, X } from 'lucide-react'
-import { LuBadgeHelp } from 'react-icons/lu'
+import { DynamicIcon, iconNames } from 'lucide-react/dynamic'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { iconsItinerary } from '../../helpers/services/menuIcons'
+import { IconoMomento, PREFIJO_LUCIDE } from './IconoMomento'
 import ed from './SideEventEditor.module.css'
 
 /*
   Mini itinerario de un Evento Flash (panel del editor). Bloques { id, name,
-  time "HH:mm", icon (índice de iconsItinerary, el catálogo del itinerario de
-  la invitación), date "YYYY-MM-DD" solo si el Flash tiene varias fechas }.
+  time "HH:mm", icon (número de iconsItinerary, el catálogo del itinerario de
+  la invitación, o "lucide:<nombre>"; ver IconoMomento.jsx), date "YYYY-MM-DD" solo si el Flash tiene varias fechas }.
 
   El orden es el de la lista: se acomoda arrastrando la manija (⋮⋮) y así se
   muestra (itinerarioPorDia en helpers/assets/eventDateTime.js). La manija es
@@ -21,9 +23,73 @@ import ed from './SideEventEditor.module.css'
 
 const MAX_MOMENTOS = 12
 
-const iconoDe = (index, size = 18) => {
-    const Icono = iconsItinerary.find(i => i.index === index)?.value
-    return Icono ? <Icono size={size} /> : <LuBadgeHelp size={size} />
+// Lucide tiene ~1,600 íconos: se muestran los que coinciden con la búsqueda
+// (nombres en inglés), hasta este tope, para no pintar todos a la vez.
+const MAX_RESULTADOS = 120
+
+// Selector de ícono: los clásicos del itinerario o cualquiera de Lucide.
+const SelectorIcono = ({ actual, onElegir }) => {
+    const { t } = useTranslation()
+    const [catalogo, setCatalogo] = useState(typeof actual === 'string' && actual.startsWith(PREFIJO_LUCIDE) ? 'lucide' : 'clasicos')
+    const [busqueda, setBusqueda] = useState('')
+
+    const resultados = useMemo(() => {
+        const q = busqueda.trim().toLowerCase().replace(/\s+/g, '-')
+        return (q ? iconNames.filter(n => n.includes(q)) : iconNames).slice(0, MAX_RESULTADOS)
+    }, [busqueda])
+
+    return (
+        <div className={ed.iconosPanel} onClick={(e) => e.stopPropagation()}>
+            <Segmented
+                block
+                size='small'
+                value={catalogo}
+                onChange={setCatalogo}
+                options={[
+                    { value: 'clasicos', label: t('side_events.icons_classic') },
+                    { value: 'lucide', label: 'Lucide' },
+                ]}
+            />
+            {catalogo === 'lucide' && (
+                <Input
+                    size='small'
+                    allowClear
+                    autoFocus
+                    placeholder={t('side_events.icons_search')}
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                />
+            )}
+            <div className={ed.iconosGrid}>
+                {catalogo === 'clasicos'
+                    ? iconsItinerary.map((icono) => (
+                        <button
+                            type='button'
+                            key={icono.index}
+                            className={`${ed.iconoOpcion} ${actual === icono.index ? ed.iconoOpcionActivo : ''}`}
+                            onClick={() => onElegir(icono.index)}
+                        >
+                            <icono.value size={18} />
+                        </button>
+                    ))
+                    : resultados.map((nombre) => (
+                        <button
+                            type='button'
+                            key={nombre}
+                            title={nombre}
+                            className={`${ed.iconoOpcion} ${actual === PREFIJO_LUCIDE + nombre ? ed.iconoOpcionActivo : ''}`}
+                            onClick={() => onElegir(PREFIJO_LUCIDE + nombre)}
+                        >
+                            <DynamicIcon name={nombre} size={18} />
+                        </button>
+                    ))
+                }
+                {catalogo === 'lucide' && !resultados.length && (
+                    <span className={ed.iconosVacio}>{t('side_events.icons_empty')}</span>
+                )}
+            </div>
+        </div>
+    )
 }
 
 const Momento = ({ momento: m, dias, onCambiar, onQuitar }) => {
@@ -50,23 +116,10 @@ const Momento = ({ momento: m, dias, onCambiar, onQuitar }) => {
             <Dropdown
                 trigger={['click']}
                 placement='bottomLeft'
-                popupRender={() => (
-                    <div className={ed.iconosGrid}>
-                        {iconsItinerary.map((icono) => (
-                            <button
-                                type='button'
-                                key={icono.index}
-                                className={`${ed.iconoOpcion} ${m.icon === icono.index ? ed.iconoOpcionActivo : ''}`}
-                                onClick={() => onCambiar({ icon: icono.index })}
-                            >
-                                <icono.value size={18} />
-                            </button>
-                        ))}
-                    </div>
-                )}
+                popupRender={() => <SelectorIcono actual={m.icon} onElegir={(icon) => onCambiar({ icon })} />}
             >
                 <button type='button' className={ed.momentoIcono} aria-label={t('side_events.itinerary_icon')}>
-                    {iconoDe(m.icon)}
+                    <IconoMomento icon={m.icon} />
                 </button>
             </Dropdown>
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { CircleCheck, CircleX, CloudSun, ImagePlus, MapPin } from 'lucide-react'
-import { LuBadgeHelp } from 'react-icons/lu'
-import { iconsItinerary } from '../../helpers/services/menuIcons'
+import { IconoMomento } from './IconoMomento'
 import { useTranslation } from 'react-i18next'
 import { darker } from '../../helpers/assets/functions'
 import { itinerarioPorDia, lineasDeFechas } from '../../helpers/assets/eventDateTime'
@@ -310,16 +309,13 @@ export const SideCanvas = ({
                             {itinerarioPorDia(body).map(grupo => (
                                 <div className={styles.itineraryDia} key={grupo.dia ?? 'unico'}>
                                     {grupo.titulo && <span className={styles.itineraryDiaTitulo}>{grupo.titulo}</span>}
-                                    {grupo.momentos.map(m => {
-                                        const Icono = iconsItinerary.find(i => i.index === m.icon)?.value ?? LuBadgeHelp
-                                        return (
-                                            <div className={styles.itineraryMomento} key={m.id}>
-                                                <span className={styles.itineraryIcono}><Icono size={18} /></span>
-                                                <span className={styles.itineraryNombre}>{m.name}</span>
-                                                {m.time && <span className={styles.itineraryHora}>{m.time}</span>}
-                                            </div>
-                                        )
-                                    })}
+                                    {grupo.momentos.map(m => (
+                                        <div className={styles.itineraryMomento} key={m.id}>
+                                            <span className={styles.itineraryIcono}><IconoMomento icon={m.icon} /></span>
+                                            <span className={styles.itineraryNombre}>{m.name}</span>
+                                            {m.time && <span className={styles.itineraryHora}>{m.time}</span>}
+                                        </div>
+                                    ))}
                                 </div>
                             ))}
                         </div>
