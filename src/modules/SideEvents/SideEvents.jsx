@@ -24,8 +24,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, ImagePlus, Info, Landmark, Link2, ListOrdered, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, Shapes, ImagePlus, Info, Landmark, Link2, ListOrdered, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
 import { ItinerarioFlash } from './ItinerarioFlash'
+import { StickersFlash } from './StickersFlash'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -2663,6 +2664,8 @@ export const SideEvents = () => {
     )
 
     /* ── Atajos de escritura sobre `current` ── */
+    // PNG seleccionado de un Flash: lo comparten la pieza (arrastrar) y el panel.
+    const [stickerSel, setStickerSel] = useState(null)
     // Imagen o video de fondo de un Flash; null = lo que diga el evento.
     const [modoFondoElegido, setModoFondoElegido] = useState(null)
     const setBody = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, ...patch } }))
@@ -2994,7 +2997,22 @@ export const SideEvents = () => {
         </>
     )
 
+    // PNG sobre la portada de un Flash (StickersFlash.jsx).
+    const panelStickers = (
+        <>
+            {blockHead(<Shapes size={16} />, t('side_events.panel_stickers'), t('side_events.panel_stickers_hint'))}
+            <StickersFlash
+                stickers={Array.isArray(current?.body?.stickers) ? current.body.stickers : []}
+                onChange={(lista) => setBody({ stickers: lista.length ? lista : null })}
+                seleccionado={stickerSel}
+                onSeleccionar={setStickerSel}
+                carpeta={`flash-${flashId}`}
+            />
+        </>
+    )
+
     const PANELS = {
+        stickers: panelStickers,
         itinerary: panelItinerary,
         background: panelBackground,
         color: panelColor,
@@ -3012,7 +3030,10 @@ export const SideEvents = () => {
         { key: 'place', icon: <Landmark size={18} />, label: t('side_events.panel_place'), short: t('side_events.dock_place') },
         { key: 'extras', icon: <StickyNote size={18} />, label: t('side_events.panel_notes'), short: t('side_events.dock_notes') },
         // El mini itinerario es solo de los Flash.
-        ...(esFlash ? [{ key: 'itinerary', icon: <ListOrdered size={18} />, label: t('side_events.panel_itinerary'), short: t('side_events.dock_itinerary') }] : []),
+        ...(esFlash ? [
+            { key: 'itinerary', icon: <ListOrdered size={18} />, label: t('side_events.panel_itinerary'), short: t('side_events.dock_itinerary') },
+            { key: 'stickers', icon: <Shapes size={18} />, label: t('side_events.panel_stickers'), short: t('side_events.dock_stickers') },
+        ] : []),
     ]
 
     /* ── Lienzo flotante: se comparte entre Diseño y Envío ── */
@@ -3065,6 +3086,8 @@ export const SideEvents = () => {
                             selected={section}
                             onSelect={setSection}
                             readOnly={activeTab !== 'diseno'}
+                            stickerSel={stickerSel}
+                            onStickerSel={setStickerSel}
                         />
                     </div>
                 </div>
@@ -3842,6 +3865,8 @@ export const SideEvents = () => {
                                         onSelect={setSection}
                                         fullBleed
                                         liftBottom={contentLift}
+                                        stickerSel={stickerSel}
+                                        onStickerSel={setStickerSel}
                                     />
                                 )
                             }

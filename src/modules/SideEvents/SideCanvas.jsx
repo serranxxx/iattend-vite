@@ -65,6 +65,8 @@ export const SideCanvas = ({
     readOnly = false,
     fullBleed = false,       // móvil: la pieza ocupa toda la pantalla
     liftBottom = 0,          // móvil: cuánto sube el contenido para librar la hoja
+    stickerSel = null,       // Flash: PNG seleccionado (StickersFlash)
+    onStickerSel,
 }) => {
 
     const { t } = useTranslation()
@@ -169,6 +171,34 @@ export const SideCanvas = ({
         ? base
         : `${base} ${styles.pickable} ${selected === section ? styles.picked : ''}`)
 
+    // PNG de un Flash (body.stickers, ver StickersFlash.jsx): se arrastran en
+    // la pieza; x/y en % de la capa (ancho y alto de la pantalla).
+    const stickers = Array.isArray(body.stickers) ? body.stickers : []
+    const arrastrarSticker = (s) => (e) => {
+        if (readOnly) return
+        e.stopPropagation()
+        e.preventDefault()
+        onStickerSel?.(s.id)
+        onSelect('stickers')
+        const capa = e.currentTarget.parentElement.getBoundingClientRect()
+        const inicio = { px: e.clientX, py: e.clientY, x: s.x, y: s.y }
+        const limitar = (v) => Math.min(100, Math.max(0, Math.round(v * 10) / 10))
+        const mover = (ev) => {
+            const x = limitar(inicio.x + ((ev.clientX - inicio.px) / capa.width) * 100)
+            const y = limitar(inicio.y + ((ev.clientY - inicio.py) / capa.height) * 100)
+            onChange((prev) => ({
+                ...prev,
+                body: { ...prev.body, stickers: (prev.body?.stickers ?? []).map(o => (o.id === s.id ? { ...o, x, y } : o)) },
+            }))
+        }
+        const soltar = () => {
+            window.removeEventListener('pointermove', mover)
+            window.removeEventListener('pointerup', soltar)
+        }
+        window.addEventListener('pointermove', mover)
+        window.addEventListener('pointerup', soltar)
+    }
+
     const setName = (value) => onChange((prev) => ({ ...prev, name: value }))
     const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }))
 
@@ -229,6 +259,33 @@ export const SideCanvas = ({
 
             {/* ── Columna de info, encima del hero ── */}
             <div ref={scrollRef} className={`${styles.scrollArea} scroll-invitation`}>
+
+                {/* PNG de un Flash sobre la portada: capa del alto de la
+                    pantalla que se mueve con la página; "detrás" queda entre
+                    el fondo y las tarjetas. Se arrastran para acomodarlos. */}
+                {stickers.length > 0 && ['back', 'front'].map(capa => (
+                    <div key={capa} aria-hidden className={`${styles.stickersCapa} ${capa === 'back' ? styles.stickersAtras : styles.stickersDelante}`}>
+                        {stickers.filter(s => (s.z === 'back' ? 'back' : 'front') === capa).map(s => (
+                            <img
+                                key={s.id}
+                                src={s.url}
+                                alt=''
+                                draggable={false}
+                                className={`${styles.sticker} ${!readOnly && stickerSel === s.id ? styles.stickerSel : ''}`}
+                                style={{
+                                    left: `${s.x}%`,
+                                    top: `${s.y}%`,
+                                    width: `${s.w}%`,
+                                    transform: `translate(-50%, -50%) rotate(${s.rot ?? 0}deg)`,
+                                    opacity: s.opacity ?? 1,
+                                    pointerEvents: readOnly ? 'none' : 'auto',
+                                }}
+                                onPointerDown={arrastrarSticker(s)}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ))}
+                    </div>
+                ))}
 
                 {/* Hueco transparente: deja ver el hero, y tocarlo también lo selecciona */}
                 <div className={styles.heroGap} onClick={pick('background')} />
