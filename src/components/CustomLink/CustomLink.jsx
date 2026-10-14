@@ -102,7 +102,7 @@ export const CustomLink = ({ isSmall, backuImage, isHeader, urlImage, url, id, h
                                     <span>{t('custom_link.invite_message')}</span>
                                     <span><b>{name}</b></span>
                                     <span className='green_text'>{t('custom_link.read_more')}</span>
-                                    <small>I attend - Plan with ease</small>
+                                    <small>I attend - Your event handled</small>
                                     <div className='cta_container'>
                                         <span className='green_text_cta'><SquareArrowUpRight size={10} />{t('custom_link.view_invitation')}</span>
                                     </div>
