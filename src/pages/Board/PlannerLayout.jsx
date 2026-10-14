@@ -10,6 +10,7 @@ import { PlannerEventList } from './PlannerEventList'
 import { buildStats, fetchPlannerData } from '../../components/PlannerDashboard/plannerData'
 import logoBlue from '/images/logo_blue.png'
 import styles from './PlannerLayout.module.css'
+import { PlannerSkeleton } from './PlannerSkeleton'
 
 
 /**
@@ -156,7 +157,11 @@ export const PlannerLayout = ({
         </div>
     )
 
-    const contenido = loading ? null : enDashboard ? dashboard : activa?.key === 'test' ? (
+    // Mientras cargan las invitaciones: esqueleto de la vista que va a salir
+    // (antes, la página se quedaba en blanco).
+    const contenido = loading
+        ? (enDashboard ? null : <PlannerSkeleton variante={!activa || activa.key === 'test' ? 'explora' : 'lista'} />)
+        : enDashboard ? dashboard : activa?.key === 'test' ? (
         <PlannerExplore
             ejemplo={activa.items[0]}
             renderInvitationCard={renderInvitationCard}

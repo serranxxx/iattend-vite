@@ -448,7 +448,9 @@ export const InvitationsPage = () => {
                     onViewChange={setView}
                     dashboard={<PlannerDashboard invitations={plannerInvitations} filterSlot={filterSlot} userId={sessions?.user?.uid} />}
                     setFilterSlot={setFilterSlot}
-                    loading={loader}
+                    // También antes de la primera carga (loader arranca en false
+                    // y el efecto corre después del primer pintado).
+                    loading={loader || invitationsCopy === null}
                     onComprar={() => setAltaEvento('compra')}
                     onGratis={() => setAltaEvento('gratis')}
                     onGratisFlash={() => setAltaEvento('flash-gratis')}
