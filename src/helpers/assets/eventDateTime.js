@@ -98,6 +98,35 @@ export function fechasDelEvento(body) {
   return body?.hour ? [body.hour] : [];
 }
 
+// Renglones de fecha de un evento: si varias fechas comparten mes y hora, se
+// juntan en uno ("26 y 27 de noviembre, 18:00"; con tres, "14, 15 y 16 de
+// …"). Si cambian el mes o la hora, cada una va en su renglón con su día de la
+// semana, como una sola fecha.
+export function lineasDeFechas(body, opts = {}) {
+  const fechas = fechasDelEvento(body);
+  const partes = fechas.map((raw) => raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/));
+  if (fechas.length < 2 || fechas.some(isAbsoluteInstant) || partes.some((p) => !p)) {
+    return fechas.map((raw) => formatEventDateTime(raw, opts)).filter(Boolean);
+  }
+
+  const grupos = [];
+  partes.forEach((p, i) => {
+    const clave = `${p[1]}-${p[2]} ${p[4]}:${p[5]}`;
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.clave === clave) ultimo.items.push({ p, raw: fechas[i] });
+    else grupos.push({ clave, items: [{ p, raw: fechas[i] }] });
+  });
+
+  return grupos.map(({ items }) => {
+    if (items.length === 1) return formatWallClock(items[0].raw);
+    const [, y, m, , hh, mm] = items[0].p;
+    const { month } = getWeekdayAndMonth(Number(y), Number(m), Number(items[0].p[3]));
+    const dias = items.map(({ p }) => Number(p[3]));
+    const lista = `${dias.slice(0, -1).join(", ")} y ${dias[dias.length - 1]}`;
+    return `${lista} de ${month}, ${hh}:${mm}`;
+  });
+}
+
 // Lo que se guarda en `body` a partir de una lista de fechas: ordenadas, sin
 // repetir, `hour` = la primera y `dates` solo si hay más de una.
 export function cuerpoConFechas(lista) {

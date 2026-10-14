@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { CircleCheck, CircleX, CloudSun, ImagePlus, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { darker } from '../../helpers/assets/functions'
-import { fechasDelEvento, formatEventDateTime } from '../../helpers/assets/eventDateTime'
+import { lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
 
 /**
@@ -171,8 +171,8 @@ export const SideCanvas = ({
     const setName = (value) => onChange((prev) => ({ ...prev, name: value }))
     const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }))
 
-    // Un Flash puede tener varias fechas: una por renglón.
-    const dateLabels = fechasDelEvento(body).map(raw => formatEventDateTime(raw, { state: address.state, timezone: body.timezone })).filter(Boolean)
+    // Un Flash puede tener varias fechas: las de mismo mes y hora van juntas.
+    const dateLabels = lineasDeFechas(body, { state: address.state, timezone: body.timezone })
     const placeLabel = body.place_name
         || (address.street && address.number ? `${address.street} ${address.number}` : null)
     const regionLabel = !body.place_name && (address.state || address.country)
