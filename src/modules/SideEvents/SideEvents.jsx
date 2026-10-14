@@ -1,4 +1,4 @@
-import { Badge, Button, Checkbox, ColorPicker, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Slider, Spin, Switch, Tooltip } from 'antd'
+import { Badge, Button, Checkbox, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Slider, Spin, Switch, Tooltip } from 'antd'
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import '../GuestManagement/guests-redesign.css'
@@ -13,7 +13,6 @@ import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import { CreditController } from '../../components/Payment/CreditController/CreditController'
 import SideEventHost from '../../components/Host/SideEventHost'
-import { colorFactoryToHex } from '../../helpers/assets/functions'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
 import { useFonts } from '../../context/FontsContext'
@@ -27,6 +26,7 @@ import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, Shapes, ImagePlus, Info, Landmark, Link2, ListOrdered, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
 import { ItinerarioFlash } from './ItinerarioFlash'
 import { StickersFlash } from './StickersFlash'
+import { SelectorColor } from './SelectorColor'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -37,7 +37,7 @@ import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import SideCanvas from './SideCanvas'
-import { ColorField, DateField, FontPicker } from '../../components/MobileFields/MobileFields'
+import { DateField, FontPicker } from '../../components/MobileFields/MobileFields'
 import { SideEventsTour, SIDE_TOUR_STORAGE_KEY } from './SideEventsTour'
 import ed from './SideEventEditor.module.css'
 import { EVENTO_CREDITOS_FLASH } from '../../components/Payment/CreditController/creditosFlash'
@@ -2765,22 +2765,12 @@ export const SideEvents = () => {
         <>
             {blockHead(<Palette size={16} />, t('side_events.theme_color'), t('side_events.panel_color_hint'))}
 
-            <div className={ed.fieldRow}>
-                <span className={ed.fieldLabel}>{t('side_events.panel_color_pick')}</span>
-                {/* En móvil, controles nativos en vez de popups de antd: dentro
-                    de la hoja los popups se abren donde pueden y su scroll pelea
-                    con el de la pieza (ver components/MobileFields). */}
-                {isMobile
-                    ? <ColorField
-                        value={current?.body?.color ?? '#000000'}
-                        onChange={(hex) => setBody({ color: hex })}
-                    />
-                    : <ColorPicker
-                        value={current?.body?.color ?? '#000000'}
-                        onChange={(e) => setBody({ color: colorFactoryToHex(e) })}
-                    />
-                }
-            </div>
+            {/* Selector en línea (sin popup): el cuadrito que abría el de antd
+                casi no se veía. Sirve igual en la hoja móvil. */}
+            <SelectorColor
+                value={current?.body?.color ?? '#000000'}
+                onChange={(hex) => setBody({ color: hex })}
+            />
 
             <div className={ed.swatchRow}>
                 {THEME_SWATCHES.map((c) => (
