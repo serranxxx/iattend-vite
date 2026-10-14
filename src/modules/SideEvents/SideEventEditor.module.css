@@ -973,12 +973,42 @@
 /* Mini itinerario de un Flash: un renglón por momento (ícono · nombre y hora
    · quitar). */
 .momento {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 8px;
+    /* Renglón 1: manija · ícono · nombre. Renglón 2 (a todo lo ancho):
+       hora · día · quitar. */
+    display: grid;
+    grid-template-columns: 18px 36px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    padding: 8px 8px 8px 4px;
     border: 1px solid #EBEBEB;
     border-radius: 12px;
+}
+
+.momentoArrastrando {
+    position: relative;
+    z-index: 2;
+    background: #FFF;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+/* Manija para arrastrar: lo único que mueve el momento. */
+.momentoManija {
+    flex-shrink: 0;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #a3a3a3;
+    cursor: grab;
+    touch-action: none;
+}
+
+.momentoManija:active {
+    cursor: grabbing;
 }
 
 .momentoIcono {
@@ -1006,15 +1036,30 @@
     gap: 6px;
 }
 
+.momentoNombre {
+    min-width: 0;
+}
+
 .momentoFila {
+    grid-column: 1 / -1;
+    padding-left: 4px;
     display: flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
+}
+
+.momentoQuitar {
+    width: 24px;
+    height: 24px;
+    margin-left: auto;
 }
 
 .momentoHora {
+    flex-shrink: 0;
+    width: 78px;
     height: 26px;
-    padding: 0 8px;
+    padding: 0 6px;
     border: 1px solid #d9d9d9;
     border-radius: 6px;
     font-family: inherit;

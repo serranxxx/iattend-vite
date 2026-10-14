@@ -1083,6 +1083,7 @@
     "panel_itinerary_hint": "Momentos del evento con su hora; se ven debajo de Cómo llegar",
     "dock_itinerary": "Itinerario",
     "itinerary_add": "Agregar momento",
+    "itinerary_drag": "Arrastrar para reordenar",
     "itinerary_remove": "Quitar momento",
     "itinerary_name": "Nombre (ej. Rompe hielo)",
     "itinerary_time": "Hora",

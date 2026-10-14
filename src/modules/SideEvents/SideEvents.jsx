@@ -25,8 +25,7 @@ import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, ImagePlus, Info, Landmark, Link2, ListOrdered, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
-import { LuBadgeHelp } from 'react-icons/lu'
-import { iconsItinerary } from '../../helpers/services/menuIcons'
+import { ItinerarioFlash } from './ItinerarioFlash'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { FiArrowUpRight } from 'react-icons/fi'
@@ -2979,104 +2978,19 @@ export const SideEvents = () => {
         </>
     )
 
-    // Mini itinerario de un Flash: bloques { id, name, time "HH:mm", icon
-    // (índice de iconsItinerary, el catálogo del itinerario de la invitación),
-    // date "YYYY-MM-DD" solo si el Flash tiene varias fechas }. Se muestra
-    // debajo de "Cómo llegar", ordenado por día y hora.
+    // Mini itinerario de un Flash (ItinerarioFlash.jsx): se muestra debajo de
+    // "Cómo llegar" en el orden en que se acomoda.
     const diasDelFlash = [...new Set(fechasDelEvento(current?.body).map(f => String(f).slice(0, 10)))]
     const itinerario = Array.isArray(current?.body?.itinerary) ? current.body.itinerary : []
-    const setItinerario = (lista) => setBody({ itinerary: lista.length ? lista : null })
-    const cambiarMomento = (id, patch) => setItinerario(itinerario.map(m => (m.id === id ? { ...m, ...patch } : m)))
-    const iconoDe = (index, size = 18) => {
-        const Icono = iconsItinerary.find(i => i.index === index)?.value
-        return Icono ? <Icono size={size} /> : <LuBadgeHelp size={size} />
-    }
 
     const panelItinerary = (
         <>
             {blockHead(<ListOrdered size={16} />, t('side_events.panel_itinerary'), t('side_events.panel_itinerary_hint'))}
-
-            {itinerario.map(m => (
-                <div className={ed.momento} key={m.id}>
-                    <Dropdown
-                        trigger={['click']}
-                        placement='bottomLeft'
-                        popupRender={() => (
-                            <div className={ed.iconosGrid}>
-                                {iconsItinerary.map((icono) => (
-                                    <button
-                                        type='button'
-                                        key={icono.index}
-                                        className={`${ed.iconoOpcion} ${m.icon === icono.index ? ed.iconoOpcionActivo : ''}`}
-                                        onClick={() => cambiarMomento(m.id, { icon: icono.index })}
-                                    >
-                                        <icono.value size={18} />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    >
-                        <button type='button' className={ed.momentoIcono} aria-label={t('side_events.itinerary_icon')}>
-                            {iconoDe(m.icon)}
-                        </button>
-                    </Dropdown>
-
-                    <div className={ed.momentoCampos}>
-                        <Input
-                            placeholder={t('side_events.itinerary_name')}
-                            value={m.name ?? ''}
-                            maxLength={60}
-                            onChange={(e) => cambiarMomento(m.id, { name: e.target.value })}
-                        />
-                        <div className={ed.momentoFila}>
-                            <input
-                                type='time'
-                                className={ed.momentoHora}
-                                value={m.time ?? ''}
-                                onChange={(e) => cambiarMomento(m.id, { time: e.target.value || null })}
-                                aria-label={t('side_events.itinerary_time')}
-                            />
-                            {diasDelFlash.length > 1 && (
-                                <Select
-                                    size='small'
-                                    style={{ flex: 1, minWidth: 0 }}
-                                    value={diasDelFlash.includes(m.date) ? m.date : diasDelFlash[0]}
-                                    onChange={(valor) => cambiarMomento(m.id, { date: valor })}
-                                    options={diasDelFlash.map(d => ({ value: d, label: dayjs(d).format('ddd D') }))}
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                    <button
-                        type='button'
-                        className={ed.fechaQuitar}
-                        aria-label={t('side_events.itinerary_remove')}
-                        onClick={() => setItinerario(itinerario.filter(x => x.id !== m.id))}
-                    >
-                        <X size={14} />
-                    </button>
-                </div>
-            ))}
-
-            {itinerario.length < 12 && (
-                <button
-                    type='button'
-                    className={ed.fechaAgregar}
-                    onClick={() => {
-                        const ultimo = itinerario[itinerario.length - 1]
-                        setItinerario([...itinerario, {
-                            id: `m${Date.now()}`,
-                            name: '',
-                            time: null,
-                            icon: null,
-                            date: diasDelFlash.length > 1 ? (ultimo?.date ?? diasDelFlash[0]) : null,
-                        }])
-                    }}
-                >
-                    <Plus size={14} /> {t('side_events.itinerary_add')}
-                </button>
-            )}
+            <ItinerarioFlash
+                itinerario={itinerario}
+                dias={diasDelFlash}
+                onChange={(lista) => setBody({ itinerary: lista.length ? lista : null })}
+            />
         </>
     )
 

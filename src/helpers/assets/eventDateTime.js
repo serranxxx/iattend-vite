@@ -128,7 +128,8 @@ export function lineasDeFechas(body, opts = {}) {
 }
 
 // Mini itinerario de un Flash (`body.itinerary`: { id, name, time "HH:mm",
-// icon, date "YYYY-MM-DD" si hay varias fechas }), ordenado por día y hora.
+// icon, date "YYYY-MM-DD" si hay varias fechas }), en el orden en que el
+// organizador lo acomodó (drag and drop en el editor).
 // Con varias fechas se agrupa por día, cada grupo con su título ("jue. 26 de
 // noviembre"); con una sola fecha va un solo grupo sin título. Los momentos
 // sin nombre no se muestran. Contraparte: `itinerarioPorDia` en iattend-events.
@@ -136,8 +137,7 @@ export function itinerarioPorDia(body) {
   const momentos = (Array.isArray(body?.itinerary) ? body.itinerary : []).filter((m) => String(m?.name ?? "").trim());
   if (!momentos.length) return [];
   const dias = [...new Set(fechasDelEvento(body).map((f) => String(f).slice(0, 10)))];
-  const porHora = (a, b) => String(a.time ?? "99:99").localeCompare(String(b.time ?? "99:99"));
-  if (dias.length < 2) return [{ dia: null, titulo: null, momentos: [...momentos].sort(porHora) }];
+  if (dias.length < 2) return [{ dia: null, titulo: null, momentos }];
 
   return dias
     .map((dia) => {
@@ -147,7 +147,7 @@ export function itinerarioPorDia(body) {
         dia,
         titulo: `${weekday}. ${d} de ${month}`,
         // Un momento sin día (o de un día que ya no está) va en el primero.
-        momentos: momentos.filter((x) => (dias.includes(x.date) ? x.date : dias[0]) === dia).sort(porHora),
+        momentos: momentos.filter((x) => (dias.includes(x.date) ? x.date : dias[0]) === dia),
       };
     })
     .filter((g) => g.momentos.length);
