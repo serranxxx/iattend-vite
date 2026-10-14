@@ -134,6 +134,10 @@ export const EventosSecundarios = ({ tipo, tab, sides, invitadosPorSide, error, 
                                     </span>
                                     <span className={`${styles.cell} ${s.fecha ? styles.date : styles.dateEmpty}`}>
                                         {s.fecha ? dayjs(s.fecha).format('DD MMM') : 'sin fecha'}
+                                        {/* Flash de varias fechas: "14 oct +1" (todas en el title). */}
+                                        {s.fechas?.length > 1 && (
+                                            <span title={s.fechas.map(f => dayjs(f).format('DD MMM')).join(' · ')}> +{s.fechas.length - 1}</span>
+                                        )}
                                     </span>
                                     <span className={styles.cell}>
                                         <Dropdown trigger={['click']} placement='bottomRight' popupRender={() => acciones(s)}>

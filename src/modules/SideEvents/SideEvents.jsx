@@ -14,7 +14,7 @@ import { HeaderDashboard } from '../Header/Header'
 import { CreditController } from '../../components/Payment/CreditController/CreditController'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { colorFactoryToHex } from '../../helpers/assets/functions'
-import { dayjsToWallClock, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
+import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
 import { useFonts } from '../../context/FontsContext'
 import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
@@ -2782,23 +2782,61 @@ export const SideEvents = () => {
             {blockHead(<CalendarDays size={16} />, t('side_events.panel_date'), t('side_events.panel_date_hint'))}
 
             {/* Hora de pared: lo que se ve en el picker es lo que se guarda,
-                sin conversión de timezone (helpers/assets/eventDateTime.js) */}
-            {isMobile
-                ? <DateField
-                    type="datetime-local"
-                    /* `datetime-local` entrega YYYY-MM-DDTHH:mm sin zona: es la
-                       misma hora de pared que se guarda, solo cambia el separador */
-                    value={wallClockToDayjs(current?.body?.hour)?.format('YYYY-MM-DDTHH:mm') ?? ''}
-                    onChange={(v) => setBody({ hour: v ? `${v.replace('T', ' ')}:00` : null })}
-                />
-                : <DatePicker
-                    style={{ width: '100%' }}
-                    showTime={{ format: 'HH:mm' }}
-                    format='DD/MM/YYYY HH:mm'
-                    value={wallClockToDayjs(current?.body?.hour)}
-                    onChange={(e) => setBody({ hour: dayjsToWallClock(e) })}
-                />
-            }
+                sin conversión de timezone (helpers/assets/eventDateTime.js).
+                Un Flash puede tener varias fechas, cada una con su hora. */}
+            {(esFlash ? (fechasDelEvento(current?.body).length ? fechasDelEvento(current?.body) : [null]) : [current?.body?.hour]).map((raw, i, lista) => {
+                const cambiar = (valor) => {
+                    if (!esFlash) return setBody({ hour: valor })
+                    const nuevas = [...lista]
+                    nuevas[i] = valor
+                    setBody(cuerpoConFechas(nuevas))
+                }
+                return (
+                    <div className={esFlash ? ed.fechaFila : undefined} key={`${i}-${raw ?? 'vacia'}`}>
+                        {isMobile
+                            ? <DateField
+                                type="datetime-local"
+                                /* `datetime-local` entrega YYYY-MM-DDTHH:mm sin zona: es la
+                                   misma hora de pared que se guarda, solo cambia el separador */
+                                value={wallClockToDayjs(raw)?.format('YYYY-MM-DDTHH:mm') ?? ''}
+                                onChange={(v) => cambiar(v ? `${v.replace('T', ' ')}:00` : null)}
+                            />
+                            : <DatePicker
+                                style={{ width: '100%' }}
+                                showTime={{ format: 'HH:mm' }}
+                                format='DD/MM/YYYY HH:mm'
+                                value={wallClockToDayjs(raw)}
+                                onChange={(e) => cambiar(dayjsToWallClock(e))}
+                            />
+                        }
+                        {esFlash && lista.length > 1 && (
+                            <button
+                                type='button'
+                                className={ed.fechaQuitar}
+                                aria-label={t('side_events.date_remove')}
+                                onClick={() => setBody(cuerpoConFechas(lista.filter((_, j) => j !== i)))}
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+                )
+            })}
+
+            {/* Otra fecha: el día siguiente a la última, a la misma hora. */}
+            {esFlash && current?.body?.hour && (
+                <button
+                    type='button'
+                    className={ed.fechaAgregar}
+                    onClick={() => {
+                        const lista = fechasDelEvento(current?.body)
+                        const ultima = wallClockToDayjs(lista[lista.length - 1])
+                        setBody(cuerpoConFechas([...lista, ultima ? dayjsToWallClock(ultima.add(1, 'day')) : null]))
+                    }}
+                >
+                    <Plus size={14} /> {t('side_events.date_add')}
+                </button>
+            )}
 
             {current?.body?.hour && !wallClockToDayjs(current.body.hour) &&
                 <span className={ed.hint}>

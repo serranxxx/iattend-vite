@@ -1077,6 +1077,8 @@
     "panel_title_hint": "Type the name straight onto the piece",
     "panel_date": "Date and time",
     "panel_date_hint": "The time you pick is the time your guests will see",
+    "date_add": "Add another date",
+    "date_remove": "Remove this date",
     "panel_place": "Place",
     "panel_place_hint": "Venue name and the address for the map",
     "panel_notes": "Notes",

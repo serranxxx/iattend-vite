@@ -362,8 +362,9 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
             .map(s => ({ s, ...clasificarSide(s, invitacionPorId, esPrueba) }))
             .filter(({ s, fecha, prueba }) => conNombre(s.name) && fecha && !prueba)
             .filter(({ s, invitacion }) => coincide(s.name, s.user_email, invitacion?.name, ...(invitacion?.owners ?? [])))
-            .map(({ s, invitacion, flash, fecha }) => ({
-                key: `${flash ? 'flash' : 'side'}-${s.id}`,
+            // Un Flash con varias fechas sale en cada una.
+            .flatMap(({ s, invitacion, flash, fechas }) => fechas.map(fecha => ({
+                key: `${flash ? 'flash' : 'side'}-${s.id}-${fecha}`,
                 tipo: flash ? 'flash' : 'side',
                 nombre: s.name,
                 fecha,
@@ -372,7 +373,7 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
                     : `Side event · ${s.name}${invitacion ? ` · de ${invitacion.name}` : ''}`,
                 invitacion,
                 sideId: s.id,
-            }))
+            })))
 
         return [...deInvitaciones, ...deSides]
     }, [porTab, sides, newInvitations, esPrueba, query])

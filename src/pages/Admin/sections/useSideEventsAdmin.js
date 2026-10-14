@@ -10,9 +10,15 @@ import { traerTodo } from '../analiticaDatos'
   toma el día tal cual, sin zona horaria (ver helpers/assets/eventDateTime.js).
 */
 
-export const fechaDeSide = (side) => {
-    const hora = side?.body?.hour
-    return typeof hora === 'string' && /^\d{4}-\d{2}-\d{2}/.test(hora) ? hora.slice(0, 10) : null
+const diaDe = (hora) => (typeof hora === 'string' && /^\d{4}-\d{2}-\d{2}/.test(hora) ? hora.slice(0, 10) : null)
+
+export const fechaDeSide = (side) => diaDe(side?.body?.hour)
+
+// Un Flash puede tener varias fechas (`body.dates`, ver fechasDelEvento en
+// helpers/assets/eventDateTime.js): los días, ordenados y sin repetir.
+export const fechasDeSide = (side) => {
+    const lista = Array.isArray(side?.body?.dates) && side.body.dates.length ? side.body.dates : [side?.body?.hour]
+    return [...new Set(lista.map(diaDe).filter(Boolean))].sort()
 }
 
 // Lo que comparten la tabla, el calendario y el resumen de la topbar: si es
@@ -22,7 +28,9 @@ export const fechaDeSide = (side) => {
 export const clasificarSide = (side, invitacionPorId, esPrueba, hoy = new Date()) => {
     const flash = !side.invitation_id
     const invitacion = flash ? null : invitacionPorId.get(side.invitation_id) ?? null
-    const fecha = fechaDeSide(side)
+    const fechas = fechasDeSide(side)
+    const fecha = fechas[0] ?? null
+    const ultima = fechas[fechas.length - 1] ?? null
     const corte = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
     return {
         flash,
@@ -31,7 +39,9 @@ export const clasificarSide = (side, invitacionPorId, esPrueba, hoy = new Date()
         prueba: flash
             ? esPrueba({ user_id: side.user_id ?? side.planner_id, user_email: side.user_email })
             : Boolean(invitacion && esPrueba(invitacion)),
-        activo: !fecha || fecha >= corte,
+        fechas,
+        // Con varias fechas sigue activo hasta la última.
+        activo: !ultima || ultima >= corte,
     }
 }
 

@@ -1077,6 +1077,8 @@
     "panel_title_hint": "El nombre se escribe directo sobre la pieza",
     "panel_date": "Fecha y hora",
     "panel_date_hint": "La hora que elijas es la que verán tus invitados",
+    "date_add": "Agregar otra fecha",
+    "date_remove": "Quitar esta fecha",
     "panel_place": "Lugar",
     "panel_place_hint": "El nombre del lugar y la dirección del mapa",
     "panel_notes": "Notas",

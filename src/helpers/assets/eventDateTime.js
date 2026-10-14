@@ -87,6 +87,24 @@ export function formatEventDateTime(raw, opts = {}) {
   return formatWallClock(raw);
 }
 
+// Eventos Flash con varias fechas (ej. 14 y 15 de octubre, cada una con su
+// hora): `body.dates` es la lista de horas de pared, ordenada, y `body.hour`
+// siempre es la primera. Todo lo que lee una sola fecha (tope para confirmar,
+// dashboard del planner, side events de bodas) sigue leyendo `body.hour`.
+// Contraparte en iattend-events: `fechasDelEvento` en src/helpers/functions.ts.
+export function fechasDelEvento(body) {
+  const lista = Array.isArray(body?.dates) ? body.dates.filter(Boolean) : [];
+  if (lista.length) return lista;
+  return body?.hour ? [body.hour] : [];
+}
+
+// Lo que se guarda en `body` a partir de una lista de fechas: ordenadas, sin
+// repetir, `hour` = la primera y `dates` solo si hay más de una.
+export function cuerpoConFechas(lista) {
+  const dates = [...new Set((lista ?? []).filter(Boolean))].sort();
+  return { hour: dates[0] ?? null, dates: dates.length > 1 ? dates : null };
+}
+
 // Convierte el objeto dayjs que entrega el AntD DatePicker a la hora de
 // pared que el organizador seleccionó, como string plano — sin ninguna
 // conversión de timezone. Los números que ves en el picker son los números
