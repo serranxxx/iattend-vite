@@ -226,3 +226,9 @@
         padding: 18px;
     }
 }
+
+/* Sin próximos: la tarjeta vacía de PlannerLayout, alineada a la izquierda
+   del listado en vez de centrada en toda la página. */
+.vacioProximos {
+    margin: 4px 0 0;
+}

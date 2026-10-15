@@ -170,6 +170,9 @@ export const PlannerLayout = ({
             statsPorId={statsPorId}
             renderInvitationCard={renderInvitationCard}
             onAbrir={onAbrir}
+            vacioProximos={activa.key === 'own'
+                ? { texto: t('planner_list.no_upcoming_own'), cta: t('invitations.planner_own_empty_cta'), onCta: onEventoPersonal }
+                : { texto: t('planner_list.no_upcoming_clients'), cta: t('invitations.planner_buy_title'), onCta: onComprar }}
         />
     ) : activa?.key === 'own' ? (
         <div className={styles.vacio}>

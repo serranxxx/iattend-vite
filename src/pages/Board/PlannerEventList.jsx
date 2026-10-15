@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, Zap } from 'lucide-react'
+import { CalendarHeart, ChevronDown, Plus, Zap } from 'lucide-react'
 import { toFirstString } from '../../helpers/invitation/newInvitation'
 import { fmtLong } from '../../components/PlannerDashboard/plannerFormat'
 import styles from './PlannerEventList.module.css'
+import layout from './PlannerLayout.module.css'
 
 /**
  * Mis clientes / Mis eventos del planner (PlannerLayout).
@@ -14,7 +15,7 @@ import styles from './PlannerEventList.module.css'
  *   cuántos llegaron (lector de pases) o, si no se usó, cuántos confirmaron.
  * statsPorId: buildStats de cada invitación (los Eventos Flash no tienen).
  */
-export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAbrir }) => {
+export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAbrir, vacioProximos }) => {
     const { t, i18n } = useTranslation()
     const locale = i18n.language?.startsWith('en') ? 'en' : 'es'
     // null = lo que toca por defecto: abierto si no hay próximos pero sí historial.
@@ -66,6 +67,17 @@ export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAb
                 {proximos.length > 0 ? (
                     <div className={styles.tarjetas}>
                         {proximos.map(inv => renderInvitationCard(inv, statsPorId[inv.id] ? { stats: statsPorId[inv.id] } : undefined))}
+                    </div>
+                ) : vacioProximos ? (
+                    // Sin próximos: la misma tarjeta de "aún no tienes…" de la
+                    // sección vacía, con su acción (crear o comprar evento).
+                    <div className={`${layout.vacio} ${styles.vacioProximos}`}>
+                        <CalendarHeart size={28} />
+                        <strong>{t('planner_list.no_upcoming_title')}</strong>
+                        <span>{vacioProximos.texto}</span>
+                        <button type='button' className={layout.vacioBoton} onClick={vacioProximos.onCta}>
+                            <Plus size={16} /> {vacioProximos.cta}
+                        </button>
                     </div>
                 ) : (
                     <p className={styles.sinProximos}>{t('planner_list.no_upcoming')}</p>
