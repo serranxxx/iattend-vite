@@ -204,7 +204,7 @@ const fechaCorta = (iso) => (iso ? dayjs(iso).locale('es').format('DD MMM') : '�
  * (Vendedores tiene su propia vista). `profiles` llega ya filtrado por rol.
  * Sin filtros: cada rol tiene sus columnas y su acción principal en la topbar.
  */
-export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, onOpenNewInvitation, onPerfilActualizado, onUsuarioCreado, query = '' }) => {
+export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPrueba, onOpenNewInvitation, onPerfilActualizado, onUsuarioCreado, query = '' }) => {
     const [editando, setEditando] = useState(null)
     const [proveedores, setProveedores] = useState({})
     const [beneficios, setBeneficios] = useState({ beneficios: {}, usados: {}, listos: false })
@@ -342,13 +342,16 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, onOpe
         if (rol === 'planners') {
             const b = beneficios.beneficios[perfil.user_id]
             const u = beneficios.usados[perfil.user_id] ?? {}
-            const activos = eventos.filter(i => esEventoActivo(i)).length
+            // Sin los de prueba (is_test, como su invitación de ejemplo, o de
+            // dueños de casa): solo los eventos reales del planner.
+            const reales = esPrueba ? eventos.filter(i => !esPrueba(i)) : eventos
+            const activos = reales.filter(i => esEventoActivo(i)).length
             return [
                 nombre, correo,
                 <span key='ev' className={styles.cell}>
                     <span className={styles.beneficio}>
                         {activos} {activos === 1 ? 'activo' : 'activos'}
-                        <span className={styles.celdaTenue}>/ {eventos.length}</span>
+                        <span className={styles.celdaTenue}>/ {reales.length}</span>
                     </span>
                 </span>,
                 <span key='pro' className={styles.cell}>{celdaBeneficio(u.gratis ?? 0, b?.free_events ?? 0)}</span>,

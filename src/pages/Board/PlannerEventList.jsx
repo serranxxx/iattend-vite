@@ -43,13 +43,12 @@ export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAb
         || inv.name
         || t('side_events.no_name')
 
+    // Siempre confirmaciones (confirmados + los que ya llegaron), también en
+    // el historial: las asistencias del lector de pases son pocas o ninguna y
+    // daban porcentajes como "1 de 133 asistieron".
     const asistencia = (inv) => {
         const s = statsPorId[inv.id]
         if (inv._flash || !s) return null
-        if (s.attended > 0) {
-            const base = Math.max(s.confirmed, s.attended)
-            return { parte: s.attended, total: base, texto: t('planner_list.attended', { count: base }) }
-        }
         if (s.total > 0) return { parte: s.confirmed, total: s.total, texto: t('planner_list.confirmed', { count: s.total }) }
         return null
     }
