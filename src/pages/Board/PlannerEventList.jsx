@@ -17,7 +17,8 @@ import styles from './PlannerEventList.module.css'
 export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAbrir }) => {
     const { t, i18n } = useTranslation()
     const locale = i18n.language?.startsWith('en') ? 'en' : 'es'
-    const [verHistorial, setVerHistorial] = useState(false)
+    // null = lo que toca por defecto: abierto si no hay próximos pero sí historial.
+    const [historialElegido, setVerHistorial] = useState(null)
 
     const hoy = dayjs().startOf('day')
     const fechaDe = (inv) => (inv.event_date ? String(inv.event_date).slice(0, 10) : null)
@@ -37,6 +38,8 @@ export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAb
     const historial = items
         .filter(inv => { const d = diasDe(inv); return d != null && d < 0 })
         .sort((a, b) => diasDe(b) - diasDe(a))
+
+    const verHistorial = historialElegido ?? (proximos.length === 0 && historial.length > 0)
 
     const tituloDe = (inv) => statsPorId[inv.id]?.title
         || inv.data?.cover?.title?.text?.value
@@ -78,7 +81,7 @@ export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAb
                             type='button'
                             className={styles.toggle}
                             aria-expanded={verHistorial}
-                            onClick={() => setVerHistorial(v => !v)}
+                            onClick={() => setVerHistorial(!verHistorial)}
                         >
                             {verHistorial ? t('planner_list.hide_history') : t('planner_list.show_history')}
                             <ChevronDown size={16} className={verHistorial ? styles.girado : ''} />
