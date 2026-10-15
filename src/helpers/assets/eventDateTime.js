@@ -98,10 +98,11 @@ export function fechasDelEvento(body) {
   return body?.hour ? [body.hour] : [];
 }
 
-// Renglones de fecha de un evento: si varias fechas comparten mes y hora, se
-// juntan en uno ("26 y 27 de noviembre, 18:00"; con tres, "14, 15 y 16 de
-// …"). Si cambian el mes o la hora, cada una va en su renglón con su día de la
-// semana, como una sola fecha.
+// Renglones de fecha de un evento. Las fechas seguidas del mismo mes se
+// juntan: con la misma hora en un renglón ("26 y 27 de noviembre, 18:00");
+// con horas distintas, en dos ("26, 27 y 28 de noviembre" y abajo
+// "jue 18:00 · vie 10:00 · sáb 08:00"). Una fecha sola de su mes va como
+// siempre, con su día de la semana.
 export function lineasDeFechas(body, opts = {}) {
   const fechas = fechasDelEvento(body);
   const partes = fechas.map((raw) => raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/));
@@ -109,21 +110,31 @@ export function lineasDeFechas(body, opts = {}) {
     return fechas.map((raw) => formatEventDateTime(raw, opts)).filter(Boolean);
   }
 
+  // Se agrupan las fechas seguidas del mismo mes.
   const grupos = [];
   partes.forEach((p, i) => {
-    const clave = `${p[1]}-${p[2]} ${p[4]}:${p[5]}`;
+    const clave = `${p[1]}-${p[2]}`;
     const ultimo = grupos[grupos.length - 1];
     if (ultimo && ultimo.clave === clave) ultimo.items.push({ p, raw: fechas[i] });
     else grupos.push({ clave, items: [{ p, raw: fechas[i] }] });
   });
 
-  return grupos.map(({ items }) => {
-    if (items.length === 1) return formatWallClock(items[0].raw);
-    const [, y, m, , hh, mm] = items[0].p;
+  return grupos.flatMap(({ items }) => {
+    if (items.length === 1) return [formatWallClock(items[0].raw)];
+    const [, y, m] = items[0].p;
     const { month } = getWeekdayAndMonth(Number(y), Number(m), Number(items[0].p[3]));
     const dias = items.map(({ p }) => Number(p[3]));
-    const lista = `${dias.slice(0, -1).join(", ")} y ${dias[dias.length - 1]}`;
-    return `${lista} de ${month}, ${hh}:${mm}`;
+    const lista = `${dias.slice(0, -1).join(", ")} y ${dias[dias.length - 1]} de ${month}`;
+    const horas = items.map(({ p }) => `${p[4]}:${p[5]}`);
+    // Misma hora: un renglón. Horas distintas: los días juntos y abajo cada
+    // hora con su día de la semana ("jue 18:00 · vie 10:00 · sáb 08:00").
+    if (horas.every((h) => h === horas[0])) return [`${lista}, ${horas[0]}`];
+    const semana = items.map(({ p }) => getWeekdayAndMonth(Number(p[1]), Number(p[2]), Number(p[3])).weekday.replace(".", ""));
+    // Si un día de la semana se repite (el 20 y el 27 son viernes), va también
+    // el número para saber cuál es cuál.
+    const repetido = new Set(semana).size < semana.length;
+    const conDia = items.map(({ p }, i) => `${semana[i]}${repetido ? ` ${Number(p[3])}` : ""} ${horas[i]}`);
+    return [lista, conDia.join(" · ")];
   });
 }
 
