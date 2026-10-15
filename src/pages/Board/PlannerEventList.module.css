@@ -227,8 +227,10 @@
     }
 }
 
-/* Sin próximos: la tarjeta vacía de PlannerLayout, alineada a la izquierda
-   del listado en vez de centrada en toda la página. */
-.vacioProximos {
-    margin: 4px 0 0;
+/* Sin próximos: la tarjeta vacía de PlannerLayout, semitransparente (deja ver
+   el fondo punteado) y con aire arriba y abajo. `.lista` sube la
+   especificidad sobre .vacio del otro módulo. */
+.lista .vacioProximos {
+    margin: 32px auto 40px;
+    background: rgba(255, 255, 255, 0.45);
 }
