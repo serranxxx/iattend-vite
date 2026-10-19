@@ -55,7 +55,15 @@ export const PlannerLayout = ({
     // Un admin tiene muchas de prueba que son sus eventos de trabajo: todas van
     // a Mis eventos y Explora usa la primera como ejemplo.
     const esEjemplo = (inv) => !esDeCliente(inv) && inv.is_test && !esAdmin
-    const pruebasAdmin = esAdmin ? lista.filter(inv => !esDeCliente(inv) && inv.is_test && !inv._flash) : []
+    // Su copia de la plantilla de planners (helpers/plannerTemplate.js en el
+    // backend: dueño y planner son la propia cuenta) va primero, así es la que
+    // sale como ejemplo; si no tiene, la primera de sus pruebas, como antes.
+    const esCopiaDePlantilla = (inv) => inv.planner_id && inv.planner_id === inv.user_id && inv.user_id === user?.uid
+    const pruebasAdmin = esAdmin
+        ? lista
+            .filter(inv => !esDeCliente(inv) && inv.is_test && !inv._flash)
+            .sort((a, b) => Number(esCopiaDePlantilla(b)) - Number(esCopiaDePlantilla(a)))
+        : []
     const secciones = [
         { key: 'test', title: t('invitations.section_test'), items: esAdmin ? pruebasAdmin.slice(0, 1) : lista.filter(esEjemplo) },
         { key: 'clients', title: t('invitations.section_clients'), items: lista.filter(esDeCliente) },
