@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { CircleCheck, CircleX, CloudSun, ImagePlus, MapPin } from 'lucide-react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { CircleCheck, CircleX, CloudSun, ImagePlus, MapPin, Music2 } from 'lucide-react'
 import { ItinerarioWidget } from './ItinerarioWidget'
 import { useTranslation } from 'react-i18next'
-import { darker } from '../../helpers/assets/functions'
+import { colorDeVelo, darker, sombraDeTexto } from '../../helpers/assets/functions'
 import { itinerarioPorDia, lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
+import { alternar, conModificador, lienzoCover } from './stickersFlashData'
 
 /**
  * Lienzo editable del side event.
@@ -65,7 +66,8 @@ export const SideCanvas = ({
     readOnly = false,
     fullBleed = false,       // móvil: la pieza ocupa toda la pantalla
     liftBottom = 0,          // móvil: cuánto sube el contenido para librar la hoja
-    stickerSel = null,       // Flash: PNG seleccionado (StickersFlash)
+    conCancion = false,      // Flash: chip de la canción (panel Canción)
+    stickerSel = [],         // Flash: ids de los PNG seleccionados (StickersFlash)
     onStickerSel,
 }) => {
 
@@ -159,6 +161,8 @@ export const SideCanvas = ({
     // Mismo cálculo del tinte que el remoto. `darker` devuelve null si el hex
     // no trae los 6 dígitos, así que el default va completo.
     const themeColor = body.color || '#000000'
+    // body.veil (0–100): velo opcional del color del tema sobre la portada y
+    // los PNG, detrás del texto (panel Fondo). Igual que el remoto.
     // Con video no hay desenfoque detrás de las tarjetas: más opacas (85%).
     const tint = `${darker(themeColor, 0.8) ?? '#000000'}${body.video ? 'D9' : '80'}`
 
@@ -174,29 +178,95 @@ export const SideCanvas = ({
 
     // PNG de un Flash (body.stickers, ver StickersFlash.jsx): se arrastran en
     // la pieza; x/y en % de la capa (ancho y alto de la pantalla).
-    const stickers = Array.isArray(body.stickers) ? body.stickers : []
+    // Los ocultos (`hidden`, panel de capas) siguen guardados pero no se pintan.
+    const stickers = (Array.isArray(body.stickers) ? body.stickers : []).filter(s => !s.hidden)
     // Mientras se arrastra: líneas guía del centro. Cerca del centro (±1.5%)
     // el PNG se imanta y la línea se marca.
     const [guias, setGuias] = useState(null)
     const IMAN = 1.5
+    // Zona segura: los PNG no pueden bajar a los botones de confirmar. Es la
+    // distancia (px de la pieza, sin escalar) del techo de la capa al borde de
+    // arriba de la píldora; lo de abajo se recorta.
+    const infoRef = useRef(null)
+    const botonesRef = useRef(null)
+    // La capa de los PNG es la pantalla (x/y/w en % de su ancho y alto). Los
+    // botones de confirmar siempre van al fondo de la pantalla, igual que en
+    // la página del invitado (iattend-events, SideEvent.tsx), así que los PNG
+    // quedan igual respecto al borde de arriba y a los botones en las dos.
+    // `zona`: { top, alto } de la capa y `limite` (techo de los botones).
+    const [zona, setZona] = useState(null)
+    useLayoutEffect(() => {
+        const info = infoRef.current
+        const botones = botonesRef.current
+        const alto = scrollRef.current?.clientHeight
+        const ancho = scrollRef.current?.clientWidth
+        if (!info || !botones || !alto || !ancho) return
+        const top = 0
+        const limite = Math.max(0, info.offsetTop + botones.offsetTop)
+        if (zona?.limite !== limite || zona?.alto !== alto || zona?.top !== top || zona?.ancho !== ancho) setZona({ limite, alto, top, ancho })
+    })
+    const marco = zona ? { top: zona.top, height: zona.alto } : undefined
+    // Los PNG viven en un lienzo de 390×700 (la pieza) que cubre la pantalla
+    // como la foto de fondo (cover): en la pieza es la pantalla tal cual; en
+    // una más alargada (móvil a pantalla completa, la página del invitado)
+    // se escala por el alto y se recorta un poco a los lados, así los PNG
+    // conservan su tamaño respecto a la pantalla.
+    const lienzo = zona ? lienzoCover(zona.ancho, zona.alto) : undefined
+    // `stickers_zona_libre`: el organizador apagó el recorte y los PNG pueden
+    // pasar sobre los botones. Moverlos nunca está limitado: bajarlos de la
+    // línea es la forma de recortarlos a propósito.
+    const zonaLibre = !!body.stickers_zona_libre
+    // El recorte no es seco: los PNG se desvanecen en los DIFUMINADO px de
+    // arriba de la línea y desaparecen justo donde empiezan los botones.
+    const DIFUMINADO = 32
+    const mascara = zona && `linear-gradient(to bottom, #000 ${Math.max(0, zona.limite - DIFUMINADO)}px, transparent ${zona.limite}px)`
+    const recorte = zona && !zonaLibre ? { ...marco, maskImage: mascara, WebkitMaskImage: mascara } : marco
+    const seleccion = Array.isArray(stickerSel) ? stickerSel : (stickerSel ? [stickerSel] : [])
+    // ⌘/Ctrl/Shift + clic suma o quita de la selección (y si lo quita, no lo
+    // arrastra). Arrastrar uno que ya está en la selección mueve a todo el
+    // grupo, con el mismo desplazamiento; el imán al centro lo marca el que
+    // se agarró.
+    // Al presionar un PNG aparece su agarradera encima, así que el clic que
+    // sigue termina en otro elemento y el navegador se lo da al contenedor
+    // común (el scroller), que elegía el fondo. Esta marca hace que ese clic
+    // se ignore; se apaga en cuanto termina.
+    const clicDeSticker = useRef(false)
     const arrastrarSticker = (s) => (e) => {
         if (readOnly) return
         e.stopPropagation()
         e.preventDefault()
-        onStickerSel?.(s.id)
+        clicDeSticker.current = true
+        window.addEventListener('pointerup', () => setTimeout(() => { clicDeSticker.current = false }, 0), { once: true })
         onSelect('stickers')
+        let grupo
+        if (conModificador(e)) {
+            grupo = alternar(seleccion, s.id)
+            onStickerSel?.(grupo)
+            if (!grupo.includes(s.id)) return
+        } else {
+            grupo = seleccion.includes(s.id) ? seleccion : [s.id]
+            onStickerSel?.(grupo)
+        }
         const capa = e.currentTarget.parentElement.getBoundingClientRect()
         const inicio = { px: e.clientX, py: e.clientY, x: s.x, y: s.y }
+        const origen = Object.fromEntries(stickers.filter(o => grupo.includes(o.id)).map(o => [o.id, { x: o.x, y: o.y }]))
         const limitar = (v) => Math.min(100, Math.max(0, Math.round(v * 10) / 10))
         const imantar = (v) => (Math.abs(v - 50) <= IMAN ? 50 : v)
         setGuias({ x: s.x === 50, y: s.y === 50 })
         const mover = (ev) => {
             const x = imantar(limitar(inicio.x + ((ev.clientX - inicio.px) / capa.width) * 100))
             const y = imantar(limitar(inicio.y + ((ev.clientY - inicio.py) / capa.height) * 100))
+            const dx = x - inicio.x
+            const dy = y - inicio.y
             setGuias({ x: x === 50, y: y === 50 })
             onChange((prev) => ({
                 ...prev,
-                body: { ...prev.body, stickers: (prev.body?.stickers ?? []).map(o => (o.id === s.id ? { ...o, x, y } : o)) },
+                body: {
+                    ...prev.body,
+                    stickers: (prev.body?.stickers ?? []).map(o => (origen[o.id]
+                        ? { ...o, x: limitar(origen[o.id].x + dx), y: limitar(origen[o.id].y + dy) }
+                        : o)),
+                },
             }))
         }
         const soltar = () => {
@@ -207,6 +277,15 @@ export const SideCanvas = ({
         window.addEventListener('pointermove', mover)
         window.addEventListener('pointerup', soltar)
     }
+
+    const estiloSticker = (s) => ({
+        left: `${s.x}%`,
+        top: `${s.y}%`,
+        width: `${s.w}%`,
+        transform: `translate(-50%, -50%) rotate(${s.rot ?? 0}deg)`,
+        opacity: s.opacity ?? 1,
+        pointerEvents: readOnly ? 'none' : 'auto',
+    })
 
     const setName = (value) => onChange((prev) => ({ ...prev, name: value }))
     const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }))
@@ -252,6 +331,21 @@ export const SideCanvas = ({
                 the Date. */}
             {!readOnly &&
                 <div className={styles.topRow}>
+                    {/* Flash: canción, arriba a la izquierda como su reproductor en
+                        la página del invitado (SongPlayer). Solo el disco. */}
+                    {conCancion &&
+                        <button
+                            className={cls('song', `${styles.chip} ${styles.chipDisco}`)}
+                            onClick={pick('song')}
+                            aria-label={body.song?.name ?? t('side_events.song_add')}
+                            title={body.song?.name ?? t('side_events.song_add')}
+                        >
+                            {body.song?.albumArt
+                                ? <img src={body.song.albumArt} alt='' className={styles.chipDiscoArte} />
+                                : <Music2 size={14} />
+                            }
+                        </button>
+                    }
                     <button className={cls('background', styles.chip)} onClick={pick('background')} data-tour='chip-background'>
                         <span className={styles.chipIcon}><ImagePlus size={13} /></span>
                         <span className={styles.chipLabel}>
@@ -259,7 +353,7 @@ export const SideCanvas = ({
                         </span>
                     </button>
 
-                    <button className={cls('color', styles.chip)} onClick={pick('color')} data-tour='chip-color'>
+                    <button className={cls('color', `${styles.chip} ${styles.chipDerecha}`)} onClick={pick('color')} data-tour='chip-color'>
                         <span className={styles.chipSwatch} style={{ background: themeColor }} />
                         <span className={styles.chipLabel}>{t('side_events.theme_color')}</span>
                     </button>
@@ -267,99 +361,151 @@ export const SideCanvas = ({
             }
 
             {/* ── Columna de info, encima del hero ── */}
-            <div ref={scrollRef} className={`${styles.scrollArea} scroll-invitation`}>
+            {/* Tocar el hueco de arriba (sin texto ni PNG) elige el fondo. */}
+            <div
+                ref={scrollRef}
+                className={`${styles.scrollArea} scroll-invitation`}
+                onClick={(e) => {
+                    if (clicDeSticker.current) { e.stopPropagation(); return }
+                    if (e.target === e.currentTarget) pick('background')(e)
+                }}
+            >
 
                 {/* PNG de un Flash sobre la portada: capa del alto de la
                     pantalla que se mueve con la página; "detrás" queda entre
                     el fondo y las tarjetas. Se arrastran para acomodarlos. */}
                 {/* Guías del centro mientras se arrastra un PNG */}
                 {guias && (
-                    <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`}>
+                    <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`} style={marco}>
                         <span className={`${styles.guiaV} ${guias.x ? styles.guiaActiva : ''}`} />
                         <span className={`${styles.guiaH} ${guias.y ? styles.guiaActiva : ''}`} />
                     </div>
                 )}
 
-                {stickers.length > 0 && ['back', 'front'].map(capa => (
-                    <div key={capa} aria-hidden className={`${styles.stickersCapa} ${capa === 'back' ? styles.stickersAtras : styles.stickersDelante}`}>
-                        {stickers.filter(s => (s.z === 'back' ? 'back' : 'front') === capa).map(s => (
-                            <img
-                                key={s.id}
-                                src={s.url}
-                                alt=''
-                                draggable={false}
-                                className={`${styles.sticker} ${!readOnly && stickerSel === s.id ? styles.stickerSel : ''}`}
-                                style={{
-                                    left: `${s.x}%`,
-                                    top: `${s.y}%`,
-                                    width: `${s.w}%`,
-                                    transform: `translate(-50%, -50%) rotate(${s.rot ?? 0}deg)`,
-                                    opacity: s.opacity ?? 1,
-                                    pointerEvents: readOnly ? 'none' : 'auto',
-                                }}
-                                onPointerDown={arrastrarSticker(s)}
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        ))}
+                {/* Zona segura, visible mientras se editan los PNG: lo que
+                    quede debajo de la línea se recorta (si el recorte está
+                    prendido). Sin recorte se ve tenue, solo como referencia. */}
+                {!readOnly && zona && (selected === 'stickers' || guias) && (
+                    <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`} style={marco}>
+                        <div
+                            className={`${styles.zonaBotones} ${zonaLibre ? styles.zonaBotonesLibre : ''}`}
+                            style={{ top: zona.limite }}
+                        >
+                            <span className={styles.zonaEtiqueta}>
+                                {t(zonaLibre ? 'side_events.stickers_zone_free' : 'side_events.stickers_zone_label')}
+                            </span>
+                        </div>
                     </div>
-                ))}
+                )}
 
-                {/* Hueco transparente: deja ver el hero, y tocarlo también lo selecciona */}
-                <div className={styles.heroGap} onClick={pick('background')} />
+                {/* Todos van detrás del título, la fecha, el lugar y los
+                    botones (z 0, debajo de .infoCont). El seleccionado tiene
+                    además una agarradera invisible encima de todo para poder
+                    moverlo aunque lo tape el texto. */}
+                {stickers.length > 0 && (
+                    <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={recorte}>
+                        <div className={styles.lienzo} style={lienzo}>
+                            {stickers.map(s => (
+                                <img
+                                    key={s.id}
+                                    src={s.url}
+                                    alt=''
+                                    draggable={false}
+                                    className={styles.sticker}
+                                    style={estiloSticker(s)}
+                                    onPointerDown={arrastrarSticker(s)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {!readOnly && seleccion.length > 0 && (
+                    <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAgarre}`} style={marco}>
+                        <div className={styles.lienzo} style={lienzo}>
+                            {stickers.filter(s => seleccion.includes(s.id)).map(s => (
+                                // El img (transparente) le da al div el tamaño del PNG;
+                                // el contorno punteado es del div y sí se ve.
+                                <div
+                                    key={s.id}
+                                    className={`${styles.sticker} ${styles.stickerSel}`}
+                                    style={{ ...estiloSticker(s), opacity: 1 }}
+                                    onPointerDown={arrastrarSticker(s)}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div
+                    ref={infoRef}
                     className={styles.infoCont}
                     style={padBottom ? { paddingBottom: padBottom + 24 } : undefined}
                 >
 
-                    {/* Título */}
-                    <div className={cls('title', styles.titleZone)} data-zone='title' onClick={pick('title')}>
-                        <div
-                            className={styles.titleInput}
-                            contentEditable={!readOnly}
-                            suppressContentEditableWarning
-                            spellCheck={false}
-                            data-placeholder={t('side_events.event_title_placeholder')}
-                            onInput={(e) => setName(e.currentTarget.textContent)}
-                            style={{
-                                fontFamily: title.font ?? 'Poppins',
-                                fontWeight: title.weight ?? 500,
-                                fontSize: `${title.size ?? 36}px`,
-                                lineHeight: title.line_height ?? 1.4,
-                                opacity: title.opacity ?? 1,
-                            }}
-                        >
-                            {initialTitle}
+                    {/* Primera pantalla: título, fecha, lugar y botones, con los
+                        botones al fondo (16 px abajo), como la página del invitado
+                        (.primera_pantalla). Lo demás queda abajo, al hacer scroll. */}
+                    <div className={styles.primeraPantalla} style={{ '--velo': colorDeVelo(themeColor, body.veil) }}>
+                        {/* Título. Vacío no ocupa lugar (como en la página del
+                            invitado, donde no se pinta): el texto de ejemplo flota
+                            encima de la fecha para poder tocarlo y escribir. */}
+                        <div className={`${cls('title', styles.titleZone)} ${!current?.name?.trim() ? styles.titleVacio : ''}`} data-zone='title' onClick={pick('title')}>
+                            <div
+                                className={styles.titleInput}
+                                contentEditable={!readOnly}
+                                suppressContentEditableWarning
+                                spellCheck={false}
+                                data-placeholder={t('side_events.event_title_placeholder')}
+                                onInput={(e) => setName(e.currentTarget.textContent)}
+                                style={{
+                                    fontFamily: title.font ?? 'Poppins',
+                                    fontWeight: title.weight ?? 500,
+                                    fontSize: `${title.size ?? 36}px`,
+                                    lineHeight: title.line_height ?? 1.4,
+                                    opacity: title.opacity ?? 1,
+                                    textShadow: sombraDeTexto(title.shadow),
+                                }}
+                            >
+                                {initialTitle}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Fecha */}
-                    <div className={cls('date', styles.col)} data-zone='date' onClick={pick('date')}>
-                        {dateLabels.length
-                            ? dateLabels.map(label => <span key={label}>{label}</span>)
-                            : <span className={styles.colMuted}>{t('side_events.datetime_label')}</span>
-                        }
-                    </div>
+                        {/* Fecha y lugar van en un solo bloque, sin separación,
+                            igual que la columna .col de la página del invitado. */}
+                        <div className={styles.detalles}>
+                            {/* Fecha */}
+                            <div className={cls('date', styles.col)} data-zone='date' onClick={pick('date')} style={{ textShadow: sombraDeTexto(body.details_shadow) }}>
+                                {dateLabels.length
+                                    ? dateLabels.map(label => <span key={label}>{label}</span>)
+                                    : <span className={styles.colMuted}>{t('side_events.datetime_label')}</span>
+                                }
+                            </div>
 
-                    {/* Lugar */}
-                    <div className={cls('place', styles.col)} data-zone='place' onClick={pick('place')}>
-                        {placeLabel
-                            ? <>
-                                <span>{placeLabel}</span>
-                                {regionLabel && <span>{regionLabel}</span>}
-                            </>
-                            : <span className={styles.colMuted}>{t('side_events.place_name_label')}</span>
-                        }
-                    </div>
+                            {/* Lugar */}
+                            <div className={cls('place', styles.col)} data-zone='place' onClick={pick('place')} style={{ textShadow: sombraDeTexto(body.details_shadow) }}>
+                                {placeLabel
+                                    ? <>
+                                        <span>{placeLabel}</span>
+                                        {regionLabel && <span>{regionLabel}</span>}
+                                    </>
+                                    : <span className={styles.colMuted}>{t('side_events.place_name_label')}</span>
+                                }
+                            </div>
+                        </div>
 
-                    {/* RSVP: maqueta de la píldora de la pieza */}
-                    <div aria-hidden className={styles.buttonsCont}>
-                        <span className={styles.mockBtn}>
-                            <CircleCheck size={17} /> {t('side_events.canvas_rsvp_yes')}
-                        </span>
-                        <span className={styles.mockBtn}>
-                            <CircleX size={17} /> {t('side_events.canvas_rsvp_no')}
-                        </span>
+                        {/* RSVP: maqueta de la píldora de la pieza */}
+                        <div ref={botonesRef} aria-hidden className={styles.buttonsCont}>
+                            <span className={styles.mockBtn}>
+                                <CircleCheck size={17} /> {t('side_events.canvas_rsvp_yes')}
+                            </span>
+                            <span className={styles.mockBtn}>
+                                <CircleX size={17} /> {t('side_events.canvas_rsvp_no')}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Itinerario de un Flash: el mismo widget que el remoto, arriba de Cómo llegar. */}

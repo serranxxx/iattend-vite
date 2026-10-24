@@ -132,8 +132,14 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    /* Juntos a la izquierda (canción + fondo, 8 px entre ellos); el color
+       del tema se va a la derecha con margin-left: auto. */
+    justify-content: flex-start;
     gap: 8px;
+}
+
+.chipDerecha {
+    margin-left: auto;
 }
 
 .chip {
@@ -176,6 +182,21 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
 
+/* Canción (Flash): solo el disco, redondo. */
+.chipDisco {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.chipDiscoArte {
+    width: 26px;
+    height: 26px;
+    border-radius: 99px;
+    object-fit: cover;
+}
+
 .chipLabel {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -187,6 +208,8 @@
     position: relative;
     z-index: 1;
     height: 100%;
+    /* 100cqh = alto de la pantalla, para la primera pantalla de la columna. */
+    container-type: size;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
@@ -194,34 +217,102 @@
     box-sizing: border-box;
 }
 
-/* Hueco que deja ver el hero antes de la columna de info. Porcentaje sobre el
-   alto del scroller: funciona igual en la tarjeta de 700px y a pantalla
-   completa. */
-.heroGap {
-    flex: none;
-    height: 45%;
-    cursor: pointer;
-}
-
 /* ── Columna de info (.info_cont del remoto) ── */
 .infoCont {
     position: relative;
-    /* Encima de los PNG "detrás" (z 0) y debajo de los "delante" (z 2). */
+    /* Encima de los PNG (z 0). Lo vacío de la columna deja pasar el puntero
+       para poder agarrar los PNG que se asoman entre el texto. */
     z-index: 1;
-    flex: 1;
+    pointer-events: none;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    /* Mismo relleno que .info_cont del remoto en móvil. */
+    padding: 0 24px 24px;
+    box-sizing: border-box;
+    /* El tinte empieza a la mitad de la pantalla, como en el remoto: la
+       columna arranca arriba y si no velaba la portada y los PNG. */
+    background-image: linear-gradient(to bottom, transparent 50cqh, var(--blur-color));
+    /* misma curva y duración que la hoja inferior: suben como un solo gesto */
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.infoCont > * {
+    pointer-events: auto;
+}
+
+/* Primera pantalla: título, fecha, lugar y botones; los botones al fondo de
+   la pantalla con 16 px abajo (= .primera_pantalla del remoto). Lo vacío deja
+   pasar el puntero a los PNG y al fondo. */
+.infoCont > .primeraPantalla {
+    pointer-events: none;
+}
+
+.primeraPantalla {
+    width: 100%;
+    min-height: 100cqh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-end;
     gap: 12px;
-    padding: 24px 20px;
+    padding-bottom: 16px;
     box-sizing: border-box;
-    background-image: linear-gradient(to bottom, transparent, var(--blur-color));
-    /* misma curva y duración que la hoja inferior: suben como un solo gesto */
-    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.primeraPantalla > * {
+    pointer-events: auto;
+}
+
+/* Velo opcional del panel Fondo (--velo): de orilla a orilla de la pantalla,
+   aunque la columna tenga margen; el scroller recorta lo que sobra. Queda
+   detrás del texto y encima de la portada y los PNG. */
+.primeraPantalla {
+    position: relative;
+    z-index: 0;
+}
+
+.primeraPantalla::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -100vw;
+    right: -100vw;
+    z-index: -1;
+    background: var(--velo, transparent);
+    pointer-events: none;
 }
 
 /* ── Título ── */
+/* Sin título no ocupa alto (en la página del invitado no se pinta); el texto
+   de ejemplo flota encima, pegado a la fecha. */
+.titleVacio {
+    position: relative;
+    height: 0;
+}
+
+.titleVacio .titleInput {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Fecha y lugar: un bloque sin separación, como .col del remoto. */
+.detalles {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.detalles .col {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
 .titleZone {
     width: 100%;
     border-radius: 14px;
@@ -234,7 +325,8 @@
     width: 100%;
     text-align: center;
     color: #FFFFFF;
-    padding: 4px 0;
+    /* Sin relleno: la página del invitado no lo tiene y movía todo lo de abajo. */
+    padding: 0;
     word-break: break-word;
     text-shadow: 0 0 18px rgba(0, 0, 0, 0.35);
     outline: none;
@@ -276,7 +368,10 @@
 .buttonsCont {
     width: 100%;
     max-width: 450px;
-    height: 58px;
+    /* Mismo alto que la píldora del remoto (botones de 64 + borde): si no, la
+       fecha y el título quedaban 6 px más abajo que en la página real. */
+    height: 66px;
+    box-sizing: border-box;
     border-radius: 999px;
     background-color: var(--blur-color--dark);
     backdrop-filter: blur(20px);
@@ -450,8 +545,27 @@
     z-index: 0;
 }
 
-.stickersDelante {
-    z-index: 2;
+/* Lienzo de 390×700 que cubre la pantalla (lienzoCover); los PNG van en % de él. */
+.lienzo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Agarradera del PNG seleccionado: encima de todo, para moverlo aunque lo
+   tape el título. */
+.stickersAgarre {
+    z-index: 3;
+}
+
+.stickerHueco {
+    display: block;
+    width: 100%;
+    height: auto;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .sticker {
@@ -500,6 +614,40 @@
     height: 0;
     border-top: 1px dashed #FFFFFF;
     transform: translateY(-0.5px);
+}
+
+/* Zona de los botones de confirmar: línea punteada y franja rayada debajo.
+   Lo que entra aquí se recorta; con la zona libre solo queda de referencia. */
+.zonaBotones {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-top: 1.5px dashed #FF4FA3;
+    background-image: repeating-linear-gradient(
+        135deg,
+        rgba(255, 79, 163, 0.16) 0 6px,
+        transparent 6px 12px
+    );
+    transition: opacity 160ms ease;
+}
+
+.zonaBotonesLibre {
+    opacity: 0.35;
+}
+
+.zonaEtiqueta {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #FF4FA3;
+    color: #FFFFFF;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .guiaActiva {

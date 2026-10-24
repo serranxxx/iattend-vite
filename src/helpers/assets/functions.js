@@ -226,3 +226,23 @@ export function simpleaddress(direccion, numero, colonia, codigoPostal, ciudad, 
 }
 
 
+
+
+// Sombra de los textos de la portada de un side event (título, fecha y
+// lugar), de 0 (sin sombra) a 100. `undefined` = la sombra de siempre (la
+// pone el CSS). Contraparte en iattend-events/src/helpers/functions.ts.
+export const sombraDeTexto = (n) => {
+    if (n === undefined || n === null) return undefined
+    if (n <= 0) return 'none'
+    const k = n / 100
+    return `0 1px ${(2 + 4 * k).toFixed(1)}px rgba(0, 0, 0, ${(0.25 + 0.45 * k).toFixed(2)}), 0 0 ${Math.round(12 + 20 * k)}px rgba(0, 0, 0, ${(0.2 + 0.5 * k).toFixed(2)})`
+}
+
+// Velo del fondo de un side event: el color del tema (#rrggbb) con la opacidad
+// de `veil` (0–100). Sin velo, transparente. Contraparte en
+// iattend-events/src/helpers/functions.ts.
+export const colorDeVelo = (color, veil) => {
+    if (!veil || veil <= 0 || !/^#[0-9a-f]{6}$/i.test(color ?? '')) return undefined
+    const alfa = Math.round(Math.min(100, veil) / 100 * 255).toString(16).padStart(2, '0')
+    return `${color}${alfa}`
+}

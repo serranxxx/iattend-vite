@@ -23,9 +23,13 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, Shapes, ImagePlus, Info, Landmark, Link2, ListOrdered, Palette, Plus, Search, Send, Share2, Sparkles, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, ImagePlus, Info, Music, Link2, ListOrdered, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, X } from 'lucide-react'
 import { ItinerarioFlash } from './ItinerarioFlash'
 import { StickersFlash } from './StickersFlash'
+import { ImagenLinkFlash } from './ImagenLinkFlash'
+import { CancionFlash } from './CancionFlash'
+import { MAX_STICKERS, nuevoSticker } from './stickersFlashData'
+import { subirSticker } from '../../helpers/services/uploadImage'
 import { SelectorColor } from './SelectorColor'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
 import { AddressAutocomplete } from './AddressAutocomplete'
@@ -86,6 +90,13 @@ const THEME_SWATCHES = [
 ]
 
 // Campos de la dirección, en el orden en que se muestran en el panel
+// Valor del slider de sombra cuando el evento aún no la ha tocado: más o menos
+// la sombra que ya traen el título y la fecha/lugar por CSS.
+const DEFAULT_SOMBRA_TITULO = 25
+// Intensidad con la que se prende el velo de color del fondo (0–100).
+const VELO_INICIAL = 35
+const DEFAULT_SOMBRA_DETALLES = 5
+
 const ADDRESS_FIELDS = [
     ['street', 'address_street'],
     ['number', 'address_number'],
@@ -2664,11 +2675,54 @@ export const SideEvents = () => {
     )
 
     /* ── Atajos de escritura sobre `current` ── */
-    // PNG seleccionado de un Flash: lo comparten la pieza (arrastrar) y el panel.
-    const [stickerSel, setStickerSel] = useState(null)
+    // PNG seleccionados de un Flash (ids): los comparten la pieza (arrastrar) y el panel.
+    const [stickerSel, setStickerSel] = useState([])
     // Imagen o video de fondo de un Flash; null = lo que diga el evento.
     const [modoFondoElegido, setModoFondoElegido] = useState(null)
     const setBody = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, ...patch } }))
+
+    // Pegar una imagen (⌘V / Ctrl+V) en un Flash la sube y la agrega como PNG,
+    // como un sticker en una historia de Instagram: abre el panel de
+    // elementos y la deja seleccionada para arrastrarla en la pieza.
+    const pegandoRef = useRef(false)
+    useEffect(() => {
+        if (!esFlash || activeTab !== 'diseno' || live) return
+        const onPaste = async (e) => {
+            const destino = e.target
+            if (destino?.closest?.('input, textarea, [contenteditable="true"]')) return
+            const archivo = [...(e.clipboardData?.files ?? [])].find(f => f.type.startsWith('image/'))
+            if (!archivo) return
+            e.preventDefault()
+            if (pegandoRef.current) return
+            if ((current?.body?.stickers?.length ?? 0) >= MAX_STICKERS) {
+                message.warning(t('side_events.stickers_paste_max', { max: MAX_STICKERS }))
+                return
+            }
+            pegandoRef.current = true
+            const aviso = message.loading(t('side_events.stickers_paste_uploading'), 0)
+            try {
+                // Se sube aligerado (WebP de ≤1200 px): pegado pesaba ~1 MB.
+                const url = await subirSticker(archivo, `flash-${flashId}`)
+                if (!url) return
+                const nuevo = nuevoSticker(url)
+                updateCurrent((prev) => ({
+                    ...prev,
+                    body: { ...prev.body, stickers: [...(Array.isArray(prev.body?.stickers) ? prev.body.stickers : []), nuevo] },
+                }))
+                setSection('stickers')
+                setStickerSel([nuevo.id])
+            } catch (err) {
+                console.error(err)
+                message.error(t('side_events.stickers_paste_error'))
+            } finally {
+                aviso()
+                pegandoRef.current = false
+            }
+        }
+        window.addEventListener('paste', onPaste)
+        return () => window.removeEventListener('paste', onPaste)
+    }, [esFlash, activeTab, live, flashId, current?.body?.stickers?.length])
+
     const setTitleProp = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body?.title, ...patch } } }))
     const setAddress = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body?.address, ...patch } } }))
 
@@ -2693,6 +2747,16 @@ export const SideEvents = () => {
                 />
             </div>
         </div>
+
+    // "Crear desde mi diseño": la imagen del link con el fondo elegido y los
+    // PNG de la pieza (ImagenLinkFlash). Solo toca url_image.
+    const generadorLink = esFlash && (
+        <ImagenLinkFlash
+            body={current?.body}
+            carpeta={`flash-${flashId}`}
+            onLista={(url) => updateCurrent((prev) => ({ ...prev, url_image: url }))}
+        />
+    )
 
     const panelBackground = (
         <>
@@ -2758,6 +2822,7 @@ export const SideEvents = () => {
                                 />
                             </div>
                         </div>
+                        {generadorLink}
                     </div>
                 </>
             ) : (
@@ -2770,8 +2835,41 @@ export const SideEvents = () => {
                     </div>
 
                     <span className={ed.hint}>{t('side_events.panel_background_note')}</span>
+
+                    {/* Flash con imagen: la del link puede armarse desde la pieza. */}
+                    {esFlash && (
+                        <div className={ed.fieldStack}>
+                            <span className={ed.fieldLabel}>{t('savethedate.poster_label')}</span>
+                            <span className={ed.hint}>{t('side_events.link_poster_hint')}</span>
+                            {(current?.url_image || current?.body?.image) &&
+                                <div className={ed.thumbRow}>
+                                    <div className={ed.thumb}>
+                                        <img src={current.url_image || current.body.image} alt='' />
+                                    </div>
+                                </div>
+                            }
+                            {generadorLink}
+                        </div>
+                    )}
                 </>
             )}
+
+            {/* Velo: tiñe la portada y los PNG con el color del tema, detrás
+                del texto y los botones. Apagado por defecto. */}
+            <label className={ed.toggle}>
+                <span className={ed.toggleLabel}>{t('side_events.veil_label')}</span>
+                <Switch
+                    size='small'
+                    checked={(current?.body?.veil ?? 0) > 0}
+                    onChange={(v) => setBody({ veil: v ? VELO_INICIAL : null })}
+                />
+            </label>
+            {(current?.body?.veil ?? 0) > 0 &&
+                <div className={ed.fieldStack}>
+                    <span className={ed.fieldLabel}>{t('side_events.veil_intensity')}</span>
+                    <Slider min={5} max={90} value={current.body.veil} onChange={(v) => setBody({ veil: v })} />
+                </div>
+            }
         </>
     )
 
@@ -2826,7 +2924,7 @@ export const SideEvents = () => {
 
             <div className={ed.fieldStack}>
                 <span className={ed.fieldLabel}>{t('side_events.font_size')}</span>
-                <Slider min={36} max={64} step={2} value={current?.body?.title?.size ?? 36} onChange={(v) => setTitleProp({ size: v })} />
+                <Slider min={flashId ? 14 : 36} max={64} step={2} value={current?.body?.title?.size ?? 36} onChange={(v) => setTitleProp({ size: v })} />
             </div>
 
             <div className={ed.fieldStack}>
@@ -2842,6 +2940,12 @@ export const SideEvents = () => {
             <div className={ed.fieldStack}>
                 <span className={ed.fieldLabel}>{t('side_events.font_opacity')}</span>
                 <Slider min={0} max={1} step={0.01} value={current?.body?.title?.opacity ?? 1} onChange={(v) => setTitleProp({ opacity: v })} />
+            </div>
+
+            {/* Sombra para que el texto resalte sobre fotos claras (0 = sin sombra). */}
+            <div className={ed.fieldStack}>
+                <span className={ed.fieldLabel}>{t('side_events.text_shadow')}</span>
+                <Slider min={0} max={100} value={current?.body?.title?.shadow ?? DEFAULT_SOMBRA_TITULO} onChange={(v) => setTitleProp({ shadow: v })} />
             </div>
         </>
     )
@@ -2912,12 +3016,18 @@ export const SideEvents = () => {
                     {formatEventDateTime(current.body.hour, { state: current.body?.address?.state, timezone: current.body?.timezone })}
                 </span>
             }
+
+            {/* La fecha y el lugar comparten sombra: en la pieza van en el mismo bloque. */}
+            <div className={ed.fieldStack}>
+                <span className={ed.fieldLabel}>{t('side_events.details_shadow')}</span>
+                <Slider min={0} max={100} value={current?.body?.details_shadow ?? DEFAULT_SOMBRA_DETALLES} onChange={(v) => setBody({ details_shadow: v })} />
+            </div>
         </>
     )
 
     const panelPlace = (
         <>
-            {blockHead(<Landmark size={16} />, t('side_events.panel_place'), t('side_events.panel_place_hint'))}
+            {blockHead(<MapPin size={16} />, t('side_events.panel_place'), t('side_events.panel_place_hint'))}
 
             <div className={ed.fieldStack}>
                 <span className={ed.fieldLabel}>{t('side_events.place_name_label')}</span>
@@ -2970,6 +3080,23 @@ export const SideEvents = () => {
             {!current?.body?.address?.city &&
                 <span className={ed.hint}>{t('side_events.panel_weather_hint')}</span>
             }
+
+            <div className={ed.fieldStack}>
+                <span className={ed.fieldLabel}>{t('side_events.details_shadow')}</span>
+                <Slider min={0} max={100} value={current?.body?.details_shadow ?? DEFAULT_SOMBRA_DETALLES} onChange={(v) => setBody({ details_shadow: v })} />
+            </div>
+        </>
+    )
+
+    // Canción de un Flash, como la del Save the Date (CancionFlash).
+    const panelSong = (
+        <>
+            {blockHead(<Music size={16} />, t('build_generals.label_song'), t('side_events.song_hint'))}
+            <CancionFlash
+                song={current?.body?.song ?? null}
+                onChange={(song) => setBody({ song })}
+                carpeta={`flash-${flashId}`}
+            />
         </>
     )
 
@@ -3005,19 +3132,22 @@ export const SideEvents = () => {
     // PNG sobre la portada de un Flash (StickersFlash.jsx).
     const panelStickers = (
         <>
-            {blockHead(<Shapes size={16} />, t('side_events.panel_stickers'), t('side_events.panel_stickers_hint'))}
+            {blockHead(<Sticker size={16} />, t('side_events.panel_stickers'), t('side_events.panel_stickers_hint'))}
             <StickersFlash
                 stickers={Array.isArray(current?.body?.stickers) ? current.body.stickers : []}
                 onChange={(lista) => setBody({ stickers: lista.length ? lista : null })}
-                seleccionado={stickerSel}
+                seleccionados={stickerSel}
                 onSeleccionar={setStickerSel}
                 carpeta={`flash-${flashId}`}
+                zonaLibre={!!current?.body?.stickers_zona_libre}
+                onZonaLibre={(libre) => setBody({ stickers_zona_libre: libre || null })}
             />
         </>
     )
 
     const PANELS = {
         stickers: panelStickers,
+        song: panelSong,
         itinerary: panelItinerary,
         background: panelBackground,
         color: panelColor,
@@ -3032,12 +3162,13 @@ export const SideEvents = () => {
         { key: 'color', icon: <Palette size={18} />, label: t('side_events.theme_color'), short: t('side_events.dock_color') },
         { key: 'title', icon: <Type size={18} />, label: t('side_events.panel_title'), short: t('side_events.dock_title') },
         { key: 'date', icon: <CalendarDays size={18} />, label: t('side_events.panel_date'), short: t('side_events.dock_date') },
-        { key: 'place', icon: <Landmark size={18} />, label: t('side_events.panel_place'), short: t('side_events.dock_place') },
+        { key: 'place', icon: <MapPin size={18} />, label: t('side_events.panel_place'), short: t('side_events.dock_place') },
         { key: 'extras', icon: <StickyNote size={18} />, label: t('side_events.panel_notes'), short: t('side_events.dock_notes') },
         // El mini itinerario es solo de los Flash.
         ...(esFlash ? [
             { key: 'itinerary', icon: <ListOrdered size={18} />, label: t('side_events.panel_itinerary'), short: t('side_events.dock_itinerary') },
-            { key: 'stickers', icon: <Shapes size={18} />, label: t('side_events.panel_stickers'), short: t('side_events.dock_stickers') },
+            { key: 'stickers', icon: <Sticker size={18} />, label: t('side_events.panel_stickers'), short: t('side_events.dock_stickers') },
+            { key: 'song', icon: <Music size={18} />, label: t('build_generals.label_song'), short: t('side_events.dock_song') },
         ] : []),
     ]
 
@@ -3093,6 +3224,7 @@ export const SideEvents = () => {
                             readOnly={activeTab !== 'diseno'}
                             stickerSel={stickerSel}
                             onStickerSel={setStickerSel}
+                            conCancion={esFlash}
                         />
                     </div>
                 </div>
@@ -3872,6 +4004,7 @@ export const SideEvents = () => {
                                         liftBottom={contentLift}
                                         stickerSel={stickerSel}
                                         onStickerSel={setStickerSel}
+                                        conCancion={esFlash}
                                     />
                                 )
                             }

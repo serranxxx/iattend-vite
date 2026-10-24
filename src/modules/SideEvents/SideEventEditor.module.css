@@ -1154,3 +1154,107 @@
 .stickerThumbActivo {
     border: 2px solid #1f1f1f;
 }
+
+/* Capas de los PNG de un Flash: la de hasta arriba primero. */
+.capasLista {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.capaFila {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 6px 6px 6px;
+    border: 1px solid #EBEBEB;
+    border-radius: 14px;
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.capaFila:hover {
+    background: #FAFAFA;
+}
+
+.capaFilaActiva {
+    border-color: #1f1f1f;
+}
+
+/* Oculto: la fila queda tenue (menos sus botones, para volver a mostrarlo). */
+.capaOculta .capaThumb,
+.capaOculta .capaNombre {
+    opacity: 0.4;
+}
+
+.capaThumb {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    padding: 4px;
+    border-radius: 10px;
+    background: repeating-conic-gradient(#f3f3f3 0% 25%, #fff 0% 50%) 50% / 10px 10px;
+    box-sizing: border-box;
+}
+
+.capaThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.capaNombre {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1f1f1f;
+}
+
+.capaPosicion {
+    font-size: 11px;
+    font-weight: 400;
+    color: #8C8C8C;
+}
+
+.capaAcciones {
+    display: flex;
+    flex-shrink: 0;
+}
+
+/* "Crear desde mi diseño" (imagen del link de un Flash). */
+.linkGenerador {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.linkStickers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+/* Dentro de la casilla es inline: sin inline-block no respeta el tamaño. */
+.linkStickerThumb {
+    display: inline-block;
+    vertical-align: middle;
+    width: 40px;
+    height: 40px;
+    padding: 4px;
+    border-radius: 10px;
+    background: repeating-conic-gradient(#f3f3f3 0% 25%, #fff 0% 50%) 50% / 10px 10px;
+    box-sizing: border-box;
+}
+
+.linkStickerThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}

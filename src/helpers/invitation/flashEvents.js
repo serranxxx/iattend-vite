@@ -39,7 +39,9 @@ export const flashComoInvitacion = (se) => ({
     event_date: se.body?.hour ? String(se.body.hour).slice(0, 10) : null,
     data: {
         cover: {
-            image: { prod: se.body?.image || se.url_image || null },
+            // La imagen del link (la de WhatsApp, puede venir de "Crear desde
+            // mi diseño" con los stickers) manda; la portada es el respaldo.
+            image: { prod: se.url_image || se.body?.image || null },
             title: { text: { value: se.name || '' } },
         },
     },

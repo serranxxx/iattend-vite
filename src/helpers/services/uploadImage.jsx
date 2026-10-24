@@ -163,6 +163,37 @@ export const deleteImageFromSupabase = async (path, invitationID, setImages) => 
 
         const longpath = `https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/${path}`;
 
+        /* ─────────────── Evento Flash ─────────────── */
+        // Su carpeta es `flash-<side_event_id>`: no hay invitación detrás, y
+        // buscarla como tal fallaba (no es un uuid) sin borrar nada.
+        if (String(invitationID).startsWith('flash-')) {
+            const { data: flash, error: flashError } = await supabase
+                .from('side_events')
+                .select('*')
+                .eq('id', String(invitationID).slice('flash-'.length))
+                .maybeSingle();
+
+            if (flashError) {
+                console.error('Error al obtener el evento Flash:', flashError.message);
+                message.error('Ocurrió un error al eliminar la imagen.');
+                return;
+            }
+            if (flash && containsString(flash, longpath)) {
+                message.error('La imagen está siendo usada en el evento. Quítala y guarda antes de eliminarla.');
+                return;
+            }
+
+            const { error } = await supabase.storage.from('user_images').remove([path]);
+            if (error) {
+                console.error('Error eliminando imagen:', error);
+                message.error('Ocurrió un error al eliminar la imagen.');
+                return;
+            }
+            getImagesFromSupabase(invitationID, setImages);
+            message.success('Imagen eliminada correctamente.');
+            return;
+        }
+
         /* ─────────────── Invitación ─────────────── */
         const { data: invitation, error: invitationError } = await supabase
             .from("invitations")
@@ -172,6 +203,7 @@ export const deleteImageFromSupabase = async (path, invitationID, setImages) => 
 
         if (invitationError) {
             console.error("Error al obtener invitación:", invitationError.message);
+            message.error("Ocurrió un error al eliminar la imagen.");
             return;
         }
 
@@ -187,6 +219,7 @@ export const deleteImageFromSupabase = async (path, invitationID, setImages) => 
 
         if (sideEventsError) {
             console.error("Error al obtener side_events:", sideEventsError.message);
+            message.error("Ocurrió un error al eliminar la imagen.");
             return;
         }
 
@@ -487,4 +520,48 @@ export const uploadOnboardingPhoto = async (file) => {
         .getPublicUrl(filePath);
 
     return data.publicUrl;
+};
+
+
+/* ─────────────── Stickers (PNG de un Flash) ─────────────── */
+// Un PNG pegado pesaba ~1 MB y en el teléfono nunca se ve a más de ~1200 px:
+// se guarda como WebP con transparencia de 1200 px como máximo (~100 KB).
+// Si el navegador no sabe codificar WebP (Safari viejo), queda PNG achicado.
+const STICKER_MAX_PX = 1200;
+
+export const aligerarSticker = async (file) => {
+    const ligero = await imageCompression(file, {
+        maxSizeMB: 0.4,
+        maxWidthOrHeight: STICKER_MAX_PX,
+        initialQuality: 0.85,
+        fileType: 'image/webp',
+        useWebWorker: true,
+    });
+    const ext = ligero.type === 'image/webp' ? 'webp' : 'png';
+    return new File([ligero], `sticker.${ext}`, { type: ligero.type });
+};
+
+// Sube un sticker ya aligerado a la carpeta del evento y regresa su URL pública.
+export const subirSticker = async (file, carpeta) => {
+    const ligero = await aligerarSticker(file);
+    const filePath = `${carpeta}/${Date.now()}-${ligero.name}`;
+    const { error } = await supabase.storage
+        .from('user_images')
+        .upload(filePath, ligero, { upsert: true, contentType: ligero.type });
+    if (error) throw error;
+    return supabase.storage.from('user_images').getPublicUrl(filePath).data.publicUrl;
+};
+
+// Desde "Mis imágenes" llega una URL (a veces un PNG pesado): si no es WebP,
+// se baja, se aligera y se sube como sticker nuevo. Si algo falla, se usa tal cual.
+export const stickerLigeroDesdeUrl = async (url, carpeta) => {
+    if (/\.webp($|\?)/i.test(url)) return url;
+    try {
+        const r = await fetch(url);
+        const blob = await r.blob();
+        return await subirSticker(new File([blob], 'sticker', { type: blob.type || 'image/png' }), carpeta);
+    } catch (err) {
+        console.error(err);
+        return url;
+    }
 };
