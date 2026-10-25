@@ -1,10 +1,13 @@
 import { Button, Slider } from 'antd'
-import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { ChevronDown, ChevronUp, ClipboardPaste, Copy, Eye, EyeOff, GripVertical, ImagePlus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { stickerLigeroDesdeUrl } from '../../helpers/services/uploadImage'
 import ed from './SideEventEditor.module.css'
-import { alternar, conModificador, MAX_STICKERS, nuevoSticker } from './stickersFlashData'
+import { alternar, conModificador, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
 
 /*
   Elementos PNG de un Evento Flash (panel del editor). Van en la portada fija,
@@ -15,17 +18,49 @@ import { alternar, conModificador, MAX_STICKERS, nuevoSticker } from './stickers
   lugar. `body.stickers_zona_libre` es legado (ya no hay zona segura). Se
   acomodan arrastrándolos en la pieza; aquí van tamaño, rotación, opacidad,
   capas y quitar.
+  Capas: se reordenan arrastrando su agarradera (y con las flechas en
+  escritorio). En el editor móvil (`movil`) el panel solo trae las capas y
+  agregar: tamaño y giro van con gestos en la pieza, y duplicar y quitar en
+  la píldora de arriba (SideEvents).
   Selección múltiple: `seleccionados` es un arreglo de ids (⌘/Ctrl/Shift +
   clic suma o quita, aquí y en la pieza). Con varios, el tamaño escala a
   todos en proporción, la rotación gira a todos lo mismo y la opacidad se
   iguala; duplicar y quitar van sobre todos.
 */
 
+// Una capa de la lista, arrastrable por su agarradera.
+const FilaCapa = ({ id, className, onClick, onKeyDown, children, etiquetaArrastrar }) => {
+    const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id })
+    return (
+        <div
+            ref={setNodeRef}
+            role='button'
+            tabIndex={0}
+            className={`${className} ${isDragging ? ed.capaArrastrando : ''}`}
+            style={{ transform: CSS.Transform.toString(transform), transition }}
+            onClick={onClick}
+            onKeyDown={onKeyDown}
+        >
+            <span
+                ref={setActivatorNodeRef}
+                className={ed.capaAgarre}
+                aria-label={etiquetaArrastrar}
+                onClick={(e) => e.stopPropagation()}
+                {...attributes}
+                {...listeners}
+            >
+                <GripVertical size={16} />
+            </span>
+            {children}
+        </div>
+    )
+}
+
 // Dos decimales: con uno, el redondeo de cada paso del slider se acumulaba
 // y los que siguen al primero se iban quedando chicos.
 const redondear = (v) => Math.round(v * 100) / 100
 
-export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSeleccionar, carpeta }) => {
+export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSeleccionar, carpeta, movil = false, onPegar = null }) => {
     const { t } = useTranslation()
     const grupo = stickers.filter(s => seleccionados.includes(s.id))
     // El primero que se eligió manda en los sliders; los demás lo siguen.
@@ -44,18 +79,30 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
         onChange(lista)
     }
 
+    // La lista va al revés del arreglo (la de hasta arriba primero).
+    const enLista = [...stickers].reverse()
+    const sensores = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+    const soltarCapa = ({ active, over }) => {
+        if (!over || active.id === over.id) return
+        const de = enLista.findIndex(s => s.id === active.id)
+        const a = enLista.findIndex(s => s.id === over.id)
+        onChange(arrayMove(enLista, de, a).reverse())
+    }
+
     return (
         <>
             {/* Capas, la de hasta arriba primero (como en un editor de diseño). */}
             {stickers.length > 0 && (
+                <DndContext sensors={sensores} collisionDetection={closestCenter} onDragEnd={soltarCapa}>
+                <SortableContext items={enLista.map(s => s.id)} strategy={verticalListSortingStrategy}>
                 <div className={ed.capasLista}>
-                    {[...stickers].reverse().map((s, k) => {
+                    {enLista.map((s, k) => {
                         const n = stickers.length - k
                         return (
-                            <div
+                            <FilaCapa
                                 key={s.id}
-                                role='button'
-                                tabIndex={0}
+                                id={s.id}
+                                etiquetaArrastrar={t('side_events.stickers_layer_drag')}
                                 className={`${ed.capaFila} ${seleccionados.includes(s.id) ? ed.capaFilaActiva : ''} ${s.hidden ? ed.capaOculta : ''}`}
                                 onClick={(e) => elegir(e, s.id)}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') elegir(e, s.id) }}
@@ -79,6 +126,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                                             onChange(stickers.map(o => (o.id === s.id ? { ...o, hidden: !o.hidden || undefined } : o)))
                                         }}
                                     />
+                                    {!movil && <>
                                     <Button
                                         type='text'
                                         size='small'
@@ -95,19 +143,30 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                                         aria-label={t('side_events.stickers_layer_down')}
                                         onClick={(e) => { e.stopPropagation(); mover(s.id, -1) }}
                                     />
+                                    </>}
                                 </span>
-                            </div>
+                            </FilaCapa>
                         )
                     })}
                 </div>
+                </SortableContext>
+                </DndContext>
             )}
 
-            <div className={ed.thumbRow}>
-                {stickers.length < MAX_STICKERS && (
-                    <div className={ed.uploadTile}>
+            {/* Agregar: un botón con texto (el ícono solo no decía que era para subir). */}
+            {stickers.length < MAX_STICKERS && (
                         <StorageImages
                             invitationID={carpeta}
                             type={'side-events'}
+                            customTrigger={
+                                <button type='button' className={ed.stickerAgregar}>
+                                    <span className={ed.stickerAgregarIcono}><ImagePlus size={18} /></span>
+                                    <span className={ed.stickerAgregarTexto}>
+                                        <strong>{t('side_events.stickers_add')}</strong>
+                                        <span>{t('side_events.stickers_add_hint', { n: stickers.length, max: MAX_STICKERS })}</span>
+                                    </span>
+                                </button>
+                            }
                             handleImage={async (url) => {
                                 if (!url) return
                                 // Un PNG de "Mis imágenes" se guarda aligerado como sticker.
@@ -117,14 +176,26 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                                 onSeleccionar([nuevo.id])
                             }}
                         />
-                    </div>
-                )}
-            </div>
-            <span className={ed.hint}>{t(stickers.length ? 'side_events.stickers_hint_drag' : 'side_events.stickers_hint_empty')}</span>
-            {stickers.length < MAX_STICKERS && <span className={ed.hint}>{t('side_events.stickers_hint_paste')}</span>}
-            {stickers.length > 1 && <span className={ed.hint}>{t('side_events.stickers_hint_multi')}</span>}
+            )}
+            {/* Teléfono: sin ⌘V, se pega con un botón que lee el portapapeles
+                (lo arma SideEvents; solo si el navegador puede leerlo). */}
+            {movil && onPegar && stickers.length < MAX_STICKERS && (
+                <button type='button' className={ed.stickerPegar} onClick={onPegar}>
+                    <ClipboardPaste size={16} />
+                    {t('side_events.stickers_paste_btn')}
+                </button>
+            )}
+            {movil
+                ? <span className={ed.hint}>{t(stickers.length ? 'side_events.stickers_hint_gestures' : 'side_events.stickers_hint_empty')}</span>
+                : <>
+                    <span className={ed.hint}>{t(stickers.length ? 'side_events.stickers_hint_drag' : 'side_events.stickers_hint_empty')}</span>
+                    {stickers.length < MAX_STICKERS && <span className={ed.hint}>{t('side_events.stickers_hint_paste')}</span>}
+                    {stickers.length > 1 && <span className={ed.hint}>{t('side_events.stickers_hint_multi')}</span>}
+                </>
+            }
 
-            {actual && (
+            {/* En móvil, tamaño y giro van con gestos y duplicar/quitar en la píldora. */}
+            {actual && !movil && (
                 <>
                     {varios && <span className={ed.fieldLabel}>{t('side_events.stickers_selected', { n: grupo.length })}</span>}
                     <div className={ed.fieldStack}>
@@ -161,10 +232,9 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                             icon={<Copy size={14} />}
                             disabled={stickers.length + grupo.length > MAX_STICKERS}
                             onClick={() => {
-                                const ahora = Date.now()
-                                const copias = grupo.map((g, i) => ({ ...g, id: `s${ahora}${i}`, x: Math.min(95, g.x + 6), y: Math.min(95, g.y + 6) }))
-                                onChange([...stickers, ...copias])
-                                onSeleccionar(copias.map(c => c.id))
+                                const { lista, nuevos } = duplicarStickers(stickers, seleccionados)
+                                onChange(lista)
+                                onSeleccionar(nuevos)
                             }}
                         >
                             {t('side_events.stickers_duplicate')}
@@ -173,7 +243,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                             danger
                             icon={<Trash2 size={14} />}
                             onClick={() => {
-                                onChange(stickers.filter(s => !seleccionados.includes(s.id)))
+                                onChange(quitarStickers(stickers, seleccionados))
                                 onSeleccionar([])
                             }}
                         >

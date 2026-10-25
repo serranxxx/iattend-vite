@@ -1234,7 +1234,19 @@
     "flash_credits_other": "{{count}} WhatsApp credits",
     "flash_not_found": "We couldn't find this Flash event.",
     "flash_no_credits": "No credits left: buy more with the + next to the counter.",
-    "flash_send_error": "The invitation could not be sent. Try again."
+    "flash_send_error": "The invitation could not be sent. Try again.",
+    "story_text": "Text",
+    "story_guests": "Guests",
+    "story_more_tools": "More tools",
+    "story_less_tools": "Fewer tools",
+    "story_close": "Close",
+    "story_share": "Share link",
+    "stickers_hint_gestures": "Tap an element on the piece to select it: move it with one finger and pinch with two to resize and rotate it.",
+    "stickers_layer_drag": "Drag to reorder",
+    "stickers_add": "Add element",
+    "stickers_add_hint": "PNG with a transparent background · {{n}} of {{max}}",
+    "stickers_paste_btn": "Paste copied image",
+    "stickers_paste_empty": "There is no copied image. Copy a PNG or a photo cutout and try again."
   },
   "tables": {
     "title": "Table Organization",

@@ -68,6 +68,7 @@ export const SideCanvas = ({
     fullBleed = false,       // móvil: la pieza ocupa toda la pantalla
     liftBottom = 0,          // móvil: cuánto sube el contenido para librar la hoja
     conCancion = false,      // Flash: chip de la canción (panel Canción)
+    storyMode = false,       // móvil "story": sin chips arriba ni contornos punteados
     stickerSel = [],         // Flash: ids de los PNG seleccionados (StickersFlash)
     onStickerSel,
 }) => {
@@ -171,6 +172,8 @@ export const SideCanvas = ({
         if (readOnly) return
         e.stopPropagation()
         onSelect(section)
+        // Móvil "story": tocar otra zona suelta el PNG elegido.
+        if (storyMode) onStickerSel?.([])
     }
 
     const cls = (section, base) => (readOnly
@@ -236,13 +239,97 @@ export const SideCanvas = ({
     // común (el scroller), que elegía el fondo. Esta marca hace que ese clic
     // se ignore; se apaga en cuanto termina.
     const clicDeSticker = useRef(false)
+    // Móvil "story": un PNG sin seleccionar no se arrastra al tocarlo (un PNG
+    // grande cubre casi toda la pieza y robaba el scroll y el deslizar a
+    // Invitados); se elige con un toque y ya elegido se mueve.
+    const elegirSticker = (s) => (e) => {
+        e.stopPropagation()
+        if (readOnly || !storyMode || seleccion.includes(s.id)) return
+        // Sin abrir la hoja: se ajusta con gestos y la píldora de arriba.
+        // Si había otra hoja abierta, se cierra.
+        if (selected && selected !== 'stickers') onSelect(null)
+        onStickerSel?.([s.id])
+    }
+
+    // Móvil "story": con un PNG elegido, dos dedos en cualquier parte de la
+    // pieza lo escalan (pellizcar) y lo giran. Listeners nativos (no
+    // pasivos) para poder frenar el zoom y el scroll del navegador.
+    const pellizcoRef = useRef(null)
+    const pellizcadoRef = useRef(false)   // el dedo que arrastraba no mueve tras pellizcar
+    const ultimoRef = useRef(null)
+    useEffect(() => {
+        ultimoRef.current = { activo: storyMode && !readOnly && seleccion.length > 0, seleccion, todos: body.stickers ?? [], onChange }
+    })
+    useEffect(() => {
+        const card = cardRef.current
+        if (!card || !storyMode) return
+        const medir = (t) => {
+            const [a, b] = [t[0], t[1]]
+            return {
+                d: Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
+                ang: (Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX) * 180) / Math.PI,
+            }
+        }
+        const inicio = (e) => {
+            const u = ultimoRef.current
+            if (!u?.activo || e.touches.length !== 2) return
+            e.preventDefault()
+            const { d, ang } = medir(e.touches)
+            pellizcoRef.current = {
+                d0: d || 1,
+                a0: ang,
+                base: Object.fromEntries(u.todos.filter(o => u.seleccion.includes(o.id)).map(o => [o.id, { w: o.w, rot: o.rot ?? 0 }])),
+            }
+            pellizcadoRef.current = true
+        }
+        const mover = (e) => {
+            const g = pellizcoRef.current
+            if (!g || e.touches.length !== 2) return
+            e.preventDefault()
+            const { d, ang } = medir(e.touches)
+            const escala = d / g.d0
+            const giro = ang - g.a0
+            const girar = (r) => ((((r + 180) % 360) + 360) % 360) - 180
+            ultimoRef.current.onChange((prev) => ({
+                ...prev,
+                body: {
+                    ...prev.body,
+                    stickers: (prev.body?.stickers ?? []).map(o => (g.base[o.id]
+                        ? {
+                            ...o,
+                            w: Math.min(200, Math.max(5, Math.round(g.base[o.id].w * escala * 100) / 100)),
+                            rot: Math.round(girar(g.base[o.id].rot + giro) * 10) / 10,
+                        }
+                        : o)),
+                },
+            }))
+        }
+        const fin = (e) => { if (e.touches.length < 2) pellizcoRef.current = null }
+        // Safari: sin esto el pellizco también hace zoom a la página.
+        const sinZoom = (e) => { if (ultimoRef.current?.activo) e.preventDefault() }
+        card.addEventListener('touchstart', inicio, { passive: false })
+        card.addEventListener('touchmove', mover, { passive: false })
+        card.addEventListener('touchend', fin)
+        card.addEventListener('touchcancel', fin)
+        card.addEventListener('gesturestart', sinZoom)
+        return () => {
+            card.removeEventListener('touchstart', inicio)
+            card.removeEventListener('touchmove', mover)
+            card.removeEventListener('touchend', fin)
+            card.removeEventListener('touchcancel', fin)
+            card.removeEventListener('gesturestart', sinZoom)
+        }
+    }, [storyMode])
+
     const arrastrarSticker = (s) => (e) => {
         if (readOnly) return
+        if (storyMode && !seleccion.includes(s.id) && !conModificador(e)) return
         e.stopPropagation()
         e.preventDefault()
         clicDeSticker.current = true
         window.addEventListener('pointerup', () => setTimeout(() => { clicDeSticker.current = false }, 0), { once: true })
-        onSelect('stickers')
+        if (!storyMode) onSelect('stickers')
+        pellizcadoRef.current = false
         let grupo
         if (conModificador(e)) {
             grupo = alternar(seleccion, s.id)
@@ -259,6 +346,8 @@ export const SideCanvas = ({
         const imantar = (v) => (Math.abs(v - 50) <= IMAN ? 50 : v)
         setGuias({ x: s.x === 50, y: s.y === 50 })
         const mover = (ev) => {
+            // Con dos dedos manda el pellizco; el dedo que queda no lo mueve.
+            if (pellizcadoRef.current) return
             const x = imantar(limitar(inicio.x + ((ev.clientX - inicio.px) / capa.width) * 100))
             const y = imantar(limitar(inicio.y + ((ev.clientY - inicio.py) / capa.height) * 100))
             const dx = x - inicio.x
@@ -306,9 +395,13 @@ export const SideCanvas = ({
     return (
         <div
             ref={cardRef}
-            className={`${styles.card} ${fullBleed ? styles.cardFull : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
+            className={`${styles.card} ${fullBleed ? styles.cardFull : ''} ${storyMode ? styles.cardStory : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
             style={{ '--blur-color': themeColor, '--blur-color--dark': tint }}
-            onClick={() => { if (!readOnly) onSelect(null) }}
+            onClick={() => {
+                if (readOnly) return
+                onSelect(null)
+                if (storyMode) onStickerSel?.([])
+            }}
         >
 
             {/* ── Hero ── */}
@@ -334,7 +427,8 @@ export const SideCanvas = ({
                 (uno es la imagen de atrás, el otro tiñe todas las tarjetas),
                 así que cada uno tiene su chip, como el de canción del Save
                 the Date. */}
-            {!readOnly &&
+            {/* En modo story sus funciones pasan a los botones del editor. */}
+            {!readOnly && !storyMode &&
                 <div className={styles.topRow}>
                     {/* Flash: canción, arriba a la izquierda como su reproductor en
                         la página del invitado (SongPlayer). Solo el disco. */}
@@ -398,7 +492,7 @@ export const SideCanvas = ({
                                         className={styles.sticker}
                                         style={estiloSticker(s)}
                                         onPointerDown={arrastrarSticker(s)}
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={elegirSticker(s)}
                                     />
                                 ))}
                             </div>
@@ -445,6 +539,7 @@ export const SideCanvas = ({
                                         key={s.id}
                                         className={`${styles.sticker} ${styles.stickerSel}`}
                                         style={{ ...estiloSticker(s), opacity: 1 }}
+                                        data-sticker
                                         onPointerDown={arrastrarSticker(s)}
                                         onClick={(e) => e.stopPropagation()}
                                     >

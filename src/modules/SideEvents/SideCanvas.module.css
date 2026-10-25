@@ -10,7 +10,7 @@
     position: relative;
     width: 390px;
     height: 700px;
-    border-radius: 28px;
+    border-radius: 24px;
     overflow: hidden;
     box-sizing: border-box;
     /* mismo lienzo de arranque que el remoto */
@@ -55,6 +55,36 @@
 
 .picked {
     outline-color: #FFFFFF;
+}
+
+/* Móvil "story" (SideEvents, rama móvil): la pieza se ve como publicada, sin
+   contornos punteados; solo la zona elegida lleva el contorno blanco. */
+.cardFull.cardStory .pickable {
+    outline-color: transparent;
+    outline-offset: 2px;
+}
+
+.cardFull.cardStory .picked {
+    outline: 1.5px solid #FFFFFF;
+    outline-offset: 2px;
+}
+
+/* El PNG elegido se arrastra con el dedo: sin esto el teléfono hacía scroll. */
+.cardStory .stickerSel {
+    touch-action: none;
+}
+
+/* Notas: el contorno va por dentro de su tarjeta. */
+.cardFull.cardStory [data-zone='extras'].picked {
+    outline-offset: -3px;
+}
+
+/* Degradado arriba para que los botones del editor se lean sobre fondos
+   claros, junto con el tinte de abajo. */
+.cardStory .tinteFijo {
+    background-image:
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.28) 0%, transparent 22%),
+        linear-gradient(to bottom, transparent 50%, color-mix(in srgb, var(--blur-color) 55%, transparent));
 }
 
 /* ── Hero ──

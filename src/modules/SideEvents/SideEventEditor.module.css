@@ -575,6 +575,77 @@
 }
 
 /* El trigger de StorageImages entra en el hueco de una miniatura */
+/* Agregar un PNG (StickersFlash): botón de ancho completo con texto. */
+.stickerAgregar {
+    width: 100%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1.5px dashed #D6D1C8;
+    border-radius: 14px;
+    background: #FFFFFF;
+    color: #1B1A18;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.stickerAgregar:hover {
+    border-color: #1B1A18;
+    background: #FAFAF8;
+}
+
+.stickerPegar {
+    width: 100%;
+    height: 44px;
+    /* La hoja es una columna flex con scroll: sin esto se encogía. */
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 14px;
+    background: #F2F0EC;
+    color: #1B1A18;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.stickerAgregarIcono {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: #F2F0EC;
+}
+
+.stickerAgregarTexto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.stickerAgregarTexto strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.stickerAgregarTexto span {
+    font-size: 12px;
+    color: #787878;
+}
+
 .uploadTile {
     display: flex;
     align-items: center;
@@ -914,6 +985,423 @@
     color: #1B1A18;
 }
 
+/* ── Móvil, modo "story" (handoff design_handoff_flash_editor_story) ──
+   La pieza ocupa casi toda la pantalla; encima, botones de vidrio oscuro
+   (a la izquierda cerrar, invitados, acceso y guardar; la canción al centro
+   y las herramientas a la derecha). */
+.mobileRoot:has(.storyStage),
+.mobileRoot:has(.storyGuests) {
+    background: #0B0A0E;
+}
+
+.storyStage {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    /* Todo el alto: las acciones van como íconos sobre la pieza. */
+    bottom: max(12px, env(safe-area-inset-bottom));
+    border-radius: 24px;
+    overflow: hidden;
+    background: #0F0E12;
+}
+
+/* Vidrio oscuro de todos los botones sobre la pieza. */
+.storyRound,
+.storyMore,
+.storySong {
+    background: rgba(12, 23, 27, 0.42);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    color: #FFFFFF;
+}
+
+.storyRound {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.storyRoundOn {
+    background: #FFFFFF;
+    color: #1B1A18;
+}
+
+.storyLeft {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.storyRound[aria-disabled='true'] {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Canción: píldora arriba al centro. */
+.storySong {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    height: 36px;
+    max-width: 190px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px 0 5px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 99px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.storySongDisc {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.storySongDisc img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.storySongName {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* PNG elegido: duplicar y quitar, arriba al centro (en lugar de la canción). */
+.storyPngPill {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 4px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 99px;
+    box-sizing: border-box;
+    background: rgba(12, 23, 27, 0.42);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    animation: storyPngEntra 0.18s ease;
+}
+
+.storyPngPill button {
+    height: 32px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 99px;
+    background: none;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.storyPngPill button[aria-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.storyPngSep {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes storyPngEntra {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -6px);
+    }
+}
+
+/* Columna de herramientas, arriba a la derecha. */
+.storyTools {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.storyTool {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.storyToolLabel {
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+    /* Fuera del flujo, colgando a la izquierda del botón: oculta no ocupa
+       lugar (si no, el hueco invisible seguía siendo tocable). */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: calc(100% + 10px);
+    display: flex;
+    align-items: center;
+    /* Las etiquetas solo con la columna expandida; entran desde la derecha. */
+    opacity: 0;
+    transform: translateX(8px);
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.2s;
+}
+
+.storyToolAbierta .storyToolLabel {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s;
+}
+
+/* Herramientas extra: el alto se abre (grid 0fr → 1fr) y cada botón entra
+   escalonado (--i). Cerrada, el margen negativo se come el gap de la columna. */
+.storyExtras {
+    display: grid;
+    grid-template-rows: 0fr;
+    margin-top: -10px;
+    transition: grid-template-rows 0.3s cubic-bezier(0.32, 0.72, 0, 1), margin-top 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.storyExtrasOn {
+    grid-template-rows: 1fr;
+    margin-top: 0;
+}
+
+.storyExtrasIn {
+    min-height: 0;
+    overflow: hidden;
+    /* Recorta el alto al abrir, pero deja lugar a la izquierda para las
+       etiquetas; ese espacio no se come los toques de la pieza. */
+    padding-left: 220px;
+    margin-left: -220px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.storyExtras .storyTool {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.85);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.22s ease;
+}
+
+.storyExtrasOn .storyTool {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    transition: opacity 0.22s ease calc(var(--i) * 35ms), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1) calc(var(--i) * 35ms);
+}
+
+.storyMoreIcono {
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.storyMoreIconoOn {
+    transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .storyExtras,
+    .storyExtras .storyTool,
+    .storyToolLabel,
+    .storyMoreIcono {
+        transition: none;
+    }
+}
+
+.storyAa {
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.01em;
+}
+
+.storyMore {
+    width: 44px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.storySaveWrap {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+}
+
+.storySave {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    background: var(--light-purple-500, #d2bfdd);
+    color: #1B1A18;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+/* Cambios sin guardar */
+.storyDot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 99px;
+    background: #D32F2F;
+    border: 2px solid #FFFFFF;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.storySpin {
+    animation: storyGiro 0.9s linear infinite;
+}
+
+@keyframes storyGiro {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Con una hoja abierta solo queda la herramienta activa: lo demás se
+   esconde para no meter ruido sobre la pieza. */
+.storyLeft,
+.storySong,
+.storyTool,
+.storyMore,
+.storySaveWrap {
+    transition: opacity 0.2s ease;
+}
+
+.storyConHoja .storyLeft,
+.storyConHoja .storySong:not([aria-pressed='true']),
+.storyConHoja .storyTool:not([aria-pressed='true']),
+.storyConHoja .storyMore,
+.storyConHoja .storySaveWrap {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Invitados a pantalla completa: entra desde la izquierda, siguiendo el
+   gesto de deslizar a la derecha sobre la pieza. */
+.storyGuests {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    animation: storyEntraIzq 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.storyStageVuelve {
+    animation: storyEntraDer 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes storyEntraIzq {
+    from {
+        transform: translateX(-100%);
+    }
+}
+
+@keyframes storyEntraDer {
+    from {
+        transform: translateX(30%);
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .storyGuests,
+    .storyStageVuelve {
+        animation: none;
+    }
+}
+
+.storyGuestsHead {
+    flex: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: max(12px, env(safe-area-inset-top)) 12px 10px;
+}
+
+.storyGuests .storyRound {
+    background: rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.storyGuestsTitle {
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 600;
+}
+
 /* La hoja (BottomSheet) ya trae su cabecera: el panel no repite el título */
 .editorSheet .blockHead {
     display: none;
@@ -1180,6 +1668,26 @@
 
 .capaFilaActiva {
     border-color: #1f1f1f;
+}
+
+/* Agarradera para reordenar (dnd-kit). Sin touch-action el teléfono hacía
+   scroll en vez de arrastrar. */
+.capaAgarre {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 44px;
+    flex-shrink: 0;
+    color: #A8A39B;
+    cursor: grab;
+    touch-action: none;
+}
+
+.capaArrastrando {
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.35);
+    cursor: grabbing;
 }
 
 /* Oculto: la fila queda tenue (menos sus botones, para volver a mostrarlo). */

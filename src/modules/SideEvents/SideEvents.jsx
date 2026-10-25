@@ -23,13 +23,13 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, ImagePlus, Info, Music, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronDown, ChevronRight, ChevronUp, CircleHelp, Copy, Film, ImagePlus, Info, Loader2, Music, Music2, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, Users, X } from 'lucide-react'
 import { ItinerarioFlash } from './ItinerarioFlash'
 import { StickersFlash } from './StickersFlash'
 import { ImagenLinkFlash } from './ImagenLinkFlash'
 import { CancionFlash } from './CancionFlash'
 import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from './efectosData'
-import { MAX_STICKERS, nuevoSticker } from './stickersFlashData'
+import { duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
 import { subirSticker } from '../../helpers/services/uploadImage'
 import { SelectorColor } from './SelectorColor'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
@@ -201,6 +201,12 @@ export const SideEvents = () => {
 
     const [sheetSection, setSheetSection] = useState(null)
     const [sheetHeight, setSheetHeight] = useState(0)
+    // Móvil "story": columna de herramientas expandida y vista de invitados.
+    const [toolsExpanded, setToolsExpanded] = useState(false)
+    const [guestsOpen, setGuestsOpen] = useState(false)
+    const deslizarRef = useRef(null)
+    // Al volver de Invitados la pieza entra animada (al abrir el editor no).
+    const [deInvitados, setDeInvitados] = useState(false)
     const [stageGap, setStageGap] = useState(0)
     const [sendMounted, setSendMounted] = useState(false)
     const [sendIn, setSendIn] = useState(false)
@@ -2410,6 +2416,7 @@ export const SideEvents = () => {
 
     const openSideEvent = (item) => {
         setCurrent(item)
+        setGuestsOpen(false)
         setSection(null)
         setActiveTab('diseno')
         setLive(false)
@@ -2557,6 +2564,8 @@ export const SideEvents = () => {
 
     const closeEditor = () => {
         setCurrent(null)
+        setGuestsOpen(false)
+        setDeInvitados(false)
         setSection(null)
         setLive(false)
         setDirty(false)
@@ -2676,7 +2685,23 @@ export const SideEvents = () => {
         // cuando ya hay side event: sin eso la medida se quedaba en 0
     }, [isMobile, activeTab, live, current?.id])
 
-    const sheetOpen = isMobile && !!section && !live && activeTab === 'diseno'
+    // Editor móvil (modo story): la franja de la barra de estado es del mismo
+    // negro que el editor, no el blanco de la página.
+    const editorMovil = !!current && isMobile
+    useEffect(() => {
+        if (!editorMovil) return
+        const html = document.documentElement
+        const meta = document.querySelector('meta[name="theme-color"]')
+        const antes = { fondo: html.style.backgroundColor, meta: meta?.getAttribute('content') }
+        html.style.backgroundColor = '#0B0A0E'
+        meta?.setAttribute('content', '#0B0A0E')
+        return () => {
+            html.style.backgroundColor = antes.fondo
+            if (antes.meta) meta?.setAttribute('content', antes.meta)
+        }
+    }, [editorMovil])
+
+    const sheetOpen = isMobile && !!section && !live && activeTab === 'diseno' && !guestsOpen
     const contentLift = sheetOpen ? Math.max(0, sheetHeight - stageGap + 10) : 0
 
     const sendOpen = activeTab === 'envio'
@@ -2725,39 +2750,68 @@ export const SideEvents = () => {
     // como un sticker en una historia de Instagram: abre el panel de
     // elementos y la deja seleccionada para arrastrarla en la pieza.
     const pegandoRef = useRef(false)
+    const agregarImagenPegada = async (archivo) => {
+        if (pegandoRef.current) return
+        if ((current?.body?.stickers?.length ?? 0) >= MAX_STICKERS) {
+            message.warning(t('side_events.stickers_paste_max', { max: MAX_STICKERS }))
+            return
+        }
+        pegandoRef.current = true
+        const aviso = message.loading(t('side_events.stickers_paste_uploading'), 0)
+        try {
+            // Se sube aligerado (WebP de ≤1200 px): pegado pesaba ~1 MB.
+            const url = await subirSticker(archivo, `flash-${flashId}`)
+            if (!url) return
+            const nuevo = nuevoSticker(url)
+            updateCurrent((prev) => ({
+                ...prev,
+                body: { ...prev.body, stickers: [...(Array.isArray(prev.body?.stickers) ? prev.body.stickers : []), nuevo] },
+            }))
+            setSection('stickers')
+            setStickerSel([nuevo.id])
+        } catch (err) {
+            console.error(err)
+            message.error(t('side_events.stickers_paste_error'))
+        } finally {
+            aviso()
+            pegandoRef.current = false
+        }
+    }
+
+    // Pegar en el teléfono (botón "Pegar imagen" de Elementos): no hay ⌘V,
+    // así que se lee el portapapeles. iOS muestra su burbuja de "Pegar" para
+    // confirmar. Sirve con el recorte de una foto ("Copiar") o un PNG copiado.
+    const puedeLeerPortapapeles = typeof navigator !== 'undefined' && !!navigator.clipboard?.read
+    const pegarDesdePortapapeles = async () => {
+        try {
+            const items = await navigator.clipboard.read()
+            for (const item of items) {
+                const tipo = item.types.find(x => x.startsWith('image/'))
+                if (!tipo) continue
+                const blob = await item.getType(tipo)
+                const archivo = new File([blob], `pegado.${tipo.split('/')[1] || 'png'}`, { type: tipo })
+                await agregarImagenPegada(archivo)
+                return
+            }
+            message.info(t('side_events.stickers_paste_empty'))
+        } catch (err) {
+            // Cancelar la burbuja de iOS también cae aquí: sin aviso.
+            if (err?.name !== 'NotAllowedError') {
+                console.error(err)
+                message.error(t('side_events.stickers_paste_error'))
+            }
+        }
+    }
+
     useEffect(() => {
         if (!esFlash || activeTab !== 'diseno' || live) return
-        const onPaste = async (e) => {
+        const onPaste = (e) => {
             const destino = e.target
             if (destino?.closest?.('input, textarea, [contenteditable="true"]')) return
             const archivo = [...(e.clipboardData?.files ?? [])].find(f => f.type.startsWith('image/'))
             if (!archivo) return
             e.preventDefault()
-            if (pegandoRef.current) return
-            if ((current?.body?.stickers?.length ?? 0) >= MAX_STICKERS) {
-                message.warning(t('side_events.stickers_paste_max', { max: MAX_STICKERS }))
-                return
-            }
-            pegandoRef.current = true
-            const aviso = message.loading(t('side_events.stickers_paste_uploading'), 0)
-            try {
-                // Se sube aligerado (WebP de ≤1200 px): pegado pesaba ~1 MB.
-                const url = await subirSticker(archivo, `flash-${flashId}`)
-                if (!url) return
-                const nuevo = nuevoSticker(url)
-                updateCurrent((prev) => ({
-                    ...prev,
-                    body: { ...prev.body, stickers: [...(Array.isArray(prev.body?.stickers) ? prev.body.stickers : []), nuevo] },
-                }))
-                setSection('stickers')
-                setStickerSel([nuevo.id])
-            } catch (err) {
-                console.error(err)
-                message.error(t('side_events.stickers_paste_error'))
-            } finally {
-                aviso()
-                pegandoRef.current = false
-            }
+            agregarImagenPegada(archivo)
         }
         window.addEventListener('paste', onPaste)
         return () => window.removeEventListener('paste', onPaste)
@@ -3223,6 +3277,8 @@ export const SideEvents = () => {
                 seleccionados={stickerSel}
                 onSeleccionar={setStickerSel}
                 carpeta={`flash-${flashId}`}
+                movil={isMobile}
+                onPegar={puedeLeerPortapapeles ? pegarDesdePortapapeles : null}
             />
         </>
     )
@@ -4004,133 +4060,242 @@ export const SideEvents = () => {
     )
 
     /* ═══════════════════════════════════════════════════════════════
-       Móvil: la pieza ocupa la pantalla, con dock de herramientas y
-       hoja inferior. Los paneles son los mismos que en escritorio.
+       Móvil, modo "story" (handoff design_handoff_flash_editor_story): la
+       pieza ocupa la pantalla, las herramientas son una columna de botones
+       redondos arriba a la derecha y las acciones finales van en la barra
+       de abajo. Los paneles son los mismos que en escritorio, en la hoja.
        ═══════════════════════════════════════════════════════════════ */
     if (current && isMobile) {
         const sheetTitle = SECTIONS.find((x) => x.key === sheetSection)?.label ?? ''
+        // Mismo orden del diseño; solo las que existen para este side event
+        // (canción, PNG, efectos e itinerario son de los Flash). Contraída
+        // enseña las primeras 4.
+        const herramientas = [
+            { key: 'title', label: t('side_events.story_text') },
+            { key: 'background', Icono: ImagePlus, label: t('side_events.panel_background') },
+            { key: 'stickers', Icono: Sticker, label: t('side_events.panel_stickers') },
+            { key: 'effects', Icono: Sparkles, label: t('side_events.panel_effects') },
+            { key: 'color', Icono: Palette, label: t('side_events.theme_color') },
+            { key: 'date', Icono: CalendarDays, label: t('side_events.panel_date') },
+            { key: 'place', Icono: MapPin, label: t('side_events.panel_place') },
+            { key: 'extras', Icono: StickyNote, label: t('side_events.panel_notes') },
+            { key: 'itinerary', Icono: ListOrdered, label: t('side_events.panel_itinerary') },
+        ].filter((h) => SECTIONS.some((x) => x.key === h.key))
+        // Las primeras 4 siempre; las demás entran y salen animadas al expandir.
+        const basicas = herramientas.slice(0, 4)
+        const extras = herramientas.slice(4)
+        const botonHerramienta = (h, i, oculta = false) => (
+            <button
+                key={h.key}
+                className={`${ed.storyTool} ${toolsExpanded ? ed.storyToolAbierta : ''}`}
+                style={{ '--i': i }}
+                onClick={() => {
+                    setSection(section === h.key ? null : h.key)
+                    if (h.key !== 'stickers') setStickerSel([])
+                }}
+                aria-label={h.label}
+                aria-pressed={section === h.key}
+                tabIndex={oculta ? -1 : undefined}
+            >
+                <span className={ed.storyToolLabel} aria-hidden>{h.label}</span>
+                <span className={`${ed.storyRound} ${section === h.key ? ed.storyRoundOn : ''}`}>
+                    {h.Icono ? <h.Icono size={20} strokeWidth={1.8} /> : <span className={ed.storyAa}>Aa</span>}
+                </span>
+            </button>
+        )
+        // Deslizar a la derecha sobre la pieza abre Invitados; a la izquierda
+        // en Invitados regresa. Solo gestos claramente horizontales, que no
+        // empiecen en la orilla (Safari los usa para ir atrás), en un PNG, en
+        // texto editable o en un control, ni con la hoja abierta.
+        const cerrarInvitados = () => { setDeInvitados(true); setGuestsOpen(false) }
+        const inicioDeslizar = (e) => {
+            const toque = e.touches[0]
+            const libre = !e.target.closest('[data-sticker], [contenteditable="true"], input, textarea, button, .ant-slider')
+            deslizarRef.current = libre && !sheetOpen && toque.clientX > 24 && toque.clientX < window.innerWidth - 24
+                ? { x: toque.clientX, y: toque.clientY }
+                : null
+        }
+        const finDeslizar = (accion, sentido) => (e) => {
+            const inicio = deslizarRef.current
+            deslizarRef.current = null
+            if (!inicio) return
+            const toque = e.changedTouches[0]
+            const dx = (toque.clientX - inicio.x) * sentido
+            const dy = Math.abs(toque.clientY - inicio.y)
+            if (dx > 70 && dy < dx * 0.6) accion()
+        }
+        const cancion = current?.body?.song
+        const stickersFlash = Array.isArray(current?.body?.stickers) ? current.body.stickers : []
+        const pngElegidos = stickerSel.filter((id) => stickersFlash.some((x) => x.id === id))
 
         return (
             <div className={ed.mobileRoot}>
 
-                {/* Header: su propia superficie, igual que el dock de abajo,
-                    para que no se sienta parte de la pieza */}
-                <div className={ed.mobileHeader}>
-                    <button className={ed.hBtn} onClick={handleBack} aria-label={t('side_events.back')}>
-                        <X size={17} />
-                    </button>
-
-                    <div className={ed.hTabs} data-tour="tabs">
-                        <button
-                            className={`${ed.hTab} ${activeTab === 'diseno' ? ed.hTabOn : ''}`}
-                            onClick={() => changeTab('diseno')}
-                        >
-                            {t('side_events.tab_design_short')}
-                        </button>
-                        <button
-                            className={`${ed.hTab} ${activeTab === 'envio' ? ed.hTabOn : ''}`}
-                            onClick={() => changeTab('envio')}
-                        >
-                            {t('side_events.tab_send_short')}
-                        </button>
-                    </div>
-
-                    <div className={ed.hRight}>
-                        {activeTab === 'diseno' &&
-                            <button
-                                className={`${ed.hBtn} ${live ? ed.hBtnOn : ''}`}
-                                data-tour="live"
-                                onClick={() => { setLive((v) => !v); setSection(null) }}
-                                aria-label={t('side_events.live')}
-                                aria-pressed={live}
-                            >
-                                <Eye size={17} />
-                            </button>
-                        }
-
-                        {botonAcceso(`${ed.hBtn} ${esPublico ? ed.hBtnOn : ''}`, false)}
-
-                        <button className={ed.hBtn} data-tour="share" onClick={() => handleShare(publicUrl)} aria-label={t('custom_link.link_btn')}>
-                            <Share2 size={16} />
-                        </button>
-
-                        <span className={ed.saveWrap} data-tour="save">
-                            <button
-                                className={ed.hSave}
-                                onClick={() => { if (dirty) handleSave() }}
-                                aria-disabled={!dirty}
-                                style={{ opacity: dirty ? 1 : 0.6 }}
-                            >
-                                {saving ? '…' : t('side_events.btn_save')}
-                            </button>
-                            {dirty && !saving && <span className={ed.saveDot} aria-hidden />}
-                        </span>
-                    </div>
-                </div>
-
-                {activeTab === 'diseno'
+                {guestsOpen
                     ? (
+                        /* Invitados (antes la pestaña Envío): pantalla completa,
+                           las tarjetas `gx` necesitan todo el ancho. */
                         <div
-                            ref={stageRef}
-                            className={ed.mobileStage}
-                            data-tour="canvas"
-                            data-morph="stage"
-                            data-morphing={stageMorphState}
+                            className={ed.storyGuests}
+                            onTouchStart={inicioDeslizar}
+                            onTouchEnd={finDeslizar(cerrarInvitados, -1)}
                         >
-                            {live
-                                ? <SideEventHost config={current} />
-                                : (
-                                    <SideCanvas
-                                        key={current?.id}
-                                        current={current}
-                                        onChange={updateCurrent}
-                                        selected={section}
-                                        onSelect={setSection}
-                                        fullBleed
-                                        liftBottom={contentLift}
-                                        stickerSel={stickerSel}
-                                        onStickerSel={setStickerSel}
-                                        conCancion={esFlash}
-                                    />
-                                )
-                            }
+                            <div className={ed.storyGuestsHead}>
+                                <button className={ed.storyRound} onClick={cerrarInvitados} aria-label={t('side_events.back')}>
+                                    <ArrowLeft size={20} strokeWidth={1.8} />
+                                </button>
+                                <span className={ed.storyGuestsTitle}>{t('side_events.story_guests')}</span>
+                                <button className={ed.storyRound} onClick={() => handleShare(publicUrl)} aria-label={t('side_events.story_share')}>
+                                    <Share2 size={18} strokeWidth={1.8} />
+                                </button>
+                            </div>
+                            <div className={`${ed.mobileSend} scroll-invitation`}>
+                                {guestsList}
+                            </div>
                         </div>
                     )
                     : (
-                        /* Las tarjetas de invitados son anchas: en móvil la
-                           lista se queda con toda la pantalla */
-                        <div className={`${ed.mobileSend} scroll-invitation`} data-tour="guests">
-                            {guestsList}
-                        </div>
+                        <>
+                            <div
+                                ref={stageRef}
+                                className={`${ed.storyStage} ${deInvitados ? ed.storyStageVuelve : ''} ${sheetOpen ? ed.storyConHoja : ''}`}
+                                data-morph="stage"
+                                data-morphing={stageMorphState}
+                                onTouchStart={inicioDeslizar}
+                                onTouchEnd={finDeslizar(() => { setSection(null); setGuestsOpen(true) }, 1)}
+                            >
+                                <SideCanvas
+                                    key={current?.id}
+                                    current={current}
+                                    onChange={updateCurrent}
+                                    selected={section}
+                                    onSelect={setSection}
+                                    fullBleed
+                                    storyMode
+                                    liftBottom={contentLift}
+                                    stickerSel={stickerSel}
+                                    onStickerSel={setStickerSel}
+                                    conCancion={esFlash}
+                                />
+
+                                {/* Columna izquierda: cerrar y, debajo, link y acceso como
+                                    botones de ícono (la pieza usa todo el alto). Invitados se
+                                    abre deslizando a la derecha. */}
+                                <div className={ed.storyLeft}>
+                                    <button className={ed.storyRound} onClick={handleBack} aria-label={t('side_events.story_close')}>
+                                        <X size={22} strokeWidth={1.8} />
+                                    </button>
+                                    <button
+                                        className={ed.storyRound}
+                                        onClick={() => handleShare(publicUrl)}
+                                        aria-label={t('side_events.story_share')}
+                                        title={t('side_events.story_share')}
+                                    >
+                                        <Link2 size={19} strokeWidth={1.8} />
+                                    </button>
+                                    {esFlash &&
+                                        <button
+                                            className={ed.storyRound}
+                                            onClick={alternarAcceso}
+                                            aria-disabled={cambiandoAcceso}
+                                            aria-label={t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}
+                                            title={t(esPublico ? 'side_events.access_public_hint' : 'side_events.access_private_hint')}
+                                        >
+                                            {esPublico ? <LockOpen size={19} strokeWidth={1.8} /> : <Lock size={19} strokeWidth={1.8} />}
+                                        </button>
+                                    }
+                                </div>
+
+                                {/* PNG elegido: en lugar de la canción, una píldora con
+                                    duplicar y quitar (tamaño y giro van con gestos). */}
+                                {esFlash && pngElegidos.length > 0 &&
+                                    <div className={ed.storyPngPill}>
+                                        <button
+                                            onClick={() => {
+                                                const { lista, nuevos } = duplicarStickers(stickersFlash, pngElegidos)
+                                                setBody({ stickers: lista })
+                                                setStickerSel(nuevos)
+                                            }}
+                                            aria-disabled={stickersFlash.length + pngElegidos.length > MAX_STICKERS}
+                                        >
+                                            <Copy size={16} strokeWidth={1.8} />
+                                            <span>{t('side_events.stickers_duplicate')}</span>
+                                        </button>
+                                        <span className={ed.storyPngSep} aria-hidden />
+                                        <button
+                                            onClick={() => {
+                                                const lista = quitarStickers(stickersFlash, pngElegidos)
+                                                setBody({ stickers: lista.length ? lista : null })
+                                                setStickerSel([])
+                                            }}
+                                        >
+                                            <Trash2 size={16} strokeWidth={1.8} />
+                                            <span>{t('side_events.stickers_remove')}</span>
+                                        </button>
+                                    </div>
+                                }
+
+                                {/* Canción (Flash): arriba al centro */}
+                                {esFlash && pngElegidos.length === 0 &&
+                                    <button className={ed.storySong} onClick={() => setSection(section === 'song' ? null : 'song')} aria-pressed={section === 'song'}>
+                                        <span className={ed.storySongDisc}>
+                                            {cancion?.albumArt
+                                                ? <img src={cancion.albumArt} alt='' />
+                                                : <Music2 size={14} />
+                                            }
+                                        </span>
+                                        <span className={ed.storySongName}>{cancion?.name ?? t('side_events.song_add')}</span>
+                                    </button>
+                                }
+
+                                {/* Arriba a la derecha: guardar y, debajo, las herramientas
+                                    (expandida, cada una con su etiqueta). */}
+                                <div className={ed.storyTools}>
+                                    <span className={ed.storySaveWrap}>
+                                        <button
+                                            className={ed.storySave}
+                                            onClick={() => { if (dirty && !saving) handleSave() }}
+                                            aria-disabled={!dirty || saving}
+                                            aria-label={t('side_events.btn_save')}
+                                            style={{ opacity: dirty || saving ? 1 : 0.6 }}
+                                        >
+                                            {saving ? <Loader2 size={20} className={ed.storySpin} /> : <Check size={22} strokeWidth={2.2} />}
+                                        </button>
+                                        {dirty && !saving && <span className={ed.storyDot} aria-hidden />}
+                                    </span>
+                                    {basicas.map((h, i) => botonHerramienta(h, i))}
+                                    {extras.length > 0 &&
+                                        <div className={`${ed.storyExtras} ${toolsExpanded ? ed.storyExtrasOn : ''}`} aria-hidden={!toolsExpanded}>
+                                            <div className={ed.storyExtrasIn}>
+                                                {extras.map((h, i) => botonHerramienta(h, i, !toolsExpanded))}
+                                            </div>
+                                        </div>
+                                    }
+                                    {herramientas.length > 4 &&
+                                        <button
+                                            className={ed.storyMore}
+                                            onClick={() => setToolsExpanded((v) => !v)}
+                                            aria-label={t(toolsExpanded ? 'side_events.story_less_tools' : 'side_events.story_more_tools')}
+                                            aria-expanded={toolsExpanded}
+                                        >
+                                            <ChevronDown size={18} className={`${ed.storyMoreIcono} ${toolsExpanded ? ed.storyMoreIconoOn : ''}`} />
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                        </>
                     )
                 }
 
-                {/* Dock de herramientas */}
-                {activeTab === 'diseno' && !live &&
-                    <div className={ed.dock}>
-                        {SECTIONS.map((sec) => (
-                            <button
-                                key={sec.key}
-                                className={`${ed.dockBtn} ${section === sec.key ? ed.dockBtnOn : ''}`}
-                                data-tour={`tool-${sec.key}`}
-                                onClick={() => setSection(section === sec.key ? null : sec.key)}
-                                aria-pressed={section === sec.key}
-                            >
-                                {sec.icon}
-                                <span>{sec.short}</span>
-                            </button>
-                        ))}
-                    </div>
-                }
-
-                {/* Hoja inferior propia: sin capa que oscurezca el fondo, se
-                    cierra arrastrando, tocando fuera o con la X */}
+                {/* Hoja inferior */}
                 <BottomSheet
                     open={sheetOpen}
                     onClose={() => setSection(null)}
                     title={sheetTitle}
                     bodyClass={ed.editorSheet}
                     onHeightChange={setSheetHeight}
+                    maxHeight='46%'
                 >
                     {sheetSection && PANELS[sheetSection]}
                 </BottomSheet>

@@ -1234,7 +1234,19 @@
     "flash_credits_other": "{{count}} créditos de WhatsApp",
     "flash_not_found": "No encontramos este Evento Flash.",
     "flash_no_credits": "Sin créditos: compra más con el + junto al contador.",
-    "flash_send_error": "No se pudo enviar la invitación. Intenta de nuevo."
+    "flash_send_error": "No se pudo enviar la invitación. Intenta de nuevo.",
+    "story_text": "Texto",
+    "story_guests": "Invitados",
+    "story_more_tools": "Más herramientas",
+    "story_less_tools": "Menos herramientas",
+    "story_close": "Cerrar",
+    "story_share": "Compartir link",
+    "stickers_hint_gestures": "Toca un elemento en la pieza para elegirlo: muévelo con un dedo y pellizca con dos para cambiar su tamaño y girarlo.",
+    "stickers_layer_drag": "Arrastra para cambiar el orden",
+    "stickers_add": "Agregar elemento",
+    "stickers_add_hint": "PNG con fondo transparente · {{n}} de {{max}}",
+    "stickers_paste_btn": "Pegar imagen copiada",
+    "stickers_paste_empty": "No hay una imagen copiada. Copia un PNG o el recorte de una foto y vuelve a intentar."
   },
   "tables": {
     "title": "Organización por mesas",

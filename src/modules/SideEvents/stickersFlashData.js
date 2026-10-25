@@ -14,6 +14,17 @@ export const nuevoSticker = (url) => ({
     opacity: 1,
 })
 
+// Duplicar los elegidos (un poco abajo a la derecha, para que se vean) y
+// quitarlos: los usan el panel y la píldora del editor móvil.
+export const duplicarStickers = (stickers, ids) => {
+    const ahora = Date.now()
+    const copias = stickers
+        .filter(s => ids.includes(s.id))
+        .map((g, i) => ({ ...g, id: `s${ahora}${i}`, x: Math.min(95, g.x + 6), y: Math.min(95, g.y + 6) }))
+    return { lista: [...stickers, ...copias], nuevos: copias.map(c => c.id) }
+}
+export const quitarStickers = (stickers, ids) => stickers.filter(s => !ids.includes(s.id))
+
 // Selección de varios PNG (panel y pieza): ⌘/Ctrl/Shift + clic suma o quita;
 // un clic normal la reemplaza.
 export const conModificador = (e) => e.shiftKey || e.metaKey || e.ctrlKey
