@@ -6,6 +6,7 @@ import { colorDeVelo, darker, sombraDeTexto } from '../../helpers/assets/functio
 import { itinerarioPorDia, lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
 import { alternar, conModificador, lienzoCover } from './stickersFlashData'
+import { EfectosCapa } from './EfectosCapa'
 
 /**
  * Lienzo editable del side event.
@@ -188,6 +189,19 @@ export const SideCanvas = ({
     // distancia (px de la pieza, sin escalar) del techo de la capa al borde de
     // arriba de la píldora; lo de abajo se recorta.
     const infoRef = useRef(null)
+    useEffect(() => {
+        const scroller = scrollRef.current
+        if (!scroller) return
+        const alScroll = () => {
+            // Zoom de la portada al subir los botones (0 → 1 en
+            // el 60% de la pantalla), como el remoto (--portada-avance).
+            const avance = Math.min(1, Math.max(0, scroller.scrollTop / (scroller.clientHeight * 0.6)))
+            cardRef.current?.style.setProperty('--portada-avance', avance.toFixed(3))
+        }
+        alScroll()
+        scroller.addEventListener('scroll', alScroll, { passive: true })
+        return () => scroller.removeEventListener('scroll', alScroll)
+    }, [])
     const botonesRef = useRef(null)
     // La capa de los PNG es la pantalla (x/y/w en % de su ancho y alto). Los
     // botones de confirmar siempre van al fondo de la pantalla, igual que en
@@ -212,15 +226,6 @@ export const SideCanvas = ({
     // se escala por el alto y se recorta un poco a los lados, así los PNG
     // conservan su tamaño respecto a la pantalla.
     const lienzo = zona ? lienzoCover(zona.ancho, zona.alto) : undefined
-    // `stickers_zona_libre`: el organizador apagó el recorte y los PNG pueden
-    // pasar sobre los botones. Moverlos nunca está limitado: bajarlos de la
-    // línea es la forma de recortarlos a propósito.
-    const zonaLibre = !!body.stickers_zona_libre
-    // El recorte no es seco: los PNG se desvanecen en los DIFUMINADO px de
-    // arriba de la línea y desaparecen justo donde empiezan los botones.
-    const DIFUMINADO = 32
-    const mascara = zona && `linear-gradient(to bottom, #000 ${Math.max(0, zona.limite - DIFUMINADO)}px, transparent ${zona.limite}px)`
-    const recorte = zona && !zonaLibre ? { ...marco, maskImage: mascara, WebkitMaskImage: mascara } : marco
     const seleccion = Array.isArray(stickerSel) ? stickerSel : (stickerSel ? [stickerSel] : [])
     // ⌘/Ctrl/Shift + clic suma o quita de la selección (y si lo quita, no lo
     // arrastra). Arrastrar uno que ya está en la selección mueve a todo el
@@ -371,74 +376,85 @@ export const SideCanvas = ({
                 }}
             >
 
-                {/* PNG de un Flash sobre la portada: capa del alto de la
-                    pantalla que se mueve con la página; "detrás" queda entre
-                    el fondo y las tarjetas. Se arrastran para acomodarlos. */}
-                {/* Guías del centro mientras se arrastra un PNG */}
-                {guias && (
-                    <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`} style={marco}>
-                        <span className={`${styles.guiaV} ${guias.x ? styles.guiaActiva : ''}`} />
-                        <span className={`${styles.guiaH} ${guias.y ? styles.guiaActiva : ''}`} />
-                    </div>
-                )}
+                {/* Portada fija (sticky dentro del scroller): no se mueve al hacer
+                    scroll. Los PNG, los efectos, el velo, el tinte y el título,
+                    la fecha y el lugar; los botones y las tarjetas (.infoCont,
+                    z 1) suben encima. Igual que la página del invitado
+                    (.portada_fija). */}
+                <div className={styles.portadaFija}>
+                    {/* Todos van detrás del título, la fecha, el lugar y los
+                        botones (z 0, debajo de .infoCont). El seleccionado tiene
+                        además una agarradera invisible encima de todo para poder
+                        moverlo aunque lo tape el texto. */}
+                    {stickers.length > 0 && (
+                        <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={marco}>
+                            <div className={styles.lienzo} style={lienzo}>
+                                {stickers.map(s => (
+                                    <img
+                                        key={s.id}
+                                        src={s.url}
+                                        alt=''
+                                        draggable={false}
+                                        className={styles.sticker}
+                                        style={estiloSticker(s)}
+                                        onPointerDown={arrastrarSticker(s)}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {/* Efectos animados (panel Efectos): encima de la portada y los PNG,
+                        debajo del texto y los botones. */}
+                    {body.effect?.type && (
+                        <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={marco}>
+                            <EfectosCapa effect={body.effect} colorTema={themeColor} />
+                        </div>
+                    )}
+                    {colorDeVelo(themeColor, body.veil) && (
+                        <div aria-hidden className={styles.capaFija} style={{ background: colorDeVelo(themeColor, body.veil) }} />
+                    )}
+                    <div aria-hidden className={`${styles.capaFija} ${styles.tinteFijo}`} />
+                    {/* Fundido inferior: el último 30% se funde con el color de
+                        fondo de la página, como el remoto (.fundido_inferior): no
+                        se ve el borde de abajo de los PNG ni del video. */}
+                    <div
+                        aria-hidden
+                        className={`${styles.capaFija} ${styles.fundidoFijo}`}
+                        style={{ '--fondo-pagina': darker(themeColor, 0.8) ?? themeColor }}
+                    />
+                </div>
 
-                {/* Zona segura, visible mientras se editan los PNG: lo que
-                    quede debajo de la línea se recorta (si el recorte está
-                    prendido). Sin recorte se ve tenue, solo como referencia. */}
-                {!readOnly && zona && (selected === 'stickers' || guias) && (
-                    <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`} style={marco}>
-                        <div
-                            className={`${styles.zonaBotones} ${zonaLibre ? styles.zonaBotonesLibre : ''}`}
-                            style={{ top: zona.limite }}
-                        >
-                            <span className={styles.zonaEtiqueta}>
-                                {t(zonaLibre ? 'side_events.stickers_zone_free' : 'side_events.stickers_zone_label')}
-                            </span>
+                {/* Encima de todo, también fijas: guías, zona de botones y la
+                    agarradera de los PNG seleccionados. */}
+                <div className={`${styles.portadaFija} ${styles.portadaFijaArriba}`}>
+                    {/* Guías del centro mientras se arrastra un PNG */}
+                    {guias && (
+                        <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`} style={marco}>
+                            <span className={`${styles.guiaV} ${guias.x ? styles.guiaActiva : ''}`} />
+                            <span className={`${styles.guiaH} ${guias.y ? styles.guiaActiva : ''}`} />
                         </div>
-                    </div>
-                )}
-
-                {/* Todos van detrás del título, la fecha, el lugar y los
-                    botones (z 0, debajo de .infoCont). El seleccionado tiene
-                    además una agarradera invisible encima de todo para poder
-                    moverlo aunque lo tape el texto. */}
-                {stickers.length > 0 && (
-                    <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={recorte}>
-                        <div className={styles.lienzo} style={lienzo}>
-                            {stickers.map(s => (
-                                <img
-                                    key={s.id}
-                                    src={s.url}
-                                    alt=''
-                                    draggable={false}
-                                    className={styles.sticker}
-                                    style={estiloSticker(s)}
-                                    onPointerDown={arrastrarSticker(s)}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            ))}
+                    )}
+                    {!readOnly && seleccion.length > 0 && (
+                        <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAgarre}`} style={marco}>
+                            <div className={styles.lienzo} style={lienzo}>
+                                {stickers.filter(s => seleccion.includes(s.id)).map(s => (
+                                    // El img (transparente) le da al div el tamaño del PNG;
+                                    // el contorno punteado es del div y sí se ve.
+                                    <div
+                                        key={s.id}
+                                        className={`${styles.sticker} ${styles.stickerSel}`}
+                                        style={{ ...estiloSticker(s), opacity: 1 }}
+                                        onPointerDown={arrastrarSticker(s)}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
-                {!readOnly && seleccion.length > 0 && (
-                    <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAgarre}`} style={marco}>
-                        <div className={styles.lienzo} style={lienzo}>
-                            {stickers.filter(s => seleccion.includes(s.id)).map(s => (
-                                // El img (transparente) le da al div el tamaño del PNG;
-                                // el contorno punteado es del div y sí se ve.
-                                <div
-                                    key={s.id}
-                                    className={`${styles.sticker} ${styles.stickerSel}`}
-                                    style={{ ...estiloSticker(s), opacity: 1 }}
-                                    onPointerDown={arrastrarSticker(s)}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 <div
                     ref={infoRef}
@@ -448,8 +464,9 @@ export const SideCanvas = ({
 
                     {/* Primera pantalla: título, fecha, lugar y botones, con los
                         botones al fondo (16 px abajo), como la página del invitado
-                        (.primera_pantalla). Lo demás queda abajo, al hacer scroll. */}
-                    <div className={styles.primeraPantalla} style={{ '--velo': colorDeVelo(themeColor, body.veil) }}>
+                        (.primera_pantalla). Al hacer scroll todo sube encima de la
+                        portada fija. */}
+                    <div className={styles.primeraPantalla}>
                         {/* Título. Vacío no ocupa lugar (como en la página del
                             invitado, donde no se pinta): el texto de ejemplo flota
                             encima de la fecha para poder tocarlo y escribir. */}
@@ -496,7 +513,6 @@ export const SideCanvas = ({
                                 }
                             </div>
                         </div>
-
                         {/* RSVP: maqueta de la píldora de la pieza */}
                         <div ref={botonesRef} aria-hidden className={styles.buttonsCont}>
                             <span className={styles.mockBtn}>

@@ -193,3 +193,25 @@
     opacity: 0.5;
     cursor: default;
 }
+
+/* Opción de cliente existente (PlannerSendDrawer): nombre o correo arriba y
+   sus eventos abajo. */
+.clienteOpcion {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+}
+
+.clienteCorreo {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clienteEventos {
+    font-size: 12px;
+    color: #8C8C8C;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

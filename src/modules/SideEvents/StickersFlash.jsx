@@ -1,4 +1,4 @@
-import { Button, Checkbox, Slider } from 'antd'
+import { Button, Slider } from 'antd'
 import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
@@ -7,14 +7,14 @@ import ed from './SideEventEditor.module.css'
 import { alternar, conModificador, MAX_STICKERS, nuevoSticker } from './stickersFlashData'
 
 /*
-  Elementos PNG de un Evento Flash (panel del editor). Van sobre la portada y
-  se mueven con la página. `body.stickers`: { id, url, x, y (centro, en % del
-  ancho y del alto de la pantalla), w (% del ancho), rot (grados), opacity,
-  hidden (oculto sin borrar), z (legado: ya no se usa) }. Todos van detrás del título, la fecha y el lugar.
-  Lo que baje a los botones de confirmar se recorta (zona segura, en SideCanvas
-  y en la página del invitado) salvo con `body.stickers_zona_libre`. Se
+  Elementos PNG de un Evento Flash (panel del editor). Van en la portada fija,
+  que ocupa toda la pantalla: los botones flotan encima, sin recorte.
+  `body.stickers`: { id, url, x, y (centro, en % del ancho y del alto de la
+  pantalla), w (% del ancho), rot (grados), opacity, hidden (oculto sin
+  borrar), z (legado: ya no se usa) }. Van detrás del título, la fecha y el
+  lugar. `body.stickers_zona_libre` es legado (ya no hay zona segura). Se
   acomodan arrastrándolos en la pieza; aquí van tamaño, rotación, opacidad,
-  la zona segura y quitar.
+  capas y quitar.
   Selección múltiple: `seleccionados` es un arreglo de ids (⌘/Ctrl/Shift +
   clic suma o quita, aquí y en la pieza). Con varios, el tamaño escala a
   todos en proporción, la rotación gira a todos lo mismo y la opacidad se
@@ -25,7 +25,7 @@ import { alternar, conModificador, MAX_STICKERS, nuevoSticker } from './stickers
 // y los que siguen al primero se iban quedando chicos.
 const redondear = (v) => Math.round(v * 100) / 100
 
-export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSeleccionar, carpeta, zonaLibre, onZonaLibre }) => {
+export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSeleccionar, carpeta }) => {
     const { t } = useTranslation()
     const grupo = stickers.filter(s => seleccionados.includes(s.id))
     // El primero que se eligió manda en los sliders; los demás lo siguen.
@@ -123,12 +123,6 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
             <span className={ed.hint}>{t(stickers.length ? 'side_events.stickers_hint_drag' : 'side_events.stickers_hint_empty')}</span>
             {stickers.length < MAX_STICKERS && <span className={ed.hint}>{t('side_events.stickers_hint_paste')}</span>}
             {stickers.length > 1 && <span className={ed.hint}>{t('side_events.stickers_hint_multi')}</span>}
-
-            {/* Zona segura (se dibuja en la pieza con este panel abierto):
-                prendida, lo que baje a los botones de confirmar se recorta. */}
-            <Checkbox checked={!zonaLibre} onChange={(e) => onZonaLibre(!e.target.checked)}>
-                {t('side_events.stickers_zone_clip')}
-            </Checkbox>
 
             {actual && (
                 <>

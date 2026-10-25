@@ -23,11 +23,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, ImagePlus, Info, Music, Link2, ListOrdered, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronRight, CircleHelp, Copy, Eye, Film, ImagePlus, Info, Music, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, X } from 'lucide-react'
 import { ItinerarioFlash } from './ItinerarioFlash'
 import { StickersFlash } from './StickersFlash'
 import { ImagenLinkFlash } from './ImagenLinkFlash'
 import { CancionFlash } from './CancionFlash'
+import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from './efectosData'
 import { MAX_STICKERS, nuevoSticker } from './stickersFlashData'
 import { subirSticker } from '../../helpers/services/uploadImage'
 import { SelectorColor } from './SelectorColor'
@@ -93,6 +94,9 @@ const THEME_SWATCHES = [
 // Valor del slider de sombra cuando el evento aún no la ha tocado: más o menos
 // la sombra que ya traen el título y la fecha/lugar por CSS.
 const DEFAULT_SOMBRA_TITULO = 25
+// Ícono de cada efecto en el panel Efectos.
+const EMOJI_EFECTO = { none: '⊘', sparkles: '✨', confetti: '🎉', bubbles: '🫧', snow: '❄️', petals: '🌸' }
+
 // Intensidad con la que se prende el velo de color del fondo (0–100).
 const VELO_INICIAL = 35
 const DEFAULT_SOMBRA_DETALLES = 5
@@ -2176,6 +2180,42 @@ export const SideEvents = () => {
         updateCurrent((prev) => ({ ...prev, body: { ...prev.body, image: e } }))
     }
 
+    // Candado de un Flash: privado (`type: 'closed'`, entra cada invitado con
+    // su código) o público (`'open'`, cualquiera con el link entra y confirma
+    // dando su nombre y sus acompañantes; ver iattend-events SideEvent.tsx y
+    // /api/side-events/:id/confirmacion-publica). Se guarda al momento: decide
+    // quién puede abrir la invitación, no es parte del diseño.
+    const esPublico = current?.type === 'open'
+    const [cambiandoAcceso, setCambiandoAcceso] = useState(false)
+    const alternarAcceso = async () => {
+        if (!current?.id || cambiandoAcceso) return
+        const nuevo = esPublico ? 'closed' : 'open'
+        setCambiandoAcceso(true)
+        const { error } = await supabase.from('side_events').update({ type: nuevo }).eq('id', current.id)
+        setCambiandoAcceso(false)
+        if (error) {
+            console.error('Error cambiando el acceso:', error)
+            message.error(t('side_events.access_error'))
+            return
+        }
+        setCurrent((prev) => ({ ...prev, type: nuevo }))
+        message.success(t(nuevo === 'open' ? 'side_events.access_now_public' : 'side_events.access_now_private'))
+    }
+    const botonAcceso = (className, conTexto) => esFlash && (
+        <Tooltip title={t(esPublico ? 'side_events.access_public_hint' : 'side_events.access_private_hint')}>
+            <button
+                className={className}
+                onClick={alternarAcceso}
+                disabled={cambiandoAcceso}
+                aria-pressed={esPublico}
+                aria-label={t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}
+            >
+                {esPublico ? <LockOpen size={16} /> : <Lock size={16} />}
+                {conTexto && t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}
+            </button>
+        </Tooltip>
+    )
+
     const updateURLimage = async (e) => {
 
         const { error } = await supabase
@@ -3088,6 +3128,50 @@ export const SideEvents = () => {
         </>
     )
 
+    // Efectos animados de un Flash (EfectosCapa): partículas sobre la portada.
+    const efecto = current?.body?.effect ?? null
+    const panelEffects = (
+        <>
+            {blockHead(<Sparkles size={16} />, t('side_events.panel_effects'), t('side_events.panel_effects_hint'))}
+            <div className={ed.efectoGrid}>
+                {[null, ...TIPOS_EFECTO].map((tipo) => (
+                    <button
+                        key={tipo ?? 'none'}
+                        type='button'
+                        className={`${ed.efectoTile} ${(efecto?.type ?? null) === tipo ? ed.efectoTileActivo : ''}`}
+                        aria-pressed={(efecto?.type ?? null) === tipo}
+                        onClick={() => setBody({
+                            effect: tipo
+                                ? { type: tipo, intensity: efecto?.intensity ?? 50, color: COLOR_INICIAL[tipo] }
+                                : null,
+                        })}
+                    >
+                        <span className={ed.efectoEmoji} aria-hidden>{EMOJI_EFECTO[tipo ?? 'none']}</span>
+                        {t(`side_events.effect_${tipo ?? 'none'}`)}
+                    </button>
+                ))}
+            </div>
+            {efecto?.type && (
+                <>
+                    <div className={ed.fieldStack}>
+                        <span className={ed.fieldLabel}>{t('side_events.effect_intensity')}</span>
+                        <Slider min={1} max={100} value={efecto.intensity ?? 50} onChange={(v) => setBody({ effect: { ...efecto, intensity: v } })} />
+                    </div>
+                    <div className={ed.fieldStack}>
+                        <span className={ed.fieldLabel}>{t('side_events.effect_color')}</span>
+                        <Segmented
+                            block
+                            size='small'
+                            value={efecto.color ?? COLOR_INICIAL[efecto.type]}
+                            onChange={(v) => setBody({ effect: { ...efecto, color: v } })}
+                            options={COLORES_EFECTO.map(c => ({ value: c, label: t(`side_events.effect_color_${c}`) }))}
+                        />
+                    </div>
+                </>
+            )}
+        </>
+    )
+
     // Canción de un Flash, como la del Save the Date (CancionFlash).
     const panelSong = (
         <>
@@ -3139,8 +3223,6 @@ export const SideEvents = () => {
                 seleccionados={stickerSel}
                 onSeleccionar={setStickerSel}
                 carpeta={`flash-${flashId}`}
-                zonaLibre={!!current?.body?.stickers_zona_libre}
-                onZonaLibre={(libre) => setBody({ stickers_zona_libre: libre || null })}
             />
         </>
     )
@@ -3148,6 +3230,7 @@ export const SideEvents = () => {
     const PANELS = {
         stickers: panelStickers,
         song: panelSong,
+        effects: panelEffects,
         itinerary: panelItinerary,
         background: panelBackground,
         color: panelColor,
@@ -3169,6 +3252,7 @@ export const SideEvents = () => {
             { key: 'itinerary', icon: <ListOrdered size={18} />, label: t('side_events.panel_itinerary'), short: t('side_events.dock_itinerary') },
             { key: 'stickers', icon: <Sticker size={18} />, label: t('side_events.panel_stickers'), short: t('side_events.dock_stickers') },
             { key: 'song', icon: <Music size={18} />, label: t('build_generals.label_song'), short: t('side_events.dock_song') },
+            { key: 'effects', icon: <Sparkles size={18} />, label: t('side_events.panel_effects'), short: t('side_events.dock_effects') },
         ] : []),
     ]
 
@@ -3964,6 +4048,8 @@ export const SideEvents = () => {
                             </button>
                         }
 
+                        {botonAcceso(`${ed.hBtn} ${esPublico ? ed.hBtnOn : ''}`, false)}
+
                         <button className={ed.hBtn} data-tour="share" onClick={() => handleShare(publicUrl)} aria-label={t('custom_link.link_btn')}>
                             <Share2 size={16} />
                         </button>
@@ -4114,6 +4200,8 @@ export const SideEvents = () => {
                                 {t('side_events.live')}
                             </button>
                         }
+
+                        {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 
                         <span data-tour="share">
                             <CustomLink

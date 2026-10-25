@@ -100,6 +100,18 @@ export const InvitationsPage = () => {
     const [altaEvento, setAltaEvento] = useState(null)
     // Evento "para enviar después" que el planner le va a mandar a su cliente.
     const [porEnviar, setPorEnviar] = useState(null)
+    // Sus clientes que ya tienen cuenta (los dueños de sus eventos de cliente),
+    // para mandarles otro evento sin volver a escribir su correo.
+    const clientesExistentes = Object.values((invitationsNI ?? [])
+        .filter(inv => esDeCliente(inv) && inv.user_id && inv.user_email)
+        .reduce((acc, inv) => {
+            const correo = String(inv.user_email).toLowerCase()
+            const titulo = inv.data?.cover?.title?.text?.value || inv.name
+            acc[correo] ??= { correo, eventos: [] }
+            if (titulo && !acc[correo].eventos.includes(titulo)) acc[correo].eventos.push(titulo)
+            return acc
+        }, {}))
+        .sort((a, b) => a.correo.localeCompare(b.correo))
 
     useEffect(() => {
         if (searchParams.get('welcome') === '1') {
@@ -468,6 +480,7 @@ export const InvitationsPage = () => {
                 />
                 <PlannerSendDrawer
                     invitation={porEnviar}
+                    clientes={clientesExistentes}
                     onClose={() => setPorEnviar(null)}
                     onSent={getNewInvitations}
                 />
