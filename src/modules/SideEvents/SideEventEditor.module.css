@@ -1346,18 +1346,18 @@
     pointer-events: none;
 }
 
-/* Invitados a pantalla completa: entra desde la izquierda, siguiendo el
-   gesto de deslizar a la derecha sobre la pieza. */
+/* Invitados de un side event normal (un Flash usa ListaInvitadosFlash):
+   pantalla completa, entra desde la izquierda, siguiendo el gesto de
+   deslizar a la derecha sobre la pieza. */
 .storyGuests {
     position: absolute;
     inset: 0;
+    /* Encima de la pieza (que sigue montada debajo). */
+    z-index: 20;
     display: flex;
     flex-direction: column;
+    background: #0B0A0E;
     animation: storyEntraIzq 0.28s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.storyStageVuelve {
-    animation: storyEntraDer 0.28s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @keyframes storyEntraIzq {
@@ -1366,16 +1366,8 @@
     }
 }
 
-@keyframes storyEntraDer {
-    from {
-        transform: translateX(30%);
-        opacity: 0;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .storyGuests,
-    .storyStageVuelve {
+    .storyGuests {
         animation: none;
     }
 }

@@ -1,6 +1,7 @@
 import {
     App,
     Button,
+    ConfigProvider,
     Divider,
     Drawer,
     Grid,
@@ -9,6 +10,7 @@ import {
     Row,
     Select,
     Space,
+    theme,
     Tooltip,
 } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -59,7 +61,10 @@ export const GuestsCRUD = ({
     refreshPage,
     drawerState,
     isSideEvent,
-    sideID
+    sideID,
+    // Editor móvil de un Evento Flash (modo story, fondo oscuro): el panel
+    // también va oscuro y sin "Calcular prioridad".
+    oscuro = false,
 }) => {
 
     const { t } = useTranslation()
@@ -607,10 +612,11 @@ export const GuestsCRUD = ({
         />
     )
 
-    return (
+    const panel = (
         <Drawer
             placement="right"
             className="help-drawer"
+            rootClassName={oscuro ? 'gc-oscuro' : undefined}
             closable
             onClose={handleClose}
             open={drawerState.visible}
@@ -688,7 +694,7 @@ export const GuestsCRUD = ({
                                     }}
                                 >
                                     <span className="gc-content-label">{t('guests.crud_label_priority')}</span>
-                                    <CalculateTier drawerState={drawerState} updateGuestField={updateGuestField} owners={owners} />
+                                    {!oscuro && <CalculateTier drawerState={drawerState} updateGuestField={updateGuestField} owners={owners} />}
                                 </div>
 
                                 {renderSelectField(
@@ -711,15 +717,19 @@ export const GuestsCRUD = ({
                                 )}
                             </div>
 
-                            <div className="guest_form_col">
-                                <span className="gc-content-label">{t('guests.crud_label_side')}</span>
-                                {renderSelectField(
-                                    guestData.side,
-                                    (value) => updateGuestField('side', value),
-                                    sideOptions,
-                                    t('guests.crud_side_placeholder')
-                                )}
-                            </div>
+                            {/* Lado: solo si la invitación tiene anfitriones (owners) con
+                                los que elegir; un Evento Flash no tiene. */}
+                            {sideOptions.length > 0 && (
+                                <div className="guest_form_col">
+                                    <span className="gc-content-label">{t('guests.crud_label_side')}</span>
+                                    {renderSelectField(
+                                        guestData.side,
+                                        (value) => updateGuestField('side', value),
+                                        sideOptions,
+                                        t('guests.crud_side_placeholder')
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {isEditing && (
@@ -876,15 +886,19 @@ export const GuestsCRUD = ({
                                                 )}
                                             </div>
 
-                                            <div className="guest_form_col">
-                                                <span className="gc-content-label">{t('guests.crud_label_side')}</span>
-                                                {renderSelectField(
-                                                    companion.side,
-                                                    (value) => updateCompanionField(index, 'side', value),
-                                                    sideOptions,
-                                                    t('guests.crud_side_placeholder')
-                                                )}
-                                            </div>
+                                            {/* Lado: solo si la invitación tiene anfitriones (owners) con
+                                                los que elegir; un Evento Flash no tiene. */}
+                                            {sideOptions.length > 0 && (
+                                                <div className="guest_form_col">
+                                                    <span className="gc-content-label">{t('guests.crud_label_side')}</span>
+                                                    {renderSelectField(
+                                                        companion.side,
+                                                        (value) => updateCompanionField(index, 'side', value),
+                                                        sideOptions,
+                                                        t('guests.crud_side_placeholder')
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {isEditing && (
@@ -929,5 +943,30 @@ export const GuestsCRUD = ({
                 </div>
             )}
         </Drawer>
+    )
+
+    if (!oscuro) return panel
+
+    // Tema oscuro de antd solo para este panel: también tiñe los desplegables
+    // de los Select, que se abren en un portal.
+    return (
+        <ConfigProvider
+            theme={{
+                algorithm: theme.darkAlgorithm,
+                token: {
+                    colorPrimary: '#d2bfdd',
+                    colorBgElevated: '#1A191F',
+                    colorBgContainer: 'rgba(255, 255, 255, 0.06)',
+                    colorBorder: 'rgba(255, 255, 255, 0.12)',
+                    fontFamily: 'Poppins, sans-serif',
+                },
+                components: {
+                    Input: { colorBorder: 'rgba(255, 255, 255, 0.12)', activeBorderColor: '#d2bfdd', hoverBorderColor: 'rgba(255, 255, 255, 0.3)' },
+                    Select: { optionSelectedBg: 'rgba(210, 191, 221, 0.18)' },
+                },
+            }}
+        >
+            {panel}
+        </ConfigProvider>
     )
 }

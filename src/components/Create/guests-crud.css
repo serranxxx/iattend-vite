@@ -49,3 +49,71 @@
         width: 100%;
     }
 }
+/* ── Oscuro: editor móvil de un Evento Flash (prop `oscuro`) ──
+   El tema oscuro de antd va en GuestsCRUD (ConfigProvider); esto cubre las
+   clases propias del formulario, que traen colores claros fijos. */
+.gc-oscuro .ant-drawer-content,
+.gc-oscuro .ant-drawer-header,
+.gc-oscuro .ant-drawer-body,
+.gc-oscuro .add_companions_container {
+    background: #0B0A0E;
+    color: #FFFFFF;
+}
+
+/* Selects (antd v6 pone el borde en la raíz; v5 en el selector) y el
+   textarea: el mismo borde tenue que los inputs. */
+.gc-oscuro .ant-select,
+.gc-oscuro .ant-select-selector,
+.gc-oscuro .ant-input,
+.gc-oscuro .ant-input-affix-wrapper {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.gc-oscuro .companions_cont {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.gc-oscuro .ant-drawer-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.gc-oscuro .ant-drawer-title,
+.gc-oscuro .ant-drawer-close {
+    color: #FFFFFF;
+}
+
+.gc-oscuro .gc-content-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.gc-oscuro .add_guest_title_cont .gc-content-label,
+.gc-oscuro .add_companions_container .gc-content-label {
+    color: #FFFFFF;
+}
+
+.gc-oscuro .gc-input-text {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+}
+
+.gc-oscuro .gc-input-text::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Agregar / Guardar: el lila del editor, como su botón de guardar. */
+.gc-oscuro .primarybutton--active {
+    background: var(--light-purple-500, #d2bfdd);
+    color: #1B1A18;
+}
+
+.gc-oscuro .primarybutton--active svg {
+    color: #1B1A18 !important;
+}
+
+.gc-oscuro .primarybutton {
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+    border: none;
+}

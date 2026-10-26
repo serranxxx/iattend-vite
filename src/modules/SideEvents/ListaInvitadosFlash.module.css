@@ -1,0 +1,331 @@
+/* Lista de invitados de un Evento Flash, editor móvil "story"
+   (ListaInvitadosFlash.jsx, handoff design_handoff_flash_guest_list). */
+
+.pagina {
+    position: absolute;
+    /* No tapa la barra de estado. */
+    top: env(safe-area-inset-top);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Encima de la pieza y sus botones (z 6); debajo de las hojas y del
+       drawer de invitados, que van en portal al body. */
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    background: #0B0A0E;
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    /* Entra desde la izquierda, siguiendo el gesto de deslizar a la derecha
+       sobre la pieza. Oculta al terminar de salir. */
+    transform: translateX(-100%);
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+        visibility 0s linear 0.32s;
+}
+
+.abierta {
+    transform: none;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+        transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+        visibility 0s;
+}
+
+/* ── Cabecera ── */
+.cabecera {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 0;
+}
+
+.redondo {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+.titulos {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.titulo {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.subtitulo {
+    max-width: 100%;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Contadores (también filtran) ── */
+.contadores {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 18px 16px 0;
+}
+
+.contador {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.contadorActivo {
+    background: #FFFFFF;
+    color: #1B1A18;
+}
+
+.contadorNumero {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.contadorEtiqueta {
+    max-width: 100%;
+    font-size: 12px;
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Búsqueda ── */
+.buscadorCont {
+    padding: 12px 16px 4px;
+}
+
+.buscador {
+    height: 44px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.buscador input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #FFFFFF;
+    font-family: inherit;
+    /* 16 px: con menos, iOS hace zoom al escribir. */
+    font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.buscador input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.buscador input::-webkit-search-cancel-button {
+    display: none;
+}
+
+/* ── Lista ── */
+.lista {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 16px 16px;
+    scrollbar-width: none;
+}
+
+.lista::-webkit-scrollbar {
+    display: none;
+}
+
+.fila {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    background: none;
+    color: #FFFFFF;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    background: rgba(210, 191, 221, 0.18);
+    color: #d2bfdd;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.identidad {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.nombre {
+    font-size: 14.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pildora {
+    height: 28px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.pildora_yes {
+    background: rgba(126, 200, 150, 0.16);
+    color: #9FD8B0;
+}
+
+.pildora_pending {
+    background: rgba(210, 191, 221, 0.16);
+    color: #d2bfdd;
+}
+
+.pildora_no {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Enviar / Reintentar por WhatsApp, en lugar de la píldora de estado. */
+.enviar {
+    height: 32px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 99px;
+    background: var(--light-purple-500, #d2bfdd);
+    color: #1B1A18;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.reintentar {
+    background: rgba(255, 138, 128, 0.18);
+    color: #FFB4AB;
+}
+
+.enviar[aria-disabled='true'] {
+    opacity: 0.45;
+}
+
+.girando {
+    animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.vacio {
+    margin: 0;
+    padding: 40px 0;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Botón inferior ── */
+.pie {
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+}
+
+.agregar {
+    width: 100%;
+    height: 48px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 99px;
+    background: var(--light-purple-500, #d2bfdd);
+    color: #1B1A18;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pagina,
+    .abierta {
+        transition: none;
+    }
+}
