@@ -15,8 +15,9 @@
 .whatsapp_mobile {
     position: fixed;
     bottom: 1.5%;
-    left: 5%;
-    width: 90%;
+    /* También se abre desde el menú ⋯ del header en tabletas: no más de 480px. */
+    left: max(5%, calc(50% - 240px));
+    width: min(90%, 480px);
     z-index: 1300;
     height: 70vh;
 }

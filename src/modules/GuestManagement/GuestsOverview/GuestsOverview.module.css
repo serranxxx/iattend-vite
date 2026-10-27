@@ -668,3 +668,34 @@
         font-size: 21px;
     }
 }
+
+/* "Qué hacer hoy": kicker + botón "Enviar comunicado" (abre Recordatorios). */
+.todayHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btnAnnounce {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid #DDD9D3;
+    background: #fff;
+    color: #1B1B1B;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease;
+}
+
+.btnAnnounce:hover {
+    border-color: #5A2EE0;
+    background: #FAF8FF;
+}

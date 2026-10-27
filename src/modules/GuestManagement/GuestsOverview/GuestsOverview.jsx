@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 import { useTranslation } from 'react-i18next'
-import { Sparkles } from 'lucide-react'
+import { Bell, Sparkles } from 'lucide-react'
 import { GuestsPie } from './GuestsPie'
 import { MesasWidget } from './MesasWidget'
 import { LiaPlanModal } from './LiaPlanModal'
@@ -41,6 +41,9 @@ export const GuestsOverview = ({
   onAddGuests,
   onCreateSend,
   onOpenTables,
+  // Abre la pestaña Recordatorios; recibe un preset opcional
+  // ({ templateSlug, segment }).
+  onOpenReminders,
 }) => {
   const { t } = useTranslation()
   // "Que Lia se encargue" y los enlaces al plan abren el mismo modal.
@@ -160,7 +163,10 @@ export const GuestsOverview = ({
       title: t('guests_overview.rd_case_read_title'),
       people: namesOf(stats.readNotReplied),
       cta: t('guests_overview.rd_action_remind'),
-      onClick: () => onGoToTab?.('esperando'),
+      // Recordatorios con "Confirma tu asistencia" y el segmento ya aplicados.
+      onClick: () => (onOpenReminders
+        ? onOpenReminders({ templateSlug: 'confirma-asistencia', segment: 'leyeron' })
+        : onGoToTab?.('esperando')),
     },
     // No viene del mockup, pero es un caso real que solo el organizador puede
     // resolver: números sin lada +52 nunca van a poder recibir WhatsApp.
@@ -219,7 +225,15 @@ export const GuestsOverview = ({
         <div className={styles.col}>
 
           <section className={`${styles.card} ${styles.cardToday}`} data-tour="ov-today">
-            <span className={styles.kicker}>{t('guests_overview.rd_today_title')}</span>
+            <div className={styles.todayHead}>
+              <span className={styles.kicker}>{t('guests_overview.rd_today_title')}</span>
+              {onOpenReminders && (
+                <button type="button" className={styles.btnAnnounce} onClick={() => onOpenReminders()}>
+                  <Bell size={15} color="#5A2EE0" />
+                  {t('reminders.overview_button')}
+                </button>
+              )}
+            </div>
             <h2 className={styles.headline}>
               {stuck > 0
                 ? t('guests_overview.rd_stuck_headline', { count: stuck })

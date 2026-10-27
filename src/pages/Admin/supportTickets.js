@@ -5,6 +5,9 @@ export const TEMAS = {
     help: 'Necesito ayuda',
     improvement: 'Sugerencia de mejora',
     question: 'Pregunta general',
+    // Desde Gestión de invitados → Recordatorios. Se atiende dando de alta la
+    // plantilla en Configuración → Recordatorios cuando Meta la apruebe.
+    reminder_request: 'Solicitud de recordatorio',
 }
 
 export const ESTADOS = {

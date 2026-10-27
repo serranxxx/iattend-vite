@@ -22,6 +22,7 @@ import { FeedbackAdminPage } from './FeedbackAdminPage'
 import { HoySection } from './sections/HoySection'
 import { PlanesSection } from './sections/PlanesSection'
 import { OnboardingSection } from './sections/OnboardingSection'
+import { RecordatoriosSection } from './sections/RecordatoriosSection'
 import { NotificacionesSection } from './sections/NotificacionesSection'
 import { VendedoresSection } from './sections/VendedoresSection'
 import { InteresadosSection } from './sections/InteresadosSection'
@@ -85,6 +86,7 @@ const SUBTABS = {
     configuracion: [
         { key: 'planes', label: 'Planes' },
         { key: 'onboarding', label: 'Onboarding' },
+        { key: 'recordatorios', label: 'Recordatorios' },
     ],
 }
 const SUBTABS_EN_CONTENIDO = new Set(['vendedores'])
@@ -425,6 +427,7 @@ export const AdminLayout = () => {
             subtitle: {
                 planes: 'Qué incluye cada plan · se refleja en la app, el checkout y la landing',
                 onboarding: 'Slides del wizard "Conoce I attend" · checkout, invitaciones y preview',
+                recordatorios: 'Plantillas de WhatsApp para comunicados a invitados · Gestión de invitados → Recordatorios',
             }[sub] ?? '',
         },
         lab: {
@@ -580,7 +583,9 @@ export const AdminLayout = () => {
                     )
                 )
             case 'configuracion':
-                return sub === 'planes' ? (puedeVerSub('planes') ? <PlanesSection /> : null) : <OnboardingSection />
+                return sub === 'planes'
+                    ? (puedeVerSub('planes') ? <PlanesSection /> : null)
+                    : sub === 'recordatorios' ? <RecordatoriosSection /> : <OnboardingSection />
             case 'lab':
                 return <LaboratorioSection invitations={newInvitations} />
             case 'eventos':

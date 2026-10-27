@@ -2,7 +2,7 @@
 import { Badge, Breadcrumb, Button, Divider, Dropdown, Grid, Input, Popconfirm, Select, Space, Tooltip, message } from "antd"
 import axios from "axios"
 import logoBlue from '/images/logo_blue.png'
-import { useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { LuArrowLeft, LuBadgeHelp, LuCheck, LuClipboard, LuClipboardCheck, LuFol
 import { IoClose, } from "react-icons/io5"
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { ChevronDown, CircleQuestionMark, Menu, MessageCircle, QrCode, Share, Sparkles } from "lucide-react";
+import { Bell, ChevronDown, CircleQuestionMark, Forward, Menu, MessageCircle, MoreHorizontal, QrCode, Share, Sparkles } from "lucide-react";
 import { appContext } from '../../context';
 import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,16 @@ import { advisorWhatsappUrl } from "../../helpers/contact";
 import { MobileActionsFab } from "./MobileActionsFab";
 
 const baseProd = "https://www.iattend.events"
+
+// Nombre de cada página del dashboard (breadcrumb y título del header).
+const PAGE_NAMES = {
+    side: "Side events",
+    edit: "Paperless",
+    guests: "Guest management",
+    "on-dashboard-guests": "Mis invitados",
+    photowall: "Photo Wall",
+    savethedate: "Save the Date",
+}
 
 const { useBreakpoint } = Grid;
 
@@ -197,7 +207,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
         </>
     )
 }
-export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges, sideEventName, onSideEventsBack }) => {
+export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges, sideEventName, onSideEventsBack, onOpenReminders }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -227,6 +237,16 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             return () => clearTimeout(timer)
         }
     }, [mobileWaOpen])
+
+    // Ancho de la ventana para los niveles del header (ver `tier` abajo).
+    const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
+    useEffect(() => {
+        const onResize = () => setViewportWidth(window.innerWidth)
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [])
+    const [menuOpen, setMenuOpen] = useState(false)
+    const menuRef = useRef(null)
 
     const isEditing = mode === "edit" || mode === "on-edit";
     const hasUnsavedChanges = isEditing && !saved;
@@ -444,14 +464,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             }
         ];
 
-        const modeMap = {
-            side: "Side events",
-            edit: "Paperless",
-            guests: "Guest management",
-            "on-dashboard-guests": "Mis invitados",
-            photowall: "Photo Wall",
-            savethedate: "Save the Date",
-        };
+        const modeMap = PAGE_NAMES;
 
         if (modeMap[mode]) {
             if (mode === 'side' && sideEventName) {
@@ -610,151 +623,219 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         )
     }
 
+    // ── Header responsive (diseño "Header · responsive") ────────────────
+    // Niveles por ancho de ventana:
+    //   full ≥1360 · todo completo
+    //   lg   1140–1359 · pases sin barra, Ayuda solo ícono
+    //   md   900–1139 · solo el nombre de la página, Recordatorios solo ícono
+    //   sm   720–899 · URL solo ícono, pases sin etiqueta; mensajes, QR y
+    //        ayuda en el menú ⋯
+    //   xs   <720 · una fila: título en dos líneas, créditos, campanita y ⋯
+    //        (URL y pases también en el menú)
+    const tier = viewportWidth >= 1360 ? 'full'
+        : viewportWidth >= 1140 ? 'lg'
+            : viewportWidth >= 900 ? 'md'
+                : viewportWidth >= 720 ? 'sm'
+                    : 'xs'
+    const inMenu = tier === 'sm' || tier === 'xs'
+
+    const eventTitle = invitation?.cover?.title?.text?.value
+    const pageName = sideEventName ?? PAGE_NAMES[mode] ?? null
+    const invitationUrl = `${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`
+
+    const backNode = hasUnsavedChanges ? (
+        <Popconfirm
+            title={t('dashboard_header.unsaved_title')}
+            description={t('dashboard_header.unsaved_desc_short')}
+            onConfirm={handleBack}
+            okText={t('dashboard_header.exit')}
+            cancelText={t('dashboard_header.cancel')}
+        >
+            <button type="button" className="hd-circle" aria-label={t('dashboard_header.back')}>
+                <LuArrowLeft size={16} />
+            </button>
+        </Popconfirm>
+    ) : (
+        <button type="button" className="hd-circle" aria-label={t('dashboard_header.back')} onClick={handleBack}>
+            <LuArrowLeft size={16} />
+        </button>
+    )
+
+    // En el menú: compartir el link de la invitación (hoja de compartir en el
+    // celular, copiar en escritorio). Si falta información, abre el formulario.
+    const shareInvitationLink = async () => {
+        setMenuOpen(false)
+        if (pendingCount > 0) return openPendingInfo()
+        const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+        if (isMobileDevice && navigator.share) {
+            try {
+                await navigator.share({ title: eventTitle, url: invitationUrl })
+                return
+            } catch (err) {
+                if (err.name === 'AbortError') return
+            }
+        }
+        try {
+            await navigator.clipboard.writeText(invitationUrl)
+            messageApi.success(t('custom_link.copied'))
+        } catch (err) {
+            console.error('Error al copiar el link:', err)
+        }
+    }
+
+    const menuItem = (icon, label, onClick, extra = null) => (
+        <button type="button" className="hd-menu-item" onClick={() => { setMenuOpen(false); onClick() }}>
+            <span className="hd-menu-icon">{icon}</span>
+            <span className="hd-menu-label">{label}</span>
+            {extra}
+        </button>
+    )
+
+    const menuPanel = (
+        <div className="hd-menu" ref={menuRef}>
+            {tier === 'xs' && !isEditing && (
+                <div className="hd-menu-passes">
+                    <PassesPill invitationId={id} getPopupContainer={() => menuRef.current ?? document.body} />
+                </div>
+            )}
+            {tier === 'xs' && menuItem(<Forward size={16} />, t('dashboard_header.menu_share_link'), shareInvitationLink)}
+            {menuItem(
+                <MessageCircle size={16} />,
+                t('dashboard_header.menu_messages'),
+                () => setMobileWaOpen(true),
+                unAnswer > 0 ? <span className="hd-menu-count">{unAnswer}</span> : null
+            )}
+            {!isEditing && menuItem(<QrCode size={16} />, t('dashboard_header.scanner_tooltip'), () => navigate(`/scanner?id=${id}`))}
+            {menuItem(<CircleQuestionMark size={16} />, t('dashboard_header.help'), () => setSupportOpen(true))}
+        </div>
+    )
+
+    const isAdminSession = session?.user?.role === "Administration"
+    const publishButton = isEditing && (
+        <Tooltip title={tier === 'xs' ? '' : t('dashboard_header.publish_tooltip')} placement="bottomLeft">
+            <Button
+                icon={isAdminSession ? <LuSendHorizontal size={14} /> : <LuUpload size={14} />}
+                type="primary"
+                className="hd-publish"
+                style={isAdminSession ? { backgroundColor: "#20212B" } : undefined}
+                onClick={isAdminSession ? onWriteChanges : onSaveChanges}
+            >
+                {isAdminSession ? t('dashboard_header.write') : t('dashboard_header.publish')}
+                {!saved && <span className="hd-publish-dot" />}
+            </Button>
+        </Tooltip>
+    )
+
     return (
         <>
             {contextHolder}
-            <div className="header-dashboard-main-container" style={{ borderBottom: '1px solid #e8e8e8' }}>
+            <div className="header-dashboard-main-container hd-bar" data-tier={tier} style={{ borderBottom: '1px solid #e8e8e8' }}>
                 <div className="header-dashboard-container">
 
-                    {/* LEFT SIDE */}
-                    <div className="header-dashboard-single-row">
+                    {/* ── Izquierda: regresar, URL y título ── */}
+                    <div className="hd-left">
+                        {backNode}
 
-                        {hasUnsavedChanges ? (
-                            <Popconfirm
-                                title={t('dashboard_header.unsaved_title')}
-                                description={t('dashboard_header.unsaved_desc_short')}
-                                onConfirm={handleBack}
-                                okText={t('dashboard_header.exit')}
-                                cancelText={t('dashboard_header.cancel')}
-                            >
-                                <Button
-                                    type="text"
-                                    className="headerbutton"
-                                    icon={<LuArrowLeft size={14} />}
+                        {tier !== 'xs' && (
+                            <div className="hd-url" data-icon={tier === 'sm' || undefined}>
+                                <CustomLink
+                                    isSmall={tier === 'sm'}
+                                    backuImage={invitation?.cover?.image?.prod}
+                                    isHeader={true}
+                                    maxHeight={34}
+                                    urlImage={urlImage}
+                                    url={invitationUrl}
+                                    id={id}
+                                    handleImage={updateURLimage}
+                                    name={eventTitle}
+                                    setupRequired={pendingCount > 0}
+                                    onSetupNeeded={openPendingInfo}
+                                    // Debajo de 750px CustomLink usa su botón de compartir: mismo ícono.
+                                    icon={<Forward size={14} />}
                                 />
-                            </Popconfirm>
-                        ) : (
-                            <Button
-                                onClick={handleBack}
-                                type="text"
-                                className="headerbutton"
-                                icon={<LuArrowLeft size={14} />}
-                            />
+                            </div>
                         )}
 
-                        {!screens.xs && <CustomLink backuImage={invitation?.cover?.image?.prod} isHeader={true} urlImage={urlImage} url={`${baseProd}/${invitation?.generals?.event?.label}/${name ?? ""}`} id={id} handleImage={updateURLimage} name={invitation?.cover?.title?.text?.value} setupRequired={pendingCount > 0} onSetupNeeded={openPendingInfo} />}
+                        {(tier === 'full' || tier === 'lg') && (
+                            <Breadcrumb className="hd-breadcrumb" items={breadcrumbItems} />
+                        )}
 
-                        {screens.xs && (
-                            <span style={{ fontFamily: 'Poppins', fontSize: '16px', fontWeight: 500, marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
-                                {sideEventName ?? invitation?.cover?.title?.text?.value}
+                        {(tier === 'md' || tier === 'sm') && (
+                            <span className="hd-page">{pageName ?? eventTitle}</span>
+                        )}
+
+                        {tier === 'xs' && (
+                            <span className="hd-title">
+                                {pageName && <span className="hd-title-event">{eventTitle}</span>}
+                                <span className="hd-title-page">{pageName ?? eventTitle}</span>
                             </span>
                         )}
-
-                        {!screens.xs && <Breadcrumb style={{ marginLeft: 8 }} items={breadcrumbItems} />}
-
                     </div>
 
-                    {!screens.xs && <CreditController id={id} />}
+                    {/* ── Centro: créditos ── */}
+                    <div className="hd-credits" data-compact={tier === 'xs' || undefined}>
+                        <CreditController id={id} />
+                    </div>
 
-                    {/* RIGHT SIDE */}
-                    <div className="header-dashboard-single-row" style={{ gap: 8 }}>
-
-                        {/* {!screens.xs && <img src={`/images/plan_${plan}.png`} alt="" style={{ maxHeight: '30px', borderRadius: '8px', boxShadow: '0px 0px 8px rgba(0,0,0,0.2)' }} />} */}
+                    {/* ── Derecha ── */}
+                    <div className="hd-right">
 
                         {/* Contador de pases: en el dashboard, no dentro del editor */}
-                        {!isEditing && <PassesPill invitationId={id} />}
+                        {!isEditing && tier !== 'xs' && (
+                            <PassesPill invitationId={id} showRail={tier === 'full'} showLabel={tier !== 'sm'} />
+                        )}
 
-                        {!screens.xs && (
+                        {/* Solo en Gestión de invitados: abre la sección Recordatorios. */}
+                        {onOpenReminders && (
+                            tier === 'full' || tier === 'lg' ? (
+                                <button type="button" className="hd-reminders-pill" onClick={onOpenReminders}>
+                                    <Bell size={15} color="#CDBEF7" />
+                                    {t('reminders.header_button')}
+                                </button>
+                            ) : (
+                                <Tooltip title={tier === 'xs' ? '' : t('reminders.header_button')}>
+                                    <button
+                                        type="button"
+                                        className="hd-reminders-pill hd-reminders-pill--icon"
+                                        aria-label={t('reminders.header_button')}
+                                        onClick={onOpenReminders}
+                                    >
+                                        <Bell size={16} color="#CDBEF7" />
+                                    </button>
+                                </Tooltip>
+                            )
+                        )}
+
+                        {!inMenu && (
                             <Dropdown
                                 trigger={['click']}
-                                placement='bottomLeft'
-                                arrow
+                                placement='bottomRight'
                                 popupRender={() => (
                                     <WhatsappMessages id={id} conversations={conversations} guestsByPhone={guestsByPhone} />
                                 )}
                             >
-                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-500)' size='large'>
-                                    <Button style={{ borderRadius: '99px' }} icon={<MessageCircle size={12} />} />
+                                <Badge style={{ zIndex: 99 }} count={unAnswer} color='var(--light-purple-500)' size='small'>
+                                    <button type="button" className="hd-circle hd-circle--outline" aria-label={t('dashboard_header.menu_messages')}>
+                                        <MessageCircle size={15} />
+                                    </button>
                                 </Badge>
                             </Dropdown>
                         )}
 
-                        {!screens.xs && !isEditing && (
+                        {!inMenu && !isEditing && (
                             <Tooltip title={t('dashboard_header.scanner_tooltip')}>
-                                <Button
-                                    style={{ borderRadius: '99px' }}
-                                    icon={<QrCode size={12} />}
+                                <button
+                                    type="button"
+                                    className="hd-circle hd-circle--outline"
                                     aria-label={t('dashboard_header.scanner_tooltip')}
                                     onClick={() => navigate(`/scanner?id=${id}`)}
-                                />
+                                >
+                                    <QrCode size={15} />
+                                </button>
                             </Tooltip>
                         )}
 
-                        {screens.xs && !isEditing && (
-                            <>
-                                {mobileWaVisible && createPortal(
-                                    <>
-                                        <div
-                                            onClick={() => setMobileWaOpen(false)}
-                                            style={{
-                                                position: 'fixed', inset: 0,
-                                                background: 'rgba(0,0,0,0.4)',
-                                                zIndex: 1299,
-                                                opacity: mobileWaEntered ? 1 : 0,
-                                                transition: 'opacity 0.24s ease',
-                                            }}
-                                        />
-                                        <WhatsappMessages
-                                            className="whatsapp_mobile"
-                                            style={{
-                                                transform: mobileWaEntered ? 'translateY(0)' : 'translateY(-32px)',
-                                                opacity: mobileWaEntered ? 1 : 0,
-                                                transition: 'transform 0.34s cubic-bezier(0.34,1.15,0.64,1), opacity 0.24s ease',
-                                            }}
-                                            id={id}
-                                            conversations={conversations}
-                                            guestsByPhone={guestsByPhone}
-                                            onClose={() => setMobileWaOpen(false)}
-                                        />
-                                    </>,
-                                    document.body
-                                )}
-                            </>
-                        )}
-
-                        {/* Información pendiente y compartir salieron del header de
-                            mobile: ahora solo lleva el nombre y el botón de regresar. */}
-
-
-                        {isEditing && screens.xs && session?.user?.role !== "Administration" && (
-                            <Button
-                                icon={<LuUpload size={14} />}
-                                type="primary"
-                                style={{ position: "relative", height: '32px', borderRadius: '99px' }}
-                                onClick={onSaveChanges}
-                            >
-                                {t('dashboard_header.publish')}
-                                {!saved && (
-                                    <div style={{ position: "absolute", top: 0, right: 0, height: 10, width: 10, borderRadius: 50, backgroundColor: "#A88AFF" }} />
-                                )}
-                            </Button>
-                        )}
-
-                        {isEditing && screens.xs && session?.user?.role === "Administration" && (
-                            <Button
-                                icon={<LuSendHorizontal size={14} />}
-                                type="primary"
-                                style={{ position: "relative", backgroundColor: "#20212B", height: '32px', borderRadius: '99px' }}
-                                onClick={onWriteChanges}
-                            >
-                                {t('dashboard_header.write')}
-                                {!saved && (
-                                    <div style={{ position: "absolute", top: 0, right: 0, height: 10, width: 10, borderRadius: 50, backgroundColor: "#A88AFF" }} />
-                                )}
-                            </Button>
-                        )}
-
-                        {!screens.xs && pendingCount > 0 && (
+                        {pendingCount > 0 && tier !== 'xs' && (
                             <Dropdown
                                 open={pendingOpen}
                                 onOpenChange={async (open) => {
@@ -879,7 +960,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 )}
                             >
                                 <Badge count={pendingCount} color='#FF8C00' size='small'>
-                                    {isEditing
+                                    {isEditing || tier !== 'full'
                                         ? <Button style={{ borderRadius: '99px', width: 32, height: 32, minWidth: 32, padding: 0, background: '#FFF4E5', border: '1px solid #FFCC80', color: '#FF8C00', display: 'flex', alignItems: 'center', justifyContent: 'center' }} icon={<LuTriangleAlert size={14} />} />
                                         : <Button style={{ borderRadius: '99px', background: '#FFF4E5', color: '#FF8C00', border: '1px solid #FFCC80', fontWeight: 500 }}>Información pendiente</Button>
                                     }
@@ -887,48 +968,70 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             </Dropdown>
                         )}
 
-                        {
-                            !screens.xs &&
-                            <Button
-                                style={{ borderRadius: '99px' }}
-                                icon={<CircleQuestionMark size={14} style={{ marginTop: '4px' }} />}
-                                onClick={() => setSupportOpen(true)}
-                            >
-                                {t('dashboard_header.help')}
-                            </Button>
-                        }
-
-
-
-                        {isEditing && !screens.xs && (
-                            <Tooltip title={t('dashboard_header.publish_tooltip')} placement="bottomLeft">
-                                <Button
-                                    icon={<LuUpload size={14} />}
-                                    type="primary"
-                                    style={{ position: "relative", borderRadius: '99px' }}
-                                    onClick={session.user.role === "Administration" ? onWriteChanges : onSaveChanges}
-                                >
-                                    {session.user.role === "Administration" ? t('dashboard_header.write') : t('dashboard_header.publish')}
-                                    {!saved && (
-                                        <div
-                                            style={{
-                                                position: "absolute",
-                                                top: 0,
-                                                right: 0,
-                                                height: 10,
-                                                width: 10,
-                                                borderRadius: 50,
-                                                backgroundColor: "#A88AFF"
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            </Tooltip>
+                        {!inMenu && (
+                            tier === 'full' ? (
+                                <button type="button" className="hd-help" onClick={() => setSupportOpen(true)}>
+                                    <CircleQuestionMark size={15} />
+                                    {t('dashboard_header.help')}
+                                </button>
+                            ) : (
+                                <Tooltip title={t('dashboard_header.help')}>
+                                    <button type="button" className="hd-circle hd-circle--outline" aria-label={t('dashboard_header.help')} onClick={() => setSupportOpen(true)}>
+                                        <CircleQuestionMark size={15} />
+                                    </button>
+                                </Tooltip>
+                            )
                         )}
 
+                        {inMenu && (
+                            <Dropdown
+                                trigger={['click']}
+                                placement='bottomRight'
+                                open={menuOpen}
+                                onOpenChange={setMenuOpen}
+                                popupRender={() => menuPanel}
+                            >
+                                <Badge dot={unAnswer > 0} color='var(--light-purple-500)' offset={[-4, 4]}>
+                                    <button type="button" className="hd-circle hd-circle--outline" aria-label={t('dashboard_header.menu_more')}>
+                                        <MoreHorizontal size={16} />
+                                    </button>
+                                </Badge>
+                            </Dropdown>
+                        )}
+
+                        {publishButton}
                     </div>
                 </div>
             </div>
+
+            {/* Mensajes en hoja (menú ⋯ y celular). */}
+            {mobileWaVisible && createPortal(
+                <>
+                    <div
+                        onClick={() => setMobileWaOpen(false)}
+                        style={{
+                            position: 'fixed', inset: 0,
+                            background: 'rgba(0,0,0,0.4)',
+                            zIndex: 1299,
+                            opacity: mobileWaEntered ? 1 : 0,
+                            transition: 'opacity 0.24s ease',
+                        }}
+                    />
+                    <WhatsappMessages
+                        className="whatsapp_mobile"
+                        style={{
+                            transform: mobileWaEntered ? 'translateY(0)' : 'translateY(-32px)',
+                            opacity: mobileWaEntered ? 1 : 0,
+                            transition: 'transform 0.34s cubic-bezier(0.34,1.15,0.64,1), opacity 0.24s ease',
+                        }}
+                        id={id}
+                        conversations={conversations}
+                        guestsByPhone={guestsByPhone}
+                        onClose={() => setMobileWaOpen(false)}
+                    />
+                </>,
+                document.body
+            )}
 
             {screens.xs && (
                 <MobileActionsFab
@@ -944,7 +1047,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                 onClose={() => setSupportOpen(false)}
                 invitationId={id}
                 session={session}
-                eventName={invitation?.cover?.title?.text?.value}
+                eventName={eventTitle}
             />
 
         </>

@@ -33,6 +33,7 @@ import { GuestsOverview } from './GuestsOverview/GuestsOverview';
 import { GuestsTour, GUESTS_TOUR_STORAGE_KEY } from './GuestsTour';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { GuestAddTiles } from './GuestAddTiles';
+import { RemindersPanel } from './Reminders/RemindersPanel';
 import { useTranslation } from 'react-i18next';
 import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
 import { useLia } from '../../context/LiaContext';
@@ -160,8 +161,12 @@ export default function GuestsPage() {
     const [sendMode, setSendMode] = useState(false)
     const [bulkSelected, setBulkSelected] = useState(() => new Set())
     const [bulkSending, setBulkSending] = useState(false)
-    // Lote activo de envío masivo (isla de progreso): { id, total, sent, failed, status }
+    // Lote activo de envío masivo (isla de progreso): { id, total, sent, failed, status, kind }
     const [activeBatch, setActiveBatch] = useState(null)
+    // Recordatorios: selección de titulares en las listas (barra flotante) y
+    // lo que los atajos dejan preelegido al abrir la pestaña.
+    const [listSel, setListSel] = useState(() => new Set())
+    const [remindersPreset, setRemindersPreset] = useState(null)
     // Tour del rediseño (GuestsTour): se abre solo la primera vez que el
     // usuario entra a la página nueva y se puede relanzar desde el "?" de la
     // escalera de pasos.
@@ -1059,7 +1064,7 @@ export default function GuestsPage() {
         if (error) {
             console.error('Error al guardar rsvp_deadline:', error)
             message.error(t('guests.rsvp_deadline_error'))
-            return
+            return false
         }
 
         if (rsvpDeadline && newDeadline !== rsvpDeadline && hasSentReminders) {
@@ -1072,6 +1077,7 @@ export default function GuestsPage() {
         }
 
         setRsvpDeadline(newDeadline)
+        return true
     }
 
     const rsvpDisabledDate = (d) => {
@@ -1337,7 +1343,7 @@ export default function GuestsPage() {
     const getActiveBatch = async () => {
         const { data } = await supabase
             .from('invitation_send_batches')
-            .select('id, total, sent_count, failed_count, status')
+            .select('id, total, sent_count, failed_count, status, kind')
             .eq('invitation_id', id)
             .is('side_event_id', null)
             .eq('status', 'processing')
@@ -1346,7 +1352,7 @@ export default function GuestsPage() {
             .maybeSingle()
 
         if (data) {
-            setActiveBatch({ id: data.id, total: data.total, sent: data.sent_count, failed: data.failed_count, status: data.status })
+            setActiveBatch({ id: data.id, total: data.total, sent: data.sent_count, failed: data.failed_count, status: data.status, kind: data.kind })
         }
     }
 
@@ -1610,6 +1616,69 @@ export default function GuestsPage() {
         } finally {
             setBulkSending(false)
         }
+    }
+
+    // La selección es de la lista que se está viendo: al cambiar de paso se limpia.
+    useEffect(() => {
+        setListSel((prev) => (prev.size ? new Set() : prev))
+    }, [activeKey])
+
+    // Recordatorios (comunicados): el panel manda los parámetros ya resueltos
+    // por titular; el backend arma la plantilla y crea un lote kind='reminder'
+    // en la misma cola del envío masivo. Se reservan los créditos de los que el
+    // backend aceptó; los fallidos se reembolsan al cerrar el lote.
+    // Devuelve { batchId, total } del lote creado, o null si no se creó. Que el
+    // lote se cree no quiere decir que salió: el resultado real llega por el
+    // polling de activeBatch (el panel lo muestra).
+    const onSendReminders = async (template, reminderItems) => {
+        if (hasPendingInfo) {
+            message.warning('Completa la información pendiente de tu invitación antes de enviar.')
+            return null
+        }
+        if (activeBatch?.status === 'processing') {
+            message.warning(t('reminders.batch_in_progress'))
+            return null
+        }
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/whats/reminders/bulk`,
+                { invitationId: id, templateId: template.id, items: reminderItems }
+            )
+            if (!response.data.ok) return null
+            const { batchId, total } = response.data.data
+            await onReserveCredits(total)
+            setActiveBatch({ id: batchId, total, sent: 0, failed: 0, status: 'processing', kind: 'reminder' })
+            setListSel(new Set())
+            return { batchId, total }
+        } catch (error) {
+            message.error(error.response?.data?.msg || t('reminders.send_error'))
+            console.log(error.response?.data || error.message)
+            return null
+        }
+    }
+
+    // Abre la pestaña de Recordatorios con algo preelegido (atajos).
+    const openReminders = (preset = {}) => {
+        setRemindersPreset({ ...preset, nonce: Date.now() })
+        setActiveKey('recordatorios')
+    }
+
+    const toggleListSel = (guestId) => setListSel((prev) => {
+        const next = new Set(prev)
+        if (next.has(guestId)) next.delete(guestId)
+        else next.add(guestId)
+        return next
+    })
+
+    // Barra flotante → Recordatorios en modo manual. Si se marcó un
+    // acompañante (vista plana con filtros), cuenta su titular.
+    const sendSelectionAsReminder = () => {
+        const leaderIds = [...new Set(rowData
+            .filter((g) => listSel.has(g.id))
+            .map((g) => (g.companion_id === null || g.companion_id === undefined) ? g.id : Number(g.companion_id)))]
+        const from = t(`guests.${STEP_DEFS.find((d) => d.key === activeKey)?.label ?? 'step_label_creado'}`)
+        openReminders({ manualIds: leaderIds, manualFrom: from })
+        setListSel(new Set())
     }
 
     // Checkbox manual del bulk: círculo grande con los tokens azules del tab
@@ -1994,7 +2063,7 @@ export default function GuestsPage() {
                 key={record.id}
                 className="gx-card"
                 data-tone={tone || undefined}
-                data-selected={bulkSelected.has(record.id) || undefined}
+                data-selected={bulkSelected.has(record.id) || listSel.has(record.id) || undefined}
                 data-dimmed={dimmed || undefined}
                 onClick={selectable ? (e) => {
                     if (e.target.closest('button, input, a, .ant-dropdown')) return
@@ -2003,6 +2072,21 @@ export default function GuestsPage() {
                 style={selectable ? { cursor: 'pointer' } : undefined}
             >
                 <div className="gx-row">
+                    {/* Selección para Recordatorios (barra flotante). En modo
+                        envío masivo manda el check del bulk. */}
+                    {!sendMode && (
+                        <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={listSel.has(record.id)}
+                            aria-label={t('reminders.select_guest', { name: record.name })}
+                            className="gx-select"
+                            data-on={listSel.has(record.id) || undefined}
+                            onClick={(e) => { e.stopPropagation(); toggleListSel(record.id) }}
+                        >
+                            {listSel.has(record.id) && <Check size={13} strokeWidth={3} />}
+                        </button>
+                    )}
                     <div className={`gx-avatar ${isConfirmed ? 'gx-avatar--accent' : ''} ${isRejected ? 'gx-avatar--muted' : ''}`}>
                         {initialsOf(record.name)}
                     </div>
@@ -2884,6 +2968,7 @@ export default function GuestsPage() {
                         onOpenTables={() => sethandleTables(true)}
                         onAddGuests={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                         onCreateSend={() => { setActiveKey('creado'); if (SHOW_BULK_SEND) setSendMode(true); }}
+                        onOpenReminders={openReminders}
                     />
                 </Spin>
             ),
@@ -2978,6 +3063,34 @@ export default function GuestsPage() {
                 </Spin>
             ),
         },
+        {
+            label: screens.xs ? <BellRing size={14} /> : t('reminders.tab'),
+            key: "recordatorios",
+            children: (
+                <RemindersPanel
+                    invitationId={id}
+                    rowData={rowData}
+                    dispatchMap={dispatchMap}
+                    tables={tables}
+                    tags={localTags}
+                    owners={owners}
+                    invitation={invitation}
+                    name={name}
+                    rsvpDeadline={rsvpDeadline}
+                    eventDate={eventDate}
+                    urlImage={url_image}
+                    onSaveRsvpDeadline={onSaveRsvpDeadline}
+                    rsvpDisabledDate={rsvpDisabledDate}
+                    plan={plan}
+                    credits={credits}
+                    preset={remindersPreset}
+                    onSend={onSendReminders}
+                    activeBatch={activeBatch}
+                    onNeedCredits={() => setBuyCreditsOpen(true)}
+                    onBack={() => setActiveKey('seguimiento')}
+                />
+            ),
+        },
     // OJO: react-hooks/exhaustive-deps está desactivado en este repo, así que
     // nadie avisa si falta una dependencia. Un estado que se lea dentro de los
     // children y no esté aquí queda congelado: el componente re-renderiza pero
@@ -3012,7 +3125,17 @@ export default function GuestsPage() {
         plan,
         rsvpPickerSlot,
         // El tour renderiza banners y tarjetas de ejemplo dentro de los tabs.
-        tourOpen
+        tourOpen,
+        // Recordatorios: selección de las listas y datos del panel.
+        listSel,
+        remindersPreset,
+        localTags,
+        owners,
+        invitation,
+        name,
+        activeBatch,
+        hasPendingInfo,
+        url_image
     ]);
 
 
@@ -3029,6 +3152,7 @@ export default function GuestsPage() {
                 }}>
                 <HeaderDashboard
                     mode={'guests'}
+                    onOpenReminders={() => openReminders()}
                 />
 
                 <Layout className='build-invitation-layout' style={{
@@ -3143,6 +3267,26 @@ export default function GuestsPage() {
                 respuesta y Confirmados cambiando el tab activo por paso. */}
             <GuestsTour open={tourOpen && tourAvailable} onClose={closeTour} setActiveKey={setActiveKey} />
 
+            {/* Selección en las listas → Recordatorios (modo manual). */}
+            {listSel.size > 0 && activeKey !== 'recordatorios' && (
+                <div
+                    className="gx gx-selbar"
+                    role="region"
+                    aria-label={t('reminders.selbar_label')}
+                    // Si la isla de progreso está abierta, la barra va encima.
+                    style={activeBatch ? { bottom: 84 } : undefined}
+                >
+                    <span className="gx-selbar-count">{t('reminders.selbar_count', { count: listSel.size })}</span>
+                    <button type="button" className="gx-selbar-cancel" onClick={() => setListSel(new Set())}>
+                        {t('reminders.cancel')}
+                    </button>
+                    <button type="button" className="gx-selbar-send" onClick={sendSelectionAsReminder}>
+                        <BellRing size={15} />
+                        {t('reminders.selbar_send')}
+                    </button>
+                </div>
+            )}
+
             {/* Isla de progreso del envío masivo (estilo dynamic island): fija
                 abajo al centro, visible mientras el lote se procesa y hasta que
                 el usuario la cierre al completarse. */}
@@ -3157,11 +3301,18 @@ export default function GuestsPage() {
                 }}>
                     {activeBatch.status === 'processing'
                         ? <Send size={16} style={{ flexShrink: 0, color: 'var(--blue-color)' }} />
-                        : <Check size={16} style={{ flexShrink: 0, color: '#43B75D' }} />}
+                        : activeBatch.sent === 0 && activeBatch.failed > 0
+                            ? <X size={16} style={{ flexShrink: 0, color: '#EE6B5E' }} />
+                            : <Check size={16} style={{ flexShrink: 0, color: '#43B75D' }} />}
 
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 4, minWidth: 0 }}>
                         <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-                            {activeBatch.status === 'processing' ? t('guests.bulk_island_sending') : t('guests.bulk_island_done')}
+                            {activeBatch.status === 'processing'
+                                ? t(activeBatch.kind === 'reminder' ? 'reminders.island_sending' : 'guests.bulk_island_sending')
+                                : activeBatch.sent === 0 && activeBatch.failed > 0
+                                    // Nada salió: no decir "completado".
+                                    ? t('reminders.island_failed_all')
+                                    : t('guests.bulk_island_done')}
                             {` · ${activeBatch.sent + activeBatch.failed}/${activeBatch.total}`}
                             {activeBatch.failed > 0 && ` · ${activeBatch.failed} ${t('guests.bulk_island_failed')}`}
                         </span>
@@ -3169,7 +3320,7 @@ export default function GuestsPage() {
                             percent={Math.round(((activeBatch.sent + activeBatch.failed) / Math.max(activeBatch.total, 1)) * 100)}
                             showInfo={false}
                             size={[undefined, 6]}
-                            strokeColor='var(--blue-color)'
+                            strokeColor={activeBatch.status !== 'processing' && activeBatch.sent === 0 && activeBatch.failed > 0 ? '#EE6B5E' : 'var(--blue-color)'}
                             railColor='#FFFFFF20'
                             style={{ margin: 0, lineHeight: 0 }}
                         />

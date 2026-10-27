@@ -14,9 +14,10 @@ const USES_PASS = new Set(['esperando', 'confirmado', 'asistente'])
 /**
  * Contador de pases del header del dashboard: usados / capacidad total, con
  * barra de avance y un "+" que abre el editor de capacidad
- * (columna invitations.tickets).
+ * (columna invitations.tickets). El header responsive apaga la barra
+ * (`showRail`) y la etiqueta (`showLabel`) según el ancho.
  */
-export const PassesPill = ({ invitationId }) => {
+export const PassesPill = ({ invitationId, showRail = true, showLabel = true, getPopupContainer }) => {
     const { t } = useTranslation()
     const { subscribe } = useDashboardRealtime()
 
@@ -75,21 +76,26 @@ export const PassesPill = ({ invitationId }) => {
     return (
         <div className={styles.pill}>
             <div className={styles.figure}>
-                <span className={styles.kicker}>{t('dashboard_header.passes')}</span>
+                {showLabel && <span className={styles.kicker}>{t('dashboard_header.passes')}</span>}
                 <span className={styles.count}>
                     <b data-over={over || undefined}>{used}</b> {t('dashboard_header.passes_of', { total })}
                 </span>
             </div>
 
-            <div className={styles.rail}>
-                <div className={styles.fill} data-over={over || undefined} style={{ width: `${pct}%` }} />
-            </div>
+            {showRail && (
+                <div className={styles.rail}>
+                    <div className={styles.fill} data-over={over || undefined} style={{ width: `${pct}%` }} />
+                </div>
+            )}
 
             <Dropdown
                 trigger={['click']}
                 placement="bottomRight"
                 open={open}
                 onOpenChange={setOpen}
+                // Dentro del menú ⋯ del header el editor vive en el menú, para
+                // que un clic en él no lo cierre.
+                getPopupContainer={getPopupContainer}
                 popupRender={() => (
                     <div className={styles.editor}>
                         <span className={styles.editorLabel}>{t('dashboard_header.passes_total')}</span>

@@ -1441,3 +1441,97 @@
     border-color: #4A22C4;
     color: #fff;
 }
+
+/* ── Recordatorios: selección en las listas ──────────────────────────── */
+
+.gx-select {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 6px;
+    border: 1.5px solid #D6D2CC;
+    background: #fff;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.gx-select:hover {
+    border-color: #5A2EE0;
+}
+
+.gx-select[data-on] {
+    background: #5A2EE0;
+    border-color: #5A2EE0;
+}
+
+/* Barra flotante: N seleccionados · Cancelar · Enviar recordatorio */
+.gx-selbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1201;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 8px 8px 20px;
+    border-radius: 999px;
+    background: #0F1A1E;
+    color: #fff;
+    box-shadow: 0 12px 32px rgba(15, 26, 30, .25);
+    max-width: calc(100vw - 24px);
+    white-space: nowrap;
+}
+
+.gx-selbar-count {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.gx-selbar-cancel {
+    border: none;
+    background: transparent;
+    color: #B9C0C2;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 6px 4px;
+}
+
+.gx-selbar-cancel:hover {
+    color: #fff;
+}
+
+.gx-selbar-send {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    background: #CDBEF7;
+    color: #2B1A66;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.gx-selbar-send:hover {
+    background: #BDA9F4;
+}
+
+/* Recordatorios: el resumen de la derecha es sticky respecto a la ventana.
+   .guests-info-container traía overflow:auto (my-guests.css), que lo vuelve
+   el contenedor de referencia del sticky aunque nunca hace scroll — quien
+   scrollea es la ventana —, así que el resumen no se quedaba pegado.
+   overflow-x: clip recorta igual a lo ancho sin crear contenedor de scroll. */
+.guests_main .guests-info-container {
+    overflow: visible;
+    overflow-x: clip;
+}

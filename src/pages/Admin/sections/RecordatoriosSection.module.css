@@ -1,0 +1,63 @@
+/* Recordatorios: lo propio de esta sección. El layout (lista, editor, pie,
+   vista previa) viene de OnboardingSection.module.css. */
+
+.variables {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.variable {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.variable code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ac-ink);
+    background: var(--ac-tint);
+    border-radius: 6px;
+    padding: 4px 6px;
+    text-align: center;
+}
+
+.reglas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.regla {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr) 28px;
+    gap: 8px;
+    align-items: center;
+}
+
+.quitar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--ac-line);
+    background: var(--ac-surface);
+    color: var(--ac-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.quitar:hover {
+    color: #C9443A;
+}
+
+.notaPreview {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--ac-muted);
+}
