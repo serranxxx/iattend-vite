@@ -43,9 +43,9 @@ export const BuildMenu = ({ buttons, invitation, setInvitation, currentSection, 
         }
     }
 
-    // bottom:56px + esta altura deben sumar exactamente 100vh para que, expandido,
+    // bottom:56px + esta altura deben sumar exactamente 100dvh para que, expandido,
     // el panel llegue hasta el borde superior real de la pantalla sin dejar hueco.
-    const mobileHeight = expanded ? 'calc(100vh - 56px)' : '300px';
+    const mobileHeight = expanded ? 'calc(100dvh - 56px)' : '300px';
 
     // Oculto = el panel desaparece por completo, sin dejar la franja de controles:
     // la invitación se ve entera y la fila de módulos (ButtonsMenu) es la que lo

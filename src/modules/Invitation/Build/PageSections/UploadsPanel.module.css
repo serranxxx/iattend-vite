@@ -374,3 +374,10 @@
     font-size: 13px;
     cursor: pointer;
 }
+
+/* Táctil (iPad): sin cursor, el botón de borrar se queda a la vista. */
+@media (hover: none) {
+    .delete {
+        opacity: 1;
+    }
+}

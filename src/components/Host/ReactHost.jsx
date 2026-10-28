@@ -151,6 +151,11 @@ export default function ReactHost({
       if (ev.data?.type === "REMOTE_FIELD_TOOL" && ev.data?.payload?.field) {
         onFieldToolRef.current?.(ev.data.payload.field, ev.data.payload.rect, ev.data.payload.section ?? 'cover');
       }
+      // Texto con el foco ({ rect } en px de la pieza, o null): el editor sube
+      // la pieza si el teclado de pantalla lo tapa (iPad).
+      if (ev.data?.type === "REMOTE_TEXT_FOCUS") {
+        window.dispatchEvent(new CustomEvent("iattend-text-focus", { detail: { rect: ev.data.payload?.rect ?? null, source: ev.source } }));
+      }
       // Texto de un bloque elegido ({ path, kind } o null): barra de texto.
       if (ev.data?.type === "REMOTE_TEXT_FIELD") {
         window.dispatchEvent(new CustomEvent("iattend-text-field", { detail: ev.data.payload ?? null }));

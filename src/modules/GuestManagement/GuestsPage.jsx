@@ -2867,6 +2867,20 @@ export default function GuestsPage() {
         </div>
     )
 
+    // iPad: al buscar, el teclado de pantalla tapa la mitad de abajo y Safari
+    // solo sube la página lo justo para ver el campo, así que los resultados
+    // quedaban debajo del teclado. Ya con el teclado arriba, el buscador se
+    // lleva al tope de lo visible para que la lista ocupe el resto.
+    const liftSearchOnTouch = (e) => {
+        if (!window.matchMedia?.('(hover: none) and (pointer: coarse)').matches) return
+        const el = e.currentTarget.closest('.gx-toolbar') ?? e.currentTarget
+        setTimeout(() => {
+            const vv = window.visualViewport
+            const top = window.scrollY + el.getBoundingClientRect().top - (vv?.offsetTop ?? 0) - 12
+            window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+        }, 400)
+    }
+
     const renderTabToolbar = (tabKey) => {
         const placeholder = tabKey === 'confirmado'
             ? t('guests.search_placeholder_table')
@@ -2879,6 +2893,7 @@ export default function GuestsPage() {
                     <input
                         value={searchUser ?? ''}
                         onChange={(e) => setSearchUser(e.target.value)}
+                        onFocus={liftSearchOnTouch}
                         placeholder={placeholder}
                     />
                     {searchUser && (
@@ -3160,7 +3175,7 @@ export default function GuestsPage() {
                     boxSizing: 'border-box'
                 }} >
                     <div onClick={() => { setOnNotificationCenter(false); setActiveTickets(false) }} style={{
-                        width: '100%', height: '100vh',
+                        width: '100%', height: '100dvh',
                         position: 'absolute', backgroundColor: '#FFFFFF40',
                         zIndex: 98,
                         opacity: onNotificationCenter ? 1 : 0,
@@ -3202,7 +3217,7 @@ export default function GuestsPage() {
                 <div
                     style={{
                         width: onNotificationCenter ? '450px' : '0px',
-                        height: onNotificationCenter ? '100vh' : '0px',
+                        height: onNotificationCenter ? '100dvh' : '0px',
                         borderRadius: onNotificationCenter ? '16px' : '99px',
                         top: onNotificationCenter ? 0 : 85,
                         right: onNotificationCenter ? 20 : 50,

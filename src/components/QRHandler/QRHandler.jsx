@@ -164,7 +164,7 @@ export const QRHandler = ({ visible, setVisible, }) => {
     return (
         <div onClick={() => setVisible(false)} style={{
             display: visible ? 'flex' : 'none', alignItems: 'flex-start', justifyContent: 'flex-start',
-            width: '100vw', height: '100vh', background: '#00000070', position: 'fixed', top: 0,
+            width: '100vw', height: '100dvh', background: '#00000070', position: 'fixed', top: 0,
             left: 0, padding:'24px', boxSizing:'border-box',
             zIndex: 999
         }}>
@@ -494,7 +494,7 @@ export const QRHandler = ({ visible, setVisible, }) => {
                         </div>
 
                         : <div style={{
-                            height: '100vh', display: 'flex', alignItems: 'center',
+                            height: '100dvh', display: 'flex', alignItems: 'center',
                             justifyContent: 'center', flexDirection: 'column',
                             position: 'relative'
                             // backgroundColor: lighter(MainColor, 0.9)

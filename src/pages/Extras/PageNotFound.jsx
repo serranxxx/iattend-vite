@@ -10,7 +10,7 @@ export const PageNotFound = () => {
 
     return (
         <div style={{
-            width: '100%', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '100%', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexDirection: 'column'
         }}>
             <div style={{

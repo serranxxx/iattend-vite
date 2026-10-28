@@ -125,6 +125,9 @@
         align-items: center;
         gap: 24px;
         width: auto;
+        /* Lugar para el círculo de Lia (fijo abajo a la derecha): sin esto
+           tapaba el último enlace al llegar al final de la página. */
+        padding-right: 72px;
     }
 
     .fa-links { flex-direction: row; }

@@ -6,11 +6,18 @@ import es_ES from 'antd/locale/es_ES';
 // Importa estilos base de antd v5 (opcional pero recomendado)
 // import 'antd/dist/reset.css';
 
+// Pantallas táctiles (iPad, celular): en Safari, si al pasar el cursor
+// aparece algo (el tooltip), el primer toque solo hace "hover" y hay que
+// tocar dos veces cada botón. Ahí los tooltips abren con el toque: el botón
+// responde al primero y el motivo de un botón bloqueado se sigue viendo.
+const TOUCH_ONLY = typeof window !== 'undefined' && Boolean(window.matchMedia?.('(hover: none) and (pointer: coarse)').matches);
+
 export const AntdProvider = ({ children }) => {
   return (
     <StyleProvider >
       <ConfigProvider
         locale={es_ES}
+        tooltip={TOUCH_ONLY ? { trigger: 'click' } : undefined}
         // modal={{
         //   centered: true,
         //   closable: false,

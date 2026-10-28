@@ -30,6 +30,28 @@ export const LIA_CHAT_STATE_EVENT = 'lia:chat-state'
 // Enter o espacio en un div con role="button"
 const isActivateKey = (e) => e.key === 'Enter' || e.key === ' '
 
+// Teclado de pantalla (iPad): la parte visible de la página (visualViewport)
+// se achica a lo que queda arriba del teclado. null si no hay teclado.
+const KEYBOARD_MIN = 120
+const useKeyboardArea = () => {
+    const [area, setArea] = useState(null)
+    useEffect(() => {
+        const vv = window.visualViewport
+        if (!vv) return
+        const update = () => {
+            const covered = window.innerHeight - (vv.height + vv.offsetTop)
+            setArea(covered >= KEYBOARD_MIN ? { top: vv.offsetTop, height: vv.height } : null)
+        }
+        vv.addEventListener('resize', update)
+        vv.addEventListener('scroll', update)
+        return () => {
+            vv.removeEventListener('resize', update)
+            vv.removeEventListener('scroll', update)
+        }
+    }, [])
+    return area
+}
+
 export const ChatContainer = () => {
     const { t } = useTranslation()
     const [open, setOpen] = useState(false)
@@ -38,6 +60,7 @@ export const ChatContainer = () => {
     const [expanded, setExpanded] = useState(false)
     const [mounted, setMounted] = useState(false)
     const [notifVisible, setNotifVisible] = useState(false)
+    const keyboardArea = useKeyboardArea()
     const [btnHovered, setBtnHovered] = useState(false)
     const [searchParams] = useSearchParams()
     const id = searchParams.get('id')
@@ -158,6 +181,12 @@ export const ChatContainer = () => {
                 width: '100vw',
                 height: '100dvh',
                 borderRadius: 0,
+            } : open && keyboardArea ? {
+                // Con el teclado abierto (iPad) el panel cabe en lo que queda
+                // visible arriba de él, en vez de quedar con la mitad debajo.
+                top: keyboardArea.top + 16,
+                bottom: 'auto',
+                height: Math.min(expanded ? keyboardArea.height : 584, keyboardArea.height - 32),
             } : undefined}
             role={open ? 'dialog' : undefined}
             aria-label={open ? 'Lia' : undefined}

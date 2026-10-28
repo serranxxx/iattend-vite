@@ -121,3 +121,10 @@
     background: rgba(41, 38, 45, 0.06);
     color: #29262D;
 }
+
+/* Táctil (iPad): sin cursor, el ojo de cada capa se queda a la vista. */
+@media (hover: none) {
+    .eye {
+        opacity: 1;
+    }
+}

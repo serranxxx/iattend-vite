@@ -440,6 +440,7 @@
     left: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     background-color: var(--text-color-80);
     z-index: 2147483647;
     display: flex;

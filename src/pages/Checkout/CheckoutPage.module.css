@@ -13,6 +13,7 @@
     justify-content: center;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     background: var(--dark-blue-500);
     color: var(--ck-text);
 }
@@ -43,6 +44,7 @@
     max-width: 480px;
     height: 100%;
     max-height: 100vh;
+    max-height: 100dvh;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(6px);

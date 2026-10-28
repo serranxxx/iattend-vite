@@ -219,6 +219,7 @@
     z-index: 26;
     width: 282px;
     max-height: calc(100vh - 140px);
+    max-height: calc(100dvh - 140px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;

@@ -8,6 +8,7 @@
     box-sizing: content-box;
 
     height: 100vh;
+    height: 100dvh;
 
 }
 
@@ -254,6 +255,7 @@
 .dashboard_body {
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     height: 100dvh;
     display: flex;
     align-items: stretch;
@@ -627,6 +629,7 @@
         flex-shrink: 1;
         height: 50vh;
         max-height: 100vh;
+        max-height: 100dvh;
     }
 
     .dashboard_guests,

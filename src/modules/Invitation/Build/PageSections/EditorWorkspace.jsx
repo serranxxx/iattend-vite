@@ -72,6 +72,58 @@ const useViewport = () => {
     return v
 }
 
+// Teclado de pantalla (iPad): tapa la mitad de abajo y el editor no hace
+// scroll, así que el texto que se está escribiendo en la pieza quedaba
+// debajo. La pieza avisa dónde quedó ese texto (REMOTE_TEXT_FOCUS) y el
+// escenario sube lo justo para dejarlo arriba del teclado, sin pasarse del
+// header y la barra de texto. Sin teclado (o en computadora) vale 0.
+const KEYBOARD_MIN = 120   // menos que esto no es un teclado (barra de atajos)
+const LIFT_TOP = 140       // header (60) + barra de texto
+const LIFT_GAP = 24
+const useKeyboardLift = () => {
+    const [lift, setLift] = useState(0)
+    const liftRef = useRef(0)
+    useEffect(() => {
+        const vv = window.visualViewport
+        if (!vv) return
+        let focus = null
+        const apply = (v) => { liftRef.current = v; setLift(v) }
+        let hadKeyboard = false
+        const update = () => {
+            const covered = window.innerHeight - (vv.height + vv.offsetTop)
+            // Al abrir el teclado Safari recorre la página hacia arriba y al
+            // cerrarlo la deja así: el editor (alto fijo) quedaba cortado bajo
+            // el header. Se regresa arriba.
+            if (covered >= KEYBOARD_MIN) hadKeyboard = true
+            else if (hadKeyboard) { hadKeyboard = false; if (window.scrollY) window.scrollTo(0, 0) }
+            if (!focus?.rect || covered < KEYBOARD_MIN || !focus.frame?.isConnected) { if (liftRef.current) apply(0); return }
+            const box = focus.frame.getBoundingClientRect()
+            const scale = focus.frame.offsetHeight ? box.height / focus.frame.offsetHeight : 1
+            // Posición sin el desplazamiento que ya se aplicó.
+            const top = box.top + liftRef.current + focus.rect.y * scale
+            const bottom = top + focus.rect.h * scale
+            const visibleBottom = vv.offsetTop + vv.height - LIFT_GAP
+            const next = Math.round(Math.max(0, Math.min(bottom - visibleBottom, top - LIFT_TOP)))
+            if (Math.abs(next - liftRef.current) > 2) apply(next)
+        }
+        const onFocus = (e) => {
+            const { rect, source } = e.detail ?? {}
+            const frame = rect && source ? [...document.querySelectorAll('iframe')].find((f) => f.contentWindow === source) : null
+            focus = rect && frame ? { rect, frame } : null
+            update()
+        }
+        window.addEventListener('iattend-text-focus', onFocus)
+        vv.addEventListener('resize', update)
+        vv.addEventListener('scroll', update)
+        return () => {
+            window.removeEventListener('iattend-text-focus', onFocus)
+            vv.removeEventListener('resize', update)
+            vv.removeEventListener('scroll', update)
+        }
+    }, [])
+    return lift
+}
+
 export const EditorWorkspace = ({
     invitation, invitationID,
     positionY, onSectionChange, activeLang, textureOverride, fontOverride, onHostReady,
@@ -83,9 +135,12 @@ export const EditorWorkspace = ({
 
     const [activeTool, setActiveTool] = useState('elements')
     const [toolOpen, setToolOpen] = useState(false)
-    // Número o 'fit' (ajustar a la pantalla).
-    const [zoomMode, setZoomMode] = useState(0.8)
+    // Número o 'fit' (ajustar a la pantalla). Si al 80% la tarjeta no cabe
+    // entre el header y el dock (iPad horizontal, laptops chicas), arranca en
+    // Ajustar.
+    const [zoomMode, setZoomMode] = useState(() => ((window.innerHeight - 60 - 150) / 780 < 0.8 ? 'fit' : 0.8))
     const vp = useViewport()
+    const keyboardLift = useKeyboardLift()
 
     // El panel de herramienta flota encima del tablero: abrirlo no recorre la
     // invitación.
@@ -470,7 +525,12 @@ export const EditorWorkspace = ({
             <div
                 className={styles.stage}
                 // Con la barra del elemento arriba, la pieza baja para no quedar debajo.
-                style={{ padding: `${selectedItem || ts || moduleTarget || separatorTarget || fieldBar ? 92 : 20}px ${padR}px 92px ${padL}px` }}
+                style={{
+                    padding: `${selectedItem || ts || moduleTarget || separatorTarget || fieldBar ? 92 : 20}px ${padR}px 92px ${padL}px`,
+                    // Teclado de pantalla: la pieza sube para no tapar el texto.
+                    transform: keyboardLift ? `translateY(-${keyboardLift}px)` : undefined,
+                    transition: 'padding 0.25s ease, transform 0.25s ease',
+                }}
                 onPointerDown={!live ? (e) => {
                     if (!e.target.closest('[data-tour="preview"], [data-edit-keep], .ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-color-picker')) {
                         setPieceModule(null)

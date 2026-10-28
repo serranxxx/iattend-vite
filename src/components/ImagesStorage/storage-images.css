@@ -162,3 +162,12 @@
 .images_storage_inline .storage_img:hover {
     transform: none;
 }
+
+/* Táctil (iPad, celular): no hay "pasar el cursor"; el botón de borrar se
+   queda a la vista. */
+@media (hover: none) {
+    .storage_delete {
+        bottom: 12px;
+        opacity: 1;
+    }
+}

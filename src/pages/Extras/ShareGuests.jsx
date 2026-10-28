@@ -114,7 +114,7 @@ export const ShareGuests = ({ invitation_id, admin }) => {
             {
                 !validated && !admin ?
                     <Layout style={{
-                        width: '100%', height: '100vh'
+                        width: '100%', height: '100dvh'
                     }}>
                         <div className='locked-invitation-background'>
                             <div className='locked-invitation-container'>

@@ -7,10 +7,13 @@
        y el dock quedaba fuera de la pantalla. */
     flex: none;
     width: 100%;
-    min-height: 760px;
+    /* Piso bajo: en iPad horizontal (Safari) quedan ~650px debajo del header;
+       con más, el dock se salía de la pantalla. */
+    min-height: 480px;
     /* El header del dashboard es fixed (60px): el área empieza debajo. */
     margin-top: 60px;
     height: calc(100vh - 60px);
+    height: calc(100dvh - 60px);
     display: flex;
     overflow: hidden;
     /* Tablero de puntos sobre el degradado claro (como antes). */

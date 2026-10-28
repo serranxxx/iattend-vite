@@ -321,3 +321,18 @@
         border-radius: 0;
     }
 }
+
+/* ── Tablet táctil (iPad) ────────────────────────────────
+   El círculo cerrado se achica (48px) y se pega más a la esquina: a 60px y
+   24px de las orillas tapaba tarjetas y el footer. */
+@media (hover: none) and (pointer: coarse) and (min-width: 481px) {
+    .chat-morph-shell {
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .chat-morph-shell--closed {
+        transform: scale(0.8);
+        transform-origin: bottom right;
+    }
+}

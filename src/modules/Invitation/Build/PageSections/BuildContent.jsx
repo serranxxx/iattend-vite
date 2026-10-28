@@ -269,7 +269,7 @@ export const BuildContent = ({
 
                 </div >
 
-                <div className='mobile-devices' onClick={() => setOnHide(true)} style={{ width: '100%', height: '100vh', overflowY: 'auto', paddingBottom: '0px', boxSizing: 'border-box' }}>
+                <div className='mobile-devices' onClick={() => setOnHide(true)} style={{ width: '100%', height: '100dvh', overflowY: 'auto', paddingBottom: '0px', boxSizing: 'border-box' }}>
                     {/* Este bloque y el marco de arriba conviven siempre: el CSS esconde
                         uno u otro según el ancho. Para la invitación da igual, pero una
                         `pantalla` prestada se montaría dos veces —y si trae un iframe,
