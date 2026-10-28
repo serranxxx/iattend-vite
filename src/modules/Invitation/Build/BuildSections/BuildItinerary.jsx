@@ -1,4 +1,5 @@
 import { Button, Drawer, Dropdown, Input, InputNumber, Switch, TimePicker, Tooltip, } from 'antd'
+import { Bird, Cake, Camera, Church, Flower, Flower2, Gem, Heart, Infinity as InfinityIcon, Leaf, Moon, Music, Sparkles, Star, Sun, Wine } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import React, { useEffect, useState, useRef, } from 'react'
 import dayjs from 'dayjs';
@@ -511,7 +512,21 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         setHowToVisible(true)
     }
 
+    const LucideIcons = { Heart, Sparkles, Star, Flower, Flower2, Leaf, Gem, Moon, Sun, Wine, Music, Camera, Church, Infinity: InfinityIcon, Bird, Cake }
     const renderIcon = (index, size) => {
+        // Íconos elegidos desde Elementos del editor de escritorio.
+        if (typeof index === 'string' && index.startsWith('lucide:')) {
+            const Glyph = LucideIcons[index.slice(7)]
+            return Glyph ? <Glyph size={size} style={{ minWidth: size }} /> : <LuBadgeHelp size={size} style={{ minWidth: size }} />
+        }
+        // SVG del catálogo del editor: pintado del color del texto.
+        if (typeof index === 'string' && index.startsWith('svg:')) {
+            const url = index.slice(4)
+            return <span style={{ display: 'inline-block', width: size, height: size, minWidth: size, background: 'currentColor', WebkitMaskImage: `url("${url}")`, maskImage: `url("${url}")`, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskPosition: 'center' }} />
+        }
+        if (typeof index === 'string' && index.startsWith('shape:')) {
+            return <LuBadgeHelp size={size} style={{ minWidth: size }} />
+        }
         if (typeof index === 'string') {
             return <img src={index} alt='' style={{ width: size, height: size, minWidth: size, objectFit: 'contain' }} />;
         }

@@ -25,6 +25,7 @@ export const TexturesProvider = ({ children }) => {
             } else {
                 setTextures((data ?? []).map(row => ({
                     id: row.id,
+                    name: row.name,
                     image: row.image_url,
                     opacity: row.opacity,
                     blend: row.blend,

@@ -1,0 +1,15 @@
+/* Miniaturas del selector de estilos de Personas (ver PeopleStylePicker.jsx).
+   El contenedor, la cuadrícula y las tarjetas vienen de CountdownStylePicker.module.css. */
+
+.col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.col i, .col b { display: block; font-style: normal; }
+.col b { font-size: 8px; line-height: 1; }
+.ln { display: block; border-radius: 99px; flex: none; }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, 44px); row-gap: 6px; }
+.cell { display: flex; justify-content: center; padding: 0 4px; }
+.card { display: flex; justify-content: center; padding: 5px 0; border-radius: 5px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+
+.rule { display: flex; justify-content: center; width: 100%; padding: 5px 0; border-top: 1px solid; }
+
+.circle { width: 16px; height: 16px; border: 1px solid; border-radius: 50%; display: grid !important; place-items: center; font-size: 6px; font-weight: 600; font-family: Georgia, serif; }

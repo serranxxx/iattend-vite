@@ -464,3 +464,14 @@
 .texOption[data-on] {
     box-shadow: 0 0 0 2px #5A2EE0;
 }
+
+/* Muestra de color que abre el panel "Color" del riel (editor de escritorio). */
+.swatchButton {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px #E3E0DA, inset 0 0 0 2px #FFF;
+    cursor: pointer;
+}

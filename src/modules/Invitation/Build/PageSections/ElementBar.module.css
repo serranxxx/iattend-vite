@@ -1,0 +1,627 @@
+/* Barra de propiedades del elemento elegido (ver ElementBar.jsx). Blanca,
+   arriba de la pieza, como la del dock. */
+.bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
+    border-radius: 18px;
+    background: #FFF;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.12);
+    white-space: nowrap;
+}
+
+.iconBtn,
+.swatchBtn,
+.textBtn {
+    height: 36px;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #29262D;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.iconBtn:hover,
+.swatchBtn:hover,
+.textBtn:hover {
+    background: #F1EFEA;
+}
+
+.iconBtn[data-on],
+.swatchBtn[data-on],
+.textBtn[data-on] {
+    background: #ECEAE6;
+}
+
+.swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+}
+
+/* Sin relleno: blanco con diagonal roja. */
+.swatch[data-empty] {
+    background: linear-gradient(135deg, transparent 45%, #F3807C 45%, #F3807C 55%, transparent 55%), #FFF;
+}
+
+.ring {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 4px solid;
+    box-sizing: border-box;
+}
+
+.divider {
+    width: 1px;
+    height: 22px;
+    margin: 0 4px;
+    background: #EBEBEB;
+}
+
+.font {
+    width: 150px;
+}
+
+/* ── Popovers ── */
+.pop {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 240px;
+    padding: 4px;
+}
+
+.popLabel {
+    font-size: 13px;
+    color: #29262D;
+}
+
+.sliderRow {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sliderLine {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider {
+    flex: 1;
+    margin: 0;
+}
+
+.sliderValue {
+    min-width: 44px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #EBEBEB;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #29262D;
+}
+
+.styleRow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.styleBtn {
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0 10px;
+    border: 1px solid #E3E0DA;
+    border-radius: 12px;
+    background: #FFF;
+    color: #29262D;
+    cursor: pointer;
+}
+
+.styleBtn[data-on] {
+    border: 2px solid #6D3CFA;
+}
+
+.styleSample {
+    width: 100%;
+    height: 0;
+    border-top: 2px solid #29262D;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.menuItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #29262D;
+    font: inherit;
+    font-size: 13.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.menuItem:hover {
+    background: #F5F3F2;
+}
+
+.menuItem[data-on] {
+    background: #EFEAFF;
+    color: #6D3CFA;
+}
+
+/* ── Barra de texto (TextBar) ── */
+.fontWide {
+    width: 140px;
+}
+
+.stepper {
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #E3E0DA;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.stepBtn {
+    width: 32px;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #29262D;
+    cursor: pointer;
+}
+
+.stepBtn:hover:not(:disabled) {
+    background: #F1EFEA;
+}
+
+.stepBtn:disabled {
+    color: #C9C6C0;
+    cursor: default;
+}
+
+.stepValue {
+    min-width: 34px;
+    text-align: center;
+    font-size: 13.5px;
+    color: #29262D;
+}
+
+/* "A" con barra del color actual debajo. */
+.colorA {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.colorBar {
+    width: 18px;
+    height: 4px;
+    margin-top: 2px;
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+}
+
+.caseBtn {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.switchRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Opción de textura en el select de la barra de fondo (ModuleBar). */
+.texOption {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.texOption img {
+    /* Cabe en el renglón del select: con 26px lo hacía crecer a lo alto. */
+    flex: none;
+    width: 18px;
+    height: 18px;
+    object-fit: cover;
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.12);
+}
+
+/* Ajuste que todavía no aplica (p. ej. fondo sin color ni imagen). */
+.iconBtn[data-off],
+.textBtn[data-off] {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: transparent;
+}
+
+/* Select de separadores (SeparatorBar): el SVG de 180px se encoge al renglón. */
+.sepSelect {
+    width: 170px;
+}
+
+.sepOpt {
+    display: inline-flex;
+    align-items: center;
+    width: 140px;
+    height: 22px;
+    vertical-align: middle;
+}
+
+.sepOpt > div {
+    width: 100%;
+}
+
+.sepOpt svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 22px;
+}
+
+/* Chips de los popovers (efectos: tipo y dirección). */
+.chipRow {
+    display: flex;
+    gap: 4px;
+}
+
+.chip {
+    height: 30px;
+    min-width: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid #E3E0DA;
+    border-radius: 99px;
+    background: #FFF;
+    color: #29262D;
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.chip[data-on] {
+    border-color: #6D3CFA;
+    background: #EFEAFF;
+    color: #6D3CFA;
+}
+
+.linkBtn {
+    align-self: flex-end;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #6D3CFA;
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+/* ── Barra de un momento (MomentBar) ── */
+.thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    object-fit: cover;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.12);
+}
+
+.barIcon {
+    display: grid;
+    place-items: center;
+    padding: 0 4px 0 6px;
+    color: #787878;
+}
+
+/* Buscador de Google: el componente trae alto y padding en línea. */
+.addressInput {
+    width: 300px;
+    height: 36px !important;
+    padding: 0 14px !important;
+    border: 1px solid #E3E0DA;
+    border-radius: 12px;
+    background: #FFF;
+    color: #29262D;
+    font: inherit;
+    font-size: 13.5px;
+    outline: none;
+}
+
+.addressInput:focus {
+    border-color: #6D3CFA;
+}
+
+.addressGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 320px;
+}
+
+.addressWide {
+    grid-column: 1 / -1;
+}
+
+/* ── Barra de imágenes (ImagesBar): fila de miniaturas que se ordenan ── */
+.thumbRow {
+    display: flex;
+    gap: 6px;
+    max-width: 360px;
+    overflow-x: auto;
+    padding: 2px;
+}
+
+.sortThumb {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background: #F5F3F2;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+}
+
+.sortThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.sortThumb[data-on] {
+    border-color: #6D3CFA;
+}
+
+.sortThumb[data-dragging] {
+    position: relative;
+    z-index: 1;
+    cursor: grabbing;
+    box-shadow: 0 6px 16px rgba(12, 23, 27, 0.2);
+}
+
+/* ── Barra de la tarjeta de regalos (GiftCardBar) ── */
+.brandSelect {
+    width: 180px;
+}
+
+.brandOption {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.brandChip {
+    flex: none;
+    width: 34px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    overflow: hidden;
+}
+
+.brandChip img {
+    max-width: 28px;
+    max-height: 14px;
+    object-fit: contain;
+}
+
+.inputHalf {
+    width: 190px;
+}
+
+/* ── Fecha (DateBar) y canción (SongBar) ── */
+.dateInput {
+    width: 150px;
+    border-radius: 12px;
+}
+
+.songText {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 220px;
+    line-height: 1.25;
+    text-align: left;
+}
+
+.songText strong,
+.songText span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.songText strong {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.songText span {
+    font-size: 12px;
+    color: #787878;
+}
+
+.songResults {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 300px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.songArt {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.spin {
+    animation: barSpin 0.9s linear infinite;
+}
+
+@keyframes barSpin {
+    to { transform: rotate(360deg); }
+}
+
+.sortThumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+
+/* ── Popover Fondo (ModuleBar, handoff 5.2) ── */
+.fondo {
+    width: 276px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fondoTabs {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 99px;
+    background: #F5F3F2;
+}
+
+.fondoTab {
+    flex: 1;
+    height: 28px;
+    border: none;
+    border-radius: 99px;
+    background: transparent;
+    color: #787878;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.fondoTab[data-on] {
+    background: #FFF;
+    color: #29262D;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+}
+
+.fondoBody {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.texGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.texCell {
+    aspect-ratio: 3 / 4;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #F5F3F2;
+    color: #9A968E;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.08);
+    cursor: pointer;
+}
+
+.texCell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.texCell[data-on] {
+    border-color: #16323d;
+}
+
+.photoRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.photoThumb {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #F5F3F2 center / cover no-repeat;
+    color: #9A968E;
+}
+
+
+/* Botón "Lia" de la barra de texto. */
+.liaBtn {
+    color: #6D3CFA;
+}
+
+.liaBtn:hover,
+.liaBtn[data-on] {
+    background: #F0EBFF;
+}

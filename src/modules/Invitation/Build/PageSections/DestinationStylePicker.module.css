@@ -1,0 +1,13 @@
+/* Miniaturas del selector de estilos de Actividades (ver DestinationStylePicker.jsx).
+   El contenedor, la cuadrícula y las tarjetas vienen de CountdownStylePicker.module.css. */
+
+.stage { position: relative; width: 90px; height: 64px; display: grid; place-items: center; }
+.stage > i { grid-area: 1 / 1; display: block; font-style: normal; }
+
+.mag { width: 34px; height: 46px; border: 2px solid #FFFFFF; border-radius: 2px 6px 2px 2px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25); }
+
+.board { width: 96px; height: 62px; border-radius: 6px; background: linear-gradient(180deg, #6B5241, #4E3B2F); display: flex; justify-content: center; gap: 8px; padding-top: 10px; box-sizing: border-box; }
+.key { display: block; width: 14px; height: 42px; border-radius: 7px; transform-origin: 50% 0; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35); }
+
+.post { width: 70px; height: 46px; background: #FFFFFF; padding: 3px; box-sizing: border-box; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); }
+.post b { display: block; width: 100%; height: 100%; opacity: 0.85; }

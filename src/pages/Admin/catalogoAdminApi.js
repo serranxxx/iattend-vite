@@ -50,3 +50,10 @@ export const fetchDatosLiaAdmin = async (tablas) => {
     })
     return data
 }
+
+// Storage de Supabase agregado (Analítica → Storage): GET /api/admin/storage.
+export const fetchStorageAdmin = async () => {
+    const headers = await authHeaders()
+    const { data } = await axios.get(`${API_URL}/api/admin/storage`, { headers })
+    return data
+}

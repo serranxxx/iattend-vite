@@ -25,6 +25,8 @@ export default function ReactHost({
   // encima (REMOTE_FIELD_CHANGE). Ver docs/entorno-edicion.md.
   editMode = false,
   selectedSection = null,
+  // Editor de escritorio con barra de texto: la pieza no muestra sus "T".
+  textBar = false,
   onSelectSection,
   onFieldChange,
   // La pieza pidió abrir la herramienta de una parte (tipografía del título)
@@ -83,7 +85,7 @@ export default function ReactHost({
     if (!win) return;
 
     // hash simple para evitar re-envíos idénticos
-    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection });
+    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar });
     if (hash === lastSentHashRef.current && reason !== "ready") return;
     lastSentHashRef.current = hash;
 
@@ -97,6 +99,7 @@ export default function ReactHost({
           lang: activeLang ?? null,
           editMode,
           selectedSection,
+          textBar,
           sentAt: Date.now(),
           reason,
         },
@@ -148,6 +151,15 @@ export default function ReactHost({
       if (ev.data?.type === "REMOTE_FIELD_TOOL" && ev.data?.payload?.field) {
         onFieldToolRef.current?.(ev.data.payload.field, ev.data.payload.rect, ev.data.payload.section ?? 'cover');
       }
+      // Texto de un bloque elegido ({ path, kind } o null): barra de texto.
+      if (ev.data?.type === "REMOTE_TEXT_FIELD") {
+        window.dispatchEvent(new CustomEvent("iattend-text-field", { detail: ev.data.payload ?? null }));
+      }
+      // Elemento suelto elegido en la pieza ({ section, id } o null): el
+      // editor de escritorio muestra su barra de propiedades (ElementBar).
+      if (ev.data?.type === "REMOTE_LAYER_SELECT") {
+        window.dispatchEvent(new CustomEvent("iattend-layer-selection", { detail: ev.data.payload ?? null }));
+      }
       // ⌘V con una imagen dentro de la pieza: el editor la sube como sticker.
       if (ev.data?.type === "REMOTE_PASTE_IMAGE" && ev.data?.payload?.file) {
         window.dispatchEvent(new CustomEvent("iattend-layer-paste", { detail: ev.data.payload }));
@@ -163,7 +175,7 @@ export default function ReactHost({
   // 2) Re-enviar cada que cambie `config`, `textureOverride` o el idioma activo
   useEffect(() => {
     postProps("config-change");
-  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, targetOrigin]);
+  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, targetOrigin]);
 
   // 2·) Elementos sueltos arrastrados desde los paneles del editor
   // (layerItems.js): el punto llega en px de la ventana y la pieza lo quiere

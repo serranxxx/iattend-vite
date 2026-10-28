@@ -46,6 +46,8 @@ export const AntdProvider = ({ children }) => {
             // Breadcrumb: { borderRadiusOuter: 999, borderRadius: 999, borderRadiusLG: 999, borderRadiusSM: 999, borderRadiusXS: 999, separatorMargin: 6 },
             // Spin: { colorPrimary: "var(--secondary-color-700)" },
             Modal: { borderRadiusLG: 36, borderRadius: 36 },
+            // Segmented en píldora (contenedor y opción elegida) en toda la app.
+            Segmented: { borderRadius: 99, borderRadiusLG: 99, borderRadiusSM: 99, borderRadiusXS: 99 },
             Button: {
               borderRadius: 8,
               colorPrimary: "#d2bfdd",

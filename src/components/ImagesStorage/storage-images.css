@@ -135,3 +135,30 @@
     }
 
 }
+/* Dentro del panel "Imágenes" del riel (StorageImages inline): sin caja
+   propia, dos columnas y el scroll lo hace el panel. */
+.images_storage_inline {
+    width: 100%;
+}
+
+.images_storage_inline .storage_imgs_cont {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    max-height: none;
+}
+
+.images_storage_inline .storage_imgs_dresscode {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.images_storage_inline .storage_dresscode_images {
+    max-height: none;
+}
+
+.images_storage_inline .storage_img {
+    height: 120px;
+}
+
+.images_storage_inline .storage_img:hover {
+    transform: none;
+}

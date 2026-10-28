@@ -388,13 +388,19 @@ export const BuildPage = () => {
     const selectFromCanvas = (type, field = null) => {
         previewSyncLocked.current = true
         selectSection(type)
-        setSelectedField(type === 'cover' ? field : null)
+        // El texto de la Cita también cuenta como campo elegido (abre la barra
+        // de texto del editor de escritorio).
+        // Un "Cita sin campo" justo después de elegir su texto (el clic que sube
+        // a la zona) no suelta el texto: eso lo hace REMOTE_CLEAR_FIELD.
+        setSelectedField((prev) => (type === 'quote' && !field && prev === 'quote_text'
+            ? prev
+            : type === 'cover' || (type === 'quote' && field === 'quote_text') ? field : null))
         // Tocar la pieza no abre el panel: solo marca el módulo (si el panel
         // ya está abierto, cambia a ese módulo). La fecha tiene su popover
         // sobre la pieza (CoverDateStyle); el panel solo se abre para el
         // fondo (selector de imágenes).
         if (field === 'image') setOnHide(false)
-        if (!field || field === 'date') return
+        if (!field || field === 'date' || field === 'quote_text') return
         setTimeout(() => {
             const el = document.querySelector(`[data-build-field="${type}.${field}"]`)
             if (!el) return

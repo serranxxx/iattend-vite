@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorPicker } from 'antd'
-import { Ban, Check, Lightbulb, Search } from 'lucide-react'
+import { Ban, Check, ChevronRight, Lightbulb, Search } from 'lucide-react'
 import { useTextures } from '../../../../context/TexturesContext'
 import { colorCollection } from '../../../../helpers/services/colorPalette'
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions'
+import { useAppSetting } from '../../../../hooks/useAppSetting'
 import styles from './ToolPanels.module.css'
 
 // Paneles de herramienta del editor de escritorio (EditorWorkspace, etapa 2):
@@ -146,7 +147,7 @@ export const TexturesPanel = ({ invitation, setInvitation, setSaved }) => {
                         <span className={styles.textureThumb}>
                             <img alt="" src={tex.image} loading="lazy" />
                         </span>
-                        <span className={styles.textureName}>{t('build_editor.texture_n', { n: i + 1 })}</span>
+                        <span className={styles.textureName}>{tex.name || t('build_editor.texture_n', { n: i + 1 })}</span>
                     </button>
                 ))}
                 {loading && Array.from({ length: 5 }).map((_, i) => (
@@ -228,5 +229,158 @@ export const IdeasPanel = ({ invitation, setInvitation, setSaved }) => {
                 )
             })}
         </div>
+    )
+}
+
+/* ── Diseño (handoff "Panel lateral" 4.1) ── */
+// Lo que define toda la invitación, en orden de decisión y en un solo
+// scroll: Estilos completos (paleta + tipografías de un golpe), Paleta (los
+// 4 colores y sugeridas) y Papel de fondo (textura general). Reúne lo que
+// antes eran los paneles Ideas, Paleta y Texturas.
+const SUGGESTED = 6
+// Texturas a la vista: 3 filas de 4 ("Ninguna" + 11).
+const PAPERS = 11
+
+export const DesignPanel = ({ invitation, setInvitation, setSaved }) => {
+    const { t } = useTranslation()
+    const { textures, loading } = useTextures()
+    const generals = invitation?.generals ?? {}
+    const colors = generals.colors ?? {}
+    const [allStyles, setAllStyles] = useState(false)
+    const stylesOn = Boolean(useAppSetting('editor_design_styles', { enabled: false })?.enabled)
+    const [allPalettes, setAllPalettes] = useState(false)
+    const [allPapers, setAllPapers] = useState(false)
+    const [query, setQuery] = useState('')
+
+    // ── Estilos completos ──
+    const styleActive = (idea) =>
+        isActivePalette(colors, idea.colors) &&
+        generals.fonts?.titles?.typeFace === idea.titles &&
+        generals.fonts?.body?.typeFace === idea.body
+    const applyStyle = (idea) => patchGenerals(setInvitation, setSaved, (g) => {
+        const base = palettePatch(idea.colors)(g)
+        return {
+            ...base,
+            fonts: { ...base.fonts, titles: { ...base.fonts.titles, typeFace: idea.titles }, body: { ...g.fonts?.body, typeFace: idea.body } },
+        }
+    })
+
+    // ── Paleta ──
+    const roles = [
+        { key: 'primary', label: t('build_generals.label_bg') },
+        { key: 'secondary', label: t('build_generals.label_contrast') },
+        { key: 'accent', label: t('build_generals.label_texts') },
+        { key: 'actions', label: t('build_generals.label_accents') },
+    ]
+    const presets = roles.filter((role) => colors[role.key]).map((role) => ({
+        label: role.label,
+        defaultOpen: true,
+        colors: [...[0.3, 0.5, 0.7, 0.9].map((n) => darker(colors[role.key], n)), colors[role.key], ...[0.9, 0.7, 0.5, 0.3, 0.1].map((n) => lighter(colors[role.key], n))],
+    }))
+    const setColor = (key, value) => patchGenerals(setInvitation, setSaved, (g) => ({ colors: { ...g.colors, [key]: value } }))
+    const palettes = useMemo(() => {
+        const q = query.trim().toLowerCase()
+        if (!q) return colorCollection
+        return colorCollection.filter((c) => c.name.toLowerCase().includes(q) || c.keywords?.some((k) => k.includes(q)))
+    }, [query])
+
+    // ── Papel ──
+    const paper = generals.texture ?? null
+    const pickPaper = (id) => patchGenerals(setInvitation, setSaved, () => ({ texture: id }))
+    // La elegida siempre se ve: si no está entre las primeras, toma el lugar
+    // de la última (siguen siendo 3 filas).
+    const papers = allPapers ? textures : (() => {
+        const first = textures.slice(0, PAPERS)
+        const chosen = textures.find((x) => x.id === paper)
+        return chosen && !first.includes(chosen) ? [...first.slice(0, PAPERS - 1), chosen] : first
+    })()
+
+    const more = (open, setOpen, label) => (
+        <button type="button" className={styles.more} onClick={() => setOpen(!open)}>
+            {open ? t('build_editor.design_less') : label} <ChevronRight size={14} data-open={open || undefined} />
+        </button>
+    )
+
+    return (
+        <>
+            {/* 1 · Estilos completos: oculto hasta prenderlo en el admin
+                (app_settings.editor_design_styles; ahí se subirán los diseños). */}
+            {stylesOn && <div className={styles.designBlock}>
+                <div className={styles.blockHead}>
+                    <span className={styles.blockTitle}>{t('build_editor.design_styles')}</span>
+                    {more(allStyles, setAllStyles, t('build_editor.design_see_all'))}
+                </div>
+                <div className={`${allStyles ? styles.styleGrid : styles.styleRow} scroll-invitation`}>
+                    {IDEAS.map((idea) => {
+                        const c = idea.colors
+                        const active = styleActive(idea)
+                        return (
+                            <button key={idea.id} type="button" className={styles.styleCard} data-active={active || undefined} onClick={() => !active && applyStyle(idea)} title={t(`build_editor.idea_${idea.id}`)}>
+                                <span className={styles.stylePreview} style={{ background: c.primary }}>
+                                    <span style={{ fontFamily: `"${idea.titles}"`, color: c.accent }} className={styles.styleAa}>Aa</span>
+                                    <span className={styles.styleAccent} style={{ background: c.actions }} />
+                                </span>
+                                <span className={styles.styleName}>{t(`build_editor.idea_${idea.id}`)}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+            </div>}
+
+            {/* 2 · Paleta */}
+            <div className={styles.designBlock}>
+                <div className={styles.blockHead}>
+                    <span className={styles.blockTitle}>{t('build_editor.design_palette')}</span>
+                </div>
+                <div className={styles.swatches}>
+                    {roles.map((role) => (
+                        <ColorPicker key={role.key} disabledAlpha presets={presets} value={colors[role.key]} onChangeComplete={(c) => setColor(role.key, colorFactoryToHex(c))}>
+                            <button type="button" className={styles.swatch}>
+                                <span className={styles.swatchColor} style={{ background: colors[role.key] }} />
+                                <span className={styles.swatchLabel}>{role.label}</span>
+                            </button>
+                        </ColorPicker>
+                    ))}
+                </div>
+                {allPalettes && (
+                    <label className={styles.search}>
+                        <Search size={15} />
+                        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('build_generals.collection_search')} />
+                    </label>
+                )}
+                <div className={styles.paletteGrid}>
+                    {(allPalettes ? palettes : colorCollection.slice(0, SUGGESTED)).map((c) => {
+                        const active = isActivePalette(colors, c)
+                        return (
+                            <button key={c.name} type="button" className={styles.paletteMini} data-active={active || undefined} onClick={() => patchGenerals(setInvitation, setSaved, palettePatch(c))}>
+                                <Strip c={c} size="sm" />
+                                <span className={styles.paletteMiniName}>{c.name}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+                {allPalettes && palettes.length === 0 && <span className={styles.empty}>{t('build_editor.palette_none')}</span>}
+                {more(allPalettes, (v) => { setAllPalettes(v); setQuery('') }, t('build_editor.design_more_palettes'))}
+            </div>
+
+            {/* 3 · Papel de fondo */}
+            <div className={styles.designBlock}>
+                <div className={styles.blockHead}>
+                    <span className={styles.blockTitle}>{t('build_editor.design_paper')}</span>
+                    {more(allPapers, setAllPapers, t('build_editor.design_see_all'))}
+                </div>
+                <div className={styles.paperGrid}>
+                    <button type="button" className={styles.paper} data-active={paper == null || undefined} onClick={() => pickPaper(null)} title={t('build_editor.texture_none')}>
+                        <span className={styles.paperThumb} data-none><Ban size={18} /></span>
+                    </button>
+                    {papers.map((tex) => (
+                        <button key={tex.id} type="button" className={styles.paper} data-active={paper === tex.id || undefined} onClick={() => pickPaper(tex.id)} title={tex.name}>
+                            <span className={styles.paperThumb}><img alt="" src={tex.image} loading="lazy" /></span>
+                        </button>
+                    ))}
+                    {loading && Array.from({ length: PAPERS }).map((_, i) => <span key={`s${i}`} className={styles.paperThumb} data-loading />)}
+                </div>
+            </div>
+        </>
     )
 }

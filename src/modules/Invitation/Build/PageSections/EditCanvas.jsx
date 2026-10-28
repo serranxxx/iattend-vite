@@ -7,14 +7,18 @@ import { CoverTitleStyle } from '../BuildSections/CoverTitleStyle'
 import { CoverMedia } from '../BuildSections/CoverMedia'
 import { CoverDateStyle } from '../BuildSections/CoverDateStyle'
 import { DressImages, ModuleBackground, ModuleSeparator, MomentAddress, MomentImage, QuoteBackground } from '../BuildSections/ModuleStyle'
+import { createPortal } from 'react-dom'
 import { ModuleOrder } from './ModuleOrder'
+import { ModuleLayers } from './ModuleLayers'
 import { CancionFlash } from '../../../SideEvents/CancionFlash'
 import styles from './EditCanvas.module.css'
 
 // Los popovers sobre la pieza se cierran al tocar fuera, pero no al usar lo
 // que ellos mismos abren (selectores, color, el selector de imágenes): esos
 // viven en portales fuera del popover y antd los tomaría como "fuera".
-const INSIDE = '.ant-popover, .ant-dropdown, .ant-select-dropdown, .ant-color-picker, .ant-picker-dropdown, .pac-container, .ant-slider, .ant-tooltip, .ant-tabs-dropdown, [data-canvas-popover-trigger]'
+// La barra de texto y el riel / panel del editor cuentan como "adentro": usarlos
+// no cierra la herramienta abierta (p. ej. elegir el color del título).
+const INSIDE = '[data-text-bar], [data-editor-left], .ant-popover, .ant-dropdown, .ant-select-dropdown, .ant-color-picker, .ant-picker-dropdown, .pac-container, .ant-slider, .ant-tooltip, .ant-tabs-dropdown, [data-canvas-popover-trigger]'
 const useOutsideClose = (open, onClose) => {
     useEffect(() => {
         if (!open) return
@@ -45,6 +49,16 @@ const OVER_SCALE = 1.5
 // misma; Personas se edita como "family" pero vive en `people`).
 const MODULE_KEY = { family: 'people' }
 const moduleKey = (section) => MODULE_KEY[section] ?? section
+
+// Herramientas que en el editor de escritorio son barras arriba de la pieza.
+const BAR_FIELDS = new Set(['background', 'quote_image', 'title', 'quote_text', 'separator'])
+// Campos con barra propia en el editor de escritorio (onFieldBar): imagen /
+// dirección de un momento, imagen de un destino, la paleta, las imágenes y
+// el link de inspiración del dresscode, las imágenes de la galería y la
+// tarjeta abierta de la mesa de regalos y la fecha, la canción y la imagen o
+// video de la portada.
+const FIELD_BAR = /^((moment_address|moment_image|dest_image|dress_link|gift_card):\d+|dress_colors|dress_images|gallery_images|date|song|cover_media)$/
+const isBarField = (field) => BAR_FIELDS.has(field) || FIELD_BAR.test(field)
 
 // Los popovers se portalean al body, pero en React sus eventos siguen
 // subiendo por el árbol hasta el tablero de BuildContent, que con un
@@ -86,6 +100,26 @@ export const EditCanvas = ({
     // Abre una herramienta del riel del editor (EditorWorkspace), p. ej. la
     // Paleta desde el chip "Color del tema".
     onOpenTool,
+    // Textos (título de la portada, texto de la Cita): en vez de su popover,
+    // el editor muestra la barra de texto arriba de la pieza. Recibe
+    // 'cover' | 'quote' | null.
+    onTextTool,
+    // Fondo de un bloque (brocha / "Cambiar fondo" de la Cita): en vez de su
+    // popover, el editor muestra la barra de fondo. Recibe la sección o null.
+    onModuleTool,
+    // Separador de un bloque: en vez de su popover, la barra del separador.
+    onSeparatorTool,
+    // Color de la fecha de la portada: en el panel "Color" del riel.
+    onDateColor,
+    // Ícono / imagen de un momento: se elige en el panel del riel.
+    onIconTool,
+    // Imagen / dirección de un momento, imagen de un destino o paleta del
+    // dresscode: en vez de su popover, una barra. Recibe el campo
+    // ("moment_address:2", "dress_colors") o null.
+    onFieldBar,
+    // Editor de escritorio: el orden de los módulos va como panel "Capas"
+    // (siempre visible) en este nodo, no como columna junto a la pieza.
+    layersTarget,
 }) => {
     const { t } = useTranslation()
     // El chip "Color del tema" muestra el color secundario de la paleta.
@@ -111,6 +145,8 @@ export const EditCanvas = ({
     // tool = { field, section, rect, side }: "title" (portada) o "background" /
     // "separator" de un módulo. Se cierra si se suelta lo que lo abrió.
     const [tool, setTool] = useState(null)
+    const barToolsRef = useRef(false)
+    useEffect(() => { barToolsRef.current = Boolean(onModuleTool) }, [onModuleTool])
     useEffect(() => {
         setTool((prev) => {
             if (!prev) return prev
@@ -130,6 +166,19 @@ export const EditCanvas = ({
         return r.left + leftCardPx * scale - width - EDGE_GAP >= 0
     }
     const onFieldTool = (field, rect, section = 'cover') => {
+        // La cartera avisa qué tarjeta abrió (sin alternar) y cuándo la cierra.
+        if (field === 'gift_card_close') {
+            setTool((prev) => (prev?.field.startsWith('gift_card:') ? null : prev))
+            return
+        }
+        if (field.startsWith('gift_card:')) {
+            if (onFieldBar) setTool({ field, section, rect, side: 'left', left: rect.x })
+            return
+        }
+        if (onIconTool && field.startsWith('moment_icon:')) {
+            onIconTool(Number(field.split(':')[1]))
+            return
+        }
         // Título y fecha: pegados a su bloque (izquierda si cabe, si no arriba).
         const isTitle = field === 'title' || field === 'date' || field === 'quote_text'
         const width = field === 'title' || field === 'quote_text' ? TITLE_POPOVER_WIDTH
@@ -152,7 +201,7 @@ export const EditCanvas = ({
         if (field === 'background' || field === 'quote_image') {
             const r = cardRef.current?.getBoundingClientRect()
             const scale = r ? r.width / CARD_WIDTH : 1
-            const orderW = orderMounted && orderSide === 'left' ? 64 : 0
+            const orderW = orderMounted && !layersTarget && orderSide === 'left' ? 64 : 0
             bgPlace = { side: 'left', left: -8 - orderW / scale }
         }
         setTool((prev) => (prev && prev.field === field && prev.section === section
@@ -161,6 +210,21 @@ export const EditCanvas = ({
     }
     useOutsideClose(Boolean(tool), () => setTool(null))
 
+    // Barra de texto (EditorWorkspace): se abre al elegir un texto en la pieza
+    // (título de la portada / texto de la Cita), no con la "T", que en este
+    // editor ni se muestra (textBar).
+    const textTarget = onTextTool ? (selectedField === 'title' ? 'cover' : selectedField === 'quote_text' ? 'quote' : null) : null
+    useEffect(() => { onTextTool?.(textTarget) }, [textTarget])
+    const isTextTool = (field) => Boolean(onTextTool) && (field === 'title' || field === 'quote_text')
+
+    // Barra de fondo (EditorWorkspace): sigue a la herramienta de fondo abierta.
+    const moduleTarget = onModuleTool && tool && (tool.field === 'background' || tool.field === 'quote_image') ? tool.section : null
+    useEffect(() => { onModuleTool?.(moduleTarget) }, [moduleTarget])
+    const separatorTarget = onSeparatorTool && tool && tool.field === 'separator' ? tool.section : null
+    useEffect(() => { onSeparatorTool?.(separatorTarget) }, [separatorTarget])
+    const fieldBar = onFieldBar && tool && FIELD_BAR.test(tool.field) ? tool.field : null
+    useEffect(() => { onFieldBar?.(fieldBar) }, [fieldBar])
+
     // Tocar dentro de la pieza también cierra los popovers (la pieza vive en
     // un iframe: useOutsideClose no ve esos toques). Si el toque era el mismo
     // botón que abrió el popover, el REMOTE_FIELD_TOOL que llega justo
@@ -168,6 +232,9 @@ export const EditCanvas = ({
     const lastClosed = useRef(null)
     const onPiecePointerDown = () => {
         setTool((prev) => {
+            // La tarjeta de regalos abierta sigue mientras la cartera no la cierre
+            // (manda "gift_card_close"): se toca para escribir sus campos.
+            if (prev?.field.startsWith('gift_card:')) return prev
             if (prev) lastClosed.current = { field: prev.field, section: prev.section, t: Date.now() }
             return null
         })
@@ -187,7 +254,22 @@ export const EditCanvas = ({
     useEffect(() => {
         const onResize = () => { setTool(null); setChipPop(null) }
         window.addEventListener('resize', onResize)
-        return () => window.removeEventListener('resize', onResize)
+        // El banco de imágenes se abrió en el riel (Subidos en modo "elegir"): los popovers
+        // se cierran para no taparlo; lo que se elija se sigue aplicando. Las
+        // herramientas que en este editor son barras (fondo, textos) siguen.
+        const onClosePops = () => {
+            setTool((prev) => (prev && barToolsRef.current && isBarField(prev.field) ? prev : null))
+            setChipPop(null)
+        }
+        window.addEventListener('iattend-close-popovers', onClosePops)
+        // Una barra terminó (p. ej. se guardó la dirección del momento).
+        const onCloseTool = () => setTool(null)
+        window.addEventListener('iattend-close-tool', onCloseTool)
+        return () => {
+            window.removeEventListener('resize', onResize)
+            window.removeEventListener('iattend-close-popovers', onClosePops)
+            window.removeEventListener('iattend-close-tool', onCloseTool)
+        }
     }, [])
 
     // Columna de módulos (T, deshacer y la pill): aparece al elegir algo en la
@@ -249,7 +331,18 @@ export const EditCanvas = ({
     return (
         <div className={styles.wrap}>
             {/* En la portada no hay orden que tocar: la columna no aparece. */}
-            {orderMounted && (
+            {layersTarget && createPortal(
+                <ModuleLayers
+                    invitation={invitation}
+                    selectedSection={selectedSection}
+                    onSelect={(type) => onSelectSection(type)}
+                    onMoved={onModuleMoved}
+                    setInvitation={setInvitation}
+                    setSaved={setSaved}
+                />,
+                layersTarget,
+            )}
+            {orderMounted && !layersTarget && (
                 <ModuleOrder
                     invitation={invitation}
                     selectedSection={selectedSection}
@@ -266,7 +359,7 @@ export const EditCanvas = ({
                 />
             )}
             {/* Fuera de la tarjeta (que recorta): flota sobre el teléfono. */}
-            {tool?.side === 'over' && (
+            {tool?.side === 'over' && !fieldBar && (
                 <div
                     className={styles.overPanel}
                     data-canvas-popover-trigger
@@ -285,17 +378,25 @@ export const EditCanvas = ({
                         type="button"
                         className={styles.chip}
                         data-canvas-popover-trigger
-                        onClick={() => { onSelectSection('cover'); toggleChip('song', songChipRef, SONG_POPOVER_WIDTH) }}
+                        onClick={() => {
+                            onSelectSection('cover')
+                            // Escritorio: la canción va en su barra arriba de la pieza.
+                            if (onFieldBar) setTool((prev) => (prev?.field === 'song' ? null : { field: 'song', section: 'cover', rect: { x: 0, y: 0, w: 0, h: 0 }, side: 'left', left: 0 }))
+                            else toggleChip('song', songChipRef, SONG_POPOVER_WIDTH)
+                        }}
                     >
                         {song?.albumArt
                             ? <img className={styles.chipArt} src={song.albumArt} alt="" />
                             : <span className={styles.chipIcon}><Music size={13} /></span>}
                         <span className={styles.chipLabel}>{song?.name || t('build_editor.chip_song')}</span>
                     </button>
-                    <button type="button" className={`${styles.chip} ${styles.chipRight}`} onClick={() => (onOpenTool ? onOpenTool('palette') : onSelectSection('generals'))}>
-                        <span className={styles.chipSwatch} style={{ background: themeColor }} />
-                        <span className={styles.chipLabel}>{t('build_editor.chip_theme')}</span>
-                    </button>
+                    {/* Escritorio: el tema está en el riel (Paleta); sin chip. */}
+                    {!onFieldBar && (
+                        <button type="button" className={`${styles.chip} ${styles.chipRight}`} onClick={() => (onOpenTool ? onOpenTool('design') : onSelectSection('generals'))}>
+                            <span className={styles.chipSwatch} style={{ background: themeColor }} />
+                            <span className={styles.chipLabel}>{t('build_editor.chip_theme')}</span>
+                        </button>
+                    )}
                 </div>
                 )}
 
@@ -325,7 +426,7 @@ export const EditCanvas = ({
                     </Popover>
                 )}
 
-                {tool && tool.side !== 'over' && (
+                {tool && tool.side !== 'over' && !isTextTool(tool.field) && !moduleTarget && !separatorTarget && !fieldBar && (
                     <Popover
                         open
                         trigger={[]}
@@ -348,7 +449,7 @@ export const EditCanvas = ({
                                 : tool.field === 'quote_text'
                                 ? <CoverTitleStyle target="quote" invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
                                 : tool.field === 'date'
-                                ? <CoverDateStyle invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} />
+                                ? <CoverDateStyle invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} onPickColor={onDateColor} />
                                 : (tool.field === 'background' && tool.section === 'quote') || tool.field === 'quote_image'
                                 ? <QuoteBackground invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
                                 : tool.field === 'background'
@@ -370,6 +471,7 @@ export const EditCanvas = ({
                         config={invitation}
                         invitationID={invitationID}
                         editMode
+                        textBar={Boolean(onTextTool)}
                         selectedSection={selectedSection}
                         onSelectSection={selectFromPiece}
                         onFieldChange={onFieldChange}

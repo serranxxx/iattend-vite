@@ -7,10 +7,11 @@ import { fetchAdminFonts, updateAdminFont } from '../fontsAdminApi'
 import { fetchGiftBrands } from '../giftBrandsAdminApi'
 import { CatalogoInvitaciones } from '../CatalogoInvitaciones/CatalogoInvitaciones'
 import { TestsDeIframe } from './TestsDeIframe'
+import { EditorCatalogLab } from './EditorCatalogLab'
 import styles from './LaboratorioSection.module.css'
 import catalogoStyles from '../CatalogoInvitaciones/CatalogoInvitaciones.module.css'
 
-const SUBTABS = ['fonts', 'texturas', 'regalos', 'catalogo', 'tests']
+const SUBTABS = ['fonts', 'texturas', 'regalos', 'elementos', 'catalogo', 'tests']
 
 const ORDENES = [
     { key: 'nombre', label: 'A–Z' },
@@ -22,6 +23,7 @@ const SUBTAB_LABELS = {
     fonts: 'Fonts',
     texturas: 'Texturas',
     regalos: 'Regalos',
+    elementos: 'Elementos',
     catalogo: 'Catálogo',
     tests: 'Tests',
 }
@@ -194,6 +196,7 @@ export const LaboratorioSection = ({ invitations }) => {
         fonts: fonts.length,
         texturas: textures.length,
         regalos: marcas.length,
+        elementos: null,
         catalogo: null,
         tests: null,
     }
@@ -246,6 +249,9 @@ export const LaboratorioSection = ({ invitations }) => {
             </div>
 
             {subtab === 'tests' && <TestsDeIframe />}
+
+            {/* Catálogo del panel lateral del editor (Elementos / Fotos). */}
+            {subtab === 'elementos' && <EditorCatalogLab />}
 
             {subtab === 'fonts' && (
                 <>

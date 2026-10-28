@@ -1,18 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './storage-images.css'
 import { Button, Dropdown, Empty, Tabs } from 'antd'
 import { ImageOff as LuImageOff, ImagePlus as LuImagePlus, Upload as LuUpload } from 'lucide-react';
 import { deleteImageFromSupabase, deleteVideoFromSupabase, getCoversFromSubapase, getDresscodesFromSupabase, getImagesFromSupabase, getQuotesFromSubapase, getVideosFromSupabase, uploadEventVideo, uploadImagesSupabase } from '../../helpers/services/uploadImage'
 import BottomSheet from '../BottomSheet/BottomSheet'
+import { MediaSiderContext } from './MediaSiderContext'
 
 
+// `inline`: se dibuja tal cual (sin botón ni dropdown), para el panel
+// "Imágenes" del riel del editor de escritorio. Dentro de ese editor
+// (MediaSiderContext) los pickers no abren su dropdown: abren ese panel.
+//
 // `mediaType='video'` cambia el picker a videos: sube a `{id}/video/`, lista
 // solo esa carpeta y oculta la pestaña de ideas. Los pickers de imagen (el
 // default) no se ven afectados.
-export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small, hideUpload, customTrigger, hideMyImages, onRequestSaveForImage, mediaType = 'image' }) => {
+export const StorageImages = ({ type, isNull, placement, absolute, invitationID, handleImage, id, small, hideUpload, customTrigger, hideMyImages, onRequestSaveForImage, mediaType = 'image', inline = false }) => {
 
     const { t } = useTranslation()
+    const sider = useContext(MediaSiderContext)
     const [images, setImages] = useState([])
     const isVideoPicker = mediaType === 'video'
     const [selectedKey, setSelectedKey] = useState(hideMyImages ? 1 : 0)
@@ -217,17 +223,33 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
         if (isMobile) setDrawerOpen(true)
     }
 
+    // Panel del riel: carga al montarse.
+    useEffect(() => {
+        if (inline) handleOpen()
+    }, [inline, invitationID])
+
+    // En el editor de escritorio el picker abre el panel del riel.
+    const openInSider = () => sider.open({ type, isNull, invitationID: resolvedId ?? invitationID, handleImage, id, hideUpload, hideMyImages, onRequestSaveForImage, mediaType })
+    const useSider = Boolean(sider) && !inline && !isMobile
+    const onTrigger = useSider ? openInSider : handleOpen
+
     const triggerButton = customTrigger
-        ? React.cloneElement(customTrigger, { onClick: handleOpen })
+        ? React.cloneElement(customTrigger, { onClick: onTrigger })
         : (
             <Button
                 style={{ position: absolute && 'absolute', top: absolute && 10, right: absolute && 10 }}
-                onClick={handleOpen}
+                onClick={onTrigger}
                 className='full-screen-button'
                 id="expandedbutton"
                 icon={<LuImagePlus size={small ? 12 : 16} style={{ marginTop: '2px' }} />}
             />
         )
+
+    if (inline) {
+        return <div className='images_storage_inline'>{tabsContent}</div>
+    }
+
+    if (useSider) return triggerButton
 
     return (
         <>

@@ -3,28 +3,21 @@ import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
 import {
     Bird, Cake, Camera, Church, Flower, Flower2, Gem, Heart, Infinity as InfinityIcon,
-    Leaf, LoaderCircle, Moon, Music, Search, Sparkles, Star, Sun, Upload, Wine,
+    ChevronRight, Leaf, LoaderCircle, WandSparkles, Moon, Music, Search, Sparkles, Star, Sun, Upload, Wine, X,
 } from 'lucide-react'
 import {
-    countStickers, LAYER_ICONS, LINE_VARIANTS, MAX_STICKERS,
-    SEPARATORS, SHAPES, startLayerDrag, stickerItem, stickerLibrary, uploadStickers,
+    countStickers, LINE_VARIANTS, MAX_STICKERS,
+    SEPARATORS, startLayerDrag, stickerItem, stickerLibrary, uploadStickers,
 } from './layerItems'
 import { Separador } from '../../../../components/Invitation/Logos'
+import { iconsItinerary } from '../../../../helpers/services/menuIcons'
+import { coincide, esNueva, useEditorCatalog } from './useEditorCatalog'
 import base from './ToolPanels.module.css'
 import styles from './LayerPanels.module.css'
 
 // Paneles Elementos y Stickers del editor de escritorio (etapa 3). Cada
 // tarjeta se arrastra a la invitación (o se agrega con un clic a la sección
 // que se ve). La pieza los pinta y los edita: SectionLayer en iattend-events.
-
-// Palabras para el buscador de íconos (es / en).
-const ICON_WORDS = {
-    Heart: 'corazon amor heart love', Sparkles: 'brillos destellos sparkles', Star: 'estrella star',
-    Flower: 'flor flower', Flower2: 'flor margarita flower daisy', Leaf: 'hoja leaf planta',
-    Gem: 'diamante anillo gem ring', Moon: 'luna noche moon night', Sun: 'sol sun dia',
-    Wine: 'copa vino brindis wine', Music: 'musica music nota', Camera: 'camara foto camera photo',
-    Church: 'iglesia church boda', Infinity: 'infinito infinity', Bird: 'pajaro ave bird', Cake: 'pastel cake',
-}
 
 const ICONS = {
     Heart, Sparkles, Star, Flower, Flower2, Leaf, Gem, Moon, Sun, Wine, Music, Camera, Church, Infinity: InfinityIcon, Bird, Cake,
@@ -34,11 +27,12 @@ const ICONS = {
 const ShapeSample = ({ variant }) => {
     const box = variant === 'rect' ? { width: 30, height: 18 } : { width: 22, height: 22 }
     return (
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" {...box} fill="currentColor">
-            {variant === 'circle' ? <ellipse cx="50" cy="50" rx="50" ry="50" />
-                : variant === 'triangle' ? <polygon points="50,2 98,98 2,98" />
-                : variant === 'star' ? <polygon points="50,3 61,37 97,37 68,59 79,94 50,72 21,94 32,59 3,37 39,37" />
-                : <rect x="0" y="0" width="100" height="100" />}
+        // Contorno, sin relleno (así entran a la invitación).
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" {...box} fill="none" stroke="currentColor" strokeWidth="2" overflow="visible">
+            {variant === 'circle' ? <ellipse cx="50" cy="50" rx="50" ry="50" vectorEffect="non-scaling-stroke" />
+                : variant === 'triangle' ? <polygon points="50,2 98,98 2,98" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                : variant === 'star' ? <polygon points="50,3 61,37 97,37 68,59 79,94 50,72 21,94 32,59 3,37 39,37" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                : <rect x="0" y="0" width="100" height="100" vectorEffect="non-scaling-stroke" />}
         </svg>
     )
 }
@@ -49,107 +43,260 @@ const TEXT_CARDS = [
     { variant: 'body', w: 70 },
 ]
 
-export const ElementsPanel = ({ invitation }) => {
-    const { t } = useTranslation()
+// Cuántos se asoman en la vista "Todo" por tipo de categoría.
+const PREVIEW = { icon: 10, shape: 5, image: 3, line: 4, separator: 2 }
+
+// Categorías que viven en código (no en el catálogo): líneas y separadores.
+const CODE_CATEGORIES = [
+    { id: 'lineas', slug: 'lineas', kind: 'line', labelKey: 'build_editor.el_lines', assets: LINE_VARIANTS.map((v) => ({ id: v, name: v, variant: v, tags: ['linea', 'line'] })) },
+    { id: 'separadores', slug: 'separadores', kind: 'separator', labelKey: 'build_editor.el_separators', assets: SEPARATORS.map((n) => ({ id: String(n), name: String(n), variant: String(n), tags: ['separador', 'separator', 'adorno', 'ornament', 'decoracion'] })) },
+]
+
+// Panel Elementos (handoff "Panel lateral" 4.2): buscador que busca en todas
+// las categorías, chips con scroll horizontal (Todo + categorías), y en
+// "Todo" el bloque Texto fijo arriba y una fila por categoría con su conteo
+// y "›" para filtrarla. Las categorías salen del catálogo
+// (useEditorCatalog: editor_categories / editor_assets, Admin → Laboratorio
+// → Elementos), con badge "Nuevo" hasta `new_until`; líneas y separadores
+// viven en código. A la invitación todo entra ARRASTRANDO.
+//
+// `iconRequest` ({ index }): se entró tocando el ícono de un momento del
+// itinerario. Con él, un clic en un ícono / forma / ilustración lo pone como
+// ícono de ese momento ("lucide:<Nombre>", "svg:<url>", "shape:<forma>" o la
+// ruta de la imagen); textos, líneas y separadores no aplican (se atenúan).
+export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest, clearIconRequest, onOpenTool }) => {
+    const { t, i18n } = useTranslation()
+    const catalog = useEditorCatalog()
+    const en = i18n.language?.startsWith('en')
+    const momentName = iconRequest ? invitation?.itinerary?.object?.[iconRequest.index]?.name : null
+    const setMomentIcon = (value) => {
+        if (!iconRequest) return
+        const index = iconRequest.index
+        setInvitation((prev) => ({
+            ...prev,
+            itinerary: { ...prev.itinerary, object: prev.itinerary.object.map((obj, i) => (i === index ? { ...obj, icon: value } : obj)) },
+        }))
+        setSaved(false)
+    }
+    const momentIcon = iconRequest ? invitation?.itinerary?.object?.[iconRequest.index]?.icon : null
+    const off = iconRequest ? { 'data-off': true } : {}
     const [query, setQuery] = useState('')
-    const q = query.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    const [view, setView] = useState('all')
+    const anchor = useRef(null)
+    // Al cambiar de categoría desde abajo, el cuerpo del panel vuelve arriba.
+    const scrollTop = () => anchor.current?.closest('[data-tool-body]')?.scrollTo({ top: 0, behavior: 'smooth' })
+    const q = query.trim()
     const titleFont = invitation?.generals?.fonts?.titles?.typeFace ?? invitation?.generals?.fonts?.body?.typeFace
     const bodyFont = invitation?.generals?.fonts?.body?.typeFace
-
-    const icons = LAYER_ICONS.filter((name) => !q || ICON_WORDS[name]?.includes(q) || name.toLowerCase().includes(q))
-    const textMatch = (variant) => !q || t(`build_editor.el_${variant}`).toLowerCase().includes(q) || 'texto text'.includes(q)
-    const texts = TEXT_CARDS.filter((c) => textMatch(c.variant))
-    const lines = !q || 'linea line'.includes(q) ? LINE_VARIANTS : []
-    const separators = !q || 'separador separator adorno ornament decoracion decoration'.includes(q) ? SEPARATORS : []
-    const shapes = !q || 'forma shape cuadrado circulo rectangulo triangulo estrella square circle rect triangle star'.includes(q) ? SHAPES : []
     const accent = invitation?.generals?.colors?.accent ?? '#29262D'
+
+    // Los íconos del itinerario (react-icons, en código) van al final de la
+    // primera categoría de íconos: { it: n } → elemento "it:<n>" / ícono n
+    // del momento.
+    const itAssets = iconsItinerary.map((ic) => ({ id: `it-${ic.index}`, name: `it-${ic.index}`, tags: ['itinerario', 'itinerary'], it: ic }))
+    const firstIcons = catalog.elements.findIndex((c) => c.kind === 'icon')
+    const categories = [
+        ...catalog.elements.map((c, i) => (i === firstIcons ? { ...c, assets: [...c.assets, ...itAssets] } : c)),
+        ...CODE_CATEGORIES,
+    ]
+    // Entrando desde el ícono de un momento: directo a Íconos, arriba.
+    useEffect(() => {
+        if (!iconRequest || firstIcons < 0) return
+        setView(catalog.elements[firstIcons].id)
+        setQuery('')
+        const id = setTimeout(scrollTop, 320)
+        return () => clearTimeout(id)
+    }, [iconRequest?.n, firstIcons])
+    const nameOf = (c) => (c.labelKey ? t(c.labelKey) : (en && c.name_en) || c.name_es)
+    useEffect(() => { if (view !== 'all' && !categories.some((c) => c.id === view)) setView('all') }, [catalog])
+
+    const texts = TEXT_CARDS.filter((c) => !q || coincide({ name: t(`build_editor.el_${c.variant}`), tags: ['texto', 'text'] }, { name_es: '' }, q))
+
+    // ── Celda de un recurso según el tipo de su categoría ──
+    const cell = (cat, asset) => {
+        if (cat.kind === 'line') {
+            return (
+                <div key={asset.id} className={styles.lineCell} {...off} onPointerDown={(e) => startLayerDrag(e, { kind: 'line', variant: asset.variant, w: 50, rot: 0, opacity: 1 })}>
+                    <span className={styles.lineSample} data-variant={asset.variant} />
+                </div>
+            )
+        }
+        if (cat.kind === 'separator') {
+            return (
+                <div key={asset.id} className={`${styles.lineCell} ${styles.sepCell}`} {...off} onPointerDown={(e) => startLayerDrag(e, { kind: 'separator', variant: asset.variant, w: 60, rot: 0, opacity: 1 })}>
+                    <Separador MainColor={accent} value={Number(asset.variant)} />
+                </div>
+            )
+        }
+        if (cat.kind === 'shape') {
+            const value = `shape:${asset.variant}`
+            return (
+                <div
+                    key={asset.id}
+                    className={styles.iconCell}
+                    title={asset.name}
+                    data-on={momentIcon === value || undefined}
+                    onPointerDown={(e) => startLayerDrag(e, { kind: 'shape', variant: asset.variant, w: asset.w ?? 26, ar: asset.ar ?? 1, rot: 0, opacity: 1, color: 'transparent', strokeWidth: 2 }, { onTap: () => setMomentIcon(value) })}
+                >
+                    <ShapeSample variant={asset.variant} />
+                </div>
+            )
+        }
+        if (cat.kind === 'icon' && asset.it) {
+            const ItIcon = asset.it.value
+            return (
+                <div
+                    key={asset.id}
+                    className={styles.iconCell}
+                    data-on={momentIcon === asset.it.index || undefined}
+                    onPointerDown={(e) => startLayerDrag(e, { kind: 'icon', icon: `it:${asset.it.index}`, w: 14, rot: 0, opacity: 1 }, { onTap: () => setMomentIcon(asset.it.index) })}
+                >
+                    <ItIcon size={22} />
+                </div>
+            )
+        }
+        if (cat.kind === 'icon') {
+            const Icon = asset.lucide ? ICONS[asset.lucide] : null
+            const value = asset.lucide ? `lucide:${asset.lucide}` : `svg:${asset.url}`
+            const item = asset.lucide
+                ? { kind: 'icon', icon: asset.lucide, w: asset.w ?? 14, rot: 0, opacity: 1 }
+                : { kind: 'icon', src: asset.url, tint: Boolean(asset.tintable), w: asset.w ?? 14, ar: asset.ar ?? 1, rot: 0, opacity: 1 }
+            return (
+                <div
+                    key={asset.id}
+                    className={styles.iconCell}
+                    title={asset.name}
+                    data-on={momentIcon === value || undefined}
+                    onPointerDown={(e) => startLayerDrag(e, item, { onTap: () => setMomentIcon(value) })}
+                >
+                    {Icon ? <Icon size={22} strokeWidth={1.7} />
+                        : asset.tintable ? <span className={styles.maskIcon} style={{ WebkitMaskImage: `url("${asset.url}")`, maskImage: `url("${asset.url}")` }} />
+                        : <img className={styles.cellImg} src={asset.url} alt="" draggable={false} />}
+                </div>
+            )
+        }
+        // Imagen (PNG): entra como sticker.
+        return (
+            <div
+                key={asset.id}
+                className={styles.artCell}
+                title={asset.name}
+                data-on={momentIcon === asset.url || undefined}
+                onPointerDown={(e) => startLayerDrag(e, { ...stickerItem(asset.url), w: asset.w ?? 26 }, { onTap: () => setMomentIcon(asset.url) })}
+            >
+                <img src={asset.url} alt={asset.name} draggable={false} loading="lazy" />
+            </div>
+        )
+    }
+    const grid = (cat, assets) => (
+        <div className={cat.kind === 'image' ? styles.artGrid : cat.kind === 'line' || cat.kind === 'separator' ? styles.lineGrid : styles.iconGrid5}>
+            {assets.map((a) => cell(cat, a))}
+        </div>
+    )
+    const header = (cat, count, withArrow) => (
+        <button type="button" className={styles.rowHead} onClick={withArrow ? () => setView(cat.id) : undefined} data-static={!withArrow || undefined}>
+            <span className={styles.rowTitle}>{nameOf(cat)}</span>
+            {esNueva(cat) && <span className={styles.badgeNew}>{t('build_editor.el_new')}</span>}
+            <span className={styles.rowCount}>{count}{withArrow && <ChevronRight size={15} />}</span>
+        </button>
+    )
+
+    const textBlock = texts.length > 0 && (
+        <div className={base.group}>
+            <span className={base.groupLabel}>{t('build_editor.el_text')}</span>
+            <span className={base.hint}>{t('build_editor.el_text_note')}</span>
+            {texts.map((c) => (
+                <div
+                    key={c.variant}
+                    className={styles.textCard}
+                    data-variant={c.variant}
+                    {...off}
+                    style={{ fontFamily: `"${c.variant === 'title' ? titleFont : bodyFont}"` }}
+                    onPointerDown={(e) => startLayerDrag(e, { kind: 'text', variant: c.variant, text: t(`build_editor.el_${c.variant}_text`), w: c.w, rot: 0, opacity: 1 })}
+                >
+                    {t(`build_editor.el_${c.variant}`)}
+                </div>
+            ))}
+            {/* Lia sin texto elegido: genera un texto y lo agrega (panel oculto "ai"). */}
+            {onOpenTool && !iconRequest && (
+                <button type="button" className={styles.liaCard} onClick={() => onOpenTool('ai')}>
+                    <WandSparkles size={16} />
+                    <span>
+                        <strong>{t('build_editor.el_lia')}</strong>
+                        <span>{t('build_editor.el_lia_hint')}</span>
+                    </span>
+                </button>
+            )}
+        </div>
+    )
+
+    const selected = categories.find((c) => c.id === view)
+    let body
+    if (q) {
+        // Búsqueda: en todas las categorías, completas.
+        const hits = categories.map((c) => ({ c, list: c.assets.filter((a) => coincide(a, c, q)) })).filter((h) => h.list.length)
+        body = (
+            <>
+                {textBlock}
+                {hits.map(({ c, list }) => (
+                    <div key={c.id} className={base.group}>
+                        {header(c, list.length, false)}
+                        {grid(c, list)}
+                    </div>
+                ))}
+                {!texts.length && !hits.length && <span className={base.empty}>{t('build_editor.el_none')}</span>}
+            </>
+        )
+    } else if (selected) {
+        body = (
+            <div className={base.group}>
+                {header(selected, selected.assets.length, false)}
+                {grid(selected, selected.assets)}
+            </div>
+        )
+    } else {
+        body = (
+            <>
+                {textBlock}
+                {categories.filter((c) => c.assets.length).map((c) => (
+                    <div key={c.id} className={base.group}>
+                        {header(c, c.assets.length, c.assets.length > (PREVIEW[c.kind] ?? 5))}
+                        {grid(c, c.assets.slice(0, PREVIEW[c.kind] ?? 5))}
+                    </div>
+                ))}
+            </>
+        )
+    }
 
     return (
         <>
-            <label className={base.search}>
+            <label ref={anchor} className={base.search}>
                 <Search size={15} />
                 <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('build_editor.el_search')} />
             </label>
-            <span className={base.hint} style={{ marginTop: 0 }}>{t('build_editor.el_hint')}</span>
 
-            {texts.length > 0 && (
-                <div className={base.group}>
-                    <span className={base.groupLabel}>{t('build_editor.el_text')}</span>
-                    <span className={base.hint}>{t('build_editor.el_text_note')}</span>
-                    {texts.map((c) => (
-                        <div
-                            key={c.variant}
-                            className={styles.textCard}
-                            data-variant={c.variant}
-                            style={{ fontFamily: `"${c.variant === 'title' ? titleFont : bodyFont}"` }}
-                            onPointerDown={(e) => startLayerDrag(e, { kind: 'text', variant: c.variant, text: t(`build_editor.el_${c.variant}_text`), w: c.w, rot: 0, opacity: 1 })}
-                        >
-                            {t(`build_editor.el_${c.variant}`)}
-                        </div>
+            {/* Fijos arriba al hacer scroll: el aviso del momento y los chips,
+                para navegar aunque se esté abajo. */}
+            <div className={styles.sticky}>
+                {iconRequest && (
+                    <div className={styles.pickBanner}>
+                        <span>{t('build_editor.el_pick_moment', { name: momentName || t('build_editor.el_pick_moment_fallback') })}</span>
+                        <button type="button" aria-label={t('build_editor.close')} onClick={clearIconRequest}><X size={14} /></button>
+                    </div>
+                )}
+                <div className={`${styles.chips} scroll-invitation`}>
+                    <button type="button" className={styles.chip} data-on={view === 'all' || undefined} onClick={() => { setView('all'); scrollTop() }}>{t('build_editor.el_all')}</button>
+                    {categories.filter((c) => c.assets.length).map((c) => (
+                        <button key={c.id} type="button" className={styles.chip} data-on={view === c.id || undefined} onClick={() => { setView(c.id); setQuery(''); scrollTop() }}>
+                            {nameOf(c)}
+                            {esNueva(c) && <span className={styles.chipDot} />}
+                        </button>
                     ))}
                 </div>
-            )}
+            </div>
+            <span className={base.hint} style={{ marginTop: 0 }}>{t('build_editor.el_hint')}</span>
 
-            {icons.length > 0 && (
-                <div className={base.group}>
-                    <span className={base.groupLabel}>{t('build_editor.el_icons')}</span>
-                    <div className={styles.iconGrid}>
-                        {icons.map((name) => {
-                            const Icon = ICONS[name]
-                            return (
-                                <div key={name} className={styles.iconCell} onPointerDown={(e) => startLayerDrag(e, { kind: 'icon', icon: name, w: 14, rot: 0, opacity: 1 })}>
-                                    <Icon size={22} strokeWidth={1.7} />
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {lines.length > 0 && (
-                <div className={base.group}>
-                    <span className={base.groupLabel}>{t('build_editor.el_lines')}</span>
-                    <div className={styles.lineGrid}>
-                        {lines.map((variant) => (
-                            <div key={variant} className={styles.lineCell} onPointerDown={(e) => startLayerDrag(e, { kind: 'line', variant, w: 50, rot: 0, opacity: 1 })}>
-                                <span className={styles.lineSample} data-variant={variant} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {shapes.length > 0 && (
-                <div className={base.group}>
-                    <span className={base.groupLabel}>{t('build_editor.el_shapes')}</span>
-                    <div className={styles.shapeGrid}>
-                        {shapes.map((sh) => (
-                            <div
-                                key={sh.variant}
-                                className={styles.iconCell}
-                                onPointerDown={(e) => startLayerDrag(e, { kind: 'shape', variant: sh.variant, w: sh.w, ar: sh.ar, rot: 0, opacity: 1, strokeWidth: 0 })}
-                            >
-                                <ShapeSample variant={sh.variant} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {separators.length > 0 && (
-                <div className={base.group}>
-                    <span className={base.groupLabel}>{t('build_editor.el_separators')}</span>
-                    <div className={styles.lineGrid}>
-                        {separators.map((n) => (
-                            <div key={n} className={`${styles.lineCell} ${styles.sepCell}`} onPointerDown={(e) => startLayerDrag(e, { kind: 'separator', variant: String(n), w: 60, rot: 0, opacity: 1 })}>
-                                <Separador MainColor={accent} value={n} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {!texts.length && !icons.length && !lines.length && !separators.length && !shapes.length && <span className={base.empty}>{t('build_editor.el_none')}</span>}
+            {body}
         </>
     )
 }

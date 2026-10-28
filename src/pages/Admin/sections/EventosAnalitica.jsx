@@ -16,6 +16,7 @@ import { AnaliticaPromedio } from './AnaliticaPromedio'
 import { AnaliticaResumen } from './AnaliticaResumen'
 import { AnaliticaRespuestas } from './AnaliticaRespuestas'
 import { AnaliticaFuncionesNuevas } from './AnaliticaFuncionesNuevas'
+import { AnaliticaStorage } from './AnaliticaStorage'
 import { nombreDeMes } from '../analiticaCalculos'
 import { EnTopbarFiltros, Segmentado, SelectFiltro } from '../AdminTopbar'
 import styles from './EventosAnalitica.module.css'
@@ -23,7 +24,7 @@ import styles from './EventosAnalitica.module.css'
 // Las pestañas viven en la topbar del admin (AdminLayout → SUBTABS.analitica)
 // y llegan en `etapa`:
 //   envios (Últimos 30 días) · eventos · historial (Envíos) · respuestas ·
-//   modulos (Mesas y side events) · nuevas · lia · promedio (Perfil)
+//   modulos (Mesas y side events) · nuevas · lia · promedio (Perfil) · storage
 // Sus filtros (ventana de días, periodo) se dibujan a la derecha de esa fila.
 
 // Estado de un filtro de periodo. Las opciones no se conocen hasta que la
@@ -95,6 +96,7 @@ export const EventosAnalitica = ({ etapa = 'envios', invitations, esPrueba }) =>
 
 
             {etapa === 'promedio' && <AnaliticaPromedio invitacionesReales={reales} />}
+            {etapa === 'storage' && <AnaliticaStorage invitations={invitations ?? []} esPrueba={esPrueba} />}
             {etapa === 'envios' && (
                 <AnaliticaResumen invitacionesReales={reales} dias={ventanaDias} />
             )}

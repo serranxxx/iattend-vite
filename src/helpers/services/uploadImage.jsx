@@ -1,6 +1,7 @@
 import imageCompression from 'browser-image-compression';
 import { message } from 'antd';
 import { supabase } from '../../lib/supabase';
+import { ensureQuota, storageChanged } from './storageQuota';
 
 export const uploadImagesSupabase = async ({
     file,
@@ -40,6 +41,9 @@ export const uploadImagesSupabase = async ({
         useWebWorker: true,
     });
 
+    // Límite de "Subidos" (10 MB / 30 MB) con el peso ya comprimido.
+    if (!(await ensureQuota(invitationID, compressedFile.size))) return;
+
     const filePath = `${invitationID}/${Date.now()}-${compressedFile.name}`;
 
     const { error } = await supabase.storage
@@ -50,6 +54,7 @@ export const uploadImagesSupabase = async ({
         });
 
     if (error) throw error;
+    storageChanged();
 
     getImagesFromSupabase(invitationID, setImages);
 
@@ -157,6 +162,7 @@ export const deleteImageFromSupabase = async (path, invitationID, setImages) => 
                 return;
             }
             message.success('Imagen eliminada correctamente.');
+            storageChanged();
             getImagesFromSupabase(invitationID, setImages);
             return;
         }
@@ -363,6 +369,8 @@ export const uploadEventVideo = async ({ file, invitationID, setVideos }) => {
         return null;
     }
 
+    if (!(await ensureQuota(invitationID, file.size))) return null;
+
     const filePath = `${invitationID}/video/${Date.now()}-${file.name}`;
 
     // Un año de caché: el nombre lleva la hora de subida, así que nunca cambia
@@ -377,6 +385,7 @@ export const uploadEventVideo = async ({ file, invitationID, setVideos }) => {
         });
 
     if (error) throw error;
+    storageChanged();
 
     if (setVideos) getVideosFromSupabase(invitationID, setVideos);
 
@@ -544,11 +553,14 @@ export const aligerarSticker = async (file) => {
 // Sube un sticker ya aligerado a la carpeta del evento y regresa su URL pública.
 export const subirSticker = async (file, carpeta) => {
     const ligero = await aligerarSticker(file);
+    // Stickers de una invitación (`inv-{id}`) cuentan para su límite.
+    if (!(await ensureQuota(carpeta, ligero.size))) return null;
     const filePath = `${carpeta}/${Date.now()}-${ligero.name}`;
     const { error } = await supabase.storage
         .from('user_images')
         .upload(filePath, ligero, { upsert: true, contentType: ligero.type });
     if (error) throw error;
+    storageChanged();
     return supabase.storage.from('user_images').getPublicUrl(filePath).data.publicUrl;
 };
 

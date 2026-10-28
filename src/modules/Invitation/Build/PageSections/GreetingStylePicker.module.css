@@ -1,0 +1,21 @@
+/* Miniaturas del selector de estilos de la Bienvenida (ver GreetingStylePicker.jsx).
+   El contenedor, la cuadrícula y las tarjetas vienen de CountdownStylePicker.module.css. */
+
+.col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.col b, .col em { font-size: 12px; font-weight: 600; line-height: 1; }
+.col em { font-weight: 500; }
+.col small { font-size: 6px; letter-spacing: 2px; font-weight: 600; }
+.ln { display: block; height: 2px; border-radius: 99px; }
+
+.orn { display: flex; align-items: center; gap: 4px; font-size: 6px; }
+.orn i { display: block; width: 12px; height: 1px; }
+
+.rules { width: 92px; padding: 3px 0; border-top: 1px solid; border-bottom: 1px solid; font-size: 6px; font-weight: 600; letter-spacing: 2px; text-align: center; }
+
+.quote { font-size: 26px; line-height: 0.6; height: 12px; opacity: 0.5; }
+
+.frame { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 10px; border: 1px solid; outline: 1px solid; outline-offset: -3px; }
+.frame b { line-height: 1; }
+
+.arch { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 80px; padding: 16px 0 6px; border: 1px solid; border-bottom: none; border-radius: 999px 999px 0 0; }
+.arch b { line-height: 1; }

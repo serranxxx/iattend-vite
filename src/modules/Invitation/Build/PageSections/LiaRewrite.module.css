@@ -1,0 +1,116 @@
+/* Popover "Reescribir con Lia" (ver LiaRewrite.jsx). */
+
+.wrap {
+    width: 276px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.title svg {
+    color: #6D3CFA;
+}
+
+.tones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tone {
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid #EBEBEB;
+    border-radius: 99px;
+    background: #FFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.tone[data-on] {
+    border-color: #6D3CFA;
+    background: #F0EBFF;
+    color: #6D3CFA;
+}
+
+.input {
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #E3E0DA;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    color: #29262D;
+    outline: none;
+}
+
+.input:focus {
+    border-color: #6D3CFA;
+}
+
+.generate {
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 10px;
+    background: #6D3CFA;
+    color: #FFF;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.generate:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.option {
+    padding: 10px 12px;
+    border: 1px solid #EBEBEB;
+    border-radius: 12px;
+    background: #FFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.option:hover {
+    border-color: #6D3CFA;
+    background: #FAF8FF;
+}
+
+.spin {
+    animation: liaSpin 0.9s linear infinite;
+}
+
+@keyframes liaSpin {
+    to { transform: rotate(360deg); }
+}

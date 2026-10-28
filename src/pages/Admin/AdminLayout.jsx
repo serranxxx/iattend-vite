@@ -82,6 +82,7 @@ const SUBTABS = {
         { key: 'nuevas', label: 'Funciones nuevas' },
         { key: 'lia', label: 'Lia' },
         { key: 'promedio', label: 'Perfil' },
+        { key: 'storage', label: 'Storage' },
     ],
     configuracion: [
         { key: 'planes', label: 'Planes' },

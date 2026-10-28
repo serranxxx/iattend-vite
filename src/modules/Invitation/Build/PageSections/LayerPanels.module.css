@@ -45,7 +45,7 @@
 /* ── Íconos ── */
 .iconGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
 }
 
@@ -67,7 +67,7 @@
 /* ── Formas ── */
 .shapeGrid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
 }
 
@@ -187,7 +187,7 @@
 
 .stickerGrid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
 }
 
@@ -216,4 +216,250 @@
     max-height: 100%;
     object-fit: contain;
     pointer-events: none;
+}
+
+/* ── Eligiendo el ícono de un momento (se entró desde el itinerario) ── */
+.pickBanner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px 10px 14px;
+    border-radius: 14px;
+    background: #EFEAFF;
+    color: #6D3CFA;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.pickBanner span {
+    flex: 1;
+}
+
+.pickBanner button {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.pickBanner button:hover {
+    background: rgba(109, 60, 250, 0.12);
+}
+
+/* No aplica como ícono del momento: se atenúa (se sigue pudiendo arrastrar). */
+.textCard[data-off],
+.lineCell[data-off] {
+    opacity: 0.4;
+}
+
+/* Ícono actual del momento. */
+.iconCell[data-on] {
+    background: #EFEAFF;
+    color: #6D3CFA;
+    box-shadow: inset 0 0 0 2px #6D3CFA;
+}
+
+/* ── Panel Elementos con catálogo (handoff "Panel lateral" 4.2) ── */
+.chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin: 0 -2px;
+    padding: 2px 2px 4px;
+    flex-shrink: 0;
+}
+
+.chip {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #EBEBEB;
+    border-radius: 99px;
+    background: #FFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.chip:hover {
+    background: #F5F3F2;
+}
+
+.chip[data-on] {
+    border-color: #16323d;
+    background: #16323d;
+    color: #FFF;
+}
+
+.chipDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6D3CFA;
+}
+
+/* Encabezado de cada fila: nombre, "Nuevo" y conteo con "›". */
+.rowHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #29262D;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.rowHead[data-static] {
+    cursor: default;
+}
+
+.rowTitle {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.rowCount {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12.5px;
+    color: #16323d;
+}
+
+.badgeNew {
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #F0EBFF;
+    color: #6D3CFA;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.iconGrid5 {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.iconGrid5 .iconCell {
+    border-radius: 12px;
+}
+
+.artGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.artCell {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: #F5F3F2;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.artCell:hover {
+    background: #EFEAFF;
+}
+
+.artCell[data-on] {
+    border-color: #6D3CFA;
+    background: #EFEAFF;
+}
+
+.artCell img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+/* SVG del catálogo pintado con el color del texto (mask). */
+.maskIcon {
+    width: 22px;
+    height: 22px;
+    background: currentColor;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.cellImg {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+/* "Escribir con Lia" en el bloque Texto. */
+.liaCard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #E4DAFF;
+    border-radius: 14px;
+    background: #F0EBFF;
+    color: #6D3CFA;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.liaCard span {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.liaCard strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.liaCard span span {
+    font-size: 11.5px;
+    color: #4B2BB0;
+}
+
+/* Aviso del momento + chips: fijos arriba del cuerpo del panel al hacer scroll. */
+.sticky {
+    position: sticky;
+    top: -4px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: -8px -18px 0;
+    padding: 8px 18px 6px;
+    background: #FFF;
 }

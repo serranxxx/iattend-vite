@@ -11,6 +11,7 @@ import { colorFactoryToHex } from '../../../../helpers/assets/functions'
 import { CoverEffects } from './CoverEffects'
 import { useTextures } from '../../../../context/TexturesContext'
 import { AddressAutocomplete } from '../../../SideEvents/AddressAutocomplete'
+import { ADDRESS_FIELDS } from './addressFields'
 import styles from './ModuleStyle.module.css'
 
 // Fondo y separador de un módulo de la invitación (dynamic_background /
@@ -88,7 +89,7 @@ const TextureStrip = ({ value, onPick }) => {
                 <Ban size={16} />
             </button>
             {textures.map((tex) => (
-                <button key={tex.id} type="button" className={styles.texOption} data-on={value === tex.id || undefined} onClick={() => onPick(tex.id)}>
+                <button key={tex.id} type="button" className={styles.texOption} data-on={value === tex.id || undefined} title={tex.name} onClick={() => onPick(tex.id)}>
                     <img src={tex.image} alt="" loading="lazy" />
                 </button>
             ))}
@@ -485,16 +486,6 @@ export const MomentImage = ({ invitation, index, setInvitation, setSaved, invita
 // Al elegir un lugar se llenan todos los campos de la dirección del momento
 // (itinerary.object[index].address) y el drawer pasa a "¿Cómo llegar?".
 // "Agregar manual" muestra los campos para escribirla a mano.
-const ADDRESS_FIELDS = [
-    ['street', 'build_editor.addr_street'],
-    ['number', 'build_editor.addr_number'],
-    ['neighborhood', 'build_editor.addr_neighborhood'],
-    ['zip', 'build_editor.addr_zip'],
-    ['city', 'build_editor.addr_city'],
-    ['state', 'build_editor.addr_state'],
-    ['country', 'build_editor.addr_country'],
-    ['url', 'build_editor.addr_url'],
-]
 
 export const MomentAddress = ({ index, setInvitation, setSaved, onDone }) => {
     const { t } = useTranslation()

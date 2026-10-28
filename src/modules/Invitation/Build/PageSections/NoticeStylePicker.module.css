@@ -1,0 +1,25 @@
+/* Miniaturas del selector de estilos de Recordatorios (ver NoticeStylePicker.jsx).
+   El contenedor, la cuadrícula y las tarjetas vienen de CountdownStylePicker.module.css. */
+
+.col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.row { display: flex; align-items: center; gap: 5px; }
+.col i, .row i, .dots i { display: block; font-style: normal; }
+.col b { font-size: 9px; line-height: 1; }
+.ln { display: block; height: 3px; border-radius: 99px; flex: none; }
+
+.num { display: flex; align-items: center; gap: 6px; border-top: 1px solid; padding-top: 3px; }
+.num em { font-family: Georgia, serif; font-style: normal; font-size: 12px; }
+
+.note { width: 64px; padding: 7px 6px 6px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12); }
+
+.card { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 80px; padding: 10px 0; border: 1px solid; border-radius: 6px; opacity: 0.9; }
+.dots { display: flex; gap: 3px; }
+.dots i { height: 3px; border-radius: 99px; }
+
+.box { width: 9px; height: 9px; border: 1.5px solid; border-radius: 3px; box-sizing: border-box; }
+
+.guide { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 12px; border: 1px solid; outline: 1px solid; outline-offset: -3px; }
+.guide b { font-size: 6px; letter-spacing: 2px; }
+
+.avatar { width: 12px; height: 12px; border-radius: 50%; }
+.bubble { background: #FFFFFF; border-radius: 2px 7px 7px 7px; padding: 4px 6px; }

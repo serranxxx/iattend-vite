@@ -90,9 +90,9 @@
 }
 
 .railButton {
-    width: 52px;
-    height: 50px;
-    border-radius: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
     border: none;
     background: transparent;
     color: #787878;
@@ -104,12 +104,6 @@
     cursor: pointer;
     font-family: inherit;
     transition: background 0.2s ease, color 0.2s ease;
-}
-
-.railButton span {
-    font-size: 9.5px;
-    font-weight: 500;
-    line-height: 1;
 }
 
 .railButton:hover {
@@ -260,6 +254,12 @@
     gap: 16px;
 }
 
+/* Con mucho contenido (p. ej. Íconos) la columna encogía a sus hijos: el
+   buscador se aplastaba. Que nada se encoja; el cuerpo hace scroll. */
+.toolBody > * {
+    flex-shrink: 0;
+}
+
 .toolSoon {
     font-size: 12.5px;
     line-height: 1.45;
@@ -281,6 +281,9 @@
     background: #FFFFFF;
     box-shadow: 0 8px 24px rgba(12, 23, 27, 0.12);
     white-space: nowrap;
+    /* Ancho propio: sin esto el ancho disponible (left al centro) lo topaba y
+       el segmento de dispositivos se aplastaba en vez de crecer. */
+    width: max-content;
     transition: left 0.25s ease;
 }
 
@@ -374,6 +377,55 @@
     background: #FFFFFF;
     color: #29262D;
     box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+}
+
+/* Segmento iOS / Android del dock: crece de 0 a su ancho (grid 0fr → 1fr). Cerrado,
+   el margen negativo se come el gap del dock para no dejar hueco. */
+.devicesWrap {
+    display: grid;
+    grid-template-columns: 0fr;
+    margin-left: -4px;
+    opacity: 0;
+    transition: grid-template-columns 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), margin-left 0.35s ease, opacity 0.2s ease;
+}
+
+.devicesWrap[data-open] {
+    grid-template-columns: 1fr;
+    margin-left: 0;
+    opacity: 1;
+    transition: grid-template-columns 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), margin-left 0.35s ease, opacity 0.25s ease 0.1s;
+}
+
+.devicesWrap:not([data-open]) {
+    pointer-events: none;
+}
+
+.devicesInner {
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* El segmento y el botón de girar el iPad van en fila. */
+.devicesInner {
+    display: flex;
+    align-items: center;
+}
+
+.rotateWrap {
+    display: grid;
+    grid-template-columns: 0fr;
+    opacity: 0;
+    transition: grid-template-columns 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
+}
+
+.rotateWrap[data-open] {
+    grid-template-columns: 1fr;
+    margin-left: 4px;
+    opacity: 1;
+}
+
+.rotateWrap:not([data-open]) {
+    pointer-events: none;
 }
 
 .segSmall {
@@ -506,4 +558,29 @@
     width: 14px;
     height: 14px;
     margin-top: 0 !important;
+}
+
+/* Barra del elemento elegido: arriba de la pieza, centrada como el dock. */
+.elementBar {
+    position: absolute;
+    top: 12px;
+    transform: translateX(-50%);
+    z-index: 31;
+    transition: left 0.25s ease;
+}
+
+/* Panel Capas (ModuleLayers, por portal desde EditCanvas). */
+.layersDock {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    bottom: 92px;
+    z-index: 30;
+    display: flex;
+    align-items: flex-start;
+    pointer-events: none;
+}
+
+.layersDock > * {
+    pointer-events: auto;
 }

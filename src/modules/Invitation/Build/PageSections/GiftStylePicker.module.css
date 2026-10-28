@@ -1,0 +1,22 @@
+/* Miniaturas del selector de estilos de la mesa de regalos (ver GiftStylePicker.jsx).
+   El contenedor, la cuadrícula y las tarjetas vienen de CountdownStylePicker.module.css. */
+
+.stage { position: relative; width: 96px; height: 64px; }
+.stage i, .row i { display: block; font-style: normal; }
+
+.card { position: absolute; left: 14px; width: 68px; height: 40px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+.cardSm { position: absolute; left: 24px; width: 48px; height: 30px; border-radius: 4px; transform-origin: 50% 100%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+
+.pocket { position: absolute; left: 6px; right: 6px; bottom: 0; height: 30px; border-radius: 6px 6px 9px 9px; box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.12); }
+.envelope { position: absolute; left: 6px; right: 6px; bottom: 0; height: 34px; border-radius: 0 0 5px 5px; clip-path: polygon(0 0, 50% 52%, 100% 0, 100% 100%, 0 100%); }
+.seal { position: absolute; left: 41px; bottom: 9px; width: 14px; height: 14px; border-radius: 50%; }
+
+.dots { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 3px; }
+.dots i { height: 4px; border-radius: 99px; }
+
+.row { display: flex; gap: 6px; }
+.flat { width: 44px; height: 28px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18); box-sizing: border-box; }
+
+.box { position: absolute; left: 18px; right: 18px; bottom: 0; height: 30px; border-radius: 3px 3px 7px 7px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18); }
+.lid { position: absolute; left: 14px; right: 14px; bottom: 28px; height: 9px; border-radius: 3px; display: flex !important; justify-content: center; filter: brightness(1.06); }
+.lid b { width: 8px; height: 100%; }

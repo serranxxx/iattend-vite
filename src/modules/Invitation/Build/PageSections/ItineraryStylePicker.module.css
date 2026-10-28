@@ -1,0 +1,52 @@
+/* Miniaturas del selector de estilos del itinerario (ver ItineraryStylePicker.jsx).
+   El contenedor, la cuadrícula y las tarjetas vienen de CountdownStylePicker.module.css. */
+
+.ln { display: block; border-radius: 99px; flex: none; }
+.row { display: flex; align-items: center; gap: 5px; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.col2 { display: flex; flex-direction: column; gap: 3px; }
+
+.zig { position: relative; width: 92px; height: 56px; display: flex; flex-direction: column; justify-content: space-around; }
+.zigLine { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); }
+.zigItem { width: 42%; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.zigItem[data-r] { align-self: flex-end; }
+
+.dot { width: 7px; height: 7px; border: 1.5px solid; border-radius: 50%; box-sizing: border-box; }
+.thumb { width: 18px; height: 18px; border-radius: 5px; }
+.hour { font-size: 13px; font-weight: 600; font-family: Georgia, serif; width: 34px; text-align: right; }
+.vline { width: 1px; height: 24px; opacity: 0.4; }
+.pill { width: 18px; height: 8px; border-radius: 99px; flex: none; }
+
+.card { width: 104px; padding: 6px; border-radius: 8px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.circle { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.dash { height: 8px; border-left: 1.5px dashed; opacity: 0.5; }
+
+.slide { width: 40px; padding: 4px; border-radius: 7px; display: flex; flex-direction: column; gap: 4px; }
+.photo { height: 22px; border-radius: 4px; }
+
+.rule { display: flex; align-items: center; gap: 8px; border-top: 1px solid; padding-top: 4px; }
+.num { font-family: Georgia, serif; font-size: 15px; font-weight: 500; line-height: 1; }
+
+.node { width: 16px; height: 16px; border: 1px solid; border-radius: 50%; flex: none; }
+.art { width: 32px; height: 32px; border-radius: 50%; }
+
+.frame { width: 110px; padding: 6px 8px; border: 1px solid; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 6px; letter-spacing: 2px; box-sizing: border-box; }
+.frame > i { font-style: normal; opacity: 0.6; }
+.leader { width: 100%; display: flex; align-items: center; gap: 4px; }
+.dots { flex: 1; border-bottom: 1px dotted; opacity: 0.5; }
+
+.arch { width: 26px; height: 36px; border: 1px solid; border-radius: 99px 99px 4px 4px; box-sizing: border-box; }
+
+.chip { width: 30px; height: 9px; border-radius: 99px; }
+.glass { width: 110px; padding: 6px 8px; border-radius: 9px; display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.35); border: 1px solid rgba(255, 255, 255, 0.5); box-sizing: border-box; }
+
+.mapCard { width: 112px; border-radius: 9px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.map {
+    display: block;
+    height: 22px;
+    background:
+        linear-gradient(90deg, transparent 46%, rgba(255, 255, 255, 0.9) 46% 52%, transparent 52%),
+        linear-gradient(0deg, transparent 40%, rgba(255, 255, 255, 0.9) 40% 50%, transparent 50%),
+        #DCE7D8;
+}
+.tile { width: 12px; height: 12px; border-radius: 4px; flex: none; }

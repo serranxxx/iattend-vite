@@ -1,12 +1,50 @@
-import { ChevronLeft, Ellipsis, Mic, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Ellipsis, Lock, Mic, RotateCw, Search } from 'lucide-react'
 import ios_settings from '../../../../assets/images/iphone-settings.svg'
 import android_settings from '../../../../assets/images/android-settings.png'
+import styles from './DevicePreview.module.css'
 
 // Marco de teléfono (iPhone 17 Pro con Safari, o Android) con la invitación
 // adentro. Lo usan BuildContent (vista previa, laboratorio, onboarding) y el
 // modo "Ver en vivo" del editor (EditorWorkspace). Estilos: .ios26-* e
-// .inv-device-*-android de build-invitation.css.
-export const DevicePreview = ({ device = 'ios', children, hostOverlay, scrollRef }) => {
+// .inv-device-*-android de build-invitation.css. "ipad" (768 × 1024) y "mac"
+// (ventana de Safari de 1280 × 800) solo los usa "Ver en vivo": a esos
+// anchos la invitación entra en su diseño de pantalla grande (iattend-events,
+// LARGE_SCREEN_QUERY). Estilos en DevicePreview.module.css; medidas en
+// DEVICE_SIZES (EditorWorkspace las usa para ajustar el zoom).
+// `landscape`: el iPad girado (1024 × 768); `rotated`: ya se giró alguna vez
+// (anima el giro).
+export const DevicePreview = ({ device = 'ios', children, hostOverlay, scrollRef, landscape = false, rotated = false }) => {
+    if (device === 'ipad') {
+        return (
+            <div className={styles.ipad} data-landscape={landscape || undefined} data-rotated={rotated || undefined} data-tour="preview">
+                <div className={styles.ipadScreen}>
+                    <div className={styles.ipadStatus}>
+                        <span>9:41</span>
+                        <img alt='' src={ios_settings} />
+                    </div>
+                    <div ref={scrollRef} className={`scroll-invitation ${styles.ipadContent}`}>
+                        {children}
+                    </div>
+                    {hostOverlay}
+                </div>
+            </div>
+        )
+    }
+    if (device === 'mac') {
+        return (
+            <div className={styles.mac} data-tour="preview">
+                <div className={styles.macBar}>
+                    <span className={styles.macLights}><i /><i /><i /></span>
+                    <span className={styles.macNav}><ChevronLeft size={16} /><ChevronRight size={16} /></span>
+                    <span className={styles.macUrl}><Lock size={11} /> iattend.mx <RotateCw size={11} /></span>
+                </div>
+                <div ref={scrollRef} className={`scroll-invitation ${styles.macContent}`}>
+                    {children}
+                </div>
+                {hostOverlay}
+            </div>
+        )
+    }
     if (device === 'ios') {
         // iPhone 17 Pro · Safari a pantalla completa: el contenido ocupa toda
         // la pantalla y la isla, el status y el nav flotan encima.

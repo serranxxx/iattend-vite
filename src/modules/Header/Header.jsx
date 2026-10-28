@@ -9,8 +9,9 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft as LuArrowLeft, BadgeHelp as LuBadgeHelp, Check as LuCheck, Clipboard as LuClipboard, ClipboardCheck as LuClipboardCheck, FolderHeart as LuFolderHeart, FolderOpen as LuFolderOpen, Link as LuLink, LogOut as LuLogOut, Menu as LuMenu, Plus as LuPlus, SendHorizontal as LuSendHorizontal, Shield as LuShield, ShieldCheck as LuShieldCheck, TriangleAlert as LuTriangleAlert, Upload as LuUpload, X as LuX } from 'lucide-react';
 import { X as IoClose } from 'lucide-react';
 import { supabase } from "../../lib/supabase";
+import { supabaseAuthHeaders } from "../../lib/authHeaders";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
-import { Bell, ChevronDown, CircleQuestionMark, Forward, Menu, MessageCircle, MoreHorizontal, QrCode, Share, Sparkles } from "lucide-react";
+import { Bell, ChevronDown, CircleQuestionMark, Forward, Lock, LockOpen, Menu, MessageCircle, MoreHorizontal, QrCode, Share, Sparkles } from "lucide-react";
 import { appContext } from '../../context';
 import { WhatsappMessages } from '../GuestManagement/WhatsappMessages/WhatsappMessages';
 import { useTranslation } from 'react-i18next';
@@ -282,7 +283,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const getInvitation = async () => {
         const { data, error } = await supabase
             .from("invitations")
-            .select("data, plan, name, url_image, owners, label, phone_number")
+            .select("data, plan, name, url_image, owners, label, phone_number, type")
             .eq("id", id)
             .maybeSingle();
 
@@ -295,7 +296,42 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             setInvOwners(data.owners ?? [])
             setInvLabel(data.label ?? null)
             setInvPhone(data.phone_number ?? null)
+            setInvType(data.type ?? 'closed')
         }
+    }
+
+    // Candado de la invitación: privada (`type: 'closed'`, cada invitado entra
+    // con su código) o pública (`'open'`, cualquiera con el link entra y al
+    // confirmar escribe su nombre y sus acompañantes; ver iattend-events
+    // Confirm.tsx y POST /api/invitations/:id/confirmacion-publica). Igual que
+    // el candado de los Flash. Se guarda al momento: decide quién puede abrir
+    // la invitación, no es parte del diseño.
+    const [invType, setInvType] = useState(null)
+    const [changingAccess, setChangingAccess] = useState(false)
+    const isPublic = invType === 'open'
+    const toggleAccess = async () => {
+        if (!id || changingAccess || invType == null) return
+        const next = isPublic ? 'closed' : 'open'
+        setChangingAccess(true)
+        // Por el backend (PATCH /api/invitations/:id/acceso), que valida dueño,
+        // planner o admin: con la anon key, si las políticas no dejaban
+        // actualizar la fila, Supabase no marcaba error y no se guardaba.
+        try {
+            const { data } = await axios.patch(
+                `${import.meta.env.VITE_API_URL}/api/invitations/${id}/acceso`,
+                { type: next },
+                { headers: await supabaseAuthHeaders() },
+            )
+            if (!data?.success) throw new Error(data?.error)
+            setInvType(data.type)
+        } catch (err) {
+            console.error('Error cambiando el acceso:', err)
+            messageApi.error(t('dashboard_header.access_error'))
+            return
+        } finally {
+            setChangingAccess(false)
+        }
+        messageApi.success(t(next === 'open' ? 'dashboard_header.access_now_public' : 'dashboard_header.access_now_private'))
     }
 
     /* ========================
@@ -729,7 +765,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     return (
         <>
             {contextHolder}
-            <div className="header-dashboard-main-container hd-bar" data-tier={tier} style={{ borderBottom: '1px solid #e8e8e8' }}>
+            <div className="header-dashboard-main-container hd-bar" data-tier={tier} data-editing={isEditing || undefined} style={{ borderBottom: '1px solid #e8e8e8' }}>
                 <div className="header-dashboard-container">
 
                     {/* ── Izquierda: regresar, URL y título ── */}
@@ -742,7 +778,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                     isSmall={tier === 'sm'}
                                     backuImage={invitation?.cover?.image?.prod}
                                     isHeader={true}
-                                    maxHeight={34}
+                                    maxHeight={30}
                                     urlImage={urlImage}
                                     url={invitationUrl}
                                     id={id}
@@ -816,6 +852,22 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                         {/* Idioma que se edita (editor de escritorio). */}
                         {languagePicker}
+
+                        {!inMenu && invType != null && (
+                            <Tooltip title={t(isPublic ? 'dashboard_header.access_public_hint' : 'dashboard_header.access_private_hint')}>
+                                <button
+                                    type="button"
+                                    className="hd-circle hd-circle--outline"
+                                    data-on={isPublic || undefined}
+                                    aria-pressed={isPublic}
+                                    aria-label={t(isPublic ? 'dashboard_header.access_public' : 'dashboard_header.access_private')}
+                                    onClick={toggleAccess}
+                                    disabled={changingAccess}
+                                >
+                                    {isPublic ? <LockOpen size={15} /> : <Lock size={15} />}
+                                </button>
+                            </Tooltip>
+                        )}
 
                         {!inMenu && (
                             <Dropdown

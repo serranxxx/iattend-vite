@@ -1,0 +1,153 @@
+/* Marcos de iPad y Mac de "Ver en vivo" (ver DevicePreview.jsx). */
+
+/* ── iPad (768 × 1024, bisel parejo) ── */
+.ipad {
+    padding: 18px;
+    border-radius: 44px;
+    background: linear-gradient(155deg, #8E8E94 0%, #3A3A40 30%, #1B1B1F 60%, #6E6E74 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, .2),
+        0 26px 60px rgba(0, 0, 0, .45);
+}
+
+.ipadScreen {
+    position: relative;
+    width: 768px;
+    height: 1024px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #000;
+}
+
+.ipadStatus {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    color: #FFF;
+    font-size: 12px;
+    font-weight: 600;
+    mix-blend-mode: difference;
+    pointer-events: none;
+}
+
+.ipadStatus img {
+    height: 11px;
+    filter: invert(1);
+}
+
+.ipadContent {
+    position: absolute;
+    inset: 0;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    background-color: var(--text-color);
+}
+
+/* ── Mac (ventana de Safari de 1280 × 800) ── */
+.mac {
+    position: relative;
+    width: 1280px;
+    height: 840px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #FFF;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, .12),
+        0 30px 70px rgba(0, 0, 0, .3);
+}
+
+.macBar {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 16px;
+    background: #F2F1EF;
+    border-bottom: 1px solid #E3E0DA;
+    color: #8A8580;
+}
+
+.macLights {
+    display: flex;
+    gap: 8px;
+}
+
+.macLights i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #FF5F57;
+}
+
+.macLights i:nth-child(2) {
+    background: #FEBC2E;
+}
+
+.macLights i:nth-child(3) {
+    background: #28C840;
+}
+
+.macNav {
+    display: flex;
+    gap: 6px;
+}
+
+.macUrl {
+    flex: 0 1 420px;
+    margin: 0 auto;
+    transform: translateX(-60px);
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    background: #E6E4E0;
+    color: #4A4744;
+    font-size: 12.5px;
+}
+
+.macContent {
+    position: absolute;
+    top: 40px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    background-color: var(--text-color);
+}
+
+.ipad[data-landscape] .ipadScreen {
+    width: 1024px;
+    height: 768px;
+}
+
+/* Girar como un iPad de verdad: las medidas cambian de golpe, pero el marco
+   arranca girado 90° (se ve igual que antes) y rota a su lugar. Cambiar el
+   nombre de la animación la reinicia sin volver a montar el iframe. La
+   primera vez (sin girar aún) no se anima: data-rotated lo pone el editor. */
+.ipad[data-rotated] {
+    animation: ipadToPortrait 0.6s cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+.ipad[data-rotated][data-landscape] {
+    animation-name: ipadToLandscape;
+}
+
+@keyframes ipadToLandscape {
+    from { transform: rotate(90deg); }
+    to { transform: rotate(0deg); }
+}
+
+@keyframes ipadToPortrait {
+    from { transform: rotate(-90deg); }
+    to { transform: rotate(0deg); }
+}

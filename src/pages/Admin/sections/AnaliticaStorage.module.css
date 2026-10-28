@@ -1,0 +1,395 @@
+/*
+  Analítica › Storage. Mismo formato que Lia: franja oscura de KPIs y
+  tarjetas que hacen scroll por dentro, sin scroll de página. Colores solo de
+  la paleta de marca (MARCA en adminCharts.js).
+*/
+
+.tablero {
+    height: 718px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    font-family: inherit;
+}
+
+.estado {
+    display: grid;
+    place-items: center;
+    min-height: 240px;
+    padding: 22px;
+    border: 1px solid var(--ac-line, #DDE3E9);
+    border-radius: 20px;
+    background: #FFFFFF;
+    color: var(--ac-muted, #5C6F84);
+    font-size: 13px;
+}
+
+/* --- Franja de KPIs --- */
+.franja {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: hidden;
+    border-radius: 20px;
+    background: #1C3249;
+    color: #FFFFFF;
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 14px 20px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.kpi:first-child {
+    border-left: none;
+}
+
+.kpiLabel {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+}
+
+.kpiFila {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.kpiValor {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.kpiBlanco { color: #FFFFFF; }
+.kpiLila { color: #D1BEDD; }
+.kpiVerde { color: #AAC187; }
+
+.kpiPie {
+    overflow: hidden;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* --- Cuerpo: dónde | eventos / crecimiento abajo --- */
+.cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-rows: minmax(0, 1fr) 190px;
+    gap: 12px;
+    min-height: 0;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--ac-line, #DDE3E9);
+    border-radius: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 0 12px rgba(12, 23, 27, 0.07);
+}
+
+.crecimiento {
+    grid-column: 1 / -1;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--ac-line-soft, #E8ECF0);
+}
+
+.label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ac-text-3, #556A7F);
+    white-space: nowrap;
+}
+
+.scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    padding: 14px 18px;
+    list-style: none;
+}
+
+.sub {
+    margin: 18px 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ac-muted, #5C6F84);
+}
+
+.barras {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.barraFila {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--ac-ink, #1C3249);
+}
+
+.barraNombre {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.barraValor {
+    flex: none;
+    margin-left: auto;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.barra {
+    height: 7px;
+    margin-top: 5px;
+    border-radius: 99px;
+    background: rgba(28, 50, 73, 0.08);
+    overflow: hidden;
+}
+
+.barra span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #1C3249;
+}
+
+/* Barra apilada por tipo de archivo. */
+.apilada {
+    display: flex;
+    height: 12px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: rgba(28, 50, 73, 0.08);
+}
+
+.apilada span[data-i="0"], .leyenda i[data-i="0"] { background: #1C3249; }
+.apilada span[data-i="1"], .leyenda i[data-i="1"] { background: #D1BEDD; }
+.apilada span[data-i="2"], .leyenda i[data-i="2"] { background: #AAC187; }
+.apilada span[data-i="3"], .leyenda i[data-i="3"] { background: #eeeadf; }
+
+.leyenda {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12px;
+    color: var(--ac-ink, #1C3249);
+}
+
+.leyenda li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.leyenda i {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+}
+
+.leyenda span {
+    color: var(--ac-muted, #5C6F84);
+}
+
+.tabla {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12px;
+}
+
+.tabla li {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--ac-line-soft, #E8ECF0);
+    color: var(--ac-ink, #1C3249);
+}
+
+.tabla li span:nth-child(2) {
+    color: var(--ac-muted, #5C6F84);
+}
+
+.aviso {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #FAF2E6;
+    color: #8F5C1A;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ac-text-2, #3D5165);
+    cursor: pointer;
+}
+
+.eventos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.evento {
+    display: flex;
+    gap: 10px;
+}
+
+.pos {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(28, 50, 73, 0.08);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ac-ink, #1C3249);
+}
+
+.eventoCuerpo {
+    flex: 1;
+    min-width: 0;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.chip,
+.chipTipo {
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(209, 190, 221, 0.25);
+    color: #4A3457;
+    font-size: 10.5px;
+}
+
+.chipTipo {
+    background: #FAF2E6;
+    color: #8F5C1A;
+    font-weight: 600;
+}
+
+.vacio {
+    font-size: 12.5px;
+    color: var(--ac-muted, #5C6F84);
+}
+
+/* Columnas de crecimiento acumulado (últimos 12 meses). */
+.columnas {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 18px 12px;
+}
+
+.columna {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-height: 0;
+}
+
+.colValor {
+    font-size: 10.5px;
+    color: var(--ac-muted, #5C6F84);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.colBarra {
+    flex: 1;
+    width: 60%;
+    display: flex;
+    align-items: flex-end;
+    border-radius: 8px 8px 0 0;
+    background: rgba(28, 50, 73, 0.04);
+}
+
+.colBarra span {
+    display: block;
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    background: #D1BEDD;
+}
+
+.colMes {
+    font-size: 11px;
+    color: var(--ac-ink, #1C3249);
+}
+
+/* Botón para abrir el evento (dashboard). */
+.abrir {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    color: var(--ac-muted, #5C6F84);
+}
+
+.abrir:hover {
+    background: rgba(28, 50, 73, 0.08);
+    color: var(--ac-ink, #1C3249);
+}

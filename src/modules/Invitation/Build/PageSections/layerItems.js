@@ -5,7 +5,8 @@
 //
 // El arrastre vive aquí: un "fantasma" sigue al puntero y, al soltarlo,
 // ReactHost pasa el punto a coordenadas del iframe (HOST_LAYER_DROP). Un clic
-// sin arrastrar lo agrega a la sección que se ve (HOST_LAYER_ADD). La
+// no agrega nada (solo `onTap`); addLayerItem (HOST_LAYER_ADD) queda para
+// pegar una imagen con ⌘V y para el panel Imágenes. La
 // comunicación con ReactHost va por eventos de window para no cablear props.
 
 import { subirSticker } from '../../../../helpers/services/uploadImage'
@@ -70,8 +71,10 @@ const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { deta
 // Agrega sin arrastrar (clic en el panel o ⌘V): la pieza elige la sección.
 export const addLayerItem = (item, section = null) => emit('iattend-layer-add', { item, section })
 
-// pointerdown sobre una tarjeta del panel.
-export const startLayerDrag = (e, item, { disabled = false } = {}) => {
+// pointerdown sobre una tarjeta del panel. A la invitación solo se agrega
+// arrastrando; un clic sin arrastre llama `onTap` (p. ej. ponerlo como ícono
+// del momento elegido en el itinerario) y si no hay, no hace nada.
+export const startLayerDrag = (e, item, { disabled = false, onTap } = {}) => {
     if (e.button !== 0 || disabled) return
     e.preventDefault()
     const src = e.currentTarget
@@ -108,7 +111,7 @@ export const startLayerDrag = (e, item, { disabled = false } = {}) => {
     const onUp = (ev) => {
         window.removeEventListener('pointermove', onMove)
         window.removeEventListener('pointerup', onUp)
-        if (!ghost) { addLayerItem(item); return }
+        if (!ghost) { onTap?.(); return }
         ghost.remove()
         delete document.body.dataset.layerDrag
         emit('iattend-layer-hover', null)

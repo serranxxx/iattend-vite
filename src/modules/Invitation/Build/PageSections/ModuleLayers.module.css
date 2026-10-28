@@ -1,0 +1,123 @@
+/* Panel "Capas" (ver ModuleLayers.jsx): a la derecha del área de trabajo. */
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 216px;
+    max-height: 100%;
+    padding: 14px 10px 10px;
+    border-radius: 20px;
+    background: #FFF;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.12);
+    box-sizing: border-box;
+}
+
+.title {
+    padding: 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #787878;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+}
+
+.row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 6px 0 4px;
+    border-radius: 12px;
+    color: #29262D;
+    font-size: 13.5px;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: background 0.15s ease;
+}
+
+.row:hover {
+    background: #F5F3F2;
+}
+
+.row[data-selected] {
+    background: #EFEAFF;
+    color: #6D3CFA;
+}
+
+.row[data-hidden] .label,
+.row[data-hidden] > svg:not(.grip) {
+    opacity: 0.4;
+}
+
+.row[data-dragging] {
+    z-index: 1;
+    background: #FFF;
+    box-shadow: 0 6px 18px rgba(12, 23, 27, 0.16);
+    cursor: grabbing;
+}
+
+.fixed {
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+
+.fixed::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: -4px;
+    height: 1px;
+    background: #EBEBEB;
+}
+
+.grip {
+    flex: none;
+    color: #B5B1AA;
+}
+
+.label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.eye {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #9A968F;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.row:hover .eye,
+.row[data-hidden] .eye {
+    opacity: 1;
+}
+
+.eye:hover {
+    background: rgba(41, 38, 45, 0.06);
+    color: #29262D;
+}

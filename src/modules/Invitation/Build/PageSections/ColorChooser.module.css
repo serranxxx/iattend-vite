@@ -1,0 +1,199 @@
+/* Selector de color de las barras (ver ColorChooser.jsx). */
+
+.wrap {
+    width: 276px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modes {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 99px;
+    background: #F5F3F2;
+}
+
+.mode {
+    flex: 1;
+    height: 28px;
+    border: none;
+    border-radius: 99px;
+    background: transparent;
+    color: #787878;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.mode[data-on] {
+    background: #FFF;
+    color: #29262D;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #787878;
+}
+
+.row,
+.solids {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.solids {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    max-height: 196px;
+    overflow-y: auto;
+}
+
+.swatch {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+    cursor: pointer;
+}
+
+.solids .swatch {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+}
+
+.swatch[data-on] {
+    box-shadow: 0 0 0 2px #FFF, 0 0 0 4px #6D3CFA;
+}
+
+/* Sin color: blanco con diagonal roja. */
+.none {
+    background: linear-gradient(135deg, transparent 45%, #F3807C 45%, #F3807C 55%, transparent 55%), #FFF;
+}
+
+.area {
+    position: relative;
+    height: 140px;
+    border-radius: 12px;
+    background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #FFF, transparent);
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.area {
+    background-blend-mode: normal;
+}
+
+.area::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #FFF, rgba(255, 255, 255, 0));
+}
+
+.areaThumb,
+.hueThumb {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #FFF;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.hue {
+    position: relative;
+    height: 12px;
+    border-radius: 99px;
+    background: linear-gradient(to right, #F00, #FF0, #0F0, #0FF, #00F, #F0F, #F00);
+    cursor: pointer;
+    touch-action: none;
+}
+
+.hueThumb {
+    top: 50%;
+}
+
+.hexRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hexPreview {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+}
+
+.hexInput {
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid #E3E0DA;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12.5px;
+    color: #29262D;
+    outline: none;
+}
+
+.hexInput:focus {
+    border-color: #6D3CFA;
+}
+
+.iconBtn {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #E3E0DA;
+    border-radius: 10px;
+    background: #FFF;
+    color: #29262D;
+    cursor: pointer;
+}
+
+.iconBtn:hover {
+    background: #F5F3F2;
+}
+
+.more {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #16323d;
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.more svg[data-open] {
+    transform: rotate(90deg);
+}

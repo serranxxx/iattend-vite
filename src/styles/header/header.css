@@ -529,6 +529,12 @@
     gap: 8px;
 }
 
+/* Editor (/dashboard/build): el círculo de regresar (30px) va alineado con la
+   columna de herramientas de abajo (56px de ancho → centro a 28px). */
+.hd-bar[data-editing]:not([data-tier='xs']) .header-dashboard-container {
+    padding-left: 13px;
+}
+
 .hd-left,
 .hd-right {
     display: flex;
@@ -545,11 +551,11 @@
     flex: 0 0 auto;
 }
 
-/* Círculos de 34px: regresar (gris) y acciones (con borde) */
+/* Botones del header en tamaño chico (30px). Círculos: regresar (gris) y acciones (con borde) */
 .hd-circle {
     flex-shrink: 0;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     padding: 0;
     border-radius: 50%;
     border: none;
@@ -583,9 +589,10 @@
 }
 
 .hd-url .ant-btn {
-    height: 34px !important;
-    max-height: 34px !important;
-    padding: 0 16px;
+    height: 30px !important;
+    max-height: 30px !important;
+    padding: 0 14px;
+    font-size: 13px;
     font-weight: 500;
 }
 
@@ -598,8 +605,8 @@
 }
 
 .hd-url[data-icon] .ant-btn {
-    width: 34px;
-    min-width: 34px;
+    width: 30px;
+    min-width: 30px;
     padding: 0;
 }
 
@@ -645,7 +652,7 @@
 }
 
 .hd-title-page {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: #1B1B1B;
     white-space: nowrap;
@@ -667,12 +674,12 @@
     transform: none;
     left: auto;
     top: auto;
-    height: 34px;
+    height: 30px;
 }
 
 .hd-credits .coins_btn {
-    height: 28px;
-    width: 28px;
+    height: 24px;
+    width: 24px;
 }
 
 /* xs: sin la moneda, solo "155 +" */
@@ -692,13 +699,13 @@
 
 /* Recordatorios */
 .hd-reminders-pill {
-    height: 34px;
+    height: 30px;
     padding: 0 16px;
 }
 
 .hd-reminders-pill--icon {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     padding: 0;
     justify-content: center;
     flex-shrink: 0;
@@ -707,7 +714,7 @@
 /* Ayuda (completo) */
 .hd-help {
     flex-shrink: 0;
-    height: 34px;
+    height: 30px;
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -717,7 +724,7 @@
     background: #fff;
     color: #1B1B1B;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     transition: background .2s ease, border-color .2s ease;
 }
@@ -730,8 +737,14 @@
 /* Publicar (editor) */
 .hd-publish {
     position: relative;
-    height: 34px;
+    height: 30px;
     border-radius: 999px;
+}
+
+.hd-publish.ant-btn {
+    height: 30px;
+    padding: 0 14px;
+    font-size: 13px;
 }
 
 .hd-publish-dot {
@@ -774,7 +787,7 @@
     background: transparent;
     color: #1B1B1B;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     text-align: left;
     cursor: pointer;
 }
@@ -810,7 +823,7 @@
    y aviso de cambios sin escribir junto al breadcrumb ── */
 .hd-lang-pill {
     flex-shrink: 0;
-    height: 34px;
+    height: 30px;
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -820,7 +833,7 @@
     background: #FFFFFF;
     color: #29262D;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
 }
@@ -854,4 +867,11 @@
     .hd-dirty {
         display: none;
     }
+}
+
+/* Candado de la invitación abierto (pública): se marca para que se note. */
+.hd-circle.hd-circle--outline[data-on] {
+    background: #16323d;
+    border-color: #16323d;
+    color: #FFFFFF;
 }

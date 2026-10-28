@@ -1,0 +1,22 @@
+/* Miniaturas del selector de estilos de la Galería (ver GalleryStylePicker.jsx).
+   El contenedor, la cuadrícula y las tarjetas vienen de CountdownStylePicker.module.css. */
+
+.stage { position: relative; width: 90px; height: 60px; display: grid; place-items: center; }
+.stage > i { grid-area: 1 / 1; display: block; font-style: normal; background: #C9B79C center / cover; }
+
+.photo { width: 34px; height: 46px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25); }
+.fan { width: 28px; height: 38px; border: 2px solid #FFFFFF; border-radius: 3px; transform-origin: 50% 130%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+.pola { width: 34px; height: 42px; background: #FFFFFF !important; padding: 3px 3px 9px; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.22); }
+.pola b { display: block; width: 100%; height: 100%; background: #C9B79C center / cover; }
+.story { width: 28px; height: 40px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); }
+
+.film { display: flex; flex-direction: column; justify-content: space-between; gap: 3px; width: 92px; padding: 4px 0; background: #1B1B1B; border-radius: 2px; transform: rotate(-4deg); }
+.film > i { display: block; height: 3px; margin: 0 3px; background: repeating-linear-gradient(90deg, #F5F3F2 0 3px, transparent 3px 6px); opacity: 0.85; }
+.film > span { display: flex; gap: 3px; padding: 0 4px; }
+.film b { display: block; flex: 1; height: 30px; background: #C9B79C center / cover; border-radius: 1px; }
+
+.album { width: 50px; height: 64px; border-radius: 2px 6px 6px 2px; display: grid; place-items: center; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25), inset 3px 0 0 rgba(0, 0, 0, 0.08); }
+.album b { display: block; width: 26px; height: 32px; border: 2px solid #FFFFFF; background: #C9B79C center / cover; }
+
+.col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.col em { font-style: normal; font-size: 8px; font-weight: 600; padding: 2px 6px; border-radius: 99px; }

@@ -1,48 +1,20 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Popover, Tooltip } from 'antd'
+import { Tooltip } from 'antd'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-    BookUser, Camera, Feather, Gift, HeartHandshake,
-    MapPinned, MessageSquareHeart, ScanHeart, ScrollText, Shirt, Type, Undo2,
-} from 'lucide-react'
-import { TypographyPanel } from '../BuildSections/TypographyPanel'
+import { ScanHeart, Undo2 } from 'lucide-react'
+import { MODULES } from './moduleList'
 import styles from './ModuleOrder.module.css'
 
-// Orden de la invitación en el modo edición: columna junto a la pieza con la
-// "T" (tipografía de toda la invitación), deshacer (solo si llega `onUndo`; en
+// Orden de la invitación en el modo edición: columna junto a la pieza con
+// deshacer (solo si llega `onUndo`; en
 // el editor de escritorio va en el dock) y la pill de módulos con el
 // que se está editando resaltado. Arrastrar un módulo arriba o abajo reescribe
 // `generals.positions`. La portada siempre va primero: se muestra fija.
 // La columna completa se puede arrastrar al otro lado de la pieza.
 
-// Vidrio de los popovers del editor (mismo que EditCanvas).
-const FROST = {
-    background: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255, 255, 255, 0.65)',
-    borderRadius: 16,
-    boxShadow: '0 12px 32px rgba(12, 23, 27, 0.18)',
-    padding: 0,
-}
-
-// id de `generals.positions` → sección del editor, llave del módulo en la
-// invitación (para saber si está activo) e icono (los del menú de módulos).
-// Solo se ven los iconos; el nombre va en un tooltip.
-const MODULES = {
-    1: { type: 'greeting', key: 'greeting', Icon: HeartHandshake },
-    2: { type: 'family', key: 'people', Icon: BookUser },
-    3: { type: 'quote', key: 'quote', Icon: Feather },
-    4: { type: 'itinerary', key: 'itinerary', Icon: ScrollText },
-    5: { type: 'dresscode', key: 'dresscode', Icon: Shirt },
-    6: { type: 'gifts', key: 'gifts', Icon: Gift },
-    7: { type: 'destinations', key: 'destinations', Icon: MapPinned },
-    8: { type: 'notices', key: 'notices', Icon: MessageSquareHeart },
-    9: { type: 'gallery', key: 'gallery', Icon: Camera },
-}
 
 const Item = ({ id, label, icon, selected, hidden, onSelect }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
@@ -135,21 +107,6 @@ export const ModuleOrder = ({
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={startShift}
         >
-            {/* Tipografía de toda la invitación (títulos y cuerpo). */}
-            <Popover
-                trigger="click"
-                placement={side === 'right' ? 'rightTop' : 'leftTop'}
-                arrow={false}
-                rootClassName={styles.frostRoot}
-                styles={{ container: FROST }}
-                content={<div onMouseDown={(e) => e.stopPropagation()}><TypographyPanel invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} /></div>}
-            >
-                <Tooltip title={t('build_editor.typography')} placement="left" mouseEnterDelay={0.25}>
-                    <button type="button" className={styles.typeButton} aria-label={t('build_editor.typography')}>
-                        <Type size={14} strokeWidth={2.2} />
-                    </button>
-                </Tooltip>
-            </Popover>
             {/* Deshacer, debajo de la "T". */}
             {onUndo && (
                 <button
