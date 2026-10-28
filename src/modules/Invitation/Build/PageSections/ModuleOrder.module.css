@@ -1,0 +1,167 @@
+/* Orden de los módulos: columna (T, deshacer y la pill de vidrio con solo
+   iconos) a la izquierda de la pieza, centrada con la tarjeta (780px de alto
+   → 390px). */
+.stack {
+    position: absolute;
+    top: 390px;
+    right: calc(100% + 20px);
+    /* El lienzo se escala con el zoom; la columna no (mismo tamaño que la de
+       idioma y zoom de la derecha): se le aplica la escala inversa. Va dentro
+       del transform (después del translate) para que siga centrada. */
+    --inv-zoom: calc(1 / var(--canvas-zoom, 1));
+    transform: translateY(-50%) scale(var(--inv-zoom));
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transform-origin: right center;
+    animation: orderIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+/* Salida: se hace chica y se desvanece (EditCanvas la desmonta al terminar). */
+.stack[data-leaving] {
+    pointer-events: none;
+    animation: orderOut 0.16s ease-in forwards;
+}
+
+/* Del lado derecho de la invitación (se arrastra la columna para cambiarla). */
+.stack[data-side="right"] {
+    right: auto;
+    left: calc(100% + 20px);
+    transform-origin: left center;
+}
+
+/* Mientras se arrastra de lado: sigue al puntero, sin animación. */
+.stack[data-shifting] {
+    animation: none;
+    cursor: grabbing;
+    z-index: 30;
+}
+
+/* Entrada: crece desde un poco más chica con un leve rebote. */
+@keyframes orderIn {
+    from { opacity: 0; transform: translateY(-50%) scale(calc(var(--inv-zoom) * 0.85)); }
+    to { opacity: 1; transform: translateY(-50%) scale(var(--inv-zoom)); }
+}
+
+@keyframes orderOut {
+    from { opacity: 1; transform: translateY(-50%) scale(var(--inv-zoom)); }
+    to { opacity: 0; transform: translateY(-50%) scale(calc(var(--inv-zoom) * 0.85)); }
+}
+
+.panel {
+    /* Barra de 36px de ancho (botones de 32 + 2px por lado). */
+    width: 32px;
+    padding: 4px 2px;
+    box-sizing: content-box;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65), 0 8px 24px rgba(12, 23, 27, 0.12);
+}
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.item {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    color: #29262D;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* dnd-kit deja el foco en el módulo al soltarlo: sin el anillo del
+   navegador (el morado ya dice cuál es). */
+.item:focus {
+    outline: none;
+}
+
+.item:focus-visible {
+    box-shadow: 0 0 0 2px rgba(90, 46, 224, 0.45);
+}
+
+.item:hover {
+    background: rgba(90, 46, 224, 0.08);
+}
+
+.item[data-selected] {
+    background: #5A2EE0;
+    color: #FFFFFF;
+}
+
+/* Módulo apagado: sigue en la lista (se puede mover), pero tenue. */
+.item[data-hidden]:not([data-selected]) {
+    color: #B9B4AD;
+}
+
+.item[data-dragging] {
+    z-index: 1;
+    cursor: grabbing;
+    background: #FFFFFF;
+    box-shadow: 0 6px 16px rgba(12, 23, 27, 0.2);
+}
+
+.item[data-dragging][data-selected] {
+    background: #5A2EE0;
+}
+
+/* La portada no se mueve: va arriba, separada del resto. */
+.fixed {
+    cursor: pointer;
+}
+
+.divider {
+    width: 16px;
+    height: 1px;
+    margin: 3px 0;
+    background: rgba(41, 38, 45, 0.12);
+}
+
+/* "T" de tipografía y deshacer: círculos blancos del ancho de la pill. */
+.typeButton,
+.undoButton {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 99px;
+    border: none;
+    background: #FFFFFF;
+    color: #29262D;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(12, 23, 27, 0.12);
+}
+
+.typeButton:hover {
+    background: #FAF8FF;
+    color: #5A2EE0;
+}
+
+.undoButton:disabled {
+    color: #C9C6C0;
+    cursor: default;
+}
+
+/* Sin animación de entrada: con ella el blur del vidrio aparecía tarde. */
+.frostRoot {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}

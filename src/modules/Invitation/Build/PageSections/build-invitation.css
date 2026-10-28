@@ -4,12 +4,11 @@
     justify-content: flex-start;
     flex-direction: column;
     background-color: var(--ft-color);
-      background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 2px),
+    /* Tablero de puntitos (antes cuadrícula) sobre el degradado. */
+    background-image:
+        radial-gradient(circle, rgba(41, 38, 45, 0.16) 1.2px, transparent 1.6px),
         radial-gradient(ellipse at center, #e9e9e9, #FFFFFF);
-    background-size: 50px 50px, 50px 50px, 100% 100%;
-    /* Tamaño de la cuadrícula */
+    background-size: 22px 22px, 100% 100%;
 
 }
 
@@ -926,4 +925,27 @@
     font-size: 12px;
     opacity: 0.6;
     font-variant-numeric: tabular-nums;
+}
+
+/* Control del panel al que llevó un toque en la pieza (modo edición). */
+.build-field-flash {
+    animation: buildFieldFlash 1.4s ease;
+    border-radius: 8px;
+}
+
+@keyframes buildFieldFlash {
+    0%, 60% { box-shadow: 0 0 0 4px rgba(205, 190, 247, 0.65); }
+    100% { box-shadow: 0 0 0 4px rgba(205, 190, 247, 0); }
+}
+
+/* Arrastrando un elemento del editor a la pieza (layerItems.js): los iframes
+   no se tragan el puntero. */
+body[data-layer-drag],
+body[data-layer-drag] * {
+    cursor: grabbing !important;
+    user-select: none;
+}
+
+body[data-layer-drag] iframe {
+    pointer-events: none !important;
 }

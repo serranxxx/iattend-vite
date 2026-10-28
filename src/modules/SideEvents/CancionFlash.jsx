@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Input, message, Segmented } from 'antd'
 import { Upload, X } from 'lucide-react'
-import { SiSpotify } from 'react-icons/si'
+import { Music as SiSpotify } from 'lucide-react';
 import { useTranslation } from 'react-i18next'
 import { searchSpotifyTracks } from '../../helpers/services/spotify'
 import { uploadSongAudio } from '../../helpers/services/uploadAudio'

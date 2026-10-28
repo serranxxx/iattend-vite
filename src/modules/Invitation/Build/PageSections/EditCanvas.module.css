@@ -1,0 +1,212 @@
+/* Lienzo de edición de la invitación. Misma receta que SideCanvas (tarjeta
+   redondeada, chips de vidrio arriba, leyenda abajo), pero adentro va la
+   pieza real en un iframe. */
+
+.wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.card {
+    position: relative;
+    width: 390px;
+    height: 780px;
+    border-radius: 36px;
+    overflow: hidden;
+    box-sizing: border-box;
+    background-image: linear-gradient(to bottom, #EEE, #CCC);
+    box-shadow: 0 24px 60px rgba(12, 23, 27, 0.28), 0 2px 8px rgba(12, 23, 27, 0.12);
+}
+
+.screen {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+/* ── Chips de arriba (fondo · color del tema) ── */
+.chips {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.chip {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 170px;
+    height: 32px;
+    padding: 0 12px 0 6px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(12, 23, 27, 0.42);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.chip:hover {
+    background: rgba(12, 23, 27, 0.6);
+}
+
+.centerChip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    height: 38px;
+    padding: 0 16px 0 8px;
+    font-size: 13.5px;
+}
+
+.chipRight {
+    margin-left: auto;
+}
+
+.chipIcon {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.chipArt {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.chipSwatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.chipLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Ancla invisible sobre el botón "T" de la pieza: el popover de tipografía
+   del título se abre pegado a él. */
+.toolAnchor {
+    position: absolute;
+    z-index: 4;
+    pointer-events: none;
+}
+
+/* Popovers sobre la pieza: el vidrio va inline (FROST en EditCanvas.jsx).
+   Sin animación de entrada: mientras antd hace el zoom con opacidad, el
+   navegador no pinta el backdrop-filter y el blur aparecía tarde. Se montan
+   y desmontan enteros, así que tampoco hace falta la de salida. */
+.frostRoot {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+/* El contenido trae su propio fondo y sombra (panel): aquí van en el vidrio. */
+.frostRoot :global(.generals-settings-popup) {
+    background: transparent;
+    box-shadow: none;
+}
+
+.songPanel {
+    width: 320px;
+    padding: 14px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.panelTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1B1B1B;
+}
+
+.mediaPanel {
+    width: 340px;
+    padding: 14px;
+    box-sizing: border-box;
+}
+
+/* ── Leyenda bajo la pieza ── */
+.caption {
+    font-size: 11px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: #9A968E;
+    white-space: nowrap;
+}
+
+/* ── "Ver en vivo" ── */
+.livePill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 35px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: none;
+    background: #FFFFFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+    transition: background 0.2s, color 0.2s;
+}
+
+.liveDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: #C9C6C0;
+    transition: background 0.2s;
+}
+
+.livePillOn {
+    background: #16323d;
+    color: #FFFFFF;
+}
+
+.livePillOn .liveDot {
+    background: #43B75D;
+}
+
+/* Panel que se pone justo encima de lo que lo abrió (imágenes del
+   dresscode): centrado sobre ellas, 1.5× su ancho y del alto de su contenido. */
+.overPanel {
+    position: absolute;
+    z-index: 6;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+    box-sizing: border-box;
+}

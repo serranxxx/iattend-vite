@@ -1,6 +1,6 @@
 import { Input } from 'antd'
 import { useEffect, useState } from 'react';
-import { TbEyeClosed } from 'react-icons/tb';
+import { EyeOff as TbEyeClosed } from 'lucide-react';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 import { useTranslation } from 'react-i18next';
 

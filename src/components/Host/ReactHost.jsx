@@ -1,11 +1,17 @@
 // ReactHost.jsx
 import { useEffect, useMemo, useRef } from "react";
 
+// Remoto (Next): producción por defecto; en local, VITE_IATTEND_EVENTS_URL
+// (http://localhost:3000 en .env.local) — igual que SideEventHost y
+// SaveTheDateHost.
+const EVENTS_URL = import.meta.env.VITE_IATTEND_EVENTS_URL || "https://www.iattend.events";
+
 // Dominios permitidos del remoto (Next)
 const ALLOWED_ORIGINS = new Set([
   "https://www.iattend.events",
   "https://iattend.events",
   "http://localhost:3000",
+  new URL(EVENTS_URL).origin,
 ]);
 
 
@@ -14,6 +20,27 @@ export default function ReactHost({
   // Se llama una vez cuando el remoto avisa que ya cargó (REMOTE_READY). El
   // onboarding lo usa para quitar la portada de carga.
   onReady,
+  // Modo edición (EditCanvas): la pieza marca cada módulo como zona tocable y
+  // avisa cuál se eligió (REMOTE_SELECT_SECTION) y qué texto se escribió
+  // encima (REMOTE_FIELD_CHANGE). Ver docs/entorno-edicion.md.
+  editMode = false,
+  selectedSection = null,
+  onSelectSection,
+  onFieldChange,
+  // La pieza pidió abrir la herramienta de una parte (tipografía del título)
+  // y dice dónde está su botón, en px de la pieza.
+  onFieldTool,
+  // La pieza soltó la parte elegida de la portada sin elegir otra cosa.
+  onClearField,
+  // Se tocó cualquier parte de la pieza (para cerrar popovers del editor).
+  onPiecePointerDown,
+  // Sube cada vez que se toca el tablero fuera de la pieza: la pieza suelta
+  // los bloques elegidos (título, fecha…).
+  deselectSignal = 0,
+  // { section, n }: lleva la pieza a esa sección aunque ya sea la actual
+  // (p. ej. después de mover un módulo en la lista de orden). `n` cambia en
+  // cada pedido para que se repita.
+  scrollRequest = null,
 }) {
   const iframeRef = useRef(null);
   const lastSentHashRef = useRef("");
@@ -23,6 +50,16 @@ export default function ReactHost({
   const isFirstScrollRef = useRef(true);
 
   const onReadyRef = useRef(onReady);
+  const onSelectSectionRef = useRef(onSelectSection);
+  const onFieldChangeRef = useRef(onFieldChange);
+  const onFieldToolRef = useRef(onFieldTool);
+  useEffect(() => { onFieldToolRef.current = onFieldTool; }, [onFieldTool]);
+  const onClearFieldRef = useRef(onClearField);
+  useEffect(() => { onClearFieldRef.current = onClearField; }, [onClearField]);
+  const onPiecePointerDownRef = useRef(onPiecePointerDown);
+  useEffect(() => { onPiecePointerDownRef.current = onPiecePointerDown; }, [onPiecePointerDown]);
+  useEffect(() => { onSelectSectionRef.current = onSelectSection; }, [onSelectSection]);
+  useEffect(() => { onFieldChangeRef.current = onFieldChange; }, [onFieldChange]);
 
   useEffect(() => {
     onSectionChangeRef.current = onSectionChange;
@@ -34,7 +71,7 @@ export default function ReactHost({
 
   // URL del componente remoto: /shared/[invitation_label]/[invitation_name]
   const url = useMemo(() => {
-    return new URL("https://www.iattend.events/host/").toString();
+    return new URL("/host/", EVENTS_URL).toString();
   }, []);
 
   // Origin destino calculado desde la URL (soporta prod/local)
@@ -46,7 +83,7 @@ export default function ReactHost({
     if (!win) return;
 
     // hash simple para evitar re-envíos idénticos
-    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang });
+    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection });
     if (hash === lastSentHashRef.current && reason !== "ready") return;
     lastSentHashRef.current = hash;
 
@@ -58,6 +95,8 @@ export default function ReactHost({
           textureOverride: textureOverride ?? null,
           fontOverride: fontOverride ?? null,
           lang: activeLang ?? null,
+          editMode,
+          selectedSection,
           sentAt: Date.now(),
           reason,
         },
@@ -94,15 +133,80 @@ export default function ReactHost({
         lastReceivedSectionRef.current = ev.data.payload.section;
         onSectionChangeRef.current?.(ev.data.payload.section);
       }
+      // Modo edición: el organizador tocó un módulo o escribió sobre la pieza.
+      if (ev.data?.type === "REMOTE_SELECT_SECTION" && ev.data?.payload?.section) {
+        // La zona ya está a la vista: no hay que pedirle al remoto que scrollee.
+        lastReceivedSectionRef.current = ev.data.payload.section;
+        onSelectSectionRef.current?.(ev.data.payload.section, ev.data.payload.field ?? null);
+      }
+      if (ev.data?.type === "REMOTE_POINTER_DOWN") {
+        onPiecePointerDownRef.current?.();
+      }
+      if (ev.data?.type === "REMOTE_CLEAR_FIELD") {
+        onClearFieldRef.current?.();
+      }
+      if (ev.data?.type === "REMOTE_FIELD_TOOL" && ev.data?.payload?.field) {
+        onFieldToolRef.current?.(ev.data.payload.field, ev.data.payload.rect, ev.data.payload.section ?? 'cover');
+      }
+      // ⌘V con una imagen dentro de la pieza: el editor la sube como sticker.
+      if (ev.data?.type === "REMOTE_PASTE_IMAGE" && ev.data?.payload?.file) {
+        window.dispatchEvent(new CustomEvent("iattend-layer-paste", { detail: ev.data.payload }));
+      }
+      if (ev.data?.type === "REMOTE_FIELD_CHANGE" && ev.data?.payload?.path) {
+        onFieldChangeRef.current?.(ev.data.payload.path, ev.data.payload.value ?? "");
+      }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [targetOrigin, config, textureOverride, fontOverride, activeLang]);
+  }, [targetOrigin, config, textureOverride, fontOverride, activeLang, editMode, selectedSection]);
 
   // 2) Re-enviar cada que cambie `config`, `textureOverride` o el idioma activo
   useEffect(() => {
     postProps("config-change");
-  }, [config, textureOverride, fontOverride, activeLang, targetOrigin]);
+  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, targetOrigin]);
+
+  // 2·) Elementos sueltos arrastrados desde los paneles del editor
+  // (layerItems.js): el punto llega en px de la ventana y la pieza lo quiere
+  // en px de su documento (el lienzo está escalado por el zoom).
+  useEffect(() => {
+    if (!editMode) return;
+    const post = (type, payload) => iframeRef.current?.contentWindow?.postMessage({ type, payload }, targetOrigin);
+    const toLocal = (p) => {
+      const iframe = iframeRef.current;
+      if (!iframe || !p) return null;
+      const r = iframe.getBoundingClientRect();
+      if (p.x < r.left || p.x > r.right || p.y < r.top || p.y > r.bottom) return null;
+      const scale = r.width / (iframe.clientWidth || r.width);
+      return { x: (p.x - r.left) / scale, y: (p.y - r.top) / scale };
+    };
+    let hovering = false;
+    const onHover = (e) => {
+      const local = toLocal(e.detail);
+      if (local) { hovering = true; post("HOST_LAYER_HOVER", local); }
+      else if (hovering) { hovering = false; post("HOST_LAYER_HOVER", null); }
+    };
+    const onDrop = (e) => {
+      hovering = false;
+      const local = toLocal(e.detail);
+      if (local) post("HOST_LAYER_DROP", { ...local, item: e.detail.item });
+      else post("HOST_LAYER_HOVER", null);
+    };
+    const onAdd = (e) => post("HOST_LAYER_ADD", e.detail);
+    window.addEventListener("iattend-layer-hover", onHover);
+    window.addEventListener("iattend-layer-drop", onDrop);
+    window.addEventListener("iattend-layer-add", onAdd);
+    return () => {
+      window.removeEventListener("iattend-layer-hover", onHover);
+      window.removeEventListener("iattend-layer-drop", onDrop);
+      window.removeEventListener("iattend-layer-add", onAdd);
+    };
+  }, [editMode, targetOrigin]);
+
+  // 2a) Tocar fuera de la pieza: soltar lo elegido adentro.
+  useEffect(() => {
+    if (!editMode || !deselectSignal) return;
+    iframeRef.current?.contentWindow?.postMessage({ type: "HOST_DESELECT" }, targetOrigin);
+  }, [deselectSignal, editMode, targetOrigin]);
 
   // 2b) Pedir auto-scroll cada que cambie la sección activa en el builder.
   // El primer mount no debe reenviar la sección inicial ("cover"): el remoto ya abre
@@ -126,6 +230,12 @@ export default function ReactHost({
     lastSentSectionRef.current = scrollToSection;
     postScrollTo(scrollToSection);
   }, [scrollToSection, targetOrigin]);
+
+  useEffect(() => {
+    if (!scrollRequest?.section) return;
+    lastSentSectionRef.current = scrollRequest.section;
+    postScrollTo(scrollRequest.section);
+  }, [scrollRequest?.n]);
 
   // 3) (Opcional) al cargar/navegar el iframe, vuelve a enviar
   useEffect(() => {

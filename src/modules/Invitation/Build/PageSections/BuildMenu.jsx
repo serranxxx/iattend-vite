@@ -7,7 +7,7 @@ import { BuildDestinations } from '../BuildSections/BuildDestinations';
 import './build-invitation.css'
 import { useState } from 'react';
 import { Button, Grid } from 'antd';
-import { LuChevronsLeft, LuChevronDown, LuChevronUp } from 'react-icons/lu';
+import { ChevronsLeft as LuChevronsLeft, ChevronDown as LuChevronDown, ChevronUp as LuChevronUp } from 'lucide-react';
 import { ArrowRight, Bookmark } from 'lucide-react';
 
 const { useBreakpoint } = Grid;

@@ -6,8 +6,8 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { createPortal } from "react-dom"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from 'react-router-dom';
-import { LuArrowLeft, LuBadgeHelp, LuCheck, LuClipboard, LuClipboardCheck, LuFolderHeart, LuFolderOpen, LuLink, LuLogOut, LuMenu, LuPlus, LuSendHorizontal, LuShield, LuShieldCheck, LuTriangleAlert, LuUpload, LuX } from "react-icons/lu"
-import { IoClose, } from "react-icons/io5"
+import { ArrowLeft as LuArrowLeft, BadgeHelp as LuBadgeHelp, Check as LuCheck, Clipboard as LuClipboard, ClipboardCheck as LuClipboardCheck, FolderHeart as LuFolderHeart, FolderOpen as LuFolderOpen, Link as LuLink, LogOut as LuLogOut, Menu as LuMenu, Plus as LuPlus, SendHorizontal as LuSendHorizontal, Shield as LuShield, ShieldCheck as LuShieldCheck, TriangleAlert as LuTriangleAlert, Upload as LuUpload, X as LuX } from 'lucide-react';
+import { X as IoClose } from 'lucide-react';
 import { supabase } from "../../lib/supabase";
 import { CustomLink } from "../../components/CustomLink/CustomLink";
 import { Bell, ChevronDown, CircleQuestionMark, Forward, Menu, MessageCircle, MoreHorizontal, QrCode, Share, Sparkles } from "lucide-react";
@@ -207,7 +207,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
         </>
     )
 }
-export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges, sideEventName, onSideEventsBack, onOpenReminders }) => {
+export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges, sideEventName, onSideEventsBack, onOpenReminders, languagePicker }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -760,6 +760,14 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             <Breadcrumb className="hd-breadcrumb" items={breadcrumbItems} />
                         )}
 
+                        {/* Editor de escritorio: aviso de cambios sin escribir. */}
+                        {languagePicker && hasUnsavedChanges && (
+                            <span className="hd-dirty">
+                                <span className="hd-dirty-dot" />
+                                {t('dashboard_header.unsaved_label')}
+                            </span>
+                        )}
+
                         {(tier === 'md' || tier === 'sm') && (
                             <span className="hd-page">{pageName ?? eventTitle}</span>
                         )}
@@ -805,6 +813,9 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 </Tooltip>
                             )
                         )}
+
+                        {/* Idioma que se edita (editor de escritorio). */}
+                        {languagePicker}
 
                         {!inMenu && (
                             <Dropdown

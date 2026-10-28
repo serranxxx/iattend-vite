@@ -1,8 +1,8 @@
 import { Button, Col, Empty, Input,} from 'antd'
 import { useTranslation } from 'react-i18next'
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
-import { IoMdAdd } from 'react-icons/io';
-import { TbEyeClosed } from 'react-icons/tb';
+import { Plus as IoMdAdd } from 'lucide-react';
+import { EyeOff as TbEyeClosed } from 'lucide-react';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 
 

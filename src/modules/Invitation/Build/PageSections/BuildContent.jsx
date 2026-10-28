@@ -4,13 +4,13 @@ import { Button, Dropdown, Grid, Slider, Tooltip } from 'antd';
 import 'react-resizable/css/styles.css';
 
 const { useBreakpoint } = Grid;
-import ios_settings from '../../../../assets/images/iphone-settings.svg'
-import android_settings from '../../../../assets/images/android-settings.png'
 import ReactHost from '../../../../components/Host/ReactHost';
-import { LuArrowLeft, LuMinus, LuMonitorSmartphone, LuPlus, LuRedo2, LuUndo2 } from 'react-icons/lu';
-import { ChevronLeft, CircleHelp, Ellipsis, Mic, Search } from 'lucide-react';
+import { ArrowLeft as LuArrowLeft, Minus as LuMinus, MonitorSmartphone as LuMonitorSmartphone, Plus as LuPlus, Redo2 as LuRedo2, Undo2 as LuUndo2 } from 'lucide-react';
+import { CircleHelp } from 'lucide-react';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { LanguageSelector } from '../../../../components/LanguageSelector/LanguageSelector';
+import { EditCanvas, LivePill } from './EditCanvas';
+import { DevicePreview } from './DevicePreview';
 
 
 
@@ -40,6 +40,12 @@ export const BuildContent = ({
     // Onboarding: aviso de que el iframe cargó y una capa encima de la pantalla
     // (la portada de carga) mientras tanto.
     onHostReady, hostOverlay,
+    // Entorno de edición (escritorio): con `live` apagado la pieza se muestra
+    // plana y editable (EditCanvas); prendido, dentro del teléfono como la ve
+    // el invitado. Si no llega `onToggleLive` (preview, laboratorio) solo
+    // existe el teléfono.
+    live = true, onToggleLive, selectedSection, onSelectSection, onFieldChange,
+    selectedField, onClearField, onCanvasBlur, deselectSignal = 0, setInvitation, setSaved,
 }) => {
 
     const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
@@ -89,7 +95,12 @@ export const BuildContent = ({
         (pantalla || (invitation && positionY)) && !coverUpdated ?
             <>
 
-                <div onClick={screens.xs ? () => !onHide ? setOnHide(true) : () => {} : () => {}} className='web-devices device-container'
+                <div
+                    onClick={screens.xs ? () => !onHide ? setOnHide(true) : () => {} : () => {}}
+                    // Modo edición: tocar el tablero fuera de la pieza (y fuera de los
+                    // popovers) suelta lo elegido adentro, como en los Eventos Flash.
+                    onPointerDown={!live && onToggleLive ? (e) => { if (!e.target.closest('[data-tour="preview"], [data-edit-keep], .ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-color-picker')) onCanvasBlur?.() } : undefined}
+                    className='web-devices device-container'
                     style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         flexDirection: 'column',
@@ -106,6 +117,8 @@ export const BuildContent = ({
                         !screens.xs &&
                     
                     <div className='tools-settings-menu-container'>
+
+                        {onToggleLive && <LivePill on={live} onToggle={onToggleLive} />}
 
                         {onUndo && (
                             <Button
@@ -226,75 +239,31 @@ export const BuildContent = ({
                             top: `${mapPosition.y}px`,
                             left: `${mapPosition.x}px`,
                         }}>
-                        {currentDevice === 'ios' ? (
-                            /* iPhone 17 Pro · Safari a pantalla completa: el contenido ocupa
-                               toda la pantalla y la isla, el status y el nav flotan encima. */
-                            <div className='ios26-device' data-tour="preview">
-                                <div className='ios26-buttons'>
-                                    <span />
-                                    <span />
-                                    <span />
-                                </div>
-                                <div className='ios26-power' />
-
-                                <div className='ios26-screen'>
-                                    <div ref={scrollableContentRef} className='scroll-invitation ios26-content'>
-                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} />}
-                                    </div>
-
-                                    {hostOverlay}
-
-                                    <div className='ios26-island' />
-
-                                    <div className='ios26-status'>
-                                        <span>9:41</span>
-                                        <img alt='' src={ios_settings} />
-                                    </div>
-
-                                    <div className='ios26-nav'>
-                                        <div className='ios26-nav-round'>
-                                            <ChevronLeft size={20} strokeWidth={2.4} />
-                                        </div>
-                                        <div className='ios26-nav-pill'>
-                                            <Search size={16} strokeWidth={2.4} />
-                                            <span>iattend.mx</span>
-                                            <Mic size={16} strokeWidth={2.4} />
-                                        </div>
-                                        <div className='ios26-nav-round'>
-                                            <Ellipsis size={20} strokeWidth={2.4} />
-                                        </div>
-                                    </div>
-
-                                    <div className='ios26-home' />
-                                </div>
-                            </div>
+                        {!live && !screens.xs && onToggleLive ? (
+                            <EditCanvas
+                                invitation={invitation}
+                                invitationID={invitationID}
+                                selectedSection={selectedSection}
+                                onSelectSection={onSelectSection}
+                                onFieldChange={onFieldChange}
+                                scrollToSection={positionY}
+                                onSectionChange={onSectionChange}
+                                textureOverride={textureOverride}
+                                fontOverride={fontOverride}
+                                activeLang={activeLang}
+                                onHostReady={onHostReady}
+                                deselectSignal={deselectSignal}
+                                selectedField={selectedField}
+                                onClearField={onClearField}
+                                setInvitation={setInvitation}
+                                setSaved={setSaved}
+                                onUndo={onUndo}
+                                canUndo={canUndo}
+                            />
                         ) : (
-                            <div className={`inv-device-main-container-${currentDevice}`} data-tour="preview" >
-                                <div className={`device-buttons-container-${currentDevice}`}>
-                                    <div className={`device-button-${currentDevice}`} />
-                                    <div className={`device-button-${currentDevice}`} />
-                                    <div className={`device-button-${currentDevice}`} />
-                                </div>
-                                <div className={`device-power-button-${currentDevice}`} />
-                                <div className={`inv-device-container-${currentDevice} scroll-invitation`}>
-
-                                    <div className={`inv-black-space-${currentDevice}`}>
-                                        <span>5:15</span>
-                                        <div className={`camera-${currentDevice}`} />
-                                        <div>
-                                            <img alt='' src={android_settings} style={{
-                                                height: '100%', objectFit: 'cover'
-                                            }} />
-                                        </div>
-                                    </div>
-
-                                    <div ref={scrollableContentRef} className={`scroll-invitation ${currentDevice}-invitation `}>
-                                        {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} />}
-
-                                    </div>
-                                    <div className={`inv-light-space-${currentDevice}`} />
-                                </div>
-                            </div>
+                            <DevicePreview device={currentDevice} hostOverlay={hostOverlay} scrollRef={scrollableContentRef}>
+                                {pantalla ?? <ReactHost config={invitation} onHide={onHide} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} />}
+                            </DevicePreview>
                         )}
                     </div>
 

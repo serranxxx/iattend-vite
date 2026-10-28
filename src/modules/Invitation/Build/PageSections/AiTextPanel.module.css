@@ -1,0 +1,187 @@
+/* Panel "Texto con Lia" (ver AiTextPanel.jsx). Medidas del handoff. */
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chip {
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid #EBEBEB;
+    border-radius: 99px;
+    background: #FFF;
+    color: #29262D;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.chip:hover {
+    background: #F7F6F3;
+}
+
+.chip[data-on] {
+    background: #16323d;
+    border-color: #16323d;
+    color: #FFF;
+}
+
+.promptBox {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #EBEBEB;
+    border-radius: 16px;
+    transition: border-color 0.15s ease;
+}
+
+.promptBox:focus-within {
+    border-color: #16323d;
+}
+
+.prompt {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    background: none;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #29262D;
+}
+
+.prompt::placeholder {
+    color: #9A968E;
+}
+
+.tones {
+    display: flex;
+    gap: 6px;
+}
+
+.tone {
+    height: 24px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 99px;
+    background: #F5F3F2;
+    color: #787878;
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tone[data-on] {
+    background: #EFEAFF;
+    color: #6D3CFA;
+}
+
+.cta {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 99px;
+    background: linear-gradient(to right, #16323d, #61747B);
+    color: #FFF;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.cta:hover {
+    opacity: 0.92;
+}
+
+.cta:disabled {
+    cursor: progress;
+    opacity: 0.75;
+}
+
+.spin {
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Resultados ── */
+.result {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background: #F5F3F2;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.result:hover {
+    background: #EFEAFF;
+}
+
+.result[data-busy] {
+    opacity: 0.6;
+}
+
+.resultText {
+    display: flex;
+    gap: 6px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #29262D;
+    white-space: pre-wrap;
+}
+
+.grip {
+    flex: none;
+    margin-top: 3px;
+    color: #C9C6C0;
+}
+
+.resultActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.another,
+.use {
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.another {
+    background: #FFF;
+    color: #29262D;
+}
+
+.another:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.use {
+    background: #16323d;
+    color: #FFF;
+}

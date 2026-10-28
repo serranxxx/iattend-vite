@@ -2,12 +2,12 @@ import { Button, Drawer, Input, message, Select, Dropdown, } from 'antd'
 import { useTranslation } from 'react-i18next'
 
 import { useEffect, useState } from 'react';
-import { LuArrowUpRight, LuCheck, LuGripVertical } from 'react-icons/lu';
+import { ArrowUpRight as LuArrowUpRight, Check as LuCheck, GripVertical as LuGripVertical } from 'lucide-react';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
-import { IoMdAdd } from 'react-icons/io';
-import { TbEyeClosed } from 'react-icons/tb';
+import { Plus as IoMdAdd } from 'lucide-react';
+import { EyeOff as TbEyeClosed } from 'lucide-react';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
-import { LuX } from 'react-icons/lu';
+import { X as LuX } from 'lucide-react';
 import {
     DndContext,
     closestCenter,

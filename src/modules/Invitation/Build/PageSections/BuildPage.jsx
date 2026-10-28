@@ -8,6 +8,7 @@ import { HeaderDashboard } from '../../../Header/Header'
 import { ButtonsMenu } from './ButtonsMenu'
 import { BuildMenu } from './BuildMenu'
 import { BuildContent } from './BuildContent'
+import { EditorWorkspace } from './EditorWorkspace'
 import { BuildTour, BUILD_TOUR_STORAGE_KEY } from './BuildTour'
 import { load } from '../../../../helpers/assets/images'
 import { useSearchParams } from 'react-router-dom'
@@ -275,6 +276,16 @@ export const BuildPage = () => {
     const [invitation, setInvitation] = useState(null)
     const [plan, setPlan] = useState(null)
     const [saved, setSaved] = useState(true);
+    // Entorno de edición: false = lienzo editable (EditCanvas); true = la pieza
+    // dentro del teléfono, como la ve el invitado. Ver docs/entorno-edicion.md.
+    const [live, setLive] = useState(false)
+    // Parte de la portada elegida en la pieza (title / date / null) y la señal
+    // que suelta lo elegido al tocar el tablero fuera de la pieza.
+    const [selectedField, setSelectedField] = useState(null)
+    const [deselectSignal, setDeselectSignal] = useState(0)
+    // Último texto escrito sobre la pieza: mientras se sigue tecleando el
+    // mismo campo no se apila un paso de deshacer por letra.
+    const inlineEditRef = useRef({ path: null, at: 0 })
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
     // Catálogo de admin: carga en memoria una copia de otra invitación, sin
@@ -324,9 +335,9 @@ export const BuildPage = () => {
         return copy
     }
 
-    const setActiveField = (updater) => {
+    const setActiveField = (updater, { snapshot = true } = {}) => {
         const previous = getActiveInvitation()
-        if (previous) {
+        if (previous && snapshot) {
             setUndoStack(prev => {
                 const next = [...prev, previous]
                 return next.length > UNDO_LIMIT ? next.slice(next.length - UNDO_LIMIT) : next
@@ -344,6 +355,60 @@ export const BuildPage = () => {
             return { ...prev, [activeLang]: { ...current, content: nextContent } }
         })
         setSaved(false)
+    }
+
+    // Texto escrito directo sobre la pieza (modo edición): `path` es la ruta
+    // del campo en la invitación, p. ej. "cover.title.text.value".
+    const setFieldByPath = (path, value) => {
+        const now = Date.now()
+        const same = inlineEditRef.current.path === path && now - inlineEditRef.current.at < 1500
+        inlineEditRef.current = { path, at: now }
+        const keys = path.split('.')
+        setActiveField((prev) => {
+            // Copia solo el camino hasta el campo; las listas (p. ej.
+            // notices.notices.2) se copian como listas, no como objetos.
+            const next = { ...prev }
+            let cursor = next
+            keys.slice(0, -1).forEach((key) => {
+                const child = cursor[key]
+                cursor[key] = Array.isArray(child) ? [...child] : { ...(child ?? {}) }
+                cursor = cursor[key]
+            })
+            cursor[keys[keys.length - 1]] = value
+            return next
+        }, { snapshot: !same })
+        setSaved(false)
+    }
+
+    // Tocar un módulo en la pieza: abre su panel y detiene el seguimiento del
+    // scroll hasta que el usuario vuelva a mover la pieza. Con `field` (título,
+    // fecha, imagen de la portada…) además lleva al control de ese campo en el
+    // panel (`data-build-field="seccion.campo"`) y lo resalta; el de imagen
+    // abre el selector de imágenes directo.
+    const selectFromCanvas = (type, field = null) => {
+        previewSyncLocked.current = true
+        selectSection(type)
+        setSelectedField(type === 'cover' ? field : null)
+        // Tocar la pieza no abre el panel: solo marca el módulo (si el panel
+        // ya está abierto, cambia a ese módulo). La fecha tiene su popover
+        // sobre la pieza (CoverDateStyle); el panel solo se abre para el
+        // fondo (selector de imágenes).
+        if (field === 'image') setOnHide(false)
+        if (!field || field === 'date') return
+        setTimeout(() => {
+            const el = document.querySelector(`[data-build-field="${type}.${field}"]`)
+            if (!el) return
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+            el.classList.add('build-field-flash')
+            setTimeout(() => el.classList.remove('build-field-flash'), 1400)
+            if (field === 'image') el.querySelector('button')?.click()
+            if (field === 'date') el.parentElement?.querySelector('.ant-picker input')?.click()
+        }, 120)
+    }
+
+    const onCanvasBlur = () => {
+        setSelectedField(null)
+        setDeselectSignal((n) => n + 1)
     }
 
     const applyHistoryEntry = (content) => {
@@ -942,7 +1007,40 @@ export const BuildPage = () => {
                 copy ?
                     <Layout className='main-build-layout' style={{ minHeight: '100vh', overflow: 'clip' }}>
 
-                        <HeaderDashboard saved={saved} mode={'edit'} onSaveChanges={onSaveChanges} session={session} onWriteChanges={onWriteChanges} />
+                        <HeaderDashboard
+                            saved={saved} mode={'edit'} onSaveChanges={onSaveChanges} session={session} onWriteChanges={onWriteChanges}
+                        />
+
+                        {/* Escritorio: área de trabajo del handoff "Editor Workspace"
+                            (riel, lienzo, Secciones y dock). El celular sigue con
+                            la barra de módulos y el panel de formularios. */}
+                        {tourAvailable ? (
+                            <EditorWorkspace
+                                invitation={getActiveInvitation()}
+                                invitationID={id}
+                                positionY={positionY}
+                                onSectionChange={handleSectionChange}
+                                activeLang={activeLang}
+                                live={live}
+                                setLive={setLive}
+                                device={device}
+                                setDevice={setDevice}
+                                onUndo={onUndo}
+                                onRedo={onRedo}
+                                canUndo={undoStack.length > 0}
+                                canRedo={redoStack.length > 0}
+                                onReplayTour={() => { setLive(false); setTourOpen(true) }}
+                                selectedSection={buttons[currentSection - 1]?.type ?? null}
+                                onSelectSection={selectFromCanvas}
+                                onFieldChange={setFieldByPath}
+                                selectedField={selectedField}
+                                onClearField={() => setSelectedField(null)}
+                                onCanvasBlur={onCanvasBlur}
+                                deselectSignal={deselectSignal}
+                                setInvitation={setActiveField}
+                                setSaved={setSaved}
+                            />
+                        ) : (
 
 
                         <div className='build-componentes-container' style={{ margin: '0px', position: 'relative', justifyContent: 'flex-start' }}>
@@ -970,10 +1068,16 @@ export const BuildPage = () => {
                                 languages={copy?.generals?.languages ?? []} disabledLanguages={copy?.generals?.disabledLanguages ?? []} activeLang={activeLang} onActiveLangChange={setActiveLang}
                                 onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating}
                                 onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0}
-                                onReplayTour={tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen} />
+                                onReplayTour={tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen}
+                                live={live} onToggleLive={() => setLive((v) => !v)}
+                                selectedSection={buttons[currentSection - 1]?.type ?? null}
+                                onSelectSection={selectFromCanvas} onFieldChange={setFieldByPath}
+                                selectedField={selectedField} onClearField={() => setSelectedField(null)} onCanvasBlur={onCanvasBlur} deselectSignal={deselectSignal}
+                                setInvitation={setActiveField} setSaved={setSaved} />
                             </div>
 
                         </div>
+                        )}
 
 
                         <UpgradeBanner plan={plan} invitationId={id} floating={false} hideOnMobile />

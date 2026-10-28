@@ -1,9 +1,9 @@
 import { Button, Input, Select,} from 'antd'
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IoMdAdd } from 'react-icons/io';
-import { RiDeleteBack2Line } from 'react-icons/ri';
-import { TbEyeClosed } from 'react-icons/tb';
+import { Plus as IoMdAdd } from 'lucide-react';
+import { Delete as RiDeleteBack2Line } from 'lucide-react';
+import { EyeOff as TbEyeClosed } from 'lucide-react';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 import { useGiftBrands } from '../../../../hooks/useGiftBrands';
 

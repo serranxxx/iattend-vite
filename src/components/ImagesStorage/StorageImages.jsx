@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './storage-images.css'
 import { Button, Dropdown, Empty, Tabs } from 'antd'
-import { LuImageOff, LuImagePlus, LuUpload } from 'react-icons/lu'
+import { ImageOff as LuImageOff, ImagePlus as LuImagePlus, Upload as LuUpload } from 'lucide-react';
 import { deleteImageFromSupabase, deleteVideoFromSupabase, getCoversFromSubapase, getDresscodesFromSupabase, getImagesFromSupabase, getQuotesFromSubapase, getVideosFromSupabase, uploadEventVideo, uploadImagesSupabase } from '../../helpers/services/uploadImage'
 import BottomSheet from '../BottomSheet/BottomSheet'
 

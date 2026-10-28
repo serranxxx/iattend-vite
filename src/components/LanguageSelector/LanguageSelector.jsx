@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Divider, Dropdown, Input, Popconfirm, Spin, Switch, Tooltip, message } from 'antd'
-import { Check, Languages, RefreshCw, Search } from 'lucide-react'
+import { Check, ChevronDown, Languages, RefreshCw, Search } from 'lucide-react'
 import { fetchDeepLLanguages } from '../../helpers/services/translationApi'
 import { POPULAR_LANGUAGES, flagForLanguage } from '../../helpers/services/languageFlags'
 
@@ -15,6 +15,9 @@ export const LanguageSelector = ({
     onToggleLanguageEnabled,
     onRetranslate,
     translating,
+    // "pill": píldora con el idioma que se edita (header del editor de
+    // escritorio). Sin esto, el botón redondo de siempre.
+    variant,
 }) => {
 
     const [open, setOpen] = useState(false)
@@ -68,8 +71,8 @@ export const LanguageSelector = ({
 
             <Dropdown
                 trigger={['click']}
-                placement='bottomLeft'
-                arrow
+                placement={variant === 'pill' ? 'bottomRight' : 'bottomLeft'}
+                arrow={variant !== 'pill'}
                 open={open}
                 onOpenChange={setOpen}
                 popupRender={() => (
@@ -196,10 +199,18 @@ export const LanguageSelector = ({
                     </div>
                 )}
             >
-                <Button
-                    className={activeLang ? 'primarybutton--active' : 'full-screen-button'}
-                    icon={<Languages size={16} style={{ marginTop: '2px' }} />}
-                />
+                {variant === 'pill' ? (
+                    <button type="button" className="hd-lang-pill">
+                        <Languages size={16} />
+                        <span>{activeLang ? labelForCode(activeLang) : 'Español'}</span>
+                        <ChevronDown size={14} color="#787878" />
+                    </button>
+                ) : (
+                    <Button
+                        className={activeLang ? 'primarybutton--active' : 'full-screen-button'}
+                        icon={<Languages size={16} style={{ marginTop: '2px' }} />}
+                    />
+                )}
             </Dropdown>
         </>
     )

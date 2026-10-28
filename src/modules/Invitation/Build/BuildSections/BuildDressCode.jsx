@@ -2,12 +2,12 @@ import { Button, ColorPicker, Empty, Input, Tooltip, message } from 'antd'
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
-import { LuImage, LuImageOff, LuLink, LuLink2Off } from 'react-icons/lu';
+import { Image as LuImage, ImageOff as LuImageOff, Link as LuLink, Link2Off as LuLink2Off } from 'lucide-react';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
-import { IoMdAdd } from 'react-icons/io';
-import { TbEyeClosed } from 'react-icons/tb';
-import { RiDeleteBack2Line } from 'react-icons/ri';
+import { Plus as IoMdAdd } from 'lucide-react';
+import { EyeOff as TbEyeClosed } from 'lucide-react';
+import { Delete as RiDeleteBack2Line } from 'lucide-react';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 import { Plus } from 'lucide-react';
 

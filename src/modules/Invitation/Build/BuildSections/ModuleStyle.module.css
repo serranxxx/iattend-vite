@@ -1,0 +1,466 @@
+/* Paneles de fondo y separador de un módulo (popovers sobre la pieza). */
+
+.panel {
+    width: 300px;
+    padding: 14px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1B1B1B;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: opacity 0.2s ease;
+}
+
+/* Efecto apagado: los ajustes se ven pero no se usan. */
+.body[data-off] {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 28px;
+}
+
+.label {
+    flex-shrink: 0;
+    width: 72px;
+    font-size: 12px;
+    color: #7A746F;
+}
+
+.control {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sliderWrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.slider {
+    flex: 1;
+    margin: 0 4px !important;
+}
+
+.value {
+    flex-shrink: 0;
+    width: 40px;
+    text-align: right;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: #1B1B1B;
+}
+
+.colorRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.link {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 12px;
+    color: #5A2EE0;
+    cursor: pointer;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.segmented {
+    border-radius: 999px;
+    padding: 3px;
+}
+
+.segmented :global(.ant-segmented-item) {
+    border-radius: 999px;
+}
+
+/* Separadores regulares: lista con scroll para elegir uno. */
+.sepGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.sepOption {
+    /* sin esto la lista (flex en columna con alto máximo) encogía cada opción */
+    flex-shrink: 0;
+    height: 56px;
+    border-radius: 12px;
+    border: 1.5px solid #ECEAE6;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+/* El separador dibuja su SVG a todo lo ancho: aquí se acota a la opción. */
+.sepOption > * {
+    width: 100%;
+    max-height: 44px;
+}
+
+.sepOption svg {
+    max-height: 44px;
+    width: 100%;
+}
+
+.sepOption:hover {
+    border-color: #D6D2CC;
+}
+
+.sepOption[data-on] {
+    border-color: #5A2EE0;
+    background: #FAF8FF;
+}
+
+.sepImage {
+    position: relative;
+    height: 90px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #F4F3F0;
+}
+
+.sepImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Acción secundaria en el encabezado (p. ej. "Ocultar" de la fecha). */
+.ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.6);
+    font-family: inherit;
+    font-size: 12px;
+    color: #29262D;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ghost:hover {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.datePicker {
+    width: 100%;
+    border-radius: 12px;
+}
+
+/* Fila aparte al pie del panel (p. ej. "Invertir color"). */
+.divided {
+    padding-top: 12px;
+    border-top: 1px solid rgba(41, 38, 45, 0.08);
+}
+
+.labelWide {
+    font-size: 13px;
+    color: #1B1B1B;
+}
+
+.addressInput {
+    width: 100%;
+    height: 36px !important;
+    border-radius: 99px;
+    padding: 0 14px !important;
+    border: 1px solid #ECEAE6;
+    background: rgba(255, 255, 255, 0.85);
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.addressInput:focus {
+    border-color: #5A2EE0;
+}
+
+.addressGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.addressWide {
+    grid-column: 1 / -1;
+}
+
+/* Campos de "Agregar manual": aparecen con una entrada suave. */
+.manualFields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    animation: manualIn 0.28s ease-out;
+}
+
+@keyframes manualIn {
+    from { opacity: 0; max-height: 0; transform: translateY(-6px); }
+    to { opacity: 1; max-height: 320px; transform: none; }
+}
+
+.addressGrid :global(.ant-input) {
+    border-radius: 99px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+/* Imágenes del dresscode: fila con scroll horizontal. */
+.imagesPanel {
+    /* Ocupa el ancho del panel que se pone sobre las imágenes de la pieza. */
+    width: 100%;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.thumbRow {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 14px 14px;
+}
+
+.thumb,
+.thumbAdd {
+    position: relative;
+    flex-shrink: 0;
+    /* 3:4, como antes, un poco más grandes. */
+    width: 104px;
+    height: 138px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #F4F3F0;
+}
+
+.thumb {
+    cursor: grab;
+    touch-action: none;
+}
+
+.thumb[data-selected],
+.thumb[data-dragging] {
+    /* Como el título de la portada: borde lavanda con halo. */
+    overflow: visible;
+    outline: 2px solid #CDBEF7;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 10px rgba(205, 190, 247, 0.22);
+}
+
+.thumb[data-selected] img,
+.thumb[data-dragging] img {
+    border-radius: inherit;
+}
+
+.thumb[data-dragging] {
+    z-index: 2;
+    cursor: grabbing;
+    box-shadow: 0 8px 20px rgba(12, 23, 27, 0.2);
+}
+
+.thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.thumbRemove {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 99px;
+    border: none;
+    background: #FFFFFF;
+    color: #E5484D;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(12, 23, 27, 0.25);
+}
+
+.thumbAdd {
+    border: 2px dashed #D6D2CC;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #5A2EE0;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.thumbAdd:hover {
+    border-color: #5A2EE0;
+    background: #FAF8FF;
+}
+
+/* El panel que flota sobre las imágenes de la pieza va todo a 1.5×
+   (sin `transform: scale`, que descuadra el arrastre de dnd-kit). */
+.imagesPanelLarge {
+    padding: 6px;
+}
+
+.imagesPanelLarge .thumbRow {
+    /* Aire para el borde y el halo de la imagen elegida. */
+    gap: 18px;
+    padding: 20px 20px;
+}
+
+.imagesPanelLarge .thumb,
+.imagesPanelLarge .thumbAdd {
+    width: 156px;
+    height: 207px;
+    border-radius: 24px;
+}
+
+.imagesPanelLarge .thumbAdd {
+    font-size: 17px;
+    gap: 9px;
+    border-width: 3px;
+}
+
+.imagesPanelLarge .thumbRemove {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+}
+
+.imagesPanelLarge .thumb[data-selected],
+.imagesPanelLarge .thumb[data-dragging] {
+    outline-offset: 6px;
+    box-shadow: 0 0 0 14px rgba(205, 190, 247, 0.22);
+}
+
+.imagesPanelLarge .thumbRemove svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Panel dentro de otro contenedor (p. ej. el panel de herramienta del
+   editor): ocupa su ancho y no trae padding propio. */
+.panelEmbedded {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Fondo de un bloque (color · imagen · textura) ── */
+/* Panel de fondo (ScrollPanel): 300px de ancho máximo y scroll por dentro
+   si no cabe a lo alto; sus partes no se aplastan. */
+.scrollPanel {
+    max-width: 300px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.scrollPanel > * {
+    flex-shrink: 0;
+}
+
+.block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+
+.subHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.subTitle {
+    font-size: 13px;
+    font-weight: 500;
+    color: #29262D;
+}
+
+/* Cuadrícula sin scroll: con scroll horizontal se recortaban las
+   miniaturas y el contorno de la elegida. */
+.texStrip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 44px);
+    gap: 6px;
+    padding: 2px;
+}
+
+/* Ancho máximo: miniaturas chicas, no estiradas al ancho del panel. */
+.texOption {
+    width: 100%;
+    max-width: 44px;
+    aspect-ratio: 3 / 4;
+    padding: 0;
+    border: 1px solid #EBEBEB;
+    border-radius: 10px;
+    background: #FAFAFA;
+    color: #C9C6C0;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.texOption img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.texOption[data-on] {
+    box-shadow: 0 0 0 2px #5A2EE0;
+}

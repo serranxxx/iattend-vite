@@ -5,7 +5,7 @@ import { StorageImages } from '../../../../components/ImagesStorage/StorageImage
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
 import { useFonts } from '../../../../context/FontsContext';
-import { TbEyeClosed } from 'react-icons/tb';
+import { EyeOff as TbEyeClosed } from 'lucide-react';
 import '../../../../styles/modules/quote.css'
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu';
 

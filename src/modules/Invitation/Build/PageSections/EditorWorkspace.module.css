@@ -1,0 +1,509 @@
+/* Área de trabajo del editor (handoff "Editor Workspace"). Los paneles, el
+   riel y el dock flotan sobre el tablero a 20px de los bordes. */
+
+.workspace {
+    position: relative;
+    /* Alto fijo: si fuera flexible, el teléfono de "Ver en vivo" lo estiraba
+       y el dock quedaba fuera de la pantalla. */
+    flex: none;
+    width: 100%;
+    min-height: 760px;
+    /* El header del dashboard es fixed (60px): el área empieza debajo. */
+    margin-top: 60px;
+    height: calc(100vh - 60px);
+    display: flex;
+    overflow: hidden;
+    /* Tablero de puntos sobre el degradado claro (como antes). */
+    background-image:
+        radial-gradient(circle, rgba(41, 38, 45, 0.16) 1.2px, transparent 1.6px),
+        radial-gradient(ellipse at center, #e9e9e9, #FFFFFF);
+    background-size: 22px 22px, 100% 100%;
+}
+
+/* ── Escenario central ── */
+.stage {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    box-sizing: border-box;
+    transition: padding 0.25s ease;
+}
+
+.canvasScale {
+    transform-origin: center center;
+    transition: transform 0.25s ease;
+}
+
+/* El marco del teléfono trae un margin-left: -40px del editor viejo
+   (build-invitation.css); aquí va centrado exacto con el dock. */
+.canvasScale > :global(.ios26-device),
+.canvasScale > [class^="inv-device-main-container-"] {
+    margin: 0;
+}
+
+/* ── Riel + panel de herramienta ── */
+.left {
+    /* Riel y panel a todo lo alto, pegados a la orilla (como Canva). */
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    transition: opacity 0.25s ease;
+}
+
+.left[data-live] {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.rail {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 6px;
+    background: #FFFFFF;
+    border-right: 1px solid #EBEBEB;
+    overflow-y: auto;
+}
+
+.railItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.railDivider {
+    width: 22px;
+    height: 1px;
+    margin: 2px 0;
+    background: #EBEBEB;
+}
+
+.railButton {
+    width: 52px;
+    height: 50px;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    color: #787878;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.railButton span {
+    font-size: 9.5px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.railButton:hover {
+    background: #F1EFEA;
+    color: #16323d;
+}
+
+.railButton[data-on] {
+    background: #16323d;
+    color: #FFFFFF;
+}
+
+.toolPanel {
+    position: relative;
+    width: 0;
+    display: flex;
+    background: #FFFFFF;
+    border-radius: 0 20px 20px 0;
+    border-right: 1px solid transparent;
+    box-shadow: none;
+    transition: width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.toolPanel[data-open] {
+    width: 340px;
+    border-right-color: #EBEBEB;
+    box-shadow: 8px 0 24px rgba(12, 23, 27, 0.06);
+}
+
+/* El contenido mide siempre 340: al abrir/cerrar se va descubriendo, y se
+   desvanece un poco. */
+.toolInner {
+    width: 340px;
+    min-width: 340px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0 20px 20px 0;
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.toolPanel:not([data-open]) .toolInner {
+    pointer-events: none;
+}
+
+.toolPanel[data-open] .toolInner {
+    opacity: 1;
+    transform: none;
+}
+
+.toolPanel:not([data-open]) {
+    overflow: hidden;
+}
+
+
+.toolHead {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 18px 18px 12px;
+}
+
+.toolIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    background: #F5F3F2;
+    color: #16323d;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.toolTitles {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.toolTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.toolHint {
+    font-size: 12px;
+    line-height: 1.35;
+    color: #787878;
+}
+
+/* Asa para plegar el panel: pestaña en su orilla derecha, a media altura. */
+.toolHandle {
+    position: absolute;
+    top: 50%;
+    right: -18px;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 18px;
+    height: 64px;
+    padding: 0;
+    border: 1px solid #EBEBEB;
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+    background: #FFFFFF;
+    color: #29262D;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 6px 0 12px rgba(12, 23, 27, 0.06);
+}
+
+.toolPanel:not([data-open]) .toolHandle {
+    display: none;
+}
+
+.toolHandle:hover {
+    background: #F5F3F2;
+}
+
+.toolClose {
+    width: 26px;
+    height: 26px;
+    border-radius: 99px;
+    border: none;
+    background: #F1EFEA;
+    color: #29262D;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toolClose:hover {
+    background: #E6E2DA;
+}
+
+.toolBody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.toolSoon {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #787878;
+}
+
+/* ── Dock ── (40px de alto: botones de 32 + 4px de padding) */
+.dock {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 18px;
+    background: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.12);
+    white-space: nowrap;
+    transition: left 0.25s ease;
+}
+
+.dockDivider {
+    width: 1px;
+    height: 22px;
+    margin: 0 4px;
+    background: #EBEBEB;
+}
+
+.dockIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: #29262D;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dockIcon:hover:not(:disabled) {
+    background: #F5F3F2;
+}
+
+.dockIcon:disabled {
+    color: #C9C6C0;
+    cursor: default;
+}
+
+.dockIcon[data-on] {
+    background: #F5F3F2;
+    color: #16323d;
+}
+
+.dockMuted {
+    color: #787878;
+}
+
+.dockText {
+    height: 32px;
+    min-width: 92px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: #29262D;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.dockText:hover {
+    background: #F5F3F2;
+}
+
+.segment {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 14px;
+    background: #F5F3F2;
+}
+
+.segBtn {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: #787878;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.segBtn[data-on] {
+    background: #FFFFFF;
+    color: #29262D;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.08);
+}
+
+.segSmall {
+    font-size: 12.5px;
+}
+
+.segDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: #C9C6C0;
+}
+
+.segLive[data-on] {
+    background: #16323d;
+    color: #FFFFFF;
+}
+
+.segLive[data-on] .segDot {
+    background: #43B75D;
+}
+
+/* ── Aviso en vivo ── */
+.liveHint {
+    position: absolute;
+    /* Junto al riel (que va pegado a la orilla). */
+    left: 84px;
+    top: 20px;
+    z-index: 25;
+    max-width: 280px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.1);
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #29262D;
+}
+
+.liveDot {
+    width: 7px;
+    height: 7px;
+    margin-top: 6px;
+    border-radius: 99px;
+    background: #43B75D;
+    flex-shrink: 0;
+}
+
+/* ── Derecha: idioma y zoom ──
+   Mismo estilo que la columna de módulos (ModuleOrder): círculo blanco de
+   50px y pill de vidrio con botones de 36px. */
+.right {
+    position: absolute;
+    right: 20px;
+    /* `top` lo pone EditorWorkspace: el centro de la invitación (misma línea
+       que la columna de módulos). */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.langButton {
+    display: flex;
+}
+
+.langButton :global(.ant-btn) {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 99px !important;
+    background: #FFFFFF !important;
+    color: #29262D !important;
+    box-shadow: 0 6px 16px rgba(12, 23, 27, 0.12) !important;
+}
+
+.langButton :global(.ant-btn:hover) {
+    background: #FAF8FF !important;
+    color: #5A2EE0 !important;
+}
+
+.zoomBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    /* Barra de 36px de ancho, como la de módulos. */
+    width: 32px;
+    padding: 4px 2px;
+    box-sizing: content-box;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65), 0 8px 24px rgba(12, 23, 27, 0.12);
+}
+
+.zoomSlider {
+    height: 200px !important;
+    margin: 8px 0 !important;
+}
+
+.zoomStep {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    background: transparent;
+    color: #29262D;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.zoomStep:hover {
+    background: rgba(90, 46, 224, 0.08);
+}
+
+.langButton :global(.ant-btn svg) {
+    width: 14px;
+    height: 14px;
+    margin-top: 0 !important;
+}

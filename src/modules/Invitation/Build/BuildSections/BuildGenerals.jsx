@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Separador } from '../../../../components/Invitation/Logos';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer';
 import { useTextures } from '../../../../context/TexturesContext';
-import { RxValueNone } from 'react-icons/rx';
-import { LuArrowBigDownDash, LuArrowBigUpDash, LuRedo2, LuRotateCcw, LuSettings2 } from 'react-icons/lu';
+import { Ban as RxValueNone } from 'lucide-react';
+import { ArrowBigDownDash as LuArrowBigDownDash, ArrowBigUpDash as LuArrowBigUpDash, Redo2 as LuRedo2, RotateCcw as LuRotateCcw, Settings2 as LuSettings2 } from 'lucide-react';
 import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions';
 import { fonts } from '../../../../helpers/assets/fonts';
 import { useFonts } from '../../../../context/FontsContext';
 import { ArrowUpRight, ChevronDown, ChevronUp, Maximize2, Paintbrush, Palette, Upload, X } from 'lucide-react';
 import { colorCollection } from '../../../../helpers/services/colorPalette';
-import { SiSpotify } from 'react-icons/si';
+import { Music as SiSpotify } from 'lucide-react';
 import { uploadSongAudio } from '../../../../helpers/services/uploadAudio';
 import { searchSpotifyTracks } from '../../../../helpers/services/spotify';
 

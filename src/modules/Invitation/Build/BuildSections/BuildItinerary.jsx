@@ -2,18 +2,18 @@ import { Button, Drawer, Dropdown, Input, InputNumber, Switch, TimePicker, Toolt
 import { useTranslation } from 'react-i18next'
 import React, { useEffect, useState, useRef, } from 'react'
 import dayjs from 'dayjs';
-import { LuArrowUpRight, LuBadgeHelp, LuImage, LuX, } from 'react-icons/lu';
+import { ArrowUpRight as LuArrowUpRight, BadgeHelp as LuBadgeHelp, Image as LuImage, X as LuX } from 'lucide-react';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';
 import { IconsModal } from '../../../../components/Helpers/IconsModal';
 import { IconsImagesPicker } from '../../../../components/Helpers/IconsImagesPicker';
 import { HelpDrawer } from '../../../../components/Helpers/HelpDrawer'
 import { HowToDrawer } from '../../../../components/Helpers/HowToDrawer'
 import { iconsItinerary } from '../../../../helpers/services/menuIcons';
-import { IoMdAdd } from 'react-icons/io';
-import { FaRegTrashAlt } from 'react-icons/fa';
+import { Plus as IoMdAdd } from 'lucide-react';
+import { Trash2 as FaRegTrashAlt } from 'lucide-react';
 import { convert12HrTo24Hr, formatTimeTo12Hours } from '../../../../helpers/assets/functions';
-import { RiDeleteBack2Line } from 'react-icons/ri';
-import { TbEyeClosed } from 'react-icons/tb';
+import { Delete as RiDeleteBack2Line } from 'lucide-react';
+import { EyeOff as TbEyeClosed } from 'lucide-react';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu'
 import { AddressAutocomplete } from '../../../SideEvents/AddressAutocomplete';
 
