@@ -78,6 +78,12 @@
     transition: all 0.3s ease;
 }
 
+/* iPad (vertical u horizontal): la lista más angosta para que el mapa
+   tenga espacio. */
+@media (min-width: 751px) and (max-width: 1180px) {
+    .table-list-container { width: 360px; }
+}
+
 .tab-map-header-cont {
     align-self: stretch;
     display: flex;

@@ -5,8 +5,12 @@ import { useTranslation } from 'react-i18next'
 import { colorDeVelo, darker, sombraDeTexto } from '../../helpers/assets/functions'
 import { itinerarioPorDia, lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
-import { alternar, conModificador, lienzoCover } from './stickersFlashData'
+import { alternar, conModificador, esImagen, lienzoCover } from './stickersFlashData'
+import { FlashElemento } from '../Editor/Elemento'
 import { EfectosCapa } from './EfectosCapa'
+import { AsistentesMuestra } from './AsistentesMuestra'
+import { RegistroMuestra } from './RegistroMuestra'
+import { estiloNotas, modoClima, portadaOculta, tarjetasDe } from './tarjetasSide'
 
 /**
  * Lienzo editable del side event.
@@ -68,14 +72,21 @@ export const SideCanvas = ({
     fullBleed = false,       // móvil: la pieza ocupa toda la pantalla
     liftBottom = 0,          // móvil: cuánto sube el contenido para librar la hoja
     conCancion = false,      // Flash: chip de la canción (panel Canción)
+    conAsistentes = false,   // Flash: cuadro "Asistentes" si body.showAttendees
+    asistentes = null,       // Flash: confirmados reales ({ total, asistentes }) para el cuadro
     storyMode = false,       // móvil "story": sin chips arriba ni contornos punteados
     stickerSel = [],         // Flash: ids de los PNG seleccionados (StickersFlash)
     onStickerSel,
+    // Editor de escritorio con barras (SideWorkspace): sin los chips de fondo
+    // y color (el fondo se toca en la pieza y el color vive en Diseño).
+    barMode = false,
 }) => {
 
     const { t } = useTranslation()
     const cardRef = useRef(null)
     const scrollRef = useRef(null)
+    const titleRef = useRef(null)
+    const extrasRef = useRef(null)
     // Dónde estaba el lienzo antes de abrir la primera hoja, para devolverlo
     // ahí cuando se cierre.
     const restoreScrollRef = useRef(null)
@@ -116,7 +127,19 @@ export const SideCanvas = ({
     // caret saltaría al final. Por eso el valor inicial se congela y el lienzo
     // se monta con `key={current.id}`.
     const [initialTitle] = useState(() => current?.name ?? '')
-    const [initialExtras] = useState(() => current?.body?.extras ?? '')
+
+    // Si el texto cambia desde fuera (deshacer / rehacer) y nadie está
+    // escribiendo en él, se vuelve a copiar al DOM.
+    useEffect(() => {
+        const el = titleRef.current
+        const value = current?.name ?? ''
+        if (el && document.activeElement !== el && el.textContent !== value) el.textContent = value
+    }, [current?.name])
+    useEffect(() => {
+        const el = extrasRef.current
+        const value = current?.body?.extras ?? ''
+        if (el && document.activeElement !== el && el.innerText !== value) el.innerText = value
+    }, [current?.body?.extras])
 
     // Con la hoja abierta el contenido ya no se empuja hacia arriba a ciegas
     // —así se salía el título por arriba—: el lienzo gana espacio abajo y la
@@ -175,6 +198,10 @@ export const SideCanvas = ({
         // Móvil "story": tocar otra zona suelta el PNG elegido.
         if (storyMode) onStickerSel?.([])
     }
+
+    // Cómo llegar y Clima: en escritorio son capas propias (abren la barra de
+    // Lugar); en el editor del celular abren el panel de Lugar.
+    const zonaDe = (key) => (barMode ? key : 'place')
 
     const cls = (section, base) => (readOnly
         ? base
@@ -290,6 +317,9 @@ export const SideCanvas = ({
             const escala = d / g.d0
             const giro = ang - g.a0
             const girar = (r) => ((((r + 180) % 360) + 360) % 360) - 180
+            // Solo el primer movimiento abre una entrada en deshacer.
+            const snapshot = !g.movido
+            g.movido = true
             ultimoRef.current.onChange((prev) => ({
                 ...prev,
                 body: {
@@ -302,7 +332,7 @@ export const SideCanvas = ({
                         }
                         : o)),
                 },
-            }))
+            }), { snapshot })
         }
         const fin = (e) => { if (e.touches.length < 2) pellizcoRef.current = null }
         // Safari: sin esto el pellizco también hace zoom a la página.
@@ -345,6 +375,9 @@ export const SideCanvas = ({
         const limitar = (v) => Math.min(100, Math.max(0, Math.round(v * 10) / 10))
         const imantar = (v) => (Math.abs(v - 50) <= IMAN ? 50 : v)
         setGuias({ x: s.x === 50, y: s.y === 50 })
+        // Un arrastre es UNA entrada en deshacer: solo el primer movimiento
+        // guarda el estado anterior.
+        let primero = true
         const mover = (ev) => {
             // Con dos dedos manda el pellizco; el dedo que queda no lo mueve.
             if (pellizcadoRef.current) return
@@ -361,7 +394,8 @@ export const SideCanvas = ({
                         ? { ...o, x: limitar(origen[o.id].x + dx), y: limitar(origen[o.id].y + dy) }
                         : o)),
                 },
-            }))
+            }), { snapshot: primero })
+            primero = false
         }
         const soltar = () => {
             setGuias(null)
@@ -372,17 +406,82 @@ export const SideCanvas = ({
         window.addEventListener('pointerup', soltar)
     }
 
+    // Escritorio: manijas sobre el PNG elegido, como los elementos de la
+    // invitación. Las esquinas lo escalan desde el centro (con varios
+    // elegidos, todos en la misma proporción) y la de arriba lo gira (se
+    // pega a 0 / 90 / 180 / 270). Un gesto es UNA entrada en deshacer. En el
+    // móvil "story" se hace con dos dedos (pellizco).
+    const manijas = !readOnly && !storyMode
+    const transformarSticker = (s, modo) => (e) => {
+        e.stopPropagation()
+        e.preventDefault()
+        clicDeSticker.current = true
+        window.addEventListener('pointerup', () => setTimeout(() => { clicDeSticker.current = false }, 0), { once: true })
+        const caja = e.currentTarget.parentElement
+        const r = caja.getBoundingClientRect()
+        const cx = r.left + r.width / 2
+        const cy = r.top + r.height / 2
+        const grupo = seleccion.includes(s.id) ? seleccion : [s.id]
+        const base = Object.fromEntries(stickers.filter(o => grupo.includes(o.id)).map(o => [o.id, { w: o.w, rot: o.rot ?? 0 }]))
+        const d0 = Math.hypot(e.clientX - cx, e.clientY - cy) || 1
+        const a0 = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI
+        const girar = (v) => ((((v + 180) % 360) + 360) % 360) - 180
+        const pegar = (v) => {
+            const cerca = Math.round(v / 90) * 90
+            return Math.abs(v - cerca) < 4 ? girar(cerca) : v
+        }
+        let primero = true
+        const mover = (ev) => {
+            let cambio
+            if (modo === 'escalar') {
+                // Proporción entre la distancia al centro ahora y al empezar.
+                const factor = Math.hypot(ev.clientX - cx, ev.clientY - cy) / d0
+                cambio = (o) => ({ w: Math.min(200, Math.max(5, Math.round(base[o.id].w * factor * 100) / 100)) })
+            } else {
+                const delta = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI - a0
+                cambio = (o) => ({ rot: Math.round(pegar(girar(base[o.id].rot + delta)) * 10) / 10 })
+            }
+            onChange((prev) => ({
+                ...prev,
+                body: {
+                    ...prev.body,
+                    stickers: (prev.body?.stickers ?? []).map(o => (base[o.id] ? { ...o, ...cambio(o) } : o)),
+                },
+            }), { snapshot: primero })
+            primero = false
+        }
+        const soltar = () => {
+            window.removeEventListener('pointermove', mover)
+            window.removeEventListener('pointerup', soltar)
+        }
+        window.addEventListener('pointermove', mover)
+        window.addEventListener('pointerup', soltar)
+    }
+
+    // Texto que se está escribiendo encima (doble clic en un texto elegido).
+    const [editando, setEditando] = useState(null)
+    useEffect(() => { if (editando && !seleccion.includes(editando)) setEditando(null) }, [stickerSel])
+    const terminarTexto = (id) => (texto) => {
+        setEditando(null)
+        onChange((prev) => ({
+            ...prev,
+            body: { ...prev.body, stickers: (prev.body?.stickers ?? []).map(o => (o.id === id && o.text !== texto ? { ...o, text: texto } : o)) },
+        }))
+    }
+    const tituloFuente = body.title?.font ?? 'Poppins'
+
     const estiloSticker = (s) => ({
         left: `${s.x}%`,
         top: `${s.y}%`,
         width: `${s.w}%`,
-        transform: `translate(-50%, -50%) rotate(${s.rot ?? 0}deg)`,
+        transform: `translate(-50%, -50%) rotate(${s.rot ?? 0}deg)${s.flipX || s.flipY ? ` scale(${s.flipX ? -1 : 1}, ${s.flipY ? -1 : 1})` : ''}`,
         opacity: s.opacity ?? 1,
         pointerEvents: readOnly ? 'none' : 'auto',
     })
 
-    const setName = (value) => onChange((prev) => ({ ...prev, name: value }))
-    const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }))
+    // Teclear seguido en el mismo texto no apila un paso de deshacer por letra.
+    const setName = (value) => onChange((prev) => ({ ...prev, name: value }), { coalesce: 'name' })
+    const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }), { coalesce: 'extras' })
 
     // Un Flash puede tener varias fechas: las de mismo mes y hora van juntas.
     const dateLabels = lineasDeFechas(body, { state: address.state, timezone: body.timezone })
@@ -395,8 +494,9 @@ export const SideCanvas = ({
     return (
         <div
             ref={cardRef}
-            className={`${styles.card} ${fullBleed ? styles.cardFull : ''} ${storyMode ? styles.cardStory : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
+            className={`${styles.card} ${barMode ? styles.cardIphone : ''} ${fullBleed ? styles.cardFull : ''} ${storyMode ? styles.cardStory : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
             style={{ '--blur-color': themeColor, '--blur-color--dark': tint }}
+            data-side-card
             onClick={() => {
                 if (readOnly) return
                 onSelect(null)
@@ -445,17 +545,23 @@ export const SideCanvas = ({
                             }
                         </button>
                     }
-                    <button className={cls('background', styles.chip)} onClick={pick('background')} data-tour='chip-background'>
-                        <span className={styles.chipIcon}><ImagePlus size={13} /></span>
-                        <span className={styles.chipLabel}>
-                            {body.image ? t('side_events.canvas_change_image') : t('side_events.canvas_add_image')}
-                        </span>
-                    </button>
+                    {/* Con barras (escritorio nuevo) el fondo se toca en la pieza
+                        y el color del tema vive en el panel Diseño. */}
+                    {!barMode && (
+                        <>
+                            <button className={cls('background', styles.chip)} onClick={pick('background')} data-tour='chip-background'>
+                                <span className={styles.chipIcon}><ImagePlus size={13} /></span>
+                                <span className={styles.chipLabel}>
+                                    {body.image ? t('side_events.canvas_change_image') : t('side_events.canvas_add_image')}
+                                </span>
+                            </button>
 
-                    <button className={cls('color', `${styles.chip} ${styles.chipDerecha}`)} onClick={pick('color')} data-tour='chip-color'>
-                        <span className={styles.chipSwatch} style={{ background: themeColor }} />
-                        <span className={styles.chipLabel}>{t('side_events.theme_color')}</span>
-                    </button>
+                            <button className={cls('color', `${styles.chip} ${styles.chipDerecha}`)} onClick={pick('color')} data-tour='chip-color'>
+                                <span className={styles.chipSwatch} style={{ background: themeColor }} />
+                                <span className={styles.chipLabel}>{t('side_events.theme_color')}</span>
+                            </button>
+                        </>
+                    )}
                 </div>
             }
 
@@ -483,18 +589,30 @@ export const SideCanvas = ({
                     {stickers.length > 0 && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={marco}>
                             <div className={styles.lienzo} style={lienzo}>
-                                {stickers.map(s => (
-                                    <img
-                                        key={s.id}
-                                        src={s.url}
-                                        alt=''
-                                        draggable={false}
-                                        className={styles.sticker}
-                                        style={estiloSticker(s)}
-                                        onPointerDown={arrastrarSticker(s)}
-                                        onClick={elegirSticker(s)}
-                                    />
-                                ))}
+                                {stickers.map(s => (esImagen(s)
+                                    ? (
+                                        <img
+                                            key={s.id}
+                                            src={s.url}
+                                            alt=''
+                                            draggable={false}
+                                            className={styles.sticker}
+                                            style={estiloSticker(s)}
+                                            onPointerDown={arrastrarSticker(s)}
+                                            onClick={elegirSticker(s)}
+                                        />
+                                    ) : (
+                                        // Texto, ícono, forma, línea o decoración (FlashElemento).
+                                        <div
+                                            key={s.id}
+                                            className={`${styles.sticker} ${styles.elemento}`}
+                                            style={{ ...estiloSticker(s), ...(editando === s.id ? { visibility: 'hidden' } : {}) }}
+                                            onPointerDown={arrastrarSticker(s)}
+                                            onClick={elegirSticker(s)}
+                                        >
+                                            <FlashElemento s={s} titleFont={tituloFuente} />
+                                        </div>
+                                    )))}
                             </div>
                         </div>
                     )}
@@ -540,10 +658,25 @@ export const SideCanvas = ({
                                         className={`${styles.sticker} ${styles.stickerSel}`}
                                         style={{ ...estiloSticker(s), opacity: 1 }}
                                         data-sticker
-                                        onPointerDown={arrastrarSticker(s)}
+                                        onPointerDown={editando === s.id ? undefined : arrastrarSticker(s)}
                                         onClick={(e) => e.stopPropagation()}
+                                        onDoubleClick={() => { if (manijas && s.kind === 'text') setEditando(s.id) }}
                                     >
-                                        <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
+                                        {esImagen(s)
+                                            ? <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
+                                            : (
+                                                <div className={`${styles.stickerHueco} ${editando === s.id ? styles.huecoEditando : ''}`}>
+                                                    <FlashElemento s={s} titleFont={tituloFuente} editable={editando === s.id} onTextDone={terminarTexto(s.id)} />
+                                                </div>
+                                            )}
+                                        {manijas && editando !== s.id && (
+                                            <>
+                                                {['nw', 'ne', 'sw', 'se'].map(c => (
+                                                    <span key={c} className={styles.manija} data-c={c} onPointerDown={transformarSticker(s, 'escalar')} />
+                                                ))}
+                                                <span className={styles.manijaGiro} onPointerDown={transformarSticker(s, 'girar')} />
+                                            </>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -565,8 +698,9 @@ export const SideCanvas = ({
                         {/* Título. Vacío no ocupa lugar (como en la página del
                             invitado, donde no se pinta): el texto de ejemplo flota
                             encima de la fecha para poder tocarlo y escribir. */}
-                        <div className={`${cls('title', styles.titleZone)} ${!current?.name?.trim() ? styles.titleVacio : ''}`} data-zone='title' onClick={pick('title')}>
+                        <div className={`${cls('title', styles.titleZone)} ${!current?.name?.trim() ? styles.titleVacio : ''}`} data-zone='title' onClick={pick('title')} style={portadaOculta(body, 'title') ? { display: 'none' } : undefined}>
                             <div
+                                ref={titleRef}
                                 className={styles.titleInput}
                                 contentEditable={!readOnly}
                                 suppressContentEditableWarning
@@ -580,6 +714,14 @@ export const SideCanvas = ({
                                     lineHeight: title.line_height ?? 1.4,
                                     opacity: title.opacity ?? 1,
                                     textShadow: sombraDeTexto(title.shadow),
+                                    // Barra de texto (la de la invitación): color, cursiva,
+                                    // subrayado, tachado, mayúsculas y espacio entre letras.
+                                    // Igual que la página del invitado (fontExtras).
+                                    ...(title.color ? { color: title.color } : {}),
+                                    ...(title.italic ? { fontStyle: 'italic' } : {}),
+                                    ...((title.underline || title.strike) ? { textDecoration: [title.underline && 'underline', title.strike && 'line-through'].filter(Boolean).join(' ') } : {}),
+                                    ...(title.transform && title.transform !== 'none' ? { textTransform: title.transform } : {}),
+                                    ...(typeof title.letterSpacing === 'number' ? { letterSpacing: `${title.letterSpacing / 100}em` } : {}),
                                 }}
                             >
                                 {initialTitle}
@@ -590,7 +732,7 @@ export const SideCanvas = ({
                             igual que la columna .col de la página del invitado. */}
                         <div className={styles.detalles}>
                             {/* Fecha */}
-                            <div className={cls('date', styles.col)} data-zone='date' onClick={pick('date')} style={{ textShadow: sombraDeTexto(body.details_shadow) }}>
+                            <div className={cls('date', styles.col)} data-zone='date' onClick={pick('date')} style={{ textShadow: sombraDeTexto(body.details_shadow), ...(portadaOculta(body, 'date') ? { display: 'none' } : {}) }}>
                                 {dateLabels.length
                                     ? dateLabels.map(label => <span key={label}>{label}</span>)
                                     : <span className={styles.colMuted}>{t('side_events.datetime_label')}</span>
@@ -598,7 +740,7 @@ export const SideCanvas = ({
                             </div>
 
                             {/* Lugar */}
-                            <div className={cls('place', styles.col)} data-zone='place' onClick={pick('place')} style={{ textShadow: sombraDeTexto(body.details_shadow) }}>
+                            <div className={cls('place', styles.col)} data-zone='place' onClick={pick('place')} style={{ textShadow: sombraDeTexto(body.details_shadow), ...(portadaOculta(body, 'place') ? { display: 'none' } : {}) }}>
                                 {placeLabel
                                     ? <>
                                         <span>{placeLabel}</span>
@@ -611,57 +753,87 @@ export const SideCanvas = ({
                         {/* RSVP: maqueta de la píldora de la pieza */}
                         <div ref={botonesRef} aria-hidden className={styles.buttonsCont}>
                             <span className={styles.mockBtn}>
-                                <CircleCheck size={17} /> {t('side_events.canvas_rsvp_yes')}
+                                <CircleCheck size={18} /> {t('side_events.canvas_rsvp_yes')}
                             </span>
                             <span className={styles.mockBtn}>
-                                <CircleX size={17} /> {t('side_events.canvas_rsvp_no')}
+                                <CircleX size={18} /> {t('side_events.canvas_rsvp_no')}
                             </span>
                         </div>
                     </div>
 
-                    {/* Itinerario de un Flash: el mismo widget que el remoto, arriba de Cómo llegar. */}
-                    {itinerarioPorDia(body).length > 0 &&
-                        <div className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
-                            <ItinerarioWidget body={body} />
-                        </div>
-                    }
-
-                    {/* Mapa: aparece igual que en el remoto, solo con dirección completa */}
-                    {hasFullAddress(address) &&
-                        <div className={cls('place', `${styles.block} ${styles.mapBlock}`)} onClick={pick('place')}>
-                            <span className={styles.mapLabel}>{t('side_events.canvas_map')}</span>
-                            <div className={styles.mapPreview}>
-                                <MapPin size={16} />
-                                <span>{[address.street, address.number, address.city].filter(Boolean).join(' ')}</span>
+                    {/* Tarjetas debajo de la portada, en el orden y con lo oculto
+                        del panel Capas (tarjetasSide.js), como la página del invitado. */}
+                    {tarjetasDe(body, conAsistentes).filter((c) => !c.hidden).map(({ key }) => {
+                        // Registro de asistentes (Flash, opcional): su pantalla de inicio.
+                        if (key === 'registration') {
+                            return body.form?.sections?.length > 0 && (
+                                <div key={key} className={cls('registration', styles.itineraryZona)} data-zone='registration' onClick={pick('registration')}>
+                                    <RegistroMuestra form={body.form} />
+                                </div>
+                            )
+                        }
+                        // Asistentes (Flash, opcional), con asistentes de ejemplo.
+                        if (key === 'attendees') {
+                            return (
+                                <div key={key} className={cls('attendees', styles.itineraryZona)} data-zone='attendees' onClick={pick('attendees')}>
+                                    <AsistentesMuestra colorTema={body.color} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={Boolean(body.chat?.enabled)} />
+                                </div>
+                            )
+                        }
+                        // Itinerario de un Flash: el mismo widget que el remoto.
+                        if (key === 'itinerary') {
+                            return itinerarioPorDia(body).length > 0 && (
+                                <div key={key} className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
+                                    <ItinerarioWidget body={body} />
+                                </div>
+                            )
+                        }
+                        // Cómo llegar: igual que en el remoto, solo con dirección completa.
+                        if (key === 'map') {
+                            return hasFullAddress(address) && (
+                                <div key={key} className={cls(zonaDe('map'), `${styles.block} ${styles.mapBlock}`)} data-zone={zonaDe('map')} onClick={pick(zonaDe('map'))}>
+                                    <span className={styles.mapLabel}>{t('side_events.canvas_map')}</span>
+                                    <div className={styles.mapPreview}>
+                                        <MapPin size={16} />
+                                        <span>{[address.street, address.number, address.city].filter(Boolean).join(' ')}</span>
+                                    </div>
+                                </div>
+                            )
+                        }
+                        // Notas
+                        if (key === 'notes') {
+                            return (
+                                <div key={key} className={cls('extras', styles.block)} data-zone='extras' onClick={pick('extras')}>
+                                    {/* El texto se copia al montarse (y no como hijo de React,
+                                        que movería el caret al escribir): así también sale bien
+                                        al volver a mostrar la tarjeta desde Capas. */}
+                                    <div
+                                        ref={(el) => {
+                                            extrasRef.current = el
+                                            if (el && !el.dataset.listo) { el.innerText = current?.body?.extras ?? ''; el.dataset.listo = '1' }
+                                        }}
+                                        className={styles.extrasInput}
+                                        style={estiloNotas(body)}
+                                        contentEditable={!readOnly}
+                                        suppressContentEditableWarning
+                                        spellCheck={false}
+                                        data-placeholder={t('side_events.extras_placeholder')}
+                                        onInput={(e) => setExtras(e.currentTarget.innerText)}
+                                    />
+                                </div>
+                            )
+                        }
+                        // Clima: con ciudad. Se edita desde Lugar, que lo condiciona.
+                        return address.city && (
+                            <div key={key} className={cls(zonaDe('weather'), `${styles.block} ${styles.weatherBlock}`)} data-zone={zonaDe('weather')} onClick={pick(zonaDe('weather'))}>
+                                <div className={styles.weatherLeft}>
+                                    <span className={styles.weatherTitle}>{t('side_events.canvas_weather')}</span>
+                                    <span className={styles.weatherHint}>{address.city} · {t(`side_events.weather_mode_${modoClima(body)}`)}</span>
+                                </div>
+                                <CloudSun size={26} />
                             </div>
-                        </div>
-                    }
-
-                    {/* Notas: debajo de Cómo llegar */}
-                    <div className={cls('extras', styles.block)} data-zone='extras' onClick={pick('extras')}>
-                        <div
-                            className={styles.extrasInput}
-                            contentEditable={!readOnly}
-                            suppressContentEditableWarning
-                            spellCheck={false}
-                            data-placeholder={t('side_events.extras_placeholder')}
-                            onInput={(e) => setExtras(e.currentTarget.innerText)}
-                        >
-                            {initialExtras}
-                        </div>
-                    </div>
-
-                    {/* Clima: mismo criterio que el remoto (ciudad y no oculto).
-                        Se edita desde Lugar, que es lo que lo condiciona. */}
-                    {address.city && !body.hideWeather &&
-                        <div className={cls('place', `${styles.block} ${styles.weatherBlock}`)} onClick={pick('place')}>
-                            <div className={styles.weatherLeft}>
-                                <span className={styles.weatherTitle}>{t('side_events.canvas_weather')}</span>
-                                <span className={styles.weatherHint}>{address.city}</span>
-                            </div>
-                            <CloudSun size={26} />
-                        </div>
-                    }
+                        )
+                    })}
 
                     <div aria-hidden className={styles.footer}>I attend</div>
                 </div>

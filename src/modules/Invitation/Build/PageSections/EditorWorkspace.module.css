@@ -23,6 +23,22 @@
     background-size: 22px 22px, 100% 100%;
 }
 
+/* Controles del editor (riel, paneles, Capas, dock): en iPad mantener
+   presionado para arrastrar seleccionaba el texto de la fila y abría el menú
+   de iOS (Copiar, Traducir…). Los campos donde se escribe sí se seleccionan. */
+.workspace {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.workspace input,
+.workspace textarea,
+.workspace [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
 /* ── Escenario central ── */
 .stage {
     flex: 1;
@@ -586,4 +602,30 @@
 
 .layersDock > * {
     pointer-events: auto;
+}
+
+/* Columna a la derecha que reemplaza riel y dock (Envío de los side events,
+   EditorShell `column`). */
+.column {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    bottom: 12px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    opacity: 0;
+    transform: translateX(14px);
+    transition: opacity 0.26s ease 0.06s, transform 0.28s ease 0.06s, width 0.25s ease;
+}
+
+.columnIn {
+    opacity: 1;
+    transform: none;
+}
+
+.column > * {
+    flex: 1;
+    min-height: 0;
 }

@@ -463,12 +463,19 @@
 }
 
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 .primarybutton:hover svg,
 .primarybutton--active:hover svg {
     color: var(--ft-color) !important;
    
 }
+}
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 .primarybutton--active:hover {
     background: var(--gradient) !important;
     color: var(--ft-color) !important;
@@ -476,15 +483,20 @@
     border: none !important;
     outline: none !important;
 }
+}
 
 .primarybutton--black:hover {
     background-color: var(--text-color) !important;
     color: var(--ft-color) !important;
 }
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 .primarybutton--black--active:hover {
     background-color: var(--text-color-80) !important;
     color: var(--ft-color) !important;
+}
 }
 
 .primarybutton--delete:hover {

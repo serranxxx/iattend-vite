@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
 import {
     Bird, Cake, Camera, Church, Flower, Flower2, Gem, Heart, Infinity as InfinityIcon,
-    ChevronRight, Leaf, LoaderCircle, WandSparkles, Moon, Music, Search, Sparkles, Star, Sun, Upload, Wine, X,
+    ChevronRight, Leaf, LoaderCircle, Plus, WandSparkles, Moon, Music, Search, Sparkles, Star, Sun, Upload, Wine, X,
 } from 'lucide-react'
 import {
     countStickers, LINE_VARIANTS, MAX_STICKERS,
@@ -12,6 +12,8 @@ import {
 import { Separador } from '../../../../components/Invitation/Logos'
 import { iconsItinerary } from '../../../../helpers/services/menuIcons'
 import { coincide, esNueva, useEditorCatalog } from './useEditorCatalog'
+import { LiveSlider } from './barControls'
+import { esUrlDeVector, estiloVector, useVector, VECTOR_BASE } from '../../../Editor/vector'
 import base from './ToolPanels.module.css'
 import styles from './LayerPanels.module.css'
 
@@ -44,7 +46,25 @@ const TEXT_CARDS = [
 ]
 
 // Cuántos se asoman en la vista "Todo" por tipo de categoría.
-const PREVIEW = { icon: 10, shape: 5, image: 3, line: 4, separator: 2 }
+const PREVIEW = { icon: 10, shape: 5, image: 3, line: 4, separator: 2, vector: 6 }
+
+// Categoría Vectores: celdas grandes (3 por fila) con el SVG en línea y un
+// trazo fijo legible; con máscara, a ese tamaño, la línea casi no se veía.
+const esVectores = (cat) => cat.slug === 'vectores'
+const tipoDe = (cat) => (esVectores(cat) ? 'vector' : cat.kind)
+// 1 px: el mismo grosor con que entra a la pieza (TRAZO_INICIAL).
+const MINI_TRAZO = { strokeFixed: true, strokePx: 1 }
+// Un vector del catálogo entra con trazo de 1 px al ancho con que se suelta
+// (en el teléfono de 390 px) y desde ahí escala con él; el original del
+// archivo, a ese tamaño, quedaba en menos de 1 px.
+const TRAZO_INICIAL = (w) => ({ strokeRel: 1 / ((w / 100) * VECTOR_BASE) })
+
+const VectorThumb = ({ url }) => {
+    const info = useVector(url)
+    return info
+        ? <span className={styles.vectorThumb} style={estiloVector(MINI_TRAZO, info)} dangerouslySetInnerHTML={{ __html: info.markup }} />
+        : <span className={`${styles.maskIcon} ${styles.vectorThumb}`} style={{ WebkitMaskImage: `url("${url}")`, maskImage: `url("${url}")` }} />
+}
 
 // Categorías que viven en código (no en el catálogo): líneas y separadores.
 const CODE_CATEGORIES = [
@@ -79,6 +99,29 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
         setSaved(false)
     }
     const momentIcon = iconRequest ? invitation?.itinerary?.object?.[iconRequest.index]?.icon : null
+    // Color propio del ícono del momento (`icon_color`): solo los que se
+    // pintan (íconos, vectores, formas); una ilustración va con sus colores.
+    const momentColor = iconRequest ? invitation?.itinerary?.object?.[iconRequest.index]?.icon_color ?? null : null
+    const momentTintable = typeof momentIcon === 'string' && /^(lucide|svg|shape):/.test(momentIcon)
+    // Grosor: íconos, formas y vectores; un SVG que se pinta como máscara no tiene trazo propio.
+    const momentStrokable = momentTintable && (!momentIcon.startsWith('svg:') || esUrlDeVector(momentIcon.slice(4)))
+    const momentStroke = iconRequest ? invitation?.itinerary?.object?.[iconRequest.index]?.icon_stroke ?? null : null
+    const setMomentField = (patch) => {
+        if (!iconRequest) return
+        const index = iconRequest.index
+        setInvitation((prev) => ({
+            ...prev,
+            itinerary: { ...prev.itinerary, object: prev.itinerary.object.map((obj, i) => (i === index ? { ...obj, ...patch } : obj)) },
+        }))
+        setSaved(false)
+    }
+    const setMomentColor = (color) => setMomentField({ icon_color: color })
+    // Grosor del trazo, en px de un ícono de 24 px (la pieza lo escala al
+    // tamaño de cada estilo). 1.6 = el de siempre; se guarda solo si cambia.
+    const setMomentStroke = (v) => setMomentField({ icon_stroke: v === 1.6 ? null : v })
+    const g = invitation?.generals
+    const momentPalette = [...new Set([g?.colors?.primary, g?.colors?.secondary, g?.colors?.accent, g?.colors?.actions, '#FFFFFF', '#29262D']
+        .filter(Boolean).map((c) => c.toUpperCase()))]
     const off = iconRequest ? { 'data-off': true } : {}
     const [query, setQuery] = useState('')
     const [view, setView] = useState('all')
@@ -155,12 +198,27 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                 </div>
             )
         }
+        if (cat.kind === 'icon' && esVectores(cat) && asset.tintable) {
+            return (
+                <div
+                    key={asset.id}
+                    className={`${styles.artCell} ${styles.vectorCell}`}
+                    title={asset.name}
+                    data-on={momentIcon === `svg:${asset.url}` || undefined}
+                    onPointerDown={(e) => startLayerDrag(e, { kind: 'icon', src: asset.url, tint: true, vector: true, w: asset.w ?? 30, ar: asset.ar ?? 1, rot: 0, opacity: 1, ...TRAZO_INICIAL(asset.w ?? 30) }, { onTap: () => setMomentIcon(`svg:${asset.url}`) })}
+                >
+                    <VectorThumb url={asset.url} />
+                </div>
+            )
+        }
         if (cat.kind === 'icon') {
             const Icon = asset.lucide ? ICONS[asset.lucide] : null
             const value = asset.lucide ? `lucide:${asset.lucide}` : `svg:${asset.url}`
             const item = asset.lucide
                 ? { kind: 'icon', icon: asset.lucide, w: asset.w ?? 14, rot: 0, opacity: 1 }
-                : { kind: 'icon', src: asset.url, tint: Boolean(asset.tintable), w: asset.w ?? 14, ar: asset.ar ?? 1, rot: 0, opacity: 1 }
+                : {
+                    kind: 'icon', src: asset.url, tint: Boolean(asset.tintable), w: asset.w ?? 14, ar: asset.ar ?? 1, rot: 0, opacity: 1,
+                }
             return (
                 <div
                     key={asset.id}
@@ -189,7 +247,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
         )
     }
     const grid = (cat, assets) => (
-        <div className={cat.kind === 'image' ? styles.artGrid : cat.kind === 'line' || cat.kind === 'separator' ? styles.lineGrid : styles.iconGrid5}>
+        <div className={cat.kind === 'image' || esVectores(cat) ? styles.artGrid : cat.kind === 'line' || cat.kind === 'separator' ? styles.lineGrid : styles.iconGrid5}>
             {assets.map((a) => cell(cat, a))}
         </div>
     )
@@ -260,8 +318,8 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                 {textBlock}
                 {categories.filter((c) => c.assets.length).map((c) => (
                     <div key={c.id} className={base.group}>
-                        {header(c, c.assets.length, c.assets.length > (PREVIEW[c.kind] ?? 5))}
-                        {grid(c, c.assets.slice(0, PREVIEW[c.kind] ?? 5))}
+                        {header(c, c.assets.length, c.assets.length > (PREVIEW[tipoDe(c)] ?? 5))}
+                        {grid(c, c.assets.slice(0, PREVIEW[tipoDe(c)] ?? 5))}
                     </div>
                 ))}
             </>
@@ -282,6 +340,46 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                     <div className={styles.pickBanner}>
                         <span>{t('build_editor.el_pick_moment', { name: momentName || t('build_editor.el_pick_moment_fallback') })}</span>
                         <button type="button" aria-label={t('build_editor.close')} onClick={clearIconRequest}><X size={14} /></button>
+                    </div>
+                )}
+                {iconRequest && momentTintable && (
+                    <div className={styles.momentColors}>
+                        <span className={styles.momentColorsLabel}>{t('build_editor.el_moment_color')}</span>
+                        <button
+                            type="button"
+                            className={`${styles.momentSwatch} ${styles.momentAuto}`}
+                            data-on={!momentColor || undefined}
+                            title={t('build_editor.el_moment_color_auto')}
+                            onClick={() => setMomentColor(null)}
+                        >
+                            A
+                        </button>
+                        {momentPalette.map((c) => (
+                            <button
+                                key={c}
+                                type="button"
+                                className={styles.momentSwatch}
+                                data-on={momentColor?.toUpperCase() === c || undefined}
+                                title={c}
+                                style={{ background: c }}
+                                onClick={() => setMomentColor(c)}
+                            />
+                        ))}
+                        <label className={`${styles.momentSwatch} ${styles.momentCustom}`} title={t('build_editor.el_moment_color_custom')} data-on={(momentColor && !momentPalette.includes(momentColor.toUpperCase())) || undefined} style={momentColor && !momentPalette.includes(momentColor.toUpperCase()) ? { background: momentColor } : undefined}>
+                            <Plus size={13} />
+                            <input type="color" value={momentColor ?? '#000000'} onChange={(e) => setMomentColor(e.target.value.toUpperCase())} />
+                        </label>
+                        {momentStrokable && <div className={styles.momentStroke}>
+                            <LiveSlider
+                                label={t('build_editor.eb_stroke_width')}
+                                value={momentStroke ?? 1.6}
+                                min={0.5}
+                                max={4}
+                                step={0.1}
+                                format={(v) => `${Number(v).toFixed(1)} px`}
+                                onChange={(v) => setMomentStroke(v)}
+                            />
+                        </div>}
                     </div>
                 )}
                 <div className={`${styles.chips} scroll-invitation`}>

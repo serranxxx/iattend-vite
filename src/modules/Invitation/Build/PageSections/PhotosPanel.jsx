@@ -57,7 +57,10 @@ const inUse = (invitation, section, url) => {
     return false
 }
 
-export const PhotosPanel = ({ invitation, setInvitation, setSaved, onSelectSection, selectedSection }) => {
+// Es el panel Fotos de todos los editores (EditorShell). Un side event / Flash
+// solo tiene un lugar para una foto (el fondo): pasa `onUse(url)` (todas las
+// categorías aplican ahí), `isInUse(url)` y su `banner`.
+export const PhotosPanel = ({ invitation, setInvitation, setSaved, onSelectSection, selectedSection, onUse, isInUse, banner }) => {
     const { t, i18n } = useTranslation()
     const catalog = useEditorCatalog()
     const en = i18n.language?.startsWith('en')
@@ -83,6 +86,7 @@ export const PhotosPanel = ({ invitation, setInvitation, setSaved, onSelectSecti
     const sectionName = selectedSection && SECTION_LABEL[selectedSection] ? t(SECTION_LABEL[selectedSection]) : null
 
     const use = (url) => {
+        if (onUse) { onUse(url, sectionKey); return }
         if (!sectionKey || !APPLY[sectionKey]) return
         setInvitation(APPLY[sectionKey](url))
         setSaved(false)
@@ -94,7 +98,7 @@ export const PhotosPanel = ({ invitation, setInvitation, setSaved, onSelectSecti
     return (
         <>
             <span ref={anchor} hidden />
-            {sectionName && (
+            {banner ? <div className={styles.banner}>{banner}</div> : sectionName && (
                 <div className={styles.banner}>
                     {t('build_editor.photos_banner_pre')} <b>{sectionName}</b> · {t('build_editor.photos_banner_post')}
                 </div>
@@ -120,7 +124,7 @@ export const PhotosPanel = ({ invitation, setInvitation, setSaved, onSelectSecti
                                 key={a.id}
                                 type="button"
                                 className={styles.photo}
-                                data-on={inUse(invitation, sectionKey, a.url) || undefined}
+                                data-on={(isInUse ? isInUse(a.url) : inUse(invitation, sectionKey, a.url)) || undefined}
                                 title={t('build_editor.photos_use')}
                                 onClick={() => use(a.url)}
                             >

@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { stickerLigeroDesdeUrl } from '../../helpers/services/uploadImage'
 import ed from './SideEventEditor.module.css'
-import { alternar, conModificador, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
+import { alternar, conModificador, contarImagenes, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
+import { MiniaturaElemento } from '../Editor/Elemento'
 
 /*
   Elementos PNG de un Evento Flash (panel del editor). Van en la portada fija,
@@ -107,7 +108,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                                 onClick={(e) => elegir(e, s.id)}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') elegir(e, s.id) }}
                             >
-                                <span className={ed.capaThumb}><img src={s.url} alt='' /></span>
+                                <span className={ed.capaThumb}><MiniaturaElemento s={s} /></span>
                                 <span className={ed.capaNombre}>
                                     {t('side_events.stickers_layer', { n })}
                                     {k === 0 && stickers.length > 1 && <span className={ed.capaPosicion}>{t('side_events.stickers_layer_top')}</span>}
@@ -154,7 +155,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
             )}
 
             {/* Agregar: un botón con texto (el ícono solo no decía que era para subir). */}
-            {stickers.length < MAX_STICKERS && (
+            {contarImagenes(stickers) < MAX_STICKERS && (
                         <StorageImages
                             invitationID={carpeta}
                             type={'side-events'}
@@ -163,7 +164,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                                     <span className={ed.stickerAgregarIcono}><ImagePlus size={18} /></span>
                                     <span className={ed.stickerAgregarTexto}>
                                         <strong>{t('side_events.stickers_add')}</strong>
-                                        <span>{t('side_events.stickers_add_hint', { n: stickers.length, max: MAX_STICKERS })}</span>
+                                        <span>{t('side_events.stickers_add_hint', { n: contarImagenes(stickers), max: MAX_STICKERS })}</span>
                                     </span>
                                 </button>
                             }
@@ -179,7 +180,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
             )}
             {/* Teléfono: sin ⌘V, se pega con un botón que lee el portapapeles
                 (lo arma SideEvents; solo si el navegador puede leerlo). */}
-            {movil && onPegar && stickers.length < MAX_STICKERS && (
+            {movil && onPegar && contarImagenes(stickers) < MAX_STICKERS && (
                 <button type='button' className={ed.stickerPegar} onClick={onPegar}>
                     <ClipboardPaste size={16} />
                     {t('side_events.stickers_paste_btn')}
@@ -189,7 +190,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                 ? <span className={ed.hint}>{t(stickers.length ? 'side_events.stickers_hint_gestures' : 'side_events.stickers_hint_empty')}</span>
                 : <>
                     <span className={ed.hint}>{t(stickers.length ? 'side_events.stickers_hint_drag' : 'side_events.stickers_hint_empty')}</span>
-                    {stickers.length < MAX_STICKERS && <span className={ed.hint}>{t('side_events.stickers_hint_paste')}</span>}
+                    {contarImagenes(stickers) < MAX_STICKERS && <span className={ed.hint}>{t('side_events.stickers_hint_paste')}</span>}
                     {stickers.length > 1 && <span className={ed.hint}>{t('side_events.stickers_hint_multi')}</span>}
                 </>
             }
@@ -230,7 +231,7 @@ export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSelecc
                     <div className={ed.fechaFila}>
                         <Button
                             icon={<Copy size={14} />}
-                            disabled={stickers.length + grupo.length > MAX_STICKERS}
+                            disabled={contarImagenes(stickers) + contarImagenes(grupo) > MAX_STICKERS}
                             onClick={() => {
                                 const { lista, nuevos } = duplicarStickers(stickers, seleccionados)
                                 onChange(lista)

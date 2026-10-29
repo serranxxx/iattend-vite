@@ -11,19 +11,21 @@ import styles from './ElementBar.module.css'
 // mismo formato de canción ({ id, source, name, artist, albumArt, previewUrl }).
 // Con canción: portada del disco, nombre y quitar. Sin canción: buscador de
 // Spotify (resultados en un popover debajo) o "Subir" un audio.
-export const SongBar = ({ invitation, invitationID, setInvitation, setSaved }) => {
+// `value` / `onChange` / `folder`: la misma barra para la canción de un side
+// event o Flash (body.song, mismo formato), fuera de la invitación.
+export const SongBar = ({ invitation, invitationID, setInvitation, setSaved, value, onChange, folder }) => {
     const { t } = useTranslation()
-    const song = invitation?.cover?.song ?? null
+    const song = value !== undefined ? value : (invitation?.cover?.song ?? null)
     const [query, setQuery] = useState('')
     const [results, setResults] = useState([])
     const [searching, setSearching] = useState(false)
     const [uploading, setUploading] = useState(false)
     const fileRef = useRef(null)
 
-    const setSong = (value) => {
-        setInvitation((prev) => ({ ...prev, cover: { ...prev.cover, song: value } }))
+    const setSong = onChange ?? ((next) => {
+        setInvitation((prev) => ({ ...prev, cover: { ...prev.cover, song: next } }))
         setSaved(false)
-    }
+    })
 
     useEffect(() => {
         if (!query.trim()) { setResults([]); return }
@@ -52,7 +54,7 @@ export const SongBar = ({ invitation, invitationID, setInvitation, setSaved }) =
         if (!file) return
         setUploading(true)
         try {
-            const url = await uploadSongAudio({ file, invitationID })
+            const url = await uploadSongAudio({ file, invitationID: folder ?? invitationID })
             if (url) setSong({ id: `upload-${Date.now()}`, source: 'upload', name: file.name.replace(/\.[^/.]+$/, ''), artist: '', albumArt: null, previewUrl: url })
         } catch (err) {
             console.error(err)

@@ -1,7 +1,30 @@
 // Datos de los PNG de un Flash: los usan el panel (StickersFlash) y el
 // pegado con ⌘V del editor (SideEvents).
 
+// Tope de imágenes (PNG) por evento; los demás elementos (texto, íconos,
+// formas, líneas, decoraciones) no pesan y tienen su propio tope.
 export const MAX_STICKERS = 12
+export const MAX_ELEMENTOS = 40
+
+// `body.stickers` guarda todos los elementos de la portada. Sin `kind` (o
+// 'sticker') es una imagen con `url`; si no, uno de los elementos del panel
+// Elementos (mismo modelo que `decorations` de la invitación: icon, shape,
+// text, line, separator). Ver FlashElemento.jsx.
+export const esImagen = (s) => !s?.kind || s.kind === 'sticker'
+export const contarImagenes = (lista) => (lista ?? []).filter(esImagen).length
+// ¿Cabe uno más de este tipo?
+export const cabeElemento = (lista, imagen = true) =>
+    (lista ?? []).length < MAX_ELEMENTOS && (!imagen || contarImagenes(lista) < MAX_STICKERS)
+
+// Elemento nuevo desde el panel (layerItems.js de la invitación arma `item`).
+export const nuevoElemento = (item) => ({
+    x: 50,
+    y: 25,
+    rot: 0,
+    opacity: 1,
+    ...item,
+    id: `s${Date.now()}${Math.random().toString(36).slice(2, 5)}`,
+})
 
 export const nuevoSticker = (url) => ({
     id: `s${Date.now()}`,

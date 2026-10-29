@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Popover, Select } from 'antd'
-import { AlignJustify, Ban, Blend, FlipHorizontal2, FlipVertical2, SquareRoundCorner } from 'lucide-react'
+import { Popover, Select, Switch } from 'antd'
+import { AlignJustify, Ban, Blend, CopyPlus, Eye, EyeOff, FlipHorizontal2, FlipVertical2, Lock, RotateCw, Scaling, SquareRoundCorner, Trash2 } from 'lucide-react'
 import { useFonts } from '../../../../context/FontsContext'
 import { fonts as fallbackFonts } from '../../../../helpers/assets/fonts'
 import { LiveSlider } from './barControls'
+import { grosorVisible, parcheCandado, parcheGrosor, useVector } from '../../../Editor/vector'
 import styles from './ElementBar.module.css'
 
 // Barra de propiedades del elemento suelto elegido en la pieza (arriba del
@@ -21,16 +22,25 @@ const STROKE_STYLES = [
     { id: 'dotted', sample: 'dotted' },
 ]
 
-// Slider que solo guarda al soltar (una sola entrada en deshacer).
-
-export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen }) => {
+// Es la barra del elemento elegido de todos los editores (EditorShell). En
+// la invitación bloquear, duplicar, eliminar y capas van sobre el elemento,
+// en la pieza; un side event / Flash pasa `group` y suma en la barra tamaño,
+// giro, ocultar, duplicar y quitar (con varios elegidos, `group.count`, solo
+// van esos y la transparencia):
+//   { count, onScale(w, o), onRotate(rot, o), hidden, onToggleHidden,
+//     canDuplicate, onDuplicate, onRemove }
+// `pieceWidth`: ancho de la pieza en px (vectores: grosor fijo sin brincos).
+export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, group = null, pieceWidth = 390 }) => {
     const { t } = useTranslation()
     const { fonts: activeFonts } = useFonts()
     const fontOptions = activeFonts.length ? activeFonts : fallbackFonts
     const [open, setOpen] = useState(null)
     useEffect(() => { setOpen(null) }, [item.id])
 
-    const isShape = item.kind === 'shape'
+    const multi = (group?.count ?? 1) > 1
+    const isShape = item.kind === 'shape' && !multi
+    const isVector = item.kind === 'icon' && item.vector && !multi
+    const vector = useVector(isVector ? item.src : null)
     const sw = item.strokeWidth ?? 0
     const fill = item.color === 'transparent' ? null : item.color || accent
 
@@ -48,8 +58,9 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen }) =>
     )
 
     return (
-        <div className={styles.bar} data-edit-keep>
-            {item.kind !== 'sticker' && (
+        <div className={styles.bar} data-edit-keep data-text-bar>
+            {multi && <span className={styles.barCount}>{t('side_events.stickers_selected', { n: group.count })}</span>}
+            {item.kind && item.kind !== 'sticker' && !multi && (
                 <button
                     type="button"
                     className={styles.swatchBtn}
@@ -99,6 +110,32 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen }) =>
                 </button>
             ))}
 
+            {isVector && pop('vstroke', (
+                <>
+                    <LiveSlider
+                        label={t('build_editor.eb_stroke_width')}
+                        value={Math.round(grosorVisible(item, vector, pieceWidth) * 2) / 2}
+                        min={0.5}
+                        max={16}
+                        step={0.5}
+                        format={(v) => `${v} px`}
+                        onChange={(v, o) => onPatch(parcheGrosor(item, v, pieceWidth), o)}
+                    />
+                    <label className={styles.switchRow}>
+                        <span>
+                            <span className={styles.switchLabel}>{t('build_editor.eb_stroke_fixed')}</span>
+                            <span className={styles.switchHint}>{t('build_editor.eb_stroke_fixed_hint')}</span>
+                        </span>
+                        <Switch size="small" checked={Boolean(item.strokeFixed)} onChange={(on) => onPatch(parcheCandado(item, vector, on, pieceWidth))} />
+                    </label>
+                </>
+            ), (
+                <button type="button" className={styles.iconBtn} data-on={open === 'vstroke' || undefined} title={t('build_editor.eb_stroke_width')}>
+                    <AlignJustify size={18} />
+                    {item.strokeFixed && <Lock size={10} className={styles.lockBadge} />}
+                </button>
+            ))}
+
             {isShape && BOX_SHAPES.has(item.variant ?? 'square') && pop('radius', (
                 <LiveSlider label={t('build_editor.eb_radius')} value={Math.min(item.radius ?? 0, 200)} min={0} max={200} onChange={(v, o) => onPatch({ radius: v }, o)} />
             ), (
@@ -107,7 +144,7 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen }) =>
                 </button>
             ))}
 
-            {item.kind === 'text' && (
+            {item.kind === 'text' && !multi && (
                 <Select
                     className={styles.font}
                     size="small"
@@ -122,9 +159,9 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen }) =>
                 />
             )}
 
-            <span className={styles.divider} />
+            {item.kind && item.kind !== 'sticker' && !multi && <span className={styles.divider} />}
 
-            {pop('flip', (
+            {!multi && pop('flip', (
                 <div className={styles.menu}>
                     <button type="button" className={styles.menuItem} data-on={item.flipX || undefined} onClick={() => onPatch({ flipX: !item.flipX })}>
                         <FlipHorizontal2 size={16} /> {t('build_editor.eb_flip_h')}
@@ -146,6 +183,42 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen }) =>
                     <Blend size={18} />
                 </button>
             ))}
+
+            {group && (
+                <>
+                    {pop('size', (
+                        <LiveSlider label={t('side_events.stickers_size')} value={Math.round(item.w)} min={5} max={200} format={(v) => `${v}%`} onChange={group.onScale} />
+                    ), (
+                        <button type="button" className={styles.iconBtn} data-on={open === 'size' || undefined} title={t('side_events.stickers_size')}>
+                            <Scaling size={18} />
+                        </button>
+                    ))}
+                    {pop('rot', (
+                        <LiveSlider label={t('side_events.stickers_rotation')} value={Math.round(item.rot ?? 0)} min={-180} max={180} format={(v) => `${v}°`} onChange={group.onRotate} />
+                    ), (
+                        <button type="button" className={styles.iconBtn} data-on={open === 'rot' || undefined} title={t('side_events.stickers_rotation')}>
+                            <RotateCw size={18} />
+                        </button>
+                    ))}
+                    <span className={styles.divider} />
+                    <button type="button" className={styles.iconBtn} data-on={group.hidden || undefined} title={t(group.hidden ? 'side_events.stickers_show' : 'side_events.stickers_hide')} onClick={group.onToggleHidden}>
+                        {group.hidden ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                    <button
+                        type="button"
+                        className={styles.iconBtn}
+                        title={t('side_events.stickers_duplicate')}
+                        aria-disabled={!group.canDuplicate || undefined}
+                        data-off={!group.canDuplicate || undefined}
+                        onClick={() => group.canDuplicate && group.onDuplicate()}
+                    >
+                        <CopyPlus size={18} />
+                    </button>
+                    <button type="button" className={styles.iconBtn} title={t('side_events.stickers_remove')} onClick={group.onRemove}>
+                        <Trash2 size={18} />
+                    </button>
+                </>
+            )}
         </div>
     )
 }

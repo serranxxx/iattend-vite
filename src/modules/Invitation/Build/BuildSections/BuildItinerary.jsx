@@ -17,6 +17,8 @@ import { Delete as RiDeleteBack2Line } from 'lucide-react';
 import { EyeOff as TbEyeClosed } from 'lucide-react';
 import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu'
 import { AddressAutocomplete } from '../../../SideEvents/AddressAutocomplete';
+import { VectorIcono } from '../../../Editor/Elemento'
+import { esUrlDeVector } from '../../../Editor/vector'
 
 export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSaved, }) => {
 
@@ -522,6 +524,8 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         // SVG del catálogo del editor: pintado del color del texto.
         if (typeof index === 'string' && index.startsWith('svg:')) {
             const url = index.slice(4)
+            // Vectores: en línea, con trazo de ícono (como en la pieza).
+            if (esUrlDeVector(url)) return <VectorIcono url={url} size={size} />
             return <span style={{ display: 'inline-block', width: size, height: size, minWidth: size, background: 'currentColor', WebkitMaskImage: `url("${url}")`, maskImage: `url("${url}")`, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskPosition: 'center' }} />
         }
         if (typeof index === 'string' && index.startsWith('shape:')) {

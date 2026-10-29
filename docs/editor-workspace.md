@@ -1,5 +1,8 @@
 # Editor Workspace (rediseño de /dashboard/build en escritorio)
 
+> Historia por etapas. El estado actual completo del editor está en
+> `docs/sistema-diseno-editor.md`.
+
 Basado en el handoff "Editor Workspace" (Downloads/design_handoff_editor_workspace).
 Se aplica por etapas.
 

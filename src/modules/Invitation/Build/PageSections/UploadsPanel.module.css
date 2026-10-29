@@ -381,3 +381,24 @@
         opacity: 1;
     }
 }
+
+/* "Pegar imagen copiada" (iPad / teléfono, sin ⌘V). */
+.paste {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #EBEBEB;
+    background: #FFF;
+    color: #29262D;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.paste:hover {
+    background: #F5F3F2;
+}

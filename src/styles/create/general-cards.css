@@ -922,11 +922,15 @@
     /* font-weight: 600; */
 }
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 #build-cover-date-buttons:hover,
 #build-cover-date-buttons--active:hover {
     background-color: var(--brand-color-500);
     border: 1px solid var(--brand-color-500);
     color: var(--ft-color);
+}
 }
 
 #general-cards-text-button {

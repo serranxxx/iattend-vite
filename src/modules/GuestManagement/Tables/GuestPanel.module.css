@@ -85,11 +85,15 @@
     border-color: var(--brand-color-500);
 }
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 .chipActive,
 .chipActive:hover {
     background-color: var(--text-color);
     border-color: var(--text-color);
     color: var(--ft-color);
+}
 }
 
 /* ── Lista ─────────────────────────────────────────────────────────────── */

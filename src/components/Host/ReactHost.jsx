@@ -165,6 +165,10 @@ export default function ReactHost({
       if (ev.data?.type === "REMOTE_LAYER_SELECT") {
         window.dispatchEvent(new CustomEvent("iattend-layer-selection", { detail: ev.data.payload ?? null }));
       }
+      // ⌘C / ⌘X / ⌘V con el foco dentro de la pieza (useElementClipboard).
+      if (ev.data?.type === "REMOTE_ELEMENT_KEY" && ev.data?.payload?.action) {
+        window.dispatchEvent(new CustomEvent("iattend-element-key", { detail: { action: ev.data.payload.action } }));
+      }
       // ⌘V con una imagen dentro de la pieza: el editor la sube como sticker.
       if (ev.data?.type === "REMOTE_PASTE_IMAGE" && ev.data?.payload?.file) {
         window.dispatchEvent(new CustomEvent("iattend-layer-paste", { detail: ev.data.payload }));
@@ -209,6 +213,9 @@ export default function ReactHost({
       else post("HOST_LAYER_HOVER", null);
     };
     const onAdd = (e) => post("HOST_LAYER_ADD", e.detail);
+    // Capas: elegir un elemento suelto desde el panel ({ section, id }).
+    const onPick = (e) => post("HOST_LAYER_SELECT", e.detail);
+    window.addEventListener("iattend-host-layer-select", onPick);
     window.addEventListener("iattend-layer-hover", onHover);
     window.addEventListener("iattend-layer-drop", onDrop);
     window.addEventListener("iattend-layer-add", onAdd);
@@ -216,6 +223,7 @@ export default function ReactHost({
       window.removeEventListener("iattend-layer-hover", onHover);
       window.removeEventListener("iattend-layer-drop", onDrop);
       window.removeEventListener("iattend-layer-add", onAdd);
+      window.removeEventListener("iattend-host-layer-select", onPick);
     };
   }, [editMode, targetOrigin]);
 

@@ -45,7 +45,9 @@ const dibujarCover = (ctx, fuente, ancho, alto) => {
  * @param {{ fondo: { tipo: 'imagen'|'video', url: string } | null, stickers: object[], color?: string, veil?: number }} opciones
  * @returns {Promise<File>} JPG listo para subir
  */
-export const generarImagenLink = async ({ fondo, stickers, color, veil }) => {
+export const generarImagenLink = async ({ fondo, stickers: todos, color, veil }) => {
+    // Solo imágenes (PNG); los elementos de texto, íconos y formas no.
+    const stickers = (todos ?? []).filter(s => !s.kind || s.kind === 'sticker')
     const ancho = PIEZA_ANCHO * ESCALA
     const alto = PIEZA_ALTO * ESCALA
     const canvas = document.createElement('canvas')

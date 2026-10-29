@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { uploadImagesSupabase } from '../../helpers/services/uploadImage'
 import { generarImagenLink } from './generarImagenLink'
+import { esImagen } from './stickersFlashData'
 import ed from './SideEventEditor.module.css'
 
 /*
@@ -18,7 +19,8 @@ export const ImagenLinkFlash = ({ body, carpeta, onLista }) => {
     const { t } = useTranslation()
     const [abierto, setAbierto] = useState(false)
     const [creando, setCreando] = useState(false)
-    const visibles = (Array.isArray(body?.stickers) ? body.stickers : []).filter(s => !s.hidden)
+    // Solo las imágenes: textos, íconos y formas no se dibujan en la imagen del link.
+    const visibles = (Array.isArray(body?.stickers) ? body.stickers : []).filter(s => !s.hidden && esImagen(s))
 
     const opcionesFondo = [
         body?.image && { value: 'portada', label: t('side_events.link_bg_cover') },

@@ -741,6 +741,13 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                 () => setMobileWaOpen(true),
                 unAnswer > 0 ? <span className="hd-menu-count">{unAnswer}</span> : null
             )}
+            {/* Candado de privacidad: en pantallas angostas (iPad vertical) no
+                cabe en la barra y vive aquí. */}
+            {invType != null && menuItem(
+                isPublic ? <LockOpen size={16} /> : <Lock size={16} />,
+                t(isPublic ? 'dashboard_header.menu_access_public' : 'dashboard_header.menu_access_private'),
+                toggleAccess
+            )}
             {!isEditing && menuItem(<QrCode size={16} />, t('dashboard_header.scanner_tooltip'), () => navigate(`/scanner?id=${id}`))}
             {menuItem(<CircleQuestionMark size={16} />, t('dashboard_header.help'), () => setSupportOpen(true))}
         </div>

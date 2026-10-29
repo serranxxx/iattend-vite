@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Popover, Segmented, message } from 'antd'
 import axios from 'axios'
-import { CloudUpload, LoaderCircle, Trash2, X } from 'lucide-react'
+import { ClipboardPaste, CloudUpload, LoaderCircle, Trash2, X } from 'lucide-react'
 import { supabase } from '../../../../lib/supabase'
-import { deleteImageFromSupabase, deleteVideoFromSupabase, uploadEventVideo, uploadImagesSupabase } from '../../../../helpers/services/uploadImage'
+import { deleteImageFromSupabase, deleteVideoFromSupabase, subirSticker, subirVector, uploadEventVideo, uploadImagesSupabase } from '../../../../helpers/services/uploadImage'
 import { startLayerDrag, stickerItem, uploadStickers } from './layerItems'
 import { useEditorCatalog } from './useEditorCatalog'
-import { MB, getStorageQuota } from '../../../../helpers/services/storageQuota'
+import { MB, getStorageQuota, invitationOfFolder } from '../../../../helpers/services/storageQuota'
 import { liaHeaders } from '../../../../pages/Lia/liaApi'
 import { useLia } from '../../../../context/LiaContext'
 import base from './ToolPanels.module.css'
@@ -29,6 +29,13 @@ import styles from './UploadsPanel.module.css'
 const EXTRA = { extra_mb: 30, cost: 100 }
 const esVideo = (name) => /\.(mp4|webm|mov|m4v)$/i.test(name)
 const esAudio = (name) => /\.(mp3|wav|m4a|aac|ogg)$/i.test(name)
+// PNG (o WebP / GIF con transparencia): lo que va encima de la pieza.
+const esPng = (name) => /\.(png|webp|gif)$/i.test(name)
+// Vector (SVG): como un PNG, pero en la pieza se le cambia el color (va como
+// ícono pintado con mask-image, igual que los de la categoría Vectores de
+// Elementos). Vive en la misma carpeta que los PNG.
+const esVector = (name) => /\.svg$/i.test(name)
+const vectorItem = (url) => ({ kind: 'icon', src: url, tint: true, vector: true, w: 20, ar: 1, rot: 0, opacity: 1 })
 
 const listar = async (carpeta) => {
     const { data, error } = await supabase.storage.from('user_images').list(carpeta, { limit: 200, sortBy: { column: 'created_at', order: 'desc' } })
@@ -49,7 +56,17 @@ const mb = (bytes) => (bytes >= 1024 * 1024 * 100 ? Math.round(bytes / 1024 / 10
 // categorías, primero la de la sección que pidió (portada, cita, dresscode).
 const REQUEST_SECTION = { cover: 'cover', 'side-events': 'cover', quote: 'quote', dresscode: 'dresscode' }
 
-export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedia }) => {
+// Es el panel Subidos de todos los editores (invitación, side events y
+// Eventos Flash; EditorShell). `folders` cambia de dónde lee y a dónde sube:
+// por omisión los de una invitación ({id}, {id}/video, inv-{id}); un Flash
+// pasa { root: 'flash-<id>', videos: 'flash-<id>/video', pngs: null } y sus
+// PNG se reconocen por la extensión dentro de `root`. `inUse(url)`: no
+// borrar un PNG que la pieza está usando. `onPaste`: botón "Pegar imagen
+// copiada" (sin ⌘V en iPad). `draggable`: fotos y PNG se arrastran a la pieza.
+export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedia, folders: foldersProp, inUse, onPaste, draggable = true }) => {
+    const folders = foldersProp ?? { root: invitationID, videos: `${invitationID}/video`, pngs: `inv-${invitationID}` }
+    // Límite de espacio: solo carpetas de una invitación.
+    const quotaId = invitationOfFolder(folders.root)
     const { t } = useTranslation()
     const [filter, setFilter] = useState('all')
     const [source, setSource] = useState('uploads')
@@ -75,7 +92,7 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
         mediaRequest.handleImage?.(url, 0, mediaRequest.id)
         clearMedia?.()
     }
-    const [files, setFiles] = useState({ photos: [], pngs: [], videos: [] })
+    const [files, setFiles] = useState({ photos: [], pngs: [], vectors: [], videos: [] })
     const [loading, setLoading] = useState(true)
     const [uploading, setUploading] = useState(0)
     const [over, setOver] = useState(false)
@@ -91,25 +108,25 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
     // Burbuja "-100 créditos" y recarga del contador del header (CreditController).
     const { setCreditSuccess } = useLia()
     const [buying, setBuying] = useState(false)
-    const cargarQuota = () => invitationID && getStorageQuota(invitationID).then(setQuota).catch(() => {})
+    const cargarQuota = () => quotaId && getStorageQuota(quotaId).then(setQuota).catch(() => {})
     useEffect(() => {
         cargarQuota()
         axios.get(`${import.meta.env.VITE_API_URL}/api/storage/package`).then(({ data }) => data?.package && setPkg(data.package)).catch(() => {})
         const onChange = () => cargarQuota()
         // Una subida chocó con el límite: se ofrece ampliar.
-        const onFull = (e) => { if (!e.detail?.invitationID || e.detail.invitationID === invitationID) { cargarQuota(); setBuyOpen(true) } }
+        const onFull = (e) => { if (quotaId && (!e.detail?.invitationID || e.detail.invitationID === quotaId)) { cargarQuota(); setBuyOpen(true) } }
         window.addEventListener('iattend-storage-changed', onChange)
         window.addEventListener('iattend-storage-full', onFull)
         return () => {
             window.removeEventListener('iattend-storage-changed', onChange)
             window.removeEventListener('iattend-storage-full', onFull)
         }
-    }, [invitationID])
+    }, [quotaId])
 
     const comprar = async () => {
         setBuying(true)
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/storage/upgrade`, { invitation_id: invitationID }, { headers: await liaHeaders() })
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/storage/upgrade`, { invitation_id: quotaId }, { headers: await liaHeaders() })
             if (data?.success) {
                 message.success(t('build_editor.up_upgraded', { mb: data.storage_limit_mb }))
                 setBuyOpen(false)
@@ -125,17 +142,27 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
     }
 
     const cargar = async () => {
-        if (!invitationID) return
-        const [raiz, videos, pngs] = await Promise.all([listar(invitationID), listar(`${invitationID}/video`), listar(`inv-${invitationID}`)])
+        if (!folders.root) return
+        const [raiz, videos, pngs] = await Promise.all([listar(folders.root), listar(folders.videos), folders.pngs ? listar(folders.pngs) : []])
+        const imagenes = raiz.filter((f) => !esVideo(f.name) && !esAudio(f.name))
+        // Sin carpeta de PNG propia, los PNG y vectores son los de la raíz por
+        // extensión.
+        const sueltos = folders.pngs ? pngs : imagenes.filter((f) => esPng(f.name) || esVector(f.name))
         setFiles({
-            photos: raiz.filter((f) => !esVideo(f.name) && !esAudio(f.name)),
+            photos: folders.pngs ? imagenes.filter((f) => !esVector(f.name)) : imagenes.filter((f) => !esPng(f.name) && !esVector(f.name)),
             videos: videos.filter((f) => esVideo(f.name)),
-            pngs,
+            pngs: sueltos.filter((f) => !esVector(f.name)),
+            vectors: sueltos.filter((f) => esVector(f.name)),
         })
         setLoading(false)
         cargarQuota()
     }
-    useEffect(() => { cargar() }, [invitationID])
+    useEffect(() => { cargar() }, [folders.root])
+    // Algo se subió o se borró desde otra pieza (⌘V, un picker).
+    useEffect(() => {
+        window.addEventListener('iattend-storage-changed', cargar)
+        return () => window.removeEventListener('iattend-storage-changed', cargar)
+    }, [folders.root])
 
     const subir = async (lista) => {
         const archivos = [...lista].filter((f) => f.type.startsWith('image/') || f.type.startsWith('video/'))
@@ -143,9 +170,12 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
         setUploading(archivos.length)
         for (const file of archivos) {
             try {
-                if (file.type.startsWith('video/')) await uploadEventVideo({ file, invitationID, setVideos: () => {} })
-                else if (file.type === 'image/png') await uploadStickers([file], invitationID)
-                else await uploadImagesSupabase({ file, invitationID, setImages: () => {} })
+                if (file.type.startsWith('video/')) await uploadEventVideo({ file, invitationID: folders.root, setVideos: () => {} })
+                // SVG: tal cual, con los PNG (se pinta de cualquier color en la pieza).
+                else if (file.type === 'image/svg+xml' || esVector(file.name)) await subirVector(file, folders.pngs ?? folders.root)
+                // PNG: aligerado sin perder la transparencia (stickers).
+                else if (file.type === 'image/png') await (folders.pngs ? uploadStickers([file], invitationID) : subirSticker(file, folders.root))
+                else await uploadImagesSupabase({ file, invitationID: folders.root, setImages: () => {} })
             } catch (e) {
                 console.error(e)
                 message.error(t('build_editor.up_error', { name: file.name }))
@@ -158,16 +188,16 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
 
     // PNG (sticker): no se borra si está puesto en la invitación.
     const borrarPng = async (f) => {
-        const enUso = JSON.stringify(invitation?.decorations ?? {}).includes(f.url)
+        const enUso = inUse ? inUse(f.url) : JSON.stringify(invitation?.decorations ?? {}).includes(f.url)
         if (enUso) { message.warning(t('build_editor.up_in_use')); return }
         const { error } = await supabase.storage.from('user_images').remove([f.path])
         if (error) { message.error(t('build_editor.up_delete_error')); return }
         cargar()
     }
     const borrar = (f, kind) => {
-        if (kind === 'png') return borrarPng(f)
-        if (kind === 'video') return deleteVideoFromSupabase(f.path, invitationID, () => cargar())
-        return deleteImageFromSupabase(f.path, invitationID, () => cargar())
+        if (kind === 'png' || kind === 'vector') return borrarPng(f)
+        if (kind === 'video') return deleteVideoFromSupabase(f.path, folders.root, () => cargar())
+        return deleteImageFromSupabase(f.path, folders.root, () => cargar())
     }
 
     // Pidiendo un archivo: solo lo que sirve (imágenes o videos).
@@ -175,9 +205,11 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
     const items = [
         ...(show === 'all' || show === 'photos' ? files.photos.map((f) => ({ ...f, kind: 'photo' })) : []),
         ...(show === 'all' || show === 'png' ? files.pngs.map((f) => ({ ...f, kind: 'png' })) : []),
+        // Los vectores no sirven de foto (fondo, portada…): no salen al elegir.
+        ...(!mediaRequest && (show === 'all' || show === 'vectors') ? files.vectors.map((f) => ({ ...f, kind: 'vector' })) : []),
         ...((!mediaRequest && (show === 'all' || show === 'videos')) || isVideoRequest ? files.videos.map((f) => ({ ...f, kind: 'video' })) : []),
     ]
-    const used = quota?.used ?? [...files.photos, ...files.pngs, ...files.videos].reduce((n, f) => n + f.size, 0)
+    const used = quota?.used ?? [...files.photos, ...files.pngs, ...files.vectors, ...files.videos].reduce((n, f) => n + f.size, 0)
     const limitMb = quota?.limitMb ?? null
     const ratio = limitMb ? used / (limitMb * MB) : 0
     const canUpgrade = limitMb != null && limitMb < pkg.extra_mb
@@ -234,6 +266,13 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                 <input ref={inputRef} type="file" multiple accept="image/*,video/*" hidden onChange={(e) => { subir(e.target.files); e.target.value = '' }} />
             </button>
 
+            {/* iPad / teléfono: sin ⌘V, se pega con un botón que lee el portapapeles. */}
+            {!mediaRequest && onPaste && (
+                <button type="button" className={styles.paste} onClick={onPaste}>
+                    <ClipboardPaste size={16} /> {t('side_events.stickers_paste_btn')}
+                </button>
+            )}
+
             {/* Filtros en pills, fijos arriba al hacer scroll (como Elementos). */}
             {!isVideoRequest && (
                 <div className={styles.sticky}>
@@ -242,6 +281,7 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                             ['all', t('build_editor.up_all')],
                             ['photos', t('build_editor.up_photos')],
                             ['png', 'PNG'],
+                            ...(mediaRequest ? [] : [['vectors', t('build_editor.up_vectors')]]),
                             ...(mediaRequest ? [] : [['videos', t('build_editor.up_videos')]]),
                         ].map(([key, label]) => (
                             <button key={key} type="button" className={styles.chip} data-on={show === key || undefined} onClick={() => setFilter(key)}>
@@ -264,15 +304,16 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                             data-pick={mediaRequest ? true : undefined}
                             title={mediaRequest ? t('build_editor.up_pick') : f.kind === 'video' ? t('build_editor.up_video_hint') : f.name}
                             onClick={mediaRequest ? (e) => { if (!e.target.closest('button')) apply(f.url) } : undefined}
-                            onPointerDown={mediaRequest || f.kind === 'video' ? undefined : (e) => {
+                            onPointerDown={mediaRequest || !draggable || f.kind === 'video' ? undefined : (e) => {
                                 if (e.target.closest('button')) return
-                                startLayerDrag(e, stickerItem(f.url))
+                                // Un vector entra como ícono que se pinta del color que se elija.
+                                startLayerDrag(e, f.kind === 'vector' ? vectorItem(f.url) : stickerItem(f.url))
                             }}
                         >
                             {f.kind === 'video'
                                 ? <video src={f.url} muted preload="metadata" />
                                 : <img src={f.url} alt="" loading="lazy" draggable={false} />}
-                            {f.kind !== 'photo' && <span className={styles.tag}>{f.kind === 'png' ? 'PNG' : 'VIDEO'}</span>}
+                            {f.kind !== 'photo' && <span className={styles.tag}>{f.kind === 'png' ? 'PNG' : f.kind === 'vector' ? 'SVG' : 'VIDEO'}</span>}
                             <button type="button" className={styles.delete} aria-label={t('build_editor.up_delete')} onClick={() => borrar(f, f.kind)}>
                                 <Trash2 size={13} />
                             </button>

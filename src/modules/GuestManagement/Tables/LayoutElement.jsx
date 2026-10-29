@@ -48,6 +48,14 @@ export const LayoutElement = ({ element, zoomLevel = 1, snapToGrid, gridStep = 2
         if (!isDragging) return
 
         const onMouseMove = (event) => {
+            // Un segundo dedo es pellizco (zoom del mapa), no arrastre: se
+            // suelta sin guardar y el elemento vuelve a donde estaba.
+            if (event.touches?.length > 1) {
+                hasDraggedRef.current = false
+                setPosition({ x: element.x, y: element.y })
+                setIsDragging(false)
+                return
+            }
             const pos = event.touches ? event.touches[0] : event
             const dx = pos.clientX - startPosRef.current.x
             const dy = pos.clientY - startPosRef.current.y

@@ -254,6 +254,16 @@ export const DynamicTable = ({
         if (!isDragging) return
 
         const onMove = (event) => {
+            // Un segundo dedo es pellizco (zoom del mapa), no arrastre: se
+            // suelta sin guardar y la mesa (o el grupo) vuelve a su lugar.
+            if (event.touches?.length > 1) {
+                hasDraggedRef.current = false
+                document.body.classList.remove('seating-dragging')
+                setDragPos(null)
+                if (isMultiSelected) onGroupDragMove?.({ x: 0, y: 0 })
+                setIsDragging(false)
+                return
+            }
             const pos = event.touches ? event.touches[0] : event
             const dx = pos.clientX - startPosRef.current.x
             const dy = pos.clientY - startPosRef.current.y

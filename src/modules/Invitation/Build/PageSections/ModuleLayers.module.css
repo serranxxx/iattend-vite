@@ -2,10 +2,10 @@
 .panel {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     width: 216px;
     max-height: 100%;
-    padding: 14px 10px 10px;
+    padding: 12px 8px 8px;
     border-radius: 20px;
     background: #FFF;
     box-shadow: 0 8px 24px rgba(12, 23, 27, 0.12);
@@ -36,7 +36,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 40px;
+    height: 34px;
     padding: 0 6px 0 4px;
     border-radius: 12px;
     color: #29262D;
@@ -126,5 +126,173 @@
 @media (hover: none) {
     .eye {
         opacity: 1;
+    }
+}
+
+/* ── Capas en árbol (LayersPanel): un grupo por módulo y adentro sus capas ── */
+.panel {
+    width: 224px;
+}
+
+.group {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.group[data-dragging] {
+    z-index: 1;
+    background: #FFF;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(12, 23, 27, 0.16);
+}
+
+/* Portada: fija arriba, separada de los módulos que se mueven. */
+.groupFixed {
+    position: relative;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+
+.groupFixed::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 1px;
+    background: #EBEBEB;
+}
+
+.groupHead {
+    gap: 6px;
+    padding-left: 0;
+}
+
+.caret {
+    flex: none;
+    width: 20px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #9A968F;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.caret[data-open] {
+    transform: rotate(90deg);
+}
+
+.children {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0 0 2px;
+    padding: 0 0 0 14px;
+    list-style: none;
+}
+
+/* Lista sin encabezado de grupo (side event / Flash): sin sangría. */
+.group > .children:first-child {
+    margin: 0;
+    padding-left: 0;
+}
+
+.child {
+    height: 28px;
+    font-size: 12.5px;
+    gap: 7px;
+}
+
+/* Contenido del módulo (título, fecha, fondo…): no se arrastra. */
+.part {
+    cursor: pointer;
+    color: #5F5B63;
+}
+
+.partDot {
+    flex: none;
+    width: 13px;
+    display: grid;
+    place-items: center;
+}
+
+.partDot::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #CFCBC4;
+}
+
+.thumb {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: #F5F3F2;
+    overflow: hidden;
+    color: #29262D;
+}
+
+.thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.thumb svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* Grupo que recibe un elemento arrastrado desde otro módulo. */
+.groupHead[data-drop] {
+    background: #EFEAFF;
+    box-shadow: inset 0 0 0 1.5px #A88AFF;
+    color: #6D3CFA;
+}
+
+/* Abrir / cerrar un grupo (Collapse en LayersPanel). */
+.collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+        grid-template-rows 280ms cubic-bezier(0.2, 0.9, 0.25, 1),
+        opacity 200ms ease;
+}
+
+.collapse[data-open] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+.collapseIn {
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Las capas bajan un poco al abrir, como si salieran del encabezado. */
+.collapse .children {
+    transform: translateY(-6px);
+    transition: transform 280ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.collapse[data-open] .children {
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .collapse,
+    .collapse .children {
+        transition-duration: 120ms;
     }
 }

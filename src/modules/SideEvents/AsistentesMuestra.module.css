@@ -1,0 +1,230 @@
+/* Tarjeta "Asistentes" de muestra (AsistentesMuestra.jsx): el mismo vidrio,
+   radio, título y chip que el itinerario de la pieza (ItinerarioWidget.module.css);
+   contraparte en iattend-events: SideEvent/Asistentes/asistentes.module.css. */
+
+.cuadro {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+    box-sizing: border-box;
+    padding: 20px 18px 16px;
+    border-radius: 24px;
+    /* La fila del chat va de orilla a orilla: que respete las esquinas. */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: #fff;
+    font-family: Poppins, sans-serif;
+    text-align: left;
+    background: color-mix(in srgb, var(--blur-color--dark, rgba(28, 52, 78, 0.32)) 78%, transparent);
+    backdrop-filter: blur(22px) saturate(180%) brightness(1.1);
+    -webkit-backdrop-filter: blur(22px) saturate(180%) brightness(1.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow:
+        0 0 14px 0 rgba(0, 0, 0, 0.10),
+        0 8px 32px rgba(0, 0, 0, 0.18),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.cuadro::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.16), transparent);
+    pointer-events: none;
+}
+
+.cuadro > * {
+    position: relative;
+}
+
+.cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 4px;
+}
+
+.titulo {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.resumen {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: #A0D97B;
+    box-shadow: 0 0 0 3px rgba(160, 217, 123, 0.3);
+}
+
+.pila {
+    height: 44px;
+    margin: 0 4px;
+}
+
+.avatar,
+.mas {
+    position: absolute;
+    top: 0;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.avatar {
+    font-size: 24px;
+    color: #FFF;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--borde-avatar);
+}
+
+.letras {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.mas {
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 4px;
+}
+
+.nombres {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ejemplo {
+    margin-right: 6px;
+    padding: 1px 6px;
+    border-radius: 99px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.verTodos {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Fila del chat de asistentes (contraparte: iattend-events Chat/chat-flash.module.css, .entry). */
+.chat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 2px -18px -16px;
+    padding: 12px 18px 14px;
+    border-top: 1px solid #FFFFFF24;
+    background: #FFFFFF0A;
+}
+
+.chatIcono {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 99px;
+    background: #FFFFFF1F;
+}
+
+.chatCol {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.chatTitulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.chatTituloTexto {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chatNuevos {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #A0D97B;
+    color: #1F2A14;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.chatPrevia {
+    font-size: 12px;
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chatPrevia b {
+    font-weight: 600;
+}

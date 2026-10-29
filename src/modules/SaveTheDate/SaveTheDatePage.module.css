@@ -199,10 +199,14 @@
     color: #16323d;
 }
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 .railBtnActive,
 .railBtnActive:hover:not(:disabled) {
     background: #16323d;
     color: #FFFFFF;
+}
 }
 
 .railBtn:disabled {

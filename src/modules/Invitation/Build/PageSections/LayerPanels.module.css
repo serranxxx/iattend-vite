@@ -254,6 +254,66 @@
     background: rgba(109, 60, 250, 0.12);
 }
 
+/* Color del ícono del momento (debajo del aviso). */
+.momentColors {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: #F5F3F2;
+}
+
+.momentColorsLabel {
+    flex-basis: 100%;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5F5B63;
+}
+
+.momentSwatch {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+    background: #FFF;
+    color: #5F5B63;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.momentSwatch[data-on] {
+    box-shadow: 0 0 0 2px #FFF, 0 0 0 4px #6D3CFA;
+}
+
+.momentStroke {
+    flex-basis: 100%;
+    margin-top: 4px;
+}
+
+.momentAuto {
+    background: linear-gradient(135deg, #FFF 50%, #E8E4DE 50%);
+}
+
+.momentCustom input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
 /* No aplica como ícono del momento: se atenúa (se sigue pudiendo arrastrar). */
 .textCard[data-off],
 .lineCell[data-off] {
@@ -400,6 +460,30 @@
     pointer-events: none;
 }
 
+/* Vectores: el dibujo llena la celda, con trazo fijo (VectorThumb). */
+.vectorCell {
+    position: relative;
+    color: #29262D;
+}
+
+.vectorCell:hover,
+.vectorCell[data-on] {
+    color: #6D3CFA;
+}
+
+.vectorThumb {
+    position: absolute;
+    inset: 12px;
+    display: block;
+}
+
+.vectorThumb svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
 /* SVG del catálogo pintado con el color del texto (mask). */
 .maskIcon {
     width: 22px;
@@ -462,4 +546,10 @@
     margin: -8px -18px 0;
     padding: 8px 18px 6px;
     background: #FFF;
+}
+
+/* Mientras carga, la máscara también llena la celda. */
+.vectorCell .maskIcon {
+    width: auto;
+    height: auto;
 }

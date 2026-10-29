@@ -19,9 +19,10 @@ export const SIDE_TOUR_STORAGE_KEY = 'iattend_side_tour_v1'
 // querySelector nunca es ambiguo.
 const target = (name) => () => document.querySelector(`[data-tour="${name}"]`)
 
-// `section` abre el panel de esa herramienta al llegar al paso, como hace
-// BuildTour con los módulos del editor de la invitación. En móvil no se aplica:
-// la hoja inferior taparía el dock, que es justo lo que el paso señala.
+// `section` elige esa zona en la pieza al llegar al paso (sale su barra) y
+// `tool` abre ese panel del riel, como hace BuildTour con los módulos del
+// editor de la invitación. En móvil no se aplica: la hoja inferior taparía el
+// dock, que es justo lo que el paso señala. `flash`: solo en Eventos Flash.
 const BLOCKS = [
     {
         key: 'diseno',
@@ -29,13 +30,16 @@ const BLOCKS = [
         steps: [
             { key: 'welcome', target: target('tabs') },
             { key: 'canvas', target: target('canvas'), placement: 'right' },
-            { key: 'background', target: target('chip-background'), section: 'background' },
-            { key: 'color', target: target('chip-color'), section: 'color' },
-            { key: 'title', target: target('tool-title'), section: 'title', placement: 'right' },
-            { key: 'date', target: target('tool-date'), section: 'date', placement: 'right' },
-            { key: 'place', target: target('tool-place'), section: 'place', placement: 'right' },
-            { key: 'notes', target: target('tool-extras'), section: 'extras', placement: 'right' },
-            { key: 'live', target: target('live'), placement: 'bottomRight' },
+            { key: 'background', target: target('bar'), section: 'background', placement: 'bottom' },
+            { key: 'color', target: target('tool-design'), tool: 'design', placement: 'right' },
+            { key: 'title', target: target('bar'), section: 'title', placement: 'bottom' },
+            { key: 'date', target: target('bar'), section: 'date', placement: 'bottom' },
+            { key: 'place', target: target('bar'), section: 'place', placement: 'bottom' },
+            { key: 'notes', target: target('canvas'), section: 'extras', placement: 'right' },
+            { key: 'elements', target: target('tool-elements'), tool: 'elements', placement: 'right', flash: true },
+            { key: 'layers', target: target('layers'), placement: 'left', flash: true },
+            { key: 'dock', target: target('dock'), placement: 'top' },
+            { key: 'live', target: target('live'), placement: 'top' },
             { key: 'share', target: target('share'), placement: 'bottomRight' },
             { key: 'save', target: target('save'), placement: 'bottomRight' },
         ],
@@ -60,17 +64,18 @@ const BLOCKS = [
 ]
 
 // Lista plana que consume <Tour>, con metadatos de bloque por paso.
-const FLAT_STEPS = BLOCKS.flatMap((block, blockIndex) =>
-    block.steps.map((step) => ({ ...step, tab: block.tab, listKey: block.listKey, blockIndex })),
+const flatSteps = (esFlash) => BLOCKS.flatMap((block, blockIndex) =>
+    block.steps
+        .filter((step) => !step.flash || esFlash)
+        .map((step) => ({ ...step, tab: block.tab, listKey: block.listKey, blockIndex })),
 )
 
-const blockStartIndex = (blockIndex) =>
-    FLAT_STEPS.findIndex((s) => s.blockIndex === blockIndex)
-
-export const SideEventsTour = ({ open, onClose, isMobile, setActiveTab, setSection, setActiveKey }) => {
+export const SideEventsTour = ({ open, onClose, isMobile, setActiveTab, setSection, setActiveKey, setTool, esFlash = false }) => {
 
     const { t } = useTranslation()
     const [current, setCurrent] = useState(0)
+    const FLAT_STEPS = flatSteps(esFlash)
+    const blockStartIndex = (blockIndex) => FLAT_STEPS.findIndex((s) => s.blockIndex === blockIndex)
 
     // El cambio de modo, de panel y de paso van en el mismo commit: cuando el
     // Tour resuelve el anclaje, lo que señala ya está montado.
@@ -78,8 +83,11 @@ export const SideEventsTour = ({ open, onClose, isMobile, setActiveTab, setSecti
         if (!step) return
         setActiveTab(step.tab)
         if (step.listKey) setActiveKey(step.listKey)
-        // El panel solo se abre en escritorio (ver nota de BLOCKS)
-        if (!isMobile) setSection(step.section ?? null)
+        // La zona y el panel solo se eligen en escritorio (ver nota de BLOCKS)
+        if (!isMobile) {
+            setSection(step.section ?? null)
+            setTool?.(step.tool ?? null)
+        }
     }
 
     // Al abrir, siempre desde el principio y en Diseño.

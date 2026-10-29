@@ -174,8 +174,12 @@
     color: #FFFFFF;
 }
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 .gx-step[aria-selected='true']:hover {
     background: var(--dark-blue-300);
+}
 }
 
 .gx-step-kicker {

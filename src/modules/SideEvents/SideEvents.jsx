@@ -23,14 +23,14 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronDown, ChevronRight, ChevronUp, CircleHelp, Copy, Film, ImagePlus, Info, Loader2, Music, Music2, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, Users, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronDown, ChevronRight, ChevronUp, CircleHelp, Copy, Film, ImagePlus, Info, Loader2, Music, Music2, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, Users, X, ClipboardList } from 'lucide-react'
 import { ItinerarioFlash } from './ItinerarioFlash'
 import { StickersFlash } from './StickersFlash'
 import { ImagenLinkFlash } from './ImagenLinkFlash'
 import { CancionFlash } from './CancionFlash'
 import { ListaInvitadosFlash } from './ListaInvitadosFlash'
 import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from './efectosData'
-import { duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
+import { contarImagenes, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
 import { subirSticker } from '../../helpers/services/uploadImage'
 import { SelectorColor } from './SelectorColor'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
@@ -45,9 +45,13 @@ import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import SideCanvas from './SideCanvas'
 import { DateField, FontPicker } from '../../components/MobileFields/MobileFields'
 import { SideEventsTour, SIDE_TOUR_STORAGE_KEY } from './SideEventsTour'
+import { SideWorkspace } from './Workspace/SideWorkspace'
+import wso from './Workspace/SideWorkspace.module.css'
 import ed from './SideEventEditor.module.css'
 import { EVENTO_CREDITOS_FLASH } from '../../components/Payment/CreditController/creditosFlash'
 import sl from './SideEventsList.module.css'
+import { asistentesDe } from './datosAsistentes'
+import { MODOS_CLIMA, modoClima, parcheModoClima, parcheOcultarTarjeta } from './tarjetasSide'
 
 
 const { Option } = Select;
@@ -137,6 +141,20 @@ export const SideEvents = () => {
     const [guestCounts, setGuestCounts] = useState({})
     const [current, setCurrent] = useState(null)
     const [live, setLive] = useState(false)          // switch "ver en vivo"
+    // Dispositivo de "Ver en vivo" (escritorio): iPhone · iPad · Mac.
+    const [device, setDevice] = useState('ios')
+    // Deshacer / rehacer de sesión (Ctrl+Z / Ctrl+Shift+Z), como en el editor
+    // de la invitación: nunca se persiste, se reinicia al cambiar de evento.
+    const UNDO_LIMIT = 20
+    const [undoStack, setUndoStack] = useState([])
+    const [redoStack, setRedoStack] = useState([])
+    // (`currentRef`, más abajo, es el espejo de `current`: updateCurrent lo
+    // pone al momento para tomar la foto del estado anterior aunque lleguen
+    // varios cambios en el mismo tick.)
+    // Teclear seguido en el mismo texto no apila un paso por letra.
+    const coalesceRef = useRef({ key: null, at: 0 })
+    // El tour abre o cierra un panel del riel del editor de escritorio.
+    const [toolRequest, setToolRequest] = useState(null)
     const [rawData, setRawData] = useState([])
     const [mainGuests, setMainGuests] = useState(null)
     const [readyToAdd, setReadyToAdd] = useState([])
@@ -192,7 +210,6 @@ export const SideEvents = () => {
     const [dirty, setDirty] = useState(false)
     const [saving, setSaving] = useState(false)
     const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 720px)').matches)
-    const [available, setAvailable] = useState({ h: 760, w: 1200 })
 
     // Catálogo del laboratorio de fuentes (tabla `fonts`, /admin → Herramientas).
     // La lista estática es solo el respaldo mientras carga o si la query falla:
@@ -2216,7 +2233,7 @@ export const SideEvents = () => {
                 aria-label={t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}
             >
                 {esPublico ? <LockOpen size={16} /> : <Lock size={16} />}
-                {conTexto && t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}
+                {conTexto && <span className={wso.pillText}>{t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}</span>}
             </button>
         </Tooltip>
     )
@@ -2398,10 +2415,74 @@ export const SideEvents = () => {
 
     // Todo cambio del diseño pasa por aquí: así el punto rojo del botón
     // Guardar y el aviso de salida siempre saben si hay trabajo sin guardar.
-    const updateCurrent = (updater) => {
-        setCurrent((prev) => updater(prev))
+    // `snapshot: false` aplica sin entrada nueva en deshacer (sliders y
+    // arrastres mandan `true` solo en su primer movimiento); `coalesce: 'x'`
+    // junta los cambios seguidos (1.5 s) sobre el mismo texto en una entrada.
+    const updateCurrent = (updater, { snapshot = true, coalesce = null } = {}) => {
+        const prev = currentRef.current
+        let take = snapshot && prev
+        if (coalesce) {
+            const now = Date.now()
+            const same = coalesceRef.current.key === coalesce && now - coalesceRef.current.at < 1500
+            coalesceRef.current = { key: coalesce, at: now }
+            take = take && !same
+        } else {
+            coalesceRef.current = { key: null, at: 0 }
+        }
+        if (take) {
+            setUndoStack((stack) => {
+                const next = [...stack, prev]
+                return next.length > UNDO_LIMIT ? next.slice(next.length - UNDO_LIMIT) : next
+            })
+            setRedoStack([])
+        }
+        const next = updater(prev)
+        currentRef.current = next
+        setCurrent(next)
         setDirty(true)
     }
+
+    const applyHistory = (entry) => {
+        currentRef.current = entry
+        setCurrent(entry)
+        setDirty(true)
+        setStickerSel([])
+    }
+    const onUndo = () => {
+        if (!undoStack.length) return
+        const entry = undoStack[undoStack.length - 1]
+        setRedoStack((r) => [...r, currentRef.current])
+        setUndoStack((s) => s.slice(0, -1))
+        applyHistory(entry)
+    }
+    const onRedo = () => {
+        if (!redoStack.length) return
+        const entry = redoStack[redoStack.length - 1]
+        setUndoStack((s) => [...s, currentRef.current])
+        setRedoStack((r) => r.slice(0, -1))
+        applyHistory(entry)
+    }
+    const resetHistory = () => {
+        setUndoStack([])
+        setRedoStack([])
+        coalesceRef.current = { key: null, at: 0 }
+    }
+
+    // Ctrl+Z / Ctrl+Shift+Z globales en el editor de escritorio, salvo con el
+    // foco en un texto (ahí manda el deshacer del navegador).
+    useEffect(() => {
+        if (!current || isMobile) return
+        const onKey = (e) => {
+            if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return
+            const el = e.target
+            if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return
+            e.preventDefault()
+            if (e.shiftKey) onRedo()
+            else onUndo()
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [current, isMobile, undoStack, redoStack])
 
     // Tocar un side event lo selecciona; abrirlo es el botón. En escritorio el
     // seleccionado llena el detalle de al lado; en móvil sube al destacado.
@@ -2414,12 +2495,14 @@ export const SideEvents = () => {
     }
 
     const openSideEvent = (item) => {
+        currentRef.current = item
         setCurrent(item)
         setGuestsOpen(false)
         setSection(null)
         setActiveTab('diseno')
         setLive(false)
         setDirty(false)
+        resetHistory()
     }
 
     // ── Morph de la portada entre el listado y el editor ──
@@ -2562,11 +2645,13 @@ export const SideEvents = () => {
     }
 
     const closeEditor = () => {
+        currentRef.current = null
         setCurrent(null)
         setGuestsOpen(false)
         setSection(null)
         setLive(false)
         setDirty(false)
+        resetHistory()
     }
 
     const handleSave = async () => {
@@ -2599,17 +2684,6 @@ export const SideEvents = () => {
         closeLeave()
         closeToList()
     }
-
-    // La pieza se escala para entrar completa en pantalla sin scroll, como en
-    // una herramienta de diseño. Se mide alto y ancho: con la columna de
-    // Envío abierta queda menos ancho disponible.
-    useEffect(() => {
-        // clientWidth: sin la barra de scroll, que también ocupa ancho
-        const fit = () => setAvailable({ h: window.innerHeight - 190, w: document.documentElement.clientWidth })
-        fit()
-        window.addEventListener('resize', fit)
-        return () => window.removeEventListener('resize', fit)
-    }, [])
 
     // Primera vez en el editor nuevo: el tour se abre solo. La espera deja
     // que la pieza y la barra estén pintadas cuando el primer paso resuelva
@@ -2712,25 +2786,6 @@ export const SideEvents = () => {
 
     const sendOpen = activeTab === 'envio'
 
-    // En Envío la pieza ya solo se mira, así que la manda el alto y todo el
-    // ancho que sobra se lo lleva la lista de invitados — las tarjetas `gx`
-    // traen contacto, estado y acciones, y agradecen cada pixel.
-    const fitH = (h) => Math.max(0.55, Math.min(1, available.h / h))
-    const fitBoth = (w, h) => Math.max(0.55, Math.min(1, Math.min(available.h / h, Math.max(320, available.w - 160) / w)))
-    const cardScale = fitBoth(CARD_W, CARD_H)
-    // Ancho del hueco: lo que queda después de la pieza (más el padding del
-    // lienzo) y un respiro parejo a los lados.
-    const STAGE_EDGE = 20
-    const SEND_MIN = 420
-    // En Envío la pieza y la lista van siempre lado a lado: en pantallas
-    // angostas (iPad, 768–1080 px) la pieza también se achica por ancho para
-    // dejarle a la lista sus 420 px mínimos.
-    // Relleno a los lados de la pieza: en Envío, más pegado a la lista.
-    const CANVAS_PAD = sendOpen ? 16 : 48
-    const fitSend = () => Math.max(0.55, Math.min(fitH(DEVICE_H), (available.w - SEND_MIN - CANVAS_PAD - STAGE_EDGE * 2) / DEVICE_W))
-    const deviceScale = sendOpen ? fitSend() : fitBoth(DEVICE_W, DEVICE_H)
-    const sendWidth = Math.max(SEND_MIN, available.w - (DEVICE_W * deviceScale + CANVAS_PAD) - STAGE_EDGE * 2)
-
     const publicUrl = `https://www.iattend.events/side-event/${current?.id}`
 
     /* ── Cabecera común de cada bloque ── */
@@ -2758,7 +2813,7 @@ export const SideEvents = () => {
     const pegandoRef = useRef(false)
     const agregarImagenPegada = async (archivo) => {
         if (pegandoRef.current) return
-        if ((current?.body?.stickers?.length ?? 0) >= MAX_STICKERS) {
+        if (contarImagenes(current?.body?.stickers) >= MAX_STICKERS) {
             message.warning(t('side_events.stickers_paste_max', { max: MAX_STICKERS }))
             return
         }
@@ -3168,14 +3223,18 @@ export const SideEvents = () => {
 
             {/* El clima vive aquí porque es lo que lo condiciona: el remoto
                 solo lo pinta cuando hay ciudad */}
-            <label className={ed.toggle}>
-                <span className={ed.toggleLabel}>{t('side_events.panel_weather')}</span>
-                <Switch
+            {/* Cuándo se muestra el clima (tarjetasSide.js, modoClima). */}
+            <div className={ed.fieldStack}>
+                <span className={ed.fieldLabel}>{t('side_events.weather_title')}</span>
+                <Segmented
+                    block
                     size='small'
-                    checked={!current?.body?.hideWeather}
-                    onChange={(v) => setBody({ hideWeather: !v })}
+                    value={modoClima(current?.body)}
+                    onChange={(v) => setBody(parcheModoClima(v))}
+                    options={MODOS_CLIMA.map((m) => ({ value: m, label: t(`side_events.weather_mode_${m}_short`) }))}
                 />
-            </label>
+                <span className={ed.hint}>{t(`side_events.weather_mode_${modoClima(current?.body)}_hint`)}</span>
+            </div>
 
             {!current?.body?.address?.city &&
                 <span className={ed.hint}>{t('side_events.panel_weather_hint')}</span>
@@ -3257,6 +3316,69 @@ export const SideEvents = () => {
         </>
     )
 
+    // Asistentes de un Flash (opcional): el cuadro de quienes confirmaron y el
+    // selector de emoji / color al confirmar (iattend-events, SideEvent/Asistentes).
+    const panelAttendees = (
+        <>
+            {blockHead(<Users size={16} />, t('side_events.panel_attendees'), t('side_events.att_hint'))}
+            <label className={ed.toggle}>
+                <span className={ed.toggleLabel}>{t('side_events.att_show')}</span>
+                <Switch
+                    size='small'
+                    checked={Boolean(current?.body?.showAttendees)}
+                    onChange={(v) => setBody({ showAttendees: v || undefined })}
+                />
+            </label>
+            {current?.body?.showAttendees && (
+                <Segmented
+                    block
+                    value={current?.body?.attendeesStyle === 'initials' ? 'initials' : 'emoji'}
+                    onChange={(v) => setBody({ attendeesStyle: v === 'initials' ? 'initials' : undefined })}
+                    options={[
+                        { value: 'emoji', label: t('side_events.att_style_emoji') },
+                        { value: 'initials', label: t('side_events.att_style_initials') },
+                    ]}
+                />
+            )}
+            {/* Chat de asistentes (solo confirmados). La moderación vive en escritorio. */}
+            {current?.body?.showAttendees && (
+                <label className={ed.toggle}>
+                    <span className={ed.toggleLabel}>{t('side_events.chat_label')}</span>
+                    <Switch
+                        size='small'
+                        checked={Boolean(current?.body?.chat?.enabled)}
+                        onChange={(v) => setBody({ chat: { ...(current?.body?.chat ?? {}), enabled: v || undefined } })}
+                    />
+                </label>
+            )}
+            {current?.body?.showAttendees && current?.body?.chat?.enabled && (
+                <TextArea
+                    autoSize={{ minRows: 2, maxRows: 5 }}
+                    maxLength={280}
+                    placeholder={t('side_events.chat_pin_placeholder')}
+                    value={current?.body?.chat?.pinned?.text ?? ''}
+                    onChange={(e) => setBody({ chat: { ...(current?.body?.chat ?? {}), pinned: e.target.value.trim() ? { text: e.target.value, updated_at: new Date().toISOString() } : null } })}
+                />
+            )}
+        </>
+    )
+
+    // Registro de asistentes: en el celular solo se prende / apaga; el
+    // formulario se arma en el editor de escritorio (RegistroPanel).
+    const panelRegistration = (
+        <>
+            {blockHead(<ClipboardList size={16} />, t('side_events.reg_title'), t('side_events.reg_mobile_hint'))}
+            <label className={ed.toggle}>
+                <span className={ed.toggleLabel}>{t('side_events.reg_title')}</span>
+                <Switch
+                    size='small'
+                    checked={Boolean(current?.body?.form?.enabled)}
+                    onChange={(v) => setBody(parcheOcultarTarjeta(current?.body, 'registration', !v))}
+                />
+            </label>
+        </>
+    )
+
     // Mini itinerario de un Flash (ItinerarioFlash.jsx): se muestra arriba de
     // "Cómo llegar" en el orden en que se acomoda.
     const diasDelFlash = [...new Set(fechasDelEvento(current?.body).map(f => String(f).slice(0, 10)))]
@@ -3300,6 +3422,8 @@ export const SideEvents = () => {
         date: panelDate,
         place: panelPlace,
         extras: panelNotes,
+        attendees: panelAttendees,
+        registration: panelRegistration,
     }
 
     const SECTIONS = [
@@ -3312,112 +3436,17 @@ export const SideEvents = () => {
         // El mini itinerario es solo de los Flash.
         ...(esFlash ? [
             { key: 'itinerary', icon: <ListOrdered size={18} />, label: t('side_events.panel_itinerary'), short: t('side_events.dock_itinerary') },
+            { key: 'attendees', icon: <Users size={18} />, label: t('side_events.panel_attendees'), short: t('side_events.dock_attendees') },
+            { key: 'registration', icon: <ClipboardList size={18} />, label: t('side_events.reg_title'), short: t('side_events.reg_title') },
             { key: 'stickers', icon: <Sticker size={18} />, label: t('side_events.panel_stickers'), short: t('side_events.dock_stickers') },
             { key: 'song', icon: <Music size={18} />, label: t('build_generals.label_song'), short: t('side_events.dock_song') },
             { key: 'effects', icon: <Sparkles size={18} />, label: t('side_events.panel_effects'), short: t('side_events.dock_effects') },
         ] : []),
     ]
 
-    /* ── Lienzo flotante: se comparte entre Diseño y Envío ── */
-    const canvasBlock = (
-        <div className={`${ed.canvasWrap} ${sendOpen ? ed.canvasWrapSend : ''}`} data-tour="canvas">
-            {live ? (
-                <div
-                    key='live'
-                    className={ed.scaler}
-                    data-morph="stage"
-                    data-morphing={stageMorphState}
-                    style={{ width: DEVICE_W * deviceScale, height: DEVICE_H * deviceScale }}
-                >
-                    <div
-                        className='inv-device-main-container-ios'
-                        style={{ transform: `scale(${deviceScale})`, transformOrigin: 'top left', marginLeft: 0, cursor: 'default' }}
-                    >
-                        <div className='device-buttons-container-ios'>
-                            <div className='device-button-ios' />
-                            <div className='device-button-ios' />
-                            <div className='device-button-ios' />
-                        </div>
-                        <div className='device-power-button-ios' />
-                        <div className='inv-device-container-ios'>
-                            <div className='inv-black-space-ios'>
-                                <span>5:15</span>
-                                <div className='camera-ios' />
-                                <div />
-                            </div>
-                            <div className='ios-invitation' style={{ overflow: 'hidden' }}>
-                                <SideEventHost config={current} />
-                            </div>
-                            <div className='inv-light-space-ios' />
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div
-                    key='card'
-                    className={ed.scaler}
-                    data-morph="stage"
-                    data-morphing={stageMorphState}
-                    style={{ width: CARD_W * cardScale, height: CARD_H * cardScale }}
-                >
-                    <div style={{ transform: `scale(${cardScale})`, transformOrigin: 'top left' }}>
-                        <SideCanvas
-                            key={current?.id}
-                            current={current}
-                            onChange={updateCurrent}
-                            selected={section}
-                            onSelect={setSection}
-                            readOnly={activeTab !== 'diseno'}
-                            stickerSel={stickerSel}
-                            onStickerSel={setStickerSel}
-                            conCancion={esFlash}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* En Envío no puede ser más ancha que la pieza: en pantallas
-                angostas la pieza se achica y el texto empujaba la lista fuera. */}
-            <span className={ed.canvasCaption} style={sendOpen ? { maxWidth: DEVICE_W * deviceScale } : undefined}>
-                {live ? t('side_events.live_caption') : t('side_events.canvas_caption')}
-            </span>
-        </div>
-    )
-
-    /* ── Diseño: riel + panel del elemento seleccionado ── */
-    const editorTools = (
-        <>
-            {/* Riel de elementos */}
-            <div className={ed.rail}>
-                {SECTIONS.map((s) => (
-                    <Tooltip key={s.key} title={s.label} placement='right'>
-                        <button
-                            className={`${ed.railBtn} ${section === s.key ? ed.railBtnActive : ''}`}
-                            data-tour={`tool-${s.key}`}
-                            onClick={() => setSection(section === s.key ? null : s.key)}
-                            aria-label={s.label}
-                            aria-pressed={section === s.key}
-                            disabled={live}
-                        >
-                            {s.icon}
-                        </button>
-                    </Tooltip>
-                ))}
-            </div>
-
-            {/* Panel del elemento seleccionado, pegado al riel */}
-            {section && !live &&
-                <aside className={ed.toolPanel}>
-                    <button className={ed.toolClose} onClick={() => setSection(null)} aria-label={t('side_events.close')}>
-                        <X size={16} />
-                    </button>
-                    {PANELS[section]}
-                </aside>
-            }
-        </>
-    )
-
     /* ── Envío: la lista de invitados que ya existe, en su columna ── */
+    // (El lienzo, el riel y los paneles de escritorio viven en SideWorkspace;
+    // PANELS y SECTIONS quedan para el editor móvil.)
     const guestsList = (
         <div className='gx'>
             {renderStepBar()}
@@ -3432,9 +3461,8 @@ export const SideEvents = () => {
 
     const sendContent = (
         <div
-            className={`${ed.block} ${ed.sendCol} ${sendIn || tourOpen ? ed.sendColIn : ''} ${tourOpen ? ed.noAnim : ''}`}
-            data-tour="guests"
-            style={{ width: Math.max(320, sendWidth - 16), height: DEVICE_H * deviceScale }}
+            className={`${ed.block} ${ed.sendCol} ${ed.sendColIn}`}
+            style={{ width: '100%', height: '100%' }}
         >
             {blockHead(
                 <Send size={16} />,
@@ -4061,6 +4089,8 @@ export const SideEvents = () => {
                 setActiveTab={setActiveTab}
                 setSection={setSection}
                 setActiveKey={setActiveKey}
+                setTool={(id) => setToolRequest({ id, n: Date.now() })}
+                esFlash={esFlash}
             />
         </>
     )
@@ -4086,6 +4116,7 @@ export const SideEvents = () => {
             { key: 'place', Icono: MapPin, label: t('side_events.panel_place') },
             { key: 'extras', Icono: StickyNote, label: t('side_events.panel_notes') },
             { key: 'itinerary', Icono: ListOrdered, label: t('side_events.panel_itinerary') },
+            { key: 'attendees', Icono: Users, label: t('side_events.panel_attendees') },
         ].filter((h) => SECTIONS.some((x) => x.key === h.key))
         // Las primeras 4 siempre; las demás entran y salen animadas al expandir.
         const basicas = herramientas.slice(0, 4)
@@ -4173,6 +4204,8 @@ export const SideEvents = () => {
                         stickerSel={stickerSel}
                         onStickerSel={setStickerSel}
                         conCancion={esFlash}
+                        conAsistentes={esFlash}
+                        asistentes={esFlash ? asistentesDe(rawData) : null}
                     />
 
                     {/* Columna izquierda: cerrar y, debajo, invitados, link y
@@ -4221,7 +4254,7 @@ export const SideEvents = () => {
                                     setBody({ stickers: lista })
                                     setStickerSel(nuevos)
                                 }}
-                                aria-disabled={stickersFlash.length + pngElegidos.length > MAX_STICKERS}
+                                aria-disabled={contarImagenes(stickersFlash) + contarImagenes(pngElegidos) > MAX_STICKERS}
                             >
                                 <Copy size={16} strokeWidth={1.8} />
                                 <span>{t('side_events.stickers_duplicate')}</span>
@@ -4353,16 +4386,16 @@ export const SideEvents = () => {
        ═══════════════════════════════════════════════════════════════ */
     if (current) {
         return (
-            <div className={ed.pageContainer}>
+            <div className={`${ed.pageContainer} ${wso.page}`}>
 
                 {/* Barra mínima: volver, evento, pestañas y acciones */}
-                <div className={ed.topBar}>
+                <div className={`${ed.topBar} ${wso.topBar}`}>
                     <div className={ed.topLeft}>
                         <button className={ed.backBtn} onClick={handleBack} aria-label={t('side_events.back')}>
                             <ArrowLeft size={17} />
                         </button>
                         <span className={ed.crumb}>
-                            {esFlash ? t('invitations.flash_badge') : 'Side event'} · <strong>{current?.name || t('side_events.no_name')}</strong>
+                            <span className={wso.crumbKind}>{esFlash ? t('invitations.flash_badge') : 'Side event'} · </span><strong>{current?.name || t('side_events.no_name')}</strong>
                         </span>
                         <Tooltip title={t('guests_tour.replay')}>
                             <button
@@ -4397,18 +4430,7 @@ export const SideEvents = () => {
                     />
 
                     <div className={ed.actionsBar}>
-                        {activeTab === 'diseno' &&
-                            <button
-                                className={`${ed.livePill} ${live ? ed.livePillOn : ''}`}
-                                data-tour="live"
-                                onClick={() => { setLive((v) => !v); setSection(null) }}
-                                aria-pressed={live}
-                            >
-                                <span className={ed.liveDot} />
-                                {t('side_events.live')}
-                            </button>
-                        }
-
+                        {/* "Ver en vivo" vive en el dock del área de trabajo. */}
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 
                         <span data-tour="share">
@@ -4441,18 +4463,35 @@ export const SideEvents = () => {
                     </div>
                 </div>
 
-                {activeTab === 'diseno' && editorTools}
-
-                <div className={ed.stageRow}>
-                    {canvasBlock}
-                    {/* El hueco anima su ancho: la pieza se recentra sola */}
-                    <div
-                        className={`${ed.sendSlot} ${tourOpen ? ed.noAnim : ''}`}
-                        style={{ width: sendOpen ? sendWidth : 0 }}
-                    >
-                        {(sendMounted || tourOpen) && sendContent}
-                    </div>
-                </div>
+                {/* Área de trabajo (riel, pieza, barras, Capas y dock), con la
+                    misma experiencia que el editor de la invitación. */}
+                <SideWorkspace
+                    current={current}
+                    esFlash={esFlash}
+                    asistentesReales={esFlash ? asistentesDe(rawData) : null}
+                    carpeta={esFlash ? `flash-${flashId}` : id}
+                    onChange={updateCurrent}
+                    section={section}
+                    setSection={setSection}
+                    stickerSel={stickerSel}
+                    setStickerSel={setStickerSel}
+                    live={live}
+                    setLive={setLive}
+                    device={device}
+                    setDevice={setDevice}
+                    sendOpen={sendOpen}
+                    sendContent={(sendMounted || tourOpen) ? sendContent : null}
+                    sendIn={sendIn}
+                    tourOpen={tourOpen}
+                    onUndo={onUndo}
+                    onRedo={onRedo}
+                    canUndo={undoStack.length > 0}
+                    canRedo={redoStack.length > 0}
+                    onReplayTour={tourAvailable ? openTour : undefined}
+                    onPaste={esFlash && puedeLeerPortapapeles ? pegarDesdePortapapeles : null}
+                    toolRequest={toolRequest}
+                    stageMorphState={stageMorphState}
+                />
 
                 {globals}
             </div>

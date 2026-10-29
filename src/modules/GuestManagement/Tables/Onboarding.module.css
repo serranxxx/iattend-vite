@@ -418,10 +418,14 @@
     border-color: var(--brand-color-500);
 }
 
+/* Solo con cursor: en táctil el hover se queda pegado y lo
+   elegido se veía de otro tono. */
+@media (hover: hover) {
 .optionActive,
 .optionActive:hover {
     border-color: var(--brand-color-500);
     background-color: var(--brand-color-100);
+}
 }
 
 .optionText {

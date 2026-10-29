@@ -1,0 +1,390 @@
+/* Botón "Interacción" y su panel (InteractionMenu.jsx). Handoff "Editor —
+   botón Interacción", opción 1c: medidas, colores y copy del handoff. */
+
+.panel {
+    /* Vive en el panel lateral (herramienta "Interacción"): todo su ancho. */
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #2A2730;
+    font-family: Poppins, sans-serif;
+}
+
+.card {
+    padding: 14px;
+    border-radius: 16px;
+    background: #F7F6F8;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Sin la tarjeta de abajo en flujo cuando está plegada. */
+.card:has(> .collapse[style*="0fr"]) {
+    gap: 0;
+}
+
+.cardHead {
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.cardHead[data-off] {
+    cursor: not-allowed;
+}
+
+.cardHead[data-off] .cardTitle,
+.cardHead[data-off] .cardIcon {
+    opacity: 0.55;
+}
+
+.cardHead:focus-visible {
+    outline: 2px solid #9C7FCB;
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
+.cardIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cardCol {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.cardTitle {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.cardSub {
+    font-size: 12px;
+    color: #8C8794;
+}
+
+.switch {
+    width: 44px;
+    height: 26px;
+    border-radius: 99px;
+    background: #DAD6DE;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 200ms ease;
+}
+
+.switch span {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 99px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px #00000026;
+    transition: left 200ms ease;
+}
+
+.switchOn {
+    background: #9C7FCB;
+}
+
+.switchOn span {
+    left: 21px;
+}
+
+.collapse {
+    display: grid;
+    transition: grid-template-rows 300ms cubic-bezier(.2, .9, .25, 1);
+}
+
+.collapse > div {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 2px;
+}
+
+.rowLabel {
+    flex: 1;
+    font-size: 12px;
+    color: #6E6876;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.segmented {
+    display: flex;
+    padding: 3px;
+    border-radius: 12px;
+    background: #EDEAEF;
+}
+
+.segmented button {
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #2A2730;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 150ms ease;
+}
+
+.segmented .segOn {
+    background: #FFFFFF;
+    box-shadow: 0 1px 2px #0000001A;
+}
+
+.chatBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 2px;
+}
+
+.block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.blockTight {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pinRow {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.textarea {
+    flex: 1;
+    height: 64px;
+    resize: none;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #E6E3E8;
+    background: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 13px;
+    color: #2A2730;
+    outline: none;
+}
+
+.textarea:focus {
+    border-color: #9C7FCB;
+}
+
+.textarea::placeholder {
+    color: #A6A1AD;
+}
+
+.darkBtn {
+    height: 40px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 12px;
+    background: #2A2730;
+    color: #FFFFFF;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.darkBtn:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.pinMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 22px;
+    font-size: 11px;
+    color: #A6A1AD;
+}
+
+.textBtn {
+    padding: 2px 6px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #2A2730;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.textBtn:hover {
+    background: #EDEAEF;
+}
+
+.msgs {
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 2px 4px;
+    max-height: 170px;
+    overflow-y: auto;
+}
+
+.msg {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-radius: 10px;
+    transition: opacity 150ms ease;
+}
+
+.msg:hover {
+    background: #F7F6F8;
+}
+
+.msg[data-saliendo] {
+    opacity: 0;
+}
+
+.msgAv {
+    width: 26px;
+    height: 26px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.msgText {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: #5B5563;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.msgText b {
+    font-weight: 600;
+    color: #2A2730;
+}
+
+.del {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #8C8794;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.del:hover {
+    background: #FBE9E7;
+    color: #C6422A;
+}
+
+.empty {
+    font-size: 12px;
+    color: #8C8794;
+    padding: 12px 6px;
+    text-align: center;
+}
+
+.verTodos {
+    align-self: center;
+    margin: 4px 0 6px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #2A2730;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.verTodos:hover {
+    background: #F7F6F8;
+}
+
+.foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 6px;
+    font-size: 11px;
+    color: #8C8794;
+}
+
+/* Aviso "Mensaje borrado · Deshacer". */
+.toast {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toast button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: #6F4FA6;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .collapse, .switch, .switch span, .msg {
+        transition-duration: 1ms;
+    }
+}

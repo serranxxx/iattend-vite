@@ -1,5 +1,8 @@
 # Entorno de edición de la invitación
 
+> Historia por etapas. El estado actual completo del editor está en
+> `docs/sistema-diseno-editor.md`.
+
 El editor (`/dashboard/build`) tiene dos modos, como los side events y el
 Save the Date: **edición** (la pieza plana y tocable) y **ver en vivo** (la
 pieza dentro del teléfono, como la abre el invitado). Rama `cambios-invitacion`

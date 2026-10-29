@@ -1,0 +1,358 @@
+/* Editor de side events / Eventos Flash en escritorio. El área de trabajo es
+   EditorShell (la misma de la invitación); aquí solo va lo propio: la página
+   (barra arriba + área que llena el resto), la leyenda de la pieza y piezas
+   de sus paneles y barras. Ver docs/sistema-diseno-editor.md. */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+/* La barra de arriba es la de siempre (SideEventEditor .topBar); el área de
+   trabajo llena lo que queda en vez de arrancar bajo un header fixed. */
+.page .workspace {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    margin-top: 0;
+}
+
+/* Pieza + leyenda, como EditCanvas: la tarjeta de SideCanvas ya trae sus
+   390 × 700 y su radio. */
+.canvasWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.caption {
+    font-size: 12px;
+    color: #787878;
+    user-select: none;
+}
+
+/* Mientras vuela el fantasma del morph (SideEvents), la pieza se esconde. */
+.canvasWrap[data-morphing="fly"] {
+    opacity: 0;
+}
+
+.canvasWrap[data-morphing="land"] {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+/* ── Panel Diseño ── */
+.swatchRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+    transition: transform 0.15s ease;
+}
+
+.swatch:hover {
+    transform: scale(1.08);
+}
+
+.swatch[data-on] {
+    box-shadow: 0 0 0 2px #FFF, 0 0 0 4px #16323d;
+}
+
+.switchRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: #29262D;
+}
+
+/* Botón secundario de los paneles (velo encendido / apagado). */
+.pasteBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #EBEBEB;
+    background: #FFF;
+    color: #29262D;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.pasteBtn:hover {
+    background: #F5F3F2;
+}
+
+/* ── Capas: miniatura del PNG en la fila ── */
+.layerThumb {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: #F1EFEA;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+
+.layerThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ── Barras: miniatura de video y textos sueltos ── */
+.barVideo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #000;
+}
+
+.barText {
+    font-size: 13px;
+    color: #29262D;
+    padding: 0 4px;
+    white-space: nowrap;
+}
+
+.barMuted {
+    font-size: 12.5px;
+    color: #787878;
+    padding: 0 4px;
+    white-space: nowrap;
+}
+
+.popWide {
+    min-width: 320px;
+}
+
+.linkThumb {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #F1EFEA;
+}
+
+/* Fecha con hora (DD/MM/YYYY HH:mm): más ancha que la de la portada. */
+.dateTime {
+    width: 178px;
+}
+
+/* Barra de arriba del editor de escritorio: blanca, separada del tablero
+   por una línea. Sobre blanco, los botones redondos (volver, ?, Privado,
+   Link del evento) pasan de la sombra a un contorno para seguir leyéndose. */
+.topBar {
+    flex-shrink: 0;
+    background: #FFFFFF;
+    border-bottom: 1px solid #EBEBEB;
+}
+
+.topBar button:not(:global(.ant-btn)) {
+    box-shadow: none;
+    border: 1px solid #EBEBEB;
+}
+
+/* ── Barra de arriba en pantallas angostas (721–1100 px) ──
+   Todo en un solo renglón: las pestañas se quedan al centro (la regla de
+   900 px de SideEventEditor las mandaba a un renglón propio y la barra se
+   partía en tres), el tipo de evento se va del breadcrumb, el nombre se
+   recorta y Privado / Link del evento quedan solo con su ícono. */
+.crumbKind,
+.pillText {
+    display: inline;
+}
+
+@media (max-width: 1100px) {
+    .page .topBar {
+        gap: 10px;
+        padding: 12px 16px;
+    }
+
+    .crumbKind,
+    .pillText {
+        display: none;
+    }
+
+    /* Los botones de Privado y Link del evento, redondos. */
+    .page .topBar [class*="actionsBar"] > button,
+    .page .topBar [class*="actionsBar"] :global(.ant-btn:not(.primarybutton--active)) {
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .page .topBar [class*="actionsBar"] :global(.ant-btn:not(.primarybutton--active) > span:not(.ant-btn-icon)) {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .page .topBar {
+        flex-wrap: nowrap;
+    }
+
+    .page .topBar [class*="topLeft"],
+    .page .topBar [class*="actionsBar"] {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .page .topBar [class*="tabs"] {
+        order: 0;
+        flex-basis: auto;
+    }
+}
+
+/* Chat de asistentes: mensaje fijado y moderación (AttendeesBar). */
+.modPop {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px;
+    padding: 4px;
+}
+
+.modTitulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.modBotones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.modPrimario {
+    background: #29262D !important;
+    color: #FFFFFF !important;
+}
+
+.modLista {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.modFila {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 4px;
+    border-bottom: 1px solid #F1EFEA;
+}
+
+.modTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: #29262D;
+    overflow-wrap: anywhere;
+}
+
+.modTexto b {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.modVacio {
+    padding: 16px 4px;
+    text-align: center;
+    font-size: 13px;
+    color: #787878;
+}
+
+/* Opciones del clima (OpcionesClima en SideBars). */
+.climaOpciones {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 290px;
+    padding: 4px;
+}
+
+.climaOpcion {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #29262D;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.climaOpcion:hover {
+    background: #F5F3F2;
+}
+
+.climaOpcion[data-on] {
+    background: #EFEAFF;
+}
+
+.climaOpcion > span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.climaOpcion b {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.climaOpcion > span:last-child > span {
+    font-size: 12px;
+    color: #787878;
+    line-height: 1.35;
+}
+
+.climaRadio {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1.5px #B5B1AA;
+}
+
+.climaOpcion[data-on] .climaRadio {
+    box-shadow: inset 0 0 0 5px #6D3CFA;
+}
+
+.climaNota {
+    padding: 4px 10px 2px;
+    font-size: 12px;
+    color: #9A6B00;
+}

@@ -120,6 +120,10 @@ export const EditCanvas = ({
     // Editor de escritorio: el orden de los módulos va como panel "Capas"
     // (siempre visible) en este nodo, no como columna junto a la pieza.
     layersTarget,
+    // Para marcar en Capas lo que está elegido: el texto de un bloque
+    // ({ path }) y el elemento suelto ({ section, id }).
+    activeText,
+    selectedLayer,
 }) => {
     const { t } = useTranslation()
     // El chip "Color del tema" muestra el color secundario de la paleta.
@@ -239,6 +243,12 @@ export const EditCanvas = ({
             return null
         })
         setChipPop(null)
+        // Y los popovers de antd de las barras (Estilo, Fondo, tipografía…):
+        // escuchan "mousedown" afuera en la ventana, que un toque dentro del
+        // iframe nunca dispara. Se simula ese toque afuera: manda el último
+        // clic (si abre otra cosa, como el panel de íconos, ya no queda nada
+        // encima).
+        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }))
     }
 
     // Popover del chip "Canción" de arriba. `chipPop` = { kind, ...ancla en
@@ -335,7 +345,11 @@ export const EditCanvas = ({
                 <ModuleLayers
                     invitation={invitation}
                     selectedSection={selectedSection}
-                    onSelect={(type) => onSelectSection(type)}
+                    onSelect={(type, field) => onSelectSection(type, field ?? null)}
+                    onOpenField={(field, section) => onFieldTool(field, { x: 0, y: 0, w: 0, h: 0 }, section)}
+                    activeField={tool?.field ?? selectedField}
+                    activeText={activeText}
+                    selectedLayer={selectedLayer}
                     onMoved={onModuleMoved}
                     setInvitation={setInvitation}
                     setSaved={setSaved}

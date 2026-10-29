@@ -29,13 +29,16 @@ const TRANSFORMS = ['none', 'uppercase', 'lowercase']
 // títulos / cuerpos; abierto = solo a este texto.
 // `lia` ({ current, kind, onApply, invitationID, lang }): botón "Lia" que
 // reescribe el texto elegido (LiaRewrite). Null = sin Lia.
-export const TextBar = ({ target, ts, lock, invitation, setInvitation, setSaved, onPickColor, colorOpen, lia }) => {
+// Es la barra de texto de todos los editores (EditorShell): el título de un
+// side event / Flash usa la misma con su adaptador `ts` (sin alineación) y
+// `extra(pop, open)` para sumar al final lo suyo (la sombra).
+export const TextBar = ({ target, ts, lock, invitation, setInvitation, setSaved, onPickColor, colorOpen, lia, extra }) => {
     const { t } = useTranslation()
     const { fonts: activeFonts } = useFonts()
     const fontOptions = activeFonts.length ? activeFonts : fallbackFonts
     const [open, setOpen] = useState(null)
     const isQuote = target === 'quote'
-    const { font, setFont, align, setAlign, maxSize, showSize, showColor } = ts
+    const { font, setFont, align, setAlign, maxSize, showSize, showColor, minSize = 8 } = ts
     const size = font.size || 16
 
     const setQuoteText = (patch, opts) => {
@@ -85,7 +88,7 @@ export const TextBar = ({ target, ts, lock, invitation, setInvitation, setSaved,
             />
 
             {showSize && <div className={styles.stepper}>
-                <button type="button" className={styles.stepBtn} disabled={size <= 8} onClick={() => setFont({ size: Math.max(8, size - 2) })} aria-label="-">
+                <button type="button" className={styles.stepBtn} disabled={size <= minSize} onClick={() => setFont({ size: Math.max(minSize, size - 2) })} aria-label="-">
                     <Minus size={16} />
                 </button>
                 <span className={styles.stepValue}>{size}</span>
@@ -173,6 +176,8 @@ export const TextBar = ({ target, ts, lock, invitation, setInvitation, setSaved,
                     {t('build_menu.shadow')}
                 </button>
             )}
+
+            {extra?.(pop, open)}
 
             {/* Reescribir con Lia (handoff 5.3). */}
             {lia && (

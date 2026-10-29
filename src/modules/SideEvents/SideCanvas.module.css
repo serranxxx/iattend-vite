@@ -28,6 +28,15 @@
     box-shadow: none;
 }
 
+/* Editor de escritorio (SideWorkspace): la pieza mide exactamente lo que la
+   pantalla del iPhone de "Ver en vivo" (DevicePreview, .ios26-content:
+   357 × 631), así el título corta igual y la foto se recorta igual en los
+   dos modos. */
+.cardIphone {
+    width: 357px;
+    height: 631px;
+}
+
 /* ── Zonas seleccionables ── */
 .pickable {
     outline: 1.5px solid transparent;
@@ -447,9 +456,12 @@
 .mockBtn {
     flex: 1;
     display: flex;
+    /* Ícono arriba y texto abajo, como los botones de la página del invitado
+       (side_buttons en iattend-events). */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 7px;
+    gap: 2px;
     height: 100%;
     color: #FFFFFF;
     font-size: 14px;
@@ -757,4 +769,64 @@
 .cardVideo .blurCover {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+}
+
+/* Manijas del PNG elegido (escritorio): esquinas para escalar y una arriba
+   para girar, como los elementos de la invitación. Miden lo mismo en
+   pantalla con cualquier zoom del escenario (--canvas-zoom, SideWorkspace). */
+.manija,
+.manijaGiro {
+    --m: calc(12px / var(--canvas-zoom, 1));
+    position: absolute;
+    width: var(--m);
+    height: var(--m);
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: calc(1.5px / var(--canvas-zoom, 1)) solid #6D3CFA;
+    box-sizing: border-box;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.3);
+    touch-action: none;
+    z-index: 1;
+}
+
+.manija[data-c="nw"] { top: calc(var(--m) * -0.85); left: calc(var(--m) * -0.85); cursor: nwse-resize; }
+.manija[data-c="ne"] { top: calc(var(--m) * -0.85); right: calc(var(--m) * -0.85); cursor: nesw-resize; }
+.manija[data-c="sw"] { bottom: calc(var(--m) * -0.85); left: calc(var(--m) * -0.85); cursor: nesw-resize; }
+.manija[data-c="se"] { bottom: calc(var(--m) * -0.85); right: calc(var(--m) * -0.85); cursor: nwse-resize; }
+
+.manijaGiro {
+    top: calc(var(--m) * -2.8);
+    left: 50%;
+    margin-left: calc(var(--m) / -2);
+    cursor: grab;
+}
+
+/* Rabito que une la manija de giro con el PNG. */
+.manijaGiro::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: calc(1.5px / var(--canvas-zoom, 1));
+    height: calc(var(--m) * 1.2);
+    transform: translateX(-50%);
+    background: #FFFFFF;
+}
+
+/* Elementos que no son imagen (FlashElemento): el lienzo mide en cqw para
+   que los textos escalen igual que una imagen. */
+.lienzo {
+    container-type: inline-size;
+}
+
+.elemento {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Texto que se está escribiendo encima: se ve y recibe el teclado. */
+.huecoEditando {
+    opacity: 1;
+    pointer-events: auto;
 }

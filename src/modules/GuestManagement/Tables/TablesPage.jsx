@@ -114,7 +114,9 @@ export const TablesPage = ({ invitationID, onClose }) => {
     const [totalChairs, setTotalChairs] = useState(10)
     const [ocuppiedChairs, setOcuppiedChairs] = useState([])
     const [tablesName, setTablesName] = useState(null)
-    const [onGuestList, setOnGuestList] = useState(true)
+    // En pantallas angostas (iPad vertical) la lista de invitados arranca
+    // plegada: abierta le dejaba al mapa una tira de ~180px.
+    const [onGuestList, setOnGuestList] = useState(() => window.innerWidth >= 1024)
     const [onSelectedTable, setOnSelectedTable] = useState(false)
     const [selectedTable, setSelectedTable] = useState(null)
     const [onViewTable, setOnViewTable] = useState(false)

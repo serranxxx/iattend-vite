@@ -564,6 +564,21 @@ export const subirSticker = async (file, carpeta) => {
     return supabase.storage.from('user_images').getPublicUrl(filePath).data.publicUrl;
 };
 
+// Vector (SVG) del panel Subidos: se sube tal cual (sin aligerar a WebP, que
+// lo convertiría en imagen y ya no se podría pintar de otro color). En la
+// pieza va como ícono pintado con `mask-image` del color del elemento.
+export const subirVector = async (file, carpeta) => {
+    if (!(await ensureQuota(carpeta, file.size))) return null;
+    const nombre = file.name.replace(/[^a-z0-9._-]+/gi, '-');
+    const filePath = `${carpeta}/${Date.now()}-${nombre.endsWith('.svg') ? nombre : `${nombre}.svg`}`;
+    const { error } = await supabase.storage
+        .from('user_images')
+        .upload(filePath, file, { upsert: true, contentType: 'image/svg+xml' });
+    if (error) throw error;
+    storageChanged();
+    return supabase.storage.from('user_images').getPublicUrl(filePath).data.publicUrl;
+};
+
 // Desde "Mis imágenes" llega una URL (a veces un PNG pesado): si no es WebP,
 // se baja, se aligera y se sube como sticker nuevo. Si algo falla, se usa tal cual.
 export const stickerLigeroDesdeUrl = async (url, carpeta) => {

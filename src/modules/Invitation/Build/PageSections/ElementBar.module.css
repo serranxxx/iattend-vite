@@ -625,3 +625,49 @@
 .liaBtn[data-on] {
     background: #F0EBFF;
 }
+
+/* "3 seleccionados" (varios elementos elegidos, side events / Flash). */
+.barCount {
+    font-size: 12.5px;
+    color: #787878;
+    padding: 0 4px;
+    white-space: nowrap;
+}
+
+/* Vectores: grosor fijo al escalar (non-scaling stroke). */
+.switchRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    cursor: pointer;
+}
+
+.switchRow > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.switchLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.switchHint {
+    max-width: 190px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: #8A8590;
+}
+
+.iconBtn {
+    position: relative;
+}
+
+.lockBadge {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+}
