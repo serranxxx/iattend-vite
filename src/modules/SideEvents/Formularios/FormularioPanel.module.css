@@ -1,0 +1,285 @@
+/* Panel "Formulario" del editor de un Flash (FormularioPanel.jsx): handoff
+   "Formularios propios", 1a. Las tarjetas, el interruptor y los botones
+   oscuros vienen de InteractionMenu.module.css. */
+
+.elegido {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #FFFFFF;
+}
+
+.miniatura {
+    width: 40px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #F1ECF8;
+    color: #6F4FA6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+}
+
+.titulo {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2A2730;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meta {
+    font-size: 12px;
+    color: #8C8794;
+}
+
+.dosBotones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.botonClaro {
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid #E6E3E8;
+    background: #FFFFFF;
+    color: #2A2730;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.botonClaro:hover,
+.botonClaro[aria-expanded="true"] {
+    background: #F5F3F7;
+}
+
+/* Elegir de Mis formularios */
+.picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.lista {
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    border-radius: 12px;
+    background: #FFFFFF;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.opcion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.opcion:hover {
+    background: #F7F6F8;
+}
+
+.opcion[data-on] {
+    background: #F6F2FB;
+}
+
+.opcionTitulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2A2730;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.opcionMeta {
+    font-size: 11px;
+    color: #8C8794;
+}
+
+.check {
+    color: #6F4FA6;
+    flex-shrink: 0;
+}
+
+.crear {
+    height: 40px;
+    border-radius: 12px;
+    border: 1.5px dashed #CFC9D6;
+    background: transparent;
+    color: #2A2730;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.crear:hover {
+    background: #FFFFFF;
+    border-color: #9C7FCB;
+}
+
+.crear:disabled {
+    opacity: .6;
+    cursor: default;
+}
+
+.nota {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #8C8794;
+}
+
+/* Respuestas */
+.respHead {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.respHead > :first-child {
+    margin-right: auto;
+}
+
+.chip {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+}
+
+.chip[data-tono="ok"] {
+    background: #E7F3EA;
+    color: #2F6B43;
+}
+
+.chip[data-tono="pend"] {
+    background: #FBF0DC;
+    color: #8A5A12;
+}
+
+.respuesta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.respuesta:hover {
+    background: #F7F6F8;
+}
+
+.avatar {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 99px;
+    background: #E9E3F3;
+    color: #6F4FA6;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.respNombre {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2A2730;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.respFecha {
+    font-size: 11px;
+    color: #8C8794;
+    white-space: nowrap;
+}
+
+.respBotones {
+    display: flex;
+    gap: 8px;
+}
+
+.verTodas {
+    flex: 1;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid #E6E3E8;
+    background: #FFFFFF;
+    color: #2A2730;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.verTodas:hover,
+.descargar:hover:not(:disabled) {
+    background: #F5F3F7;
+}
+
+.descargar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    border: 1px solid #E6E3E8;
+    background: #FFFFFF;
+    color: #2A2730;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.descargar:disabled {
+    opacity: .45;
+    cursor: default;
+}

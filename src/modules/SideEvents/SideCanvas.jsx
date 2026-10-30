@@ -1,16 +1,19 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { CircleCheck, CircleX, CloudSun, ImagePlus, MapPin, Music2 } from 'lucide-react'
+import { ArrowUpRight, CircleCheck, ClipboardList, CircleX, CloudSun, Eye, GripVertical, ImagePlus, MapPin, Music2, Plus } from 'lucide-react'
 import { ItinerarioWidget } from './ItinerarioWidget'
 import { useTranslation } from 'react-i18next'
 import { colorDeVelo, darker, sombraDeTexto } from '../../helpers/assets/functions'
-import { itinerarioPorDia, lineasDeFechas } from '../../helpers/assets/eventDateTime'
+import { lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
-import { alternar, conModificador, esImagen, lienzoCover } from './stickersFlashData'
+import { alternar, conModificador, esImagen, lienzoCover, nuevoIdElemento, PIEZA_ALTO, PIEZA_ANCHO } from './stickersFlashData'
 import { FlashElemento } from '../Editor/Elemento'
+import { TrazoSvg } from '../Editor/Dibujo'
+import { PINCEL, simplificar } from '../Editor/dibujoData'
 import { EfectosCapa } from './EfectosCapa'
 import { AsistentesMuestra } from './AsistentesMuestra'
-import { RegistroMuestra } from './RegistroMuestra'
-import { estiloNotas, modoClima, portadaOculta, tarjetasDe } from './tarjetasSide'
+import { estiloDe, tintaDeNotas, variablesDeEstilo } from './estilosBloque'
+import { formPublicado } from './Formularios/modelo'
+import { activasPrimero, agruparTarjetas, estiloNotas, modoClima, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos } from './tarjetasSide'
 
 /**
  * Lienzo editable del side event.
@@ -58,10 +61,13 @@ const cubicBezier = ([x1, y1, x2, y2]) => {
 
 const ease = cubicBezier(SHEET_CURVE)
 
-// El remoto pinta la dirección solo cuando está completa
-const ADDRESS_KEYS = ['street', 'number', 'neighborhood', 'zipcode', 'city', 'state', 'country']
 
-const hasFullAddress = (address) => ADDRESS_KEYS.every((k) => !!address?.[k])
+
+// Itinerario de ejemplo para la tarjeta apagada (sin momentos todavía).
+const ITINERARIO_MUESTRA = [
+    { id: 'muestra-1', name: 'Llegada', time: '16:00', icon: 'lucide:party-popper' },
+    { id: 'muestra-2', name: 'Salida', time: '20:00', icon: 'lucide:log-out' },
+]
 
 export const SideCanvas = ({
     current,
@@ -80,6 +86,11 @@ export const SideCanvas = ({
     // Editor de escritorio con barras (SideWorkspace): sin los chips de fondo
     // y color (el fondo se toca en la pieza y el color vive en Diseño).
     barMode = false,
+    // Herramienta Dibujar: { brush, color, size, opacity (10–100) } activa el
+    // modo dibujo; `onTrazo(tipo)` avisa de cada trazo ('trazo' | 'borrar').
+    pincel = null,
+    onTrazo,
+    sinTrazos = false,
 }) => {
 
     const { t } = useTranslation()
@@ -96,6 +107,147 @@ export const SideCanvas = ({
     // si se quitara al instante, el navegador recorta el scroll al nuevo tope
     // y la mitad del recorrido se vería como un salto seco.
     const [heldPad, setHeldPad] = useState(0)
+    // Notas vacía abierta para escribir (con "Agregar notas"); vacía al salir, se cierra.
+    const [notasAbiertas, setNotasAbiertas] = useState(false)
+    // ── Modo dibujo (herramienta Dibujar) ──
+    // Los dibujos van anclados a la FOTO de fondo (no al lienzo de los PNG):
+    // así lo que se calca sobre la foto cuadra en cualquier pantalla, aunque
+    // la foto y el lienzo se recorten distinto. Sin foto, al lienzo. Cada
+    // recuadro mide 390 de ancho en unidades del dibujo (marcoUnidades).
+    // El trazo en curso: puntos en pantalla (clientX/Y) y, para verlo, en las
+    // unidades del recuadro donde se dibuja.
+    const [trazo, setTrazo] = useState(null)
+    const trazoRef = useRef(null)
+    const fotoRef = useRef(null)
+    const lienzoRef = useRef(null)
+    const marcoUnidades = (rect) => ({ ancho: PIEZA_ANCHO, alto: PIEZA_ANCHO * (rect.height / rect.width) })
+    const aUnidades = (pts, rect) => {
+        const u = marcoUnidades(rect)
+        return pts.map(([cx, cy]) => [((cx - rect.left) / rect.width) * u.ancho, ((cy - rect.top) / rect.height) * u.alto])
+    }
+    const empezarTrazo = (e) => {
+        if (!pincel || e.button !== 0) return
+        e.preventDefault()
+        e.stopPropagation()
+        e.currentTarget.setPointerCapture?.(e.pointerId)
+        trazoRef.current = { el: e.currentTarget, pts: [[e.clientX, e.clientY]] }
+        setTrazo(aUnidades(trazoRef.current.pts, e.currentTarget.getBoundingClientRect()))
+    }
+    const moverTrazo = (e) => {
+        const t = trazoRef.current
+        if (!t) return
+        const u = t.pts[t.pts.length - 1]
+        if (Math.hypot(e.clientX - u[0], e.clientY - u[1]) < 0.8) return
+        t.pts = [...t.pts, [e.clientX, e.clientY]]
+        setTrazo(aUnidades(t.pts, t.el.getBoundingClientRect()))
+    }
+    const terminarTrazo = () => {
+        const t = trazoRef.current
+        trazoRef.current = null
+        setTrazo(null)
+        if (!t || !pincel) return
+        const p = PINCEL[pincel.brush] ?? PINCEL.pluma
+        const r1 = (n) => Math.round(n * 10) / 10
+        const r2 = (n) => Math.round(n * 100) / 100
+        const lista = Array.isArray(body.stickers) ? body.stickers : []
+        if (p.borra) {
+            // A cada dibujo que toca se le agrega lo borrado, en su caja (en
+            // las unidades de SU recuadro: foto o lienzo).
+            let toco = false
+            const nueva = lista.map((o) => {
+                if (o.kind !== 'dibujo' || o.hidden) return o
+                const marco = (o.foto && fotoRef.current ? fotoRef.current : lienzoRef.current)?.getBoundingClientRect()
+                if (!marco?.width) return o
+                const u = marcoUnidades(marco)
+                const pts = aUnidades(t.pts, marco)
+                // El ancho del borrador, de las unidades de donde se dibujó a las de este recuadro.
+                const ancho = pincel.size * p.k * (t.el.getBoundingClientRect().width / marco.width)
+                const k = ((o.w / 100) * u.ancho) / o.vbW
+                const cx = (o.x / 100) * u.ancho
+                const cy = (o.y / 100) * u.alto
+                const rad = (-(o.rot ?? 0) * Math.PI) / 180
+                const local = pts.map(([px, py]) => {
+                    const dx = px - cx
+                    const dy = py - cy
+                    return [(dx * Math.cos(rad) - dy * Math.sin(rad)) / k + o.vbW / 2, (dx * Math.sin(rad) + dy * Math.cos(rad)) / k + o.vbH / 2]
+                })
+                const m = ancho / k / 2
+                if (!local.some(([x, y]) => x > -m && x < o.vbW + m && y > -m && y < o.vbH + m)) return o
+                toco = true
+                return { ...o, erase: [...(o.erase ?? []), { points: simplificar(local, 0.6 / k).map(([x, y]) => [r1(x), r1(y)]), size: r1(ancho / k) }] }
+            })
+            if (!toco) return
+            onChange((prev) => ({ ...prev, body: { ...prev.body, stickers: nueva } }))
+            onTrazo?.('borrar')
+            return
+        }
+        // Se dibuja en el recuadro de la capa de dibujo (foto, o lienzo sin foto).
+        const rect = t.el.getBoundingClientRect()
+        const u = marcoUnidades(rect)
+        const ancho = pincel.size * p.k
+        const puntos = simplificar(aUnidades(t.pts, rect), 0.6)
+        const pad = ancho / 2 + (p.brillo ? pincel.size * 3 : 2)
+        const xs = puntos.map((q) => q[0])
+        const ys = puntos.map((q) => q[1])
+        const x0 = Math.min(...xs) - pad
+        const y0 = Math.min(...ys) - pad
+        const vbW = Math.max(1, Math.max(...xs) - Math.min(...xs) + pad * 2)
+        const vbH = Math.max(1, Math.max(...ys) - Math.min(...ys) + pad * 2)
+        const nuevo = {
+            id: nuevoIdElemento('d'),
+            kind: 'dibujo',
+            // Anclado a la foto (x / y / w en % de la foto como se ve).
+            ...(marcoFoto ? { foto: true } : {}),
+            brush: pincel.brush,
+            color: pincel.color,
+            size: pincel.size,
+            points: puntos.map(([x, y]) => [r1(x - x0), r1(y - y0)]),
+            vbW: r1(vbW),
+            vbH: r1(vbH),
+            x: r2(((x0 + vbW / 2) / u.ancho) * 100),
+            y: r2(((y0 + vbH / 2) / u.alto) * 100),
+            w: r2((vbW / u.ancho) * 100),
+            rot: 0,
+            opacity: Math.min(pincel.opacity / 100, p.maxA ?? 1),
+        }
+        onChange((prev) => ({ ...prev, body: { ...prev.body, stickers: [...(prev.body?.stickers ?? []), nuevo] } }))
+        onTrazo?.('trazo', nuevo.id)
+    }
+
+    // Arrastrar una sección (INFORMACIÓN, UBICACIÓN…) por su etiqueta en la
+    // pieza: { id, destino (lugar entre las demás activas), soltar }.
+    const [arrastre, setArrastre] = useState(null)
+    const arrastreRef = useRef(null)
+    useEffect(() => { arrastreRef.current = arrastre }, [arrastre])
+    const arrastreId = arrastre?.id
+    useEffect(() => {
+        if (!arrastreId) return
+        const card = cardRef.current
+        const mover = (e) => {
+            // Lugar = cuántas de las demás secciones activas quedan arriba del puntero.
+            const otras = [...(card?.querySelectorAll('[data-grupo]') ?? [])]
+                .filter((el) => el.dataset.grupo !== arrastreId && el.querySelector('[data-arrastrable-grupo]'))
+            const destino = otras.filter((el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2 < e.clientY }).length
+            setArrastre((a) => (a && a.destino !== destino ? { ...a, destino } : a))
+        }
+        const soltar = () => {
+            const a = arrastreRef.current
+            if (a) a.soltar(a.id, a.destino)
+            setArrastre(null)
+        }
+        window.addEventListener('pointermove', mover)
+        window.addEventListener('pointerup', soltar)
+        window.addEventListener('pointercancel', soltar)
+        return () => {
+            window.removeEventListener('pointermove', mover)
+            window.removeEventListener('pointerup', soltar)
+            window.removeEventListener('pointercancel', soltar)
+        }
+    }, [arrastreId])
+    // Al abrirla con "Agregar notas", el cursor queda adentro.
+    useEffect(() => {
+        if (notasAbiertas) requestAnimationFrame(() => extrasRef.current?.focus())
+    }, [notasAbiertas])
     const padBottom = liftBottom || heldPad
 
     // Scroll con la curva y la duración de la hoja. `scrollTo({behavior})` no
@@ -179,6 +331,25 @@ export const SideCanvas = ({
         glideTo(scroller, scroller.scrollTop + delta)
     }, [selected, liftBottom])
 
+    // Escritorio (sin hoja): al elegir una zona desde fuera de la pieza (p. ej.
+    // una capa en Capas) y no verse completa, la pieza se desliza hasta
+    // centrarla. Lo que ya se ve no se mueve (tocar en la pieza no brinca).
+    useEffect(() => {
+        const scroller = scrollRef.current
+        if (!scroller || !selected || liftBottom) return
+        const zone = cardRef.current?.querySelector(`[data-zone="${selected}"]`)
+        // Lo que va fijo encima (canción, formulario) no está en el scroll.
+        if (!zone || !scroller.contains(zone)) return
+        const zoneRect = zone.getBoundingClientRect()
+        const scrollerRect = scroller.getBoundingClientRect()
+        if (zoneRect.top >= scrollerRect.top && zoneRect.bottom <= scrollerRect.bottom) return
+        // La pieza puede ir escalada (zoom del lienzo): de px de pantalla a px del scroll.
+        const escala = scrollerRect.height / (scroller.clientHeight || scrollerRect.height) || 1
+        const margen = Math.max(12, (scrollerRect.height - zoneRect.height) / 2)
+        const delta = (zoneRect.top - scrollerRect.top - margen) / escala
+        glideTo(scroller, scroller.scrollTop + delta)
+    }, [selected, liftBottom])
+
     const body = current?.body ?? {}
     const title = body.title ?? {}
     const address = body.address ?? {}
@@ -256,6 +427,19 @@ export const SideCanvas = ({
     // se escala por el alto y se recorta un poco a los lados, así los PNG
     // conservan su tamaño respecto a la pantalla.
     const lienzo = zona ? lienzoCover(zona.ancho, zona.alto) : undefined
+    // Recuadro de la foto (o del video) de fondo tal como se ve (cover de la
+    // pantalla, centrado): ahí van los dibujos, para que cuadren con la foto.
+    const [tamFoto, setTamFoto] = useState(null)
+    const fotoActual = body.video || body.image || null
+    useEffect(() => { setTamFoto(null) }, [fotoActual])
+    const marcoFoto = zona && tamFoto ? (() => {
+        const escala = Math.max(zona.ancho / tamFoto.w, zona.alto / tamFoto.h)
+        const width = tamFoto.w * escala
+        const height = tamFoto.h * escala
+        return { left: (zona.ancho - width) / 2, top: (zona.alto - height) / 2, width, height }
+    })() : null
+    // Dibujos anclados a la foto (si no hay foto, van en el lienzo).
+    const enFoto = (st) => st.kind === 'dibujo' && st.foto && marcoFoto
     const seleccion = Array.isArray(stickerSel) ? stickerSel : (stickerSel ? [stickerSel] : [])
     // ⌘/Ctrl/Shift + clic suma o quita de la selección (y si lo quita, no lo
     // arrastra). Arrastrar uno que ya está en la selección mueve a todo el
@@ -479,6 +663,63 @@ export const SideCanvas = ({
         pointerEvents: readOnly ? 'none' : 'auto',
     })
 
+    // Los elementos de la portada en un recuadro (lienzo de los PNG o foto).
+    const pintarStickers = (lista) => lista.map(s => (esImagen(s)
+                                    ? (
+                                        <img
+                                            key={s.id}
+                                            src={s.url}
+                                            alt=''
+                                            draggable={false}
+                                            className={styles.sticker}
+                                            style={estiloSticker(s)}
+                                            onPointerDown={arrastrarSticker(s)}
+                                            onClick={elegirSticker(s)}
+                                        />
+                                    ) : (
+                                        // Texto, ícono, forma, línea o decoración (FlashElemento).
+                                        <div
+                                            key={s.id}
+                                            className={`${styles.sticker} ${styles.elemento}`}
+                                            style={{ ...estiloSticker(s), ...(editando === s.id ? { visibility: 'hidden' } : {}) }}
+                                            onPointerDown={arrastrarSticker(s)}
+                                            onClick={elegirSticker(s)}
+                                        >
+                                            <FlashElemento s={s} titleFont={tituloFuente} />
+                                        </div>
+                                    )))
+
+    // Agarraderas (contorno, manijas) de los elegidos en un recuadro.
+    const pintarAgarres = (lista) => lista.map(s => (
+                                    // El img (transparente) le da al div el tamaño del PNG;
+                                    // el contorno punteado es del div y sí se ve.
+                                    <div
+                                        key={s.id}
+                                        className={`${styles.sticker} ${styles.stickerSel}`}
+                                        style={{ ...estiloSticker(s), opacity: 1 }}
+                                        data-sticker
+                                        onPointerDown={editando === s.id ? undefined : arrastrarSticker(s)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onDoubleClick={() => { if (manijas && s.kind === 'text') setEditando(s.id) }}
+                                    >
+                                        {esImagen(s)
+                                            ? <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
+                                            : (
+                                                <div className={`${styles.stickerHueco} ${editando === s.id ? styles.huecoEditando : ''}`}>
+                                                    <FlashElemento s={s} titleFont={tituloFuente} editable={editando === s.id} onTextDone={terminarTexto(s.id)} />
+                                                </div>
+                                            )}
+                                        {manijas && editando !== s.id && (
+                                            <>
+                                                {['nw', 'ne', 'sw', 'se'].map(c => (
+                                                    <span key={c} className={styles.manija} data-c={c} onPointerDown={transformarSticker(s, 'escalar')} />
+                                                ))}
+                                                <span className={styles.manijaGiro} onPointerDown={transformarSticker(s, 'girar')} />
+                                            </>
+                                        )}
+                                    </div>
+    ))
+
     // Teclear seguido en el mismo texto no apila un paso de deshacer por letra.
     const setName = (value) => onChange((prev) => ({ ...prev, name: value }), { coalesce: 'name' })
     const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }), { coalesce: 'extras' })
@@ -495,7 +736,9 @@ export const SideCanvas = ({
         <div
             ref={cardRef}
             className={`${styles.card} ${barMode ? styles.cardIphone : ''} ${fullBleed ? styles.cardFull : ''} ${storyMode ? styles.cardStory : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
-            style={{ '--blur-color': themeColor, '--blur-color--dark': tint }}
+            // Estilo de bloques (Flash): sus variables y data-estilo (solo si no es vidrio).
+            style={{ '--blur-color': themeColor, '--blur-color--dark': tint, ...variablesDeEstilo(estiloDe(body), body.color) }}
+            data-estilo={estiloDe(body) === 'vidrio' ? undefined : estiloDe(body)}
             data-side-card
             onClick={() => {
                 if (readOnly) return
@@ -508,9 +751,9 @@ export const SideCanvas = ({
             <div className={cls('background', styles.hero)} onClick={pick('background')}>
                 {/* Flash con video de fondo: la imagen es su cuadro fijo. */}
                 {body.video
-                    ? <video src={body.video} poster={body.image || undefined} autoPlay muted loop playsInline preload='auto' className={styles.heroBg} />
+                    ? <video src={body.video} poster={body.image || undefined} autoPlay muted loop playsInline preload='auto' className={styles.heroBg} onLoadedMetadata={(e) => setTamFoto({ w: e.currentTarget.videoWidth, h: e.currentTarget.videoHeight })} />
                     : body.image
-                    ? <img src={body.image} alt='' className={styles.heroBg} />
+                    ? <img src={body.image} alt='' className={styles.heroBg} onLoad={(e) => setTamFoto({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
                     : (
                         <div className={styles.heroEmpty}>
                             <ImagePlus size={26} />
@@ -588,32 +831,15 @@ export const SideCanvas = ({
                         moverlo aunque lo tape el texto. */}
                     {stickers.length > 0 && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={marco}>
-                            <div className={styles.lienzo} style={lienzo}>
-                                {stickers.map(s => (esImagen(s)
-                                    ? (
-                                        <img
-                                            key={s.id}
-                                            src={s.url}
-                                            alt=''
-                                            draggable={false}
-                                            className={styles.sticker}
-                                            style={estiloSticker(s)}
-                                            onPointerDown={arrastrarSticker(s)}
-                                            onClick={elegirSticker(s)}
-                                        />
-                                    ) : (
-                                        // Texto, ícono, forma, línea o decoración (FlashElemento).
-                                        <div
-                                            key={s.id}
-                                            className={`${styles.sticker} ${styles.elemento}`}
-                                            style={{ ...estiloSticker(s), ...(editando === s.id ? { visibility: 'hidden' } : {}) }}
-                                            onPointerDown={arrastrarSticker(s)}
-                                            onClick={elegirSticker(s)}
-                                        >
-                                            <FlashElemento s={s} titleFont={tituloFuente} />
-                                        </div>
-                                    )))}
+                            <div ref={lienzoRef} className={styles.lienzo} style={lienzo}>
+                                {pintarStickers(stickers.filter((x) => !enFoto(x)))}
                             </div>
+                            {/* Dibujos anclados a la foto: en su recuadro (cover de la foto). */}
+                            {marcoFoto && (
+                                <div ref={fotoRef} className={styles.lienzo} style={marcoFoto}>
+                                    {pintarStickers(stickers.filter(enFoto))}
+                                </div>
+                            )}
                         </div>
                     )}
                     {/* Efectos animados (panel Efectos): encima de la portada y los PNG,
@@ -647,39 +873,38 @@ export const SideCanvas = ({
                             <span className={`${styles.guiaH} ${guias.y ? styles.guiaActiva : ''}`} />
                         </div>
                     )}
-                    {!readOnly && seleccion.length > 0 && (
+                    {!readOnly && !pincel && seleccion.length > 0 && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAgarre}`} style={marco}>
                             <div className={styles.lienzo} style={lienzo}>
-                                {stickers.filter(s => seleccion.includes(s.id)).map(s => (
-                                    // El img (transparente) le da al div el tamaño del PNG;
-                                    // el contorno punteado es del div y sí se ve.
-                                    <div
-                                        key={s.id}
-                                        className={`${styles.sticker} ${styles.stickerSel}`}
-                                        style={{ ...estiloSticker(s), opacity: 1 }}
-                                        data-sticker
-                                        onPointerDown={editando === s.id ? undefined : arrastrarSticker(s)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onDoubleClick={() => { if (manijas && s.kind === 'text') setEditando(s.id) }}
-                                    >
-                                        {esImagen(s)
-                                            ? <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
-                                            : (
-                                                <div className={`${styles.stickerHueco} ${editando === s.id ? styles.huecoEditando : ''}`}>
-                                                    <FlashElemento s={s} titleFont={tituloFuente} editable={editando === s.id} onTextDone={terminarTexto(s.id)} />
-                                                </div>
-                                            )}
-                                        {manijas && editando !== s.id && (
-                                            <>
-                                                {['nw', 'ne', 'sw', 'se'].map(c => (
-                                                    <span key={c} className={styles.manija} data-c={c} onPointerDown={transformarSticker(s, 'escalar')} />
-                                                ))}
-                                                <span className={styles.manijaGiro} onPointerDown={transformarSticker(s, 'girar')} />
-                                            </>
-                                        )}
-                                    </div>
-                                ))}
+                                {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && !enFoto(x)))}
                             </div>
+                            {marcoFoto && (
+                                <div className={styles.lienzo} style={marcoFoto}>
+                                    {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && enFoto(x)))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {/* Modo dibujo: encima de todo, captura el puntero. El trazo en
+                        curso se ve igual que como queda (TrazoSvg). */}
+                    {pincel && !readOnly && (
+                        <div className={`${styles.stickersCapa} ${styles.capaDibujo}`} style={marco}>
+                            <div
+                                className={`${styles.lienzo} ${styles.lienzoDibujo}`}
+                                style={marcoFoto ?? lienzo}
+                                onPointerDown={empezarTrazo}
+                                onPointerMove={moverTrazo}
+                                onPointerUp={terminarTrazo}
+                                onPointerCancel={terminarTrazo}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {trazo && (
+                                    <div className={styles.trazoVivo} style={{ opacity: Math.min(pincel.opacity / 100, PINCEL[pincel.brush]?.maxA ?? 1) }}>
+                                        <TrazoSvg s={{ ...pincel, points: trazo }} vbW={PIEZA_ANCHO} vbH={marcoFoto ? PIEZA_ANCHO * (marcoFoto.height / marcoFoto.width) : PIEZA_ALTO} preview />
+                                    </div>
+                                )}
+                            </div>
+                            {sinTrazos && !trazo && <span className={styles.dibujoAviso}>{t('side_events.draw_canvas_hint')}</span>}
                         </div>
                     )}
                 </div>
@@ -753,91 +978,260 @@ export const SideCanvas = ({
                         {/* RSVP: maqueta de la píldora de la pieza */}
                         <div ref={botonesRef} aria-hidden className={styles.buttonsCont}>
                             <span className={styles.mockBtn}>
-                                <CircleCheck size={18} /> {t('side_events.canvas_rsvp_yes')}
+                                <CircleCheck size={20} strokeWidth={1.6} /> {t('side_events.canvas_rsvp_yes')}
                             </span>
+                            <span className={styles.mockDivisor} />
                             <span className={styles.mockBtn}>
-                                <CircleX size={18} /> {t('side_events.canvas_rsvp_no')}
+                                <CircleX size={20} strokeWidth={1.6} /> {t('side_events.canvas_rsvp_no')}
                             </span>
                         </div>
                     </div>
 
-                    {/* Tarjetas debajo de la portada, en el orden y con lo oculto
-                        del panel Capas (tarjetasSide.js), como la página del invitado. */}
-                    {tarjetasDe(body, conAsistentes).filter((c) => !c.hidden).map(({ key }) => {
-                        // Registro de asistentes (Flash, opcional): su pantalla de inicio.
-                        if (key === 'registration') {
-                            return body.form?.sections?.length > 0 && (
-                                <div key={key} className={cls('registration', styles.itineraryZona)} data-zone='registration' onClick={pick('registration')}>
-                                    <RegistroMuestra form={body.form} />
-                                </div>
-                            )
+                    {/* Tarjetas debajo de la portada, en el orden del panel Capas
+                        (tarjetasSide.js), agrupadas bajo su etiqueta
+                        (INFORMACIÓN · UBICACIÓN · ASISTENTES), como la página del
+                        invitado (handoff "Flash Layout" 3a). El formulario no va en
+                        el scroll: al invitado le llega como aviso al confirmar.
+                        Al editar, como los módulos deshabilitados de la
+                        invitación: las ocultas y las que no tienen datos salen
+                        opacas, con una muestra y al centro "Activar …" (ocultas)
+                        o "Agregar …" (sin datos). En la página no salen. */}
+                    {(() => {
+                        const tarjetas = tarjetasDe(body, conAsistentes)
+                        const oculta = (k) => Boolean(tarjetas.find((c) => c.key === k)?.hidden)
+                        const conItinerario = tieneDatos(body, 'itinerary')
+                        const conMapa = tieneDatos(body, 'map')
+                        // Notas vacía: opaca con "Agregar notas"; al tocarlo (o al
+                        // elegirla en Capas) se abre para escribir ahí mismo.
+                        const conDatos = (k) => tieneDatos(body, k) || (k === 'notes' && (notasAbiertas || selected === 'extras'))
+                        const lista = (k) => !oculta(k) && conDatos(k)
+                        // Activas arriba (en su orden), inactivas al final.
+                        const keys = activasPrimero(tarjetas.filter((c) => !readOnly || lista(c.key)).map((c) => c.key), lista)
+                        const grupos = agruparTarjetas(keys)
+                        // Secciones activas: se pueden arrastrar por su etiqueta.
+                        const gruposActivos = grupos.filter((g) => g.keys.some(lista))
+                        const arrastrable = (g) => !readOnly && gruposActivos.length > 1 && gruposActivos.includes(g)
+                        // El clima va dentro de Lugar solo si los dos se ven completos.
+                        const climaEnLugar = lista('map') && lista('weather')
+
+                        // Activar una oculta: se prende (como su ojo en Capas) y se elige.
+                        const activar = (key, zona) => (e) => {
+                            e.stopPropagation()
+                            onChange((prev) => ({ ...prev, body: { ...prev.body, ...parcheOcultarTarjeta(prev.body, key, false) } }))
+                            onSelect(zona)
                         }
-                        // Asistentes (Flash, opcional), con asistentes de ejemplo.
-                        if (key === 'attendees') {
+                        // Tarjeta apagada: la muestra opaca y el botón al centro.
+                        // Sin datos ("Agregar …"): abre su edición y, si estaba
+                        // oculta, la prende para que salga en cuanto tenga algo.
+                        const apagada = (key, zona, muestra, agregar, alAgregar) => {
+                            const alTocarAgregar = (e) => {
+                                e.stopPropagation()
+                                if (oculta(key)) onChange((prev) => ({ ...prev, body: { ...prev.body, ...parcheOcultarTarjeta(prev.body, key, false) } }))
+                                if (alAgregar) alAgregar()
+                                else onSelect(zona)
+                            }
                             return (
-                                <div key={key} className={cls('attendees', styles.itineraryZona)} data-zone='attendees' onClick={pick('attendees')}>
-                                    <AsistentesMuestra colorTema={body.color} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={Boolean(body.chat?.enabled)} />
+                                <div key={key} className={cls(zona, styles.apagada)} data-zone={zona} onClick={agregar ? alTocarAgregar : (e) => { e.stopPropagation(); onSelect(zona) }}>
+                                    <div className={styles.apagadaMuestra} aria-hidden>{muestra}</div>
+                                    {!readOnly && (
+                                        <button type='button' className={styles.activar} onClick={agregar ? alTocarAgregar : activar(key, zona)}>
+                                            {agregar ? <Plus size={15} strokeWidth={2.2} /> : <Eye size={15} strokeWidth={2} />}
+                                            {agregar ?? t('side_events.canvas_activate', { name: t(`build_editor.${{ itinerary: 'lp_itinerary', map: 'lp_map', notes: 'lp_notes', attendees: 'lp_attendees', weather: 'lp_weather' }[key]}`) })}
+                                        </button>
+                                    )}
                                 </div>
                             )
                         }
-                        // Itinerario de un Flash: el mismo widget que el remoto.
-                        if (key === 'itinerary') {
-                            return itinerarioPorDia(body).length > 0 && (
-                                <div key={key} className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
-                                    <ItinerarioWidget body={body} />
+
+                        const tarjetaLugar = (muestra, conClima) => (
+                            <>
+                                <div className={styles.lugarCabecera}>
+                                    <span className={styles.lugarTextos}>
+                                        <span className={styles.lugarNombre}>{muestra ? t('side_events.place_name_label') : (placeLabel || address.street)}</span>
+                                        <span className={styles.lugarDireccion}>{muestra ? t('side_events.canvas_empty_place') : [`${address.street ?? ''} ${address.number ?? ''}`.trim(), address.city].filter(Boolean).join(', ')}</span>
+                                    </span>
+                                    <span className={styles.lugarAbrir}>{t('side_events.canvas_open')} <ArrowUpRight size={14} /></span>
                                 </div>
-                            )
-                        }
-                        // Cómo llegar: igual que en el remoto, solo con dirección completa.
-                        if (key === 'map') {
-                            return hasFullAddress(address) && (
-                                <div key={key} className={cls(zonaDe('map'), `${styles.block} ${styles.mapBlock}`)} data-zone={zonaDe('map')} onClick={pick(zonaDe('map'))}>
-                                    <span className={styles.mapLabel}>{t('side_events.canvas_map')}</span>
-                                    <div className={styles.mapPreview}>
-                                        <MapPin size={16} />
-                                        <span>{[address.street, address.number, address.city].filter(Boolean).join(' ')}</span>
+                                <div className={styles.mapPreview}>
+                                    <MapPin size={16} />
+                                </div>
+                                {conClima && (
+                                    <div className={cls(zonaDe('weather'), styles.lugarClima)} data-zone={zonaDe('weather')} onClick={pick(zonaDe('weather'))}>
+                                        <CloudSun size={24} />
+                                        <span className={styles.weatherLeft}>
+                                            <span className={styles.weatherTitle}>{t('side_events.canvas_weather')}</span>
+                                            <span className={styles.weatherHint}>{address.city} · {t(`side_events.weather_mode_${modoClima(body)}`)}</span>
+                                        </span>
                                     </div>
-                                </div>
-                            )
-                        }
-                        // Notas
-                        if (key === 'notes') {
-                            return (
-                                <div key={key} className={cls('extras', styles.block)} data-zone='extras' onClick={pick('extras')}>
-                                    {/* El texto se copia al montarse (y no como hijo de React,
-                                        que movería el caret al escribir): así también sale bien
-                                        al volver a mostrar la tarjeta desde Capas. */}
-                                    <div
-                                        ref={(el) => {
-                                            extrasRef.current = el
-                                            if (el && !el.dataset.listo) { el.innerText = current?.body?.extras ?? ''; el.dataset.listo = '1' }
-                                        }}
-                                        className={styles.extrasInput}
-                                        style={estiloNotas(body)}
-                                        contentEditable={!readOnly}
-                                        suppressContentEditableWarning
-                                        spellCheck={false}
-                                        data-placeholder={t('side_events.extras_placeholder')}
-                                        onInput={(e) => setExtras(e.currentTarget.innerText)}
-                                    />
-                                </div>
-                            )
-                        }
-                        // Clima: con ciudad. Se edita desde Lugar, que lo condiciona.
-                        return address.city && (
-                            <div key={key} className={cls(zonaDe('weather'), `${styles.block} ${styles.weatherBlock}`)} data-zone={zonaDe('weather')} onClick={pick(zonaDe('weather'))}>
+                                )}
+                            </>
+                        )
+                        const tarjetaClima = (ciudad) => (
+                            <>
                                 <div className={styles.weatherLeft}>
                                     <span className={styles.weatherTitle}>{t('side_events.canvas_weather')}</span>
-                                    <span className={styles.weatherHint}>{address.city} · {t(`side_events.weather_mode_${modoClima(body)}`)}</span>
+                                    <span className={styles.weatherHint}>{ciudad} · {t(`side_events.weather_mode_${modoClima(body)}`)}</span>
                                 </div>
                                 <CloudSun size={26} />
-                            </div>
+                            </>
                         )
-                    })}
+
+                        // Soltar una sección: el nuevo orden de las activas y después las inactivas.
+                        const soltar = (id, destino) => {
+                            const otras = gruposActivos.filter((g) => g.id !== id)
+                            const movida = gruposActivos.find((g) => g.id === id)
+                            const nuevo = [...otras.slice(0, destino), movida, ...otras.slice(destino), ...grupos.filter((g) => !gruposActivos.includes(g))]
+                            if (nuevo.map((g) => g.id).join() === grupos.map((g) => g.id).join()) return
+                            onChange((prev) => ({ ...prev, body: { ...prev.body, ...parcheOrdenTarjetas(prev.body, nuevo.flatMap((g) => g.keys)) } }))
+                        }
+                        const otrasActivas = arrastre ? gruposActivos.filter((g) => g.id !== arrastre.id) : []
+                        const lineaAntes = arrastre ? otrasActivas[arrastre.destino]?.id : null
+                        const lineaDespues = arrastre && arrastre.destino >= otrasActivas.length ? otrasActivas[otrasActivas.length - 1]?.id : null
+
+                        return grupos.map(({ id, keys: delGrupo }) => (
+                            <div
+                                key={id}
+                                className={styles.grupo}
+                                data-grupo={id}
+                                data-arrastrando={arrastre?.id === id || undefined}
+                                data-linea={lineaAntes === id ? 'antes' : lineaDespues === id ? 'despues' : undefined}
+                            >
+                                {arrastrable(grupos.find((x) => x.id === id)) ? (
+                                    <span
+                                        className={`${styles.grupoEtiqueta} ${styles.grupoArrastrable}`}
+                                        data-arrastrable-grupo
+                                        title={t('side_events.canvas_drag_group')}
+                                        onPointerDown={(e) => {
+                                            if (e.button !== 0) return
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            setArrastre({ id, destino: gruposActivos.findIndex((x) => x.id === id), soltar })
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <GripVertical size={13} className={styles.grupoAsa} />
+                                        {t(`side_events.canvas_group_${id}`)}
+                                    </span>
+                                ) : (
+                                    <span className={styles.grupoEtiqueta}>{t(`side_events.canvas_group_${id}`)}</span>
+                                )}
+                                {delGrupo.map((key) => {
+                                    // Asistentes (Flash, opcional), con asistentes de ejemplo.
+                                    if (key === 'attendees') {
+                                        const muestra = <AsistentesMuestra colorTema={body.color} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={Boolean(body.chat?.enabled)} sinTitulo />
+                                        if (oculta(key)) return apagada(key, 'attendees', muestra)
+                                        return (
+                                            <div key={key} className={cls('attendees', styles.itineraryZona)} data-zone='attendees' onClick={pick('attendees')}>
+                                                {muestra}
+                                            </div>
+                                        )
+                                    }
+                                    // Itinerario: el mismo widget que el remoto (vacío, uno de ejemplo).
+                                    if (key === 'itinerary') {
+                                        if (!lista(key)) {
+                                            const ejemplo = { ...body, itinerary: conItinerario ? body.itinerary : ITINERARIO_MUESTRA }
+                                            return apagada(key, 'itinerary', <ItinerarioWidget body={ejemplo} sinTitulo />, conItinerario ? null : t('side_events.canvas_add_itinerary'))
+                                        }
+                                        return (
+                                            <div key={key} className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
+                                                <ItinerarioWidget body={body} sinTitulo />
+                                            </div>
+                                        )
+                                    }
+                                    // Lugar: mapa y, debajo, la fila del clima (cada uno su capa).
+                                    if (key === 'map') {
+                                        if (!lista(key)) {
+                                            return apagada(key, zonaDe('map'), <div className={`${styles.block} ${styles.lugarBlock}`}>{tarjetaLugar(!conMapa, false)}</div>, conMapa ? null : t('side_events.canvas_add_place'))
+                                        }
+                                        return (
+                                            <div key={key} className={cls(zonaDe('map'), `${styles.block} ${styles.lugarBlock}`)} data-zone={zonaDe('map')} onClick={pick(zonaDe('map'))}>
+                                                {tarjetaLugar(false, climaEnLugar)}
+                                            </div>
+                                        )
+                                    }
+                                    // Notas
+                                    if (key === 'notes') {
+                                        // Sin texto: "Agregar notas" la abre para escribir ahí mismo.
+                                        if (!lista(key)) {
+                                            const conTexto = conDatos(key)
+                                            return apagada(key, 'extras', (
+                                                <div className={`${styles.block} ${styles.notasBlock}`}>
+                                                    <div className={styles.extrasInput} style={estiloNotas(body)}>{body.extras || t('side_events.canvas_sample_notes')}</div>
+                                                </div>
+                                            ), conTexto ? null : t('side_events.canvas_add_notes'), () => {
+                                                setNotasAbiertas(true)
+                                                onSelect('extras')
+                                            })
+                                        }
+                                        return (
+                                            <div key={key} className={cls('extras', `${styles.block} ${styles.notasBlock}`)} data-zone='extras' onClick={pick('extras')}>
+                                                {/* El texto se copia al montarse (y no como hijo de React,
+                                                    que movería el caret al escribir): así también sale bien
+                                                    al volver a mostrar la tarjeta desde Capas. */}
+                                                <div
+                                                    ref={(el) => {
+                                                        extrasRef.current = el
+                                                        if (el && !el.dataset.listo) { el.innerText = current?.body?.extras ?? ''; el.dataset.listo = '1' }
+                                                    }}
+                                                    className={styles.extrasInput}
+                                                    style={{
+                                                        ...estiloNotas(body),
+                                                        // Con otro estilo de bloques: el color elegido si se lee, si no la tinta del estilo.
+                                                        ...(tintaDeNotas(estiloDe(body), body.color, body.notes_style?.color) ? { color: tintaDeNotas(estiloDe(body), body.color, body.notes_style?.color), mixBlendMode: 'normal' } : {}),
+                                                    }}
+                                                    contentEditable={!readOnly}
+                                                    suppressContentEditableWarning
+                                                    spellCheck={false}
+                                                    data-placeholder={t('side_events.extras_placeholder')}
+                                                    onInput={(e) => setExtras(e.currentTarget.innerText)}
+                                                    // Vacía al salir: vuelve a la tarjeta opaca.
+                                                    onBlur={(e) => { if (!e.currentTarget.innerText.trim()) setNotasAbiertas(false) }}
+                                                />
+                                            </div>
+                                        )
+                                    }
+                                    // Clima: dentro de Lugar cuando los dos se ven; si no, su tarjeta sola.
+                                    if (climaEnLugar) return null
+                                    if (!lista(key)) {
+                                        return apagada(key, zonaDe('weather'), <div className={`${styles.block} ${styles.weatherBlock}`}>{tarjetaClima(address.city || t('side_events.canvas_sample_city'))}</div>, address.city ? null : t('side_events.canvas_add_city'))
+                                    }
+                                    return (
+                                        <div key={key} className={cls(zonaDe('weather'), `${styles.block} ${styles.weatherBlock}`)} data-zone={zonaDe('weather')} onClick={pick(zonaDe('weather'))}>
+                                            {tarjetaClima(address.city)}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ))
+                    })()}
 
                     <div aria-hidden className={styles.footer}>I attend</div>
                 </div>
             </div>
+
+            {/* Formulario (Flash): al invitado le llega como aviso fijo
+                arriba de la pantalla al confirmar. Aquí solo una píldora
+                chica en la esquina (no estorba al editar la portada): con
+                formulario dice "Formulario"; sin él, "+ Formulario" (como el
+                disco de la canción). Tocarla abre su panel. */}
+            {conAsistentes && (() => {
+                const form = formPublicado(body.form)
+                const preguntas = (form?.sections ?? []).reduce((n, s) => n + (s.fields ?? []).filter((f) => f.enabled !== false).length, 0)
+                const puesto = Boolean(body.form?.enabled) && preguntas > 0
+                return (
+                    <button
+                        type='button'
+                        className={cls('registration', `${styles.formAviso} ${puesto ? '' : styles.formAvisoVacio}`)}
+                        data-zone='registration'
+                        onClick={pick('registration')}
+                        title={puesto ? `${form.title || t('side_events.reg_title')} · ${t('side_events.canvas_form_arrives', { count: preguntas })}` : undefined}
+                    >
+                        {puesto ? <ClipboardList size={13} strokeWidth={2.2} /> : <Plus size={13} strokeWidth={2.4} />}
+                        {/* Con formulario puesto, su nombre; sin él, "+ Formulario". */}
+                        <span className={styles.formAvisoTexto}>{puesto ? (form.title?.trim() || t('side_events.reg_title')) : t('side_events.reg_title')}</span>
+                    </button>
+                )
+            })()}
         </div>
     )
 }

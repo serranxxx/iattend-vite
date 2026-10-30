@@ -228,3 +228,37 @@
 .chatPrevia b {
     font-weight: 600;
 }
+
+/* Estilo de bloques (panel Diseño, estilosBloque.js): la pieza pone
+   data-estilo y las variables --bloque-* cuando no es vidrio. */
+[data-estilo] .cuadro {
+    background: var(--bloque-fondo);
+    -webkit-backdrop-filter: var(--bloque-blur);
+    backdrop-filter: var(--bloque-blur);
+    border: var(--bloque-borde);
+    box-shadow: var(--bloque-sombra);
+    border-radius: var(--bloque-radio);
+    color: var(--bloque-tinta);
+}
+
+[data-estilo] .cuadro::before {
+    background: var(--bloque-reflejo);
+}
+
+[data-estilo] .resumen,
+[data-estilo] .mas,
+[data-estilo] .ejemplo,
+[data-estilo] .chatIcono {
+    background: var(--bloque-suave);
+    border-color: var(--bloque-linea);
+    box-shadow: none;
+}
+
+[data-estilo] .nombres {
+    color: color-mix(in srgb, var(--bloque-tinta) 75%, transparent);
+}
+
+[data-estilo] .chat {
+    background: transparent;
+    border-top-color: var(--bloque-linea);
+}

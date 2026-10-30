@@ -18,7 +18,8 @@ const STACK = 7
 // `chat`: con el chat prendido (body.chat.enabled), su fila al pie, como la
 // página del invitado (iattend-events, Chat/FilaChat.tsx), con el mensaje de
 // ejemplo de "Ver en vivo".
-export const AsistentesMuestra = ({ colorTema, reales = null, modo = 'emoji', chat = false }) => {
+// `sinTitulo`: bajo la etiqueta ASISTENTES de la página solo queda el chip.
+export const AsistentesMuestra = ({ colorTema, reales = null, modo = 'emoji', chat = false, sinTitulo }) => {
     const { t } = useTranslation()
     const ejemplo = !reales?.total
     // Por pases (titular + acompañantes), como la tarjeta del invitado.
@@ -29,7 +30,7 @@ export const AsistentesMuestra = ({ colorTema, reales = null, modo = 'emoji', ch
     return (
         <div className={styles.cuadro} style={{ '--borde-avatar': `${darker(colorTema ?? '#000000', 0.2) ?? '#000000'}80` }}>
             <div className={styles.cabecera}>
-                <span className={styles.titulo}>{t('side_events.panel_attendees')}</span>
+                {!sinTitulo && <span className={styles.titulo}>{t('side_events.panel_attendees')}</span>}
                 <span className={styles.resumen}>
                     <span className={styles.punto} />
                     {t('side_events.att_count', { n: total })}
@@ -40,7 +41,7 @@ export const AsistentesMuestra = ({ colorTema, reales = null, modo = 'emoji', ch
                     <span
                         key={a.id}
                         className={`${styles.avatar} ${modo === 'initials' ? styles.letras : ''}`}
-                        style={{ left: i * 34, zIndex: 100 - i, background: fondoAsistente(a, modo) }}
+                        style={{ left: i * 34, zIndex: 100 - i, background: fondoAsistente(a, modo, colorTema) }}
                     >
                         {modo === 'initials' ? a.iniciales : emojiAsistente(a)}
                     </span>

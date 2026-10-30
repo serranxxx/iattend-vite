@@ -51,7 +51,8 @@ import ed from './SideEventEditor.module.css'
 import { EVENTO_CREDITOS_FLASH } from '../../components/Payment/CreditController/creditosFlash'
 import sl from './SideEventsList.module.css'
 import { asistentesDe } from './datosAsistentes'
-import { MODOS_CLIMA, modoClima, parcheModoClima, parcheOcultarTarjeta } from './tarjetasSide'
+import { MODOS_CLIMA, modoClima, parcheModoClima } from './tarjetasSide'
+import { FormularioPanel } from './Formularios/FormularioPanel'
 
 
 const { Option } = Select;
@@ -3363,20 +3364,15 @@ export const SideEvents = () => {
         </>
     )
 
-    // Registro de asistentes: en el celular solo se prende / apaga; el
-    // formulario se arma en el editor de escritorio (RegistroPanel).
+    // Formulario (Flash): el mismo panel que en el escritorio
+    // (Formularios/FormularioPanel.jsx); crear, editar y ver respuestas abre
+    // la vista completa encima.
     const panelRegistration = (
-        <>
-            {blockHead(<ClipboardList size={16} />, t('side_events.reg_title'), t('side_events.reg_mobile_hint'))}
-            <label className={ed.toggle}>
-                <span className={ed.toggleLabel}>{t('side_events.reg_title')}</span>
-                <Switch
-                    size='small'
-                    checked={Boolean(current?.body?.form?.enabled)}
-                    onChange={(v) => setBody(parcheOcultarTarjeta(current?.body, 'registration', !v))}
-                />
-            </label>
-        </>
+        <FormularioPanel
+            body={current?.body}
+            updateForm={(fn, opts) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)}
+            eventoId={current?.id}
+        />
     )
 
     // Mini itinerario de un Flash (ItinerarioFlash.jsx): se muestra arriba de

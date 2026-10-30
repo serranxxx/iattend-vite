@@ -11,7 +11,7 @@ import ed from './SideEventEditor.module.css'
 
 /*
   Mini itinerario de un Evento Flash (panel del editor). Bloques { id, name,
-  time "HH:mm", place (lugar o detalle, opcional), icon ("lucide:<nombre>", de cualquier ícono de Lucide; los
+  time "HH:mm", desc (detalle opcional, ≤ 60; los viejos traen place), icon ("lucide:<nombre>", de cualquier ícono de Lucide; los
   números de antes son del catálogo del itinerario de la invitación y se
   siguen pintando, ver IconoMomento.jsx), date "YYYY-MM-DD" solo si el Flash tiene varias fechas }.
 
@@ -68,14 +68,17 @@ const Momento = ({ momento: m, dias, onCambiar, onQuitar }) => {
                 maxLength={60}
                 onChange={(e) => onCambiar({ name: e.target.value })}
             />
-            {/* Lugar o detalle (opcional): el renglón gris del widget. */}
+            {/* Detalle (opcional, ≤ 60): el renglón chico debajo del nombre en
+                el itinerario (handoff 6c). Se guarda en `desc`; los momentos
+                viejos traían `place`, que se lee de respaldo y se pasa a desc
+                al editarlo. */}
             <Input
                 className={ed.momentoLugar}
                 size='small'
                 placeholder={t('side_events.itinerary_place')}
-                value={m.place ?? ''}
-                maxLength={80}
-                onChange={(e) => onCambiar({ place: e.target.value || null })}
+                value={m.desc ?? m.place ?? ''}
+                maxLength={60}
+                onChange={(e) => onCambiar({ desc: e.target.value || null, place: null })}
             />
             {/* Segundo renglón a todo lo ancho: el panel es angosto. */}
             <div className={ed.momentoFila}>

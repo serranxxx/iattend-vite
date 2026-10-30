@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DatePicker, Input, Popover, Segmented, Switch, Tooltip } from 'antd'
 import dayjs from 'dayjs'
-import { Blend, Clapperboard, CloudOff, CloudSun, Film, ImageMinus, ImagePlus, Link2, ListOrdered, MapPin, MessageCircle, Pin, Plus, Trash2, Users, X } from 'lucide-react'
+import { Blend, Clapperboard, CloudOff, CloudSun, Film, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X } from 'lucide-react'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatEventDateTime } from '../../../helpers/assets/eventDateTime'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import { AddressAutocomplete } from '../AddressAutocomplete'
@@ -362,16 +362,23 @@ export const WeatherBar = ({ body, setBody }) => {
     )
 }
 
-export const ItineraryBar = ({ count, onEdit }) => {
+// Barra del modo dibujo (herramienta Dibujar): el pincel elegido, deshacer el
+// último trazo, borrar los de esta sesión y "Listo" (sale del modo dibujo).
+export const DibujoBar = ({ pincel, trazos, onDeshacer, onBorrarTodo, onListo }) => {
     const { t } = useTranslation()
+    const sin = trazos === 0
     return (
-        <div className={bar.bar} data-edit-keep data-text-bar>
-            <span className={bar.barIcon}><ListOrdered size={18} /></span>
-            <span className={own.barText}>{t('side_events.ws_moments', { n: count })}</span>
+        <div className={bar.bar} data-edit-keep>
+            <span className={own.dibujoBarPunto} style={{ background: pincel.brush === 'borrador' ? '#C9C5CE' : pincel.color }} />
+            <span className={own.barText}>{t(`side_events.draw_brush_${pincel.brush}`)} · {pincel.size} px</span>
             <span className={bar.divider} />
-            <button type="button" className={bar.textBtn} onClick={onEdit}>
-                {t('side_events.ws_edit_moments')}
+            <button type="button" className={bar.textBtn} data-off={sin || undefined} disabled={sin} onClick={onDeshacer}>
+                <Undo2 size={16} /> {t('side_events.draw_undo')}
             </button>
+            <button type="button" className={bar.textBtn} data-off={sin || undefined} disabled={sin} onClick={onBorrarTodo}>
+                <Trash2 size={16} /> {t('side_events.draw_clear')}
+            </button>
+            <button type="button" className={own.dibujoListo} onClick={onListo}>{t('side_events.draw_done')}</button>
         </div>
     )
 }

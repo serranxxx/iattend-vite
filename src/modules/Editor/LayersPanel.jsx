@@ -21,13 +21,18 @@ import styles from '../Invitation/Build/PageSections/ModuleLayers.module.css'
 
   groups: [{
     id,
+    seccion?: { label, hint },     // solo una etiqueta de sección (PORTADA, PÁGINA…), sin capas
     header?: { label, icon, selected, hidden, onSelect, onToggleHidden, sortable, defaultOpen },
     segments: [
       { kind: 'items', id, rows, onReorder(activeId, overId) }   // se arrastran
       { kind: 'fixed', rows }                                       // no se mueven
     ],
   }]
-  row: { id, label, icon, selected, hidden?, onSelect(event), onToggleHidden? }
+  row: { id, label, icon, selected, hidden?, onSelect(event), onToggleHidden?, action? }
+  action: { label, onClick }: un botón ("+ Agregar") en lugar del ojo, para lo
+  que todavía no tiene contenido. También en header.
+  variant: 'secciones' → filas más amplias, ojo siempre a la vista y grupos
+  abiertos de entrada (la flecha los comprime) (Capas de un Flash).
   onReorderGroups(activeGroupId, overGroupId)
   onMoveItem({ itemId, fromGroup, toGroup, toSegment })
 */
@@ -47,6 +52,23 @@ const EyeButton = ({ hidden, onToggle, showLabel, hideLabel }) => (
         {hidden ? <EyeOff size={15} /> : <Eye size={15} />}
     </button>
 )
+
+// "+ Agregar": en lugar del ojo, para lo que todavía no tiene contenido.
+const ActionButton = ({ action }) => (
+    <button
+        type="button"
+        className={styles.action}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); action.onClick() }}
+    >
+        {action.label}
+    </button>
+)
+
+// Ojo o "+ Agregar" al final de una fila.
+const RowEnd = ({ item, ctx }) => (item.action
+    ? <ActionButton action={item.action} />
+    : item.onToggleHidden ? <EyeButton hidden={item.hidden} onToggle={item.onToggleHidden} {...ctx.labels} /> : null)
 
 // Capa que se arrastra (un elemento).
 const ItemRow = ({ row, groupId, segmentId, ctx }) => {
@@ -69,7 +91,7 @@ const ItemRow = ({ row, groupId, segmentId, ctx }) => {
             <GripVertical size={13} className={styles.grip} />
             <span className={styles.thumb}>{row.icon}</span>
             <span className={styles.label}>{row.label}</span>
-            {row.onToggleHidden && <EyeButton hidden={row.hidden} onToggle={row.onToggleHidden} {...ctx.labels} />}
+            <RowEnd item={row} ctx={ctx} />
         </li>
     )
 }
@@ -81,7 +103,7 @@ const FixedRow = ({ row, ctx }) => (
         <span className={styles.partDot} />
         <span className={styles.thumb}>{row.icon}</span>
         <span className={styles.label}>{row.label}</span>
-        {row.onToggleHidden && <EyeButton hidden={row.hidden} onToggle={row.onToggleHidden} {...ctx.labels} />}
+        <RowEnd item={row} ctx={ctx} />
     </li>
 )
 
@@ -150,7 +172,7 @@ const GroupHeader = ({ header, open, onCaret, dragProps, dropTarget, ctx, vacio 
         {header.sortable ? <GripVertical size={14} className={styles.grip} /> : <Lock size={13} className={styles.grip} />}
         {header.icon}
         <span className={styles.label}>{header.label}</span>
-        {header.onToggleHidden && <EyeButton hidden={header.hidden} onToggle={header.onToggleHidden} {...ctx.labels} />}
+        <RowEnd item={header} ctx={ctx} />
     </div>
 )
 
@@ -181,13 +203,14 @@ const FixedGroup = ({ group, open, onCaret, ctx }) => {
     )
 }
 
-export const LayersPanel = ({ title, groups, onReorderGroups, onMoveItem, showLabel, hideLabel }) => {
+export const LayersPanel = ({ title, groups, onReorderGroups, onMoveItem, showLabel, hideLabel, variant }) => {
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
     // Abierto: el que el usuario abrió con la flecha, o el que tiene algo elegido.
     const [toggled, setToggled] = useState({})
     const hasSelection = (g) => g.header?.selected || g.segments.some((s) => s.rows.some((r) => r.selected))
     // `header.defaultOpen`: abierto de entrada (la portada de un side event).
-    const isOpen = (g) => (g.id in toggled ? toggled[g.id] : hasSelection(g) || Boolean(g.header?.defaultOpen))
+    // Variante "secciones": abiertos de entrada; la flecha los comprime.
+    const isOpen = (g) => (g.id in toggled ? toggled[g.id] : variant === 'secciones' || hasSelection(g) || Boolean(g.header?.defaultOpen))
     const caret = (g) => setToggled((prev) => ({ ...prev, [g.id]: !isOpen(g) }))
     const sortableIds = groups.filter((g) => g.header?.sortable).map((g) => gid(g.id))
 
@@ -239,7 +262,7 @@ export const LayersPanel = ({ title, groups, onReorderGroups, onMoveItem, showLa
     }
 
     return (
-        <div className={styles.panel} data-edit-keep onMouseDown={(e) => e.stopPropagation()}>
+        <div className={`${styles.panel} ${variant === 'secciones' ? styles.panelSecciones : ''}`} data-edit-keep onMouseDown={(e) => e.stopPropagation()}>
             <span className={styles.title}>{title}</span>
             <ul className={`${styles.list} scroll-invitation`} aria-label={title}>
                 <DndContext
@@ -251,7 +274,15 @@ export const LayersPanel = ({ title, groups, onReorderGroups, onMoveItem, showLa
                     onDragCancel={() => setDropGroup(null)}
                 >
                     <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-                        {groups.map((g) => (!g.header
+                        {groups.map((g) => (g.seccion
+                            // Etiqueta de sección (PORTADA, PÁGINA…), con su ayuda a la derecha.
+                            ? (
+                                <li key={g.id} className={styles.seccion}>
+                                    <span>{g.seccion.label}</span>
+                                    {g.seccion.hint && <span className={styles.seccionHint}>{g.seccion.hint}</span>}
+                                </li>
+                            )
+                            : !g.header
                             // Sin encabezado (Flash): sus capas directo.
                             ? <li key={g.id} className={styles.group}><Children group={g} ctx={ctx} /></li>
                             : g.header.sortable

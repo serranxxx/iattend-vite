@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
-import { CloudUpload, Images, ListOrdered, Palette, Shapes, Users, ClipboardList } from 'lucide-react'
+import { CloudUpload, Images, ListOrdered, Palette, PenLine, Shapes, Users, ClipboardList } from 'lucide-react'
 import SideCanvas from '../SideCanvas'
 import SideEventHost from '../../../components/Host/SideEventHost'
 import { SongBar } from '../../Invitation/Build/PageSections/SongBar'
 import { EditorShell } from '../../Editor/EditorShell'
-import { fechasDelEvento, itinerarioPorDia } from '../../../helpers/assets/eventDateTime'
+import { fechasDelEvento } from '../../../helpers/assets/eventDateTime'
 import { stickerLigeroDesdeUrl } from '../../../helpers/services/uploadImage'
 import { cabeElemento, contarImagenes, duplicarStickers, esImagen, lienzoCover, MAX_ELEMENTOS, MAX_STICKERS, nuevoElemento, quitarStickers } from '../stickersFlashData'
 import { ElementsPanel } from '../../Invitation/Build/PageSections/LayerPanels'
-import { DesignPanel, ItineraryPanel } from './SidePanels'
+import { DesignPanel, DrawPanel, ItineraryPanel } from './SidePanels'
 import { PhotosPanel } from '../../Invitation/Build/PageSections/PhotosPanel'
 import { UploadsPanel } from '../../Invitation/Build/PageSections/UploadsPanel'
-import { BackgroundBar, DateBar, DEFAULT_SOMBRA_TITULO, ItineraryBar, PlaceBar, WeatherBar } from './SideBars'
+import { BackgroundBar, DateBar, DEFAULT_SOMBRA_TITULO, DibujoBar, PlaceBar, WeatherBar } from './SideBars'
 import { TextBar } from '../../Invitation/Build/PageSections/TextBar'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import barStyles from '../../Invitation/Build/PageSections/ElementBar.module.css'
@@ -25,7 +25,7 @@ import { SideLayers } from './SideLayers'
 import own from './SideWorkspace.module.css'
 import { NOTAS_DEFAULT } from '../tarjetasSide'
 import { InteractionPanel } from './InteractionMenu'
-import { RegistroPanel } from './RegistroPanel'
+import { FormularioPanel } from '../Formularios/FormularioPanel'
 
 // Área de trabajo del editor de side events / Eventos Flash en escritorio,
 // con la misma experiencia que el editor de la invitación (ver
@@ -41,13 +41,18 @@ const TOOLS = [
     { id: 'design', icon: Palette },
     { id: 'elements', icon: Shapes, flash: true },
     { id: 'photos', icon: Images },
-    { id: 'itinerary', icon: ListOrdered, flash: true },
+    // Dibujar a mano sobre la pieza (handoff "Herramienta Dibujar"): abrirla
+    // activa el modo dibujo; cada trazo queda como un elemento "Dibujo".
+    { id: 'draw', icon: PenLine, flash: true },
     { id: 'uploads', icon: CloudUpload },
+    // Itinerario (ItineraryPanel): sin ícono en el riel; se abre al elegir
+    // Itinerario en Capas o en la pieza (como Asistentes y Formulario).
+    { id: 'itinerary', icon: ListOrdered, flash: true, hidden: true },
     // Lista de asistentes y chat de invitados (InteractionMenu): sin ícono en
     // el riel; se abre solo al elegir Asistentes en Capas o en la pieza.
     { id: 'interaction', icon: Users, flash: true, hidden: true },
-    // Registro de asistentes (RegistroPanel): también sin ícono; se abre al
-    // elegir Registro en Capas o en la pieza.
+    // Formulario (Formularios/FormularioPanel): también sin ícono; se abre al
+    // elegir Formulario en Capas o en la pieza.
     { id: 'registration', icon: ClipboardList, flash: true, hidden: true },
 ]
 
@@ -89,6 +94,7 @@ export const SideWorkspace = ({
     const body = current?.body ?? {}
     const setBody = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
     const setTitle = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body?.title, ...patch } } }), opts)
+    const updateForm = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)
     const setAddress = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body?.address, ...patch } } }), opts)
     const stickers = useMemo(() => (Array.isArray(body.stickers) ? body.stickers : []), [body.stickers])
     const setStickers = (lista, opts) => setBody({ stickers: lista.length ? lista : null }, opts)
@@ -144,10 +150,42 @@ export const SideWorkspace = ({
         // Asistentes no tiene barra: abre directo "Interacción" en el panel lateral.
         if (s === 'attendees' && esFlash) openTool('interaction')
         if (s === 'registration' && esFlash) openTool('registration')
+        if (s === 'itinerary' && esFlash) openTool('itinerary')
         if (s !== 'stickers') setStickerSel([])
         setSection(s)
     }
     const deselect = () => { setSection(null); setStickerSel([]) }
+
+    /* ── Dibujar ── */
+    // El pincel se recuerda en la sesión del editor (no en el body). Con la
+    // herramienta abierta, la pieza está en modo dibujo. `trazos`: lo que se
+    // dibujó (o borró) en esta sesión, para deshacer y "Borrar todo".
+    const [pincel, setPincel] = useState({ brush: 'pluma', color: '#FFFFFF', size: 8, opacity: 100 })
+    const [trazos, setTrazos] = useState([])
+    const modoDibujo = esFlash && !live && toolOpen && activeTool === 'draw'
+    useEffect(() => { if (modoDibujo) { setSection(null); setStickerSel([]) } }, [modoDibujo])
+    const deshacerTrazo = () => { if (!trazos.length) return; onUndo?.(); setTrazos((x) => x.slice(0, -1)) }
+    const borrarTodo = () => {
+        const ids = trazos.filter((x) => x.id).map((x) => x.id)
+        if (ids.length) setStickers(stickers.filter((x) => !ids.includes(x.id)))
+        setTrazos([])
+    }
+    // Atajos del modo dibujo: P pluma, E borrador, Esc = Listo. ⌘/Ctrl Z ya
+    // deshace en todo el editor: aquí solo se descuenta el trazo.
+    useEffect(() => {
+        if (!modoDibujo) return
+        const onKey = (e) => {
+            const el = e.target
+            if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) setTrazos((x) => x.slice(0, -1))
+            else if (e.metaKey || e.ctrlKey || e.altKey) return
+            else if (e.key.toLowerCase() === 'p') setPincel((x) => ({ ...x, brush: 'pluma' }))
+            else if (e.key.toLowerCase() === 'e') setPincel((x) => ({ ...x, brush: 'borrador' }))
+            else if (e.key === 'Escape') setToolOpen(false)
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [modoDibujo])
 
     // Supr / Backspace quita los PNG elegidos; Escape suelta lo elegido.
     useEffect(() => {
@@ -209,7 +247,6 @@ export const SideWorkspace = ({
     }, [toolOpen, activeTool])
 
     /* ── Barra contextual ── */
-    const momentos = itinerarioPorDia(body).reduce((n, d) => n + (d.momentos?.length ?? d.items?.length ?? 0), 0)
     const dias = [...new Set(fechasDelEvento(body).map((f) => String(f).slice(0, 10)))]
     // Atajos del selector de color de los elementos.
     const palette = [...new Set([body.color, '#FFFFFF', '#000000'].filter(Boolean).map((c) => c.toUpperCase()))]
@@ -293,7 +330,9 @@ export const SideWorkspace = ({
     ))
 
     // Color del elemento (relleno / color, o borde de una forma) o del título.
-    const colorTarget = section === 'title' && colorField === 'text'
+    const colorTarget = modoDibujo && colorField === 'draw'
+        ? { value: pincel.color, allowNone: false, onPick: (c) => setPincel((x) => ({ ...x, color: c })) }
+        : section === 'title' && colorField === 'text'
         ? { value: title.color || '#FFFFFF', allowNone: false, onPick: (c, o) => setTitle({ color: c }, o) }
         : section === 'extras' && colorField === 'text'
         ? { value: notas.color || '#FFFFFF', allowNone: false, onPick: (c, o) => setNotas({ color: c }, o) }
@@ -309,6 +348,7 @@ export const SideWorkspace = ({
     })() : null
 
     const bar = live ? null
+        : modoDibujo ? <DibujoBar pincel={pincel} trazos={trazos.length} onDeshacer={deshacerTrazo} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} />
         : section === 'stickers' && actual
             ? <ElementBar item={actual} accent="#FFFFFF" onPatch={(patch, o) => cambiarGrupo(() => patch, o)} onPickColor={pickColor} colorOpen={colorPop ? colorField : null} group={elementGroup} pieceWidth={CARD.w} />
         : section === 'title' ? <TextBar target="flash_title" ts={titleTs} onPickColor={() => pickColor('text')} colorOpen={Boolean(colorPop) && colorField === 'text'} extra={titleShadow} />
@@ -320,7 +360,6 @@ export const SideWorkspace = ({
         : section === 'weather' ? <WeatherBar body={body} setBody={setBody} />
         : section === 'background' ? <BackgroundBar current={current} setBody={setBody} onChange={onChange} esFlash={esFlash} carpeta={carpeta} pickMedia={pickMedia} />
         : section === 'song' ? <SongBar value={body.song ?? null} onChange={(song) => setBody({ song })} folder={carpeta} />
-        : section === 'itinerary' ? <ItineraryBar count={momentos} onEdit={() => openTool('itinerary')} />
         : null
 
     const panelProps = { current, setBody, esFlash, carpeta }
@@ -340,8 +379,9 @@ export const SideWorkspace = ({
             // fondo y los PNG de un Flash viven en su carpeta (flash-<id>).
             : id === 'photos' ? <PhotosPanel selectedSection="cover" onUse={(url) => setBody({ image: url })} isInUse={(url) => body.image === url} banner={t('side_events.ws_photos_banner')} />
             : id === 'itinerary' ? <ItineraryPanel {...panelProps} dias={dias} />
+            : id === 'draw' ? <DrawPanel current={current} pincel={pincel} setPincel={setPincel} onOtroColor={() => pickColor('draw')} />
             : id === 'interaction' ? <InteractionPanel body={body} setBody={setBody} eventoId={current?.id} />
-            : id === 'registration' ? <RegistroPanel body={body} setBody={setBody} eventoId={current?.id} />
+            : id === 'registration' ? <FormularioPanel body={body} updateForm={updateForm} eventoId={current?.id} />
             : id === 'uploads' ? (
                 <UploadsPanel
                     invitationID={carpeta}
@@ -381,6 +421,9 @@ export const SideWorkspace = ({
                         conAsistentes={esFlash}
                         asistentes={asistentesReales}
                         barMode
+                        pincel={modoDibujo ? pincel : null}
+                        onTrazo={(tipo, id) => setTrazos((x) => [...x, { tipo, id }])}
+                        sinTrazos={trazos.length === 0}
                     />
                     <span className={own.caption}>{t('side_events.canvas_caption')}</span>
                 </div>

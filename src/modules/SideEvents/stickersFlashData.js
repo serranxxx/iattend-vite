@@ -16,6 +16,9 @@ export const contarImagenes = (lista) => (lista ?? []).filter(esImagen).length
 export const cabeElemento = (lista, imagen = true) =>
     (lista ?? []).length < MAX_ELEMENTOS && (!imagen || contarImagenes(lista) < MAX_STICKERS)
 
+// Id de un elemento nuevo (prefijo: 's' elementos, 'd' dibujos).
+export const nuevoIdElemento = (prefijo = 's') => `${prefijo}${Date.now()}${Math.random().toString(36).slice(2, 5)}`
+
 // Elemento nuevo desde el panel (layerItems.js de la invitación arma `item`).
 export const nuevoElemento = (item) => ({
     x: 50,

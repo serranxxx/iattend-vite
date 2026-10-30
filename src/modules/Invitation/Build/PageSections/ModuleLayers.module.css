@@ -296,3 +296,113 @@
         transition-duration: 120ms;
     }
 }
+
+/* "+ Agregar" en lugar del ojo (LayersPanel, row.action): lo que todavía no
+   tiene contenido. */
+.action {
+    flex: none;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 99px;
+    border: 1px solid #E2DFDA;
+    background: #FFF;
+    color: #29262D;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.action:hover {
+    background: #F5F3F2;
+    border-color: #CFCBC4;
+}
+
+.row[data-hidden] .action {
+    opacity: 1;
+}
+
+/* ── Variante "secciones" (Capas de un Flash): etiquetas de sección, filas
+   más amplias, ojo siempre visible y grupos abiertos de entrada (la flecha
+   los comprime). ── */
+.panelSecciones {
+    width: 280px;
+    padding: 14px 10px 10px;
+}
+
+.seccion {
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 8px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8C8794;
+}
+
+.seccion:not(:first-child) {
+    margin-top: 6px;
+    border-top: 1px solid #EBEBEB;
+    padding-top: 12px;
+}
+
+.seccionHint {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #A6A1AC;
+    white-space: nowrap;
+}
+
+.panelSecciones .child {
+    height: 36px;
+    font-size: 13.5px;
+    gap: 9px;
+}
+
+.panelSecciones .groupHead {
+    height: 36px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #5F5B63;
+}
+
+.panelSecciones .thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+}
+
+.panelSecciones .thumb svg {
+    width: 14px;
+    height: 14px;
+}
+
+.panelSecciones .eye {
+    opacity: 1;
+    color: #B5B1AA;
+}
+
+.panelSecciones .eye:hover {
+    color: #29262D;
+}
+
+.panelSecciones .groupFixed::after {
+    display: none;
+}
+
+.panelSecciones .children {
+    padding-left: 14px;
+}
+
+/* Sin encabezado (portada, formulario): sin sangría. */
+.panelSecciones .group > .children:first-child {
+    padding-left: 0;
+}

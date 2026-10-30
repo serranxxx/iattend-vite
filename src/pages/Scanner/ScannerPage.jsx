@@ -7,7 +7,7 @@ import { ScannerSetup } from './ScannerSetup'
 import { ScannerList } from './ScannerList'
 import { CheckInSheet } from './CheckInSheet'
 import { ScanOverlay } from './ScanOverlay'
-import { beep, buildParties, findParty, firstName, formatEventDate, hhmm, isArrived, norm, tableTitle, unlockAudio } from './scannerUtils'
+import { beep, buildParties, claveFlash, findParty, firstName, formatEventDate, hhmm, isArrived, leerQr, norm, normGuest, tableTitle, unlockAudio } from './scannerUtils'
 import styles from './Scanner.module.css'
 
 const BANNED_EMAILS = ['pa.perez98@gmail.com', 'pau@iattend.mx']
@@ -30,6 +30,13 @@ const useIsTablet = () => {
 export const ScannerPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const invitationId = searchParams.get('id')
+  // Eventos Flash (side event sin invitación): ?flash=<side_events.id>. Sus invitados viven en
+  // side_events_guests y no tienen mesas; el QR de su pase trae "side:<id>" (ver leerQr).
+  const flashId = invitationId ? null : searchParams.get('flash')
+  const eventId = invitationId ?? flashId
+  const esFlash = !!flashId
+  const guestTable = esFlash ? 'side_events_guests' : 'guests'
+  const parentCol = esFlash ? 'side_events_id' : 'invitation_id'
   const isTablet = useIsTablet()
 
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark')
@@ -69,11 +76,11 @@ export const ScannerPage = () => {
   const guestsRef = useRef(guests)
   const tablesRef = useRef(tables)
   const soundRef = useRef(sound)
-  const invitationRef = useRef(invitationId)
+  const eventRef = useRef(null)
   guestsRef.current = guests
   tablesRef.current = tables
   soundRef.current = sound
-  invitationRef.current = invitationId
+  eventRef.current = { id: eventId, flash: esFlash, table: guestTable, parent: parentCol }
 
   const cols = () => hasArrivedAtRef.current ? `${BASE_COLS}, arrived_at` : BASE_COLS
 
@@ -88,18 +95,25 @@ export const ScannerPage = () => {
   // ───────────────────────────────────────────────────────
   const fetchEvents = async () => {
     setEventsLoading(true)
-    const { data, error } = await supabase.from('invitations').select('id, name, user_email')
+    const [inv, flash] = await Promise.all([
+      supabase.from('invitations').select('id, name, user_email'),
+      supabase.from('side_events').select('id, name, user_email').is('invitation_id', null),
+    ])
     setEventsLoading(false)
-    if (error) { console.error('Error al obtener invitaciones:', error); return }
-    setEvents((data ?? []).filter(i => !BANNED_EMAILS.includes(i.user_email)))
+    if (inv.error) { console.error('Error al obtener invitaciones:', inv.error); return }
+    if (flash.error) console.error('Error al obtener eventos Flash:', flash.error)
+    setEvents([
+      ...(inv.data ?? []).map(i => ({ ...i, kind: 'invitation', key: `inv-${i.id}` })),
+      ...(flash.data ?? []).map(f => ({ ...f, kind: 'flash', key: `flash-${f.id}` })),
+    ].filter(e => !BANNED_EMAILS.includes(e.user_email)))
   }
 
   const fetchGuests = async (id) => {
     setLoading(true)
     const run = () => supabase
-      .from('guests')
+      .from(guestTable)
       .select(cols())
-      .eq('invitation_id', id)
+      .eq(parentCol, id)
       .in('state', LIST_STATES)
       .order('name')
     let { data, error } = await run()
@@ -108,17 +122,24 @@ export const ScannerPage = () => {
       ;({ data, error } = await run())
     }
     if (error) console.error('Error al obtener invitados:', error)
-    else setGuests(data ?? [])
+    else setGuests((data ?? []).map(normGuest))
     setLoading(false)
   }
 
   const fetchTables = async (id) => {
+    if (esFlash) { setTables([]); return }
     const { data, error } = await supabase.from('tables').select('id, number, name').eq('invitation_id', id)
     if (error) { console.error('Error al obtener mesas:', error); return }
     setTables([...(data ?? [])].sort((a, b) => (a.number ?? 0) - (b.number ?? 0)))
   }
 
   const fetchEventInfo = async (id) => {
+    if (esFlash) {
+      const { data } = await supabase.from('side_events').select('name, hour:body->>hour').eq('id', id).maybeSingle()
+      if (data?.name) setEventName(data.name)
+      setEventMeta(formatEventDate(data?.hour))
+      return
+    }
     const { data } = await supabase
       .from('invitations')
       .select('name, cover_date:data->cover->date->>value')
@@ -135,7 +156,7 @@ export const ScannerPage = () => {
     if (hasArrivedAtRef.current) patch.arrived_at = arrived ? at : null
     const prev = guestsRef.current
     setGuests(gs => gs.map(g => ids.includes(g.id) ? { ...g, ...patch } : g))
-    const { error } = await supabase.from('guests').update(patch).in('id', ids)
+    const { error } = await supabase.from(guestTable).update(patch).in('id', ids)
     if (error) {
       console.error('Error al registrar llegada:', error)
       setGuests(prev)
@@ -150,24 +171,24 @@ export const ScannerPage = () => {
     await Promise.all(snapshot.map(s => {
       const patch = { state: s.state }
       if (hasArrivedAtRef.current) patch.arrived_at = s.arrived_at ?? null
-      return supabase.from('guests').update(patch).eq('id', s.id)
+      return supabase.from(guestTable).update(patch).eq('id', s.id)
     }))
     setToast(null)
   }
 
   useEffect(() => {
-    if (!invitationId) {
+    if (!eventId) {
       if (!events.length) fetchEvents()
       return
     }
-    fetchGuests(invitationId)
-    fetchTables(invitationId)
-    fetchEventInfo(invitationId)
+    fetchGuests(eventId)
+    fetchTables(eventId)
+    fetchEventInfo(eventId)
 
     // Varios lectores pueden estar registrando a la vez: mantenemos la lista sincronizada
     const channel = supabase
-      .channel(`scanner_guests_${invitationId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'guests', filter: `invitation_id=eq.${invitationId}` }, (payload) => {
+      .channel(esFlash ? `scanner_flash_${eventId}` : `scanner_guests_${eventId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: guestTable, filter: `${parentCol}=eq.${eventId}` }, (payload) => {
         const row = payload.new
         if (payload.eventType === 'DELETE') {
           setGuests(gs => gs.filter(g => g.id !== payload.old?.id))
@@ -178,14 +199,14 @@ export const ScannerPage = () => {
           const inList = LIST_STATES.includes(row.state)
           const exists = gs.some(g => g.id === row.id)
           if (!inList) return exists ? gs.filter(g => g.id !== row.id) : gs
-          const next = { id: row.id, name: row.name, state: row.state, table: row.table, companion_id: row.companion_id, arrived_at: row.arrived_at ?? null }
+          const next = normGuest({ id: row.id, name: row.name, state: row.state, table: row.table, companion_id: row.companion_id, arrived_at: row.arrived_at ?? null })
           return exists ? gs.map(g => g.id === row.id ? { ...g, ...next } : g) : [...gs, next]
         })
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [invitationId])
+  }, [invitationId, flashId])
 
   useEffect(() => () => {
     stopScanner()
@@ -197,7 +218,8 @@ export const ScannerPage = () => {
   // ───────────────────────────────────────────────────────
   const handleLogin = () => {
     if (!selectedEvent) { setPinError('Selecciona tu evento.'); return }
-    const expected = String(selectedEvent.id).slice(0, 4).toLowerCase()
+    const flash = selectedEvent.kind === 'flash'
+    const expected = flash ? claveFlash(selectedEvent.id) : String(selectedEvent.id).slice(0, 4).toLowerCase()
     if (pin.trim().toLowerCase() !== expected) {
       setPinError('Clave incorrecta. Son los 4 caracteres que te compartimos.')
       return
@@ -205,7 +227,7 @@ export const ScannerPage = () => {
     setPinError('')
     setPin('')
     setEventName(selectedEvent.name ?? '')
-    setSearchParams({ id: String(selectedEvent.id) })
+    setSearchParams(flash ? { flash: String(selectedEvent.id) } : { id: String(selectedEvent.id) })
   }
 
   const handleLogout = async () => {
@@ -231,10 +253,10 @@ export const ScannerPage = () => {
   useEffect(() => { localStorage.setItem(SOUND_KEY, sound ? 'on' : 'off') }, [sound])
 
   const handleShare = async () => {
-    const id = String(invitationId)
+    const id = String(eventId)
     const name = eventName || 'Evento'
-    const url = `https://www.iattend.site/scanner?id=${id}`
-    const text = `Lector de pases · ${name}. Clave de acceso: ${id.slice(0, 4)}`
+    const url = `https://www.iattend.site/scanner?${esFlash ? 'flash' : 'id'}=${id}`
+    const text = `Lector de pases · ${name}. Clave de acceso: ${esFlash ? claveFlash(id) : id.slice(0, 4)}`
     try {
       if (navigator.share) {
         await navigator.share({ title: `Lector de pases · ${name}`, text, url })
@@ -302,18 +324,27 @@ export const ScannerPage = () => {
     if (cooldownRef.current) return
     cooldownRef.current = true
 
-    const raw = decodedText.trim()
-    const uuidMatch = raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
-    const guestId = uuidMatch ? uuidMatch[0] : (isNaN(Number(raw)) ? raw : Number(raw))
+    const ev = eventRef.current
+    const qr = leerQr(decodedText)
+    // Un Flash solo acepta su propio QR ("side:<id>") o el código del invitado; un número suelto es el
+    // id de un invitado de boda y podría coincidir con otro de side_events_guests.
+    // Una invitación rechaza los pases de side events por la misma razón.
+    const lookup = ev.flash
+      ? (qr.kind === 'side' ? ['id', qr.id] : typeof qr.id === 'string' && qr.id ? ['password', qr.id] : null)
+      : (qr.kind === 'guest' ? ['id', qr.id] : null)
 
-    const { data: guest, error } = await supabase
-      .from('guests')
-      .select(`${cols()}, invitation_id`)
-      .eq('id', guestId)
-      .maybeSingle()
+    const { data: found, error } = lookup
+      ? await supabase
+        .from(ev.table)
+        .select(`${cols()}, ${ev.parent}`)
+        .eq(lookup[0], lookup[1])
+        .eq(ev.parent, ev.id)
+        .maybeSingle()
+      : { data: null, error: null }
+    const guest = found && normGuest(found)
 
-    if (error || !guest || String(guest.invitation_id) !== String(invitationRef.current)) {
-      setScanResult({ kind: 'bad' })
+    if (error || !guest || String(guest[ev.parent]) !== String(ev.id)) {
+      setScanResult({ kind: 'bad', ...(qr.kind === 'side' && !ev.flash ? { sub: 'Este pase es de otro evento.' } : {}) })
       pushRecent('QR desconocido', 'bad')
       return
     }
@@ -334,7 +365,7 @@ export const ScannerPage = () => {
     const at = new Date().toISOString()
     const patch = { state: 'asistente' }
     if (hasArrivedAtRef.current) patch.arrived_at = at
-    const { error: updateErr } = await supabase.from('guests').update(patch).eq('id', guest.id)
+    const { error: updateErr } = await supabase.from(ev.table).update(patch).eq('id', guest.id)
     if (updateErr) {
       console.error(updateErr)
       setScanResult({ kind: 'bad', sub: 'No se pudo registrar la llegada. Intenta de nuevo.' })
@@ -343,7 +374,7 @@ export const ScannerPage = () => {
     }
 
     const updated = { ...guest, ...patch }
-    delete updated.invitation_id
+    delete updated[ev.parent]
     const nextGuests = guestsRef.current.some(g => g.id === guest.id)
       ? guestsRef.current.map(g => g.id === guest.id ? { ...g, ...patch } : g)
       : [...guestsRef.current, updated]
@@ -403,6 +434,7 @@ export const ScannerPage = () => {
   // Derivados
   // ───────────────────────────────────────────────────────
   const tableById = useMemo(() => new Map(tables.map(t => [t.id, t])), [tables])
+  const personasText = (n) => `${n} ${n === 1 ? 'persona' : 'personas'}`
   const tableText = (id, withName = false) => {
     const t = tableById.get(id)
     if (!t) return 'Sin mesa'
@@ -424,13 +456,16 @@ export const ScannerPage = () => {
     base.forEach(p => { if (p.status === 'done') counts.arrived++; else counts.pending++ })
     const rows = base.filter(p => matches(p, filter)).map(p => {
       const viaCompanion = q && !norm(p.primary.name).includes(q) ? p.members.find(m => norm(m.name).includes(q)) : null
-      const meta = viaCompanion
-        ? `Incluye a ${viaCompanion.name} · ${tableText(p.table)}`
-        : `${tableText(p.table)}${p.total > 1 ? ` · ${p.total} personas` : ''}`
+      // un Flash no tiene mesas: solo cuántas personas entran con el pase
+      const meta = esFlash
+        ? (viaCompanion ? `Incluye a ${viaCompanion.name} · ` : '') + personasText(p.total)
+        : viaCompanion
+          ? `Incluye a ${viaCompanion.name} · ${tableText(p.table)}`
+          : `${tableText(p.table)}${p.total > 1 ? ` · ${p.total} personas` : ''}`
       return { party: p, meta }
     })
     return { rows, counts }
-  }, [parties, query, tableFilter, filter, tableById])
+  }, [parties, query, tableFilter, filter, tableById, esFlash])
 
   const tableStats = useMemo(() => {
     const stats = new Map(tables.map(t => [t.id, { table: t, a: 0, n: 0 }]))
@@ -472,7 +507,7 @@ export const ScannerPage = () => {
   // ───────────────────────────────────────────────────────
   return (
     <div className={styles.root} data-theme={theme}>
-      {!invitationId ? (
+      {!eventId ? (
         <ScannerSetup
           events={events}
           eventsLoading={eventsLoading}
@@ -514,7 +549,7 @@ export const ScannerPage = () => {
         <CheckInSheet
           isTablet={isTablet}
           members={sheetMembers}
-          tableLabel={tableText(sheetMembers[0].table ?? sheetMembers.find(m => m.table != null)?.table, true)}
+          tableLabel={esFlash ? personasText(sheetMembers.length) : tableText(sheetMembers[0].table ?? sheetMembers.find(m => m.table != null)?.table, true)}
           selected={sheet.selected}
           onToggle={(id) => setSheet(s => ({ ...s, selected: { ...s.selected, [id]: !s.selected[id] } }))}
           onSave={saveSheet}

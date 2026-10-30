@@ -13,12 +13,14 @@
   hideWeather): el backend lee showAttendees para dar la lista.
 */
 
-import { formDesdePlantilla } from './plantillasRegistro'
+import { reglasDefault } from './Formularios/modelo'
+import { itinerarioPorDia } from '../../helpers/assets/eventDateTime'
 
-// Registro va primero: después de confirmar es lo que sigue.
+// Formulario sigue en la lista (su ojo lo prende y apaga) pero no se ordena:
+// no va en el scroll de la página.
 export const ORDEN_TARJETAS = ['registration', 'itinerary', 'map', 'notes', 'attendees', 'weather']
 
-// Qué tarjetas existen: Registro, Asistentes e Itinerario son solo de los Flash.
+// Qué tarjetas existen: Formulario, Asistentes e Itinerario son solo de los Flash.
 const SOLO_FLASH = new Set(['registration', 'attendees', 'itinerary'])
 const aplica = (key, esFlash) => esFlash || !SOLO_FLASH.has(key)
 
@@ -35,13 +37,33 @@ export const tarjetasDe = (body, esFlash) => {
     return orden.filter((k) => aplica(k, esFlash)).map((key) => ({ key, hidden: ocultaDe(body, key) }))
 }
 
+// Grupos de la página (handoff "Flash Layout" 3a): cada uno con su etiqueta
+// centrada (INFORMACIÓN · UBICACIÓN · ASISTENTES). El formulario no está: ya
+// no va en el scroll (al invitado le llega como aviso al confirmar). Recibe
+// las llaves que de verdad se pintan, en orden; el grupo sale donde aparece
+// su primera tarjeta.
+export const GRUPO_DE_TARJETA = { itinerary: 'info', notes: 'info', map: 'lugar', weather: 'lugar', attendees: 'gente' }
+
+export const agruparTarjetas = (keys) => {
+    const grupos = []
+    for (const key of keys) {
+        const id = GRUPO_DE_TARJETA[key]
+        if (!id) continue
+        let grupo = grupos.find((g) => g.id === id)
+        if (!grupo) grupos.push((grupo = { id, keys: [] }))
+        grupo.keys.push(key)
+    }
+    return grupos
+}
+
 // Lista completa para guardar (todas las llaves, aunque no apliquen).
 const lista = (body, orden) => orden.map((key) => ({ key, hidden: ocultaDe(body, key) }))
 
 export const parcheOcultarTarjeta = (body, key, hidden) => {
-    // Registro: prenderlo sin formulario arma uno con la plantilla básica.
+    // Formulario: prenderlo sin uno elegido deja las reglas listas; se elige
+    // o se crea en el panel Formulario (Formularios/FormularioPanel.jsx).
     if (key === 'registration') {
-        return { form: body?.form?.sections?.length ? { ...body.form, enabled: !hidden } : (hidden ? body?.form ?? null : formDesdePlantilla('basico')) }
+        return { form: hidden ? (body?.form ? { ...body.form, enabled: false } : null) : { ...reglasDefault(), ...(body?.form ?? {}), enabled: true } }
     }
     if (key === 'attendees') return { showAttendees: hidden ? undefined : true }
     if (key === 'weather') return { hideWeather: hidden || undefined }
@@ -49,16 +71,30 @@ export const parcheOcultarTarjeta = (body, key, hidden) => {
     return { cards: lista(body, orden).map((c) => (c.key === key ? { ...c, hidden: hidden || undefined } : c)) }
 }
 
-// Mueve `activa` al lugar de `destino` (arrastrar en Capas).
-export const parcheMoverTarjeta = (body, activa, destino) => {
-    const orden = tarjetasDe(body, true).map((c) => c.key)
-    const de = orden.indexOf(activa)
-    const a = orden.indexOf(destino)
-    if (de < 0 || a < 0 || de === a) return null
-    const nuevo = [...orden]
-    nuevo.splice(a, 0, nuevo.splice(de, 1)[0])
-    return { cards: lista(body, nuevo) }
+// Guarda un orden nuevo (Capas por grupos): las llaves en el orden dado y las
+// que falten, al final.
+export const parcheOrdenTarjetas = (body, orden) => {
+    const completo = [...new Set([...orden, ...tarjetasDe(body, true).map((c) => c.key)])]
+    return { cards: lista(body, completo) }
 }
+
+// ¿La tarjeta tiene algo que enseñar? Sin datos no sale en la página aunque
+// su ojo esté prendido: en Capas se ve inactiva y en la pieza, opaca con
+// "Agregar …". Mismas condiciones que la página del invitado (SideEvent.tsx).
+const DIRECCION = ['street', 'number', 'neighborhood', 'zipcode', 'city', 'state', 'country']
+export const direccionCompleta = (address) => DIRECCION.every((k) => !!address?.[k])
+export const tieneDatos = (body, key) => {
+    if (key === 'itinerary') return itinerarioPorDia(body).length > 0
+    if (key === 'map') return direccionCompleta(body?.address)
+    if (key === 'weather') return Boolean(body?.address?.city)
+    if (key === 'notes') return Boolean(String(body?.extras ?? '').trim())
+    return true
+}
+
+// Activas primero: las que se ven en la página (activa(key) = true) conservan
+// su orden y van arriba; las inactivas (ocultas o sin datos), al final. Lo
+// usan la pieza del editor y Capas.
+export const activasPrimero = (keys, activa) => [...keys.filter(activa), ...keys.filter((k) => !activa(k))]
 
 export const portadaOculta = (body, key) => Boolean(body?.coverHidden?.[key])
 

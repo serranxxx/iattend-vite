@@ -6,6 +6,7 @@ import {
 import { Separador } from '../../components/Invitation/Logos'
 import { iconsItinerary } from '../../helpers/services/menuIcons'
 import { estiloVector, trazoDeIcono, useVector } from './vector'
+import { Dibujo } from './Dibujo'
 import styles from './Elemento.module.css'
 
 /*
@@ -89,6 +90,9 @@ export const FlashElemento = ({ s, titleFont, bodyFont = 'Poppins', color: force
         sel?.removeAllRanges()
         sel?.addRange(r)
     }, [editable])
+
+    // Dibujo a mano (herramienta Dibujar): su trazo en SVG.
+    if (s.kind === 'dibujo') return <Dibujo s={s} forced={forced} />
 
     if (s.kind === 'icon') {
         if (s.src && s.vector) return <Vector s={s} color={color} />

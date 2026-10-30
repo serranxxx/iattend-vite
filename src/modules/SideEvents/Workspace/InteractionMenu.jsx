@@ -213,7 +213,7 @@ export const InteractionPanel = ({ body, setBody, eventoId }) => {
                                         const iniciales = String(m.autor ?? '').trim().split(/\s+/).map((p) => p.match(/\p{L}/u)?.[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
                                         return (
                                             <div key={m.id} className={styles.msg} data-saliendo={saliendo === m.id || undefined}>
-                                                <span className={styles.msgAv} style={{ background: fondoAsistente(a, modo) }}>
+                                                <span className={styles.msgAv} style={{ background: fondoAsistente(a, modo, body?.color) }}>
                                                     {modo === 'initials' ? iniciales : emojiAsistente(a)}
                                                 </span>
                                                 <span className={styles.msgText}><b>{String(m.autor ?? '').split(' ')[0]}</b> {m.text}</span>

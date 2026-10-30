@@ -437,9 +437,9 @@
 .buttonsCont {
     width: 100%;
     max-width: 450px;
-    /* Mismo alto que la píldora del remoto (botones de 64 + borde): si no, la
-       fecha y el título quedaban 6 px más abajo que en la página real. */
-    height: 66px;
+    /* Mismo alto que la cápsula del remoto (80 px, handoff "Flash Layout"
+       3a): si no, la fecha y el título quedaban más abajo que en la página. */
+    height: 80px;
     box-sizing: border-box;
     border-radius: 999px;
     background-color: var(--blur-color--dark);
@@ -461,19 +461,24 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 4px;
     height: 100%;
     color: #FFFFFF;
-    font-size: 14px;
-    border-right: 1px solid #FFFFFF40;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.mockBtn:last-child {
-    border-right: none;
+/* Divisor entre las dos mitades, con aire arriba y abajo. */
+.mockDivisor {
+    align-self: stretch;
+    width: 1px;
+    margin: 14px 0;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .mockBtn svg {
-    opacity: 0.5;
+    opacity: 0.8;
 }
 
 /* ── Tarjetas translúcidas (.mapa_container del remoto) ── */
@@ -542,6 +547,216 @@
     text-align: center;
     padding: 0 18px;
     box-sizing: border-box;
+}
+
+/* Etiqueta de grupo (INFORMACIÓN · UBICACIÓN · ASISTENTES), como la página
+   del invitado (layout.module.css → .etiqueta). */
+/* Una sección (etiqueta + sus tarjetas): se arrastra por su etiqueta para
+   cambiar su orden (solo las activas). */
+.grupo {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 0.15s ease;
+}
+
+.grupo[data-arrastrando] {
+    opacity: 0.45;
+}
+
+/* Dónde va a caer la sección que se arrastra. */
+.grupo[data-linea]::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    height: 3px;
+    border-radius: 99px;
+    background: #A88AFF;
+    box-shadow: 0 0 0 3px rgba(168, 138, 255, 0.25);
+    z-index: 3;
+}
+
+.grupo[data-linea='antes']::after {
+    top: 4px;
+}
+
+.grupo[data-linea='despues']::after {
+    bottom: -8px;
+}
+
+.grupoArrastrable {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.grupoArrastrable:active {
+    cursor: grabbing;
+}
+
+.grupoAsa {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.grupoArrastrable:hover .grupoAsa,
+.grupo[data-arrastrando] .grupoAsa {
+    opacity: 0.9;
+}
+
+.grupoEtiqueta {
+    width: 100%;
+    max-width: 450px;
+    padding-top: 18px;
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-align: center;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+/* Lugar: mapa + clima en una sola tarjeta (TarjetaLugar del remoto). */
+.lugarBlock {
+    align-items: stretch;
+    gap: 14px;
+    padding: 20px;
+}
+
+.lugarBlock > * {
+    position: relative;
+    z-index: 2;
+}
+
+.lugarCabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.lugarTextos {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    text-align: left;
+}
+
+.lugarNombre {
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lugarDireccion {
+    font-size: 13px;
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lugarAbrir {
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.lugarBlock .mapPreview {
+    height: 150px;
+    border-radius: 22px;
+    border: none;
+}
+
+.lugarClima {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 8px;
+    margin: -6px -8px;
+    border-radius: 14px;
+    outline-offset: -2px;
+}
+
+.notasBlock {
+    padding: 20px;
+}
+
+/* Tarjeta apagada (oculta en Capas, o sin datos): como los módulos
+   deshabilitados de la invitación (iattend-events invitation.module.css →
+   .zoneDimmed / .zoneActivate). La muestra se ve opaca y al centro un botón
+   de vidrio: "Activar …" la prende, "Agregar …" abre su edición. Solo en el
+   editor, nunca en la página. */
+.apagada {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    justify-content: center;
+    border-radius: 28px;
+    flex-shrink: 0;
+    cursor: pointer;
+    outline-offset: 3px;
+}
+
+.apagadaMuestra {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.35;
+    filter: grayscale(0.6);
+    pointer-events: none;
+}
+
+.activar {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    height: 32px;
+    padding: 0 14px 0 12px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: #29262D;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(12, 23, 27, 0.12);
+    transition: background 0.15s ease;
+}
+
+.activar:hover {
+    background: rgba(255, 255, 255, 0.92);
 }
 
 /* Clima: maqueta, no se llama a la API desde el editor */
@@ -829,4 +1044,133 @@
 .huecoEditando {
     opacity: 1;
     pointer-events: auto;
+}
+
+/* ── Estilo de bloques (panel Diseño, estilosBloque.js) ──
+   Con un estilo que no es vidrio, la pieza lleva data-estilo y las variables
+   --bloque-*: mismas pieles que la página del invitado (iattend-events,
+   helpers/estilosBloque.ts). */
+.card[data-estilo] .block,
+.card[data-estilo] .buttonsCont {
+    background: var(--bloque-fondo);
+    -webkit-backdrop-filter: var(--bloque-blur);
+    backdrop-filter: var(--bloque-blur);
+    border: var(--bloque-borde);
+    box-shadow: var(--bloque-sombra);
+    color: var(--bloque-tinta);
+}
+
+.card[data-estilo] .block {
+    border-radius: var(--bloque-radio);
+}
+
+.card[data-estilo] .block::before,
+.card[data-estilo] .buttonsCont::before {
+    background: var(--bloque-reflejo);
+}
+
+.card[data-estilo] .mockBtn {
+    color: var(--bloque-tinta);
+}
+
+.card[data-estilo] .mockDivisor {
+    background: var(--bloque-linea);
+}
+
+.card[data-estilo] .lugarAbrir {
+    background: var(--bloque-relieve);
+    border-color: var(--bloque-linea);
+}
+
+.card[data-estilo] .lugarBlock .mapPreview {
+    background-color: var(--bloque-suave);
+    color: var(--bloque-tinta);
+}
+
+.card[data-estilo] .grupoEtiqueta {
+    text-shadow: var(--etiqueta-sombra);
+}
+
+/* Marca del formulario (Flash): en la página llega como aviso fijo arriba
+   al confirmar (NotificacionFormulario en iattend-events). En la pieza es una
+   píldora chica en la esquina de arriba a la derecha, del alto del disco de
+   la canción, para no estorbar al editar la portada. Sin formulario dice
+   "+ Formulario" con borde punteado, como un espacio por llenar. */
+.formAviso {
+    position: absolute;
+    /* Mismo alto y renglón que el disco de la canción (.topRow + .chip). */
+    top: 14px;
+    right: 14px;
+    z-index: 30;
+    max-width: calc(100% - 64px);
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(12, 23, 27, 0.42);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    outline-offset: 3px;
+}
+
+.formAvisoTexto {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.formAviso svg {
+    flex-shrink: 0;
+}
+
+.formAvisoVacio {
+    border: 1.5px dashed rgba(255, 255, 255, 0.7);
+    background: rgba(12, 23, 27, 0.28);
+}
+
+/* ── Modo dibujo (herramienta Dibujar) ── */
+.capaDibujo {
+    pointer-events: auto;
+    z-index: 40;
+}
+
+.lienzoDibujo {
+    pointer-events: auto;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.trazoVivo {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* "Dibuja sobre la pieza": antes del primer trazo, abajo y centrado. */
+.dibujoAviso {
+    position: absolute;
+    left: 50%;
+    bottom: 96px;
+    transform: translateX(-50%);
+    padding: 7px 14px;
+    border-radius: 99px;
+    background: rgba(20, 16, 44, 0.35);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
 }

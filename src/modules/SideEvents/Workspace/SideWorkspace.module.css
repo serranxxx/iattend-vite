@@ -356,3 +356,132 @@
     font-size: 12px;
     color: #9A6B00;
 }
+
+/* Miniatura de un estilo de bloques (panel Diseño): la foto del Flash con
+   una tarjetita del estilo encima. */
+.estiloMini {
+    position: relative;
+    width: 100%;
+    height: 44px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.estiloMini > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.estiloMini > span {
+    position: relative;
+    width: 62%;
+    height: 52%;
+    box-sizing: border-box;
+}
+
+/* ── Herramienta Dibujar (DrawPanel / DibujoBar) ── */
+.dibujoPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.pincelMuestra {
+    display: block;
+    overflow: visible;
+}
+
+.dibujoColores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dibujoColor {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(41, 38, 45, 0.14);
+    cursor: pointer;
+    transition: box-shadow 0.15s ease;
+}
+
+.dibujoColor[data-on] {
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #29262D;
+}
+
+.dibujoOtro {
+    background: conic-gradient(#FF5A5F, #FFC93C, #3DDC97, #4CC9F0, #6E5BD0, #FF5A5F);
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.dibujoGrosor {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.dibujoGrosorSlider {
+    flex: 1;
+    min-width: 0;
+}
+
+.dibujoPunto {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #F4F3F5;
+    display: grid;
+    place-items: center;
+}
+
+.dibujoNota {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #F7F6F8;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #5F5B63;
+}
+
+.dibujoAtajos {
+    color: #8C8794;
+}
+
+.dibujoBarPunto {
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.18);
+}
+
+.dibujoListo {
+    height: 34px;
+    margin-left: 4px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 99px;
+    background: #29262D;
+    color: #FFFFFF;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}

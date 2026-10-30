@@ -1,20 +1,23 @@
-/* Widget de itinerario de un Evento Flash (handoff
-   design_handoff_itinerario_widget): panel glass, pestañas por día y línea de
-   tiempo. Contraparte en iattend-events: components/SideEvent/itinerario-widget.module.css. */
+/* Itinerario de un Evento Flash en la pieza del editor (ItinerarioWidget.jsx,
+   handoff "Itinerario del Evento Flash" opción 6c): barra del día + lista.
+   Los blancos son variables del estilo de bloques (estilosBloque.js) con el
+   valor de vidrio de respaldo. Contraparte en iattend-events:
+   components/SideEvent/itinerario-widget.module.css. */
 
 .panel {
-  /* Texto sobre blanco (pestaña elegida, etiquetas, ícono en curso): el color
-     de tema oscurecido para que se lea. */
+  /* Texto sobre blanco (día elegido, orbe y chip de "ahora"): el color de
+     tema oscurecido para que se lea. */
   --itinerario-acento: color-mix(in srgb, var(--blur-color, #1c344e) 45%, #000);
   width: 100%;
   max-width: 450px;
   box-sizing: border-box;
-  padding: 20px 18px 14px;
-  /* 24 px, igual que las demás tarjetas (y el remoto). */
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   border-radius: 24px;
-  /* El color de tema del evento, como Cómo llegar y el clima (--blur-color--dark
-     lo pone la pieza). El azul del handoff queda de respaldo. */
-  /* Vidrio líquido teñido, igual que el remoto (itinerario-widget.module.css). */
+  /* Vidrio de la pieza (como las demás tarjetas del lienzo, --blur-color--dark
+     lo pone la pieza). Con otro estilo de bloques, abajo ([data-estilo]). */
   position: relative;
   background: color-mix(in srgb, var(--blur-color--dark, rgba(28, 52, 78, 0.32)) 78%, transparent);
   backdrop-filter: blur(22px) saturate(180%) brightness(1.1);
@@ -45,195 +48,247 @@
   pointer-events: none;
 }
 
-.cabecera {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 4px;
+.panel > * {
+  position: relative;
 }
 
 .titulo {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
-.resumen {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
-  text-align: right;
-}
-
-/* Selector de día */
-.pestanas {
-  position: relative;
-  display: grid;
-  gap: 6px;
-  margin-top: 16px;
-  padding: 4px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.pill {
-  position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(20, 40, 70, 0.18);
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.pestana {
-  position: relative;
-  border: 0;
-  cursor: pointer;
-  font-family: inherit;
-  border-radius: 12px;
-  padding: 8px 4px;
+/* ── Varios días: segmentado ── */
+.dias {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: transparent;
-  color: #fff;
-  transition: color 300ms ease;
-}
-
-.pestanaActiva {
-  color: var(--itinerario-acento);
-}
-
-.pestanaDow {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.85;
-}
-
-.pestanaNum {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.pestanaConteo {
-  font-size: 10px;
-  font-weight: 500;
-  opacity: 0.8;
-}
-
-/* Línea de tiempo */
-.lista {
-  overflow: hidden;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 99px;
+  background: var(--bloque-suave, rgba(255, 255, 255, 0.14));
+  border: 1px solid var(--bloque-linea, rgba(255, 255, 255, 0.25));
 }
 
 .dia {
-  margin-top: 16px;
+  flex: 1;
+  height: 36px;
+  border: 0;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--bloque-tinta, #fff);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 250ms ease, color 250ms ease;
+}
+
+.diaActivo {
+  background: var(--boton-fondo, #fff);
+  color: var(--boton-tinta, var(--itinerario-acento));
+}
+
+/* ── Barra del día ── */
+.barra {
+  padding: 6px 8px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pista {
+  position: relative;
+  height: 14px;
+}
+
+.riel,
+.avance {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  height: 4px;
+  border-radius: 99px;
+}
+
+.riel {
+  right: 0;
+  background: var(--bloque-linea, rgba(255, 255, 255, 0.22));
+}
+
+.avance {
+  background: var(--bloque-tinta, #fff);
+  transition: width 600ms ease;
+}
+
+.punto {
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  box-sizing: border-box;
+  border-radius: 99px;
+  border: 2px solid var(--bloque-tinta, #fff);
+  /* Hueco: del tinte de la tarjeta (opaco), para que el riel no se vea a
+     través. */
+  background: var(--bloque-base, color-mix(in srgb, var(--blur-color, #6E7FD8) 70%, #fff));
+}
+
+.puntoLleno {
+  background: var(--bloque-tinta, #fff);
+}
+
+.etiquetas {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.etiquetas b {
+  font-weight: 600;
+}
+
+.etiquetas span {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* ── Lista ── */
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
 }
 
 .fila {
   display: grid;
-  grid-template-columns: 46px 36px minmax(0, 1fr);
-  column-gap: 10px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  column-gap: 12px;
   align-items: stretch;
-  padding: 0 4px;
-  border-radius: 14px;
-}
-
-.filaEnCurso {
-  background: rgba(255, 255, 255, 0.16);
+  transition: opacity 300ms ease;
 }
 
 .filaPasada {
   opacity: 0.55;
 }
 
-.hora {
-  padding-top: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
 .nodo {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
 }
 
-.linea {
-  width: 2px;
-  flex: 1;
-  min-height: 8px;
-  background: rgba(255, 255, 255, 0.28);
-}
-
-.circulo {
-  width: 36px;
-  height: 36px;
+.orbe {
+  width: 44px;
+  height: 44px;
+  margin-top: 8px;
   flex: none;
-  border-radius: 50%;
+  box-sizing: border-box;
+  border-radius: 99px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  background: var(--bloque-relieve, linear-gradient(145deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)));
+  border: 1px solid var(--bloque-linea, rgba(255, 255, 255, 0.55));
+  box-shadow: var(--bloque-brillo, inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 6px 14px rgba(20, 40, 110, 0.22));
+  color: var(--bloque-tinta, #fff);
 }
 
-.filaEnCurso .circulo {
-  background: #fff;
-  color: var(--itinerario-acento);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25);
+.orbe svg {
+  stroke-width: 1.8;
 }
 
-.contenido {
-  min-width: 0;
-  padding: 9px 0 12px;
+/* Línea en tramos: no pasa detrás del orbe. */
+.tramo {
+  position: absolute;
+  left: 50%;
+  margin-left: -1px;
+  border-left: 2px solid var(--bloque-linea, rgba(255, 255, 255, 0.4));
 }
 
-.tituloFila {
+.tramoEntrada {
+  top: 0;
+  height: 8px;
+}
+
+.tramoSalida {
+  top: 52px;
+  bottom: 0;
+}
+
+/* Con 2 momentos, punteada. */
+.tramoPunteado {
+  border-left-style: dashed;
+}
+
+.texto {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 0;
+  min-width: 0;
 }
 
 .nombre {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+
+.detalle {
+  font-size: 12px;
+  opacity: 0.88;
   line-height: 1.35;
   text-wrap: pretty;
 }
 
-.badge {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #fff;
-  color: var(--itinerario-acento);
+.hora {
+  align-self: center;
+  padding: 6px 11px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--bloque-suave, rgba(255, 255, 255, 0.18));
+  border: 1px solid var(--bloque-linea, rgba(255, 255, 255, 0.35));
 }
 
-.lugar {
-  margin-top: 1px;
-  font-size: 12.5px;
-  font-weight: 400;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.85);
-  text-wrap: pretty;
+/* "Ahora": orbe y chip en blanco con el color del tema. */
+.filaAhora .orbe {
+  background: var(--boton-fondo, #fff);
+  color: var(--boton-tinta, var(--itinerario-acento));
+  border: var(--boton-borde, 1px solid #fff);
+  box-shadow: 0 0 0 5px var(--bloque-suave, rgba(255, 255, 255, 0.22));
+}
+
+.filaAhora .hora {
+  background: var(--boton-fondo, #fff);
+  color: var(--boton-tinta, var(--itinerario-acento));
+  border: var(--boton-borde, 1px solid #fff);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pill,
-  .pestana {
+  .avance,
+  .dia,
+  .fila {
     transition: none;
   }
+}
+
+/* Estilo de bloques (panel Diseño, estilosBloque.js): la pieza pone
+   data-estilo y las variables --bloque-* cuando no es vidrio. */
+[data-estilo] .panel {
+  background: var(--bloque-fondo);
+  -webkit-backdrop-filter: var(--bloque-blur);
+  backdrop-filter: var(--bloque-blur);
+  border: var(--bloque-borde);
+  box-shadow: var(--bloque-sombra);
+  border-radius: var(--bloque-radio);
+  color: var(--bloque-tinta);
+}
+
+[data-estilo] .panel::before {
+  inset: 0;
+  height: auto;
+  background: var(--bloque-reflejo);
 }

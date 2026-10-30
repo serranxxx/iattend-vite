@@ -40,9 +40,47 @@ const perfilDe = (a) => {
 // Sin emoji elegido: uno fijo por invitado (nunca letras). Igual que events.
 export const emojiAsistente = (a) => a.emoji || EMOJIS[hashDe(a.id, 7) % EMOJIS.length]
 
-// `modo`: 'emoji' (por omisión) o 'initials' (body.attendeesStyle).
-export const fondoAsistente = (a, modo = 'emoji') => {
-    const [claro, oscuro] = modo === 'initials' ? FORMALES[hashDe(a.id, 3) % FORMALES.length] : PERFILES[perfilDe(a)]
+// Modo iniciales con el color del tema: tonos parecidos al color base (mismo
+// matiz con variaciones ligeras de tono y luz), oscuros para que las letras
+// blancas se lean. Tema gris o negro: grises. Sin tema, los sobrios de
+// siempre. Igual que events (datosAsistentes.ts, formalesDe).
+const aHsl = (hex) => {
+    const n = parseInt(hex.slice(1), 16)
+    const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2
+    if (max === min) return { h: 0, s: 0, l }
+    const d = max - min
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4
+    return { h: h * 60, s, l }
+}
+const aHex = (h, s, l) => {
+    const k = (n) => (n + h / 30) % 12
+    const a = s * Math.min(l, 1 - l)
+    const f = (n) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))))
+    return `#${[f(0), f(8), f(4)].map((x) => x.toString(16).padStart(2, '0')).join('')}`
+}
+// [desplazamiento de tono, luz] de cada variante.
+const VARIANTES_TEMA = [[0, 0.3], [-14, 0.36], [14, 0.42], [-7, 0.48], [7, 0.34], [-20, 0.4], [20, 0.46], [0, 0.26]]
+const formalesCache = new Map()
+const formalesDe = (tema) => {
+    if (!tema || !/^#[0-9a-f]{6}$/i.test(tema)) return FORMALES
+    if (formalesCache.has(tema)) return formalesCache.get(tema)
+    const { h, s } = aHsl(tema)
+    const sat = s < 0.08 ? s : Math.min(0.55, Math.max(0.18, s * 0.75))
+    const lista = VARIANTES_TEMA.map(([dh, l]) => {
+        const tono = (h + (sat < 0.08 ? 0 : dh) + 360) % 360
+        return [aHex(tono, sat, l), aHex(tono, sat, Math.max(0.12, l - 0.08))]
+    })
+    formalesCache.set(tema, lista)
+    return lista
+}
+
+// `modo`: 'emoji' (por omisión) o 'initials' (body.attendeesStyle). `tema`:
+// color del tema del Flash (body.color), para el modo iniciales.
+export const fondoAsistente = (a, modo = 'emoji', tema) => {
+    const formales = formalesDe(tema)
+    const [claro, oscuro] = modo === 'initials' ? formales[hashDe(a.id, 3) % formales.length] : PERFILES[perfilDe(a)]
     return `linear-gradient(to bottom, ${claro}, ${oscuro})`
 }
 

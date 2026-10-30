@@ -28,12 +28,12 @@ export const ScannerSetup = ({ events, eventsLoading, selectedEvent, onSelectEve
             <Select
               placeholder='Selecciona tu evento'
               loading={eventsLoading}
-              value={selectedEvent?.id ?? undefined}
+              value={selectedEvent?.key ?? undefined}
               onChange={(val) => {
-                onSelectEvent(events.find(e => e.id === val) ?? null)
+                onSelectEvent(events.find(e => e.key === val) ?? null)
                 setTimeout(() => pinRef.current?.focus(), 50)
               }}
-              options={events.map(e => ({ value: e.id, label: e.name ?? String(e.id) }))}
+              options={events.map(e => ({ value: e.key, label: `${e.name ?? String(e.id)}${e.kind === 'flash' ? ' · Flash' : ''}` }))}
               showSearch
               filterOption={(input, option) => norm(option?.label).includes(norm(input))}
               suffixIcon={<ChevronDown size={18} />}
