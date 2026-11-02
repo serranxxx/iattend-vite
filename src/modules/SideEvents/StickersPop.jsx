@@ -7,11 +7,11 @@ import { useTranslation } from 'react-i18next'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
 import { stickerLigeroDesdeUrl } from '../../helpers/services/uploadImage'
 import ed from './SideEventEditor.module.css'
-import { alternar, conModificador, contarImagenes, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
+import { alternar, conModificador, contarImagenes, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersPopData'
 import { MiniaturaElemento } from '../Editor/Elemento'
 
 /*
-  Elementos PNG de un Evento Flash (panel del editor). Van en la portada fija,
+  Elementos PNG de un Pop (panel del editor). Van en la portada fija,
   que ocupa toda la pantalla: los botones flotan encima, sin recorte.
   `body.stickers`: { id, url, x, y (centro, en % del ancho y del alto de la
   pantalla), w (% del ancho), rot (grados), opacity, hidden (oculto sin
@@ -61,7 +61,7 @@ const FilaCapa = ({ id, className, onClick, onKeyDown, children, etiquetaArrastr
 // y los que siguen al primero se iban quedando chicos.
 const redondear = (v) => Math.round(v * 100) / 100
 
-export const StickersFlash = ({ stickers, onChange, seleccionados = [], onSeleccionar, carpeta, movil = false, onPegar = null }) => {
+export const StickersPop = ({ stickers, onChange, seleccionados = [], onSeleccionar, carpeta, movil = false, onPegar = null }) => {
     const { t } = useTranslation()
     const grupo = stickers.filter(s => seleccionados.includes(s.id))
     // El primero que se eligió manda en los sliders; los demás lo siguen.

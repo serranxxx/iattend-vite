@@ -1,4 +1,4 @@
-// Efectos animados de un Flash: catálogo compartido por el panel (SideEvents)
+// Efectos animados de un Pop: catálogo compartido por el panel (SideEvents)
 // y la capa (EfectosCapa). Ver EfectosCapa.jsx.
 
 export const TIPOS_EFECTO = ['sparkles', 'confetti', 'bubbles', 'snow', 'petals']

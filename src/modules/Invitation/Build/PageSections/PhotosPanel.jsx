@@ -57,7 +57,7 @@ const inUse = (invitation, section, url) => {
     return false
 }
 
-// Es el panel Fotos de todos los editores (EditorShell). Un side event / Flash
+// Es el panel Fotos de todos los editores (EditorShell). Un side event / Pop
 // solo tiene un lugar para una foto (el fondo): pasa `onUse(url)` (todas las
 // categorías aplican ahí), `isInUse(url)` y su `banner`.
 export const PhotosPanel = ({ invitation, setInvitation, setSaved, onSelectSection, selectedSection, onUse, isInUse, banner }) => {

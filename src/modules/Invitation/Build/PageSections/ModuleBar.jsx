@@ -172,7 +172,7 @@ export const ModuleBar = ({ section, invitation, setInvitation, setSaved, onPick
                         // Hacia la izquierda del botón: no tapa la pieza.
                         placement="bottomRight"
                         arrow={false}
-                        content={<StylePicker invitation={invitation} value={mod.style} onPick={(id) => setMod({ style: ['1a', 'G1', 'R1', 'P1', 'W1'].includes(id) ? null : id })} />}
+                        content={<div data-text-bar><StylePicker invitation={invitation} value={mod.style} onPick={(id) => setMod({ style: ['1a', 'G1', 'R1', 'P1', 'W1'].includes(id) ? null : id })} /></div>}
                     >
                         <button type="button" className={styles.textBtn} data-on={open === 'style' || undefined}>
                             <LayoutGrid size={17} /> {t('build_editor.cd_style')}

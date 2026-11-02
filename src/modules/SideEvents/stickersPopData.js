@@ -1,4 +1,4 @@
-// Datos de los PNG de un Flash: los usan el panel (StickersFlash) y el
+// Datos de los PNG de un Pop: los usan el panel (StickersPop) y el
 // pegado con ⌘V del editor (SideEvents).
 
 // Tope de imágenes (PNG) por evento; los demás elementos (texto, íconos,
@@ -9,7 +9,7 @@ export const MAX_ELEMENTOS = 40
 // `body.stickers` guarda todos los elementos de la portada. Sin `kind` (o
 // 'sticker') es una imagen con `url`; si no, uno de los elementos del panel
 // Elementos (mismo modelo que `decorations` de la invitación: icon, shape,
-// text, line, separator). Ver FlashElemento.jsx.
+// text, line, separator). Ver PopElemento.jsx.
 export const esImagen = (s) => !s?.kind || s.kind === 'sticker'
 export const contarImagenes = (lista) => (lista ?? []).filter(esImagen).length
 // ¿Cabe uno más de este tipo?
@@ -55,6 +55,55 @@ export const quitarStickers = (stickers, ids) => stickers.filter(s => !ids.inclu
 // un clic normal la reemplaza.
 export const conModificador = (e) => e.shiftKey || e.metaKey || e.ctrlKey
 export const alternar = (lista, id) => (lista.includes(id) ? lista.filter(x => x !== id) : [...lista, id])
+
+/*
+  Grupos de capas (Capas y la barra del elemento → Agrupar / Desagrupar,
+  ⌘G / ⇧⌘G): los elementos de un grupo llevan el mismo `grupo` y quedan
+  juntos en el arreglo (en el lugar del que estaba más arriba). Tocar uno en
+  la pieza elige al grupo entero; en Capas son una fila que se arrastra como
+  bloque. Solo es del editor: la página del invitado los pinta igual.
+*/
+// Los ids de los elementos que van juntos con `s` (su grupo, o solo él).
+export const miembrosDe = (stickers, s) => (s?.grupo ? stickers.filter((o) => o.grupo === s.grupo).map((o) => o.id) : [s?.id].filter(Boolean))
+
+// La selección completada con los grupos de lo elegido.
+export const conSusGrupos = (stickers, ids) => {
+    const grupos = new Set(stickers.filter((o) => ids.includes(o.id) && o.grupo).map((o) => o.grupo))
+    return stickers.filter((o) => ids.includes(o.id) || (o.grupo && grupos.has(o.grupo))).map((o) => o.id)
+}
+
+// ¿Lo elegido es exactamente un grupo?
+export const grupoDeSeleccion = (stickers, ids) => {
+    const elegidos = stickers.filter((o) => ids.includes(o.id))
+    const g = elegidos[0]?.grupo
+    if (!g || elegidos.some((o) => o.grupo !== g)) return null
+    return stickers.filter((o) => o.grupo === g).length === elegidos.length ? g : null
+}
+
+// Agrupa: un grupo nuevo con lo elegido (y sus grupos), juntos en el lugar
+// del que estaba más arriba.
+export const agrupar = (stickers, ids) => {
+    const todos = conSusGrupos(stickers, ids)
+    if (todos.length < 2) return stickers
+    const g = nuevoIdElemento('g')
+    const miembros = stickers.filter((o) => todos.includes(o.id)).map((o) => ({ ...o, grupo: g }))
+    const resto = stickers.filter((o) => !todos.includes(o.id))
+    // Lugar: después de los que quedaban debajo del de más arriba.
+    const arriba = Math.max(...todos.map((id) => stickers.findIndex((o) => o.id === id)))
+    const debajo = stickers.slice(0, arriba + 1).filter((o) => !todos.includes(o.id)).length
+    return [...resto.slice(0, debajo), ...miembros, ...resto.slice(debajo)]
+}
+
+// Desagrupa los grupos de lo elegido (sus elementos se quedan donde están).
+export const desagrupar = (stickers, ids) => {
+    const grupos = new Set(stickers.filter((o) => ids.includes(o.id) && o.grupo).map((o) => o.grupo))
+    if (!grupos.size) return stickers
+    return stickers.map((o) => {
+        if (!o.grupo || !grupos.has(o.grupo)) return o
+        const { grupo: _grupo, ...sin } = o
+        return sin
+    })
+}
 
 // Lienzo de los PNG: la pieza del editor (390×700) escalada para cubrir una
 // pantalla de ancho × alto, centrada (como object-fit: cover). En 390×700 es

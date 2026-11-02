@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
-import { Check, ClipboardList, Download, FileText, Plus } from 'lucide-react'
+import { Check, ClipboardList, Download, FileText, Lock, Plus } from 'lucide-react'
 import ims from '../Workspace/InteractionMenu.module.css'
 import styles from './FormularioPanel.module.css'
 import { FormularioVista } from './FormularioVista'
@@ -14,14 +14,14 @@ import {
 } from './modelo'
 
 /*
-  Herramienta "Formulario" del panel lateral de un Flash (handoff
+  Herramienta "Formulario" del panel lateral de un Pop (handoff
   "Formularios propios", 1a; se abre al elegir la capa Formulario o su
   tarjeta en la pieza). Solo prende el formulario, elige cuál de "Mis
-  formularios" usa este Flash y resume las respuestas. Crear, editar y
+  formularios" usa este Pop y resume las respuestas. Crear, editar y
   revisar se hace en la vista completa (FormularioVista), que se abre encima
   del editor; comparte con el panel las respuestas (un solo canal en vivo).
-  Reglas del Flash (quién responde, cerrar respuestas, folio…) en body.form;
-  las preguntas en forms.items, copiadas al Flash como snapshot.
+  Reglas del Pop (quién responde, cerrar respuestas, folio…) en body.form;
+  las preguntas en forms.items, copiadas al Pop como snapshot.
 */
 
 const Interruptor = ({ on }) => (
@@ -107,6 +107,26 @@ export const FormularioPanel = ({ body, updateForm, eventoId }) => {
 
             {activo && (
                 <>
+                    {/* Obligatorio (lo decide el organizador; apagado de entrada):
+                        al confirmar el formulario se abre solo y no deja ver nada
+                        más hasta responderlo. Mismo ajuste que la pestaña Ajustes. */}
+                    <section className={ims.card}>
+                        <button
+                            type="button"
+                            className={ims.cardHead}
+                            role="switch"
+                            aria-checked={form?.required === true}
+                            onClick={() => updateForm((prev) => ({ ...(prev ?? {}), required: !(prev?.required === true) }))}
+                        >
+                            <span className={ims.cardIcon}><Lock size={18} strokeWidth={1.9} /></span>
+                            <span className={ims.cardCol}>
+                                <span className={ims.cardTitle}>{t('side_events.frm_set_required')}</span>
+                                <span className={ims.cardSub}>{t(form?.required === true ? 'side_events.frm_set_required_on' : 'side_events.frm_set_required_off')}</span>
+                            </span>
+                            <Interruptor on={form?.required === true} />
+                        </button>
+                    </section>
+
                     <section className={ims.card}>
                         <span className={ims.rowLabel}>{t('side_events.frm_chosen')}</span>
                         {tieneFormulario && (

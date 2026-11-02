@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 /*
   ⌘C / ⌘X / ⌘V de los elementos sueltos en todos los editores (invitación,
-  side events y Eventos Flash). Cada editor dice qué hay elegido y cómo
+  side events y Pops). Cada editor dice qué hay elegido y cómo
   quitarlo / pegarlo:
 
     copy()        → { items, section } | null   (lo elegido ahora)

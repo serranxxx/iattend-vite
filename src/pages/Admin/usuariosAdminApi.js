@@ -33,7 +33,7 @@ export const updateBeneficiosPlanner = async (userId, payload) => {
     return axios.put(`${API_URL}/api/admin/planners/${userId}/beneficios`, payload, { headers })
 }
 
-// Alta de un planner: cuenta, 1 evento regular y 1 Flash gratis, su invitación
+// Alta de un planner: cuenta, 1 evento regular y 1 Pop gratis, su invitación
 // de ejemplo y (opcional) el correo de bienvenida. Ver adminUsuarios.js → crearPlanner.
 export const crearPlanner = async (payload) => {
     const headers = await authHeaders()

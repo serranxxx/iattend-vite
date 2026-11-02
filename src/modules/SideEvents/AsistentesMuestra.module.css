@@ -162,7 +162,7 @@
     white-space: nowrap;
 }
 
-/* Fila del chat de asistentes (contraparte: iattend-events Chat/chat-flash.module.css, .entry). */
+/* Fila del chat de asistentes (contraparte: iattend-events Chat/chat-pop.module.css, .entry). */
 .chat {
     display: flex;
     align-items: center;
@@ -261,4 +261,13 @@
 [data-estilo] .chat {
     background: transparent;
     border-top-color: var(--bloque-linea);
+}
+
+/* Sin confirmados todavía (ya no hay asistentes de ejemplo). */
+.vacio {
+    display: block;
+    padding: 6px 0 2px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--bloque-suave, rgba(41, 38, 45, 0.6));
 }

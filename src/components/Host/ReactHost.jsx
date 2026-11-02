@@ -27,6 +27,15 @@ export default function ReactHost({
   selectedSection = null,
   // Editor de escritorio con barra de texto: la pieza no muestra sus "T".
   textBar = false,
+  // Editor del celular: la pieza agranda sus botones de edición ("Cambiar
+  // fondo") a la medida del dedo (iattend-events HostClient → html[data-edit-movil]).
+  editMovil = false,
+  // "Ver en vivo" → Confirmado: la pieza usa un invitado de ejemplo ya
+  // confirmado (iattend-events Invitation `vistaConfirmada`).
+  vistaConfirmada = false,
+  // Plan de la invitación (solo "Ver en vivo"): la pieza pinta lo del plan
+  // (dock Pro, barra Lite) como la ve el invitado.
+  plan = null,
   onSelectSection,
   onFieldChange,
   // La pieza pidió abrir la herramienta de una parte (tipografía del título)
@@ -85,7 +94,7 @@ export default function ReactHost({
     if (!win) return;
 
     // hash simple para evitar re-envíos idénticos
-    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar });
+    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan });
     if (hash === lastSentHashRef.current && reason !== "ready") return;
     lastSentHashRef.current = hash;
 
@@ -100,6 +109,9 @@ export default function ReactHost({
           editMode,
           selectedSection,
           textBar,
+          editMovil,
+          vistaConfirmada,
+          plan,
           sentAt: Date.now(),
           reason,
         },
@@ -151,10 +163,11 @@ export default function ReactHost({
       if (ev.data?.type === "REMOTE_FIELD_TOOL" && ev.data?.payload?.field) {
         onFieldToolRef.current?.(ev.data.payload.field, ev.data.payload.rect, ev.data.payload.section ?? 'cover');
       }
-      // Texto con el foco ({ rect } en px de la pieza, o null): el editor sube
-      // la pieza si el teclado de pantalla lo tapa (iPad).
+      // Texto con el foco ({ rect, fontSize } en px de la pieza, o null): el
+      // editor sube la pieza si el teclado de pantalla lo tapa (iPad) y el del
+      // celular la acerca y la centra (Editor/useZoomTexto.js).
       if (ev.data?.type === "REMOTE_TEXT_FOCUS") {
-        window.dispatchEvent(new CustomEvent("iattend-text-focus", { detail: { rect: ev.data.payload?.rect ?? null, source: ev.source } }));
+        window.dispatchEvent(new CustomEvent("iattend-text-focus", { detail: { rect: ev.data.payload?.rect ?? null, fontSize: ev.data.payload?.fontSize ?? null, source: ev.source } }));
       }
       // Texto de un bloque elegido ({ path, kind } o null): barra de texto.
       if (ev.data?.type === "REMOTE_TEXT_FIELD") {
@@ -184,7 +197,7 @@ export default function ReactHost({
   // 2) Re-enviar cada que cambie `config`, `textureOverride` o el idioma activo
   useEffect(() => {
     postProps("config-change");
-  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, targetOrigin]);
+  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, targetOrigin]);
 
   // 2·) Elementos sueltos arrastrados desde los paneles del editor
   // (layerItems.js): el punto llega en px de la ventana y la pieza lo quiere

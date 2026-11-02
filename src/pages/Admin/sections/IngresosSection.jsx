@@ -11,7 +11,7 @@ import { AdminModal } from '../AdminModal'
 import { MESES, calcularCargosPorVenta, calcularKpis, formatCurrency, netoPromedioPorVenta } from '../ventasCalculos'
 import { AcumuladoChart, BarrasPorMes, ComparativaChart, MESES_CORTOS, ProyeccionChart } from './VentasCharts'
 import { MetaDelMes } from './MetaDelMes'
-import { COLOR_POR_ANIO, COLOR_POR_PLAN, PLANES_DE_VENTA } from '../adminCharts'
+import { COLOR_POR_ANIO, COLOR_POR_PLAN, PLANES_DE_VENTA, nombreDePlan } from '../adminCharts'
 import styles from './VentasSection.module.css'
 import iv from './Ingresos.module.css'
 
@@ -534,11 +534,11 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
             try {
                 const { data } = await searchAdminInvitations(q.trim())
                 setInvitationOptions((data?.invitations || []).map(inv => {
-                    // Eventos Flash: sin invitación, van por side_event_id.
+                    // Pops: sin invitación, van por side_event_id.
                     if (inv.side_event_id) {
                         return {
                             value: `flash-${inv.side_event_id}`,
-                            label: `⚡ ${inv.name} — ${inv.planner ? `planner ${inv.planner}` : (inv.user_email || 'sin correo')} (Evento Flash)`,
+                            label: `⚡ ${inv.name} — ${inv.planner ? `planner ${inv.planner}` : (inv.user_email || 'sin correo')} (Pop)`,
                             plan: 'Flash',
                         }
                     }
@@ -571,11 +571,11 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
     const handleCreateManualSale = async () => {
         const values = await manualForm.validateFields()
         try {
-            const flash = String(values.invitation_id).startsWith('flash-')
+            const pop = String(values.invitation_id).startsWith('flash-')
             await createAdminVentaManual({
                 ...values,
-                invitation_id: flash ? undefined : values.invitation_id,
-                side_event_id: flash ? Number(values.invitation_id.slice(6)) : undefined,
+                invitation_id: pop ? undefined : values.invitation_id,
+                side_event_id: pop ? Number(values.invitation_id.slice(6)) : undefined,
                 fecha_venta: values.fecha_venta ? values.fecha_venta.toISOString() : undefined,
             })
             message.success('Venta registrada')
@@ -606,7 +606,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     <Form.Item name='plan' label='Plan' rules={[{ required: true }]}>
                         <Select
                             disabled={editingVenta?.plan === 'Flash'}
-                            options={editingVenta?.plan === 'Flash' ? [{ value: 'Flash', label: 'Flash' }] : PLANES_DE_INVITACION}
+                            options={editingVenta?.plan === 'Flash' ? [{ value: 'Flash', label: 'Pop' }] : PLANES_DE_INVITACION}
                         />
                     </Form.Item>
                     <Form.Item name='vendedor_id' label='Vendedor asignado' rules={[{ required: true }]}>
@@ -663,7 +663,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                             onSelect={handleSelectInvitation}
                             notFoundContent={searchingInvitations ? 'Buscando…' : 'Escribe al menos 3 letras'}
                             options={invitationOptions}
-                            placeholder='Buscar invitación o Evento Flash por nombre o correo'
+                            placeholder='Buscar invitación o Pop por nombre o correo'
                         />
                     </Form.Item>
                     <Form.Item name='vendedor_id' label='Vendedor' rules={[{ required: true }]}>
@@ -671,11 +671,11 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                     </Form.Item>
                     <Form.Item noStyle shouldUpdate={(a, b) => a.invitation_id !== b.invitation_id}>
                         {({ getFieldValue }) => {
-                            const flash = String(getFieldValue('invitation_id') || '').startsWith('flash-')
+                            const pop = String(getFieldValue('invitation_id') || '').startsWith('flash-')
                             return (
                                 <Form.Item name='plan' label='Plan' rules={[{ required: true }]}
-                                    extra={flash ? 'Los Flash no pagan comisión a vendedores.' : undefined}>
-                                    <Select disabled={flash} options={flash ? [{ value: 'Flash', label: 'Flash' }] : PLANES_DE_INVITACION} />
+                                    extra={pop ? 'Los Pops no pagan comisión a vendedores.' : undefined}>
+                                    <Select disabled={pop} options={pop ? [{ value: 'Flash', label: 'Pop' }] : PLANES_DE_INVITACION} />
                                 </Form.Item>
                             )
                         }}
@@ -772,7 +772,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                         <span className={`${styles.cell} ${styles.vendedor}`}>{venta.vendedor || '—'}</span>
                                         <span className={styles.cell}>
                                             <span className={`${styles.plan} ${venta.plan !== 'PRO' ? styles.planLite : ''}`}>
-                                                {venta.plan}
+                                                {nombreDePlan(venta.plan)}
                                             </span>
                                         </span>
                                         <span className={`${styles.cell} ${styles.cellNum}`}>{formatCurrency(venta.precio_acordado)}</span>
@@ -857,7 +857,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <span className={iv.kpiLabel}>Ventas del mes</span>
                         <div className={iv.kpiLinea}>
                             <span className={iv.kpiValor}>{kpis.ventasCount}</span>
-                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite{kpis.flashCount ? ` · ${kpis.flashCount} Flash` : ''} · {kpisAnuales.ventasCount} en {year}</span>
+                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite{kpis.popCount ? ` · ${kpis.popCount} Pop` : ''} · {kpisAnuales.ventasCount} en {year}</span>
                         </div>
                     </div>
                     <div className={iv.kpi}>
@@ -1008,7 +1008,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                             <div className={iv.ventaTexto}>
                                                 <div className={iv.ventaNombre}>
                                                     <b>{venta.evento}</b>
-                                                    <span className={venta.plan !== 'PRO' ? iv.planLite : iv.planPro}>{venta.plan}</span>
+                                                    <span className={venta.plan !== 'PRO' ? iv.planLite : iv.planPro}>{nombreDePlan(venta.plan)}</span>
                                                 </div>
                                                 <span className={iv.ventaMeta}>
                                                     {venta.vendedor || '—'} · {dayjs(venta.fecha_venta).format('D MMM')}
@@ -1091,7 +1091,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                     .map(plan => [plan, barras.series[0].porPlan[plan].reduce((a, b) => a + b, 0)])
                                     .filter(([, n]) => n > 0)
                                     .map(([plan, n]) => (
-                                        <span key={plan}><i style={{ background: COLOR_POR_PLAN[plan] }} />{n} {plan}</span>
+                                        <span key={plan}><i style={{ background: COLOR_POR_PLAN[plan] }} />{n} {nombreDePlan(plan)}</span>
                                     ))}
                                 <span>{formatCurrency(barras.series[0].neto)} {descontarIva ? 'neto' : 'con IVA'}</span>
                             </span>

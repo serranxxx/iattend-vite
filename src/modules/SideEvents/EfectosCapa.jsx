@@ -3,7 +3,7 @@ import styles from './EfectosCapa.module.css'
 import { cantidadDeEfecto, COLOR_INICIAL, TIPOS_EFECTO } from './efectosData'
 
 /*
-  Efectos animados de un Flash (panel Efectos): partículas encima de la
+  Efectos animados de un Pop (panel Efectos): partículas encima de la
   portada y los PNG, debajo del texto y los botones. Solo CSS (transform y
   opacity): ligero en el teléfono, y nada se mueve con "reducir movimiento".
   `body.effect`: { type: 'sparkles'|'confetti'|'bubbles'|'snow'|'petals',

@@ -11,12 +11,12 @@ import styles from './Elemento.module.css'
 
 /*
   Elemento suelto que no es imagen, de todos los editores: lo dibujan la
-  pieza de un Flash (SideCanvas) y las miniaturas del panel Capas.
-  Contenido de un elemento de la portada de un Flash que no es imagen
+  pieza de un Pop (SideCanvas) y las miniaturas del panel Capas.
+  Contenido de un elemento de la portada de un Pop que no es imagen
   (`body.stickers[n].kind`): ícono, forma, texto, línea o decoración. Mismo
   modelo y mismo dibujo que los elementos de la invitación (SectionLayer en
   iattend-events); contraparte en la página del invitado:
-  iattend-events/src/components/SideEvent/FlashElemento.tsx. El contenedor
+  iattend-events/src/components/SideEvent/PopElemento.tsx. El contenedor
   (el lienzo de 390 × 700) es `container-type: inline-size`, así los textos
   miden en cqw y escalan igual que una imagen.
   Sin color propio va en blanco, el color del texto de la pieza.
@@ -76,7 +76,7 @@ export const Vector = ({ s, color, className = '' }) => {
 
 // `color`: fuerza un color (miniaturas de Capas). `editable` + `onTextDone`:
 // el texto se escribe encima (doble clic en la pieza).
-export const FlashElemento = ({ s, titleFont, bodyFont = 'Poppins', color: forced, editable = false, onTextDone }) => {
+export const PopElemento = ({ s, titleFont, bodyFont = 'Poppins', color: forced, editable = false, onTextDone }) => {
     const color = forced ?? (s.color && s.color !== 'transparent' ? s.color : DEFAULT_COLOR)
     const editRef = useRef(null)
 
@@ -180,11 +180,14 @@ export const FlashElemento = ({ s, titleFont, bodyFont = 'Poppins', color: force
     return <span className={styles.text} style={textStyle}>{s.text}</span>
 }
 
-// Miniatura para las listas de capas: la imagen, o el elemento en gris oscuro.
+// Miniatura para las listas de capas: la imagen; un dibujo, con su color;
+// lo demás, en gris oscuro.
 export const MiniaturaElemento = ({ s }) => (
     !s.kind || s.kind === 'sticker'
         ? <img src={s.url} alt="" draggable={false} />
         : s.kind === 'text'
             ? <span className={styles.miniTexto}>Aa</span>
-            : <span className={styles.mini}><FlashElemento s={{ ...s, w: 100 }} color="#29262D" /></span>
+            : s.kind === 'dibujo'
+                ? <span className={styles.mini}><PopElemento s={{ ...s, w: 100 }} /></span>
+                : <span className={styles.mini}><PopElemento s={{ ...s, w: 100 }} color="#29262D" /></span>
 )

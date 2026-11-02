@@ -6,25 +6,25 @@ la pantalla, qué hace, cómo se ve, de dónde lee y a dónde escribe. Los
 documentos `docs/editor-workspace.md` y `docs/entorno-edicion.md` cuentan la
 historia por etapas; este es el mapa completo del resultado.
 
-**Un solo editor para todo.** Invitación, side events y Eventos Flash usan
+**Un solo editor para todo.** Invitación, side events y Pops usan
 las mismas piezas (`src/modules/Editor/` y los paneles / barras de
 `PageSections/`); cada editor solo aporta su pieza y lo que es propio de sus
 datos:
 
 | Pieza compartida | Archivo | Lo usan |
 |---|---|---|
-| Área de trabajo (riel + panel, escenario con zoom, barra, Capas, dock, Ver en vivo y dispositivos, columna de Envío, teclado del iPad) | `modules/Editor/EditorShell.jsx` | invitación (`EditorWorkspace`), side events / Flash (`SideWorkspace`) |
+| Área de trabajo (riel + panel, escenario con zoom, barra, Capas, dock, Ver en vivo y dispositivos, columna de Envío, teclado del iPad) | `modules/Editor/EditorShell.jsx` | invitación (`EditorWorkspace`), side events / Pop (`SideWorkspace`) |
 | Selector de color de las barras | `modules/Editor/useColorPopover.js` + `ColorPopover.jsx` | los tres |
 | ⌘C / ⌘X / ⌘V de los elementos (se pega en el módulo elegido; sirve entre módulos, eventos y editores) | `modules/Editor/useElementClipboard.js` (desde la pieza: `REMOTE_ELEMENT_KEY`) | los tres |
 | Panel Capas (las capas reales, en árbol) | `modules/Editor/LayersPanel.jsx` (adaptadores `ModuleLayers`, `SideLayers`) | los tres |
-| Panel Elementos (catálogo) | `PageSections/LayerPanels.jsx` | invitación y Flash |
+| Panel Elementos (catálogo) | `PageSections/LayerPanels.jsx` | invitación y Pop |
 | Panel Fotos | `PageSections/PhotosPanel.jsx` (`onUse`, `isInUse`, `banner`) | los tres |
 | Panel Subidos (Todo · Fotos · PNG · Vectores · Videos) | `PageSections/UploadsPanel.jsx` (`folders`, `inUse`, `onPaste`, `draggable`) | los tres |
-| Barra del elemento | `PageSections/ElementBar.jsx` (`group` suma tamaño, giro, ocultar, duplicar, quitar) | invitación y Flash |
+| Barra del elemento | `PageSections/ElementBar.jsx` (`group` suma tamaño, giro, ocultar, duplicar, quitar) | invitación y Pop |
 | Barra de texto | `PageSections/TextBar.jsx` (adaptador `ts`, `extra`) | los tres |
-| Barra de la canción | `PageSections/SongBar.jsx` (`value` / `onChange` / `folder`) | invitación y Flash |
+| Barra de la canción | `PageSections/SongBar.jsx` (`value` / `onChange` / `folder`) | invitación y Pop |
 
-Lo propio de un side event / Flash (sus barras de fecha, lugar, fondo e
+Lo propio de un side event / Pop (sus barras de fecha, lugar, fondo e
 itinerario y su panel Diseño: color del tema, velo y efectos) vive en
 `modules/SideEvents/Workspace/`. Ver `docs/editor-side-events-workspace.md`.
 
@@ -38,7 +38,7 @@ ojo (`hidden`, que SectionLayer ya no pinta) y tocarlos los elige en la
 pieza (`HOST_LAYER_SELECT`, que además la lleva al centro de la vista). Un
 elemento se arrastra a otro módulo (a su encabezado o a sus capas): se
 mueve al centro de ese módulo y queda elegido; a la otra lista de su módulo,
-cambia de delante a detrás del contenido. En un side event / Flash: contenido (canción,
+cambia de delante a detrás del contenido. En un side event / Pop: contenido (canción,
 título, fecha, lugar, itinerario, notas), elementos y fondo.
 
 **Vectores.** Un SVG subido en Subidos (filtro Vectores) o de la categoría
@@ -51,7 +51,7 @@ y se pinta **en línea** (no como máscara), así la barra le cambia:
   usa `vector-effect: non-scaling-stroke`, el trazo no cambia al agrandar o achicar.
   Al prender o apagar se convierte el grosor que se ve en ese momento, sin brincos.
   La conversión usa el ancho de la pieza (`pieceWidth` de `ElementBar`: 390 la
-  invitación, 357 un Flash).
+  invitación, 357 un Pop).
 
 Como **ícono de un momento del itinerario** de la invitación (tocar el ícono en
 la pieza abre Elementos), un vector de la categoría Vectores se pinta igual que
@@ -449,7 +449,7 @@ sección). Arrastrar una opción la suelta como texto suelto.
   es `${VITE_IATTEND_EVENTS_URL || https://www.iattend.events}/host/`.
 - **Chip "Canción"** arriba a la izquierda, solo con la portada a la vista:
   muestra la carátula y el nombre; en escritorio abre la barra `SongBar`
-  (celular: popover con `CancionFlash`). El chip "Color del tema" solo existe
+  (celular: popover con `CancionPop`). El chip "Color del tema" solo existe
   en celular (en escritorio el tema está en Diseño).
 - Dentro de la pieza, cada módulo es una **zona** (`.editZone`): su contenido
   no recibe clics salvo lo marcado `data-edit-field`; hover = borde punteado

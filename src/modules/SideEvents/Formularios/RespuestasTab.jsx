@@ -1,3 +1,5 @@
+import { supabase } from '../../../lib/supabase'
+import { urlSide } from '../../../helpers/invitation/sideEventLink'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Download, FileSpreadsheet, FileText, Link2, Search, X } from 'lucide-react'
@@ -8,7 +10,7 @@ import { TIPO, fechaCorta, inicialesDe, valorCelda } from './modelo'
 /*
   Pestaña Respuestas de la vista completa (handoff 1b): buscador (nombre,
   folio o cualquier respuesta), filtro Todos / Completos / Pendientes, tabla
-  con una columna por pregunta del formulario que usa este Flash (snapshot) y
+  con una columna por pregunta del formulario que usa este Pop (snapshot) y
   descarga de lo filtrado en Excel o CSV. Al tocar una fila se abre el
   detalle a la derecha; si está pendiente, ahí se copia su link.
   Se mantiene al día con el aviso del canal side_form_<id> (useRespuestasFormulario).
@@ -67,7 +69,9 @@ export const RespuestasTab = ({ respuestas, snapshot, eventoId, guestInicial, av
     const copiarLink = async (r) => {
         const base = import.meta.env.VITE_IATTEND_EVENTS_URL || 'https://www.iattend.events'
         try {
-            await navigator.clipboard.writeText(`${base}/side-event/${eventoId}?registro=${r.token}`)
+            // El link público usa el código del evento (sideEventLink.js), no el número.
+            const { data } = await supabase.from('side_events').select('*').eq('id', eventoId).maybeSingle()
+            await navigator.clipboard.writeText(`${urlSide(data ?? { id: eventoId }, base)}?registro=${r.token}`)
             avisar(t('side_events.frm_link_copied'))
         } catch {
             avisar(t('side_events.frm_link_error'))

@@ -1,0 +1,234 @@
+/* Paleta del modo dibujo a pantalla completa (PaletaDibujo.jsx). */
+
+.paleta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 112px;
+    max-height: calc(100% - 32px);
+    /* Aire arriba y abajo como en Notas (la orilla es redonda de 56 px). */
+    padding: 34px 0 36px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 56px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 18px 50px rgba(23, 22, 27, 0.14), 0 2px 8px rgba(23, 22, 27, 0.06);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.historial {
+    display: flex;
+    gap: 8px;
+}
+
+.circulo {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border: none;
+    border-radius: 50%;
+    background: #E8E8EB;
+    color: #8E8E93;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.circulo:hover:not(:disabled) {
+    background: #DEDEE2;
+    color: #6E6E73;
+}
+
+.circulo:disabled {
+    cursor: default;
+    background: #EDEDEF;
+    color: #BDBDC2;
+}
+
+/* Las plumas: pegadas a la orilla derecha, cortadas por la paleta. */
+.plumas {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.plumaBtn {
+    display: block;
+    width: 100%;
+    height: 48px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.pluma {
+    display: block;
+    width: 150px;
+    height: 40px;
+    margin-left: 28px;
+    margin-top: 4px;
+    transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.08));
+}
+
+.plumaBtn:hover .pluma:not([data-on]) {
+    transform: translateX(-5px);
+}
+
+/* La elegida sale de la paleta, como en Notas. */
+.pluma[data-on] {
+    transform: translateX(-18px);
+}
+
+.colores {
+    display: grid;
+    grid-template-columns: repeat(2, 32px);
+    gap: 10px 12px;
+    transition: opacity 0.15s ease;
+}
+
+.colores[data-off] {
+    opacity: 0.35;
+}
+
+.color {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    background: var(--c);
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.color:disabled {
+    cursor: default;
+}
+
+/* Elegido: aro blanco y orilla oscura alrededor del color. */
+.color[data-on] {
+    border: none;
+    box-shadow: inset 0 0 0 2.5px #fff, 0 0 0 2px #29262D;
+}
+
+.otro {
+    background: var(--c, conic-gradient(from 0deg, #FF5A5F, #FFC93C, #3DDC97, #4CC9F0, #4C8BF5, #B36BF5, #FF5A5F));
+}
+
+/* Hoja de ajustes del pincel (al tocar el elegido o "…"), como en Notas:
+   cinco grosores y la barra de opacidad del color. En antd v6 la caja es
+   .ant-popover-container. */
+.hojaRoot :global(.ant-popover-container),
+.hojaRoot :global(.ant-popover-inner) {
+    padding: 0;
+    border-radius: 32px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 18px 50px rgba(23, 22, 27, 0.14), 0 2px 8px rgba(23, 22, 27, 0.05);
+}
+
+.ajustes {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 296px;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+/* El Popover envuelve cada pluma: el hueco conserva su alto. */
+.plumaHueco {
+    display: block;
+}
+
+/* ── Barra horizontal (modo dibujo del celular, `horizontal`) ──
+   Las plumas paradas con la punta arriba, cortadas por la orilla de abajo;
+   caben cinco y el resto se recorre con el dedo. A la derecha, el color. */
+.paleta[data-horizontal] {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 6px;
+    width: auto;
+    max-height: none;
+    height: 96px;
+    padding: 0 16px 0 10px;
+    border-radius: 34px;
+}
+
+.paleta[data-horizontal] .plumas {
+    flex-direction: row;
+    align-self: auto;
+    gap: 0;
+    width: calc(5 * 50px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.paleta[data-horizontal] .plumas::-webkit-scrollbar {
+    display: none;
+}
+
+.paleta[data-horizontal] .plumaHueco {
+    flex: none;
+    width: 50px;
+    height: 100%;
+}
+
+.paleta[data-horizontal] .plumaBtn {
+    position: relative;
+    width: 50px;
+    height: 100%;
+}
+
+/* La pluma (dibujada acostada, punta a la izquierda) se para: gira 90° y
+   la punta queda arriba; el cuerpo lo corta la orilla de abajo. */
+.paleta[data-horizontal] .pluma {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    margin: 0;
+    transform-origin: 0 0;
+    transform: rotate(90deg) translate(14px, -20px);
+}
+
+.paleta[data-horizontal] .pluma[data-on] {
+    transform: rotate(90deg) translate(2px, -20px);
+}
+
+.paleta[data-horizontal] .colores {
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+}
+
+.paleta[data-horizontal] .color {
+    width: 36px;
+    height: 36px;
+}
+
+/* En el celular no hay hover (y el de un toque se queda pegado). */
+.paleta[data-horizontal] .plumaBtn:hover .pluma:not([data-on]) {
+    transform: rotate(90deg) translate(14px, -20px);
+}
+
+/* Botón de color de la barra: el arcoíris (abre el selector) con el color
+   actual al centro. */
+.paleta[data-horizontal] .otro,
+.paleta[data-horizontal] .otro[data-on] {
+    border: none;
+    background:
+        radial-gradient(circle, var(--c) 0 50%, #FFFFFF 50% 62%, transparent 62%),
+        conic-gradient(from 0deg, #FF5A5F, #FFC93C, #3DDC97, #4CC9F0, #4C8BF5, #B36BF5, #FF5A5F);
+    box-shadow: 0 1px 3px rgba(23, 22, 27, 0.12);
+}

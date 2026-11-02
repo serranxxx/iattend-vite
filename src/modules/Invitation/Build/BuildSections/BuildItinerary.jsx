@@ -19,6 +19,7 @@ import { BuildMenu } from '../../../../components/BuildMenu/BuildMenu'
 import { AddressAutocomplete } from '../../../SideEvents/AddressAutocomplete';
 import { VectorIcono } from '../../../Editor/Elemento'
 import { esUrlDeVector } from '../../../Editor/vector'
+import { conDireccion, indicePrincipal, marcarPrincipal, tieneDireccion } from './lugarPrincipal'
 
 export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSaved, }) => {
 
@@ -447,6 +448,36 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
         setSaved(false)
     };
 
+    // Con dos o más direcciones: cuál es el lugar principal (el del pase de
+    // Apple Wallet; lugarPrincipal.js). Apagarlo vuelve a la regla automática.
+    const filaPrincipal = (item) => {
+        const items = invitation?.itinerary?.object ?? []
+        const index = items.indexOf(item)
+        if (index < 0 || !tieneDireccion(item) || conDireccion(items) < 2) return null
+        const activo = indicePrincipal(items) === index
+        return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span><b>{t('build_editor.main_place')}</b></span>
+                    <span className='gc-content-label' style={{ opacity: 0.5 }}>
+                        {activo && item.principal !== true ? t('build_editor.main_place_auto') : t('build_editor.main_place_hint')}
+                    </span>
+                </div>
+                <Switch
+                    size='small'
+                    checked={activo}
+                    onChange={() => {
+                        setInvitation(prev => ({
+                            ...prev,
+                            itinerary: { ...prev.itinerary, object: marcarPrincipal(prev.itinerary.object, item.principal === true ? null : index) },
+                        }))
+                        setSaved(false)
+                    }}
+                />
+            </div>
+        )
+    }
+
     const handleAdress = (objectId) => {
         setInvitation(prevInvitation => ({
             ...prevInvitation,
@@ -659,6 +690,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                         <span><b>{t('build_itinerary.section_address')}</b></span>
                         <Switch size='small' checked={!!item.address} onChange={() => handleAdress(item.id)} />
                     </div>
+                    {filaPrincipal(item)}
                     {item.address && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <AddressAutocomplete
@@ -980,6 +1012,7 @@ export const BuildItinerary = ({ invitationID, invitation, setInvitation, setSav
                                                                                     <span><b>{t('build_itinerary.section_address')}</b></span>
                                                                                     <Switch size='small' checked={item.address ? true : false} onChange={() => handleAdress(item.id)} />
                                                                                 </div>
+                                                                                {filaPrincipal(item)}
 
                                                                                 {item.address && (
                                                                                     <>

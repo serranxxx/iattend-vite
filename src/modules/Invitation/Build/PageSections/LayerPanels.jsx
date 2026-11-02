@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import {
     countStickers, LINE_VARIANTS, MAX_STICKERS,
-    SEPARATORS, startLayerDrag, stickerItem, stickerLibrary, uploadStickers,
+    SEPARATORS, startLayerDrag, stickerItem, tocarParaAgregar, stickerLibrary, uploadStickers,
 } from './layerItems'
 import { Separador } from '../../../../components/Invitation/Logos'
 import { iconsItinerary } from '../../../../helpers/services/menuIcons'
@@ -84,7 +84,13 @@ const CODE_CATEGORIES = [
 // itinerario. Con él, un clic en un ícono / forma / ilustración lo pone como
 // ícono de ese momento ("lucide:<Nombre>", "svg:<url>", "shape:<forma>" o la
 // ruta de la imagen); textos, líneas y separadores no aplican (se atenúan).
-export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest, clearIconRequest, onOpenTool }) => {
+// `onElegir(item)` (editor del celular): tocar un elemento lo agrega (sin
+// arrastrar a la pieza, que en el celular queda tapada por el panel).
+export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest, clearIconRequest, onOpenTool, onElegir }) => {
+    // Eligiendo el ícono de un momento (iconRequest), tocar pone el ícono (onTap) en vez de agregar.
+    const arrastrar = (e, item, opts) => (onElegir
+        ? tocarParaAgregar(e, () => (iconRequest && opts?.onTap ? opts.onTap() : onElegir(item)))
+        : startLayerDrag(e, item, opts))
     const { t, i18n } = useTranslation()
     const catalog = useEditorCatalog()
     const en = i18n.language?.startsWith('en')
@@ -159,14 +165,14 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
     const cell = (cat, asset) => {
         if (cat.kind === 'line') {
             return (
-                <div key={asset.id} className={styles.lineCell} {...off} onPointerDown={(e) => startLayerDrag(e, { kind: 'line', variant: asset.variant, w: 50, rot: 0, opacity: 1 })}>
+                <div key={asset.id} className={styles.lineCell} {...off} onPointerDown={(e) => arrastrar(e, { kind: 'line', variant: asset.variant, w: 50, rot: 0, opacity: 1 })}>
                     <span className={styles.lineSample} data-variant={asset.variant} />
                 </div>
             )
         }
         if (cat.kind === 'separator') {
             return (
-                <div key={asset.id} className={`${styles.lineCell} ${styles.sepCell}`} {...off} onPointerDown={(e) => startLayerDrag(e, { kind: 'separator', variant: asset.variant, w: 60, rot: 0, opacity: 1 })}>
+                <div key={asset.id} className={`${styles.lineCell} ${styles.sepCell}`} {...off} onPointerDown={(e) => arrastrar(e, { kind: 'separator', variant: asset.variant, w: 60, rot: 0, opacity: 1 })}>
                     <Separador MainColor={accent} value={Number(asset.variant)} />
                 </div>
             )
@@ -179,7 +185,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                     className={styles.iconCell}
                     title={asset.name}
                     data-on={momentIcon === value || undefined}
-                    onPointerDown={(e) => startLayerDrag(e, { kind: 'shape', variant: asset.variant, w: asset.w ?? 26, ar: asset.ar ?? 1, rot: 0, opacity: 1, color: 'transparent', strokeWidth: 2 }, { onTap: () => setMomentIcon(value) })}
+                    onPointerDown={(e) => arrastrar(e, { kind: 'shape', variant: asset.variant, w: asset.w ?? 26, ar: asset.ar ?? 1, rot: 0, opacity: 1, color: 'transparent', strokeWidth: 2 }, { onTap: () => setMomentIcon(value) })}
                 >
                     <ShapeSample variant={asset.variant} />
                 </div>
@@ -192,7 +198,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                     key={asset.id}
                     className={styles.iconCell}
                     data-on={momentIcon === asset.it.index || undefined}
-                    onPointerDown={(e) => startLayerDrag(e, { kind: 'icon', icon: `it:${asset.it.index}`, w: 14, rot: 0, opacity: 1 }, { onTap: () => setMomentIcon(asset.it.index) })}
+                    onPointerDown={(e) => arrastrar(e, { kind: 'icon', icon: `it:${asset.it.index}`, w: 14, rot: 0, opacity: 1 }, { onTap: () => setMomentIcon(asset.it.index) })}
                 >
                     <ItIcon size={22} />
                 </div>
@@ -205,7 +211,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                     className={`${styles.artCell} ${styles.vectorCell}`}
                     title={asset.name}
                     data-on={momentIcon === `svg:${asset.url}` || undefined}
-                    onPointerDown={(e) => startLayerDrag(e, { kind: 'icon', src: asset.url, tint: true, vector: true, w: asset.w ?? 30, ar: asset.ar ?? 1, rot: 0, opacity: 1, ...TRAZO_INICIAL(asset.w ?? 30) }, { onTap: () => setMomentIcon(`svg:${asset.url}`) })}
+                    onPointerDown={(e) => arrastrar(e, { kind: 'icon', src: asset.url, tint: true, vector: true, w: asset.w ?? 30, ar: asset.ar ?? 1, rot: 0, opacity: 1, ...TRAZO_INICIAL(asset.w ?? 30) }, { onTap: () => setMomentIcon(`svg:${asset.url}`) })}
                 >
                     <VectorThumb url={asset.url} />
                 </div>
@@ -225,7 +231,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                     className={styles.iconCell}
                     title={asset.name}
                     data-on={momentIcon === value || undefined}
-                    onPointerDown={(e) => startLayerDrag(e, item, { onTap: () => setMomentIcon(value) })}
+                    onPointerDown={(e) => arrastrar(e, item, { onTap: () => setMomentIcon(value) })}
                 >
                     {Icon ? <Icon size={22} strokeWidth={1.7} />
                         : asset.tintable ? <span className={styles.maskIcon} style={{ WebkitMaskImage: `url("${asset.url}")`, maskImage: `url("${asset.url}")` }} />
@@ -240,7 +246,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                 className={styles.artCell}
                 title={asset.name}
                 data-on={momentIcon === asset.url || undefined}
-                onPointerDown={(e) => startLayerDrag(e, { ...stickerItem(asset.url), w: asset.w ?? 26 }, { onTap: () => setMomentIcon(asset.url) })}
+                onPointerDown={(e) => arrastrar(e, { ...stickerItem(asset.url), w: asset.w ?? 26 }, { onTap: () => setMomentIcon(asset.url) })}
             >
                 <img src={asset.url} alt={asset.name} draggable={false} loading="lazy" />
             </div>
@@ -270,7 +276,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                     data-variant={c.variant}
                     {...off}
                     style={{ fontFamily: `"${c.variant === 'title' ? titleFont : bodyFont}"` }}
-                    onPointerDown={(e) => startLayerDrag(e, { kind: 'text', variant: c.variant, text: t(`build_editor.el_${c.variant}_text`), w: c.w, rot: 0, opacity: 1 })}
+                    onPointerDown={(e) => arrastrar(e, { kind: 'text', variant: c.variant, text: t(`build_editor.el_${c.variant}_text`), w: c.w, rot: 0, opacity: 1 })}
                 >
                     {t(`build_editor.el_${c.variant}`)}
                 </div>
@@ -392,7 +398,7 @@ export const ElementsPanel = ({ invitation, setInvitation, setSaved, iconRequest
                     ))}
                 </div>
             </div>
-            <span className={base.hint} style={{ marginTop: 0 }}>{t('build_editor.el_hint')}</span>
+            <span className={base.hint} style={{ marginTop: 0 }}>{t(onElegir ? 'build_editor.el_hint_tap' : 'build_editor.el_hint')}</span>
 
             {body}
         </>

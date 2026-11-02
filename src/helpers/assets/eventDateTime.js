@@ -87,7 +87,7 @@ export function formatEventDateTime(raw, opts = {}) {
   return formatWallClock(raw);
 }
 
-// Eventos Flash con varias fechas (ej. 14 y 15 de octubre, cada una con su
+// Pops con varias fechas (ej. 14 y 15 de octubre, cada una con su
 // hora): `body.dates` es la lista de horas de pared, ordenada, y `body.hour`
 // siempre es la primera. Todo lo que lee una sola fecha (tope para confirmar,
 // dashboard del planner, side events de bodas) sigue leyendo `body.hour`.
@@ -138,7 +138,7 @@ export function lineasDeFechas(body, opts = {}) {
   });
 }
 
-// Mini itinerario de un Flash (`body.itinerary`: { id, name, time "HH:mm",
+// Mini itinerario de un Pop (`body.itinerary`: { id, name, time "HH:mm",
 // icon, date "YYYY-MM-DD" si hay varias fechas }), en el orden en que el
 // organizador lo acomodó (drag and drop en el editor).
 // Con varias fechas se agrupa por día, cada grupo con su título ("jue. 26 de

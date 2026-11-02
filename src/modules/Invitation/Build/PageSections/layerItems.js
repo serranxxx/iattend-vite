@@ -71,6 +71,27 @@ const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { deta
 // Agrega sin arrastrar (clic en el panel o ⌘V): la pieza elige la sección.
 export const addLayerItem = (item, section = null) => emit('iattend-layer-add', { item, section })
 
+// Celular (drawer de Elementos del editor de side events / Pop): tocar una
+// tarjeta la agrega, sin arrastre. No hace preventDefault, así el panel
+// sigue haciendo scroll: si el dedo se mueve (o el navegador toma el gesto,
+// pointercancel) no cuenta como toque.
+export const tocarParaAgregar = (e, onTap) => {
+    if (e.button !== 0) return
+    const sx = e.clientX
+    const sy = e.clientY
+    let movio = false
+    const onMove = (ev) => { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) movio = true }
+    const fin = () => {
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        window.removeEventListener('pointercancel', fin)
+    }
+    const onUp = () => { fin(); if (!movio) onTap?.() }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', fin)
+}
+
 // pointerdown sobre una tarjeta del panel. A la invitación solo se agrega
 // arrastrando; un clic sin arrastre llama `onTap` (p. ej. ponerlo como ícono
 // del momento elegido en el itinerario) y si no hay, no hace nada.

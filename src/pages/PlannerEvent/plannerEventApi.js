@@ -16,19 +16,19 @@ export const crearEventoGratis = async (payload) =>
 export const checkoutEvento = async (payload) =>
     axios.post(`${API_URL}/api/planner/eventos/checkout`, payload, { headers: await supabaseAuthHeaders() })
 
-// ── Eventos Flash (side events sin invitación) ──
+// ── Pops (side events sin invitación) ──
 
-export const fetchPrecioFlash = async () =>
-    axios.get(`${API_URL}/api/planner/flash/precio`, { headers: await supabaseAuthHeaders() })
+export const fetchPrecioPop = async () =>
+    axios.get(`${API_URL}/api/planner/pop/precio`, { headers: await supabaseAuthHeaders() })
 
-export const crearFlashGratis = async (payload) =>
-    axios.post(`${API_URL}/api/planner/flash`, payload, { headers: await supabaseAuthHeaders() })
+export const crearPopGratis = async (payload) =>
+    axios.post(`${API_URL}/api/planner/pop`, payload, { headers: await supabaseAuthHeaders() })
 
-export const checkoutFlash = async (payload) =>
-    axios.post(`${API_URL}/api/planner/flash/checkout`, payload, { headers: await supabaseAuthHeaders() })
+export const checkoutPop = async (payload) =>
+    axios.post(`${API_URL}/api/planner/pop/checkout`, payload, { headers: await supabaseAuthHeaders() })
 
-export const asignarClienteFlash = async (sideEventId, payload) =>
-    axios.post(`${API_URL}/api/planner/flash/${sideEventId}/cliente`, payload, { headers: await supabaseAuthHeaders() })
+export const asignarClientePop = async (sideEventId, payload) =>
+    axios.post(`${API_URL}/api/planner/pop/${sideEventId}/cliente`, payload, { headers: await supabaseAuthHeaders() })
 
 // Manda al cliente un evento creado "para enviar después": crea su cuenta y la
 // asigna a la invitación que ya existe.

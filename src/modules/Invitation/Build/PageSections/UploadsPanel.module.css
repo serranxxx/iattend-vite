@@ -402,3 +402,39 @@
 .paste:hover {
     background: #F5F3F2;
 }
+
+/* Pop: niveles de espacio para elegir (15 / 30 MB). */
+.buyOpciones {
+    display: flex;
+    gap: 6px;
+}
+
+.buyOpcion {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1.5px solid #E6E3DE;
+    border-radius: 12px;
+    background: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.buyOpcion strong {
+    font-size: 13px;
+}
+
+.buyOpcion span {
+    font-size: 11.5px;
+    color: #787878;
+}
+
+.buyOpcion[data-on] {
+    border-color: #29262D;
+    background: #FAF9F7;
+}
+

@@ -123,9 +123,11 @@ export const COLOR_POR_ANIO = {
     viejo: { color: MARCA.verde, oscuro: MARCA.oscuroNeutro },
 }
 
-// Ventas por plan (barras apiladas de un año en Ventas).
+// Ventas por plan (barras apiladas de un año en Ventas). 'Flash' es el valor
+// guardado en ventas.plan para un Pop (check de la tabla): se muestra "Pop".
 export const PLANES_DE_VENTA = ['PRO', 'Lite', 'Flash']
 export const COLOR_POR_PLAN = { PRO: MARCA.navy, Lite: MARCA.lila, Flash: MARCA.verde }
+export const nombreDePlan = (plan) => (plan === 'Flash' ? 'Pop' : plan)
 
 // Tooltip para gráficas sobre fondo navy: blanco con texto navy.
 export const tooltipOscuro = (tokens, formato) => ({

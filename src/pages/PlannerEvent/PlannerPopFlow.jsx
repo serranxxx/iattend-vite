@@ -5,26 +5,29 @@ import { formatMXN } from '../../hooks/usePlans'
 import {
     Screen, ScreenHeader, StickyFooter, PrimaryButton, Field, TextInput, Hint, Segmented, Steps, Card,
 } from '../../modules/Sales/SalesUi'
-import { checkoutFlash, crearFlashGratis, fetchBeneficios, fetchPrecioFlash } from './plannerEventApi'
+import { checkoutPop, crearPopGratis, fetchBeneficios, fetchPrecioPop } from './plannerEventApi'
 import salesStyles from '../../modules/Sales/VendorNewSale.module.css'
 import styles from './PlannerEventDrawer.module.css'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
- * Alta de un Evento Flash (side event sin invitación) dentro del drawer de
+ * Alta de un Pop (side event sin invitación) dentro del drawer de
  * PlannerEventDrawer. Pasos: para quién (para mí / a mi cliente ahora /
  * enviar después) → datos (nombre, fecha, hora) → pago o confirmación.
  *   modo 'compra' → Stripe con su descuento (lo crea el webhook).
- *   modo 'gratis' → consume uno de sus Eventos Flash gratis.
+ *   modo 'gratis' → consume uno de sus Pops gratis.
  * El diseño y los invitados se arman después en el editor de side events
- * (/dashboard/side?flash=<id>). Backend: helpers/flashEvent.js.
+ * (/dashboard/side?pop=<id>). Backend: helpers/popEvent.js.
  */
-export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) => {
+// `soloParaMi`: un cliente con Pops gratis (Admin → Usuarios › Clientes). Su
+// Pop siempre es para él: sin el paso "Para quién".
+export const PlannerPopFlow = ({ modo, soloParaMi = false, onBackToStart, onClose, onCreated }) => {
     const { t } = useTranslation()
     const raiz = useRef(null)
+    const inicio = soloParaMi ? 1 : 0
 
-    const [paso, setPaso] = useState(0)
+    const [paso, setPaso] = useState(inicio)
     const [destino, setDestino] = useState('mio')
     const [nombreCliente, setNombreCliente] = useState('')
     const [correoCliente, setCorreoCliente] = useState('')
@@ -44,12 +47,12 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
                 .then(({ data }) => setGratisDisponibles(data.beneficios?.free_flash_events ?? 0))
                 .catch(() => setGratisDisponibles(0))
         } else {
-            fetchPrecioFlash()
+            fetchPrecioPop()
                 .then(({ data }) => setPrecio(data))
                 .catch((err) => {
                     // Sin precio no se puede pagar: se dice por qué en vez de
                     // quedarse en "Cargando precio…".
-                    console.error('No se pudo cargar el precio del Evento Flash:', err.response?.status, err.response?.data || err.message)
+                    console.error('No se pudo cargar el precio del Pop:', err.response?.status, err.response?.data || err.message)
                     setPrecioError(err.response?.data?.msg || err.message)
                 })
         }
@@ -76,13 +79,13 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
         ...(destino === 'ahora' ? { correo_cliente: correoCliente.trim(), nombre_cliente: nombreCliente.trim() } : {}),
     })
 
-    const handleBack = () => (paso === 0 ? (onBackToStart ?? onClose)() : setPaso(paso - 1))
+    const handleBack = () => (paso === inicio ? (onBackToStart ?? onClose)() : setPaso(paso - 1))
     const handleNext = () => {
         if (!pasoCompleto) { setError(t('planner_event.err_required')); return }
         setPaso(paso + 1)
     }
 
-    // Administración puede crear sin costo (el backend no le gasta Flash gratis).
+    // Administración puede crear sin costo (el backend no le gasta Pop gratis).
     const esAdmin = JSON.parse(localStorage.getItem('session') || 'null')?.user?.role === 'Administration'
 
     const handleSubmit = async ({ sinCosto = false } = {}) => {
@@ -91,10 +94,10 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
         setSubmitting(true)
         try {
             if (modo === 'gratis' || sinCosto) {
-                const { data } = await crearFlashGratis(payload())
+                const { data } = await crearPopGratis(payload())
                 setCreado(data)
             } else {
-                const { data } = await checkoutFlash({ ...payload(), origin: window.location.origin })
+                const { data } = await checkoutPop({ ...payload(), origin: window.location.origin })
                 window.location.href = data.url
                 return
             }
@@ -115,15 +118,15 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
             )}>
                 <div className={styles.listo} ref={raiz}>
                     <span className={styles.listoIcono}><PartyPopper size={28} /></span>
-                    <h1 className={styles.listoTitulo}>{t('planner_flash.done_title')}</h1>
+                    <h1 className={styles.listoTitulo}>{t('planner_pop.done_title')}</h1>
                     <p className={styles.listoTexto}>
                         {creado.sin_cliente
-                            ? t('planner_flash.done_later')
+                            ? t('planner_pop.done_later')
                             : destino === 'ahora'
                                 ? (creado.cliente_existente
                                     ? t('planner_event.done_existing', { correo: correoCliente.trim() })
                                     : t('planner_event.done_new', { correo: correoCliente.trim() }))
-                                : t('planner_flash.done_mine')}
+                                : t(soloParaMi ? 'planner_pop.done_client' : 'planner_pop.done_mine')}
                     </p>
                 </div>
             </Screen>
@@ -145,7 +148,7 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
                     onClick={() => handleSubmit()}
                 >
                     {modo === 'gratis'
-                        ? t('planner_flash.submit_free')
+                        ? t('planner_pop.submit_free')
                         : t('planner_event.submit_pay', { amount: total != null ? formatMXN(total) : '' })}
                 </PrimaryButton>
             )}
@@ -161,30 +164,30 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
         <Screen embedded footer={footer}>
             <div ref={raiz} style={{ display: 'none' }} />
             <ScreenHeader
-                title={modo === 'gratis' ? t('planner_flash.title_free') : t('planner_event.title_buy')}
+                title={modo === 'gratis' ? t('planner_pop.title_free') : t('planner_event.title_buy')}
                 onBack={handleBack}
-                backLabel={paso === 0 ? t('planner_event.cancel') : t('planner_event.back')}
-                aside={t('planner_event.step_of', { n: paso + 1, total: 3 })}
+                backLabel={paso === inicio ? t('planner_event.cancel') : t('planner_event.back')}
+                aside={t('planner_event.step_of', { n: paso - inicio + 1, total: 3 - inicio })}
             />
             <Steps
-                current={paso}
-                labels={[t('planner_flash.step_for'), t('planner_flash.step_data'), modo === 'gratis' ? t('planner_event.step_confirm') : t('planner_event.step_payment')]}
+                current={paso - inicio}
+                labels={[t('planner_pop.step_for'), t('planner_pop.step_data'), modo === 'gratis' ? t('planner_event.step_confirm') : t('planner_event.step_payment')].slice(inicio)}
             />
 
             {paso === 0 && (
                 <>
                     <Segmented
-                        label={t('planner_flash.for_label')}
+                        label={t('planner_pop.for_label')}
                         value={destino}
                         onChange={setDestino}
                         options={[
-                            { value: 'mio', label: t('planner_flash.for_me') },
-                            { value: 'ahora', label: t('planner_flash.for_client') },
+                            { value: 'mio', label: t('planner_pop.for_me') },
+                            { value: 'ahora', label: t('planner_pop.for_client') },
                             { value: 'despues', label: t('planner_event.send_later') },
                         ]}
                     />
-                    {destino === 'mio' && <Hint>{t('planner_flash.for_me_hint')}</Hint>}
-                    {destino === 'despues' && <Hint>{t('planner_flash.later_hint')}</Hint>}
+                    {destino === 'mio' && <Hint>{t('planner_pop.for_me_hint')}</Hint>}
+                    {destino === 'despues' && <Hint>{t('planner_pop.later_hint')}</Hint>}
                     {destino === 'ahora' && (
                         <>
                             <Field label={t('planner_event.client_name')} htmlFor='pf-name'>
@@ -209,14 +212,14 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
 
             {paso === 1 && (
                 <>
-                    <Field label={t('planner_flash.name')} htmlFor='pf-nombre' hint={<Hint>{t('planner_flash.name_hint')}</Hint>}>
-                        <TextInput id='pf-nombre' maxLength={120} placeholder={t('planner_flash.name_placeholder')} value={nombre} onChange={(e) => setNombre(e.target.value)} />
+                    <Field label={t('planner_pop.name')} htmlFor='pf-nombre' hint={<Hint>{t('planner_pop.name_hint')}</Hint>}>
+                        <TextInput id='pf-nombre' maxLength={120} placeholder={t('planner_pop.name_placeholder')} value={nombre} onChange={(e) => setNombre(e.target.value)} />
                     </Field>
                     <div className={salesStyles.twoCols}>
                         <Field label={t('planner_event.event_date')} htmlFor='pf-fecha'>
                             <TextInput id='pf-fecha' type='date' className={salesStyles.dateInput} value={fecha} onChange={(e) => setFecha(e.target.value)} />
                         </Field>
-                        <Field label={t('planner_flash.hour')} htmlFor='pf-hora'>
+                        <Field label={t('planner_pop.hour')} htmlFor='pf-hora'>
                             <TextInput id='pf-hora' type='time' className={salesStyles.dateInput} value={hora} onChange={(e) => setHora(e.target.value)} />
                         </Field>
                     </div>
@@ -229,15 +232,15 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
                         <span className={styles.resumenIcono}><Zap size={20} /></span>
                         <div>
                             <strong>{nombre.trim()}</strong>
-                            <p>{t('planner_flash.summary_text')}</p>
+                            <p>{t('planner_pop.summary_text')}</p>
                         </div>
                     </div>
                     {modo === 'gratis' ? (
                         <>
                             <p className={styles.notaGratis}>
                                 {sinGratis
-                                    ? t('planner_flash.free_none_left')
-                                    : t('planner_flash.free_left', { count: Math.max((gratisDisponibles ?? 1) - 1, 0) })}
+                                    ? t('planner_pop.free_none_left')
+                                    : t('planner_pop.free_left', { count: Math.max((gratisDisponibles ?? 1) - 1, 0) })}
                             </p>
                             <div className={salesStyles.priceTotal}>
                                 <span>{t('planner_event.total')}</span>
@@ -262,9 +265,9 @@ export const PlannerFlashFlow = ({ modo, onBackToStart, onClose, onCreated }) =>
                             </div>
                         </>
                     ) : precioError ? (
-                        <Hint tone='error'>{t('planner_flash.price_error', { msg: precioError })}</Hint>
+                        <Hint tone='error'>{t('planner_pop.price_error', { msg: precioError })}</Hint>
                     ) : (
-                        <Hint>{t('planner_flash.price_loading')}</Hint>
+                        <Hint>{t('planner_pop.price_loading')}</Hint>
                     )}
                 </Card>
             )}

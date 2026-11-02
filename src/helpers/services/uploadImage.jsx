@@ -169,22 +169,22 @@ export const deleteImageFromSupabase = async (path, invitationID, setImages) => 
 
         const longpath = `https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/${path}`;
 
-        /* ─────────────── Evento Flash ─────────────── */
+        /* ─────────────── Pop ─────────────── */
         // Su carpeta es `flash-<side_event_id>`: no hay invitación detrás, y
         // buscarla como tal fallaba (no es un uuid) sin borrar nada.
         if (String(invitationID).startsWith('flash-')) {
-            const { data: flash, error: flashError } = await supabase
+            const { data: pop, error: popError } = await supabase
                 .from('side_events')
                 .select('*')
                 .eq('id', String(invitationID).slice('flash-'.length))
                 .maybeSingle();
 
-            if (flashError) {
-                console.error('Error al obtener el evento Flash:', flashError.message);
+            if (popError) {
+                console.error('Error al obtener el Pop:', popError.message);
                 message.error('Ocurrió un error al eliminar la imagen.');
                 return;
             }
-            if (flash && containsString(flash, longpath)) {
+            if (pop && containsString(pop, longpath)) {
                 message.error('La imagen está siendo usada en el evento. Quítala y guarda antes de eliminarla.');
                 return;
             }
@@ -532,7 +532,7 @@ export const uploadOnboardingPhoto = async (file) => {
 };
 
 
-/* ─────────────── Stickers (PNG de un Flash) ─────────────── */
+/* ─────────────── Stickers (PNG de un Pop) ─────────────── */
 // Un PNG pegado pesaba ~1 MB y en el teléfono nunca se ve a más de ~1200 px:
 // se guarda como WebP con transparencia de 1200 px como máximo (~100 KB).
 // Si el navegador no sabe codificar WebP (Safari viejo), queda PNG achicado.

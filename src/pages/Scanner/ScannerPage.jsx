@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 import { Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { ScannerSetup } from './ScannerSetup'
 import { ScannerList } from './ScannerList'
 import { CheckInSheet } from './CheckInSheet'
 import { ScanOverlay } from './ScanOverlay'
-import { beep, buildParties, claveFlash, findParty, firstName, formatEventDate, hhmm, isArrived, leerQr, norm, normGuest, tableTitle, unlockAudio } from './scannerUtils'
+import { beep, buildParties, clavePop, findParty, firstName, formatEventDate, hhmm, isArrived, leerQr, norm, normGuest, tableTitle, unlockAudio } from './scannerUtils'
 import styles from './Scanner.module.css'
 
 const BANNED_EMAILS = ['pa.perez98@gmail.com', 'pau@iattend.mx']
@@ -30,13 +31,13 @@ const useIsTablet = () => {
 export const ScannerPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const invitationId = searchParams.get('id')
-  // Eventos Flash (side event sin invitación): ?flash=<side_events.id>. Sus invitados viven en
+  // Pops (side event sin invitación): ?pop=<side_events.id>. Sus invitados viven en
   // side_events_guests y no tienen mesas; el QR de su pase trae "side:<id>" (ver leerQr).
-  const flashId = invitationId ? null : searchParams.get('flash')
-  const eventId = invitationId ?? flashId
-  const esFlash = !!flashId
-  const guestTable = esFlash ? 'side_events_guests' : 'guests'
-  const parentCol = esFlash ? 'side_events_id' : 'invitation_id'
+  const popId = invitationId ? null : searchParams.get('pop') ?? searchParams.get('flash')
+  const eventId = invitationId ?? popId
+  const esPop = !!popId
+  const guestTable = esPop ? 'side_events_guests' : 'guests'
+  const parentCol = esPop ? 'side_events_id' : 'invitation_id'
   const isTablet = useIsTablet()
 
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark')
@@ -80,7 +81,7 @@ export const ScannerPage = () => {
   guestsRef.current = guests
   tablesRef.current = tables
   soundRef.current = sound
-  eventRef.current = { id: eventId, flash: esFlash, table: guestTable, parent: parentCol }
+  eventRef.current = { id: eventId, pop: esPop, table: guestTable, parent: parentCol }
 
   const cols = () => hasArrivedAtRef.current ? `${BASE_COLS}, arrived_at` : BASE_COLS
 
@@ -95,16 +96,16 @@ export const ScannerPage = () => {
   // ───────────────────────────────────────────────────────
   const fetchEvents = async () => {
     setEventsLoading(true)
-    const [inv, flash] = await Promise.all([
+    const [inv, pop] = await Promise.all([
       supabase.from('invitations').select('id, name, user_email'),
       supabase.from('side_events').select('id, name, user_email').is('invitation_id', null),
     ])
     setEventsLoading(false)
     if (inv.error) { console.error('Error al obtener invitaciones:', inv.error); return }
-    if (flash.error) console.error('Error al obtener eventos Flash:', flash.error)
+    if (pop.error) console.error('Error al obtener Pops:', pop.error)
     setEvents([
       ...(inv.data ?? []).map(i => ({ ...i, kind: 'invitation', key: `inv-${i.id}` })),
-      ...(flash.data ?? []).map(f => ({ ...f, kind: 'flash', key: `flash-${f.id}` })),
+      ...(pop.data ?? []).map(f => ({ ...f, kind: 'flash', key: `flash-${f.id}` })),
     ].filter(e => !BANNED_EMAILS.includes(e.user_email)))
   }
 
@@ -127,15 +128,18 @@ export const ScannerPage = () => {
   }
 
   const fetchTables = async (id) => {
-    if (esFlash) { setTables([]); return }
+    if (esPop) { setTables([]); return }
     const { data, error } = await supabase.from('tables').select('id, number, name').eq('invitation_id', id)
     if (error) { console.error('Error al obtener mesas:', error); return }
     setTables([...(data ?? [])].sort((a, b) => (a.number ?? 0) - (b.number ?? 0)))
   }
 
   const fetchEventInfo = async (id) => {
-    if (esFlash) {
-      const { data } = await supabase.from('side_events').select('name, hour:body->>hour').eq('id', id).maybeSingle()
+    if (esPop) {
+      // RPC side_event_lector: el lector corre sin sesión y la anon key ya no
+      // lee la tabla side_events. Sin la RPC todavía (PGRST202), la tabla.
+      let { data, error } = await supabase.rpc('side_event_lector', { p_id: Number(id) }).maybeSingle()
+      if (error?.code === 'PGRST202') ({ data } = await supabase.from('side_events').select('name, hour:body->>hour').eq('id', id).maybeSingle())
       if (data?.name) setEventName(data.name)
       setEventMeta(formatEventDate(data?.hour))
       return
@@ -147,6 +151,18 @@ export const ScannerPage = () => {
       .maybeSingle()
     if (data?.name) setEventName(data.name)
     setEventMeta(formatEventDate(data?.cover_date))
+  }
+
+  // Bienvenida en el pase de Apple Wallet de quien llega, si lo agregó a su
+  // iPhone (iattend--backend, POST /api/wallet/bienvenida: una sola vez por
+  // pase y solo si ya quedó como asistente). Sin esperar ni avisar si falla.
+  const avisarLlegada = (ids) => {
+    if (!ids.length || !eventId) return
+    axios.post(`${import.meta.env.VITE_API_URL}/api/wallet/bienvenida`, {
+      kind: esPop ? 'side' : 'invitacion',
+      eventoId: eventId,
+      guestIds: ids,
+    }).catch(() => {})
   }
 
   // Escribe la llegada (o la quita) en Supabase con actualización optimista
@@ -163,6 +179,7 @@ export const ScannerPage = () => {
       showToast('No se pudo guardar. Revisa tu conexión.')
       return false
     }
+    if (arrived) avisarLlegada(ids)
     return true
   }
 
@@ -187,7 +204,7 @@ export const ScannerPage = () => {
 
     // Varios lectores pueden estar registrando a la vez: mantenemos la lista sincronizada
     const channel = supabase
-      .channel(esFlash ? `scanner_flash_${eventId}` : `scanner_guests_${eventId}`)
+      .channel(esPop ? `scanner_pop_${eventId}` : `scanner_guests_${eventId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: guestTable, filter: `${parentCol}=eq.${eventId}` }, (payload) => {
         const row = payload.new
         if (payload.eventType === 'DELETE') {
@@ -206,7 +223,7 @@ export const ScannerPage = () => {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [invitationId, flashId])
+  }, [invitationId, popId])
 
   useEffect(() => () => {
     stopScanner()
@@ -218,8 +235,8 @@ export const ScannerPage = () => {
   // ───────────────────────────────────────────────────────
   const handleLogin = () => {
     if (!selectedEvent) { setPinError('Selecciona tu evento.'); return }
-    const flash = selectedEvent.kind === 'flash'
-    const expected = flash ? claveFlash(selectedEvent.id) : String(selectedEvent.id).slice(0, 4).toLowerCase()
+    const pop = selectedEvent.kind === 'flash'
+    const expected = pop ? clavePop(selectedEvent.id) : String(selectedEvent.id).slice(0, 4).toLowerCase()
     if (pin.trim().toLowerCase() !== expected) {
       setPinError('Clave incorrecta. Son los 4 caracteres que te compartimos.')
       return
@@ -227,7 +244,7 @@ export const ScannerPage = () => {
     setPinError('')
     setPin('')
     setEventName(selectedEvent.name ?? '')
-    setSearchParams(flash ? { flash: String(selectedEvent.id) } : { id: String(selectedEvent.id) })
+    setSearchParams(pop ? { pop: String(selectedEvent.id) } : { id: String(selectedEvent.id) })
   }
 
   const handleLogout = async () => {
@@ -255,8 +272,8 @@ export const ScannerPage = () => {
   const handleShare = async () => {
     const id = String(eventId)
     const name = eventName || 'Evento'
-    const url = `https://www.iattend.site/scanner?${esFlash ? 'flash' : 'id'}=${id}`
-    const text = `Lector de pases · ${name}. Clave de acceso: ${esFlash ? claveFlash(id) : id.slice(0, 4)}`
+    const url = `https://www.iattend.site/scanner?${esPop ? 'pop' : 'id'}=${id}`
+    const text = `Lector de pases · ${name}. Clave de acceso: ${esPop ? clavePop(id) : id.slice(0, 4)}`
     try {
       if (navigator.share) {
         await navigator.share({ title: `Lector de pases · ${name}`, text, url })
@@ -326,10 +343,10 @@ export const ScannerPage = () => {
 
     const ev = eventRef.current
     const qr = leerQr(decodedText)
-    // Un Flash solo acepta su propio QR ("side:<id>") o el código del invitado; un número suelto es el
+    // Un Pop solo acepta su propio QR ("side:<id>") o el código del invitado; un número suelto es el
     // id de un invitado de boda y podría coincidir con otro de side_events_guests.
     // Una invitación rechaza los pases de side events por la misma razón.
-    const lookup = ev.flash
+    const lookup = ev.pop
       ? (qr.kind === 'side' ? ['id', qr.id] : typeof qr.id === 'string' && qr.id ? ['password', qr.id] : null)
       : (qr.kind === 'guest' ? ['id', qr.id] : null)
 
@@ -344,7 +361,7 @@ export const ScannerPage = () => {
     const guest = found && normGuest(found)
 
     if (error || !guest || String(guest[ev.parent]) !== String(ev.id)) {
-      setScanResult({ kind: 'bad', ...(qr.kind === 'side' && !ev.flash ? { sub: 'Este pase es de otro evento.' } : {}) })
+      setScanResult({ kind: 'bad', ...(qr.kind === 'side' && !ev.pop ? { sub: 'Este pase es de otro evento.' } : {}) })
       pushRecent('QR desconocido', 'bad')
       return
     }
@@ -372,6 +389,8 @@ export const ScannerPage = () => {
       pushRecent(guest.name, 'bad')
       return
     }
+
+    avisarLlegada([guest.id])
 
     const updated = { ...guest, ...patch }
     delete updated[ev.parent]
@@ -456,8 +475,8 @@ export const ScannerPage = () => {
     base.forEach(p => { if (p.status === 'done') counts.arrived++; else counts.pending++ })
     const rows = base.filter(p => matches(p, filter)).map(p => {
       const viaCompanion = q && !norm(p.primary.name).includes(q) ? p.members.find(m => norm(m.name).includes(q)) : null
-      // un Flash no tiene mesas: solo cuántas personas entran con el pase
-      const meta = esFlash
+      // un Pop no tiene mesas: solo cuántas personas entran con el pase
+      const meta = esPop
         ? (viaCompanion ? `Incluye a ${viaCompanion.name} · ` : '') + personasText(p.total)
         : viaCompanion
           ? `Incluye a ${viaCompanion.name} · ${tableText(p.table)}`
@@ -465,7 +484,7 @@ export const ScannerPage = () => {
       return { party: p, meta }
     })
     return { rows, counts }
-  }, [parties, query, tableFilter, filter, tableById, esFlash])
+  }, [parties, query, tableFilter, filter, tableById, esPop])
 
   const tableStats = useMemo(() => {
     const stats = new Map(tables.map(t => [t.id, { table: t, a: 0, n: 0 }]))
@@ -549,7 +568,7 @@ export const ScannerPage = () => {
         <CheckInSheet
           isTablet={isTablet}
           members={sheetMembers}
-          tableLabel={esFlash ? personasText(sheetMembers.length) : tableText(sheetMembers[0].table ?? sheetMembers.find(m => m.table != null)?.table, true)}
+          tableLabel={esPop ? personasText(sheetMembers.length) : tableText(sheetMembers[0].table ?? sheetMembers.find(m => m.table != null)?.table, true)}
           selected={sheet.selected}
           onToggle={(id) => setSheet(s => ({ ...s, selected: { ...s.selected, [id]: !s.selected[id] } }))}
           onSave={saveSheet}

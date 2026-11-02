@@ -1,8 +1,8 @@
 import { useId } from 'react'
-import { PINCEL, pathDe, temblor } from './dibujoData'
+import { aclarar, PINCEL, pathDe, temblor } from './dibujoData'
 
 /*
-  Dibujo a mano de un Flash (handoff "Herramienta Dibujar (pincel)"): cada
+  Dibujo a mano de un Pop (handoff "Herramienta Dibujar (pincel)"): cada
   trazo es un elemento más de la portada (`body.stickers[n].kind === 'dibujo'`)
   y se pinta como SVG, nítido en cualquier pantalla. Lo usan la pieza del
   editor (SideCanvas, también el trazo en curso) y las miniaturas de Capas.
@@ -33,12 +33,14 @@ export const TrazoSvg = ({ s, vbW, vbH, forced, preview = false }) => {
         // Solo en el trazo en curso: una guía de por dónde pasa el borrador.
         cuerpo = <path d={d} {...comun} stroke="rgba(255,255,255,0.55)" strokeWidth={ancho} strokeDasharray={`${ancho * 0.2} ${ancho * 0.5}`} />
     } else if (p.brillo && !forced) {
+        // Neón: un tubo casi blanco con la orilla del color y un halo del
+        // color, amplio y difuso, alrededor (como un letrero de neón).
         cuerpo = (
             <>
-                <path d={d} {...comun} stroke={color} strokeWidth={ancho} filter={`url(#b${id})`} />
-                <path d={d} {...comun} stroke={color} strokeWidth={ancho} filter={`url(#b${id})`} />
-                <path d={d} {...comun} stroke={color} strokeWidth={ancho} />
-                <path d={d} {...comun} stroke="#FFFFFF" strokeWidth={Math.max(1.5, s.size * 0.3)} />
+                <path d={d} {...comun} stroke={color} strokeWidth={ancho * 2.2} opacity={0.85} filter={`url(#b${id})`} />
+                <path d={d} {...comun} stroke={color} strokeWidth={ancho * 1.3} filter={`url(#c${id})`} />
+                <path d={d} {...comun} stroke={aclarar(color, 0.45)} strokeWidth={ancho} />
+                <path d={d} {...comun} stroke={aclarar(color, 0.9)} strokeWidth={ancho * 0.66} filter={`url(#n${id})`} />
             </>
         )
     } else if (p.grano && !forced) {
@@ -51,9 +53,17 @@ export const TrazoSvg = ({ s, vbW, vbH, forced, preview = false }) => {
         <svg viewBox={`0 0 ${vbW} ${vbH}`} width="100%" height="100%" overflow="visible" style={{ display: 'block', overflow: 'visible' }}>
             <defs>
                 {p.brillo && !forced && (
-                    <filter id={`b${id}`} filterUnits="userSpaceOnUse" x={-vbW} y={-vbH} width={vbW * 3} height={vbH * 3}>
-                        <feGaussianBlur stdDeviation={s.size * 1.1} />
-                    </filter>
+                    <>
+                        <filter id={`b${id}`} filterUnits="userSpaceOnUse" x={-vbW} y={-vbH} width={vbW * 3} height={vbH * 3}>
+                            <feGaussianBlur stdDeviation={ancho * 1.5} />
+                        </filter>
+                        <filter id={`c${id}`} filterUnits="userSpaceOnUse" x={-vbW} y={-vbH} width={vbW * 3} height={vbH * 3}>
+                            <feGaussianBlur stdDeviation={ancho * 0.45} />
+                        </filter>
+                        <filter id={`n${id}`} filterUnits="userSpaceOnUse" x={-vbW} y={-vbH} width={vbW * 3} height={vbH * 3}>
+                            <feGaussianBlur stdDeviation={ancho * 0.08} />
+                        </filter>
+                    </>
                 )}
                 {borrado && (
                     <mask id={`m${id}`} maskUnits="userSpaceOnUse" x={-vbW} y={-vbH} width={vbW * 3} height={vbH * 3}>

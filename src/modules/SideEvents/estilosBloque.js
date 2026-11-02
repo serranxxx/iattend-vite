@@ -1,6 +1,6 @@
 /*
-    Estilo de bloques de un Flash (handoff "Estilo de bloques del Evento
-    Flash"): la "piel" de todas las tarjetas de la página (confirmación,
+    Estilo de bloques de un Pop (handoff "Estilo de bloques del Evento
+    Pop"): la "piel" de todas las tarjetas de la página (confirmación,
     itinerario, mensaje, ubicación, asistentes, hojas y aviso). Se elige en el
     panel Diseño del editor y se guarda en body.blockStyle. Sin valor =
     "vidrio", lo de siempre.

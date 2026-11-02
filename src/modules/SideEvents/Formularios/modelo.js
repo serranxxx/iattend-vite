@@ -3,10 +3,10 @@ import {
 } from 'lucide-react'
 
 /*
-  Formularios propios de un Flash (handoff "Formularios propios en Eventos
-  Flash"). El organizador los arma desde cero en la vista completa
+  Formularios propios de un Pop (handoff "Formularios propios en Eventos
+  Pop"). El organizador los arma desde cero en la vista completa
   (FormularioVista.jsx) y quedan en "Mis formularios" (tabla forms, por
-  dueño). Cada Flash guarda en body.form { formId, snapshot, reglas }:
+  dueño). Cada Pop guarda en body.form { formId, snapshot, reglas }:
 
     items (forms.items)  lista plana para editar y reordenar:
       { id, kind: 'section', title }
@@ -127,6 +127,9 @@ export const reglasDefault = () => ({
     enabled: true,
     scope: 'persona',
     allowLater: true,
+    // Obligatorio: al confirmar se abre solo y no deja hacer nada más hasta
+    // responderlo (iattend-events, SideEvent.tsx → formObligatorio).
+    required: false,
     accepting: true,
     privacyUrl: '',
     folioPrefix: 'REG',

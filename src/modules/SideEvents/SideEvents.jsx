@@ -1,9 +1,12 @@
+import * as XLSX from 'xlsx'
+import { TablaInvitados } from './TablaInvitados'
 import { Badge, Button, Checkbox, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Slider, Spin, Switch, Tooltip } from 'antd'
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import '../GuestManagement/guests-redesign.css'
 import { LuImage, LuPlus, LuShoppingCart } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
+import { storageChanged } from '../../helpers/services/storageQuota'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
@@ -23,14 +26,13 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronDown, ChevronRight, ChevronUp, CircleHelp, Copy, Film, ImagePlus, Info, Loader2, Music, Music2, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Share2, Sparkles, Sticker, StickyNote, Trash2, Type, Users, X, ClipboardList } from 'lucide-react'
-import { ItinerarioFlash } from './ItinerarioFlash'
-import { StickersFlash } from './StickersFlash'
-import { ImagenLinkFlash } from './ImagenLinkFlash'
-import { CancionFlash } from './CancionFlash'
-import { ListaInvitadosFlash } from './ListaInvitadosFlash'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronDown, ChevronRight, ChevronUp, CircleHelp, Copy, Download, Film, Route, Table, GalleryHorizontal, ImagePlus, Info, Loader2, Music, Music2, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Sparkles, Sticker, StickyNote, Trash2, Type, Users, X, ClipboardList, RefreshCw } from 'lucide-react'
+import { ItinerarioPop } from './ItinerarioPop'
+import { StickersPop } from './StickersPop'
+import { CancionPop } from './CancionPop'
+import { ListaInvitadosPop } from './ListaInvitadosPop'
 import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from './efectosData'
-import { contarImagenes, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersFlashData'
+import { contarImagenes, duplicarStickers, MAX_STICKERS, nuevoSticker, quitarStickers } from './stickersPopData'
 import { subirSticker } from '../../helpers/services/uploadImage'
 import { SelectorColor } from './SelectorColor'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
@@ -48,14 +50,40 @@ import { SideEventsTour, SIDE_TOUR_STORAGE_KEY } from './SideEventsTour'
 import { SideWorkspace } from './Workspace/SideWorkspace'
 import wso from './Workspace/SideWorkspace.module.css'
 import ed from './SideEventEditor.module.css'
-import { EVENTO_CREDITOS_FLASH } from '../../components/Payment/CreditController/creditosFlash'
+import { EVENTO_CREDITOS_POP } from '../../components/Payment/CreditController/creditosPop'
 import sl from './SideEventsList.module.css'
 import { asistentesDe } from './datosAsistentes'
 import { MODOS_CLIMA, modoClima, parcheModoClima } from './tarjetasSide'
 import { FormularioPanel } from './Formularios/FormularioPanel'
+import { FormularioVista } from './Formularios/FormularioVista'
+import { useMisFormularios, useRespuestasFormulario } from './Formularios/useFormularios'
+import { formPublicado } from './Formularios/modelo'
+import { createPortal } from 'react-dom'
+import { componerPortada, firmaPortada, portadaConDiseno } from './componerPortada'
+import { VistaLinkWhatsApp } from './VistaLinkWhatsApp'
+import { EditorMovil } from './Movil/EditorMovil'
+import { InvitadosMovil } from './Movil/InvitadosMovil'
+import { codigoSide, urlSide } from '../../helpers/invitation/sideEventLink'
+import { EstadoGuardado } from './EstadoGuardado'
+import { CompartirPop } from './CompartirPop'
+import { ajusteDe, fotosDePortada, MAX_FOTOS_CARRUSEL, parcheFotos, soloVideos } from './fotosPortada'
+import { uploadImagesSupabase } from '../../helpers/services/uploadImage'
 
 
 const { Option } = Select;
+
+// Editor del celular: el nuevo (Movil/EditorMovil.jsx, la pieza como en web
+// sobre el tablero de puntos) o el modo "story" de antes, que se queda aquí
+// mientras sus herramientas pasan al nuevo.
+const EDITOR_MOVIL_NUEVO = true
+
+// Autoguardado del editor: cuánto después del último cambio se guarda (con
+// cambios seguidos, a lo más AUTOGUARDADO_MAX_MS desde el primero sin
+// guardar), y cuánto debe estar quieta la portada para rehacer la imagen del
+// link. ⌘S / Ctrl+S guarda en ese momento.
+const AUTOGUARDADO_MS = 5000
+const AUTOGUARDADO_MAX_MS = 30000
+const IMAGEN_LINK_MS = 20000
 
 
 
@@ -197,6 +225,10 @@ export const SideEvents = () => {
     // dejando el calendario muerto.
     const [rsvpPickerSlot, setRsvpPickerSlot] = useState(null)
     const [searchUser, setSearchUser] = useState(null)
+    // Invitados: vista por pasos (la de siempre) o compacta (una tabla con
+    // todo, TablaInvitados). Se recuerda en este navegador.
+    const [vistaInvitados, setVistaInvitados] = useState(() => (localStorage.getItem('iattend_vista_invitados_side') === 'compacta' ? 'compacta' : 'pasos'))
+    const cambiarVistaInvitados = (v) => { setVistaInvitados(v); localStorage.setItem('iattend_vista_invitados_side', v) }
     const [filterTag, setFilterTag] = useState(null)
     const [filterTier, setFilterTier] = useState(null)
     const [filterDelivery, setFilterDelivery] = useState(null)
@@ -231,21 +263,33 @@ export const SideEvents = () => {
     // event y se puede relanzar desde el "?" de la barra o de la escalera.
     const [tourOpen, setTourOpen] = useState(false)
     const [leaveMounted, setLeaveMounted] = useState(false)
+    // Autoguardado: 'pendiente' | 'guardando' | 'guardado' | 'error'.
+    const [estadoGuardado, setEstadoGuardado] = useState('guardado')
+    // Sube con cada cambio: un guardado solo limpia `dirty` si no hubo otro después.
+    const versionRef = useRef(0)
     const [leaveIn, setLeaveIn] = useState(false)
     const [leaving, setLeaving] = useState(false)
     const stageRef = useRef(null)
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
-    // Evento Flash (/dashboard/side?flash=<side_event_id>): un side event sin
+    // Pop (/dashboard/side?pop=<side_event_id>): un side event sin
     // invitación. Abre directo su editor y apaga lo que depende de una
     // invitación padre (plan, tope, importar invitados de la boda, etiquetas).
     // Los créditos son los del propio evento (side_events.credits); los envíos
-    // por WhatsApp todavía no están disponibles para Flash.
-    const flashId = searchParams.get("flash");
-    const esFlash = !!flashId;
-    const creditsTable = esFlash ? 'side_events' : 'invitations';
-    const creditsOwnerId = esFlash ? flashId : id;
-    const hasPendingInfo = !esFlash && (!invName || !invLabel || !invPhone || !invOwners?.length)
+    // por WhatsApp todavía no están disponibles para Pop.
+    const popId = searchParams.get("pop") ?? searchParams.get("flash");
+    const esPop = !!popId;
+    const creditsTable = esPop ? 'side_events' : 'invitations';
+    // Formulario del Pop en la vista compacta de invitados: sus respuestas
+    // (columna Formulario de TablaInvitados) y la vista completa del
+    // formulario abierta en las respuestas de un invitado (la misma que abre
+    // FormularioPanel).
+    const formPop = esPop && current?.body?.form?.enabled ? current.body.form : null
+    const { formularios: misFormularios, cambiarLocal: cambiarFormLocal, guardar: guardarForm } = useMisFormularios()
+    const { respuestas: respuestasForm, cargar: recargarRespuestas } = useRespuestasFormulario(current?.id, Boolean(formPop))
+    const [vistaFormulario, setVistaFormulario] = useState(null) // { tab, guestId }
+    const creditsOwnerId = esPop ? popId : id;
+    const hasPendingInfo = !esPop && (!invName || !invLabel || !invPhone || !invOwners?.length)
     const navigate = useNavigate()
     const { subscribe } = useDashboardRealtime()
     const [drawerState, setDrawerState] = useState({
@@ -457,8 +501,8 @@ export const SideEvents = () => {
         setCreditSending(t('guests.reminder_sending_label'))
         try {
             const payload = {
-                // Un Evento Flash no tiene invitación: va solo con sideEventId
-                invitationId: esFlash ? null : id,
+                // Un Pop no tiene invitación: va solo con sideEventId
+                invitationId: esPop ? null : id,
                 guestId: guest.id,
                 guestName: guest.name,
                 guestPhone: guest.phone_number.replace(/^\+/, ""),
@@ -497,7 +541,7 @@ export const SideEvents = () => {
                             parameters: [
                                 {
                                     type: "text",
-                                    text: `side-event/${current?.id}?password=${guest.password}`,
+                                    text: `side-event/${codigoSide(current)}?password=${guest.password}`,
                                 },
                             ],
                         },
@@ -656,8 +700,8 @@ export const SideEvents = () => {
         to: guest?.phone_number?.replace(/^\+/, ""),
         type: "template",
         template: {
-            // Evento Flash: siempre invitation_retry (solo el nombre del evento).
-            name: esFlash ? "invitation_retry" : current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
+            // Pop: siempre invitation_retry (solo el nombre del evento).
+            name: esPop ? "invitation_retry" : current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
             language: { code: "es_MX" },
             components: [
                 {
@@ -668,7 +712,7 @@ export const SideEvents = () => {
                 },
                 {
                     type: "body",
-                    parameters: esFlash
+                    parameters: esPop
                         ? [{ type: "text", text: `${current?.name}`.replace(/[\n\r]/g, " ") }]
                         : [
                             { type: "text", text: `${current?.name}`.replace(/[\n\r]/g, " ") },
@@ -681,7 +725,7 @@ export const SideEvents = () => {
                     sub_type: "url",
                     index: "0",
                     parameters: [
-                        { type: "text", text: `side-event/${current?.id}?password=${guest.password}` },
+                        { type: "text", text: `side-event/${codigoSide(current)}?password=${guest.password}` },
                     ],
                 },
             ],
@@ -690,25 +734,25 @@ export const SideEvents = () => {
 
     // Reserva de créditos del lote en un solo UPDATE; el backend reembolsa los
     // fallidos al cerrar el lote.
-    // Evento Flash: resta de un solo golpe (RPC consume_side_event_credits,
+    // Pop: resta de un solo golpe (RPC consume_side_event_credits,
     // migración 2026-10-10g del backend). null = el RPC aún no existe y se
     // sigue con leer y escribir.
-    const consumirCreditosFlash = async (amount) => {
-        const { data, error } = await supabase.rpc('consume_side_event_credits', { p_side_event_id: Number(flashId), p_amount: amount })
+    const consumirCreditosPop = async (amount) => {
+        const { data, error } = await supabase.rpc('consume_side_event_credits', { p_side_event_id: Number(popId), p_amount: amount })
         if (error) {
-            if (error.code !== 'PGRST202') console.error('Error al descontar créditos del Evento Flash:', error)
+            if (error.code !== 'PGRST202') console.error('Error al descontar créditos del Pop:', error)
             return error.code === 'PGRST202' ? null : credits
         }
         const restantes = Array.isArray(data) ? data[0] : data
         setCredits(restantes ?? 0)
         // El contador de la barra (CreditController) no recibe Realtime de
         // side_events: se le avisa directo con el saldo nuevo.
-        window.dispatchEvent(new CustomEvent(EVENTO_CREDITOS_FLASH, { detail: { id: String(flashId), credits: restantes ?? 0 } }))
+        window.dispatchEvent(new CustomEvent(EVENTO_CREDITOS_POP, { detail: { id: String(popId), credits: restantes ?? 0 } }))
         return restantes ?? 0
     }
 
     const onReserveCredits = async (amount) => {
-        if (esFlash && (await consumirCreditosFlash(amount)) != null) return
+        if (esPop && (await consumirCreditosPop(amount)) != null) return
         const { data, error } = await supabase
             .from(creditsTable)
             .select('credits')
@@ -760,7 +804,7 @@ export const SideEvents = () => {
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/bulk`,
-                { invitationId: esFlash ? null : id, sideEventId: current.id, items }
+                { invitationId: esPop ? null : id, sideEventId: current.id, items }
             )
 
             if (response.data.ok) {
@@ -870,7 +914,7 @@ export const SideEvents = () => {
     }
 
     const sideLinkFor = (record) =>
-        `https://www.iattend.events/side-event/${current?.id}?password=${record.password}`
+        `${urlSide(current)}?password=${record.password}`
 
     // Estado de entrega del tab "Esperando respuesta": etiqueta ya traducida y
     // tono que hereda el borde de la tarjeta.
@@ -952,17 +996,17 @@ export const SideEvents = () => {
             </Tooltip>
         )
 
-        // Un Evento Flash no tiene otro lugar desde donde mandar su WhatsApp
+        // Un Pop no tiene otro lugar desde donde mandar su WhatsApp
         // (en los side events normales solo se marca a mano): aquí lleva el
         // botón de envío, con sus créditos propios. aria-disabled para que el
         // Tooltip con el motivo se vea.
-        if (!esFlash) return marcar
+        if (!esPop) return marcar
 
         const nacional = /^\+52\d+/.test(record.phone_number ?? '')
         const motivo = !nacional
             ? t('guests.tooltip_national_only')
             : credits <= 0
-                ? t('side_events.flash_no_credits')
+                ? t('side_events.pop_no_credits')
                 : ''
 
         return (
@@ -975,7 +1019,7 @@ export const SideEvents = () => {
                         onClick={() => {
                             if (motivo) return
                             onSedingInvitation(current, record)
-                                .catch(() => message.error(t('side_events.flash_send_error')))
+                                .catch(() => message.error(t('side_events.pop_send_error')))
                         }}
                     >
                         {t('guests.btn_send_invitation')}
@@ -1157,6 +1201,57 @@ export const SideEvents = () => {
         )
     }
 
+    // Descargables: la lista de cada paso en Excel, como en los invitados de
+    // la invitación (GuestsPage → exportFlatGuestsToExcel). "Es acompañante
+    // de" sale del titular (companion_id es texto en side_events_guests).
+    const descargarInvitados = (estados, archivo) => {
+        const nombrePorId = new Map(rawData.map((g) => [String(g.id), g.name]))
+        const filas = rawData
+            .filter((g) => estados.includes(g.state))
+            .map((g) => ({
+                Nombre: g.name ?? '',
+                Contacto: g.phone_number ?? '',
+                Estado: t(`guests.step_label_${g.state === 'asistente' ? 'confirmado' : g.state}`, { defaultValue: g.state ?? '' }),
+                Etiqueta: g.tag ?? '',
+                Prioridad: g.tier ?? '',
+                Código: g.password ?? '',
+                'Es acompañante de': g.companion_id != null ? (nombrePorId.get(String(g.companion_id)) ?? '') : '',
+                ...(g.arrived_at ? { Llegada: dayjs(g.arrived_at).format('DD/MM/YYYY HH:mm') } : {}),
+            }))
+        const hoja = XLSX.utils.json_to_sheet(filas)
+        const libro = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(libro, hoja, 'Invitados')
+        XLSX.writeFile(libro, archivo)
+    }
+
+    const DESCARGAS = [
+        { label: 'step_label_creado', estados: ['creado'], archivo: 'Por-invitar.xlsx' },
+        { label: 'step_label_esperando', estados: ['esperando'], archivo: 'Esperando-respuesta.xlsx' },
+        { label: 'step_label_confirmado', estados: ['confirmado', 'asistente'], archivo: 'Confirmados.xlsx' },
+        { label: 'step_label_rechazado', estados: ['rechazado'], archivo: 'No-asistiran.xlsx' },
+    ]
+
+    const renderDownloadsPanel = () => (
+        <div className="gx-filters-panel gx-downloads-panel">
+            <span className="gx-downloads-title">{t('guests.download_title')}</span>
+            {DESCARGAS.map((d) => {
+                const total = rawData.filter((g) => d.estados.includes(g.state)).length
+                return (
+                    <button
+                        key={d.label}
+                        type="button"
+                        className="gx-downloads-row"
+                        disabled={total === 0}
+                        onClick={() => descargarInvitados(d.estados, `${(current?.name || 'Evento').replace(/[\\/:*?"<>|]+/g, '')} - ${d.archivo}`)}
+                    >
+                        <span>{t(`guests.${d.label}`)} <span className="gx-downloads-count">{total}</span></span>
+                        <span className="gx-downloads-icon"><Download size={15} /></span>
+                    </button>
+                )
+            })}
+        </div>
+    )
+
     // Escalera de pasos (sin Resumen: los side events no tienen ese tab)
     const STEP_DEFS = [
         { key: 'creado', step: 'step_one', label: 'step_label_creado' },
@@ -1318,11 +1413,11 @@ export const SideEvents = () => {
                             companions: [],
                             visible: true
                         })}
-                        onFile={(file) => esFlash
-                            ? message.info(t('side_events.flash_import_soon'))
+                        onFile={(file) => esPop
+                            ? message.info(t('side_events.pop_import_soon'))
                             : navigate(`/dashboard/guests/import?id=${id}&side_events_id=${current?.id}`, { state: { file } })}
-                        // Copiar la lista de la boda: un Evento Flash no tiene boda.
-                        topExtra={esFlash ? null : (
+                        // Copiar la lista de la boda: un Pop no tiene boda.
+                        topExtra={esPop ? null : (
                             <Dropdown
                                 key={1}
                                 trigger={['click']}
@@ -1396,28 +1491,138 @@ export const SideEvents = () => {
                     />
                 )}
             >
-                <button type="button" className="gx-tool gx-tool--primary" data-tour="se-add">
+                <button type="button" className="gx-tool gx-tool--primary gx-tool--agregar" data-tour="se-add" aria-label={t('side_events.btn_add')}>
                     <Plus size={15} />
-                    <span>{t('side_events.btn_add')}</span>
+                    <span className="gx-tool-texto">{t('side_events.btn_add')}</span>
                 </button>
             </Dropdown>
     )
 
+    const renderSearchBox = () => (
+        <div className="gx-search" data-tour="se-search">
+            <Search size={16} />
+            <input
+                value={searchUser ?? ''}
+                onChange={(e) => setSearchUser(e.target.value)}
+                placeholder={t('guests.search_placeholder')}
+            />
+            {searchUser && (
+                <button type="button" className="gx-search-clear" onClick={() => setSearchUser(null)}>
+                    <X size={14} />
+                </button>
+            )}
+        </div>
+    )
+
+    const renderDownloadsButton = () => (
+        <Dropdown trigger={['click']} placement="bottomRight" popupRender={renderDownloadsPanel}>
+            <button type="button" className="gx-tool" aria-label={t('guests.btn_downloads')}>
+                <Download size={15} />
+                <span>{t('guests.btn_downloads')}</span>
+            </button>
+        </Dropdown>
+    )
+
+    const renderFiltersButton = () => (
+        <Dropdown trigger={['click']} placement="bottomRight" popupRender={renderFiltersPanel}>
+            <button type="button" className="gx-tool" data-active={activeFilterCount > 0 || undefined} data-tour="se-filters">
+                {t('guests.filters')}
+                {activeFilterCount > 0 && <span className="gx-tool-count">{activeFilterCount}</span>}
+            </button>
+        </Dropdown>
+    )
+
+    // Vista compacta: solo buscador, descargar y agregar (sin Filtros: el
+    // estado y lo demás se ordenan con su columna). Los filtros de Pasos no
+    // aplican aquí; el buscador sí.
+    const invitadosCompacta = rawData.filter((g) => {
+        const q = searchUser?.toLowerCase() || ''
+        return !q || (g.name?.toLowerCase() || '').includes(q) || (g.phone_number?.toString() || '').includes(searchUser)
+    })
+
+    // Descarga directa de toda la tabla compacta (lo que se ve, con el
+    // buscador), en Excel y con sus mismas columnas.
+    const descargarTablaCompacta = () => {
+        const nombrePorId = new Map(rawData.map((g) => [String(g.id), g.name]))
+        const respuestaDe = new Map((respuestasForm ?? []).map((r) => [String(r.guestId), r]))
+        const fecha = (iso) => (iso && dayjs(iso).isValid() ? dayjs(iso).format('DD/MM/YYYY HH:mm') : '')
+        const titulares = invitadosCompacta.filter((g) => g.companion_id == null || !invitadosCompacta.some((x) => String(x.id) === String(g.companion_id)))
+        const ordenados = titulares.flatMap((g) => [g, ...invitadosCompacta.filter((x) => x.companion_id != null && String(x.companion_id) === String(g.id))])
+        const filas = ordenados.map((g) => {
+            const r = respuestaDe.get(String(g.id))
+            const status = dispatchMap[g.id]?.status
+            return {
+                Nombre: g.name ?? '',
+                Estado: t(`guests.state_${g.state}`, { defaultValue: g.state ?? '' }),
+                Teléfono: g.phone_number ?? '',
+                Código: g.password ?? '',
+                'Acompañante de': g.companion_id != null ? (nombrePorId.get(String(g.companion_id)) ?? '') : '',
+                Etiqueta: g.tag ?? '',
+                Prioridad: g.tier ?? '',
+                WhatsApp: status && status !== 'undefined' ? t(`guests.msg_${status}`, { defaultValue: status }) : '',
+                Enviado: fecha(g.invitation_sent_at),
+                'Última acción': fecha(g.last_update_date),
+                Llegada: fecha(g.arrived_at),
+                ...(formPop ? { Formulario: r ? (r.estado === 'completo' ? (r.folio || t('guests.compact_form_done')) : t('guests.compact_form_pending')) : '' } : {}),
+            }
+        })
+        const hoja = XLSX.utils.json_to_sheet(filas)
+        const libro = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(libro, hoja, 'Invitados')
+        XLSX.writeFile(libro, `${(current?.name || 'Evento').replace(/[\\/:*?"<>|]+/g, '')} - Invitados.xlsx`)
+    }
+
+    // Recargar la tabla: invitados, estatus de WhatsApp y, con formulario,
+    // sus respuestas (por si algo cambió fuera de este editor).
+    const [refrescando, setRefrescando] = useState(false)
+    const refrescarTabla = async () => {
+        if (refrescando) return
+        setRefrescando(true)
+        try {
+            await Promise.all([getGuests(), getMessagesUpdates(), formPop ? recargarRespuestas?.() : null])
+        } finally {
+            setRefrescando(false)
+        }
+    }
+    const renderRefreshButton = () => (
+        <Tooltip title={t('guests.refresh')}>
+            <button
+                type="button"
+                className="gx-tool gx-tool--icon gx-tool--refresh"
+                aria-label={t('guests.refresh')}
+                data-cargando={refrescando || undefined}
+                disabled={refrescando}
+                onClick={refrescarTabla}
+            >
+                <RefreshCw size={15} />
+            </button>
+        </Tooltip>
+    )
+
+    const renderCompactToolbar = () => (
+        <div className="gx-compact-bar">
+            <div className="gx-toolbar">
+                {renderSearchBox()}
+                <Tooltip title={t('guests.compact_download')}>
+                    <button
+                        type="button"
+                        className="gx-tool gx-tool--icon"
+                        aria-label={t('guests.compact_download')}
+                        disabled={invitadosCompacta.length === 0}
+                        onClick={descargarTablaCompacta}
+                    >
+                        <Download size={15} />
+                    </button>
+                </Tooltip>
+                {renderRefreshButton()}
+            </div>
+        </div>
+    )
+
     const renderTabToolbar = (tabKey) => (
         <div className="gx-toolbar">
-            <div className="gx-search" data-tour="se-search">
-                <Search size={16} />
-                <input
-                    value={searchUser ?? ''}
-                    onChange={(e) => setSearchUser(e.target.value)}
-                    placeholder={t('guests.search_placeholder')}
-                />
-                {searchUser && (
-                    <button type="button" className="gx-search-clear" onClick={() => setSearchUser(null)}>
-                        <X size={14} />
-                    </button>
-                )}
-            </div>
+            {renderSearchBox()}
+            {renderDownloadsButton()}
 
             {tabKey === 'esperando' && (
                 <button
@@ -1430,16 +1635,11 @@ export const SideEvents = () => {
                 </button>
             )}
 
-            <Dropdown trigger={['click']} placement="bottomRight" popupRender={renderFiltersPanel}>
-                <button type="button" className="gx-tool" data-active={activeFilterCount > 0 || undefined} data-tour="se-filters">
-                    {t('guests.filters')}
-                    {activeFilterCount > 0 && <span className="gx-tool-count">{activeFilterCount}</span>}
-                </button>
-            </Dropdown>
+            {renderFiltersButton()}
+            {renderRefreshButton()}
 
             {/* El envío masivo sigue tras SHOW_BULK_SEND: hoy solo hay envío manual */}
             {tabKey === 'creado' && renderBulkActionsBar()}
-            {tabKey === 'creado' && !sendMode && renderAddGuestButton()}
         </div>
     )
 
@@ -1514,14 +1714,14 @@ export const SideEvents = () => {
     )
 
     const getMessagesUpdates = async () => {
-        // Un Evento Flash no tiene invitación para la RPC: el último envío de
+        // Un Pop no tiene invitación para la RPC: el último envío de
         // cada invitado sale directo de sus dispatches (vienen del más nuevo
         // al más viejo, así que el primero por invitado es el vigente).
-        if (esFlash) {
+        if (esPop) {
             const { data, error } = await supabase
                 .from('invitation_message_dispatches')
                 .select('guest_id, status, created_at')
-                .eq('side_event_id', flashId)
+                .eq('side_event_id', popId)
                 .order('created_at', { ascending: false })
             if (error) return
             const vistos = new Set()
@@ -1570,9 +1770,9 @@ export const SideEvents = () => {
 
     const onSedingInvitation = async (data, guest, retry = false) => {
         // Plantilla invitation_retry: la de los reintentos y la de todo envío de
-        // un Evento Flash. El crédito sí se cobra en un Flash (solo el reintento
+        // un Pop. El crédito sí se cobra en un Pop (solo el reintento
         // es gratis).
-        const plantillaCorta = retry || esFlash
+        const plantillaCorta = retry || esPop
         if (hasPendingInfo) {
             message.warning('Completa la información pendiente de tu invitación antes de enviar.')
             return
@@ -1593,10 +1793,10 @@ export const SideEvents = () => {
             try {
                 const payload = {
 
-                    invitationId: esFlash ? null : id,
-                    // Solo un Flash (sin invitación) necesita el side event
+                    invitationId: esPop ? null : id,
+                    // Solo un Pop (sin invitación) necesita el side event
                     // para el registro del envío.
-                    ...(esFlash ? { sideEventId: data.id } : {}),
+                    ...(esPop ? { sideEventId: data.id } : {}),
                     guestId: guest.id,
                     guestName: guest.name,
                     guestPhone: guest.phone_number.replace(/^\+/, ""),
@@ -1607,7 +1807,7 @@ export const SideEvents = () => {
                     // Tres variantes sobre el mismo endpoint/registro (igual que
                     // GuestsPage): retry → invitation_retry; con rsvp_deadline del
                     // side event → invitation_deadline ({{3}} = fecha límite);
-                    // sin fecha → invitation_v2. Los Eventos Flash siempre van
+                    // sin fecha → invitation_v2. Los Pops siempre van
                     // con invitation_retry (solo {{1}} = nombre del evento).
                     template: {
                         name: plantillaCorta ? "invitation_retry" : current?.rsvp_deadline ? "invitation_deadline" : "invitation_v2",
@@ -1659,7 +1859,7 @@ export const SideEvents = () => {
                                 parameters: [
                                     {
                                         type: "text",
-                                        text: `side-event/${data?.id}?password=${guest.password}`,
+                                        text: `side-event/${codigoSide(data)}?password=${guest.password}`,
                                     },
                                 ],
                             },
@@ -1700,7 +1900,7 @@ export const SideEvents = () => {
 
     const getSideEvents = async () => {
         const base = supabase.from('side_events').select('*')
-        const { data, error } = await (esFlash ? base.eq('id', flashId) : base.eq('invitation_id', id))
+        const { data, error } = await (esPop ? base.eq('id', popId) : base.eq('invitation_id', id))
 
         if (error) {
             console.error(error)
@@ -1742,9 +1942,9 @@ export const SideEvents = () => {
     }
 
     const getCredits = async () => {
-        if (esFlash) {
-            // Créditos propios del Evento Flash; sin plan ni tope que mostrar.
-            const { data } = await supabase.from('side_events').select('credits').eq('id', flashId).maybeSingle()
+        if (esPop) {
+            // Créditos propios del Pop; sin plan ni tope que mostrar.
+            const { data } = await supabase.from('side_events').select('credits').eq('id', popId).maybeSingle()
             setPlan('pro')
             setSideEventsCap(1)
             setCredits(data?.credits ?? 0)
@@ -1822,19 +2022,90 @@ export const SideEvents = () => {
         setSelectedId(data.id)
     }
 
-    const saveSideEvent = async () => {
+    // Imagen del link de un Pop (y la foto del pase de Apple Wallet si el
+    // organizador no le puso una propia). Con imagen propia (`body.linkImage`,
+    // herramienta "Imagen del link") es esa. Si no: con foto (o sin fondo) es la portada con
+    // todo lo que tiene encima (componerPortada), y se vuelve a armar solo si
+    // la portada cambió desde la última vez (`body.linkFirma`); sin nada
+    // encima, es la foto. Con video es la imagen que el organizador elige para
+    // el link (`body.image`), tal cual: los elementos van sobre el video. Si
+    // falla (p. ej. una imagen sin CORS) se guarda con la que ya tenía.
+    // `silencioso` (autoguardado): sin el aviso "Actualizando la imagen del
+    // link…" (en el celular tapaba el header mientras se editaba).
+    const imagenDelLink = async (body, { silencioso = false } = {}) => {
+        if (!esPop) return { url: current.url_image, linkFirma: undefined }
+        // Imagen propia del link (herramienta "Imagen del link", LinkPanel).
+        if (body.linkImage) return { url: body.linkImage, linkFirma: null }
+        if (soloVideos(body)) {
+            if (!body.image) message.warning(t('side_events.link_video_pick'))
+            return { url: body.image || current.url_image, linkFirma: null }
+        }
+        const firma = firmaPortada(body)
+        if (body.linkFirma === firma && current.url_image) return { url: current.url_image, linkFirma: firma }
+        if (!portadaConDiseno(body)) return { url: body.image || current.url_image, linkFirma: firma }
+        const aviso = silencioso ? () => {} : message.loading(t('side_events.link_updating'), 0)
+        try {
+            const fondo = body.image ? { tipo: 'imagen', url: body.image, ajuste: ajusteDe(body, body.image) } : null
+            const archivo = await componerPortada({ fondo, stickers: body.stickers ?? [], color: body.color, veil: body.veil, titleFont: body.title?.font })
+            const url = await uploadImagesSupabase({ file: archivo, invitationID: `flash-${popId}`, setImages: () => {} })
+            return url ? { url, linkFirma: firma } : { url: current.url_image, linkFirma: body.linkFirma }
+        } catch (err) {
+            console.error('No se pudo armar la imagen del link:', err)
+            return { url: current.url_image, linkFirma: body.linkFirma }
+        } finally {
+            aviso()
+        }
+    }
+
+    // Imagen del link armada sola (`<fecha>-portada.jpg` en flash-<id>/): cada
+    // vez que se rehace sube una nueva (URL nueva, así WhatsApp y Wallet no
+    // se quedan con la de caché) y, ya guardada, se borran las anteriores
+    // de Subidos, salvo que algo del Pop la siga usando.
+    // `urlAnterior`: la imagen del link que se acaba de reemplazar (se sabe que
+    // era automática); las demás se reconocen por su nombre.
+    const limpiarImagenesDelLink = async (popIdLimpiar, urlActual, bodyGuardado, urlAnterior) => {
+        try {
+            const carpeta = `flash-${popIdLimpiar}`
+            const { data } = await supabase.storage.from('user_images').list(carpeta, { limit: 1000 })
+            const enUso = new Set([
+                urlActual, bodyGuardado?.image, bodyGuardado?.linkImage, bodyGuardado?.wallet?.image,
+                ...(bodyGuardado?.images ?? []),
+                ...(bodyGuardado?.stickers ?? []).map((x) => x.url),
+            ].filter(Boolean).map((u) => decodeURIComponent(String(u).split('?')[0].split('/').pop())))
+            const nombre = urlAnterior ? decodeURIComponent(String(urlAnterior).split('?')[0].split('/').pop()) : null
+            const nombreAnterior = nombre && /-(portada|imagen-del-link)\.jpg$/i.test(nombre) ? nombre : null
+            const viejas = (data ?? [])
+                .filter((f) => (/-imagen-del-link\.jpg$/i.test(f.name) || f.name === nombreAnterior) && !enUso.has(f.name))
+                .map((f) => `${carpeta}/${f.name}`)
+            if (!viejas.length) return
+            await supabase.storage.from('user_images').remove(viejas)
+            storageChanged()
+        } catch (err) {
+            console.error('No se pudieron limpiar las imágenes viejas del link:', err)
+        }
+    }
+
+    // `conImagen: false` (autoguardado): no rehace la imagen del link (se arma
+    // con html2canvas y se sube); se queda la que había y su firma.
+    // `silencioso`: sin el mensaje "Guardado" (lo dice el indicador).
+    const saveSideEvent = async ({ conImagen = true, silencioso = false } = {}) => {
         if (!current?.id) return false;
 
+        const link = conImagen
+            ? await imagenDelLink(current.body ?? {}, { silencioso })
+            : { url: current.url_image, linkFirma: undefined }
         const body = {
             ...current.body,
             timezone: getTimezoneForState(current.body?.address?.state),
+            ...(link.linkFirma !== undefined ? { linkFirma: link.linkFirma } : {}),
         };
+        const urlImage = link.url ?? (current.url_image === null ? current.body.image : current.url_image)
 
         const { error } = await supabase
             .from('side_events')
             .update({
                 name: current.name,
-                url_image: current.url_image === null ? current.body.image : current.url_image,
+                url_image: urlImage,
                 body,
             })
             .eq('id', current.id);
@@ -1846,8 +2117,13 @@ export const SideEvents = () => {
         }
 
         // La tarjeta del listado también refleja el cambio sin recargar
-        setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, name: current.name, body } : se))
-        message.success(t('side_events.saved'))
+        setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, name: current.name, body, url_image: urlImage } : se))
+        // Ya guardada la nueva imagen del link, fuera las anteriores (sin esperar).
+        // La anterior solo si era la automática (había firma) y cambió.
+        const anteriorAutomatica = current.body?.linkFirma && current.url_image !== urlImage ? current.url_image : null
+        if (esPop && popId) limpiarImagenesDelLink(popId, urlImage, body, anteriorAutomatica)
+        setCurrent((prev) => (prev?.id === current.id ? { ...prev, url_image: urlImage, body: { ...prev.body, linkFirma: body.linkFirma } } : prev))
+        if (!silencioso) message.success(t('side_events.saved'))
         return true;
     };
 
@@ -1862,23 +2138,11 @@ export const SideEvents = () => {
         }
     };
 
+    // El link del evento solo se copia (sin la hoja de compartir del sistema).
     const handleShare = async (url) => {
         if (hasPendingInfo) {
             message.warning('Completa la información pendiente de tu invitación antes de compartir el link.')
             return
-        }
-        const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-        if (isMobileDevice && navigator.share) {
-            try {
-                await navigator.share({
-                    title: current?.name ?? 'Evento',
-                    text: '¡Te invitamos a un evento especial!',
-                    url,
-                });
-                return;
-            } catch (err) {
-                if (err.name === 'AbortError') return;
-            }
         }
         await copyToClipboard(url);
     };
@@ -1904,8 +2168,8 @@ export const SideEvents = () => {
     }
 
     const getMainGuests = async () => {
-        // Un Evento Flash no tiene invitación de donde copiar invitados.
-        if (esFlash) return
+        // Un Pop no tiene invitación de donde copiar invitados.
+        if (esPop) return
 
         try {
             const { data, error } = await supabase
@@ -2148,7 +2412,7 @@ export const SideEvents = () => {
     }
 
     const onUpdateCredits = async () => {
-        if (esFlash && (await consumirCreditosFlash(1)) != null) return
+        if (esPop && (await consumirCreditosPop(1)) != null) return
         // 1. Obtener créditos actuales
         const { data, error } = await supabase
             .from(creditsTable)
@@ -2200,10 +2464,10 @@ export const SideEvents = () => {
         text.length > max ? text.slice(0, max) + '...' : text;
 
     const handleImages = (e) => {
-        updateCurrent((prev) => ({ ...prev, body: { ...prev.body, image: e } }))
+        updateCurrent((prev) => ({ ...prev, body: { ...prev.body, image: e, images: undefined } }))
     }
 
-    // Candado de un Flash: privado (`type: 'closed'`, entra cada invitado con
+    // Candado de un Pop: privado (`type: 'closed'`, entra cada invitado con
     // su código) o público (`'open'`, cualquiera con el link entra y confirma
     // dando su nombre y sus acompañantes; ver iattend-events SideEvent.tsx y
     // /api/side-events/:id/confirmacion-publica). Se guarda al momento: decide
@@ -2224,7 +2488,7 @@ export const SideEvents = () => {
         setCurrent((prev) => ({ ...prev, type: nuevo }))
         message.success(t(nuevo === 'open' ? 'side_events.access_now_public' : 'side_events.access_now_private'))
     }
-    const botonAcceso = (className, conTexto) => esFlash && (
+    const botonAcceso = (className, conTexto) => esPop && (
         <Tooltip title={t(esPublico ? 'side_events.access_public_hint' : 'side_events.access_private_hint')}>
             <button
                 className={className}
@@ -2295,12 +2559,12 @@ export const SideEvents = () => {
         getCredits()
         getSideEvents()
         getMessagesUpdates()
-    }, [id, flashId])
+    }, [id, popId])
 
-    // Evento Flash: no hay listado, se entra directo a su editor.
+    // Pop: no hay listado, se entra directo a su editor.
     useEffect(() => {
-        if (esFlash && sideEvent?.length && !current) openSideEvent(sideEvent[0])
-    }, [esFlash, sideEvent])
+        if (esPop && sideEvent?.length && !current) openSideEvent(sideEvent[0])
+    }, [esPop, sideEvent])
 
 
     // Si hay un lote de envío masivo en curso para este side event (p. ej. tras
@@ -2386,7 +2650,7 @@ export const SideEvents = () => {
     }, [sideEvent])
 
     useEffect(() => {
-        if (!id && !esFlash) return;
+        if (!id && !esPop) return;
 
         const u1 = subscribe('side_events_guests', (payload) => {
             const sideEventId = payload.new?.side_events_id ?? payload.old?.side_events_id;
@@ -2400,7 +2664,7 @@ export const SideEvents = () => {
         const u2 = subscribe('invitation_message_dispatches', (payload) => {
             const row = payload.new || payload.old;
             if (!row) return;
-            if (esFlash ? String(row.side_event_id) !== String(flashId) : String(row.invitation_id) !== String(id)) return;
+            if (esPop ? String(row.side_event_id) !== String(popId) : String(row.invitation_id) !== String(id)) return;
             getMessagesUpdates()
             getGuests(currentRef.current?.id)
         });
@@ -2441,12 +2705,14 @@ export const SideEvents = () => {
         currentRef.current = next
         setCurrent(next)
         setDirty(true)
+        versionRef.current += 1
     }
 
     const applyHistory = (entry) => {
         currentRef.current = entry
         setCurrent(entry)
         setDirty(true)
+        versionRef.current += 1
         setStickerSel([])
     }
     const onUndo = () => {
@@ -2503,6 +2769,7 @@ export const SideEvents = () => {
         setActiveTab('diseno')
         setLive(false)
         setDirty(false)
+        setEstadoGuardado('guardado')
         resetHistory()
     }
 
@@ -2607,8 +2874,8 @@ export const SideEvents = () => {
     }
 
     const closeToList = () => {
-        // Un Evento Flash no tiene listado: regresa a la página de invitaciones.
-        if (esFlash) return navigate('/invitations')
+        // Un Pop no tiene listado: regresa a la página de invitaciones.
+        if (esPop) return navigate('/invitations')
         startMorph('out', current)
         setMorphedIn(false)
         closeEditor()
@@ -2655,13 +2922,68 @@ export const SideEvents = () => {
         resetHistory()
     }
 
-    const handleSave = async () => {
+    // ── Autoguardado (ya no hay botón Guardar) ──
+    // AUTOGUARDADO_MS después del último cambio se guarda en silencio
+    // (debounce: no en cada acción); si se sigue editando sin parar, a los
+    // AUTOGUARDADO_MAX_MS del primer cambio sin guardar. Si llegan cambios mientras guarda, se queda `dirty` y se
+    // guardan en la siguiente pasada (`versionRef`). La imagen del link se
+    // rehace aparte: tras IMAGEN_LINK_MS sin tocar la portada y al salir.
+    const guardandoRef = useRef(false)
+    const guardarAhora = async ({ conImagen = false } = {}) => {
+        if (guardandoRef.current) {
+            // Ya hay uno en curso: se intenta otra vez en un momento.
+            await new Promise((r) => setTimeout(r, 400))
+            return guardarAhora({ conImagen })
+        }
+        guardandoRef.current = true
         setSaving(true)
-        const ok = await saveSideEvent()
+        setEstadoGuardado('guardando')
+        const version = versionRef.current
+        const ok = await saveSideEvent({ conImagen, silencioso: true })
+        guardandoRef.current = false
         setSaving(false)
-        if (ok) setDirty(false)
-        return ok
+        if (!ok) { setEstadoGuardado('error'); return false }
+        if (versionRef.current === version) {
+            setDirty(false)
+            setEstadoGuardado('guardado')
+        }
+        return true
     }
+    const handleSave = () => guardarAhora({ conImagen: true })
+
+    const sinGuardarDesdeRef = useRef(null)
+    useEffect(() => {
+        if (!current?.id || !dirty) { sinGuardarDesdeRef.current = null; return undefined }
+        setEstadoGuardado('pendiente')
+        sinGuardarDesdeRef.current ??= Date.now()
+        const espera = Math.min(AUTOGUARDADO_MS, Math.max(0, sinGuardarDesdeRef.current + AUTOGUARDADO_MAX_MS - Date.now()))
+        const timer = setTimeout(() => { sinGuardarDesdeRef.current = null; guardarAhora() }, espera)
+        return () => clearTimeout(timer)
+    }, [current, dirty])
+
+    // ⌘S / Ctrl+S: guardar ya (sin esperar el autoguardado), con la imagen
+    // del link al día. Sin cambios pendientes no hace nada (pero tampoco deja
+    // que el navegador abra "Guardar página").
+    const guardarRef = useRef(null)
+    useEffect(() => { guardarRef.current = () => { if (dirty || estadoGuardado === 'error' || imagenLinkVieja(current)) { sinGuardarDesdeRef.current = null; guardarAhora({ conImagen: true }) } } })
+    useEffect(() => {
+        const onKey = (e) => {
+            if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || e.key?.toLowerCase() !== 's') return
+            e.preventDefault()
+            guardarRef.current?.()
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [])
+
+    // Imagen del link de un Pop: cuando la portada lleva un rato quieta y su
+    // firma ya no es la de la imagen guardada.
+    const imagenLinkVieja = (c) => Boolean(esPop && c?.body && !c.body.linkImage && c.body.linkFirma !== firmaPortada(c.body))
+    useEffect(() => {
+        if (!current?.id || !imagenLinkVieja(current)) return undefined
+        const timer = setTimeout(() => { if (!dirty) guardarAhora({ conImagen: true }) }, IMAGEN_LINK_MS)
+        return () => clearTimeout(timer)
+    }, [current, dirty])
 
     // ── Salir con cambios sin guardar ──
     // Diálogo propio: se queda montado mientras sale para que se vea la
@@ -2671,10 +2993,18 @@ export const SideEvents = () => {
         setTimeout(() => setLeaveMounted(false), 220)
     }
 
-    const handleBack = () => {
-        if (!dirty) return closeToList()
-        setLeaveMounted(true)
-        setTimeout(() => setLeaveIn(true), 20)
+    // Salir: primero termina de guardar (y rehace la imagen del link si hace
+    // falta); el aviso de cambios sin guardar solo sale si no se pudo.
+    const handleBack = async () => {
+        if (dirty || saving || imagenLinkVieja(currentRef.current ?? current)) {
+            const ok = await guardarAhora({ conImagen: true })
+            if (!ok) {
+                setLeaveMounted(true)
+                setTimeout(() => setLeaveIn(true), 20)
+                return
+            }
+        }
+        closeToList()
     }
 
     const saveAndLeave = async () => {
@@ -2758,9 +3088,9 @@ export const SideEvents = () => {
         // cuando ya hay side event: sin eso la medida se quedaba en 0
     }, [isMobile, activeTab, live, current?.id])
 
-    // Editor móvil (modo story): la franja de la barra de estado es del mismo
-    // negro que el editor, no el blanco de la página, y nada hace zoom al
-    // escribir.
+    // Editor móvil: la franja de la barra de estado es del color del editor
+    // (blanco en el nuevo, EditorMovil; negro en el modo story viejo) y nada
+    // hace zoom al escribir.
     const editorMovil = !!current && isMobile
     useEffect(() => {
         if (!editorMovil) return
@@ -2771,12 +3101,16 @@ export const SideEvents = () => {
         // pantalla al tocarlos. maximum-scale=1 apaga ese zoom automático;
         // iOS sigue dejando pellizcar para acercar a mano.
         const viewport = document.querySelector('meta[name="viewport"]')
-        const antes = { fondo: html.style.backgroundColor, meta: meta?.getAttribute('content'), viewport: viewport?.getAttribute('content') }
-        html.style.backgroundColor = '#0B0A0E'
-        meta?.setAttribute('content', '#0B0A0E')
+        const antes = { fondo: html.style.backgroundColor, fondoBody: document.body.style.backgroundColor, meta: meta?.getAttribute('content'), viewport: viewport?.getAttribute('content') }
+        const color = EDITOR_MOVIL_NUEVO ? '#FFFFFF' : '#0B0A0E'
+        html.style.backgroundColor = color
+        // También el body: Safari toma de él el color de su barra de abajo.
+        document.body.style.backgroundColor = color
+        meta?.setAttribute('content', color)
         viewport?.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1')
         return () => {
             html.style.backgroundColor = antes.fondo
+            document.body.style.backgroundColor = antes.fondoBody
             if (antes.meta) meta?.setAttribute('content', antes.meta)
             if (antes.viewport) viewport?.setAttribute('content', antes.viewport)
         }
@@ -2787,7 +3121,7 @@ export const SideEvents = () => {
 
     const sendOpen = activeTab === 'envio'
 
-    const publicUrl = `https://www.iattend.events/side-event/${current?.id}`
+    const publicUrl = urlSide(current)
 
     /* ── Cabecera común de cada bloque ── */
     const blockHead = (icon, title, hint, action = null) => (
@@ -2802,13 +3136,13 @@ export const SideEvents = () => {
     )
 
     /* ── Atajos de escritura sobre `current` ── */
-    // PNG seleccionados de un Flash (ids): los comparten la pieza (arrastrar) y el panel.
+    // PNG seleccionados de un Pop (ids): los comparten la pieza (arrastrar) y el panel.
     const [stickerSel, setStickerSel] = useState([])
-    // Imagen o video de fondo de un Flash; null = lo que diga el evento.
+    // Imagen o video de fondo de un Pop; null = lo que diga el evento.
     const [modoFondoElegido, setModoFondoElegido] = useState(null)
     const setBody = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, ...patch } }))
 
-    // Pegar una imagen (⌘V / Ctrl+V) en un Flash la sube y la agrega como PNG,
+    // Pegar una imagen (⌘V / Ctrl+V) en un Pop la sube y la agrega como PNG,
     // como un sticker en una historia de Instagram: abre el panel de
     // elementos y la deja seleccionada para arrastrarla en la pieza.
     const pegandoRef = useRef(false)
@@ -2822,7 +3156,7 @@ export const SideEvents = () => {
         const aviso = message.loading(t('side_events.stickers_paste_uploading'), 0)
         try {
             // Se sube aligerado (WebP de ≤1200 px): pegado pesaba ~1 MB.
-            const url = await subirSticker(archivo, `flash-${flashId}`)
+            const url = await subirSticker(archivo, `flash-${popId}`)
             if (!url) return
             const nuevo = nuevoSticker(url)
             updateCurrent((prev) => ({
@@ -2866,7 +3200,7 @@ export const SideEvents = () => {
     }
 
     useEffect(() => {
-        if (!esFlash || activeTab !== 'diseno' || live) return
+        if (!esPop || activeTab !== 'diseno' || live) return
         const onPaste = (e) => {
             const destino = e.target
             if (destino?.closest?.('input, textarea, [contenteditable="true"]')) return
@@ -2877,18 +3211,19 @@ export const SideEvents = () => {
         }
         window.addEventListener('paste', onPaste)
         return () => window.removeEventListener('paste', onPaste)
-    }, [esFlash, activeTab, live, flashId, current?.body?.stickers?.length])
+    }, [esPop, activeTab, live, popId, current?.body?.stickers?.length])
 
     const setTitleProp = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body?.title, ...patch } } }))
     const setAddress = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body?.address, ...patch } } }))
 
     /* ── Paneles del inspector: uno por elemento del lienzo ── */
 
-    // Fondo de un Flash: imagen o video (como el Save the Date). El video va en
+    // Fondo de un Pop: imagen o video (como el Save the Date). El video va en
     // `body.video`; con video, `body.image` es la imagen fija: se ve mientras
     // carga y es la que sale al compartir el link (WhatsApp no reproduce
     // video). Los side events de una boda siguen solo con imagen.
-    const modoFondo = modoFondoElegido ?? (current?.body?.video ? 'video' : 'image')
+    const fotosFondo = fotosDePortada(current?.body)
+    const modoFondo = modoFondoElegido ?? (current?.body?.video ? 'video' : fotosFondo.length > 1 ? 'carousel' : 'image')
     const miniaturaImagen = (labelQuitar) => current?.body?.image &&
         <div className={ed.thumb}>
             <img src={current.body.image} alt='' />
@@ -2904,31 +3239,26 @@ export const SideEvents = () => {
             </div>
         </div>
 
-    // "Crear desde mi diseño": la imagen del link con el fondo elegido y los
-    // PNG de la pieza (ImagenLinkFlash). Solo toca url_image.
-    const generadorLink = esFlash && (
-        <ImagenLinkFlash
-            body={current?.body}
-            carpeta={`flash-${flashId}`}
-            onLista={(url) => updateCurrent((prev) => ({ ...prev, url_image: url }))}
-        />
-    )
-
     const panelBackground = (
         <>
             {blockHead(<ImagePlus size={16} />, t('side_events.panel_background'), t('side_events.panel_background_hint'))}
 
-            {esFlash && (
+            {esPop && (
                 <Segmented
                     block
                     value={modoFondo}
                     onChange={(valor) => {
                         setModoFondoElegido(valor)
-                        // Volver a imagen quita el video; la imagen se queda.
-                        if (valor === 'image' && current?.body?.video) setBody({ video: null })
+                        // Volver a imagen o a carrusel quita el video (la imagen se
+                        // queda); volver a imagen deja solo la primera foto.
+                        const parche = {}
+                        if (valor !== 'video' && current?.body?.video) parche.video = null
+                        if (valor === 'image' && fotosFondo.length > 1) Object.assign(parche, parcheFotos(fotosFondo.slice(0, 1)))
+                        if (Object.keys(parche).length) setBody(parche)
                     }}
                     options={[
                         { value: 'image', label: t('side_events.media_image'), icon: <ImagePlus size={14} /> },
+                        { value: 'carousel', label: t('side_events.media_carousel'), icon: <GalleryHorizontal size={14} /> },
                         { value: 'video', label: t('savethedate.media_video'), icon: <Film size={14} /> },
                     ]}
                 />
@@ -2947,7 +3277,7 @@ export const SideEvents = () => {
                         }
                         <div className={ed.uploadTile}>
                             <StorageImages
-                                invitationID={`flash-${flashId}`}
+                                invitationID={`flash-${popId}`}
                                 mediaType='video'
                                 handleImage={(url) => { if (url) setBody({ video: url }) }}
                             />
@@ -2955,21 +3285,22 @@ export const SideEvents = () => {
                     </div>
                     {!current?.body?.video && <span className={ed.hint}>{t('side_events.video_hint')}</span>}
 
-                    {/* Imagen para el link: es la que se comparte (url_image, la
-                        misma de "Personaliza tu link") y también el cuadro fijo
-                        del video mientras carga (body.image). */}
+                    {/* Imagen para el link: con video la elige el organizador.
+                        Es la que se comparte y la foto del pase (url_image, al
+                        guardar) y el cuadro fijo del video mientras carga
+                        (body.image). */}
                     <div className={ed.fieldStack}>
                         <span className={ed.fieldLabel}>{t('savethedate.poster_label')}</span>
-                        <span className={ed.hint}>{t('savethedate.poster_hint')}</span>
+                        <span className={ed.hint}>{t(current?.body?.image ? 'savethedate.poster_hint' : 'side_events.link_video_pick')}</span>
                         <div className={ed.thumbRow}>
-                            {(current?.url_image || current?.body?.image) &&
+                            {current?.body?.image &&
                                 <div className={ed.thumb}>
-                                    <img src={current.url_image || current.body.image} alt='' />
+                                    <img src={current.body.image} alt='' />
                                 </div>
                             }
                             <div className={ed.uploadTile}>
                                 <StorageImages
-                                    invitationID={`flash-${flashId}`}
+                                    invitationID={`flash-${popId}`}
                                     handleImage={(url) => {
                                         if (!url) return
                                         updateCurrent((prev) => ({ ...prev, url_image: url, body: { ...prev.body, image: url } }))
@@ -2978,7 +3309,44 @@ export const SideEvents = () => {
                                 />
                             </div>
                         </div>
-                        {generadorLink}
+                    </div>
+                </>
+            ) : modoFondo === 'carousel' ? (
+                // Carrusel (fotosPortada.js): la primera es la del link y el pase.
+                <>
+                    <div className={ed.thumbRow}>
+                        {fotosFondo.map((url, i) => (
+                            <div key={url + i} className={ed.thumb}>
+                                <img src={url} alt='' />
+                                <div className={ed.thumbActions}>
+                                    <Button
+                                        size='small'
+                                        type='text'
+                                        aria-label={t('side_events.carousel_remove')}
+                                        style={{ color: '#FFF' }}
+                                        icon={<Trash2 size={16} />}
+                                        onClick={() => setBody(parcheFotos(fotosFondo.filter((_, j) => j !== i)))}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        {fotosFondo.length < MAX_FOTOS_CARRUSEL && (
+                            <div className={ed.uploadTile}>
+                                <StorageImages
+                                    invitationID={`flash-${popId}`}
+                                    type={'side-events'}
+                                    handleImage={(url) => {
+                                        if (!url) return
+                                        updateCurrent((prev) => ({ ...prev, body: { ...prev.body, ...parcheFotos([...fotosDePortada(prev.body), url]) } }))
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <span className={ed.hint}>{t('side_events.carousel_hint')}</span>
+                    <div className={ed.fieldStack}>
+                        <span className={ed.fieldLabel}>{t('savethedate.poster_label')}</span>
+                        <VistaLinkWhatsApp current={current} url={publicUrl} nota={t('side_events.link_auto_short')} />
                     </div>
                 </>
             ) : (
@@ -2986,25 +3354,17 @@ export const SideEvents = () => {
                     <div className={ed.thumbRow}>
                         {miniaturaImagen(t('side_events.remove_image'))}
                         <div className={ed.uploadTile}>
-                            <StorageImages invitationID={esFlash ? `flash-${flashId}` : id} handleImage={handleImages} type={'side-events'} />
+                            <StorageImages invitationID={esPop ? `flash-${popId}` : id} handleImage={handleImages} type={'side-events'} />
                         </div>
                     </div>
 
                     <span className={ed.hint}>{t('side_events.panel_background_note')}</span>
 
-                    {/* Flash con imagen: la del link puede armarse desde la pieza. */}
-                    {esFlash && (
+                    {/* Pop con imagen: la del link se arma sola al guardar. */}
+                    {esPop && (
                         <div className={ed.fieldStack}>
                             <span className={ed.fieldLabel}>{t('savethedate.poster_label')}</span>
-                            <span className={ed.hint}>{t('side_events.link_poster_hint')}</span>
-                            {(current?.url_image || current?.body?.image) &&
-                                <div className={ed.thumbRow}>
-                                    <div className={ed.thumb}>
-                                        <img src={current.url_image || current.body.image} alt='' />
-                                    </div>
-                                </div>
-                            }
-                            {generadorLink}
+                            <VistaLinkWhatsApp current={current} url={publicUrl} nota={t('side_events.link_auto_short')} />
                         </div>
                     )}
                 </>
@@ -3080,7 +3440,7 @@ export const SideEvents = () => {
 
             <div className={ed.fieldStack}>
                 <span className={ed.fieldLabel}>{t('side_events.font_size')}</span>
-                <Slider min={flashId ? 14 : 36} max={64} step={2} value={current?.body?.title?.size ?? 36} onChange={(v) => setTitleProp({ size: v })} />
+                <Slider min={popId ? 14 : 36} max={64} step={2} value={current?.body?.title?.size ?? 36} onChange={(v) => setTitleProp({ size: v })} />
             </div>
 
             <div className={ed.fieldStack}>
@@ -3112,16 +3472,16 @@ export const SideEvents = () => {
 
             {/* Hora de pared: lo que se ve en el picker es lo que se guarda,
                 sin conversión de timezone (helpers/assets/eventDateTime.js).
-                Un Flash puede tener varias fechas, cada una con su hora. */}
-            {(esFlash ? (fechasDelEvento(current?.body).length ? fechasDelEvento(current?.body) : [null]) : [current?.body?.hour]).map((raw, i, lista) => {
+                Un Pop puede tener varias fechas, cada una con su hora. */}
+            {(esPop ? (fechasDelEvento(current?.body).length ? fechasDelEvento(current?.body) : [null]) : [current?.body?.hour]).map((raw, i, lista) => {
                 const cambiar = (valor) => {
-                    if (!esFlash) return setBody({ hour: valor })
+                    if (!esPop) return setBody({ hour: valor })
                     const nuevas = [...lista]
                     nuevas[i] = valor
                     setBody(cuerpoConFechas(nuevas))
                 }
                 return (
-                    <div className={esFlash ? ed.fechaFila : undefined} key={`${i}-${raw ?? 'vacia'}`}>
+                    <div className={esPop ? ed.fechaFila : undefined} key={`${i}-${raw ?? 'vacia'}`}>
                         {isMobile
                             ? <DateField
                                 type="datetime-local"
@@ -3138,7 +3498,7 @@ export const SideEvents = () => {
                                 onChange={(e) => cambiar(dayjsToWallClock(e))}
                             />
                         }
-                        {esFlash && lista.length > 1 && (
+                        {esPop && lista.length > 1 && (
                             <button
                                 type='button'
                                 className={ed.fechaQuitar}
@@ -3153,7 +3513,7 @@ export const SideEvents = () => {
             })}
 
             {/* Otra fecha: el día siguiente a la última, a la misma hora. */}
-            {esFlash && current?.body?.hour && (
+            {esPop && current?.body?.hour && (
                 <button
                     type='button'
                     className={ed.fechaAgregar}
@@ -3248,7 +3608,7 @@ export const SideEvents = () => {
         </>
     )
 
-    // Efectos animados de un Flash (EfectosCapa): partículas sobre la portada.
+    // Efectos animados de un Pop (EfectosCapa): partículas sobre la portada.
     const efecto = current?.body?.effect ?? null
     const panelEffects = (
         <>
@@ -3292,14 +3652,14 @@ export const SideEvents = () => {
         </>
     )
 
-    // Canción de un Flash, como la del Save the Date (CancionFlash).
+    // Canción de un Pop, como la del Save the Date (CancionPop).
     const panelSong = (
         <>
             {blockHead(<Music size={16} />, t('build_generals.label_song'), t('side_events.song_hint'))}
-            <CancionFlash
+            <CancionPop
                 song={current?.body?.song ?? null}
                 onChange={(song) => setBody({ song })}
-                carpeta={`flash-${flashId}`}
+                carpeta={`flash-${popId}`}
             />
         </>
     )
@@ -3317,7 +3677,7 @@ export const SideEvents = () => {
         </>
     )
 
-    // Asistentes de un Flash (opcional): el cuadro de quienes confirmaron y el
+    // Asistentes de un Pop (opcional): el cuadro de quienes confirmaron y el
     // selector de emoji / color al confirmar (iattend-events, SideEvent/Asistentes).
     const panelAttendees = (
         <>
@@ -3364,7 +3724,7 @@ export const SideEvents = () => {
         </>
     )
 
-    // Formulario (Flash): el mismo panel que en el escritorio
+    // Formulario (Pop): el mismo panel que en el escritorio
     // (Formularios/FormularioPanel.jsx); crear, editar y ver respuestas abre
     // la vista completa encima.
     const panelRegistration = (
@@ -3375,32 +3735,32 @@ export const SideEvents = () => {
         />
     )
 
-    // Mini itinerario de un Flash (ItinerarioFlash.jsx): se muestra arriba de
+    // Mini itinerario de un Pop (ItinerarioPop.jsx): se muestra arriba de
     // "Cómo llegar" en el orden en que se acomoda.
-    const diasDelFlash = [...new Set(fechasDelEvento(current?.body).map(f => String(f).slice(0, 10)))]
+    const diasDelPop = [...new Set(fechasDelEvento(current?.body).map(f => String(f).slice(0, 10)))]
     const itinerario = Array.isArray(current?.body?.itinerary) ? current.body.itinerary : []
 
     const panelItinerary = (
         <>
             {blockHead(<ListOrdered size={16} />, t('side_events.panel_itinerary'), t('side_events.panel_itinerary_hint'))}
-            <ItinerarioFlash
+            <ItinerarioPop
                 itinerario={itinerario}
-                dias={diasDelFlash}
+                dias={diasDelPop}
                 onChange={(lista) => setBody({ itinerary: lista.length ? lista : null })}
             />
         </>
     )
 
-    // PNG sobre la portada de un Flash (StickersFlash.jsx).
+    // PNG sobre la portada de un Pop (StickersPop.jsx).
     const panelStickers = (
         <>
             {blockHead(<Sticker size={16} />, t('side_events.panel_stickers'), t('side_events.panel_stickers_hint'))}
-            <StickersFlash
+            <StickersPop
                 stickers={Array.isArray(current?.body?.stickers) ? current.body.stickers : []}
                 onChange={(lista) => setBody({ stickers: lista.length ? lista : null })}
                 seleccionados={stickerSel}
                 onSeleccionar={setStickerSel}
-                carpeta={`flash-${flashId}`}
+                carpeta={`flash-${popId}`}
                 movil={isMobile}
                 onPegar={puedeLeerPortapapeles ? pegarDesdePortapapeles : null}
             />
@@ -3429,8 +3789,8 @@ export const SideEvents = () => {
         { key: 'date', icon: <CalendarDays size={18} />, label: t('side_events.panel_date'), short: t('side_events.dock_date') },
         { key: 'place', icon: <MapPin size={18} />, label: t('side_events.panel_place'), short: t('side_events.dock_place') },
         { key: 'extras', icon: <StickyNote size={18} />, label: t('side_events.panel_notes'), short: t('side_events.dock_notes') },
-        // El mini itinerario es solo de los Flash.
-        ...(esFlash ? [
+        // El mini itinerario es solo de los Pops.
+        ...(esPop ? [
             { key: 'itinerary', icon: <ListOrdered size={18} />, label: t('side_events.panel_itinerary'), short: t('side_events.dock_itinerary') },
             { key: 'attendees', icon: <Users size={18} />, label: t('side_events.panel_attendees'), short: t('side_events.dock_attendees') },
             { key: 'registration', icon: <ClipboardList size={18} />, label: t('side_events.reg_title'), short: t('side_events.reg_title') },
@@ -3443,8 +3803,67 @@ export const SideEvents = () => {
     /* ── Envío: la lista de invitados que ya existe, en su columna ── */
     // (El lienzo, el riel y los paneles de escritorio viven en SideWorkspace;
     // PANELS y SECTIONS quedan para el editor móvil.)
-    const guestsList = (
-        <div className='gx'>
+    // `soloIconos`: el del encabezado compacto (sin texto, con tooltip).
+    const renderSelectorVista = (soloIconos = false) => (
+        <div className={`gx-view-toggle${soloIconos ? ' gx-view-toggle--iconos' : ''}`} role="radiogroup" aria-label={t('guests.view_label')}>
+            {[
+                { key: 'pasos', icon: <Route size={14} />, label: t('guests.view_steps') },
+                { key: 'compacta', icon: <Table size={14} />, label: t('guests.view_compact') },
+            ].map((v) => (
+                <Tooltip key={v.key} title={v.label}>
+                    <button
+                        type="button"
+                        role="radio"
+                        aria-checked={vistaInvitados === v.key}
+                        aria-label={v.label}
+                        data-active={vistaInvitados === v.key || undefined}
+                        onClick={() => cambiarVistaInvitados(v.key)}
+                    >
+                        {v.icon}<span>{v.label}</span>
+                    </button>
+                </Tooltip>
+            ))}
+        </div>
+    )
+
+    // `key` por vista: al cambiar de Pasos a Compacta (o al revés) se monta de
+    // nuevo y entra con su transición (gx-vista-entra).
+    const guestsList = vistaInvitados === 'compacta' ? (
+        <div key='compacta' className='gx gx--compacta gx-vista-entra'>
+            {renderCompactToolbar()}
+            <TablaInvitados
+                invitados={invitadosCompacta}
+                todos={rawData}
+                dispatchMap={dispatchMap}
+                onCopyLink={(g) => handleShare(sideLinkFor(g))}
+                onOpen={openGuestDrawer}
+                formulario={formPop ? {
+                    // guestId llega como texto del backend: la llave es String(id).
+                    porInvitado: new Map((respuestasForm ?? []).map((r) => [String(r.guestId), r])),
+                    onAbrir: (g) => setVistaFormulario({ tab: 'responses', guestId: String(g.id) }),
+                } : null}
+            />
+            {vistaFormulario && formPop && createPortal(
+                <FormularioVista
+                    inicial={vistaFormulario}
+                    formulario={(misFormularios ?? []).find((f) => f.id === formPop.formId) ?? null}
+                    reglas={formPop}
+                    publicado={formPublicado(formPop)}
+                    updateForm={(fn, opts) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)}
+                    cambiarLocal={cambiarFormLocal}
+                    guardar={guardarForm}
+                    respuestas={respuestasForm}
+                    recargar={recargarRespuestas}
+                    eventoId={current?.id}
+                    fondo={current?.body?.image}
+                    onCopiar={() => setVistaFormulario(null)}
+                    onClose={() => setVistaFormulario(null)}
+                />,
+                document.body,
+            )}
+        </div>
+    ) : (
+        <div key='pasos' className='gx gx-vista-entra'>
             {renderStepBar()}
             {renderTabHero(activeKey)}
             {renderTabToolbar(activeKey)}
@@ -3455,17 +3874,35 @@ export const SideEvents = () => {
         </div>
     )
 
+    // Encabezado de Invitados (las dos vistas): título a la izquierda y a la
+    // derecha la vista (solo íconos) | los envíos (créditos) del Pop y Agregar.
+    const headCompacto = (
+        <div className="gx-compact-head">
+            <div className="gx-compact-head-text">
+                <span className="gx-compact-head-title">{t('side_events.guests_title')}</span>
+                <span className="gx-compact-head-hint">{t('side_events.guests_hint')}</span>
+            </div>
+            <div className="gx-compact-head-actions">
+                {renderSelectorVista(true)}
+                {esPop && (
+                    <>
+                        <span className="gx-compact-head-divider" aria-hidden />
+                        <CreditController id={popId} pop variante="envios" />
+                    </>
+                )}
+                {renderAddGuestButton()}
+            </div>
+        </div>
+    )
+
     const sendContent = (
         <div
             className={`${ed.block} ${ed.sendCol} ${ed.sendColIn}`}
-            style={{ width: '100%', height: '100%' }}
+            // Sin el margen de .sendCol (era para ir junto al teléfono): con
+            // width 100 % se salía 16 px a la derecha de la columna.
+            style={{ width: '100%', height: '100%', marginLeft: 0 }}
         >
-            {blockHead(
-                <Send size={16} />,
-                t('side_events.guests_title'),
-                t('side_events.guests_hint'),
-                <span className={ed.countPill}>{rawData.length}</span>
-            )}
+            {headCompacto}
 
             <div className={`${ed.sendBody} scroll-invitation`}>
                 {guestsList}
@@ -3995,7 +4432,7 @@ export const SideEvents = () => {
     /* ── Piezas que viven fuera del layout y se usan en las dos vistas ── */
     const globals = (
         <>
-                <GuestsCRUD rowData={rawData} invitationID={esFlash ? null : id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} oscuro={esFlash && isMobile} />
+                <GuestsCRUD rowData={rawData} invitationID={esPop ? null : id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} oscuro={esPop && isMobile && !EDITOR_MOVIL_NUEVO} />
 
                 {/* Isla de progreso del envío masivo (estilo dynamic island) */}
                 {activeBatch && (
@@ -4051,8 +4488,8 @@ export const SideEvents = () => {
                         <span style={{ fontSize: 13, color: '#787878' }}>
                             {t('guests.reminder_buy_credits_body', { credits })}
                         </span>
-                        {esFlash
-                            ? <span className={sl.railMeta}>{t('side_events.flash_credits', { count: credits ?? 0 })}</span>
+                        {esPop
+                            ? <span className={sl.railMeta}>{t('side_events.pop_credits', { count: credits ?? 0 })}</span>
                             : <CreditsComponent invitationID={id} creditsDisplay={credits} />}
                     </div>
                 </Modal>
@@ -4086,21 +4523,71 @@ export const SideEvents = () => {
                 setSection={setSection}
                 setActiveKey={setActiveKey}
                 setTool={(id) => setToolRequest({ id, n: Date.now() })}
-                esFlash={esFlash}
+                esPop={esPop}
             />
         </>
     )
 
     /* ═══════════════════════════════════════════════════════════════
-       Móvil, modo "story" (handoff design_handoff_flash_editor_story): la
+       Móvil, modo "story" (handoff design_handoff_pop_editor_story): la
        pieza ocupa la pantalla, las herramientas son una columna de botones
        redondos arriba a la derecha y las acciones finales van en la barra
        de abajo. Los paneles son los mismos que en escritorio, en la hoja.
        ═══════════════════════════════════════════════════════════════ */
+    if (current && isMobile && EDITOR_MOVIL_NUEVO) {
+        // Editor nuevo del celular (Movil/EditorMovil.jsx): la pieza como en
+        // escritorio sobre el tablero de puntos; por ahora sin herramientas.
+        return (
+            <>
+                <EditorMovil
+                    current={current}
+                    onChange={updateCurrent}
+                    carpeta={esPop ? `flash-${popId}` : id}
+                    section={section}
+                    onSelect={setSection}
+                    stickerSel={stickerSel}
+                    onStickerSel={setStickerSel}
+                    esPop={esPop}
+                    asistentes={esPop ? asistentesDe(rawData) : null}
+                    onBack={handleBack}
+                    stageMorphState={stageMorphState}
+                    onUndo={onUndo}
+                    onRedo={onRedo}
+                    canUndo={undoStack.length > 0}
+                    canRedo={redoStack.length > 0}
+                    tab={activeTab}
+                    onTab={(v) => { setActiveTab(v); setSection(null) }}
+                    esPublico={esPublico}
+                    onAcceso={alternarAcceso}
+                    cambiandoAcceso={cambiandoAcceso}
+                    // Compartir: modal con la portada, su QR y Copiar link (como
+                    // el popover de escritorio).
+                    urlPublica={publicUrl}
+                    compartirBloqueado={hasPendingInfo}
+                    onCompartirBloqueado={() => handleShare(publicUrl)}
+                    estadoGuardado={estadoGuardado}
+                    onReintentar={() => guardarAhora({ conImagen: true })}
+                    invitados={activeTab === 'envio' ? (
+                        <InvitadosMovil
+                            invitados={rawData ?? []}
+                            creditos={esPop ? <CreditController id={popId} pop variante="envios" placement="bottomRight" /> : null}
+                            onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
+                            onEditar={openGuestDrawer}
+                            onDescargar={descargarTablaCompacta}
+                            onRefrescar={refrescarTabla}
+                            refrescando={refrescando}
+                        />
+                    ) : null}
+                />
+                {globals}
+            </>
+        )
+    }
+
     if (current && isMobile) {
         const sheetTitle = SECTIONS.find((x) => x.key === sheetSection)?.label ?? ''
         // Mismo orden del diseño; solo las que existen para este side event
-        // (canción, PNG, efectos e itinerario son de los Flash). Contraída
+        // (canción, PNG, efectos e itinerario son de los Pops). Contraída
         // enseña las primeras 4.
         const herramientas = [
             { key: 'title', label: t('side_events.story_text') },
@@ -4141,12 +4628,12 @@ export const SideEvents = () => {
         // empiecen en la orilla (Safari los usa para ir atrás), en un PNG, en
         // texto editable o en un control, ni con la hoja abierta.
         const cerrarInvitados = () => setGuestsOpen(false)
-        // Envío por WhatsApp desde la lista de invitados del Flash: el mismo
+        // Envío por WhatsApp desde la lista de invitados del Pop: el mismo
         // envío (y las mismas reglas) que las tarjetas de escritorio.
         const motivoEnvio = (g) => (!/^\+52\d+/.test(g.phone_number ?? '')
             ? t('guests.tooltip_national_only')
-            : credits <= 0 ? t('side_events.flash_no_credits') : '')
-        const envioFlash = (g) => {
+            : credits <= 0 ? t('side_events.pop_no_credits') : '')
+        const envioPop = (g) => {
             if (g.state === 'creado') {
                 return { tipo: 'enviar', motivo: motivoEnvio(g), enviar: () => onSedingInvitation(current, g) }
             }
@@ -4174,8 +4661,8 @@ export const SideEvents = () => {
             if (dx > 70 && dy < dx * 0.6) accion()
         }
         const cancion = current?.body?.song
-        const stickersFlash = Array.isArray(current?.body?.stickers) ? current.body.stickers : []
-        const pngElegidos = stickerSel.filter((id) => stickersFlash.some((x) => x.id === id))
+        const stickersPop = Array.isArray(current?.body?.stickers) ? current.body.stickers : []
+        const pngElegidos = stickerSel.filter((id) => stickersPop.some((x) => x.id === id))
 
         return (
             <div className={ed.mobileRoot}>
@@ -4199,9 +4686,9 @@ export const SideEvents = () => {
                         liftBottom={contentLift}
                         stickerSel={stickerSel}
                         onStickerSel={setStickerSel}
-                        conCancion={esFlash}
-                        conAsistentes={esFlash}
-                        asistentes={esFlash ? asistentesDe(rawData) : null}
+                        conCancion={esPop}
+                        conAsistentes={esPop}
+                        asistentes={esPop ? asistentesDe(rawData) : null}
                     />
 
                     {/* Columna izquierda: cerrar y, debajo, invitados, link y
@@ -4227,7 +4714,7 @@ export const SideEvents = () => {
                         >
                             <Link2 size={19} strokeWidth={1.8} />
                         </button>
-                        {esFlash &&
+                        {esPop &&
                             <button
                                 className={ed.storyRound}
                                 onClick={alternarAcceso}
@@ -4242,15 +4729,15 @@ export const SideEvents = () => {
 
                     {/* PNG elegido: en lugar de la canción, una píldora con
                         duplicar y quitar (tamaño y giro van con gestos). */}
-                    {esFlash && pngElegidos.length > 0 &&
+                    {esPop && pngElegidos.length > 0 &&
                         <div className={ed.storyPngPill}>
                             <button
                                 onClick={() => {
-                                    const { lista, nuevos } = duplicarStickers(stickersFlash, pngElegidos)
+                                    const { lista, nuevos } = duplicarStickers(stickersPop, pngElegidos)
                                     setBody({ stickers: lista })
                                     setStickerSel(nuevos)
                                 }}
-                                aria-disabled={contarImagenes(stickersFlash) + contarImagenes(pngElegidos) > MAX_STICKERS}
+                                aria-disabled={contarImagenes(stickersPop) + contarImagenes(pngElegidos) > MAX_STICKERS}
                             >
                                 <Copy size={16} strokeWidth={1.8} />
                                 <span>{t('side_events.stickers_duplicate')}</span>
@@ -4258,7 +4745,7 @@ export const SideEvents = () => {
                             <span className={ed.storyPngSep} aria-hidden />
                             <button
                                 onClick={() => {
-                                    const lista = quitarStickers(stickersFlash, pngElegidos)
+                                    const lista = quitarStickers(stickersPop, pngElegidos)
                                     setBody({ stickers: lista.length ? lista : null })
                                     setStickerSel([])
                                 }}
@@ -4269,8 +4756,8 @@ export const SideEvents = () => {
                         </div>
                     }
 
-                    {/* Canción (Flash): arriba al centro */}
-                    {esFlash && pngElegidos.length === 0 &&
+                    {/* Canción (Pop): arriba al centro */}
+                    {esPop && pngElegidos.length === 0 &&
                         <button className={ed.storySong} onClick={() => setSection(section === 'song' ? null : 'song')} aria-pressed={section === 'song'}>
                             <span className={ed.storySongDisc}>
                                 {cancion?.albumArt
@@ -4320,11 +4807,11 @@ export const SideEvents = () => {
 
 
                 {/* Invitados: página encima del editor (que sigue montado
-                    debajo). En un Flash, la lista del handoff de invitados;
+                    debajo). En un Pop, la lista del handoff de invitados;
                     en un side event normal, las tarjetas de siempre. */}
-                {esFlash
+                {esPop
                     ? (
-                        <ListaInvitadosFlash
+                        <ListaInvitadosPop
                             open={guestsOpen}
                             onClose={cerrarInvitados}
                             invitados={rawData}
@@ -4333,7 +4820,7 @@ export const SideEvents = () => {
                             onCompartir={() => handleShare(publicUrl)}
                             onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                             onAbrirInvitado={openGuestDrawer}
-                            envio={envioFlash}
+                            envio={envioPop}
                             onTouchStart={inicioDeslizar}
                             onTouchEnd={finDeslizar(cerrarInvitados, -1)}
                         />
@@ -4350,7 +4837,7 @@ export const SideEvents = () => {
                                 </button>
                                 <span className={ed.storyGuestsTitle}>{t('side_events.story_guests')}</span>
                                 <button className={ed.storyRound} onClick={() => handleShare(publicUrl)} aria-label={t('side_events.story_share')}>
-                                    <Share2 size={18} strokeWidth={1.8} />
+                                    <Link2 size={18} strokeWidth={1.8} />
                                 </button>
                             </div>
                             <div className={`${ed.mobileSend} scroll-invitation`}>
@@ -4391,7 +4878,7 @@ export const SideEvents = () => {
                             <ArrowLeft size={17} />
                         </button>
                         <span className={ed.crumb}>
-                            <span className={wso.crumbKind}>{esFlash ? t('invitations.flash_badge') : 'Side event'} · </span><strong>{current?.name || t('side_events.no_name')}</strong>
+                            <span className={wso.crumbKind}>{esPop ? t('invitations.pop_badge') : 'Side event'} · </span><strong>{current?.name || t('side_events.no_name')}</strong>
                         </span>
                         <Tooltip title={t('guests_tour.replay')}>
                             <button
@@ -4403,13 +4890,11 @@ export const SideEvents = () => {
                                 <CircleHelp size={16} />
                             </button>
                         </Tooltip>
-                        {/* Evento Flash: sus créditos propios (en un side event
-                            normal viven en la invitación, en su header). */}
-                        {/* CreditController se centra absoluto en su contenedor (está
-                            hecho para el header): este le da su lugar. */}
-                        {esFlash && (
-                            <span style={{ position: 'relative', width: 122, height: 34, marginLeft: 4, flexShrink: 0 }}>
-                                <CreditController id={flashId} flash />
+                        {/* Pop: sus créditos junto al título; en Invitados van
+                            en el encabezado de la lista (headCompacto). */}
+                        {esPop && activeTab !== 'envio' && (
+                            <span className={ed.creditosTitulo}>
+                                <CreditController id={popId} pop variante="envios" placement="bottomLeft" />
                             </span>
                         )}
                     </div>
@@ -4430,32 +4915,31 @@ export const SideEvents = () => {
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 
                         <span data-tour="share">
-                            <CustomLink
-                            backuImage={current?.body?.image}
-                            urlImage={current?.url_image}
-                            url={publicUrl}
-                            // Un Flash guarda sus imágenes en flash-<id>, no en la invitación.
-                            id={esFlash ? `flash-${flashId}` : id}
-                            handleImage={updateURLimage}
-                            name={current?.name}
-                            setupRequired={hasPendingInfo}
-                            onSetupNeeded={() => navigate(`/dashboard?id=${id}`)}
-                            />
+                            {/* Pop: "Compartir" con la portada, su QR y "Copiar link". */}
+                            {esPop ? (
+                                <CompartirPop
+                                    current={current}
+                                    url={publicUrl}
+                                    bloqueado={hasPendingInfo}
+                                    onBloqueado={() => message.warning('Completa la información pendiente de tu invitación antes de compartir el link.')}
+                                />
+                            ) : (
+                                <CustomLink
+                                    backuImage={current?.body?.image}
+                                    urlImage={current?.url_image}
+                                    url={publicUrl}
+                                    id={id}
+                                    handleImage={updateURLimage}
+                                    name={current?.name}
+                                    setupRequired={hasPendingInfo}
+                                    onSetupNeeded={() => navigate(`/dashboard?id=${id}`)}
+                                />
+                            )}
                         </span>
 
-                        <span className={ed.saveWrap} data-tour="save">
-                            <Button
-                                className='primarybutton--active'
-                                loading={saving}
-                                aria-disabled={!dirty}
-                                onClick={() => { if (dirty) handleSave() }}
-                                style={{ borderRadius: '99px', opacity: dirty ? 1 : 0.6 }}
-                            >
-                                {t('side_events.btn_save')}
-                            </Button>
-                            {/* Punto rojo mientras haya cambios sin guardar */}
-                            {dirty && !saving && <span className={ed.saveDot} aria-hidden />}
-                        </span>
+                        {/* Autoguardado: su estado sale como aviso flotante (no
+                            ocupa lugar en el header). */}
+                        <EstadoGuardado flotante estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} />
                     </div>
                 </div>
 
@@ -4463,9 +4947,9 @@ export const SideEvents = () => {
                     misma experiencia que el editor de la invitación. */}
                 <SideWorkspace
                     current={current}
-                    esFlash={esFlash}
-                    asistentesReales={esFlash ? asistentesDe(rawData) : null}
-                    carpeta={esFlash ? `flash-${flashId}` : id}
+                    esPop={esPop}
+                    asistentesReales={esPop ? asistentesDe(rawData) : null}
+                    carpeta={esPop ? `flash-${popId}` : id}
                     onChange={updateCurrent}
                     section={section}
                     setSection={setSection}
@@ -4484,7 +4968,7 @@ export const SideEvents = () => {
                     canUndo={undoStack.length > 0}
                     canRedo={redoStack.length > 0}
                     onReplayTour={tourAvailable ? openTour : undefined}
-                    onPaste={esFlash && puedeLeerPortapapeles ? pegarDesdePortapapeles : null}
+                    onPaste={esPop && puedeLeerPortapapeles ? pegarDesdePortapapeles : null}
                     toolRequest={toolRequest}
                     stageMorphState={stageMorphState}
                 />
@@ -4506,7 +4990,7 @@ export const SideEvents = () => {
                     backgroundColor: 'var(--ft-color)',
                     width: '100%',
                 }}>
-                {!esFlash && <HeaderDashboard mode={'side'} />}
+                {!esPop && <HeaderDashboard mode={'side'} />}
                 <Layout className='build-invitation-layout' style={{
                     paddingTop: '0px',
                     position: 'relative',
@@ -4514,16 +4998,16 @@ export const SideEvents = () => {
                 }} >
 
                     <div className='guests-info-container' style={{ padding: isMobile ? '12px' : '24px', marginTop: '65px', paddingBottom: '24px', }}>
-                        {sideEvent && !esFlash
+                        {sideEvent && !esPop
                             ? (isMobile ? sideEventsListMobile : sideEventsList)
-                            : sideEvent?.length === 0 && esFlash
-                                ? <div className={sl.spin}>{t('side_events.flash_not_found')}</div>
+                            : sideEvent?.length === 0 && esPop
+                                ? <div className={sl.spin}>{t('side_events.pop_not_found')}</div>
                                 : <div className={sl.spin}><Spin /></div>}
                     </div>
                 </Layout >
 
-                {!esFlash && <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />}
-                {!esFlash && <ProModal open={proOpen} onClose={() => setProOpen(false)} invitationId={id} />}
+                {!esPop && <UpgradeBanner plan={plan} invitationId={id} hideOnMobile />}
+                {!esPop && <ProModal open={proOpen} onClose={() => setProOpen(false)} invitationId={id} />}
                 <FooterApp></FooterApp>
                 {globals}
             </Layout >

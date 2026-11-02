@@ -1,22 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
-import { CloudUpload, Images, ListOrdered, Palette, PenLine, Shapes, Users, ClipboardList } from 'lucide-react'
+import { CloudUpload, Images, Link2, ListOrdered, Palette, PenLine, Shapes, Ticket, Users, ClipboardList } from 'lucide-react'
 import SideCanvas from '../SideCanvas'
 import SideEventHost from '../../../components/Host/SideEventHost'
 import { SongBar } from '../../Invitation/Build/PageSections/SongBar'
 import { EditorShell } from '../../Editor/EditorShell'
 import { fechasDelEvento } from '../../../helpers/assets/eventDateTime'
-import { stickerLigeroDesdeUrl } from '../../../helpers/services/uploadImage'
-import { cabeElemento, contarImagenes, duplicarStickers, esImagen, lienzoCover, MAX_ELEMENTOS, MAX_STICKERS, nuevoElemento, quitarStickers } from '../stickersFlashData'
+import { agrupar, contarImagenes, desagrupar, esImagen, lienzoCover, MAX_ELEMENTOS, MAX_STICKERS, quitarStickers } from '../stickersPopData'
 import { ElementsPanel } from '../../Invitation/Build/PageSections/LayerPanels'
+import { stickerItem } from '../../Invitation/Build/PageSections/layerItems'
+import { agregarElemento } from './agregarElemento'
+import { useBarraContextual } from './barraContextual'
 import { DesignPanel, DrawPanel, ItineraryPanel } from './SidePanels'
 import { PhotosPanel } from '../../Invitation/Build/PageSections/PhotosPanel'
 import { UploadsPanel } from '../../Invitation/Build/PageSections/UploadsPanel'
-import { BackgroundBar, DateBar, DEFAULT_SOMBRA_TITULO, DibujoBar, PlaceBar, WeatherBar } from './SideBars'
+import { mediaDePortada, soloVideos } from '../fotosPortada'
+import { AjusteFotoBar, BackgroundBar, DateBar, DEFAULT_SOMBRA_TITULO, DibujoBar, PlaceBar, WeatherBar } from './SideBars'
 import { TextBar } from '../../Invitation/Build/PageSections/TextBar'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
-import barStyles from '../../Invitation/Build/PageSections/ElementBar.module.css'
 import { ElementBar } from '../../Invitation/Build/PageSections/ElementBar'
 import { useColorPopover } from '../../Editor/useColorPopover'
 import { ColorPopover } from '../../Editor/ColorPopover'
@@ -25,9 +27,14 @@ import { SideLayers } from './SideLayers'
 import own from './SideWorkspace.module.css'
 import { NOTAS_DEFAULT } from '../tarjetasSide'
 import { InteractionPanel } from './InteractionMenu'
+import { useMensajesChat } from './useMensajesChat'
+import { HERRAMIENTAS } from './herramientas'
 import { FormularioPanel } from '../Formularios/FormularioPanel'
+import { WalletPanelPop } from './WalletPanelPop'
+import { PaletaDibujo } from './PaletaDibujo'
+import { LinkPanel } from './LinkPanel'
 
-// Área de trabajo del editor de side events / Eventos Flash en escritorio,
+// Área de trabajo del editor de side events / Pops en escritorio,
 // con la misma experiencia que el editor de la invitación (ver
 // docs/sistema-diseno-editor.md): riel de herramientas y su panel a la
 // izquierda (agregar / global), la pieza editable al centro (SideCanvas,
@@ -37,31 +44,15 @@ import { FormularioPanel } from '../Formularios/FormularioPanel'
 // tour). En Envío la pieza va en el teléfono y la lista de invitados ocupa
 // la derecha. El celular sigue con su editor (SideEvents.jsx, modo story).
 
-const TOOLS = [
-    { id: 'design', icon: Palette },
-    { id: 'elements', icon: Shapes, flash: true },
-    { id: 'photos', icon: Images },
-    // Dibujar a mano sobre la pieza (handoff "Herramienta Dibujar"): abrirla
-    // activa el modo dibujo; cada trazo queda como un elemento "Dibujo".
-    { id: 'draw', icon: PenLine, flash: true },
-    { id: 'uploads', icon: CloudUpload },
-    // Itinerario (ItineraryPanel): sin ícono en el riel; se abre al elegir
-    // Itinerario en Capas o en la pieza (como Asistentes y Formulario).
-    { id: 'itinerary', icon: ListOrdered, flash: true, hidden: true },
-    // Lista de asistentes y chat de invitados (InteractionMenu): sin ícono en
-    // el riel; se abre solo al elegir Asistentes en Capas o en la pieza.
-    { id: 'interaction', icon: Users, flash: true, hidden: true },
-    // Formulario (Formularios/FormularioPanel): también sin ícono; se abre al
-    // elegir Formulario en Capas o en la pieza.
-    { id: 'registration', icon: ClipboardList, flash: true, hidden: true },
-]
+// Las herramientas del riel (y del footer del celular): herramientas.js.
+const TOOLS = HERRAMIENTAS
 
 // Pieza de edición: la pantalla del iPhone de "Ver en vivo" (SideCanvas
 // .cardIphone = .ios26-content de DevicePreview), para que se vean idénticas.
 const CARD = { w: 357, h: 631 }
 
 export const SideWorkspace = ({
-    current, esFlash, carpeta, onChange,
+    current, esPop, carpeta, onChange,
     // Confirmados reales ({ total, asistentes }): "Ver en vivo" los enseña en
     // el cuadro Asistentes en vez del ejemplo (iattend-events, SideEvent.tsx).
     asistentesReales = null,
@@ -72,12 +63,20 @@ export const SideWorkspace = ({
     onPaste, toolRequest, stageMorphState,
 }) => {
     const { t } = useTranslation()
+    // "Ver en vivo" como un invitado que ya confirmó (botón del dock).
+    const [vistaConfirmada, setVistaConfirmada] = useState(false)
 
     /* ── Riel y panel ── */
     const [activeTool, setActiveTool] = useState('design')
     const [toolOpen, setToolOpen] = useState(false)
-    const tools = TOOLS.filter((x) => !x.flash || esFlash)
-        .map((x) => ({ ...x, title: t(`side_events.ws_tool_${x.id}`), hint: t(`side_events.ws_tool_${x.id}_hint`) }))
+    const tools = TOOLS.filter((x) => !x.pop || esPop)
+        .map((x) => ({
+            ...x,
+            title: t(`side_events.ws_tool_${x.id}`),
+            hint: t(`side_events.ws_tool_${x.id}_hint`),
+            // Portada de video: el link necesita una foto subida (LinkPanel).
+            ...(x.id === 'link' && soloVideos(current?.body) && !current?.body?.linkImage ? { aviso: t('side_events.link_need_image') } : {}),
+        }))
     const openTool = (id) => { setActiveTool(id); setToolOpen(true) }
     const pickTool = (id) => {
         if (id === activeTool) { setToolOpen((o) => !o); return }
@@ -92,10 +91,11 @@ export const SideWorkspace = ({
 
     /* ── Escritura sobre el evento ── */
     const body = current?.body ?? {}
+    // Mensajes reales del chat (Pop con asistentes y chat prendidos): los
+    // modera el panel Interacción y los enseñan la pieza y "Ver en vivo".
+    const chatMensajes = useMensajesChat(current?.id, esPop && Boolean(body.showAttendees) && Boolean(body.chat?.enabled))
     const setBody = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
-    const setTitle = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body?.title, ...patch } } }), opts)
     const updateForm = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)
-    const setAddress = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body?.address, ...patch } } }), opts)
     const stickers = useMemo(() => (Array.isArray(body.stickers) ? body.stickers : []), [body.stickers])
     const setStickers = (lista, opts) => setBody({ stickers: lista.length ? lista : null }, opts)
 
@@ -114,18 +114,11 @@ export const SideWorkspace = ({
         }
     }
     const addElement = async (item, punto) => {
-        const imagen = esImagen(item)
-        if (!cabeElemento(stickers, imagen)) {
-            message.warning(t('side_events.stickers_paste_max', { max: imagen ? MAX_STICKERS : MAX_ELEMENTOS }))
-            return
-        }
-        // Un PNG se guarda aligerado (WebP) en la carpeta del evento.
-        const extra = imagen ? { kind: undefined, url: await stickerLigeroDesdeUrl(item.url, carpeta) } : {}
-        const nuevo = nuevoElemento({ ...item, ...extra, ...(punto ?? {}) })
-        onChange((prev) => ({
-            ...prev,
-            body: { ...prev.body, stickers: [...(Array.isArray(prev.body?.stickers) ? prev.body.stickers : []), nuevo] },
-        }))
+        const nuevo = await agregarElemento({
+            item, punto, stickers, carpeta, onChange,
+            onLleno: (max) => message.warning(t('side_events.stickers_paste_max', { max })),
+        })
+        if (!nuevo) return
         setSection('stickers')
         setStickerSel([nuevo.id])
     }
@@ -148,13 +141,34 @@ export const SideWorkspace = ({
     const selectZone = (s) => {
         if (s === 'color') { openTool('design'); setSection(null); return }
         // Asistentes no tiene barra: abre directo "Interacción" en el panel lateral.
-        if (s === 'attendees' && esFlash) openTool('interaction')
-        if (s === 'registration' && esFlash) openTool('registration')
-        if (s === 'itinerary' && esFlash) openTool('itinerary')
+        if (s === 'attendees' && esPop) openTool('interaction')
+        if (s === 'registration' && esPop) openTool('registration')
+        if (s === 'itinerary' && esPop) openTool('itinerary')
         if (s !== 'stickers') setStickerSel([])
         setSection(s)
     }
     const deselect = () => { setSection(null); setStickerSel([]) }
+
+    /* ── Ajustar la foto de fondo ── */
+    // Barra Fondo → Ajustar: la pieza toma el arrastre y la rueda sobre la
+    // foto. Se cierra con Listo, Esc / Enter o al elegir otra cosa.
+    const [ajustandoFoto, setAjustandoFoto] = useState(false)
+    // La foto o el video elegido en la tira de la barra Fondo: se ve quieto en
+    // la pieza y es el que se ajusta (fotosPortada.js).
+    const [fotoSel, setFotoSel] = useState(null)
+    const mediaFondo = mediaDePortada(current?.body)
+    const fotoElegida = mediaFondo.includes(fotoSel) ? fotoSel : mediaFondo[0] ?? null
+    useEffect(() => { if (section !== 'background' || live) setAjustandoFoto(false) }, [section, live])
+    useEffect(() => {
+        if (!ajustandoFoto) return undefined
+        const onKey = (e) => {
+            const el = e.target
+            if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return
+            if (e.key === 'Escape' || e.key === 'Enter') { e.stopPropagation(); setAjustandoFoto(false) }
+        }
+        window.addEventListener('keydown', onKey, true)
+        return () => window.removeEventListener('keydown', onKey, true)
+    }, [ajustandoFoto])
 
     /* ── Dibujar ── */
     // El pincel se recuerda en la sesión del editor (no en el body). Con la
@@ -162,8 +176,18 @@ export const SideWorkspace = ({
     // dibujó (o borró) en esta sesión, para deshacer y "Borrar todo".
     const [pincel, setPincel] = useState({ brush: 'pluma', color: '#FFFFFF', size: 8, opacity: 100 })
     const [trazos, setTrazos] = useState([])
-    const modoDibujo = esFlash && !live && toolOpen && activeTool === 'draw'
+    // Con varias fotos / videos en la portada: dibujar en toda la portada o
+    // anclado a una (que se queda fija mientras se dibuja).
+    const [dibujoEn, setDibujoEn] = useState('todo')
+    const dibujoEnValido = mediaFondo.includes(dibujoEn) ? dibujoEn : 'todo'
+    const modoDibujo = esPop && !live && toolOpen && activeTool === 'draw'
     useEffect(() => { if (modoDibujo) { setSection(null); setStickerSel([]) } }, [modoDibujo])
+    // Dibujo a pantalla completa (botón de la barra): sin riel, panel, Capas ni
+    // dock, la pieza 50 % más grande y la paleta a la derecha (PaletaDibujo).
+    // Solo se dibuja y se hace scroll. Al salir del modo dibujo se apaga.
+    const [dibujoFull, setDibujoFull] = useState(false)
+    useEffect(() => { if (!modoDibujo) setDibujoFull(false) }, [modoDibujo])
+    const inmersivo = modoDibujo && dibujoFull
     const deshacerTrazo = () => { if (!trazos.length) return; onUndo?.(); setTrazos((x) => x.slice(0, -1)) }
     const borrarTodo = () => {
         const ids = trazos.filter((x) => x.id).map((x) => x.id)
@@ -181,11 +205,12 @@ export const SideWorkspace = ({
             else if (e.metaKey || e.ctrlKey || e.altKey) return
             else if (e.key.toLowerCase() === 'p') setPincel((x) => ({ ...x, brush: 'pluma' }))
             else if (e.key.toLowerCase() === 'e') setPincel((x) => ({ ...x, brush: 'borrador' }))
-            else if (e.key === 'Escape') setToolOpen(false)
+            // Esc: primero sale de pantalla completa; si no, termina el dibujo.
+            else if (e.key === 'Escape') { if (dibujoFull) setDibujoFull(false); else setToolOpen(false) }
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
-    }, [modoDibujo])
+    }, [modoDibujo, dibujoFull])
 
     // Supr / Backspace quita los PNG elegidos; Escape suelta lo elegido.
     useEffect(() => {
@@ -199,6 +224,10 @@ export const SideWorkspace = ({
                 setStickerSel([])
             } else if (e.key === 'Escape') {
                 deselect()
+            } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g' && stickerSel.length) {
+                // ⌘G agrupa lo elegido; ⇧⌘G desagrupa.
+                e.preventDefault()
+                setStickers(e.shiftKey ? desagrupar(stickers, stickerSel) : agrupar(stickers, stickerSel))
             }
         }
         window.addEventListener('keydown', onKey)
@@ -252,117 +281,38 @@ export const SideWorkspace = ({
     const palette = [...new Set([body.color, '#FFFFFF', '#000000'].filter(Boolean).map((c) => c.toUpperCase()))]
 
     // Elemento(s) elegido(s): la barra de elementos de la invitación con lo de
-    // un Flash (tamaño, giro, ocultar, duplicar, quitar; varios a la vez).
+    // un Pop (tamaño, giro, ocultar, duplicar, quitar; varios a la vez).
     const { colorField, colorPop, pickColor, closeColor } = useColorPopover()
-    const grupo = stickers.filter((x) => stickerSel.includes(x.id))
-    const actual = stickers.find((x) => x.id === stickerSel.find((id) => grupo.some((g) => g.id === id))) ?? null
-    const cambiarGrupo = (fn, o) => setStickers(stickers.map((x) => (stickerSel.includes(x.id) ? { ...x, ...fn(x) } : x)), o)
-    const redondear = (v) => Math.round(v * 100) / 100
-    const noCabe = stickers.length + grupo.length > MAX_ELEMENTOS || contarImagenes(stickers) + contarImagenes(grupo) > MAX_STICKERS
-    const elementGroup = actual && {
-        count: grupo.length,
-        onScale: (v, o) => {
-            const factor = v / (actual.w || 1)
-            cambiarGrupo((x) => ({ w: x.id === actual.id ? v : Math.min(200, Math.max(5, redondear(x.w * factor))) }), o)
-        },
-        onRotate: (v, o) => {
-            const delta = v - (actual.rot ?? 0)
-            cambiarGrupo((x) => ({ rot: x.id === actual.id ? v : Math.min(180, Math.max(-180, (x.rot ?? 0) + delta)) }), o)
-        },
-        hidden: grupo.every((x) => x.hidden),
-        onToggleHidden: () => { const oculto = grupo.every((x) => x.hidden); cambiarGrupo(() => ({ hidden: !oculto || undefined })) },
-        canDuplicate: !noCabe,
-        onDuplicate: () => { const { lista, nuevos } = duplicarStickers(stickers, stickerSel); setStickers(lista); setStickerSel(nuevos) },
-        onRemove: () => { setStickers(quitarStickers(stickers, stickerSel)); setStickerSel([]) },
-    }
-    // Título: la barra de texto de la invitación con un adaptador a body.title
-    // (font, size, weight, line_height, opacity, color y los extras).
-    const title = body.title ?? {}
-    const titleTs = {
-        font: {
-            ...title,
-            typeFace: title.font ?? 'Poppins',
-            size: title.size ?? 36,
-            weight: title.weight ?? 500,
-            lineHeight: title.line_height ?? 1.4,
-            opacity: title.opacity ?? 1,
-            color: title.color || '#FFFFFF',
-        },
-        setFont: (patch, o) => {
-            const { typeFace, lineHeight, ...rest } = patch
-            setTitle({ ...rest, ...(typeFace !== undefined ? { font: typeFace } : {}), ...(lineHeight !== undefined ? { line_height: lineHeight } : {}) }, o)
-        },
-        align: null,
-        setAlign: null,
-        minSize: esFlash ? 14 : 36,
-        maxSize: 64,
-        showSize: true,
-        showColor: true,
-    }
-    // Notas: la misma barra de texto, sobre body.notes_style (tarjetasSide.js).
-    const notas = { ...NOTAS_DEFAULT, ...(body.notes_style ?? {}) }
-    const setNotas = (patch, o) => setBody({ notes_style: { ...(body.notes_style ?? {}), ...patch } }, o)
-    const notesTs = {
-        font: {
-            ...notas,
-            typeFace: notas.font,
-            lineHeight: notas.line_height,
-            color: notas.color || '#FFFFFF',
-        },
-        setFont: (patch, o) => {
-            const { typeFace, lineHeight, ...rest } = patch
-            setNotas({ ...rest, ...(typeFace !== undefined ? { font: typeFace } : {}), ...(lineHeight !== undefined ? { line_height: lineHeight } : {}) }, o)
-        },
-        align: notas.align,
-        setAlign: (v) => setNotas({ align: v }),
-        minSize: 10,
-        maxSize: 32,
-        showSize: true,
-        showColor: true,
-    }
-
-    const titleShadow = (pop, open) => pop('shadow', (
-        <LiveSlider label={t('side_events.text_shadow')} value={title.shadow ?? DEFAULT_SOMBRA_TITULO} min={0} max={100} format={(v) => `${v}%`} onChange={(v, o) => setTitle({ shadow: v }, o)} />
-    ), (
-        <button type="button" className={barStyles.textBtn} data-on={open === 'shadow' || (title.shadow ?? DEFAULT_SOMBRA_TITULO) > 0 || undefined}>
-            {t('build_menu.shadow')}
-        </button>
-    ))
-
+    // La barra contextual (elemento, título, notas, fecha, lugar, clima,
+    // fondo, canción) es la misma del celular: barraContextual.jsx.
+    const barra = useBarraContextual({
+        section, current, onChange, esPop, carpeta, pieceWidth: CARD.w,
+        stickerSel, setStickerSel,
+        pickColor, colorPop, colorField,
+        pickMedia, fotoElegida, setFotoSel, ajustandoFoto, setAjustandoFoto,
+    })
     // Color del elemento (relleno / color, o borde de una forma) o del título.
     const colorTarget = modoDibujo && colorField === 'draw'
-        ? { value: pincel.color, allowNone: false, onPick: (c) => setPincel((x) => ({ ...x, color: c })) }
-        : section === 'title' && colorField === 'text'
-        ? { value: title.color || '#FFFFFF', allowNone: false, onPick: (c, o) => setTitle({ color: c }, o) }
-        : section === 'extras' && colorField === 'text'
-        ? { value: notas.color || '#FFFFFF', allowNone: false, onPick: (c, o) => setNotas({ color: c }, o) }
-        : actual && !esImagen(actual) && grupo.length === 1 ? (() => {
-        const field = colorField === 'stroke' && actual.kind === 'shape' ? 'stroke' : 'color'
-        return {
-            value: field === 'stroke' ? (actual.stroke || '#FFFFFF') : (actual.color || '#FFFFFF'),
-            allowNone: field === 'color' && actual.kind === 'shape',
-            onPick: (c, o) => cambiarGrupo(() => (field === 'stroke'
-                ? { stroke: c, strokeWidth: (actual.strokeWidth ?? 0) > 0 ? actual.strokeWidth : 2 }
-                : { color: c }), o),
+        ? {
+            // Selector estilo iOS, con la opacidad del pincel; se abre hacia el
+            // centro (la paleta está a la derecha y el panel a la izquierda).
+            ios: true,
+            value: pincel.color,
+            allowNone: false,
+            onPick: (c) => setPincel((x) => ({ ...x, color: c })),
+            opacity: pincel.opacity,
+            onOpacity: (v) => setPincel((x) => ({ ...x, opacity: v })),
+            opacidadMin: 10,
+            placement: inmersivo ? 'left' : 'right',
+            anclarA: inmersivo ? '[data-paleta-dibujo]' : '[data-editor-left]',
         }
-    })() : null
+        : barra.colorTarget
 
     const bar = live ? null
-        : modoDibujo ? <DibujoBar pincel={pincel} trazos={trazos.length} onDeshacer={deshacerTrazo} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} />
-        : section === 'stickers' && actual
-            ? <ElementBar item={actual} accent="#FFFFFF" onPatch={(patch, o) => cambiarGrupo(() => patch, o)} onPickColor={pickColor} colorOpen={colorPop ? colorField : null} group={elementGroup} pieceWidth={CARD.w} />
-        : section === 'title' ? <TextBar target="flash_title" ts={titleTs} onPickColor={() => pickColor('text')} colorOpen={Boolean(colorPop) && colorField === 'text'} extra={titleShadow} />
-        : section === 'extras' ? <TextBar target="flash_notes" ts={notesTs} onPickColor={() => pickColor('text')} colorOpen={Boolean(colorPop) && colorField === 'text'} />
-        : section === 'date' ? <DateBar body={body} setBody={setBody} esFlash={esFlash} />
-        // Cómo llegar sale de la dirección: abre la misma barra que Lugar.
-        : section === 'place' || section === 'map' ? <PlaceBar body={body} setBody={setBody} setAddress={setAddress} />
-        // Clima: cuándo se muestra (automático, siempre, si va a llover, oculto).
-        : section === 'weather' ? <WeatherBar body={body} setBody={setBody} />
-        : section === 'background' ? <BackgroundBar current={current} setBody={setBody} onChange={onChange} esFlash={esFlash} carpeta={carpeta} pickMedia={pickMedia} />
-        : section === 'song' ? <SongBar value={body.song ?? null} onChange={(song) => setBody({ song })} folder={carpeta} />
-        : null
+        : modoDibujo ? <DibujoBar trazos={trazos.length} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} pantallaCompleta={dibujoFull} onPantallaCompleta={setDibujoFull} media={mediaFondo} dibujoEn={dibujoEnValido} onDibujoEn={setDibujoEn} />
+        : barra.bar
 
-    const panelProps = { current, setBody, esFlash, carpeta }
+    const panelProps = { current, setBody, esPop, carpeta }
     // Lo que el panel Elementos lee de la invitación: las tipografías de las
     // muestras de texto y el color de las muestras (oscuro: el panel es blanco).
     const elementsInvitation = {
@@ -376,18 +326,27 @@ export const SideWorkspace = ({
             // suelta en la pieza llega por `iattend-layer-drop`.
             : id === 'elements' ? <ElementsPanel invitation={elementsInvitation} />
             // Los paneles Fotos y Subidos de la invitación: aquí una foto va al
-            // fondo y los PNG de un Flash viven en su carpeta (flash-<id>).
-            : id === 'photos' ? <PhotosPanel selectedSection="cover" onUse={(url) => setBody({ image: url })} isInUse={(url) => body.image === url} banner={t('side_events.ws_photos_banner')} />
+            // fondo y los PNG de un Pop viven en su carpeta (flash-<id>).
+            // En un Pop una foto de Ideas entra como elemento (PNG) en la
+            // pieza; para la portada se elige desde el "+" de la barra Fondo
+            // (Subidos → Ideas). Un side event de boda no tiene elementos:
+            // ahí sigue siendo el fondo.
+            : id === 'photos' ? (esPop
+                ? <PhotosPanel selectedSection="cover" onUse={(url) => addElement({ ...stickerItem(url), w: 60 }, { x: 50, y: 40 })} banner={t('side_events.ws_photos_banner_pop')} />
+                : <PhotosPanel selectedSection="cover" onUse={(url) => setBody({ image: url })} isInUse={(url) => body.image === url} banner={t('side_events.ws_photos_banner')} />)
             : id === 'itinerary' ? <ItineraryPanel {...panelProps} dias={dias} />
             : id === 'draw' ? <DrawPanel current={current} pincel={pincel} setPincel={setPincel} onOtroColor={() => pickColor('draw')} />
-            : id === 'interaction' ? <InteractionPanel body={body} setBody={setBody} eventoId={current?.id} />
+            : id === 'interaction' ? <InteractionPanel body={body} setBody={setBody} eventoId={current?.id} chatMensajes={chatMensajes} />
             : id === 'registration' ? <FormularioPanel body={body} updateForm={updateForm} eventoId={current?.id} />
+            // Elegir foto: abre Subidos y, al elegir, regresa al panel.
+            : id === 'link' ? <LinkPanel current={current} setBody={setBody} onPickImage={(handleImage) => pickMedia({}, (url, ...rest) => { handleImage(url, ...rest); setActiveTool('link'); setToolOpen(true) })} />
+            : id === 'wallet' ? <WalletPanelPop current={current} setBody={setBody} onPickImage={(handleImage) => pickMedia({}, (url, ...rest) => { handleImage(url, ...rest); setActiveTool('wallet'); setToolOpen(true) })} />
             : id === 'uploads' ? (
                 <UploadsPanel
                     invitationID={carpeta}
-                    folders={esFlash ? { root: carpeta, videos: `${carpeta}/video`, pngs: null } : undefined}
+                    folders={esPop ? { root: carpeta, videos: `${carpeta}/video`, pngs: null } : undefined}
                     inUse={(url) => stickers.some((s) => s.url === url) || body.image === url}
-                    draggable={esFlash}
+                    draggable={esPop}
                     mediaRequest={mediaRequest}
                     clearMedia={() => setMediaRequest(null)}
                     onPaste={onPaste}
@@ -417,18 +376,33 @@ export const SideWorkspace = ({
                         onSelect={selectZone}
                         stickerSel={stickerSel}
                         onStickerSel={setStickerSel}
-                        conCancion={esFlash}
-                        conAsistentes={esFlash}
+                        conCancion={esPop}
+                        conAsistentes={esPop}
                         asistentes={asistentesReales}
+                        chatMensajes={chatMensajes.mensajes}
                         barMode
                         pincel={modoDibujo ? pincel : null}
                         onTrazo={(tipo, id) => setTrazos((x) => [...x, { tipo, id }])}
                         sinTrazos={trazos.length === 0}
+                        soloDibujo={inmersivo}
+                        fotoFija={modoDibujo && dibujoEnValido !== 'todo' ? dibujoEnValido : section === 'background' ? fotoElegida : null}
+                        dibujoEn={dibujoEnValido}
+                        ajustarFoto={ajustandoFoto && section === 'background' ? fotoElegida : null}
                     />
-                    <span className={own.caption}>{t('side_events.canvas_caption')}</span>
+                    {!inmersivo && <span className={own.caption}>{t('side_events.canvas_caption')}</span>}
                 </div>
             )}
-            liveContent={<SideEventHost config={asistentesReales?.total ? { ...current, _asistentes: asistentesReales } : current} />}
+            liveContent={<SideEventHost config={{
+                ...current,
+                // Lo real (confirmados y mensajes del chat), aunque esté vacío:
+                // "Ver en vivo" ya no inventa asistentes ni conversación.
+                ...(asistentesReales ? { _asistentes: asistentesReales } : {}),
+                ...(chatMensajes.mensajes ? { _chat: chatMensajes.mensajes.slice(0, 40) } : {}),
+                // "Confirmado" del dock: la página como la ve un invitado que ya confirmó.
+                ...(vistaConfirmada ? { _vistaConfirmada: true } : {}),
+            }} />}
+            vistaConfirmada={vistaConfirmada}
+            onVistaConfirmada={setVistaConfirmada}
             live={live}
             setLive={setLive}
             device={device}
@@ -446,19 +420,36 @@ export const SideWorkspace = ({
                     onChange={setStickers}
                     section={section}
                     onZone={selectZone}
-                    conCancion={esFlash}
-                    esFlash={esFlash}
+                    conCancion={esPop}
+                    esPop={esPop}
                     body={body}
                     setBody={setBody}
                 />
             )}
-            column={sendOpen ? { node: sendContent, in: sendIn || tourOpen, noAnim: tourOpen } : null}
+            // Al volver a Diseño la columna se queda unos 300 ms (`saliendo`)
+            // para desvanecerse mientras el editor ya se reacomoda.
+            column={sendOpen
+                ? { node: sendContent, in: sendIn || tourOpen, noAnim: tourOpen }
+                : sendContent ? { node: sendContent, in: false, saliendo: true } : null}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={canUndo}
             canRedo={canRedo}
             onReplayTour={onReplayTour}
             mediaSider={mediaSider}
+            inmersivo={inmersivo}
+            lateral={inmersivo ? (
+                <PaletaDibujo
+                    pincel={pincel}
+                    setPincel={setPincel}
+                    temaColor={body.color}
+                    onDeshacer={deshacerTrazo}
+                    puedeDeshacer={trazos.length > 0}
+                    onRehacer={() => { onRedo?.(); setTrazos((x) => [...x, { tipo: 'rehacer' }]) }}
+                    puedeRehacer={Boolean(canRedo)}
+                    onOtroColor={() => pickColor('draw')}
+                />
+            ) : null}
         >
             {!live && <ColorPopover colorPop={colorPop} closeColor={closeColor} target={colorTarget} palette={palette} />}
         </EditorShell>

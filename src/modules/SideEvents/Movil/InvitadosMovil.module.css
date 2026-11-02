@@ -1,0 +1,281 @@
+/* Invitados en el celular (InvitadosMovil.jsx): hoja blanca, filtros en
+   chips y la lista con su estado. */
+.hoja {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 22px 18px 0;
+    border-radius: 28px 28px 0 0;
+    background: #FFFFFF;
+    box-shadow: 0 -4px 24px rgba(23, 22, 27, 0.06);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.titulo {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: 'Plus Jakarta Sans', 'Work Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #17161B;
+}
+
+.cuenta {
+    font-size: 18px;
+    font-weight: 500;
+    color: #9A97A0;
+}
+
+.acciones {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mas {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #29262D;
+    cursor: pointer;
+}
+
+.buscador {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    height: 46px;
+    padding: 0 16px;
+    border-radius: 99px;
+    background: #F2F1EE;
+    color: #8A8790;
+}
+
+.buscador input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    /* 16 px: con menos, iOS acerca la pantalla al escribir. */
+    font-size: 16px;
+    color: #17161B;
+}
+
+.limpiar {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.chips {
+    display: flex;
+    gap: 8px;
+    margin: 14px -18px 0;
+    padding: 0 18px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+    display: none;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    height: 38px;
+    padding: 0 14px;
+    border: 1px solid #E6E3DE;
+    border-radius: 99px;
+    background: #FFFFFF;
+    color: #29262D;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chip[data-on] {
+    border-color: #17161B;
+    background: #17161B;
+    color: #FFFFFF;
+}
+
+.chipCuenta {
+    font-weight: 500;
+    opacity: 0.6;
+}
+
+.punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+}
+
+.chip[data-estado="confirmado"]:not([data-on]) .punto,
+.estado[data-estado="confirmado"] .punto { background: #3E8E4F; }
+.chip[data-estado="esperando"]:not([data-on]) .punto,
+.estado[data-estado="esperando"] .punto { background: #B7791F; }
+.chip[data-estado="creado"]:not([data-on]) .punto,
+.estado[data-estado="creado"] .punto { background: #8A8790; }
+.chip[data-estado="rechazado"]:not([data-on]) .punto,
+.estado[data-estado="rechazado"] .punto { background: #C2410C; }
+
+.lista {
+    flex: 1;
+    min-height: 0;
+    margin: 8px -18px 0;
+    padding: 0 18px 110px;
+    list-style: none;
+    overflow-y: auto;
+}
+
+.fila {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px 0;
+    border: none;
+    border-bottom: 1px solid #EFEDEA;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* Acompañante: sangrado, con flecha, sin línea entre él y su titular. */
+.fila[data-acompanante] {
+    padding-left: 18px;
+    gap: 10px;
+}
+
+li:has(+ li > .fila[data-acompanante]) > .fila {
+    border-bottom: none;
+}
+
+.flecha {
+    flex: none;
+    color: #B8B5BD;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #EDE8F7;
+    color: #6B4FA8;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.fila[data-acompanante] .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    background: #F2F1EE;
+    color: #6E6B73;
+}
+
+.textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.nombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 700;
+    color: #17161B;
+}
+
+.fila[data-acompanante] .nombre {
+    font-weight: 500;
+}
+
+.sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #8A8790;
+}
+
+.estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.estado[data-estado="confirmado"] { background: #E7F3E9; color: #2F7A47; }
+.estado[data-estado="esperando"] { background: #FBF1DC; color: #9A6417; }
+.estado[data-estado="creado"] { background: #F2F1EE; color: #5F5B66; }
+.estado[data-estado="rechazado"] { background: #FCE8E1; color: #B23A0E; }
+
+.vacio {
+    padding: 40px 0;
+    text-align: center;
+    font-size: 14px;
+    color: #8A8790;
+}
+
+.agregar {
+    position: absolute;
+    right: 18px;
+    bottom: max(18px, env(safe-area-inset-bottom));
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    padding: 0 24px;
+    border: none;
+    border-radius: 99px;
+    background: #D7C6EA;
+    color: #17161B;
+    font: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    box-shadow: 0 10px 28px rgba(107, 79, 168, 0.25);
+    cursor: pointer;
+}

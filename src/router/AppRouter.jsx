@@ -9,8 +9,9 @@ const DashboardChat = () => {
   const screens = Grid.useBreakpoint()
   const isMobile = !screens.md
   if (!pathname.startsWith('/dashboard')) return null
-  // Lia vive dentro de una invitación; un Evento Flash no tiene.
-  if (new URLSearchParams(search).get('flash')) return null
+  // Lia vive dentro de una invitación; un Pop no tiene.
+  const params = new URLSearchParams(search)
+  if (params.get('pop') || params.get('flash')) return null
   if (isMobile && pathname === '/dashboard/build') return null
   return <ChatContainer />
 }

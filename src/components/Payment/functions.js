@@ -65,9 +65,9 @@ export const handleCheckout = async (invitationID, priceId, userId) => {
     }
 };
 
-// Créditos de un Evento Flash (side event sin invitación): el webhook los
+// Créditos de un Pop (side event sin invitación): el webhook los
 // suma a side_events.credits.
-export const handleCheckoutFlashCredits = async (sideEventId, priceId) => {
+export const handleCheckoutPopCredits = async (sideEventId, priceId) => {
     try {
         const response = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/payment/create-checkout`,

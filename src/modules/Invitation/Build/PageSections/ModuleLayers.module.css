@@ -197,7 +197,7 @@
     list-style: none;
 }
 
-/* Lista sin encabezado de grupo (side event / Flash): sin sangría. */
+/* Lista sin encabezado de grupo (side event / Pop): sin sangría. */
 .group > .children:first-child {
     margin: 0;
     padding-left: 0;
@@ -324,7 +324,7 @@
     opacity: 1;
 }
 
-/* ── Variante "secciones" (Capas de un Flash): etiquetas de sección, filas
+/* ── Variante "secciones" (Capas de un Pop): etiquetas de sección, filas
    más amplias, ojo siempre visible y grupos abiertos de entrada (la flecha
    los comprime). ── */
 .panelSecciones {
@@ -405,4 +405,36 @@
 /* Sin encabezado (portada, formulario): sin sangría. */
 .panelSecciones .group > .children:first-child {
     padding-left: 0;
+}
+
+/* Grupo de capas (elementos agrupados de un Pop, LayersPanel → GroupItemRow):
+   una fila que se arrastra como bloque y sus capas sangradas debajo. */
+.capaGrupo {
+    list-style: none;
+}
+
+.capaGrupo[data-dragging] {
+    z-index: 5;
+    position: relative;
+}
+
+.capaGrupoHijos {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 4px 22px;
+}
+
+/* Renombrar un grupo de capas (doble clic en su nombre). */
+.renombrar {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0 8px;
+    border: 1.5px solid #8F80F0;
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+    font-size: inherit;
+    color: #29262D;
+    outline: none;
 }

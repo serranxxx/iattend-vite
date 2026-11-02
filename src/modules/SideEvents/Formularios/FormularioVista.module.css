@@ -1,5 +1,5 @@
 /* Vista completa del formulario (FormularioVista.jsx y sus pestañas):
-   handoff "Formularios propios", 1b. Encima del editor del Flash: su barra
+   handoff "Formularios propios", 1b. Encima del editor del Pop: su barra
    superior (EditorShell) está en z-index 1200. Los popups de antd que se
    abren desde aquí llevan su propio zIndex más alto (FormularioVista.jsx). */
 
@@ -1381,4 +1381,115 @@
     .switchChico, .switchChico span, .switchGrande, .switchGrande span, .tarjeta {
         transition-duration: 1ms;
     }
+}
+
+/* Editor del celular (≤ 720 px): la vista completa va como modal — tarjeta
+   con esquinas de 32 px sobre un velo (la sombra extendida), como los demás
+   modales del editor (EditorMovil). Sube al abrir. */
+@media (max-width: 720px) {
+    .vista {
+        inset: calc(env(safe-area-inset-top) + 14px) 12px max(14px, env(safe-area-inset-bottom));
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(23, 22, 27, 0.22), 0 0 0 100vmax rgba(23, 22, 27, 0.32);
+        animation: entrarModal 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .textoBoton {
+        white-space: nowrap;
+    }
+
+    /* Las preguntas a todo el ancho; agregar pregunta / sección flotan
+       abajo al centro en una píldora horizontal. */
+    .herramientas {
+        position: fixed;
+        top: auto;
+        left: 50%;
+        bottom: calc(max(14px, env(safe-area-inset-bottom)) + 16px);
+        z-index: 3;
+        width: auto;
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        border-radius: 99px;
+        transform: translateX(-50%);
+        box-shadow: 0 8px 24px rgba(23, 22, 27, 0.16);
+    }
+
+    .herramientas button {
+        border-radius: 50%;
+    }
+
+    /* Pie de la pregunta: "+ Texto de ayuda" en su renglón y abajo
+       duplicar · borrar | Obligatoria, a la derecha. */
+    .pie {
+        flex-wrap: wrap;
+        row-gap: 6px;
+    }
+
+    /* Respuestas: tabla comprimida (columna Invitado angosta y fija a la
+       izquierda, filas bajas, letra menor) que se recorre de lado. */
+    .respuestas {
+        padding: 14px 12px 14px;
+        gap: 10px;
+    }
+
+    .respBarra {
+        gap: 8px;
+    }
+
+    .buscador {
+        width: 100%;
+    }
+
+    .tabla {
+        font-size: 12px;
+    }
+
+    .tabla th {
+        padding: 9px 10px;
+        font-size: 11px;
+    }
+
+    .tabla td {
+        padding: 7px 10px;
+    }
+
+    .tabla .colInvitado {
+        min-width: 0;
+        width: 128px;
+        max-width: 128px;
+    }
+
+    .tabla .avatar {
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+    }
+
+    .tabla .invitado {
+        gap: 8px;
+    }
+
+    .tabla .invitadoCol {
+        min-width: 0;
+    }
+
+    .tabla .invitadoCol b,
+    .tabla .invitadoCol small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .pie > .textoBoton {
+        flex-basis: 100%;
+        justify-content: flex-start;
+        text-align: left;
+    }
+}
+
+@keyframes entrarModal {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: none; }
 }

@@ -1,0 +1,985 @@
+/* Editor del celular (EditorMovil.jsx): página blanca con el tablero de
+   puntos de escritorio y la pieza al centro. */
+.raiz {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    overflow: hidden;
+    /* Blanco liso con puntos (sin el degradado gris de escritorio): Safari
+       pinta sus barras de arriba y de abajo con el color de las orillas. */
+    background-color: #FFFFFF;
+    background-image: radial-gradient(circle, rgba(41, 38, 45, 0.16) 1.2px, transparent 1.6px);
+    background-size: 22px 22px;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Sin zoom de doble toque (tocar dos veces un botón acercaba la página). */
+    touch-action: manipulation;
+}
+
+.escenario {
+    position: absolute;
+    inset: 0;
+}
+
+.pieza {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+}
+
+.pieza[data-morphing="fly"] {
+    opacity: 0;
+}
+
+.pieza[data-morphing="land"] {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.leyenda {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: #787878;
+}
+
+/* Header: salir · deshacer · rehacer · Diseño / Invitados · acceso ·
+   compartir · Guardar. */
+.header {
+    position: absolute;
+    /* Un poco abajo de la barra de estado y separado de las orillas (en el
+       iPhone las esquinas de la pantalla son redondas). */
+    top: calc(env(safe-area-inset-top) + 6px);
+    left: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 18px;
+    box-sizing: border-box;
+}
+
+.icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #FFFFFF;
+    color: #29262D;
+    box-shadow: 0 2px 10px rgba(23, 22, 27, 0.1);
+    cursor: pointer;
+}
+
+.icono:disabled {
+    color: #C2C0C6;
+    cursor: default;
+}
+
+/* Público: verde, como la píldora de escritorio. */
+.icono[data-publico] {
+    background: #E8F5EC;
+    color: #2F7A47;
+}
+
+.segmento {
+    display: flex;
+    flex: none;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 99px;
+    background: #FFFFFF;
+    box-shadow: 0 2px 10px rgba(23, 22, 27, 0.1);
+}
+
+.segBtn {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    background: transparent;
+    color: #8A8790;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.segBtn[data-on] {
+    background: #29262D;
+    color: #FFFFFF;
+}
+
+.espacio {
+    flex: 1;
+}
+
+/* Estado del autoguardado, centrado debajo del header. */
+.estado {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.estado > * {
+    pointer-events: auto;
+}
+
+/* Pestaña Invitados: la lista de escritorio a lo ancho, con scroll. */
+.invitados {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    /* La hoja de invitados (InvitadosMovil) va a lo ancho, hasta abajo. */
+    padding: 8px 0 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.invitados > * {
+    flex: 1;
+    min-height: 0;
+}
+
+/* En el celular, las acciones del encabezado de la lista (vista, créditos,
+   Agregar) van en un solo renglón: Agregar queda como botón redondo con "+". */
+.invitados :global(.gx-compact-head-actions) {
+    flex-wrap: nowrap;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+    margin-left: 0;
+}
+
+.invitados :global(.gx-compact-head) {
+    flex-wrap: wrap;
+}
+
+.invitados :global(.gx-tool--agregar) {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.invitados :global(.gx-tool--agregar .gx-tool-texto) {
+    display: none;
+}
+
+/* Footer: las herramientas del riel en una píldora flotante (como la barra
+   de Safari), solo en Diseño. */
+.footer {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    max-width: calc(100% - 28px);
+    padding: 0 8px;
+    transform: translateX(-50%);
+    border-radius: 99px;
+    background: #FFFFFF;
+    box-shadow: 0 8px 28px rgba(23, 22, 27, 0.12), 0 1px 3px rgba(23, 22, 27, 0.06);
+    box-sizing: border-box;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.footer::-webkit-scrollbar {
+    display: none;
+}
+
+.herramienta {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #5F5B66;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.herramienta[data-on] {
+    background: #29262D;
+    color: #FFFFFF;
+}
+
+/* Aviso de la herramienta (Imagen del link sin foto con portada de video). */
+.aviso {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #E5484D;
+    box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+/* Con el drawer abierto la píldora se esconde (el drawer nace de ella). */
+.footer[data-oculto] {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px) scale(0.96);
+    pointer-events: none;
+}
+
+.footer {
+    transition: opacity 0.25s ease, transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La pieza se achica o crece con el drawer: solo transform, con la curva
+   de la hoja (CURVA_HOJA en EditorMovil.jsx). */
+.escenario[data-animar] .pieza {
+    transition: transform 0.52s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+}
+
+.escenario[data-animar] .leyenda {
+    transition: transform 0.52s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease;
+}
+
+.leyenda[data-oculta] {
+    opacity: 0;
+}
+
+/* Drawer de la herramienta (Diseño): la mitad de abajo, blanco, con el
+   título al centro y ✓ para cerrar (como las hojas de Canva / iOS). */
+.drawer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 4;
+    background: #FFFFFF;
+    border-radius: 28px 28px 0 0;
+    /* Separa el drawer del espacio de trabajo, leve. */
+    box-shadow: 0 -2px 14px rgba(23, 22, 27, 0.06);
+    overflow: hidden;
+}
+
+.drawerAdentro {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.drawerCabeza {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    flex: none;
+    padding: 18px 14px 6px;
+}
+
+.drawerAsa {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    width: 36px;
+    height: 5px;
+    border-radius: 3px;
+    background: #DCDAE0;
+    transform: translateX(-50%);
+}
+
+.drawerTitulo {
+    grid-column: 2;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 600;
+    color: #17161B;
+}
+
+.drawerListo {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #17161B;
+    cursor: pointer;
+}
+
+.drawerCuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    flex: 1;
+    min-height: 0;
+    padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Elementos: a pantalla completa, sin redondeo y con el aire de la barra de
+   estado arriba. */
+.drawer[data-completo] {
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: env(safe-area-inset-top);
+    box-sizing: border-box;
+}
+
+/* Las tarjetas de Elementos, Fotos y Subidos son para arrastrar en
+   escritorio (touch-action: none); aquí se tocan y el panel tiene que hacer
+   scroll. */
+.drawer[data-panel="elements"] .drawerCuerpo *,
+.drawer[data-panel="photos"] .drawerCuerpo *,
+.drawer[data-panel="uploads"] .drawerCuerpo * {
+    touch-action: pan-y !important;
+    cursor: pointer !important;
+}
+
+/* ── Modo dibujo ── */
+/* Header: deshacer · rehacer · "Dibujar en" · ✓ (entra con un fundido). */
+.header[data-dibujo] {
+    animation: entraArriba 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.listo {
+    background: #29262D;
+    color: #FFFFFF;
+}
+
+/* "Dibujar en" + Borrar todo en una píldora blanca (como la barra de
+   dibujo de escritorio). */
+.dibujoHerr {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 3px;
+    border-radius: 18px;
+    background: #FFFFFF;
+    box-shadow: 0 2px 10px rgba(23, 22, 27, 0.1);
+}
+
+.dibujarEn {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.divisor {
+    flex: none;
+    width: 1px;
+    height: 22px;
+    margin: 0 4px;
+    background: rgba(23, 22, 27, 0.1);
+}
+
+.borrar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #29262D;
+    cursor: pointer;
+}
+
+.borrar:disabled {
+    color: #C2C0C6;
+    cursor: default;
+}
+
+.dibujarEn::-webkit-scrollbar {
+    display: none;
+}
+
+/* La paleta horizontal (PaletaDibujo) abajo al centro; sube al entrar. */
+.paletaDibujo {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    z-index: 3;
+    transform: translateX(-50%);
+    animation: entraAbajo 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Color del pincel: tarjeta flotante sobre la paleta, como el selector de
+   colores de iOS (esquinas grandes, vidrio claro). Crece desde el botón de
+   color (abajo a la derecha). */
+.colorFondo {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+}
+
+.colorModal {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: calc(max(14px, env(safe-area-inset-bottom)) + 96px + 12px);
+    z-index: 6;
+    max-height: calc(100% - 140px);
+    padding: 18px 20px 20px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 36px;
+    background: rgba(255, 255, 255, 0.94);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow: 0 24px 60px rgba(23, 22, 27, 0.18), 0 2px 8px rgba(23, 22, 27, 0.06);
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform-origin: 88% 100%;
+    animation: colorEntra 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.colorModal[data-cerrando] {
+    animation: colorSale 0.2s ease-in forwards;
+}
+
+.coloresDibujo {
+    width: 100%;
+}
+
+@keyframes colorEntra {
+    from { opacity: 0; transform: scale(0.6) translateY(24px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes colorSale {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: scale(0.7) translateY(20px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .colorModal,
+    .colorModal[data-cerrando] {
+        animation: none;
+    }
+}
+
+/* Salir del dibujo: la paleta baja y el header de dibujo se desvanece;
+   al volver, el header de siempre entra con el mismo fundido. */
+.paletaDibujo[data-saliendo] {
+    animation: saleAbajo 0.26s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.header[data-dibujo][data-saliendo] {
+    animation: saleArriba 0.22s ease-in forwards;
+}
+
+.header[data-volviendo] {
+    animation: entraArriba 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes saleAbajo {
+    from { transform: translate(-50%, 0); }
+    to { transform: translate(-50%, 130%); }
+}
+
+@keyframes saleArriba {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes entraAbajo {
+    from { transform: translate(-50%, 130%); }
+    to { transform: translate(-50%, 0); }
+}
+
+@keyframes entraArriba {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .paletaDibujo,
+    .paletaDibujo[data-saliendo],
+    .header[data-dibujo],
+    .header[data-volviendo] {
+        animation: none;
+    }
+}
+
+/* ── Modal (Imagen del link / Pase digital) ──
+   Tarjeta blanca centrada con velo; crece un poco al abrir. */
+.modalCapa {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(env(safe-area-inset-top) + 14px) 12px calc(max(14px, env(safe-area-inset-bottom)));
+    box-sizing: border-box;
+}
+
+.modalVelo {
+    position: absolute;
+    inset: 0;
+    background: rgba(23, 22, 27, 0.32);
+    animation: veloEntra 0.25s ease;
+}
+
+.modal {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 100%;
+    border-radius: 32px;
+    background: #FFFFFF;
+    box-shadow: 0 24px 60px rgba(23, 22, 27, 0.22);
+    overflow: hidden;
+    animation: modalEntra 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.modalCuerpo {
+    flex: 1;
+    min-height: 0;
+    /* Que no se recorra solo cuando cargan las imágenes de adentro. */
+    overflow-anchor: none;
+    padding: 4px 20px 22px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Subidos dentro del modal: se toca para elegir y el cuerpo hace scroll. */
+.modalCuerpo * {
+    touch-action: pan-y;
+}
+
+.modalCapa[data-saliendo] .modalVelo {
+    animation: veloSale 0.2s ease forwards;
+}
+
+.modalCapa[data-saliendo] .modal {
+    animation: modalSale 0.2s ease-in forwards;
+}
+
+@keyframes veloEntra {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes veloSale {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes modalEntra {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes modalSale {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(16px) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modal,
+    .modalVelo,
+    .modalCapa[data-saliendo] .modal,
+    .modalCapa[data-saliendo] .modalVelo {
+        animation: none;
+    }
+}
+
+/* Imagen del link en el modal: el chat de WhatsApp a lo ancho (en
+   escritorio mide 272 px) y la burbuja a la derecha, como en el teléfono. */
+.modal [data-vista-link] {
+    width: 100%;
+}
+
+.modal [data-vista-link] > :first-child > :first-child {
+    width: min(100%, 250px);
+}
+
+/* Compartir: mismo ancho que los demás modales, contenido centrado. */
+.modal[data-modal="compartir"] .modalCuerpo {
+    display: flex;
+    justify-content: center;
+}
+
+/* Fondo elegido: la barra Fondo (o la de Ajustar) en lugar del footer, abajo
+   al centro; si no cabe, la barra misma se recorre de lado (así conserva su
+   redondeo y su sombra). Sube con un fundido. */
+.barraFondo {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    z-index: 3;
+    transform: translateX(-50%);
+    animation: barraEntra 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.barraFondo > * {
+    width: max-content;
+    max-width: calc(100vw - 20px);
+    box-sizing: border-box;
+    padding-top: 10px !important;
+    padding-bottom: 8px !important;
+    border-radius: 26px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.barraFondo > *::-webkit-scrollbar {
+    display: none;
+}
+
+.barraFondo[data-saliendo] {
+    pointer-events: none;
+    animation: barraSale 0.24s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes barraSale {
+    from { opacity: 1; transform: translate(-50%, 0); }
+    to { opacity: 0; transform: translate(-50%, 16px); }
+}
+
+@keyframes barraEntra {
+    from { opacity: 0; transform: translate(-50%, 16px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .barraFondo,
+    .barraFondo[data-saliendo] {
+        animation: none;
+    }
+}
+
+/* Con scroll de lado nada se encoge (los íconos se aplastaban). */
+.barraFondo > * > *,
+.barraFondo svg {
+    flex-shrink: 0;
+}
+
+/* ── Ver en vivo ── */
+/* En el footer: separador y el ojo, un círculo oscuro a la derecha. */
+.footerDivisor {
+    flex: none;
+    width: 1px;
+    height: 30px;
+    margin: 0 6px;
+    background: rgba(23, 22, 27, 0.1);
+}
+
+.vivoBtn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #29262D;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+/* El footer con el ojo: botones un poco más angostos para que quepa todo. */
+.footer {
+    gap: 0;
+    padding: 0 6px 0 0;
+    overflow: hidden;
+}
+
+/* Las herramientas, con scroll de lado (se desvanecen en la orilla). */
+.footerHerr {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding-left: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+}
+
+.footerHerr::-webkit-scrollbar {
+    display: none;
+}
+
+/* La página real a pantalla completa; entra creciendo desde abajo. */
+.vivo {
+    /* Fija (no absolute): Safari 26 pinta sus barras con el fondo de lo fijo
+       que toca las orillas de la pantalla. */
+    position: fixed;
+    inset: 0;
+    z-index: 8;
+    background: #000000;
+    animation: vivoEntra 0.36s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.vivo[data-cerrando] {
+    animation: vivoSale 0.26s ease-in forwards;
+}
+
+.vivo iframe {
+    /* El toque que abrió la vista no debe llegar a la página (el "click"
+       tardío de iOS caía en "No asistiré"): medio segundo sin puntero. */
+    animation: vivoSinToque 0.6s;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Arriba: cerrar y Sin confirmar / Confirmado, en vidrio. */
+.vivoBarra {
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 8px);
+    left: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.vivoBarra > * {
+    pointer-events: auto;
+}
+
+.vivoCerrar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #29262D;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    cursor: pointer;
+}
+
+.vivoSeg {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 99px;
+    background: transparent;
+    color: #8A8790;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vivoSeg[data-on] {
+    background: #29262D;
+    color: #FFFFFF;
+}
+
+@keyframes vivoSinToque {
+    from, to { pointer-events: none; }
+}
+
+@keyframes vivoEntra {
+    from { opacity: 0; transform: translateY(40px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes vivoSale {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(30px) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vivo,
+    .vivo[data-cerrando] {
+        animation: none;
+    }
+}
+
+/* ── Popovers de las barras en el celular ──
+   (body[data-editor-movil], Editor/useEditorMovil.js). Todo popover cuyo
+   contenido lleva data-text-bar (Estilo de la cuenta regresiva, Sombra,
+   Velo, Desenfoque, opacidad, fuentes…) sale como tarjeta flotante a lo
+   ancho, arriba de la barra (y del teclado), con scroll propio, en vez de
+   anclado al botón: se cortaba fuera de la pantalla. */
+:global(body[data-editor-movil] .ant-popover:has([data-text-bar], [data-ajustes-pincel])) {
+    position: fixed !important;
+    inset: auto 12px calc(max(14px, env(safe-area-inset-bottom)) + var(--teclado-movil, 0px) + 84px) 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    transform-origin: 50% 100% !important;
+}
+
+:global(body[data-editor-movil] .ant-popover:has([data-text-bar], [data-ajustes-pincel]) .ant-popover-container) {
+    max-height: min(62vh, calc(100dvh - var(--teclado-movil, 0px) - 200px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 32px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow: 0 24px 60px rgba(23, 22, 27, 0.18), 0 2px 8px rgba(23, 22, 27, 0.06);
+    animation: popEntra 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Su contenido a lo ancho (los selectores traen anchos de escritorio). */
+:global(body[data-editor-movil] .ant-popover:has([data-text-bar], [data-ajustes-pincel]) :is([data-text-bar], [data-ajustes-pincel])) {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+:global(body[data-editor-movil] .ant-popover:has([data-text-bar], [data-ajustes-pincel]) .ant-popover-arrow) {
+    display: none;
+}
+
+@keyframes popEntra {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :global(body[data-editor-movil] .ant-popover:has([data-text-bar], [data-ajustes-pincel]) .ant-popover-container) {
+        animation: none;
+    }
+}
+
+/* Inputs de las barras (buscar canción, dirección…): en escritorio miden
+   300 px y en el celular empujaban el botón de al lado fuera de la barra.
+   Aquí caben con el ícono y el botón de subir (≈ 150 px). */
+.barraFondo :global(input) {
+    max-width: calc(100vw - 150px);
+    min-width: 0;
+}
+
+/* Un solo borde: la caja de antd de adentro (.ant-popover-inner) va sin
+   fondo, borde, sombra ni redondeo propios (se veía un segundo recuadro
+   dentro de la tarjeta). */
+:global(body[data-editor-movil] .ant-popover:has([data-text-bar], [data-ajustes-pincel]) .ant-popover-inner) {
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* La de los ajustes del pincel va arriba de la paleta de dibujo (más alta
+   que la barra) y sin el padding de la hoja de escritorio. */
+:global(body[data-editor-movil] .ant-popover:has([data-ajustes-pincel])) {
+    bottom: calc(max(14px, env(safe-area-inset-bottom)) + 96px + 12px) !important;
+}
+
+:global(body[data-editor-movil] .ant-popover:has([data-ajustes-pincel]) [data-ajustes-pincel]) {
+    padding: 0;
+}
+
+/* Listas desplegables de las barras (Select de antd: estilo del separador,
+   tipografía, Del cuerpo…): en el celular salen igual que las demás
+   tarjetas flotantes (popovers con data-text-bar): a lo ancho, arriba de la
+   barra y del teclado, 32 px de redondeo, vidrio claro y scroll propio; sin
+   velo. Antes colgaban del select y se salían de la pantalla. */
+:global(body[data-editor-movil] .ant-select-dropdown) {
+    position: fixed !important;
+    inset: auto 12px calc(max(14px, env(safe-area-inset-bottom)) + var(--teclado-movil, 0px) + 84px) 12px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-height: min(62vh, calc(100dvh - var(--teclado-movil, 0px) - 200px));
+    padding: 12px !important;
+    border-radius: 32px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow: 0 24px 60px rgba(23, 22, 27, 0.18), 0 2px 8px rgba(23, 22, 27, 0.06) !important;
+    overflow: hidden;
+    animation: popEntra 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Cada opción a la medida del dedo. */
+:global(body[data-editor-movil] .ant-select-dropdown .ant-select-item) {
+    min-height: 52px;
+    align-items: center;
+    border-radius: 16px;
+}
+
+:global(body[data-editor-movil] .ant-select-dropdown .ant-select-item-option-content) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Zoom al escribir: solo la invitación se acerca; la leyenda de abajo
+   ("Toca cualquier parte…", dentro de la pieza en la invitación) se oculta. */
+.pieza[data-zoom] :global([data-leyenda]) {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* Zoom al escribir: entrar y salir con una curva larga y suave (también el
+   tamaño de la pieza), mientras dura y un momento después (useZoomAnimando). */
+.escenario[data-animar] .pieza[data-zoom-anim] {
+    transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .escenario[data-animar] .pieza[data-zoom-anim] {
+        transition: none;
+    }
+}
+
+/* La barra sube y baja con el teclado (zoom in / out al escribir) con una
+   curva suave, no de golpe. */
+.barraFondo {
+    transition: bottom 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .barraFondo {
+        transition: none;
+    }
+}

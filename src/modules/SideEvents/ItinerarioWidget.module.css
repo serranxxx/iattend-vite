@@ -1,5 +1,5 @@
-/* Itinerario de un Evento Flash en la pieza del editor (ItinerarioWidget.jsx,
-   handoff "Itinerario del Evento Flash" opción 6c): barra del día + lista.
+/* Itinerario de un Pop en la pieza del editor (ItinerarioWidget.jsx,
+   handoff "Itinerario del Pop" opción 6c): barra del día + lista.
    Los blancos son variables del estilo de bloques (estilosBloque.js) con el
    valor de vidrio de respaldo. Contraparte en iattend-events:
    components/SideEvent/itinerario-widget.module.css. */

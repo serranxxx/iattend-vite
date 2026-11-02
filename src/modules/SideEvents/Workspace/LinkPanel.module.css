@@ -1,0 +1,201 @@
+/* "Imagen del link" de un Pop (LinkPanel.jsx): lo propio del panel; el resto
+   reutiliza ToolPanels y WalletPanel. */
+
+.url {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 4px 0 12px;
+    border: 1px solid #E6E3DE;
+    border-radius: 12px;
+    background: #FAF9F7;
+}
+
+.urlTexto {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: #4A4741;
+}
+
+.copiar {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #4A4741;
+    cursor: pointer;
+}
+
+.copiar:hover {
+    background: #EFEDE9;
+}
+
+/* Portada de video sin foto: hay que subir una. */
+.aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #FDECEC;
+    color: #B42318;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.aviso svg {
+    flex: none;
+    margin-top: 1px;
+}
+
+/* Las dos opciones de imagen: Usar portada · Subir foto. */
+.opciones {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.opcion {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 12px 8px 8px;
+    border: 1.5px solid #E6E3DE;
+    border-radius: 14px;
+    background: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.opcion:hover:not([aria-disabled]) {
+    border-color: #CFC9C1;
+}
+
+.opcion[data-on] {
+    border-color: #29262D;
+    background: #FAF9F7;
+}
+
+.opcion[aria-disabled] {
+    cursor: default;
+    opacity: .55;
+}
+
+.opcion[data-falta] {
+    border-color: #E5484D;
+    border-style: dashed;
+}
+
+.mini {
+    position: relative;
+    flex: none;
+    width: 52px;
+    height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #EFEDE9;
+}
+
+.mini img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.miniPieza {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+    pointer-events: none;
+}
+
+.miniVacia {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: #8A8E92;
+}
+
+.opcionTextos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.opcionTitulo {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.opcionSub {
+    font-size: 12px;
+    line-height: 1.35;
+    color: #787878;
+}
+
+.check {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #29262D;
+    color: #fff;
+}
+
+/* Link viejo con el número (eventos de antes del código público). */
+.viejo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #FFF7EC;
+    border: 1px solid #F5DDB8;
+}
+
+.viejoTitulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7A4B0E;
+}
+
+.viejoTexto {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #8A6A3B;
+}
+
+.viejoBoton {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 7px 14px;
+    border: 1px solid #E8C99A;
+    border-radius: 99px;
+    background: #FFFFFF;
+    color: #7A4B0E;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}

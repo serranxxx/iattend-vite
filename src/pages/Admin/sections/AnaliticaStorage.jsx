@@ -24,7 +24,7 @@ const AREAS = {
     event_media: 'Fotos y videos de invitaciones',
     photo_wall: 'Photo Wall',
     stickers: 'Stickers del editor',
-    flash: 'Eventos Flash',
+    pop: 'Pops',
     iattend_assets: 'Assets de i attend',
     editor_catalog: 'Catálogo del editor',
     temp: 'Temporales (Save the Date)',
@@ -75,13 +75,13 @@ export const AnaliticaStorage = ({ invitations, esPrueba }) => {
             const prueba = inv ? esPrueba(inv) : false
             return {
                 ...e,
-                nombre: e.flash_id ? (e.flash_name || 'Evento Flash') : inv ? nombreDe(inv) : 'Sin invitación (borrada)',
+                nombre: e.pop_id ? (e.pop_name || 'Pop') : inv ? nombreDe(inv) : 'Sin invitación (borrada)',
                 // Abrir el evento en su dashboard (como el resto del admin).
-                href: e.flash_id ? `https://www.iattend.site/dashboard/side?flash=${e.flash_id}`
+                href: e.pop_id ? `https://www.iattend.site/dashboard/side?pop=${e.pop_id}`
                     : inv ? `https://www.iattend.site/dashboard?id=${inv.id}` : null,
-                tipo: e.flash_id ? 'Flash' : inv ? (prueba ? 'Prueba' : 'Real') : 'Huérfano',
+                tipo: e.pop_id ? 'Pop' : inv ? (prueba ? 'Prueba' : 'Real') : 'Huérfano',
                 prueba,
-                huerfano: !e.flash_id && !inv,
+                huerfano: !e.pop_id && !inv,
             }
         })
         const reales = eventos.filter((e) => !e.prueba && !e.huerfano)
@@ -194,7 +194,7 @@ export const AnaliticaStorage = ({ invitations, esPrueba }) => {
                     </header>
                     <ol className={`${styles.scroll} ${styles.eventos}`}>
                         {datos.eventos.map((e, i) => (
-                            <li key={e.invitation_id ?? e.flash_id} className={styles.evento}>
+                            <li key={e.invitation_id ?? e.pop_id} className={styles.evento}>
                                 <span className={styles.pos}>{i + 1}</span>
                                 <div className={styles.eventoCuerpo}>
                                     <div className={styles.barraFila}>

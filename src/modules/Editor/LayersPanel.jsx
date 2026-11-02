@@ -12,7 +12,7 @@ import styles from '../Invitation/Build/PageSections/ModuleLayers.module.css'
   En la invitación cada módulo es un GRUPO (se arrastra para cambiar su
   posición y el ojo lo oculta) y adentro van sus capas: los elementos que se
   agregaron delante del contenido, el contenido del módulo (título, texto,
-  fecha…), los elementos detrás del contenido y su fondo. En un Flash hay un
+  fecha…), los elementos detrás del contenido y su fondo. En un Pop hay un
   solo grupo, sin encabezado.
 
   Un elemento se arrastra dentro de su lista para cambiar su orden, a la otra
@@ -28,11 +28,15 @@ import styles from '../Invitation/Build/PageSections/ModuleLayers.module.css'
       { kind: 'fixed', rows }                                       // no se mueven
     ],
   }]
-  row: { id, label, icon, selected, hidden?, onSelect(event), onToggleHidden?, action? }
+  row: { id, label, icon, selected, hidden?, onSelect(event), onToggleHidden?, action?, children? }
+  children: [row]: un GRUPO de capas (elementos agrupados de un Pop; con
+  `onRename(nombre)` y `nombre` se renombra con doble clic): la fila
+  se arrastra como un bloque, su flecha muestra sus capas (que se eligen una
+  por una pero no se arrastran sueltas).
   action: { label, onClick }: un botón ("+ Agregar") en lugar del ojo, para lo
   que todavía no tiene contenido. También en header.
   variant: 'secciones' → filas más amplias, ojo siempre a la vista y grupos
-  abiertos de entrada (la flecha los comprime) (Capas de un Flash).
+  abiertos de entrada (la flecha los comprime) (Capas de un Pop).
   onReorderGroups(activeGroupId, overGroupId)
   onMoveItem({ itemId, fromGroup, toGroup, toSegment })
 */
@@ -96,8 +100,88 @@ const ItemRow = ({ row, groupId, segmentId, ctx }) => {
     )
 }
 
+// Grupo de capas (elementos agrupados): se arrastra como un bloque y su
+// flecha despliega sus capas, que se eligen una por una y también se
+// arrastran (dentro del grupo, fuera de él, o una suelta hacia adentro): todo
+// va a `onReorder` de su segmento, que decide según dónde cayó.
+const GroupItemRow = ({ row, groupId, segmentId, ctx }) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: row.id,
+        data: { type: 'item', groupId, segmentId },
+    })
+    const [abierto, setAbierto] = useState(false)
+    // Doble clic en el nombre: se renombra ahí mismo (Enter / salir guarda,
+    // Esc cancela). `row.nombre`: el nombre sin la cuenta.
+    const [editando, setEditando] = useState(false)
+    const guardar = (valor) => { setEditando(false); if (valor.trim() !== (row.nombre ?? '')) row.onRename?.(valor.trim()) }
+    return (
+        <li
+            ref={setNodeRef}
+            className={styles.capaGrupo}
+            data-dragging={isDragging || undefined}
+            style={{ transform: CSS.Translate.toString(transform), transition }}
+        >
+            <div
+                className={`${styles.row} ${styles.child}`}
+                data-selected={row.selected || undefined}
+                data-hidden={row.hidden || undefined}
+                onClick={(e) => { e.stopPropagation(); if (!ctx.justDragged()) row.onSelect(e) }}
+                {...attributes}
+                {...listeners}
+            >
+                <GripVertical size={13} className={styles.grip} />
+                <span className={styles.thumb}>{row.icon}</span>
+                {editando ? (
+                    <input
+                        className={styles.renombrar}
+                        defaultValue={row.nombre ?? ''}
+                        autoFocus
+                        maxLength={40}
+                        onFocus={(e) => e.target.select()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                            e.stopPropagation()
+                            if (e.key === 'Enter') guardar(e.currentTarget.value)
+                            else if (e.key === 'Escape') setEditando(false)
+                        }}
+                        onBlur={(e) => guardar(e.currentTarget.value)}
+                    />
+                ) : (
+                    <span
+                        className={styles.label}
+                        title={row.onRename ? row.renameHint : undefined}
+                        onDoubleClick={row.onRename ? (e) => { e.stopPropagation(); setEditando(true) } : undefined}
+                    >
+                        {row.label}
+                    </span>
+                )}
+                <button
+                    type="button"
+                    className={styles.caret}
+                    data-open={abierto || undefined}
+                    aria-label={row.label}
+                    aria-expanded={abierto}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); setAbierto((v) => !v) }}
+                >
+                    <ChevronRight size={14} />
+                </button>
+                <RowEnd item={row} ctx={ctx} />
+            </div>
+            <Collapse open={abierto}>
+                <ul className={styles.capaGrupoHijos}>
+                    <SortableContext items={row.children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                        {row.children.map((c) => <ItemRow key={c.id} row={c} groupId={groupId} segmentId={segmentId} ctx={ctx} />)}
+                    </SortableContext>
+                </ul>
+            </Collapse>
+        </li>
+    )
+}
+
 // Capa fija (contenido del módulo: título, fecha, fondo…). Con
-// `onToggleHidden` lleva ojo (ej. Asistentes de un Flash, que es opcional).
+// `onToggleHidden` lleva ojo (ej. Asistentes de un Pop, que es opcional).
 const FixedRow = ({ row, ctx }) => (
     <li className={`${styles.row} ${styles.child} ${styles.part}`} data-selected={row.selected || undefined} data-hidden={row.hidden || undefined} onClick={(e) => { e.stopPropagation(); row.onSelect(e) }}>
         <span className={styles.partDot} />
@@ -113,7 +197,9 @@ const Children = ({ group, ctx }) => (
             ? seg.rows.map((row) => <FixedRow key={row.id} row={row} ctx={ctx} />)
             : (
                 <SortableContext key={seg.id ?? i} items={seg.rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-                    {seg.rows.map((row) => <ItemRow key={row.id} row={row} groupId={group.id} segmentId={seg.id} ctx={ctx} />)}
+                    {seg.rows.map((row) => (row.children
+                        ? <GroupItemRow key={row.id} row={row} groupId={group.id} segmentId={seg.id} ctx={ctx} />
+                        : <ItemRow key={row.id} row={row} groupId={group.id} segmentId={seg.id} ctx={ctx} />))}
                 </SortableContext>
             )))}
     </ul>
@@ -283,7 +369,7 @@ export const LayersPanel = ({ title, groups, onReorderGroups, onMoveItem, showLa
                                 </li>
                             )
                             : !g.header
-                            // Sin encabezado (Flash): sus capas directo.
+                            // Sin encabezado (Pop): sus capas directo.
                             ? <li key={g.id} className={styles.group}><Children group={g} ctx={ctx} /></li>
                             : g.header.sortable
                                 ? <SortableGroup key={g.id} group={g} open={isOpen(g)} onCaret={() => caret(g)} ctx={ctx} />

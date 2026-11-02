@@ -7,9 +7,9 @@ import { PREFIJO_LUCIDE } from './IconoMomento'
 import ed from './SideEventEditor.module.css'
 
 /*
-  Selector de ícono del itinerario de un Flash: todos los íconos de Lucide.
+  Selector de ícono del itinerario de un Pop: todos los íconos de Lucide.
   Trae el set completo de golpe (`icons`), así que se carga con React.lazy
-  solo al abrir el selector (ItinerarioFlash.jsx) y no pesa en el editor.
+  solo al abrir el selector (ItinerarioPop.jsx) y no pesa en el editor.
   Se guarda el nombre en kebab ("lucide:plane-landing"), que es el que usa
   DynamicIcon para pintarlo en la pieza y en iattend-events.
 */

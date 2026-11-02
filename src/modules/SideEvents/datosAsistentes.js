@@ -1,5 +1,5 @@
 /*
-  Asistentes de un Flash en el editor (cuadro de muestra en la pieza): la
+  Asistentes de un Pop en el editor (cuadro de muestra en la pieza): la
   página del invitado (iattend-events, components/SideEvent/Asistentes) pinta
   la lista real; aquí siempre se ve el ejemplo, igual al que enseña "Ver en
   vivo" mientras nadie confirma. Contraparte: Asistentes/datosAsistentes.ts en events.
@@ -77,7 +77,7 @@ const formalesDe = (tema) => {
 }
 
 // `modo`: 'emoji' (por omisión) o 'initials' (body.attendeesStyle). `tema`:
-// color del tema del Flash (body.color), para el modo iniciales.
+// color del tema del Pop (body.color), para el modo iniciales.
 export const fondoAsistente = (a, modo = 'emoji', tema) => {
     const formales = formalesDe(tema)
     const [claro, oscuro] = modo === 'initials' ? formales[hashDe(a.id, 3) % formales.length] : PERFILES[perfilDe(a)]
@@ -87,7 +87,7 @@ export const fondoAsistente = (a, modo = 'emoji', tema) => {
 // Solo letras: "Abuela (Lupita)" → "AL", no "A(".
 const iniciales = (n) => n.trim().split(/\s+/).map((p) => p.match(/\p{L}/u)?.[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
 
-// Confirmados reales del Flash (filas de side_events_guests que ya tiene el
+// Confirmados reales del Pop (filas de side_events_guests que ya tiene el
 // editor) con la forma que da GET /api/side-events/:id/asistentes: primer
 // nombre, iniciales y avatar, el más reciente primero. "Ver en vivo" los usa
 // en vez del ejemplo aunque el interruptor aún no esté guardado.
@@ -121,6 +121,17 @@ export const ASISTENTES_EJEMPLO = [
     perfil,
     titular: titular == null ? null : `ejemplo-${titular}`,
 }))
+
+// Solo en la pieza del editor: los confirmados reales primero y, si son
+// pocos, asistentes de ejemplo hasta `minimo` para que el cuadro se vea lleno
+// (con la marca "Ejemplo"). Igual que rellenarConEjemplo en events.
+export const rellenarConEjemplo = (lista, minimo = 9) => {
+    const reales = lista?.asistentes ?? []
+    const faltan = Math.max(0, minimo - reales.length)
+    if (!faltan) return lista ?? { total: 0, asistentes: [] }
+    const relleno = ASISTENTES_EJEMPLO.slice(0, faltan)
+    return { total: (lista?.total ?? reales.length) + relleno.length, asistentes: [...reales, ...relleno], ejemplo: true }
+}
 
 // Pases: titular + acompañantes que confirmaron (si el titular no está, el
 // acompañante va solo). Igual que unidadesDe en events.

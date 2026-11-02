@@ -6,10 +6,60 @@ import styles from './ElementBar.module.css'
 // en vivo mientras se arrastra; solo el primer movimiento de cada arrastre
 // abre una entrada en deshacer (`{ snapshot }`, para setActiveField), así un
 // arrastre se deshace de un jalón.
+// En el celular (≤ 750 px) no hay slider: cinco opciones ya hechas, del
+// mínimo al máximo, en un riel gris con la elegida en blanco (como los
+// grosores del pincel, AjustesPincel). Arrastrar con el dedo un slider de
+// 200 px era impreciso.
+const MOVIL = '(max-width: 750px)'
+const useEsMovil = () => {
+    const [movil, setMovil] = useState(() => typeof window !== 'undefined' && window.matchMedia(MOVIL).matches)
+    useEffect(() => {
+        const mq = window.matchMedia(MOVIL)
+        const cambio = () => setMovil(mq.matches)
+        mq.addEventListener('change', cambio)
+        return () => mq.removeEventListener('change', cambio)
+    }, [])
+    return movil
+}
+const OPCIONES = 5
+const opcionesDe = (min, max, step) => {
+    const lista = Array.from({ length: OPCIONES }, (_, i) => {
+        const v = min + ((max - min) * i) / (OPCIONES - 1)
+        return Math.round(Math.round(v / step) * step * 1000) / 1000
+    })
+    return [...new Set(lista)]
+}
+const cercana = (lista, v) => lista.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a), lista[0])
+
 export const LiveSlider = ({ label, value, min, max, step = 1, format = (v) => v, onChange }) => {
     const [local, setLocal] = useState(value)
     const dragging = useRef(false)
+    const movil = useEsMovil()
     useEffect(() => { if (!dragging.current) setLocal(value) }, [value])
+    if (movil) {
+        const opciones = opcionesDe(min, max, step)
+        const elegida = cercana(opciones, Number(value) || 0)
+        return (
+            <div className={styles.sliderRow}>
+                <span className={styles.popLabel}>{label}</span>
+                <div className={styles.opciones} role="radiogroup" aria-label={label}>
+                    {opciones.map((v) => (
+                        <button
+                            key={v}
+                            type="button"
+                            role="radio"
+                            aria-checked={v === elegida}
+                            className={styles.opcion}
+                            data-on={v === elegida || undefined}
+                            onClick={() => onChange(v, { snapshot: true })}
+                        >
+                            {format(v)}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        )
+    }
     return (
         <div className={styles.sliderRow}>
             <span className={styles.popLabel}>{label}</span>

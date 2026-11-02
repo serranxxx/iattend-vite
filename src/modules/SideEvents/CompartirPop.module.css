@@ -1,0 +1,113 @@
+/* Popover "Compartir" de un Pop (CompartirPop.jsx). */
+.panel {
+    width: 236px;
+    /* data-text-bar: el popover lleva el redondeo de 32 px de los del editor. */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* La portada en vivo (390 × 700) escalada al ancho del panel. Sin la capa de
+   desenfoque de la portada (SideCanvas soloPortada): un backdrop-filter dentro
+   de la capa escalada podía dejar la foto sin pintar. */
+.portada {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #EEEEEE;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.16);
+}
+
+.pieza {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: top left;
+    pointer-events: none;
+}
+
+/* El QR del link, al centro de la portada. */
+.qr {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 8px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    display: flex;
+}
+
+.qr > * {
+    padding: 0 !important;
+}
+
+.url {
+    font-size: 12px;
+    color: #787878;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.botones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Modal del celular: los botones lado a lado y más gruesos. */
+.botones[data-fila] {
+    flex-direction: row;
+}
+
+.botones[data-fila] > * {
+    flex: 1;
+    min-width: 0;
+    height: 48px !important;
+    font-size: 15px;
+}
+
+/* Brillo del QR: un destello que lo cruza cada pocos segundos y un halo que
+   late, para que llame a escanearlo. El destello pasa rápido y casi todo el
+   tiempo está fuera, así no estorba al lector. */
+.qr {
+    overflow: hidden;
+    animation: qrHalo 2.6s ease-in-out infinite;
+}
+
+.qr::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    bottom: -40%;
+    left: 0;
+    width: 60%;
+    background: linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: translateX(-160%) skewX(-12deg);
+    animation: qrDestello 3.2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes qrDestello {
+    0%, 55% { transform: translateX(-160%) skewX(-12deg); }
+    85%, 100% { transform: translateX(260%) skewX(-12deg); }
+}
+
+@keyframes qrHalo {
+    0%, 100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28), 0 0 0 0 rgba(255, 255, 255, 0.55); }
+    50% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28), 0 0 0 12px rgba(255, 255, 255, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .qr,
+    .qr::after {
+        animation: none;
+    }
+
+    .qr::after {
+        display: none;
+    }
+}

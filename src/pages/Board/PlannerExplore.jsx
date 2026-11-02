@@ -14,7 +14,10 @@ const AVANCE_MS = 6000
  * "Ver invitación" (entra a su dashboard, como "Comenzar") y "Compartir".
  * Los altos van en vh para que toda la sección quepa en pantalla sin scroll.
  */
-export const PlannerExplore = ({ ejemplo, renderInvitationCard, onVer, onCompartir }) => {
+// `onRegalar`: la slide de regalo abre "Regala I attend" (clientes, como el
+// AdsCarousel de antes).
+// `completo`: sin invitación de ejemplo (clientes), el carrusel llena todo el alto.
+export const PlannerExplore = ({ ejemplo, renderInvitationCard, onVer, onCompartir, onRegalar, completo = false }) => {
     const { t } = useTranslation()
     const [activa, setActiva] = useState(0)
     // Fotos del carrusel ya descargadas: aparecen suave en vez de pintarse a
@@ -30,13 +33,15 @@ export const PlannerExplore = ({ ejemplo, renderInvitationCard, onVer, onCompart
     const mover = (paso) => setActiva(i => (i + paso + SLIDES.length) % SLIDES.length)
 
     return (
-        <div className={styles.explora}>
+        <div className={`${styles.explora} ${completo ? styles.completo : ''}`}>
             <section className={styles.carrusel} aria-roledescription='carousel' aria-label={t('planner_explore.carousel_label')}>
                 {SLIDES.map((slide, i) => (
                     <div
                         key={slide.id}
                         className={`${styles.slide} ${i === activa ? styles.slideActiva : ''}`}
                         aria-hidden={i !== activa}
+                        onClick={slide.id === 'regalo' && onRegalar ? onRegalar : undefined}
+                        style={slide.id === 'regalo' && onRegalar ? { cursor: 'pointer' } : undefined}
                     >
                         <img
                             src={slide.img}

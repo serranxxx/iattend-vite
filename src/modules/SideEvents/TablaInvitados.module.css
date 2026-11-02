@@ -1,0 +1,357 @@
+/* Vista compacta de invitados (TablaInvitados.jsx): grilla densa tipo AG Grid. */
+
+.marco {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--gx-border, #E6E3DE);
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+    font-family: 'Work Sans', 'Plus Jakarta Sans', sans-serif;
+    /* Llena el alto de su contenedor (.gx--compacta) aunque haya pocas filas. */
+    flex: 1;
+    min-height: 260px;
+}
+
+.scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.tabla {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 12.5px;
+    color: var(--gx-ink, #17161B);
+}
+
+.tabla thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 34px;
+    padding: 0;
+    background: #F7F6F3;
+    border-bottom: 1px solid var(--gx-border, #E6E3DE);
+    border-right: 1px solid #EFEDE9;
+    text-align: left;
+    font-weight: 600;
+}
+
+.tabla thead th:last-child,
+.tabla tbody td:last-child {
+    border-right: none;
+}
+
+.encabezado {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    height: 34px;
+    padding: 0 10px;
+    border: none;
+    background: none;
+    color: #6E6A64;
+    font: inherit;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.encabezado span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.encabezado:hover {
+    color: var(--gx-ink, #17161B);
+    background: #EFEDE9;
+}
+
+.tabla tbody td {
+    height: 32px;
+    padding: 0 10px;
+    border-bottom: 1px solid #F0EEEA;
+    border-right: 1px solid #F4F2EF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.tabla tbody tr:nth-child(even) td {
+    background: #FCFBFA;
+}
+
+.tabla tbody tr:hover td {
+    background: #F3F1FB;
+}
+
+.num {
+    text-align: right;
+    color: #A8A39C;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    padding-right: 8px !important;
+}
+
+.tabla thead th.num {
+    padding-right: 8px;
+    font-size: 10.5px;
+    color: #A8A39C;
+}
+
+.nombre {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.nombre > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nombreTitular {
+    font-weight: 600;
+}
+
+.nombreHijo {
+    color: #4A4741;
+}
+
+.flechaHijo {
+    flex: none;
+    color: #B5B0A8;
+    margin-left: 6px;
+}
+
+.filaHijo td {
+    background: #FDFDFC;
+}
+
+.estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: #F1EFEC;
+    color: #5D5953;
+}
+
+.estado i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.estado[data-estado='esperando'] { background: #FFF4DE; color: #9A6A0B; }
+.estado[data-estado='confirmado'] { background: #E4F3E6; color: #2F7A3D; }
+.estado[data-estado='asistente'] { background: #DDEBFB; color: #2458A6; }
+.estado[data-estado='rechazado'] { background: #FBE7E7; color: #A83A3A; }
+
+.mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+    color: #4A4741;
+}
+
+.centro {
+    text-align: center;
+}
+
+.grupo {
+    color: #6E6A64;
+}
+
+.grupoTitular {
+    color: #4A4741;
+    font-weight: 500;
+}
+
+.chip {
+    display: inline-block;
+    max-width: 100%;
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: #F1EFEC;
+    font-size: 11.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.envio {
+    font-size: 11.5px;
+    font-weight: 500;
+}
+
+.envio[data-tono='bien'] { color: #2F7A3D; }
+.envio[data-tono='visto'] { color: #9A6A0B; }
+.envio[data-tono='mal'] { color: #A83A3A; }
+.envio[data-tono='neutro'] { color: #6E6A64; }
+
+.fecha {
+    color: #4A4741;
+    font-variant-numeric: tabular-nums;
+}
+
+.vacio {
+    color: #C9C4BC;
+}
+
+.acciones {
+    text-align: right;
+    padding-right: 6px !important;
+}
+
+.accion {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 2px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #6E6A64;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.accion:hover {
+    background: #EAE7E2;
+    color: var(--gx-ink, #17161B);
+}
+
+.sinFilas {
+    height: 80px !important;
+    text-align: center;
+    color: #8A8E92;
+}
+
+.pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--gx-border, #E6E3DE);
+    background: #F7F6F3;
+    font-size: 11.5px;
+    color: #6E6A64;
+}
+
+.quitarOrden {
+    border: none;
+    background: none;
+    padding: 0;
+    color: #5B3FD1;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* # y Nombre fijas a la izquierda: no se mueven con el scroll horizontal.
+   Llevan fondo sólido (heredan el de su fila) y una línea a la derecha. */
+.tabla th:nth-child(1),
+.tabla td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+
+.tabla th:nth-child(2),
+.tabla td:nth-child(2) {
+    position: sticky;
+    left: 40px;
+    z-index: 1;
+    box-shadow: 1px 0 0 var(--gx-border, #E6E3DE), 6px 0 8px -6px rgba(23, 22, 27, .12);
+}
+
+.tabla tbody td:nth-child(1),
+.tabla tbody td:nth-child(2) {
+    background: #fff;
+}
+
+.tabla tbody tr:nth-child(even) td:nth-child(1),
+.tabla tbody tr:nth-child(even) td:nth-child(2) {
+    background: #FCFBFA;
+}
+
+.tabla tbody tr:hover td:nth-child(1),
+.tabla tbody tr:hover td:nth-child(2) {
+    background: #F3F1FB;
+}
+
+.tabla thead th:nth-child(1),
+.tabla thead th:nth-child(2) {
+    z-index: 3;
+}
+
+/* Botón de la columna Formulario (Pop con formulario activo). */
+.botonFormulario {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    height: 22px;
+    padding: 0 9px;
+    border: 1px solid transparent;
+    border-radius: 99px;
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.botonFormulario span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.botonFormulario[data-estado='completo'] {
+    background: #E4F3E6;
+    color: #2F7A3D;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+}
+
+.botonFormulario[data-estado='pendiente'] {
+    background: #FFF4DE;
+    color: #9A6A0B;
+}
+
+.botonFormulario:hover {
+    border-color: currentColor;
+}
+
+/* En el celular (≤ 720 px) # y Nombre ya no van fijas: se mueven con el
+   scroll horizontal como las demás (el encabezado sigue fijo arriba). */
+@media (max-width: 720px) {
+    .tabla tbody td:nth-child(1),
+    .tabla tbody td:nth-child(2) {
+        position: static;
+        box-shadow: none;
+    }
+
+    .tabla thead th:nth-child(1),
+    .tabla thead th:nth-child(2) {
+        left: auto;
+        box-shadow: none;
+    }
+}

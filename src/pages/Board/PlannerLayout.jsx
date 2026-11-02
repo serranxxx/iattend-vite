@@ -35,11 +35,17 @@ import { PlannerSkeleton } from './PlannerSkeleton'
  * Mis eventos, Dashboard) con un "+" al centro que abre la hoja de alta
  * (comprar o usar sus eventos gratis). "¿Te falta algo?" va como fila al
  * final del dashboard.
+ *
+ * `esCliente`: el mismo layout para una cuenta de cliente (InvitationsPage lo
+ * usa para todos): sin Clientes, Dashboard, Administrador, "¿Te falta algo?"
+ * ni invitación de ejemplo; Explora es solo el carrusel (con su slide de
+ * regalo, `onRegalar`) y Eventos son todas sus invitaciones.
  */
 export const PlannerLayout = ({
+    esCliente = false,
     greeting, user, invitations, beneficios, esDeCliente, renderInvitationCard,
     view, onViewChange, dashboard, setFilterSlot, loading,
-    onComprar, onGratis, onGratisFlash, onEventoPersonal, onTour, onLogout, onAbrir, onCompartir,
+    onComprar, onGratis, onGratisPop, onEventoPersonal, onRegalar, onTour, onLogout, onAbrir, onCompartir,
 }) => {
     const { t } = useTranslation()
     const navigate = useNavigate()
@@ -48,38 +54,41 @@ export const PlannerLayout = ({
     const [hojaAlta, setHojaAlta] = useState(false)
     // Administración usa este mismo layout (helpers/roles.js) y aquí no está
     // el header de la app: su acceso a Administrador va en la barra, bajo Dashboard.
-    const esAdmin = user?.role === 'Administration'
+    const esAdmin = !esCliente && user?.role === 'Administration'
 
     const lista = invitations ?? []
     // La invitación `is_test` de un planner es su ejemplo (Explora I attend).
     // Un admin tiene muchas de prueba que son sus eventos de trabajo: todas van
     // a Mis eventos y Explora usa la primera como ejemplo.
-    const esEjemplo = (inv) => !esDeCliente(inv) && inv.is_test && !esAdmin
+    const esEjemplo = (inv) => !esCliente && !esDeCliente(inv) && inv.is_test && !esAdmin
     // Su copia de la plantilla de planners (helpers/plannerTemplate.js en el
     // backend: dueño y planner son la propia cuenta) va primero, así es la que
     // sale como ejemplo; si no tiene, la primera de sus pruebas, como antes.
     const esCopiaDePlantilla = (inv) => inv.planner_id && inv.planner_id === inv.user_id && inv.user_id === user?.uid
     const pruebasAdmin = esAdmin
         ? lista
-            .filter(inv => !esDeCliente(inv) && inv.is_test && !inv._flash)
+            .filter(inv => !esDeCliente(inv) && inv.is_test && !inv._pop)
             .sort((a, b) => Number(esCopiaDePlantilla(b)) - Number(esCopiaDePlantilla(a)))
         : []
+    // Clientes manda: todo lo de un cliente (invitación o Pop) va ahí. Los
+    // Pops propios van en Pops y Eventos queda con sus invitaciones propias.
     const secciones = [
-        { key: 'test', title: t('invitations.section_test'), items: esAdmin ? pruebasAdmin.slice(0, 1) : lista.filter(esEjemplo) },
-        { key: 'clients', title: t('invitations.section_clients'), items: lista.filter(esDeCliente) },
-        { key: 'own', title: t('invitations.planner_tab_own'), items: lista.filter(inv => !esDeCliente(inv) && !esEjemplo(inv)) },
-    ]
+        { key: 'test', title: t('invitations.section_test'), items: esAdmin ? pruebasAdmin.slice(0, 1) : lista.filter(inv => !inv._pop && esEjemplo(inv)) },
+        { key: 'clients', title: t('invitations.planner_tab_clients'), items: lista.filter(esDeCliente) },
+        { key: 'own', title: t('invitations.planner_tab_own'), items: lista.filter(inv => !inv._pop && !esDeCliente(inv) && !esEjemplo(inv)) },
+        { key: 'pops', title: t('invitations.planner_tab_pops'), items: lista.filter(inv => inv._pop && !esDeCliente(inv)) },
+    ].filter(s => !esCliente || s.key !== 'clients')
 
     // Siempre se entra a Explora I attend; después, la que elija.
     const activa = secciones.find(s => s.key === (elegida ?? 'test'))
 
     // Números de las tarjetas de Mis clientes y Mis eventos (mismo cálculo
-    // que el dashboard). Sin números para los Flash: con stats la tarjeta
+    // que el dashboard). Sin números para los Pops: con stats la tarjeta
     // pinta el lector de pases, que solo sabe abrir invitaciones.
     const conNumeros = secciones
         .filter(s => s.key === 'clients' || s.key === 'own')
         .flatMap(s => s.items)
-        .filter(i => !i._flash)
+        .filter(i => !i._pop)
     const conNumerosKey = conNumeros.map(i => i.id).join(',')
     const [datosEventos, setDatosEventos] = useState(null)
     useEffect(() => {
@@ -97,8 +106,11 @@ export const PlannerLayout = ({
     const enDashboard = view === 'data'
 
     const gratis = beneficios?.free_events ?? 0
-    const gratisFlash = beneficios?.free_flash_events ?? 0
+    const gratisPop = beneficios?.free_flash_events ?? 0
     const descuento = beneficios?.discount_pct ?? 0
+
+    // Crear un Pop: con uno gratis, directo a ese flujo; si no, la compra.
+    const crearPop = gratisPop > 0 ? onGratisPop : onComprar
 
     const abrirSeccion = (key) => {
         setElegida(key)
@@ -121,11 +133,11 @@ export const PlannerLayout = ({
         },
     }
 
-    // Beneficios gratis en una sola tarjeta, una fila por tipo. El ⓘ de Flash
+    // Beneficios gratis en una sola tarjeta, una fila por tipo. El ⓘ de Pop
     // explica qué es: casi nadie lo sabe todavía. En celular van en la hoja
     // del "+".
     const usarGratis = (fn) => () => { setHojaAlta(false); fn?.() }
-    const regalos = (gratis > 0 || gratisFlash > 0) && (
+    const regalos = (gratis > 0 || gratisPop > 0) && (
         <div className={styles.regalos}>
             <span className={styles.regalosTitulo}><Gift size={13} /> {t('planner_free.title')}</span>
             {gratis > 0 && (
@@ -136,29 +148,29 @@ export const PlannerLayout = ({
                     <ChevronRight size={16} className={styles.regaloFlecha} />
                 </button>
             )}
-            {gratisFlash > 0 && (
-                <button type='button' className={styles.regalo} onClick={usarGratis(onGratisFlash)}>
+            {gratisPop > 0 && (
+                <button type='button' className={styles.regalo} onClick={usarGratis(onGratisPop)}>
                     <span className={styles.regaloIcono}><Zap size={15} /></span>
                     <span className={styles.regaloTexto}>
-                        {t('planner_free.flash')}
+                        {t('planner_free.pop')}
                         <Popover
                             trigger={['hover', 'click']}
                             placement={celular ? 'top' : 'right'}
-                            content={<p className={styles.queEsFlash}>{t('planner_free.flash_what')}</p>}
-                            title={t('planner_free.flash_what_title')}
+                            content={<p className={styles.queEsPop}>{t('planner_free.pop_what')}</p>}
+                            title={t('planner_free.pop_what_title')}
                         >
                             <span
                                 className={styles.info}
                                 role='button'
                                 tabIndex={0}
-                                aria-label={t('planner_free.flash_what_title')}
+                                aria-label={t('planner_free.pop_what_title')}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <Info size={13} />
                             </span>
                         </Popover>
                     </span>
-                    <span className={styles.regaloCuenta}>×{gratisFlash}</span>
+                    <span className={styles.regaloCuenta}>×{gratisPop}</span>
                     <ChevronRight size={16} className={styles.regaloFlecha} />
                 </button>
             )}
@@ -171,7 +183,9 @@ export const PlannerLayout = ({
         ? (enDashboard ? null : <PlannerSkeleton variante={!activa || activa.key === 'test' ? 'explora' : 'lista'} />)
         : enDashboard ? dashboard : activa?.key === 'test' ? (
         <PlannerExplore
-            ejemplo={activa.items[0]}
+            ejemplo={esCliente ? undefined : activa.items[0]}
+            onRegalar={esCliente ? onRegalar : undefined}
+            completo={esCliente}
             renderInvitationCard={renderInvitationCard}
             onVer={() => onAbrir(activa.items[0])}
             onCompartir={() => onCompartir(activa.items[0])}
@@ -185,15 +199,28 @@ export const PlannerLayout = ({
             onAbrir={onAbrir}
             vacioProximos={activa.key === 'own'
                 ? { texto: t('planner_list.no_upcoming_own'), cta: t('invitations.planner_own_empty_cta'), onCta: onEventoPersonal }
-                : { texto: t('planner_list.no_upcoming_clients'), cta: t('invitations.planner_buy_title'), onCta: onComprar }}
+                : activa.key === 'pops'
+                    ? { texto: t('planner_list.no_upcoming_pops'), ...(!esCliente || gratisPop > 0 ? { cta: t('invitations.planner_pops_empty_cta'), onCta: crearPop } : {}) }
+                    : { texto: t('planner_list.no_upcoming_clients'), cta: t('invitations.planner_buy_title'), onCta: onComprar }}
         />
+    ) : activa?.key === 'pops' ? (
+        <div className={styles.vacio}>
+            <Zap size={28} />
+            <strong>{t('invitations.planner_pops_empty_title')}</strong>
+            <span>{t(esCliente ? 'invitations.planner_pops_empty_text_client' : 'invitations.planner_pops_empty_text')}</span>
+            {(!esCliente || gratisPop > 0) && (
+                <button type='button' className={styles.vacioBoton} onClick={crearPop}>
+                    <Plus size={16} /> {t('invitations.planner_pops_empty_cta')}
+                </button>
+            )}
+        </div>
     ) : activa?.key === 'own' ? (
         <div className={styles.vacio}>
             <CalendarHeart size={28} />
-            <strong>{t('invitations.planner_own_empty_title')}</strong>
-            <span>{t('invitations.planner_own_empty_text')}</span>
-            <button type='button' className={styles.vacioBoton} onClick={onEventoPersonal}>
-                <Plus size={16} /> {t('invitations.planner_own_empty_cta')}
+            <strong>{t(esCliente ? 'invitations.empty_title' : 'invitations.planner_own_empty_title')}</strong>
+            <span>{t(esCliente ? 'invitations.empty_text' : 'invitations.planner_own_empty_text')}</span>
+            <button type='button' className={styles.vacioBoton} onClick={esCliente ? onComprar : onEventoPersonal}>
+                <Plus size={16} /> {t(esCliente ? 'invitations.empty_cta' : 'invitations.planner_own_empty_cta')}
             </button>
         </div>
     ) : (
@@ -215,10 +242,13 @@ export const PlannerLayout = ({
             { key: 'clients', label: t('invitations.planner_tab_clients'), icon: Users },
             { key: 'nuevo' },
             { key: 'own', label: t('invitations.planner_tab_own'), icon: CalendarHeart },
+            { key: 'pops', label: t('invitations.planner_tab_pops'), icon: Zap },
             { key: 'data', label: t('planner.segment_data'), icon: LayoutDashboard },
-        ]
+        ].filter(p => !esCliente || (p.key !== 'clients' && p.key !== 'data'))
+        // Cliente: Explora · Eventos · + · Pops (el "+" sigue entre las pestañas).
+        if (esCliente) pestanas.splice(1, 0, ...pestanas.splice(pestanas.findIndex(p => p.key === 'own'), 1))
         const pestanaActiva = enDashboard ? 'data' : activa?.key
-        const tieneGratis = gratis > 0 || gratisFlash > 0
+        const tieneGratis = gratis > 0 || gratisPop > 0
 
         return (
             <div className={styles.movil}>
@@ -244,7 +274,7 @@ export const PlannerLayout = ({
                     {enDashboard && <PlannerFeedback variante='fila' />}
                 </main>
 
-                <nav className={styles.pestanas} aria-label={t('invitations.planner_nav_label')}>
+                <nav className={styles.pestanas} style={{ gridTemplateColumns: `repeat(${pestanas.length}, minmax(0, 1fr))` }} aria-label={t('invitations.planner_nav_label')}>
                     {pestanas.map(p => {
                         if (p.key === 'nuevo') {
                             return (
@@ -329,18 +359,20 @@ export const PlannerLayout = ({
                             onClick={() => abrirSeccion(s.key)}
                         >
                             <span>{s.title}</span>
-                            <small>{s.items.length}</small>
+                            {!(esCliente && s.key === 'test') && <small>{s.items.length}</small>}
                         </button>
                     ))}
 
-                    <button
-                        type='button'
-                        className={`${styles.navItem} ${styles.navDashboard} ${enDashboard ? styles.navItemActivo : ''}`}
-                        aria-current={enDashboard ? 'page' : undefined}
-                        onClick={() => onViewChange('data')}
-                    >
-                        <span className={styles.navConIcono}><LayoutDashboard size={16} /> {t('planner.segment_data')}</span>
-                    </button>
+                    {!esCliente && (
+                        <button
+                            type='button'
+                            className={`${styles.navItem} ${styles.navDashboard} ${enDashboard ? styles.navItemActivo : ''}`}
+                            aria-current={enDashboard ? 'page' : undefined}
+                            onClick={() => onViewChange('data')}
+                        >
+                            <span className={styles.navConIcono}><LayoutDashboard size={16} /> {t('planner.segment_data')}</span>
+                        </button>
+                    )}
                     {enDashboard && (
                         // PlannerDashboard dibuja aquí su filtro de eventos (portal)
                         <div ref={setFilterSlot} className={styles.filtro} />
@@ -354,9 +386,11 @@ export const PlannerLayout = ({
                 </nav>
 
                 <div className={styles.pie}>
-                    <div className={styles.sugerencias}>
-                        <PlannerFeedback />
-                    </div>
+                    {!esCliente && (
+                        <div className={styles.sugerencias}>
+                            <PlannerFeedback />
+                        </div>
+                    )}
                     <Dropdown menu={menuUsuario} trigger={['click']} placement='topLeft'>
                         <button type='button' className={styles.usuario}>
                             <span className={styles.avatar}>{iniciales}</span>

@@ -17,7 +17,7 @@
     los encabezados; por eso `domingoDe`.
 
   · El color dice el tipo: invitaciones en azul, side events en violeta y
-    Eventos Flash en verde. Los días pasados van en gris, con la barra del
+    Pops en verde. Los días pasados van en gris, con la barra del
     color de su tipo.
 
   · Cada evento llega armado desde EventosSection: { key, tipo, nombre, fecha,
@@ -38,7 +38,7 @@ const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const TIPOS = [
     { tipo: 'invitacion', label: 'Invitaciones', color: 'azul' },
     { tipo: 'side', label: 'Side events', color: 'violeta' },
-    { tipo: 'flash', label: 'Flash', color: 'verde' },
+    { tipo: 'pop', label: 'Pop', color: 'verde' },
 ]
 const COLOR_POR_TIPO = Object.fromEntries(TIPOS.map(t => [t.tipo, t.color]))
 

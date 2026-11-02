@@ -44,7 +44,7 @@ export const DateBar = ({ invitation, setInvitation, setSaved, onPickColor, colo
                 // Hacia la izquierda del botón: no tapa la pieza.
                 placement="bottomRight"
                 arrow={false}
-                content={<CountdownStylePicker invitation={invitation} value={date.style} onPick={(id) => setDate({ style: id === '1a' ? null : id })} />}
+                content={<div data-text-bar><CountdownStylePicker invitation={invitation} value={date.style} onPick={(id) => setDate({ style: id === '1a' ? null : id })} /></div>}
             >
                 <button type="button" className={styles.textBtn} data-on={styleOpen || undefined}>
                     <LayoutGrid size={17} /> {t('build_editor.cd_style')}

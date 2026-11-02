@@ -62,7 +62,7 @@ export const GuestsCRUD = ({
     drawerState,
     isSideEvent,
     sideID,
-    // Editor móvil de un Evento Flash (modo story, fondo oscuro): el panel
+    // Editor móvil de un Pop (modo story, fondo oscuro): el panel
     // también va oscuro y sin "Calcular prioridad".
     oscuro = false,
 }) => {
@@ -142,7 +142,7 @@ export const GuestsCRUD = ({
     }
 
     const getTags = async () => {
-        // Sin invitación (Evento Flash) no hay etiquetas ni novios.
+        // Sin invitación (Pop) no hay etiquetas ni novios.
         if (!invitationID) return
         const { data, error } = await supabase
             .from('invitations')
@@ -718,7 +718,7 @@ export const GuestsCRUD = ({
                             </div>
 
                             {/* Lado: solo si la invitación tiene anfitriones (owners) con
-                                los que elegir; un Evento Flash no tiene. */}
+                                los que elegir; un Pop no tiene. */}
                             {sideOptions.length > 0 && (
                                 <div className="guest_form_col">
                                     <span className="gc-content-label">{t('guests.crud_label_side')}</span>
@@ -887,7 +887,7 @@ export const GuestsCRUD = ({
                                             </div>
 
                                             {/* Lado: solo si la invitación tiene anfitriones (owners) con
-                                                los que elegir; un Evento Flash no tiene. */}
+                                                los que elegir; un Pop no tiene. */}
                                             {sideOptions.length > 0 && (
                                                 <div className="guest_form_col">
                                                     <span className="gc-content-label">{t('guests.crud_label_side')}</span>

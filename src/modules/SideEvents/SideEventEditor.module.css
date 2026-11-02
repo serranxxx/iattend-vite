@@ -324,6 +324,15 @@
     padding: 0 4px;
 }
 
+/* Vista compacta: la tabla llena todo el alto que queda (aunque tenga pocas
+   filas) y scrollea por dentro. */
+.sendBody:has(> :global(.gx--compacta)) {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+}
+
 /* La escalera de pasos se queda arriba mientras la lista scrollea */
 .sendBody :global(.gx-steps) {
     position: sticky;
@@ -501,6 +510,12 @@
     margin-left: auto;
 }
 
+/* Invitados: el selector de vista y el total van pegados a la derecha, en
+   línea con la barra de herramientas (sin el hueco del botón de cerrar). */
+.sendCol .blockHead {
+    padding-right: 0;
+}
+
 .countPill {
     background: #F1F1F1;
     border-radius: 99px;
@@ -580,7 +595,7 @@
 }
 
 /* El trigger de StorageImages entra en el hueco de una miniatura */
-/* Agregar un PNG (StickersFlash): botón de ancho completo con texto. */
+/* Agregar un PNG (StickersPop): botón de ancho completo con texto. */
 .stickerAgregar {
     width: 100%;
     flex-shrink: 0;
@@ -990,7 +1005,7 @@
     color: #1B1A18;
 }
 
-/* ── Móvil, modo "story" (handoff design_handoff_flash_editor_story) ──
+/* ── Móvil, modo "story" (handoff design_handoff_pop_editor_story) ──
    La pieza ocupa casi toda la pantalla; encima, botones de vidrio oscuro
    (a la izquierda cerrar, invitados, acceso y guardar; la canción al centro
    y las herramientas a la derecha). */
@@ -1351,7 +1366,7 @@
     pointer-events: none;
 }
 
-/* Invitados de un side event normal (un Flash usa ListaInvitadosFlash):
+/* Invitados de un side event normal (un Pop usa ListaInvitadosPop):
    pantalla completa, entra desde la izquierda, siguiendo el gesto de
    deslizar a la derecha sobre la pieza. */
 .storyGuests {
@@ -1404,7 +1419,7 @@
     display: none;
 }
 
-/* Eventos Flash con varias fechas: un picker por fecha, con su botón para
+/* Pops con varias fechas: un picker por fecha, con su botón para
    quitarla, y "Agregar otra fecha" abajo. */
 .fechaFila {
     display: flex;
@@ -1455,7 +1470,7 @@
     background: #f6f6f6;
 }
 
-/* Mini itinerario de un Flash: un renglón por momento (ícono · nombre y hora
+/* Mini itinerario de un Pop: un renglón por momento (ícono · nombre y hora
    · quitar). */
 .momento {
     /* Renglón 1: manija · ícono · nombre. Renglón 2 (a todo lo ancho):
@@ -1618,7 +1633,7 @@
     background: #1f1f1f;
 }
 
-/* Miniaturas de los PNG de un Flash (StickersFlash): la elegida, con borde. */
+/* Miniaturas de los PNG de un Pop (StickersPop): la elegida, con borde. */
 .stickerThumb {
     width: 64px;
     height: 64px;
@@ -1640,7 +1655,7 @@
     border: 2px solid #1f1f1f;
 }
 
-/* Capas de los PNG de un Flash: la de hasta arriba primero. */
+/* Capas de los PNG de un Pop: la de hasta arriba primero. */
 .capasLista {
     display: flex;
     flex-direction: column;
@@ -1731,40 +1746,7 @@
     flex-shrink: 0;
 }
 
-/* "Crear desde mi diseño" (imagen del link de un Flash). */
-.linkGenerador {
-    width: 280px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.linkStickers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 12px;
-}
-
-/* Dentro de la casilla es inline: sin inline-block no respeta el tamaño. */
-.linkStickerThumb {
-    display: inline-block;
-    vertical-align: middle;
-    width: 40px;
-    height: 40px;
-    padding: 4px;
-    border-radius: 10px;
-    background: repeating-conic-gradient(#f3f3f3 0% 25%, #fff 0% 50%) 50% / 10px 10px;
-    box-sizing: border-box;
-}
-
-.linkStickerThumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-/* Candado de un Flash abierto (público): verde, para que se note que
+/* Candado de un Pop abierto (público): verde, para que se note que
    cualquiera con el link puede entrar. */
 .accesoPublico {
     background: #E8F5EC;
@@ -1772,7 +1754,7 @@
     color: #1E6B3A;
 }
 
-/* Panel Efectos (Flash): cuadrícula de efectos animados. */
+/* Panel Efectos (Pop): cuadrícula de efectos animados. */
 .efectoGrid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1806,4 +1788,22 @@
 .efectoEmoji {
     font-size: 20px;
     line-height: 1;
+}
+
+/* Créditos del Pop junto al título (fuera de Invitados): la píldora de la
+   lista, un poco más baja para la barra. */
+.creditosTitulo {
+    display: inline-flex;
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+
+.creditosTitulo :global(.envios_pill) {
+    height: 34px;
+    padding: 0 3px 0 12px;
+}
+
+.creditosTitulo :global(.envios_mas) {
+    width: 26px;
+    height: 26px;
 }

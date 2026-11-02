@@ -29,6 +29,12 @@ export const asignarPlannerAdmin = async (invitationId, plannerId) => {
     )
 }
 
+// Créditos de un Pop (side_events.credits): suma o resta `delta` de un golpe.
+export const sumarCreditosPopAdmin = async (popId, delta) => {
+    const headers = await authHeaders()
+    return axios.post(`${API_URL}/api/admin/pops/${popId}/creditos`, { delta }, { headers })
+}
+
 // Recarga manual de créditos I attend; el backend la deja pasar solo a admins.
 export const actualizarCreditosAdmin = async (invitationId, credits) => {
     const headers = await authHeaders()

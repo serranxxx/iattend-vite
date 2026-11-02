@@ -7,12 +7,12 @@ import { uploadSongAudio } from '../../../../helpers/services/uploadAudio'
 import styles from './ElementBar.module.css'
 
 // Barra de la canción de la portada (cover.song), arriba de la pieza. Se abre
-// con el chip "Canción" y reemplaza en escritorio a su popover (CancionFlash):
+// con el chip "Canción" y reemplaza en escritorio a su popover (CancionPop):
 // mismo formato de canción ({ id, source, name, artist, albumArt, previewUrl }).
 // Con canción: portada del disco, nombre y quitar. Sin canción: buscador de
 // Spotify (resultados en un popover debajo) o "Subir" un audio.
 // `value` / `onChange` / `folder`: la misma barra para la canción de un side
-// event o Flash (body.song, mismo formato), fuera de la invitación.
+// event o Pop (body.song, mismo formato), fuera de la invitación.
 export const SongBar = ({ invitation, invitationID, setInvitation, setSaved, value, onChange, folder }) => {
     const { t } = useTranslation()
     const song = value !== undefined ? value : (invitation?.cover?.song ?? null)

@@ -10,11 +10,11 @@ import { incompleta, snapshotDe } from './modelo'
 
 /*
   Vista completa de un formulario (handoff "Formularios propios", 1b): se
-  abre encima del editor del Flash con tres pestañas, Preguntas · Respuestas
+  abre encima del editor del Pop con tres pestañas, Preguntas · Respuestas
   · Ajustes. Las preguntas se guardan solas en Mis formularios (forms, con
-  ~800 ms de espera) y a la vez actualizan el snapshot de este Flash
+  ~800 ms de espera) y a la vez actualizan el snapshot de este Pop
   (body.form.snapshot, entra al historial del editor y se guarda con el
-  Flash). Ajustes son reglas de este Flash, no del formulario.
+  Pop). Ajustes son reglas de este Pop, no del formulario.
 */
 
 const TABS = ['questions', 'responses', 'settings']
@@ -41,7 +41,7 @@ export const FormularioVista = ({
     }, [])
     useEffect(() => () => clearTimeout(avisoReloj.current), [])
 
-    // Guardado en Mis formularios (con espera) y snapshot del Flash (al momento).
+    // Guardado en Mis formularios (con espera) y snapshot del Pop (al momento).
     const vaciar = useCallback(async () => {
         clearTimeout(reloj.current)
         const patch = pendiente.current

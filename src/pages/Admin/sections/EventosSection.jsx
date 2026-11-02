@@ -8,7 +8,7 @@ import 'dayjs/locale/es'
 import { supabase } from '../../../lib/supabase'
 import { esEventoActivo, fechaDeEvento } from '../adminConstants'
 import { AdminModal } from '../AdminModal'
-import { actualizarCreditosAdmin, asignarPlannerAdmin } from '../catalogoAdminApi'
+import { actualizarCreditosAdmin, asignarPlannerAdmin, sumarCreditosPopAdmin } from '../catalogoAdminApi'
 import { EventosCalendario } from './EventosCalendario'
 import { EventosSecundarios } from './EventosSecundarios'
 import { clasificarSide } from './useSideEventsAdmin'
@@ -22,7 +22,7 @@ dayjs.locale('es')
 const TIPOS = [
     { value: 'invitaciones', label: 'Invitaciones' },
     { value: 'side', label: 'Side events' },
-    { value: 'flash', label: 'Flash' },
+    { value: 'pop', label: 'Pops' },
 ]
 
 const TABS = [
@@ -81,8 +81,8 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
     const [tabLocal, setTab] = useState('calendario')
     const tab = tabDeTopbar ?? tabLocal
     const [tipo, setTipo] = useState('invitaciones')
-    // Side events y Flash (los carga AdminLayout): calendario y sus tablas.
-    const { sides, invitadosPorSide, error: errorSides } = sideEvents ?? {}
+    // Side events y Pop (los carga AdminLayout): calendario y sus tablas.
+    const { sides, invitadosPorSide, error: errorSides, parchar: parcharSide } = sideEvents ?? {}
     const [ownerInputs, setOwnerInputs] = useState({})
     const [radiografia, setRadiografia] = useState({})
     // Evento abierto desde el calendario; su tarjeta se muestra en un modal.
@@ -145,10 +145,17 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
 
         setGuardando(true)
         try {
-            await actualizarCreditosAdmin(recargando.id, creditosNuevos);
+            // Pop: suma la diferencia de un golpe (side_events.credits) y
+            // actualiza su fila; invitación: el total, como siempre.
+            if (recargando._pop) {
+                const { data } = await sumarCreditosPopAdmin(recargando.id, creditosNuevos - Number(recargando.credits || 0))
+                parcharSide?.(recargando.id, { credits: data.credits })
+            } else {
+                await actualizarCreditosAdmin(recargando.id, creditosNuevos);
+                refreshEventos()
+            }
             message.success('Créditos actualizados')
             cerrarRecarga()
-            refreshEventos()
         } catch (error) {
             console.error('Error updating credits:', error.response?.data || error.message);
             message.error('No se pudieron actualizar los créditos')
@@ -339,7 +346,7 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
             .some(campo => String(campo ?? '').toLowerCase().includes(texto)))
     }, [porTab, tab, query, perfilesPorId])
 
-    // Calendario: invitaciones, side events y Flash, cada tipo con su color. Solo
+    // Calendario: invitaciones, side events y Pop, cada tipo con su color. Solo
     // los que tienen nombre y fecha, y sin los de prueba.
     const eventosCalendario = useMemo(() => {
         const texto = query.trim().toLowerCase()
@@ -362,14 +369,14 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
             .map(s => ({ s, ...clasificarSide(s, invitacionPorId, esPrueba) }))
             .filter(({ s, fecha, prueba }) => conNombre(s.name) && fecha && !prueba)
             .filter(({ s, invitacion }) => coincide(s.name, s.user_email, invitacion?.name, ...(invitacion?.owners ?? [])))
-            // Un Flash con varias fechas sale en cada una.
-            .flatMap(({ s, invitacion, flash, fechas }) => fechas.map(fecha => ({
-                key: `${flash ? 'flash' : 'side'}-${s.id}-${fecha}`,
-                tipo: flash ? 'flash' : 'side',
+            // Un Pop con varias fechas sale en cada una.
+            .flatMap(({ s, invitacion, pop, fechas }) => fechas.map(fecha => ({
+                key: `${pop ? 'pop' : 'side'}-${s.id}-${fecha}`,
+                tipo: pop ? 'pop' : 'side',
                 nombre: s.name,
                 fecha,
-                titulo: flash
-                    ? `Flash · ${s.name}${s.user_email ? ` · ${s.user_email}` : ''}`
+                titulo: pop
+                    ? `Pop · ${s.name}${s.user_email ? ` · ${s.user_email}` : ''}`
                     : `Side event · ${s.name}${invitacion ? ` · de ${invitacion.name}` : ''}`,
                 invitacion,
                 sideId: s.id,
@@ -378,11 +385,11 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
         return [...deInvitaciones, ...deSides]
     }, [porTab, sides, newInvitations, esPrueba, query])
 
-    // Invitación y side event abren la tarjeta de la invitación; un Flash no
+    // Invitación y side event abren la tarjeta de la invitación; un Pop no
     // tiene invitación, así que abre su editor.
     const abrirDelCalendario = (evento) => {
-        if (evento.tipo === 'flash') {
-            window.open(`https://www.iattend.site/dashboard/side?flash=${evento.sideId}`, '_blank', 'noopener')
+        if (evento.tipo === 'pop') {
+            window.open(`https://www.iattend.site/dashboard/side?pop=${evento.sideId}`, '_blank', 'noopener')
             return
         }
         if (evento.invitacion) setAbierto(evento.invitacion)
@@ -581,6 +588,23 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
 
     const delta = creditosNuevos - Number(recargando?.credits || 0)
 
+    // Cuántos eventos hay de cada tipo en la pestaña actual (Activos / Todos /
+    // Pruebas), con las mismas reglas que sus tablas (EventosSecundarios).
+    const conteoPorTipo = useMemo(() => {
+        const pestana = tab === 'calendario' ? 'activos' : tab
+        const conteo = { invitaciones: porTab[pestana]?.length ?? 0, side: null, pop: null }
+        if (!sides) return conteo
+        const invitacionPorId = new Map((newInvitations ?? []).map(i => [i.id, i]))
+        conteo.side = 0
+        conteo.pop = 0
+        sides.forEach(s => {
+            const { pop, prueba, activo } = clasificarSide(s, invitacionPorId, esPrueba)
+            const cuenta = pestana === 'pruebas' ? prueba : !prueba && (pestana !== 'activos' || activo)
+            if (cuenta) conteo[pop ? 'pop' : 'side'] += 1
+        })
+        return conteo
+    }, [tab, porTab, sides, newInvitations, esPrueba])
+
     return (
         <div className={styles.eventos}>
             {!tabDeTopbar && <div className={styles.toolbar}>
@@ -600,7 +624,15 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
 
             {tab !== 'calendario' && (
                 <EnTopbarFiltros>
-                    <Segmentado ariaLabel='Tipo de evento' valor={tipo} onCambio={setTipo} opciones={TIPOS} />
+                    <Segmentado
+                        ariaLabel='Tipo de evento'
+                        valor={tipo}
+                        onCambio={setTipo}
+                        opciones={TIPOS.map(o => ({
+                            ...o,
+                            label: <>{o.label}{conteoPorTipo[o.value] != null && <span className={styles.segmentoCuenta}>{conteoPorTipo[o.value]}</span>}</>,
+                        }))}
+                    />
                 </EnTopbarFiltros>
             )}
 
@@ -614,6 +646,7 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
                     invitaciones={newInvitations}
                     esPrueba={esPrueba}
                     nombrePlanner={nombrePlanner}
+                    onCreditos={(pop) => abrirRecarga({ ...pop, _pop: true })}
                     query={query}
                 />
             ) : tab === 'calendario' ? (
@@ -652,8 +685,10 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
                                             </span>
                                             <span className={styles.cell}>{chipCreditos(record)}</span>
                                             <span className={styles.cell}>{botonDuenos(record)}</span>
-                                            <span className={`${styles.cell} ${record.planner_id ? styles.planner : styles.dateEmpty}`}>
-                                                {nombrePlanner(record) || 'Sin planner'}
+                                            <span className={`${styles.cell} ${record.planner_id ? '' : styles.dateEmpty}`}>
+                                                {record.planner_id
+                                                    ? <span className={styles.plannerTag} title={nombrePlanner(record)}>{nombrePlanner(record)}</span>
+                                                    : 'Sin planner'}
                                             </span>
                                             <span className={`${styles.cell} ${fecha ? styles.date : styles.dateEmpty}`}>
                                                 {fecha || 'sin fecha'}

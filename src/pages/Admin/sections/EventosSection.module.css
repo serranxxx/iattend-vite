@@ -168,6 +168,25 @@
     white-space: nowrap;
 }
 
+/* Planner del evento como etiqueta (verde de marca), para que destaque entre
+   los "Sin planner". */
+.plannerTag {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    padding: 4px 10px;
+    border-radius: 99px;
+    /* Verde claro de marca (#AAC187) suavizado; el de los tokens se perdía. */
+    background: #DCE6CC;
+    color: #3E4F28;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
 .dateEmpty {
     color: var(--ac-muted-2);
 }
@@ -757,7 +776,7 @@
     min-width: 0;
 }
 
-/* Side events y Flash (EventosSecundarios): otras columnas y, en móvil, la
+/* Side events y Pop (EventosSecundarios): otras columnas y, en móvil, la
    misma tabla con scroll lateral en vez de la lista de tarjetas. */
 .rowSecundario {
     grid-template-columns: 1.3fr 1.5fr 1.3fr 80px 124px 1fr 90px 40px;
@@ -771,4 +790,13 @@
     .scrollerSiempre .table {
         min-width: 900px;
     }
+}
+
+/* Número de eventos de cada tipo en el segmentado de la topbar. */
+.segmentoCuenta {
+    margin-left: 6px;
+    font-size: 0.85em;
+    font-weight: 500;
+    opacity: 0.55;
+    font-variant-numeric: tabular-nums;
 }

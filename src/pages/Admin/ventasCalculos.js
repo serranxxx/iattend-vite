@@ -17,9 +17,9 @@ export const IVA_RATE = 0.16
 // Comisión por plan. Paperless va explícito en 0 y no por el mínimo de monto:
 // hoy cuesta $899 y el mínimo lo excluye solo, pero si algún día sube de $1,000
 // empezaría a comisionar sin que nadie lo decidiera.
-// Flash (Eventos Flash de planners) no comisiona a nadie ni cuenta para los
+// Pop (Pops de planners) no comisiona a nadie ni cuenta para los
 // hitos del bono; si se compró con Stripe, solo se descuenta lo de Stripe.
-const COMISION_POR_PLAN = { PRO: 1000, Lite: 750, Paperless: 0, Flash: 0 }
+const COMISION_POR_PLAN = { PRO: 1000, Lite: 750, Paperless: 0, Pop: 0 }
 const COMISION_POR_DEFECTO = 1000
 const COMISION_MONTO_MINIMO = 1000
 
@@ -132,7 +132,7 @@ export const calcularKpis = (ventas, cargosPorVenta) => {
         ventasCount: ventas.length,
         proCount: ventas.filter(v => v.plan === 'PRO').length,
         liteCount: ventas.filter(v => v.plan === 'Lite').length,
-        flashCount: ventas.filter(v => v.plan === 'Flash').length,
+        popCount: ventas.filter(v => v.plan === 'Flash').length,
         ingresoBruto,
         iva,
         comisiones,

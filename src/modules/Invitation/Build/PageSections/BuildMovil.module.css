@@ -1,0 +1,32 @@
+/* Header del editor de la invitación en el celular (BuildPage →
+   EditorMovilShell `headerDerecha`): Publicar, una píldora oscura con un
+   punto cuando hay cambios sin publicar. */
+.publicar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: none;
+    height: 36px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 99px;
+    background: #29262D;
+    color: #FFFFFF;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(23, 22, 27, 0.14);
+    cursor: pointer;
+}
+
+.punto {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #E5484D;
+    box-shadow: 0 0 0 2px #FFFFFF;
+}

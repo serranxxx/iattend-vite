@@ -34,7 +34,7 @@ export const CoverMedia = ({ invitation, setInvitation, setSaved, invitationID, 
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} data-build-field='cover.image'>
                     <StorageImages type={'cover'} invitationID={invitationID} handleImage={onAdd} />
-                    {/* Videos de portada: mismo selector que Flash y Save the Date
+                    {/* Videos de portada: mismo selector que Pop y Save the Date
                         (máx. 5 s y 25 MB, en {id}/video/). La invitación los
                         reproduce en bucle y sin sonido (Cover de iattend-events). */}
                     <StorageImages

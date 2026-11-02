@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
-import { CloudUpload, Images, Palette, Shapes, WandSparkles } from 'lucide-react'
+import { CloudUpload, Images, Palette, Shapes, Ticket, WandSparkles } from 'lucide-react'
 import ReactHost from '../../../../components/Host/ReactHost'
 import { EditCanvas } from './EditCanvas'
 import { EditorShell } from '../../../Editor/EditorShell'
+import { EditorMovilShell } from '../../../Editor/EditorMovilShell'
 import { useColorPopover } from '../../../Editor/useColorPopover'
 import { ColorPopover } from '../../../Editor/ColorPopover'
 import { copiaDeElemento, useElementClipboard } from '../../../Editor/useElementClipboard'
@@ -13,6 +14,7 @@ import { PhotosPanel } from './PhotosPanel'
 import { UploadsPanel } from './UploadsPanel'
 import { ElementsPanel } from './LayerPanels'
 import { AiTextPanel } from './AiTextPanel'
+import { WalletPanelInvitacion } from './WalletPanelInvitacion'
 import { invitationPalette } from './colorUtils'
 import { ElementBar } from './ElementBar'
 import { TextBar } from './TextBar'
@@ -34,6 +36,9 @@ import { addLayerItem, countStickers, MAX_STICKERS, stickerItem, uploadStickers 
 // invitación editable al centro (EditCanvas) o dentro del teléfono en "Ver en
 // vivo", el panel Secciones a la derecha y el dock abajo. En celular sigue el
 // editor de antes (BuildMenu + BuildContent). Ver docs/editor-workspace.md.
+// Con `movil` (celular, BuildPage): la misma lógica (herramientas, paneles,
+// barras, color, Ver en vivo) en el cascarón del celular, EditorMovilShell,
+// con el diseño del editor del Pop. Ver docs/editor-movil-invitacion.md.
 
 // Herramientas del riel. Las que traen `Panel` ya funcionan; las demás llegan en las
 // siguientes etapas (drag & drop de elementos y stickers, Lia, etc.).
@@ -48,6 +53,8 @@ const TOOLS = [
     { id: 'elements', icon: Shapes, Panel: ElementsPanel },
     { id: 'photos', icon: Images, Panel: PhotosPanel },
     { id: 'uploads', icon: CloudUpload, Panel: UploadsPanel },
+    // Simulador del pase de Apple Wallet de los invitados (foto, título, lugar principal).
+    { id: 'wallet', icon: Ticket, Panel: WalletPanelInvitacion },
     { id: 'ai', icon: WandSparkles, Panel: AiTextPanel, hidden: true, parent: 'elements' },
 ]
 
@@ -56,14 +63,22 @@ const BLOCKS = new Set(['greeting', 'family', 'quote', 'itinerary', 'dresscode',
 
 export const EditorWorkspace = ({
     invitation, invitationID,
+    // Plan de la invitación: "Ver en vivo" la enseña como la ve el invitado
+    // (dock Pro, barra Lite…), también ya confirmada.
+    plan,
     positionY, onSectionChange, activeLang, textureOverride, fontOverride, onHostReady,
     live, setLive, device, setDevice, onUndo, onRedo, canUndo, canRedo, onReplayTour,
     selectedSection, onSelectSection, onFieldChange, selectedField, onClearField, onCanvasBlur, deselectSignal,
     setInvitation, setSaved,
+    // Celular: cascarón EditorMovilShell. `onBack` (salir), `headerDerecha`
+    // (lo de la derecha del header: Publicar) y `estado` (debajo del header).
+    movil = false, onBack, headerDerecha, estado,
 }) => {
     const { t } = useTranslation()
 
     const [activeTool, setActiveTool] = useState('elements')
+    // "Ver en vivo" → Sin confirmar / Confirmado (como en side events / Pop).
+    const [vistaConfirmada, setVistaConfirmada] = useState(false)
     const [toolOpen, setToolOpen] = useState(false)
     const pickTool = (id) => {
         if (id === activeTool) { setToolOpen((o) => !o); return }
@@ -111,7 +126,7 @@ export const EditorWorkspace = ({
         paste: (clip) => {
             const destino = selectedSection === 'cover' || BLOCKS.has(selectedSection) ? selectedSection : clip.section
             if (!destino) return
-            // Un PNG de un Flash no trae `kind`: en la invitación es un sticker.
+            // Un PNG de un Pop no trae `kind`: en la invitación es un sticker.
             const copias = clip.items.map((it, i) => ({ kind: 'sticker', ...copiaDeElemento(it, destino === clip.section, i) }))
             setInvitation((prev) => ({ ...prev, decorations: { ...(prev.decorations ?? {}), [destino]: [...(prev.decorations?.[destino] ?? []), ...copias] } }))
             setSaved(false)
@@ -484,11 +499,80 @@ export const EditorWorkspace = ({
         />
         ) : null
 
+    // Celular: tocar un elemento / PNG lo agrega (sin arrastrar a la pieza,
+    // que queda tapada por el panel) y se cierra el panel; la pieza elige la
+    // sección (addLayerItem).
+    const elegirMovil = movil ? (item) => { addLayerItem(item, null); setToolOpen(false) } : undefined
+
     const renderTool = (id) => {
         const item = TOOLS.find((x) => x.id === id)
         return item?.Panel
-            ? <item.Panel invitation={invitation} invitationID={invitationID} setInvitation={setInvitation} setSaved={setSaved} onSelectSection={onSelectSection} selectedSection={selectedSection} onOpenTool={(next) => { setActiveTool(next); setToolOpen(true) }} activeLang={activeLang} mediaRequest={mediaRequest} clearMedia={() => setMediaRequest(null)} colorTarget={colorTarget} iconRequest={iconRequest} clearIconRequest={() => setIconRequest(null)} />
+            ? <item.Panel onElegir={elegirMovil} movil={movil || undefined} {...(movil && id === 'uploads' ? { draggable: false } : {})} invitation={invitation} invitationID={invitationID} setInvitation={setInvitation} setSaved={setSaved} onSelectSection={onSelectSection} selectedSection={selectedSection} onOpenTool={(next) => { setActiveTool(next); setToolOpen(true) }} activeLang={activeLang} mediaRequest={mediaRequest} clearMedia={() => setMediaRequest(null)} colorTarget={colorTarget} iconRequest={iconRequest} clearIconRequest={() => setIconRequest(null)}
+                // Elegir foto desde un panel: abre Subidos y, al elegir, regresa al panel.
+                onPickImage={(handleImage) => mediaSider.open({ invitationID, handleImage: (url, ...rest) => { handleImage(url, ...rest); setActiveTool(id); setToolOpen(true) } })} />
             : null
+    }
+
+    if (movil) {
+        return (
+            <EditorMovilShell
+                tools={TOOLS.map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`) }))}
+                // Diseño a media pantalla (la pieza se ve arriba); Elementos,
+                // Fotos, Subidos y Lia a pantalla completa; el pase en modal.
+                modos={{ design: 0.5, elements: 1, photos: 1, uploads: 1, ai: 1, wallet: 'modal' }}
+                activeTool={activeTool}
+                toolOpen={toolOpen}
+                onPickTool={pickTool}
+                onCloseTool={() => setToolOpen(false)}
+                renderTool={renderTool}
+                card={{ w: 390, h: 780 }}
+                canvas={(
+                    <EditCanvas
+                        movil
+                        invitation={invitation}
+                        invitationID={invitationID}
+                        selectedSection={selectedSection}
+                        onSelectSection={selectFromPiece}
+                        onFieldChange={onFieldChange}
+                        scrollToSection={positionY}
+                        onSectionChange={onSectionChange}
+                        textureOverride={textureOverride}
+                        fontOverride={fontOverride}
+                        activeLang={activeLang}
+                        onHostReady={onHostReady}
+                        deselectSignal={deselectSignal}
+                        selectedField={selectedField}
+                        onClearField={onClearField}
+                        setInvitation={setInvitation}
+                        setSaved={setSaved}
+                        onOpenTool={(id) => { setActiveTool(id); setToolOpen(true) }}
+                        onTextTool={setTextTarget}
+                        onModuleTool={setToolModule}
+                        onSeparatorTool={setSeparatorTarget}
+                        onFieldBar={setFieldBar}
+                        onDateColor={() => pickColor('date')}
+                        onIconTool={openIconPanel}
+                        activeText={textField?.path ?? null}
+                        selectedLayer={selectedLayer}
+                    />
+                )}
+                liveContent={<ReactHost config={invitation} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} vistaConfirmada={vistaConfirmada} plan={plan} />}
+                vistaConfirmada={vistaConfirmada}
+                onVistaConfirmada={setVistaConfirmada}
+                bar={bar}
+                colorPop={Boolean(colorPop)}
+                colorTarget={colorTarget}
+                closeColor={closeColor}
+                onBack={onBack}
+                onUndo={onUndo}
+                onRedo={onRedo}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                headerDerecha={headerDerecha}
+                estado={estado}
+                onBlur={() => { setPieceModule(null); setTextField(null); onCanvasBlur?.() }}
+            />
+        )
     }
 
     return (
@@ -538,7 +622,9 @@ export const EditorWorkspace = ({
                     selectedLayer={selectedLayer}
                 />
             )}
-            liveContent={<ReactHost config={invitation} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} />}
+            liveContent={<ReactHost config={invitation} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} vistaConfirmada={vistaConfirmada} plan={plan} />}
+                vistaConfirmada={vistaConfirmada}
+                onVistaConfirmada={setVistaConfirmada}
             bar={bar}
             // Capas: EditCanvas pinta aquí el orden de los módulos (portal).
             layersRef={setLayersEl}

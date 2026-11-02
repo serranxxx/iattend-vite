@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Popover, Select, Switch } from 'antd'
-import { AlignJustify, Ban, Blend, CopyPlus, Eye, EyeOff, FlipHorizontal2, FlipVertical2, Lock, RotateCw, Scaling, SquareRoundCorner, Trash2 } from 'lucide-react'
+import { AlignJustify, Ban, Blend, CopyPlus, Eye, EyeOff, FlipHorizontal2, FlipVertical2, Group, Lock, RotateCw, Scaling, SquareRoundCorner, Trash2, Ungroup } from 'lucide-react'
 import { useFonts } from '../../../../context/FontsContext'
 import { fonts as fallbackFonts } from '../../../../helpers/assets/fonts'
 import { LiveSlider } from './barControls'
 import { grosorVisible, parcheCandado, parcheGrosor, useVector } from '../../../Editor/vector'
 import styles from './ElementBar.module.css'
+import pincel from '../../../SideEvents/Workspace/AjustesPincel.module.css'
+import { BarraOpacidad, Garabato } from '../../../SideEvents/Workspace/AjustesPincel'
 
 // Barra de propiedades del elemento suelto elegido en la pieza (arriba del
 // teléfono, como en Canva): color, borde, esquinas, voltear y transparencia;
@@ -24,12 +26,44 @@ const STROKE_STYLES = [
 
 // Es la barra del elemento elegido de todos los editores (EditorShell). En
 // la invitación bloquear, duplicar, eliminar y capas van sobre el elemento,
-// en la pieza; un side event / Flash pasa `group` y suma en la barra tamaño,
+// en la pieza; un side event / Pop pasa `group` y suma en la barra tamaño,
 // giro, ocultar, duplicar y quitar (con varios elegidos, `group.count`, solo
 // van esos y la transparencia):
 //   { count, onScale(w, o), onRotate(rot, o), hidden, onToggleHidden,
 //     canDuplicate, onDuplicate, onRemove }
 // `pieceWidth`: ancho de la pieza en px (vectores: grosor fijo sin brincos).
+// Grosor del trazo + transparencia en una sola hoja (como la del pincel,
+// AjustesPincel): cinco grosores ya hechos y la barra de opacidad del color.
+const VECTOR_GROSORES = [1, 2, 3.5, 6, 10]
+const SHAPE_GROSORES = [1, 2, 4, 7, 12]
+const cercanoA = (lista, v) => lista.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a), lista[0])
+const TrazoYOpacidad = ({ grosores, grosor, onGrosor, color, opacity, onOpacity, t }) => {
+    const actual = grosor > 0 ? cercanoA(grosores, grosor) : null
+    return (
+        <div className={pincel.ajustes}>
+            <span className={styles.popLabel}>{t('build_editor.eb_stroke_width')}</span>
+            <div className={pincel.grosores} role="radiogroup" aria-label={t('build_editor.eb_stroke_width')}>
+                {grosores.map((g) => (
+                    <button
+                        key={g}
+                        type="button"
+                        role="radio"
+                        aria-checked={actual === g}
+                        aria-label={`${g} px`}
+                        className={pincel.grosor}
+                        data-on={actual === g || undefined}
+                        onClick={() => onGrosor(g)}
+                    >
+                        <Garabato ancho={Math.max(1.4, g * (8 / grosores[grosores.length - 1]))} />
+                    </button>
+                ))}
+            </div>
+            <span className={styles.popLabel}>{t('build_editor.eb_opacity')}</span>
+            <BarraOpacidad color={color} value={opacity} label={t('build_editor.eb_opacity')} onChange={onOpacity} />
+        </div>
+    )
+}
+
 export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, group = null, pieceWidth = 390 }) => {
     const { t } = useTranslation()
     const { fonts: activeFonts } = useFonts()
@@ -51,7 +85,8 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
             trigger="click"
             placement="bottom"
             arrow={false}
-            content={<div className={styles.pop} onMouseDown={(e) => e.stopPropagation()}>{content}</div>}
+            // data-text-bar: 32 px de redondeo (escritorio) y tarjeta flotante a lo ancho (celular).
+            content={<div className={styles.pop} data-text-bar onMouseDown={(e) => e.stopPropagation()}>{content}</div>}
         >
             {trigger}
         </Popover>
@@ -102,7 +137,15 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                             )
                         })}
                     </div>
-                    <LiveSlider label={t('build_editor.eb_stroke_width')} value={sw} min={0} max={12} onChange={(v, o) => onPatch({ strokeWidth: v }, o)} />
+                    <TrazoYOpacidad
+                        grosores={SHAPE_GROSORES}
+                        grosor={sw}
+                        onGrosor={(v) => onPatch({ strokeWidth: v, strokeStyle: item.strokeStyle || 'solid' })}
+                        color={item.stroke || accent}
+                        opacity={Math.max(10, Math.round((item.opacity ?? 1) * 100))}
+                        onOpacity={(v) => onPatch({ opacity: v / 100 })}
+                        t={t}
+                    />
                 </>
             ), (
                 <button type="button" className={styles.iconBtn} data-on={open === 'stroke' || undefined} title={t('build_editor.eb_stroke')}>
@@ -112,14 +155,14 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
 
             {isVector && pop('vstroke', (
                 <>
-                    <LiveSlider
-                        label={t('build_editor.eb_stroke_width')}
-                        value={Math.round(grosorVisible(item, vector, pieceWidth) * 2) / 2}
-                        min={0.5}
-                        max={16}
-                        step={0.5}
-                        format={(v) => `${v} px`}
-                        onChange={(v, o) => onPatch(parcheGrosor(item, v, pieceWidth), o)}
+                    <TrazoYOpacidad
+                        grosores={VECTOR_GROSORES}
+                        grosor={grosorVisible(item, vector, pieceWidth)}
+                        onGrosor={(v) => onPatch(parcheGrosor(item, v, pieceWidth))}
+                        color={fill || '#29262D'}
+                        opacity={Math.max(10, Math.round((item.opacity ?? 1) * 100))}
+                        onOpacity={(v) => onPatch({ opacity: v / 100 })}
+                        t={t}
                     />
                     <label className={styles.switchRow}>
                         <span>
@@ -161,22 +204,20 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
 
             {item.kind && item.kind !== 'sticker' && !multi && <span className={styles.divider} />}
 
-            {!multi && pop('flip', (
-                <div className={styles.menu}>
-                    <button type="button" className={styles.menuItem} data-on={item.flipX || undefined} onClick={() => onPatch({ flipX: !item.flipX })}>
-                        <FlipHorizontal2 size={16} /> {t('build_editor.eb_flip_h')}
+            {/* Voltear: los dos espejos directo en la barra (sin menú). */}
+            {!multi && (
+                <>
+                    <button type="button" className={styles.iconBtn} data-on={item.flipX || undefined} aria-pressed={Boolean(item.flipX)} title={t('build_editor.eb_flip_h')} aria-label={t('build_editor.eb_flip_h')} onClick={() => onPatch({ flipX: !item.flipX })}>
+                        <FlipHorizontal2 size={18} />
                     </button>
-                    <button type="button" className={styles.menuItem} data-on={item.flipY || undefined} onClick={() => onPatch({ flipY: !item.flipY })}>
-                        <FlipVertical2 size={16} /> {t('build_editor.eb_flip_v')}
+                    <button type="button" className={styles.iconBtn} data-on={item.flipY || undefined} aria-pressed={Boolean(item.flipY)} title={t('build_editor.eb_flip_v')} aria-label={t('build_editor.eb_flip_v')} onClick={() => onPatch({ flipY: !item.flipY })}>
+                        <FlipVertical2 size={18} />
                     </button>
-                </div>
-            ), (
-                <button type="button" className={styles.textBtn} data-on={open === 'flip' || undefined}>
-                    {t('build_editor.eb_flip')}
-                </button>
-            ))}
+                </>
+            )}
 
-            {pop('opacity', (
+            {/* Vectores y formas llevan la transparencia en la hoja del trazo. */}
+            {!isVector && !isShape && pop('opacity', (
                 <LiveSlider label={t('build_editor.eb_opacity')} value={Math.round((item.opacity ?? 1) * 100)} min={0} max={100} onChange={(v, o) => onPatch({ opacity: v / 100 }, o)} />
             ), (
                 <button type="button" className={styles.iconBtn} data-on={open === 'opacity' || undefined} title={t('build_editor.eb_opacity')}>
@@ -200,6 +241,17 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                             <RotateCw size={18} />
                         </button>
                     ))}
+                    {/* Grupos de capas (Pop): con varios elegidos, Agrupar; con un
+                        grupo elegido, Desagrupar. */}
+                    {(group.onAgrupar || group.onDesagrupar) && (
+                        <>
+                            <span className={styles.divider} />
+                            <button type="button" className={styles.textBtn} title={group.onDesagrupar ? '⇧⌘G' : '⌘G'} onClick={group.onDesagrupar ?? group.onAgrupar}>
+                                {group.onDesagrupar ? <Ungroup size={17} /> : <Group size={17} />}
+                                {t(group.onDesagrupar ? 'side_events.layers_ungroup' : 'side_events.layers_group')}
+                            </button>
+                        </>
+                    )}
                     <span className={styles.divider} />
                     <button type="button" className={styles.iconBtn} data-on={group.hidden || undefined} title={t(group.hidden ? 'side_events.stickers_show' : 'side_events.stickers_hide')} onClick={group.onToggleHidden}>
                         {group.hidden ? <EyeOff size={18} /> : <Eye size={18} />}

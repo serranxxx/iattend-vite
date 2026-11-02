@@ -343,7 +343,7 @@ export const AdminLayout = () => {
         getTickets()
     }, [])
 
-    // Side events y Flash: Eventos los muestra (tablas, calendario) y la topbar
+    // Side events y Pop: Eventos los muestra (tablas, calendario) y la topbar
     // los resume. Se piden al entrar a Eventos.
     const sideEvents = useSideEventsAdmin(route === 'eventos')
 
@@ -356,12 +356,12 @@ export const AdminLayout = () => {
         const porRol = Object.fromEntries(ROLES_USUARIOS.map(r => [r, 0]))
         ;(newProfiles ?? []).forEach(p => { porRol[rutaDePerfil(p)] += 1 })
 
-        // Side events y Flash, con las mismas reglas de activo y prueba.
+        // Side events y Pop, con las mismas reglas de activo y prueba.
         const sides = { activos: 0, total: 0, prueba: 0 }
-        const flash = { activos: 0, total: 0, prueba: 0 }
+        const pop = { activos: 0, total: 0, prueba: 0 }
         ;(sideEvents.sides ?? []).forEach(s => {
             const c = clasificarSide(s, invitationsById, esPrueba)
-            const grupo = c.flash ? flash : sides
+            const grupo = c.pop ? pop : sides
             if (c.prueba) { grupo.prueba += 1; return }
             grupo.total += 1
             if (c.activo) grupo.activos += 1
@@ -369,7 +369,7 @@ export const AdminLayout = () => {
 
         return {
             sides: sideEvents.sides ? sides : null,
-            flash: sideEvents.sides ? flash : null,
+            pop: sideEvents.sides ? pop : null,
             eventosActivos: reales.filter(i => esEventoActivo(i)).length,
             eventosTotales: reales.length,
             eventosPrueba: invitaciones.length - reales.length,
@@ -393,7 +393,7 @@ export const AdminLayout = () => {
             title: 'Eventos',
             // Activos de cada tipo sobre su total; las pruebas, de los tres juntos.
             subtitle: conteos.sides
-                ? `Invitaciones ${conteos.eventosActivos} activas de ${conteos.eventosTotales} · Side events ${conteos.sides.activos} de ${conteos.sides.total} · Flash ${conteos.flash.activos} de ${conteos.flash.total} · ${conteos.eventosPrueba + conteos.sides.prueba + conteos.flash.prueba} pruebas`
+                ? `Invitaciones ${conteos.eventosActivos} activas de ${conteos.eventosTotales} · Side events ${conteos.sides.activos} de ${conteos.sides.total} · Pops ${conteos.pop.activos} de ${conteos.pop.total} · ${conteos.eventosPrueba + conteos.sides.prueba + conteos.pop.prueba} pruebas`
                 : `${conteos.eventosActivos} activos · ${conteos.eventosTotales} en total · ${conteos.eventosPrueba} pruebas`,
             // El picker de usuario necesita envolver al botón, así que esta ruta
             // declara `wrap` en vez de un `onClick` suelto.
@@ -405,7 +405,7 @@ export const AdminLayout = () => {
             action: { label: 'Nuevo usuario', wrap: (boton) => pickerNuevoUsuario(boton) },
         },
         // "Nuevo planner" y "Nuevo vendedor" los pone su sección en la topbar.
-        planners: { title: 'Planners', subtitle: 'Clientes B2B · cada alta incluye 1 evento PRO y 1 Flash gratis' },
+        planners: { title: 'Planners', subtitle: 'Clientes B2B · cada alta incluye 1 evento PRO y 1 Pop gratis' },
         vendedores: { title: 'Vendedores', subtitle: 'Equipo comercial · las comisiones del mes viven en Ventas' },
         admin: { title: 'Administración', subtitle: 'Acceso completo al panel · mismas funciones que un planner en /invitations' },
         mkt: { title: 'Marketing', subtitle: 'Cuentas del equipo de marketing' },

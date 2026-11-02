@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Drawer, Grid } from 'antd'
-import { PlannerFlashFlow } from './PlannerFlashFlow'
+import { PlannerPopFlow } from './PlannerPopFlow'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Check, ChevronDown, CreditCard, Gift, Mail, PartyPopper, X, Zap } from 'lucide-react'
 import { checkUrlDisponible } from '../../modules/Sales/salesApi'
@@ -25,10 +25,10 @@ const PLANES_COMPRA = ['pro', 'lite']
  * En los dos casos el cliente recibe su usuario y contraseña por correo y el
  * planner queda asignado al evento. Backend: controllers/planner.js.
  * `onCreated` corre al cerrar tras crear un evento gratis (para recargar).
- * modo 'flash-gratis' → un Evento Flash gratis (PlannerFlashFlow). En
- * 'compra' el primer paso deja elegir Invitación o Evento Flash.
+ * modo 'pop-gratis' → un Pop gratis (PlannerPopFlow). En
+ * 'compra' el primer paso deja elegir Invitación o Pop.
  */
-export const PlannerEventDrawer = ({ open, modo, onClose, onCreated }) => {
+export const PlannerEventDrawer = ({ open, modo, soloParaMi, onClose, onCreated }) => {
     const screens = Grid.useBreakpoint()
     return (
         <Drawer
@@ -43,29 +43,29 @@ export const PlannerEventDrawer = ({ open, modo, onClose, onCreated }) => {
             style={{ borderRadius: screens.sm ? '20px 0 0 20px' : 0, overflow: 'hidden' }}
             styles={{ header: { display: 'none' }, body: { padding: 0 } }}
         >
-            <AltaEvento modo={modo} onClose={onClose} onCreated={onCreated} />
+            <AltaEvento modo={modo} soloParaMi={soloParaMi} onClose={onClose} onCreated={onCreated} />
         </Drawer>
     )
 }
 
 // Dentro del drawer (se monta al abrir): elige el flujo según lo que se crea.
-// Al comprar, lo primero es elegir Evento regular o Evento Flash; con eso se
+// Al comprar, lo primero es elegir Evento regular o Pop; con eso se
 // muestra su flujo y "atrás" en su primer paso regresa a esta elección. Los
 // botones de gratis ya traen el tipo definido.
-const AltaEvento = ({ modo, onClose, onCreated }) => {
+const AltaEvento = ({ modo, soloParaMi, onClose, onCreated }) => {
     const { t } = useTranslation()
-    const [tipo, setTipo] = useState(modo === 'flash-gratis' ? 'flash' : modo === 'gratis' ? 'regular' : null)
+    const [tipo, setTipo] = useState(modo === 'pop-gratis' ? 'pop' : modo === 'gratis' ? 'regular' : null)
     const volverAElegir = modo === 'compra' ? () => setTipo(null) : undefined
 
     if (!tipo) {
         const opciones = [
-            { key: 'regular', icono: <Mail size={22} />, titulo: t('planner_flash.kind_regular'), texto: t('planner_flash.kind_regular_text') },
-            { key: 'flash', icono: <Zap size={22} />, titulo: t('planner_flash.kind_flash'), texto: t('planner_flash.kind_flash_text') },
+            { key: 'regular', icono: <Mail size={22} />, titulo: t('planner_pop.kind_regular'), texto: t('planner_pop.kind_regular_text') },
+            { key: 'pop', icono: <Zap size={22} />, titulo: t('planner_pop.kind_pop'), texto: t('planner_pop.kind_pop_text') },
         ]
         return (
             <Screen embedded>
                 <ScreenHeader title={t('planner_event.title_buy')} onBack={onClose} backLabel={t('planner_event.cancel')} />
-                <p className={styles.eleccionIntro}>{t('planner_flash.kind_label')}</p>
+                <p className={styles.eleccionIntro}>{t('planner_pop.kind_label')}</p>
                 <div className={styles.eleccion}>
                     {opciones.map(({ key, icono, titulo, texto }) => (
                         <button key={key} type='button' className={styles.opcion} onClick={() => setTipo(key)}>
@@ -82,8 +82,8 @@ const AltaEvento = ({ modo, onClose, onCreated }) => {
         )
     }
 
-    return tipo === 'flash'
-        ? <PlannerFlashFlow modo={modo === 'flash-gratis' ? 'gratis' : 'compra'} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
+    return tipo === 'pop'
+        ? <PlannerPopFlow modo={modo === 'pop-gratis' ? 'gratis' : 'compra'} soloParaMi={soloParaMi} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
         : <PlannerEventFlow modo={modo} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
 }
 

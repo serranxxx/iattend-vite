@@ -7,7 +7,7 @@ import { campoPublicado, esSeccion, incompleta, inicialesDe } from './modelo'
 /*
   Columna "Así lo ve tu invitado" de la pestaña Preguntas: la pregunta activa
   (o la primera de la sección activa) en la tarjeta de vidrio del formulario
-  sobre la portada del Flash, con las medidas de la página del invitado
+  sobre la portada del Pop, con las medidas de la página del invitado
   (iattend-events components/SideEvent/Registro/registro.module.css). Solo
   muestra; no se responde aquí.
 */

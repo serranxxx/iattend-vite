@@ -10,7 +10,7 @@ import { DressImages, ModuleBackground, ModuleSeparator, MomentAddress, MomentIm
 import { createPortal } from 'react-dom'
 import { ModuleOrder } from './ModuleOrder'
 import { ModuleLayers } from './ModuleLayers'
-import { CancionFlash } from '../../../SideEvents/CancionFlash'
+import { CancionPop } from '../../../SideEvents/CancionPop'
 import styles from './EditCanvas.module.css'
 
 // Los popovers sobre la pieza se cierran al tocar fuera, pero no al usar lo
@@ -77,6 +77,9 @@ const FROST = {
 }
 
 export const EditCanvas = ({
+    // Editor del celular: chip de la canción y "Cambiar fondo" (en la pieza)
+    // más grandes, a la medida del dedo (44 px).
+    movil = false,
     invitation,
     invitationID,
     selectedSection,
@@ -169,6 +172,9 @@ export const EditCanvas = ({
         const scale = r.width / CARD_WIDTH
         return r.left + leftCardPx * scale - width - EDGE_GAP >= 0
     }
+    // Editor del celular (en callbacks: ref).
+    const movilRef = useRef(movil)
+    useEffect(() => { movilRef.current = movil }, [movil])
     const onFieldTool = (field, rect, section = 'cover') => {
         // La cartera avisa qué tarjeta abrió (sin alternar) y cuándo la cierra.
         if (field === 'gift_card_close') {
@@ -209,7 +215,9 @@ export const EditCanvas = ({
             bgPlace = { side: 'left', left: -8 - orderW / scale }
         }
         setTool((prev) => (prev && prev.field === field && prev.section === section
-            ? null // otro toque al mismo botón lo cierra
+            // otro toque al mismo botón lo cierra (en el celular, el del texto
+            // que se escribe no: es tocar para mover el cursor)
+            ? (movilRef.current && (field === 'title' || field === 'quote_text') ? prev : null)
             : { field, section, rect, side, left, ...(bgPlace ?? {}) }))
     }
     useOutsideClose(Boolean(tool), () => setTool(null))
@@ -239,6 +247,11 @@ export const EditCanvas = ({
             // La tarjeta de regalos abierta sigue mientras la cartera no la cierre
             // (manda "gift_card_close"): se toca para escribir sus campos.
             if (prev?.field.startsWith('gift_card:')) return prev
+            // Celular: la barra del texto que se está escribiendo (título,
+            // cita) sigue al tocar dentro de la pieza (mover el cursor,
+            // seleccionar una palabra con doble toque…); se va al soltar el
+            // texto o tocar otra zona (efecto de selectedField / selectedSection).
+            if (movilRef.current && (prev?.field === 'title' || prev?.field === 'quote_text')) return prev
             if (prev) lastClosed.current = { field: prev.field, section: prev.section, t: Date.now() }
             return null
         })
@@ -262,7 +275,9 @@ export const EditCanvas = ({
     // El ancla se calcula al abrir: si la ventana cambia de tamaño con un
     // popover abierto, se cierra en vez de quedar mal colocado.
     useEffect(() => {
-        const onResize = () => { setTool(null); setChipPop(null) }
+        // En el celular no: abrir el teclado (buscar canción, escribir la
+        // dirección) cambia el alto de la ventana y cerraba la barra recién abierta.
+        const onResize = () => { if (movilRef.current) return; setTool(null); setChipPop(null) }
         window.addEventListener('resize', onResize)
         // El banco de imágenes se abrió en el riel (Subidos en modo "elegir"): los popovers
         // se cierran para no taparlo; lo que se elija se sigue aplicando. Las
@@ -383,7 +398,7 @@ export const EditCanvas = ({
                     <DressImages large module={tool.field === 'gallery_images' ? 'gallery' : 'dresscode'} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
                 </div>
             )}
-            <div ref={cardRef} className={styles.card} data-tour="preview">
+            <div ref={cardRef} className={styles.card} data-tour="preview" data-movil={movil || undefined}>
                 {/* Canción y color del tema son de la portada: solo con ella a la vista. */}
                 {selectedSection === 'cover' && (
                 <div className={styles.chips}>
@@ -428,10 +443,10 @@ export const EditCanvas = ({
                         content={(
                             <div onMouseDown={stopBoardPan}>{
                             // Misma canción que en General (cover.song) y el mismo
-                            // buscador que Flash y Save the Date.
+                            // buscador que Pop y Save the Date.
                             <div className={styles.songPanel}>
                                 <span className={styles.panelTitle}>{t('build_generals.label_song')}</span>
-                                <CancionFlash song={song} onChange={setSong} carpeta={invitationID} />
+                                <CancionPop song={song} onChange={setSong} carpeta={invitationID} />
                             </div>
                             }</div>
                         )}
@@ -485,6 +500,7 @@ export const EditCanvas = ({
                         config={invitation}
                         invitationID={invitationID}
                         editMode
+                        editMovil={movil}
                         textBar={Boolean(onTextTool)}
                         selectedSection={selectedSection}
                         onSelectSection={selectFromPiece}
@@ -508,7 +524,7 @@ export const EditCanvas = ({
                 </div>
             </div>
 
-            <span className={styles.caption}>{t('build_editor.canvas_caption')}</span>
+            <span className={styles.caption} data-leyenda>{t('build_editor.canvas_caption')}</span>
         </div>
     )
 }

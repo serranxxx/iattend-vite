@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react'
   Sin strokeRel / strokePx se respeta el grosor original del archivo.
 
   Las conversiones entre px y fracción usan el ancho de la pieza (`base`:
-  390 px la sección de la invitación, 357 px el lienzo de un Flash), donde
+  390 px la sección de la invitación, 357 px el lienzo de un Pop), donde
   `w` es el % de ese ancho.
 */
 

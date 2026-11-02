@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip } from 'antd'
-import { ChevronLeft, CircleHelp, Laptop, PenLine, Redo2, RotateCcwSquare, Scan, Smartphone, Tablet, Undo2 } from 'lucide-react'
+import { ChevronLeft, CircleCheck, CircleDashed, CircleHelp, Laptop, Layers, PanelRightClose, PenLine, Redo2, RotateCcwSquare, Scan, Smartphone, Tablet, Undo2 } from 'lucide-react'
 import { DevicePreview } from '../Invitation/Build/PageSections/DevicePreview'
 import { DEVICE_SIZES } from '../Invitation/Build/PageSections/deviceSizes'
 import { MediaSiderContext } from '../../components/ImagesStorage/MediaSiderContext'
+import { LienzoInmersivo } from './LienzoInmersivo'
+import { INMERSIVO_EASE, INMERSIVO_MS, reducirMovimiento } from './inmersivo'
 import ws from '../Invitation/Build/PageSections/EditorWorkspace.module.css'
+import eb from '../Invitation/Build/PageSections/ElementBar.module.css'
 
 /*
   Área de trabajo única de los editores de I attend (invitación, side events
-  y Eventos Flash). Ver docs/sistema-diseno-editor.md. Pone el marco y la
+  y Pops). Ver docs/sistema-diseno-editor.md. Pone el marco y la
   experiencia; cada editor le da su contenido:
 
   - Riel de herramientas + panel deslizable (340 px) a la izquierda. El panel
@@ -101,6 +104,9 @@ const useKeyboardLift = () => {
     return lift
 }
 
+// Ancho de `lateral` en el modo inmersivo (la paleta de dibujo).
+const LATERAL_W = 112
+
 export const EditorShell = ({
     className,
     topOffset = 60,
@@ -109,6 +115,9 @@ export const EditorShell = ({
     // Pieza
     card = { w: 390, h: 780 }, canvas, liveContent,
     live, setLive, device, setDevice, onBlur, onLeaveEdit,
+    // "Ver en vivo" como un invitado que ya confirmó (opcional: solo si el
+    // editor lo pasa; hoy side events / Pop, SideWorkspace).
+    vistaConfirmada, onVistaConfirmada,
     // `hasLayers`: hay panel Capas (con `layersRef` el contenido llega por portal).
     bar, layers, layersRef, hasLayers = false,
     // Dock
@@ -116,6 +125,10 @@ export const EditorShell = ({
     // Envío (side events)
     column = null,
     mediaSider = null,
+    // Modo inmersivo (dibujo a pantalla completa): sin riel, panel, Capas ni
+    // dock; la pieza centrada y 50 % más grande en un tablero con zoom y
+    // arrastre (LienzoInmersivo) y `lateral` a la derecha (la paleta de dibujo).
+    inmersivo = false, lateral = null,
     children,
 }) => {
     const { t } = useTranslation()
@@ -129,7 +142,9 @@ export const EditorShell = ({
     const [landscape, setLandscape] = useState(false)
     const [rotated, setRotated] = useState(false)
 
-    const withColumn = Boolean(column)
+    // `column.saliendo`: la columna se va (se desvanece) mientras el resto ya
+    // vuelve a editar.
+    const withColumn = Boolean(column) && !column.saliendo
     const liveDevice = withColumn ? 'ios' : device
     // Envío: el iPhone (con su leyenda, ~34 px) a la izquierda y la columna
     // con todo el ancho que sobra.
@@ -140,20 +155,32 @@ export const EditorShell = ({
     // recorren al centro del espacio que queda. En pantallas angostas (iPad
     // vertical) no caben los dos paneles y la pieza: se esconde Capas, y el
     // lado derecho deja lugar al círculo de Lia.
-    const panelOpen = toolOpen && !withColumn
-    const showLayers = hasLayers && !live && !withColumn
+    const panelOpen = toolOpen && !withColumn && !inmersivo
+    const showLayers = hasLayers && !live && !withColumn && !inmersivo
+    // Capas se puede ocultar (y se recuerda): queda una píldora para abrirla.
+    const [capasOcultas, setCapasOcultas] = useState(() => {
+        try { return localStorage.getItem('iattend_capas_ocultas') === '1' } catch { return false }
+    })
+    const ocultarCapas = (v) => {
+        setCapasOcultas(v)
+        try { localStorage.setItem('iattend_capas_ocultas', v ? '1' : '0') } catch { /* sin almacenamiento */ }
+    }
     const hideLayers = panelOpen && vp.w < 1100
     const padL = withColumn ? 40 : panelOpen ? 405 : 96
-    const padR = withColumn ? columnWidth + 40 : panelOpen && showLayers ? (hideLayers ? 150 : 248) : 96
+    const padR = withColumn ? columnWidth + 40 : inmersivo ? 96 + LATERAL_W : panelOpen && showLayers && !capasOcultas ? (hideLayers ? 150 : 248) : 96
     const fitScale = clamp(Math.min((vp.w - padL - padR) / (card.w + 20), (vp.h - 150) / card.h), ZOOM_MIN, 1)
-    const fitFor = (d) => clamp(Math.min((vp.w - padL - padR) / (d.w + 40), (vp.h - 150) / (d.h + 20)), 0.2, 1)
+    // En "Ver en vivo" con la barra Sin confirmar / Confirmado arriba, el
+    // dispositivo deja su lugar (como la pieza con la barra de edición).
+    const barraVivo = live && !withColumn && Boolean(onVistaConfirmada)
+    const fitFor = (d) => clamp(Math.min((vp.w - padL - padR) / (d.w + 40), (vp.h - (barraVivo ? 184 : 150)) / (d.h + 20)), 0.2, 1)
     // El iPad usa el mismo zoom de pie y acostado: al girar no cambia de tamaño.
     const liveFit = liveDevice === 'ipad'
         ? Math.min(fitFor(DEVICE_SIZES.ipad), fitFor(DEVICE_SIZES.ipadLandscape))
         : fitFor(DEVICE_SIZES[liveDevice] ?? DEVICE_SIZES.ios)
-    const zoom = withColumn ? columnScale
+    const zoomBase = withColumn ? columnScale
         : live ? Math.min(zoomMode === 'fit' ? liveFit : zoomMode, liveFit)
         : zoomMode === 'fit' ? fitScale : hideLayers ? Math.min(zoomMode, fitScale) : zoomMode
+    const zoom = inmersivo ? zoomBase * 1.5 : zoomBase
     const zoomLabel = zoomMode === 'fit' ? t('build_editor.zoom_fit') : `${Math.round(zoom * 100)}%`
     const center = `calc(${padL}px + (100% - ${padL + padR}px) / 2)`
 
@@ -163,6 +190,83 @@ export const EditorShell = ({
         setLive(mode === 'live')
     }
 
+    // Transición del modo inmersivo: la pieza viaja (FLIP) de su lugar en el
+    // tablero normal al del inmersivo (LienzoInmersivo, `desde`) y de regreso
+    // (abajo). Cada tablero deja su recuadro al desmontarse; riel, Capas y
+    // dock vuelven deslizándose (`volviendo` → data-entrada).
+    const canvasScaleRef = useRef(null)
+    const rectNormal = useRef(null)
+    const rectInmersivo = useRef(null)
+    const refCanvasScale = useCallback((el) => {
+        canvasScaleRef.current = el
+        if (!el) return undefined
+        return () => { rectNormal.current = { rect: el.getBoundingClientRect(), w: el.offsetWidth } }
+    }, [])
+    const [volviendo, setVolviendo] = useState(false)
+    const inmersivoAntes = useRef(inmersivo)
+    useLayoutEffect(() => {
+        if (inmersivoAntes.current === inmersivo) return undefined
+        inmersivoAntes.current = inmersivo
+        if (inmersivo) return undefined
+        setVolviendo(true)
+        const timer = setTimeout(() => setVolviendo(false), INMERSIVO_MS + 200)
+        const el = canvasScaleRef.current
+        const prev = rectInmersivo.current
+        if (el && prev?.width && el.offsetWidth && !reducirMovimiento()) {
+            // De donde estaba en el inmersivo a su lugar (origen al centro).
+            const fin = el.getBoundingClientRect()
+            const z1 = prev.width / el.offsetWidth
+            const ox = el.offsetWidth / 2
+            const oy = el.offsetHeight / 2
+            const dx = prev.left - fin.left + ox * (z1 - zoom)
+            const dy = prev.top - fin.top + oy * (z1 - zoom)
+            el.animate(
+                [{ transform: `translate(${dx}px, ${dy}px) scale(${z1})` }, { transform: `scale(${zoom})` }],
+                { duration: INMERSIVO_MS, easing: INMERSIVO_EASE },
+            )
+        }
+        return () => clearTimeout(timer)
+    }, [inmersivo])
+
+    // Cambio de modo (editar ↔ columna de Envío ↔ en vivo): la pieza viaja
+    // (FLIP) de su lugar anterior al nuevo con un fundido, y al volver a editar
+    // riel, Capas y dock entran deslizándose. En ese cuadro el escenario no
+    // anima su padding (si no, el lugar final se mediría a medio camino).
+    const modo = withColumn ? 'columna' : live ? 'vivo' : 'editar'
+    const [modoPintado, setModoPintado] = useState(modo)
+    const cambiandoModo = modoPintado !== modo && !inmersivo
+    const rectAntes = useRef(null)
+    useLayoutEffect(() => {
+        const el = canvasScaleRef.current
+        if (!el || inmersivo) return undefined
+        if (!cambiandoModo) {
+            rectAntes.current = el.getBoundingClientRect()
+            return undefined
+        }
+        const prev = rectAntes.current
+        const venia = modoPintado
+        setModoPintado(modo)
+        let timer = null
+        if (modo === 'editar' && venia === 'columna') {
+            setVolviendo(true)
+            timer = setTimeout(() => setVolviendo(false), INMERSIVO_MS + 200)
+        }
+        if (prev?.width && el.offsetWidth && !reducirMovimiento()) {
+            const fin = el.getBoundingClientRect()
+            const z1 = prev.width / el.offsetWidth
+            const ox = el.offsetWidth / 2
+            const oy = el.offsetHeight / 2
+            const dx = prev.left - fin.left + ox * (z1 - zoom)
+            const dy = prev.top - fin.top + oy * (z1 - zoom)
+            el.animate(
+                [{ transform: `translate(${dx}px, ${dy}px) scale(${z1})`, opacity: 0.35 }, { transform: `scale(${zoom})`, opacity: 1 }],
+                { duration: INMERSIVO_MS + 60, easing: INMERSIVO_EASE },
+            )
+        }
+        rectAntes.current = el.getBoundingClientRect()
+        return () => { if (timer) clearTimeout(timer) }
+    })
+
     const tool = tools.find((x) => x.id === activeTool)
     const railOn = (item) => toolOpen && (activeTool === item.id || tool?.parent === item.id)
 
@@ -170,20 +274,23 @@ export const EditorShell = ({
         <MediaSiderContext.Provider value={mediaSider}>
         <div ref={wsRef} className={`${ws.workspace} ${className ?? ''}`}>
             {/* ── Riel y panel de herramienta ── */}
-            {!withColumn && (
-                <div className={ws.left} data-live={live || undefined} data-edit-keep data-editor-left>
+            {!withColumn && !inmersivo && (
+                <div className={ws.left} data-live={live || undefined} data-entrada={volviendo || undefined} data-edit-keep data-editor-left>
                     <div className={ws.rail}>
                         {tools.filter((item) => !item.hidden).map((item) => (
                             <div key={item.id} className={ws.railItem}>
-                                <Tooltip title={item.title} placement="right">
+                                {/* `item.aviso` (texto): punto rojo en el ícono y el motivo en el tooltip. */}
+                                <Tooltip title={item.aviso ? `${item.title} · ${item.aviso}` : item.title} placement="right">
                                     <button
                                         type="button"
                                         className={ws.railButton}
                                         data-on={railOn(item) || undefined}
                                         data-tour={`tool-${item.id}`}
+                                        aria-label={item.aviso ? `${item.title}. ${item.aviso}` : item.title}
                                         onClick={() => onPickTool(item.id)}
                                     >
                                         <item.icon size={20} />
+                                        {item.aviso && <span className={ws.railAviso} aria-hidden />}
                                     </button>
                                 </Tooltip>
                             </div>
@@ -220,9 +327,11 @@ export const EditorShell = ({
             <div
                 className={ws.stage}
                 style={{
-                    padding: `${bar ? 92 : 20}px ${padR}px ${withColumn ? 20 : 92}px ${padL}px`,
+                    padding: `${bar || barraVivo ? 92 : 20}px ${padR}px ${withColumn ? 20 : 92}px ${padL}px`,
                     transform: keyboardLift ? `translateY(-${keyboardLift}px)` : undefined,
-                    transition: 'padding 0.25s ease, transform 0.25s ease',
+                    transition: cambiandoModo ? 'none' : 'padding 0.25s ease, transform 0.25s ease',
+                    // Inmersivo: el tablero de LienzoInmersivo ocupa su lugar.
+                    ...(inmersivo ? { display: 'none' } : {}),
                 }}
                 onPointerDown={!live && onBlur ? (e) => {
                     if (!e.target.closest('[data-tour="preview"], [data-side-card], [data-edit-keep], .ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-picker-dropdown, .ant-color-picker, .pac-container')) onBlur()
@@ -230,12 +339,26 @@ export const EditorShell = ({
             >
                 {/* --canvas-zoom: lo que no deba achicarse con el zoom (manijas,
                     columnas) usa su inverso. */}
-                <div className={ws.canvasScale} style={{ transform: `scale(${zoom})`, '--canvas-zoom': zoom }}>
-                    {live || withColumn
-                        ? <DevicePreview device={liveDevice} landscape={landscape} rotated={rotated}>{liveContent}</DevicePreview>
-                        : canvas}
-                </div>
+                {!inmersivo && (
+                    <div ref={refCanvasScale} className={ws.canvasScale} style={{ transform: `scale(${zoom})`, '--canvas-zoom': zoom }}>
+                        {live || withColumn
+                            ? <DevicePreview device={liveDevice} landscape={landscape} rotated={rotated}>{liveContent}</DevicePreview>
+                            : canvas}
+                    </div>
+                )}
             </div>
+
+            {/* ── Modo inmersivo: tablero con zoom y arrastre (LienzoInmersivo) ── */}
+            {inmersivo && (
+                <LienzoInmersivo
+                    canvas={canvas}
+                    card={card}
+                    zoomInicial={zoom}
+                    desde={rectNormal}
+                    rectSalida={rectInmersivo}
+                    area={{ left: 40, right: LATERAL_W + 64, top: bar ? 92 : 24, bottom: 96 }}
+                />
+            )}
 
             {/* ── Aviso en vivo ── */}
             {live && !withColumn && (
@@ -247,9 +370,19 @@ export const EditorShell = ({
 
             {/* ── Capas ── */}
             {showLayers && (
-                <div ref={layersRef} className={ws.layersDock} style={hideLayers ? { display: 'none' } : undefined} data-tour="layers">
+                <div ref={layersRef} className={ws.layersDock} style={hideLayers ? { display: 'none' } : undefined} data-tour="layers" data-ocultas={capasOcultas || undefined} data-entrada={volviendo || undefined} aria-hidden={capasOcultas || undefined}>
                     {layers}
+                    <Tooltip title={t('build_editor.layers_panel_hide')} placement="left">
+                        <button type="button" className={ws.layersHide} onClick={() => ocultarCapas(true)} aria-label={t('build_editor.layers_panel_hide')}>
+                            <PanelRightClose size={16} />
+                        </button>
+                    </Tooltip>
                 </div>
+            )}
+            {showLayers && !hideLayers && capasOcultas && (
+                <button type="button" className={ws.layersShow} onClick={() => ocultarCapas(false)}>
+                    <Layers size={16} /> {t('build_editor.layers_title')}
+                </button>
             )}
 
             {/* ── Barra contextual (arriba de la pieza) ── */}
@@ -259,16 +392,40 @@ export const EditorShell = ({
                 </div>
             )}
 
+            {/* ── "Ver en vivo": la página sin confirmar o como la ve un invitado
+                que ya confirmó (misma barra que las de edición). ── */}
+            {barraVivo && (
+                <div className={ws.elementBar} style={{ left: center }}>
+                    <div className={eb.bar} role="radiogroup" aria-label={t('build_editor.live_confirmed_hint')}>
+                        <div className={ws.segment}>
+                            <button type="button" role="radio" aria-checked={!vistaConfirmada} className={`${ws.segBtn} ${ws.segSmall}`} data-on={!vistaConfirmada || undefined} onClick={() => onVistaConfirmada(false)}>
+                                <CircleDashed size={14} /> {t('build_editor.live_unconfirmed')}
+                            </button>
+                            <button type="button" role="radio" aria-checked={Boolean(vistaConfirmada)} className={`${ws.segBtn} ${ws.segSmall}`} data-on={vistaConfirmada || undefined} onClick={() => onVistaConfirmada(true)}>
+                                <CircleCheck size={14} /> {t('build_editor.live_confirmed')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ── Columna (Envío) ── */}
-            {withColumn && (
-                <div className={`${ws.column} ${column.in ? ws.columnIn : ''}`} style={{ width: columnWidth, transition: column.noAnim ? 'none' : undefined }} data-tour="guests">
+            {column && (
+                <div className={`${ws.column} ${column.in && !column.saliendo ? ws.columnIn : ''}`} style={{ width: columnWidth, transition: column.noAnim ? 'none' : undefined, ...(column.saliendo ? { pointerEvents: 'none' } : {}) }} data-tour="guests" aria-hidden={column.saliendo || undefined}>
                     {column.node}
                 </div>
             )}
 
+            {/* ── Lateral del modo inmersivo (paleta de dibujo) ── */}
+            {inmersivo && lateral && (
+                <div className={ws.lateral} style={{ width: LATERAL_W }} data-edit-keep>
+                    {lateral}
+                </div>
+            )}
+
             {/* ── Dock ── */}
-            {!withColumn && (
-                <div className={ws.dock} data-edit-keep data-tour="dock" style={{ left: center }}>
+            {!withColumn && !inmersivo && (
+                <div className={ws.dock} data-edit-keep data-tour="dock" data-entrada={volviendo || undefined} style={{ left: center }}>
                     <Tooltip title={t('build_editor.undo')}>
                         <button type="button" className={ws.dockIcon} disabled={!canUndo} onClick={onUndo} aria-label={t('build_editor.undo')} data-tour="undo">
                             <Undo2 size={17} />
@@ -318,6 +475,7 @@ export const EditorShell = ({
                                     </Tooltip>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 

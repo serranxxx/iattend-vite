@@ -385,7 +385,7 @@ un popover debajo y "Subir") y `cover_media` ("Cambiar fondo") →
 `SortableThumbs.jsx`, quitar la elegida y Efectos en popover; el color de la
 sombra va al panel "Color", `colorField = 'cover_shadow'`). El chip "Color
 del tema" ya no sale en escritorio (el tema está en Paleta). En el celular
-siguen `CoverDateStyle`, `CancionFlash` y `CoverMedia`.
+siguen `CoverDateStyle`, `CancionPop` y `CoverMedia`.
 
 **Dock y dispositivos de "Ver en vivo".** El segmento de dispositivos del dock
 está siempre montado y crece / se encoge suave (grid `0fr → 1fr`) al entrar y

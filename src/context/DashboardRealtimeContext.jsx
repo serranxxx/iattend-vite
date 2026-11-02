@@ -13,7 +13,7 @@ const WATCHED_TABLES = [
     'whatsapp_incoming_messages',
     'whatsapp_freetext_dispatches',
     'side_events_guests',
-    // créditos de un Evento Flash (CreditController en modo flash)
+    // créditos de un Pop (CreditController en modo pop)
     'side_events',
     'invitations',
     'save_the_date_reactions',
@@ -22,10 +22,10 @@ const WATCHED_TABLES = [
 export const DashboardRealtimeProvider = ({ children }) => {
     const [searchParams] = useSearchParams()
     const id = searchParams.get('id')
-    // Un Evento Flash (/dashboard/side?flash=<id>) no trae invitación: el
+    // Un Pop (/dashboard/side?pop=<id>) no trae invitación: el
     // canal se abre por el side event y las notificaciones se filtran por él.
-    const flashId = searchParams.get('flash')
-    const canal = id || (flashId ? `flash-${flashId}` : null)
+    const popId = searchParams.get('pop') ?? searchParams.get('flash')
+    const canal = id || (popId ? `flash-${popId}` : null)
     const listenersRef = useRef({})
     const sideEventIdsRef = useRef(new Set())
     const { notify } = useLia()
@@ -40,7 +40,7 @@ export const DashboardRealtimeProvider = ({ children }) => {
     // Load side event IDs for this invitation so we can filter side_events_guests
     useEffect(() => {
         if (!id) {
-            sideEventIdsRef.current = new Set(flashId ? [String(flashId)] : [])
+            sideEventIdsRef.current = new Set(popId ? [String(popId)] : [])
             return
         }
         sideEventIdsRef.current = new Set()
@@ -51,7 +51,7 @@ export const DashboardRealtimeProvider = ({ children }) => {
             .then(({ data }) => {
                 if (data) sideEventIdsRef.current = new Set(data.map(s => String(s.id)))
             })
-    }, [id, flashId])
+    }, [id, popId])
 
     useEffect(() => {
         if (!canal) return
@@ -83,11 +83,11 @@ export const DashboardRealtimeProvider = ({ children }) => {
                 .eq('id', row.dispatch_id)
                 .single()
             if (!data) return
-            if (id ? String(data.invitation_id) !== String(id) : String(data.side_event_id) !== String(flashId)) return
+            if (id ? String(data.invitation_id) !== String(id) : String(data.side_event_id) !== String(popId)) return
             notify({ type: 'info', title: row.contact_name || row.from_phone, body: row.message_body?.slice(0, 80) || 'Nuevo mensaje' })
         })
         return () => { u1(); u2(); u3() }
-    }, [id, flashId, canal, subscribe, notify, t])
+    }, [id, popId, canal, subscribe, notify, t])
 
     useEffect(() => {
         if (!canal) return

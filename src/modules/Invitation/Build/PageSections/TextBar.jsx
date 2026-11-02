@@ -30,7 +30,7 @@ const TRANSFORMS = ['none', 'uppercase', 'lowercase']
 // `lia` ({ current, kind, onApply, invitationID, lang }): botón "Lia" que
 // reescribe el texto elegido (LiaRewrite). Null = sin Lia.
 // Es la barra de texto de todos los editores (EditorShell): el título de un
-// side event / Flash usa la misma con su adaptador `ts` (sin alineación) y
+// side event / Pop usa la misma con su adaptador `ts` (sin alineación) y
 // `extra(pop, open)` para sumar al final lo suyo (la sombra).
 export const TextBar = ({ target, ts, lock, invitation, setInvitation, setSaved, onPickColor, colorOpen, lia, extra }) => {
     const { t } = useTranslation()
@@ -189,7 +189,7 @@ export const TextBar = ({ target, ts, lock, invitation, setInvitation, setSaved,
                         trigger="click"
                         placement="bottom"
                         arrow={false}
-                        content={<LiaRewrite {...lia} onApply={(text) => { lia.onApply(text); setOpen(null) }} />}
+                        content={<div data-text-bar><LiaRewrite {...lia} onApply={(text) => { lia.onApply(text); setOpen(null) }} /></div>}
                     >
                         <button type="button" className={`${styles.textBtn} ${styles.liaBtn}`} data-on={open === 'lia' || undefined}>
                             <Sparkles size={16} /> Lia

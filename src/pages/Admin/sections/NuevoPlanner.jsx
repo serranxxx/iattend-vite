@@ -9,7 +9,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
  * "Agregar planner" de Admin → Usuarios. El backend crea la cuenta con rol
- * planner, le da 1 evento regular y 1 Evento Flash gratis, le copia la
+ * planner, le da 1 evento regular y 1 Pop gratis, le copia la
  * invitación de ejemplo y, si se pide, le manda el correo de bienvenida de
  * planner con su acceso. Si no se manda, aquí se muestra la contraseña.
  */
@@ -85,7 +85,7 @@ const Formulario = ({ onClose, onCreado }) => {
                         </>
                     )}
                     <ul>
-                        <li>{resultado.beneficios ? '✓' : '✗'} 1 evento regular y 1 Evento Flash gratis</li>
+                        <li>{resultado.beneficios ? '✓' : '✗'} 1 evento regular y 1 Pop gratis</li>
                         <li>{resultado.plantilla?.ok ? '✓' : '✗'} Su invitación de ejemplo{resultado.plantilla?.ok ? '' : ` (${resultado.plantilla?.msg || 'no se pudo copiar'})`}</li>
                     </ul>
                 </div>
@@ -134,7 +134,7 @@ const Formulario = ({ onClose, onCreado }) => {
                     Enviarle su acceso por correo
                 </Checkbox>
                 <small className={styles.editorBeneficiosNota}>
-                    Nace con 1 evento regular y 1 Evento Flash gratis, y con su invitación de ejemplo.
+                    Nace con 1 evento regular y 1 Pop gratis, y con su invitación de ejemplo.
                 </small>
             </div>
         </AdminModal>

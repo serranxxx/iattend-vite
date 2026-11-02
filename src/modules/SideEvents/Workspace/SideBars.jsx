@@ -1,17 +1,18 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DatePicker, Input, Popover, Segmented, Switch, Tooltip } from 'antd'
+import { DatePicker, Input, Popover, Segmented, Slider, Switch, Tooltip } from 'antd'
 import dayjs from 'dayjs'
-import { Blend, Clapperboard, CloudOff, CloudSun, Film, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X } from 'lucide-react'
+import { Blend, Clapperboard, CloudOff, CloudSun, Film, GalleryHorizontal, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X, Maximize2, Minimize2, Move, Play, Droplets, Layers, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatEventDateTime } from '../../../helpers/assets/eventDateTime'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import { AddressAutocomplete } from '../AddressAutocomplete'
-import { ImagenLinkFlash } from '../ImagenLinkFlash'
 import bar from '../../Invitation/Build/PageSections/ElementBar.module.css'
 import own from './SideWorkspace.module.css'
 import { MODOS_CLIMA, modoClima, parcheModoClima } from '../tarjetasSide'
+import { VistaLinkWhatsApp } from '../VistaLinkWhatsApp'
+import { ajusteDe, AJUSTE_ZOOM_MAX, DESENFOQUE_BASE, desenfoqueDe, esVideo, MAX_FOTOS_CARRUSEL, mediaDePortada, parcheAjuste, parcheMedia } from '../fotosPortada'
 
-// Barras contextuales del editor de side events / Flash (arriba de la
+// Barras contextuales del editor de side events / Pop (arriba de la
 // pieza), con el formato de las barras de la invitación (ElementBar.module.css,
 // ver docs/sistema-diseno-editor.md §7). Cada una sale al elegir su zona en
 // SideCanvas y escribe en `current.body` con `setBody(patch, opts)`; los
@@ -63,14 +64,14 @@ const usePop = () => {
 }
 
 /* ── Fecha y hora ── */
-// Hora de pared, sin conversión de timezone. Un Flash puede tener varias
+// Hora de pared, sin conversión de timezone. Un Pop puede tener varias
 // fechas (fechasDelEvento / cuerpoConFechas).
-export const DateBar = ({ body, setBody, esFlash }) => {
+export const DateBar = ({ body, setBody, esPop }) => {
     const { t } = useTranslation()
     const { open, pop } = usePop()
-    const lista = esFlash ? (fechasDelEvento(body).length ? fechasDelEvento(body) : [null]) : [body?.hour]
+    const lista = esPop ? (fechasDelEvento(body).length ? fechasDelEvento(body) : [null]) : [body?.hour]
     const cambiar = (i, valor) => {
-        if (!esFlash) return setBody({ hour: valor })
+        if (!esPop) return setBody({ hour: valor })
         const nuevas = [...lista]
         nuevas[i] = valor
         setBody(cuerpoConFechas(nuevas))
@@ -89,14 +90,14 @@ export const DateBar = ({ body, setBody, esFlash }) => {
                         value={wallClockToDayjs(raw)}
                         onChange={(d) => d && cambiar(i, dayjsToWallClock(d))}
                     />
-                    {esFlash && lista.length > 1 && (
+                    {esPop && lista.length > 1 && (
                         <button type="button" className={bar.iconBtn} title={t('side_events.date_remove')} onClick={() => setBody(cuerpoConFechas(lista.filter((_, j) => j !== i)))}>
                             <X size={16} />
                         </button>
                     )}
                 </span>
             ))}
-            {esFlash && body?.hour && (
+            {esPop && body?.hour && (
                 <button
                     type="button"
                     className={bar.iconBtn}
@@ -190,96 +191,192 @@ export const PlaceBar = ({ body, setBody, setAddress }) => {
     )
 }
 
+/* ── Paso entre la barra Fondo y la de Ajustar ──
+// Son dos barras distintas: la que entra crece (o se encoge) desde el ancho
+// de la que se fue, y sus botones aparecen con un fundido. Solo si la otra
+// se acaba de ir (no al elegir el fondo otra vez más tarde). */
+let barraQueSalio = null
+const useAnchoDesdeLaAnterior = () => {
+    const ref = useRef(null)
+    useLayoutEffect(() => {
+        const el = ref.current
+        if (!el) return undefined
+        const antes = barraQueSalio && performance.now() - barraQueSalio.t < 200 ? barraQueSalio.ancho : null
+        barraQueSalio = null
+        const quieto = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        let cuadro = null
+        if (antes && !quieto) {
+            // Arranca con el ancho de la anterior; el suyo se mide dos cuadros
+            // después, cuando sus controles (el slider de antd) ya se acomodaron.
+            el.style.overflow = 'hidden'
+            el.style.width = `${antes}px`
+            ;[...el.children].forEach((c) => c.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, delay: 90, easing: 'ease-out', fill: 'backwards' }))
+            cuadro = requestAnimationFrame(() => { cuadro = requestAnimationFrame(() => {
+                el.style.width = ''
+                const ancho = el.offsetWidth
+                el.style.width = `${antes}px`
+                const listo = () => { el.style.width = ''; el.style.overflow = '' }
+                // Se queda en su ancho final hasta quitar el ancho en línea (sin parpadeo).
+                const a = el.animate([{ width: `${antes}px` }, { width: `${ancho}px` }], { duration: 320, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)', fill: 'forwards' })
+                a.onfinish = () => {
+                    // Si al final su ancho real ya es otro, termina de llegar
+                    // a él en un tramo corto (sin salto).
+                    el.style.width = ''
+                    const real = el.offsetWidth
+                    a.oncancel = null
+                    a.cancel()
+                    if (Math.abs(real - ancho) < 1) { listo(); return }
+                    const b = el.animate([{ width: `${ancho}px` }, { width: `${real}px` }], { duration: 160, easing: 'ease-out' })
+                    b.onfinish = listo
+                    b.oncancel = listo
+                }
+                a.oncancel = listo
+            }) })
+        }
+        return () => {
+            if (cuadro) cancelAnimationFrame(cuadro)
+            barraQueSalio = { ancho: el.offsetWidth, t: performance.now() }
+        }
+    }, [])
+    return ref
+}
+
 /* ── Fondo ── */
-// Imagen o video (Flash) de fondo, velo del color del tema e imagen del link.
+// La portada como una tira de miniaturas (fotos y videos, fotosPortada.js):
+// con una es el fondo fijo y con varias un carrusel (solo Pop; un side event
+// de boda lleva una foto). La elegida (`fotoSel`) se ve quieta en la pieza,
+// lleva la X para quitarla y es la que se ajusta; tocarla otra vez la cambia
+// por otra. "+" agrega foto o video. Después: Ajustar y Velo.
 // `pickMedia(request, handleImage)` abre Subidos en modo "elegir".
-export const BackgroundBar = ({ current, setBody, onChange, esFlash, carpeta, pickMedia }) => {
+const duracionTexto = (seg) => (Number.isFinite(seg) ? `${Math.floor(seg / 60)}:${String(Math.floor(seg % 60)).padStart(2, '0')}` : '')
+
+export const BackgroundBar = ({ current, setBody, onChange, esPop, pickMedia, fotoSel, onFotoSel, onAjustar }) => {
     const { t } = useTranslation()
     const { open, setOpen, pop } = usePop()
     const body = current?.body ?? {}
-    const [modoElegido, setModoElegido] = useState(null)
-    const modo = esFlash ? (modoElegido ?? (body.video ? 'video' : 'image')) : 'image'
+    const media = mediaDePortada(body)
+    const max = esPop ? MAX_FOTOS_CARRUSEL : 1
+    const elegida = media.includes(fotoSel) ? fotoSel : media[0] ?? null
     const veil = body.veil ?? 0
+    const blur = desenfoqueDe(body)
+    const [duraciones, setDuraciones] = useState({})
+    // La foto del link: la primera foto, si no se subió una propia (LinkPanel).
+    const fotoDelLink = esPop && !body.linkImage ? body.image : null
+    const anchoRef = useAnchoDesdeLaAnterior()
 
-    const pickImage = () => {
+    // Abre Subidos para elegir (en un Pop, foto o video). `reemplaza`: url
+    // que se cambia por la nueva, en su mismo lugar.
+    const elegir = (reemplaza = null) => {
         setOpen(null)
-        pickMedia({ type: 'side-events' }, (url) => url && setBody({ image: url }))
+        pickMedia(esPop ? { type: 'side-events', mediaType: 'mixto' } : { type: 'side-events' }, (url) => {
+            if (!url) return
+            onChange((prev) => {
+                const actual = mediaDePortada(prev.body)
+                const lista = reemplaza ? actual.map((x) => (x === reemplaza ? url : x)) : [...actual, url]
+                return { ...prev, body: { ...prev.body, ...parcheMedia(lista, prev.body.image) } }
+            })
+            onFotoSel?.(url)
+        })
     }
-    const pickVideo = () => {
-        setOpen(null)
-        pickMedia({ mediaType: 'video' }, (url) => url && setBody({ video: url }))
+    // Reordenar arrastrando (la primera foto es la del link y el pase).
+    const [arrastrada, setArrastrada] = useState(null)
+    const [sobre, setSobre] = useState(null)
+    const mover = (desde, hasta) => {
+        if (desde === hasta || desde == null || hasta == null) return
+        onChange((prev) => {
+            const lista = [...mediaDePortada(prev.body)]
+            const [x] = lista.splice(desde, 1)
+            lista.splice(hasta, 0, x)
+            return { ...prev, body: { ...prev.body, ...parcheMedia(lista, prev.body.image) } }
+        })
     }
-    // Con video, la imagen es el cuadro fijo mientras carga y la del link.
-    const pickPoster = () => {
-        setOpen(null)
-        pickMedia({ type: 'side-events' }, (url) => url && onChange((prev) => ({ ...prev, url_image: url, body: { ...prev.body, image: url } })))
+    const quitar = (src) => {
+        const lista = media.filter((x) => x !== src)
+        onChange((prev) => ({
+            ...prev,
+            body: { ...prev.body, ...parcheMedia(mediaDePortada(prev.body).filter((x) => x !== src), prev.body.image === src ? null : prev.body.image) },
+        }))
+        onFotoSel?.(lista[Math.max(0, media.indexOf(src) - 1)] ?? null)
     }
 
     return (
-        <div className={bar.bar} data-edit-keep data-text-bar>
-            {esFlash && (
-                <>
-                    <Segmented
-                        size="small"
-                        shape="round"
-                        value={modo}
-                        onChange={(v) => {
-                            setModoElegido(v)
-                            // Volver a imagen quita el video; la imagen se queda.
-                            if (v === 'image' && body.video) setBody({ video: null })
-                        }}
-                        options={[
-                            { value: 'image', label: t('side_events.media_image'), icon: <ImagePlus size={14} /> },
-                            { value: 'video', label: t('savethedate.media_video'), icon: <Film size={14} /> },
-                        ]}
-                    />
-                    <span className={bar.divider} />
-                </>
-            )}
-
-            {modo === 'video' ? (
-                <>
-                    {body.video && <video className={own.barVideo} src={body.video} muted playsInline preload="metadata" />}
-                    <button type="button" className={bar.textBtn} onClick={pickVideo}>
-                        <Clapperboard size={17} /> {body.video ? t('side_events.ws_change_video') : t('side_events.ws_add_video')}
-                    </button>
-                    {body.video && (
-                        <button type="button" className={bar.iconBtn} title={t('savethedate.remove_video')} onClick={() => setBody({ video: null })}>
-                            <ImageMinus size={18} />
-                        </button>
-                    )}
-                    <span className={bar.divider} />
-                    {body.image && <img className={bar.thumb} src={body.image} alt="" />}
-                    <Tooltip title={t('savethedate.poster_hint')}>
-                        <button type="button" className={bar.textBtn} onClick={pickPoster}>
-                            <ImagePlus size={17} /> {t('savethedate.poster_label')}
+        <div ref={anchoRef} className={bar.bar} data-edit-keep data-text-bar>
+            <div className={own.fondoTira}>
+                {media.map((src, i) => {
+                    const video = esVideo(src)
+                    const on = src === elegida
+                    return (
+                        <span
+                            key={src + i}
+                            className={own.fondoItem}
+                            data-on={on || undefined}
+                            data-arrastrando={arrastrada === i || undefined}
+                            data-sobre={(sobre === i && arrastrada !== i) || undefined}
+                            draggable={media.length > 1}
+                            onDragStart={(e) => { setArrastrada(i); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)) }}
+                            onDragOver={(e) => { if (arrastrada == null) return; e.preventDefault(); if (sobre !== i) setSobre(i) }}
+                            onDragLeave={() => setSobre((x) => (x === i ? null : x))}
+                            onDrop={(e) => { e.preventDefault(); mover(arrastrada, i); setArrastrada(null); setSobre(null) }}
+                            onDragEnd={() => { setArrastrada(null); setSobre(null) }}
+                        >
+                            <Tooltip placement="bottom" title={on ? t(video ? 'side_events.cover_replace_video' : 'side_events.cover_replace') : null}>
+                                <button
+                                    type="button"
+                                    className={own.fondoMini}
+                                    aria-pressed={on}
+                                    aria-label={video ? t('savethedate.media_video') : t('side_events.media_image')}
+                                    onClick={() => (on ? elegir(src) : onFotoSel?.(src))}
+                                >
+                                    {video
+                                        ? <video src={src} muted playsInline preload="metadata" draggable={false} onLoadedMetadata={(e) => { const d = e.currentTarget.duration; setDuraciones((x) => (x[src] === d ? x : { ...x, [src]: d })) }} />
+                                        : <img src={src} alt="" draggable={false} />}
+                                    {video && duraciones[src] > 0 && (
+                                        <span className={own.fondoDuracion}><Play size={8} fill="currentColor" /> {duracionTexto(duraciones[src])}</span>
+                                    )}
+                                </button>
+                            </Tooltip>
+                            {src === fotoDelLink && (
+                                <Tooltip placement="bottom" title={t('side_events.cover_link_badge')}>
+                                    <span className={own.fondoLink}><Link2 size={11} /></span>
+                                </Tooltip>
+                            )}
+                            {on && (
+                                <button type="button" className={own.fondoQuitar} aria-label={t('side_events.carousel_remove')} onClick={() => quitar(src)}>
+                                    <X size={12} strokeWidth={3} />
+                                </button>
+                            )}
+                        </span>
+                    )
+                })}
+                {media.length < max && (
+                    <Tooltip placement="bottom" title={t(esPop ? 'side_events.cover_add' : 'side_events.canvas_add_image')}>
+                        <button type="button" className={own.fondoAgregar} aria-label={t(esPop ? 'side_events.cover_add' : 'side_events.canvas_add_image')} onClick={() => elegir()}>
+                            <Plus size={20} />
                         </button>
                     </Tooltip>
-                </>
-            ) : (
+                )}
+            </div>
+
+            {media.length > 0 && (
                 <>
-                    {body.image && <img className={bar.thumb} src={body.image} alt="" />}
-                    <button type="button" className={bar.textBtn} onClick={pickImage}>
-                        <ImagePlus size={17} /> {body.image ? t('side_events.canvas_change_image') : t('side_events.canvas_add_image')}
-                    </button>
-                    {body.image && (
-                        <button type="button" className={bar.iconBtn} title={t('side_events.remove_image')} onClick={() => setBody({ image: null })}>
-                            <ImageMinus size={18} />
-                        </button>
+                    <span className={bar.divider} />
+                    {/* Ajustar la elegida: zoom y encuadre (AjusteFotoBar). */}
+                    {onAjustar && (
+                        <Tooltip placement="bottom" title={t('side_events.photo_adjust_tip')}>
+                            <button type="button" className={bar.textBtn} onClick={() => { setOpen(null); onAjustar(elegida) }}>
+                                <Move size={17} /> {t('side_events.photo_adjust')}
+                            </button>
+                        </Tooltip>
                     )}
                 </>
             )}
-
-            <span className={bar.divider} />
 
             {/* Velo del color del tema sobre la portada y los PNG. */}
             {pop('veil', (
                 <>
                     <div className={own.switchRow}>
                         <span>{t('side_events.veil_label')}</span>
-                        <button type="button" className={bar.textBtn} data-on={veil > 0 || undefined} onClick={() => setBody({ veil: veil > 0 ? null : VELO_INICIAL })}>
-                            {veil > 0 ? t('side_events.ws_on') : t('side_events.ws_off')}
-                        </button>
+                        <Switch size="small" checked={veil > 0} onChange={(v) => setBody({ veil: v ? VELO_INICIAL : null })} />
                     </div>
                     {veil > 0 && <LiveSlider label={t('side_events.veil_intensity')} value={veil} min={5} max={90} format={(v) => `${v}%`} onChange={(v, o) => setBody({ veil: v }, o)} />}
                 </>
@@ -289,23 +386,26 @@ export const BackgroundBar = ({ current, setBody, onChange, esFlash, carpeta, pi
                 </button>
             ))}
 
-            {/* Imagen del link: la que sale al compartir (url_image). */}
-            {esFlash && (
+            {/* Desenfoque de la portada hacia abajo (fotosPortada.js →
+                desenfoqueDe). Con un video de fondo no hay. */}
+            {!body.video && pop('blur', (
                 <>
-                    <span className={bar.divider} />
-                    {pop('link', (
+                    <div className={own.switchRow}>
+                        <span>{t('side_events.blur_label')}</span>
+                        <Switch size="small" checked={blur.amount > 0} onChange={(v) => setBody({ coverBlur: { ...blur, amount: v ? DESENFOQUE_BASE.amount : 0 } })} />
+                    </div>
+                    {blur.amount > 0 && (
                         <>
-                            <span className={bar.popLabel}>{t('side_events.link_poster_hint')}</span>
-                            {(current?.url_image || body.image) && <img className={own.linkThumb} src={current.url_image || body.image} alt="" />}
-                            <ImagenLinkFlash body={body} carpeta={carpeta} onLista={(url) => { onChange((prev) => ({ ...prev, url_image: url })); setOpen(null) }} />
+                            <LiveSlider label={t('side_events.blur_amount')} value={blur.amount} min={1} max={20} format={(v) => `${v} px`} onChange={(v, o) => setBody({ coverBlur: { ...blur, amount: v } }, o)} />
+                            <LiveSlider label={t('side_events.blur_start')} value={blur.start} min={0} max={90} format={(v) => `${v}%`} onChange={(v, o) => setBody({ coverBlur: { ...blur, start: v } }, o)} />
                         </>
-                    ), (
-                        <button type="button" className={bar.textBtn} data-on={open === 'link' || undefined}>
-                            <Link2 size={17} /> {t('savethedate.poster_label')}
-                        </button>
-                    ), true)}
+                    )}
                 </>
-            )}
+            ), (
+                <button type="button" className={bar.textBtn} data-on={open === 'blur' || undefined}>
+                    <Droplets size={17} /> {t('side_events.blur_button')}
+                </button>
+            ))}
         </div>
     )
 }
@@ -313,7 +413,7 @@ export const BackgroundBar = ({ current, setBody, onChange, esFlash, carpeta, pi
 /* ── Itinerario ── */
 // Los momentos se editan en el panel Itinerario del riel; la barra solo
 // resume y lleva ahí.
-// Asistentes de un Flash: prender / apagar el cuadro. Al prenderlo, los
+// Asistentes de un Pop: prender / apagar el cuadro. Al prenderlo, los
 // invitados eligen emoji o color al confirmar (iattend-events, SelectorAvatar).
 // Cuándo se muestra el clima (tarjetasSide.js, modoClima): automático (unos
 // días antes, cuando ya hay pronóstico), siempre, solo si va a llover u oculto.
@@ -352,7 +452,7 @@ export const WeatherBar = ({ body, setBody }) => {
                 trigger="click"
                 placement="bottom"
                 arrow={false}
-                content={<div onMouseDown={(e) => e.stopPropagation()}><OpcionesClima body={body} setBody={(p) => { setBody(p); setAbierto(false) }} sinCiudad={!body?.address?.city} /></div>}
+                content={<div data-text-bar onMouseDown={(e) => e.stopPropagation()}><OpcionesClima body={body} setBody={(p) => { setBody(p); setAbierto(false) }} sinCiudad={!body?.address?.city} /></div>}
             >
                 <button type="button" className={bar.textBtn} data-on={abierto || undefined}>
                     {t(`side_events.weather_mode_${modo}`)}
@@ -364,20 +464,100 @@ export const WeatherBar = ({ body, setBody }) => {
 
 // Barra del modo dibujo (herramienta Dibujar): el pincel elegido, deshacer el
 // último trazo, borrar los de esta sesión y "Listo" (sale del modo dibujo).
-export const DibujoBar = ({ pincel, trazos, onDeshacer, onBorrarTodo, onListo }) => {
+// `pantallaCompleta` / `onPantallaCompleta`: dibujo a pantalla completa
+// (SideWorkspace): el botón entra y, adentro, se vuelve "Salir".
+/* ── Ajustar la foto de fondo ── */
+// Mientras está abierta, la pieza toma el arrastre (mover) y la rueda (zoom)
+// sobre la foto (SideCanvas `ajustarFoto`). Aquí: zoom, restablecer y Listo.
+export const AjusteFotoBar = ({ body, setBody, src, onListo }) => {
+    const { t } = useTranslation()
+    const a = ajusteDe(body, src) ?? { z: 1, x: 50, y: 50 }
+    const zoom = (z) => setBody(parcheAjuste(body, src, { ...a, z: Math.min(AJUSTE_ZOOM_MAX, Math.max(1, z)) }), { coalesce: 'ajuste-foto' })
+    const tocado = Boolean(ajusteDe(body, src))
+    const anchoRef = useAnchoDesdeLaAnterior()
+    return (
+        <div ref={anchoRef} className={bar.bar} data-edit-keep>
+            <span className={own.barText}><Move size={15} /> {t('side_events.photo_adjust_drag')}</span>
+            <span className={bar.divider} />
+            <button type="button" className={bar.iconBtn} aria-label={t('build_editor.zoom_out')} onClick={() => zoom(Math.round((a.z - 0.1) * 100) / 100)} disabled={a.z <= 1}>
+                <ZoomOut size={16} />
+            </button>
+            <Slider
+                className={own.ajusteSlider}
+                min={100}
+                max={AJUSTE_ZOOM_MAX * 100}
+                value={Math.round(a.z * 100)}
+                tooltip={{ formatter: (v) => `${v}%` }}
+                onChange={(v) => zoom(v / 100)}
+            />
+            <button type="button" className={bar.iconBtn} aria-label={t('build_editor.zoom_in')} onClick={() => zoom(Math.round((a.z + 0.1) * 100) / 100)} disabled={a.z >= AJUSTE_ZOOM_MAX}>
+                <ZoomIn size={16} />
+            </button>
+            <span className={own.ajusteValor}>{Math.round(a.z * 100)}%</span>
+            <span className={bar.divider} />
+            <button type="button" className={bar.textBtn} data-off={!tocado || undefined} disabled={!tocado} onClick={() => setBody(parcheAjuste(body, src, null))}>
+                <RotateCcw size={16} /> {t('side_events.photo_adjust_reset')}
+            </button>
+            <button type="button" className={own.dibujoListo} onClick={onListo}>{t('side_events.draw_done')}</button>
+        </div>
+    )
+}
+
+// Con varias fotos / videos en la portada, "Dibujar en": toda la portada o
+// una de ellas (`dibujoEn` = 'todo' | url; SideCanvas la deja fija).
+// "Dibujar en": toda la portada o una de sus fotos / videos (segmentado con
+// miniaturas). Lo usan la barra de dibujo de escritorio (DibujoBar) y el
+// header del modo dibujo del celular (EditorMovil, `className`).
+export const DibujarEn = ({ media = [], dibujoEn = 'todo', onDibujoEn, className = '' }) => {
+    const { t } = useTranslation()
+    return (
+        <div className={`${own.dibujoEnSeg} ${className}`} role="radiogroup" aria-label={t('side_events.draw_on')}>
+            <Tooltip placement="bottom" title={t('side_events.draw_on_all')}>
+                <button type="button" role="radio" aria-checked={dibujoEn === 'todo'} className={own.dibujoEnTodo} data-on={dibujoEn === 'todo' || undefined} onClick={() => onDibujoEn('todo')}>
+                    <Layers size={16} /> {t('side_events.draw_on_cover')}
+                </button>
+            </Tooltip>
+            {media.map((src, i) => (
+                <Tooltip key={src + i} placement="bottom" title={t(esVideo(src) ? 'side_events.draw_on_video' : 'side_events.draw_on_photo', { n: i + 1 })}>
+                    <button type="button" role="radio" aria-checked={dibujoEn === src} className={own.dibujoEnMini} data-on={dibujoEn === src || undefined} onClick={() => onDibujoEn(src)}>
+                        {esVideo(src) ? <video src={src} muted playsInline preload="metadata" /> : <img src={src} alt="" />}
+                    </button>
+                </Tooltip>
+            ))}
+        </div>
+    )
+}
+
+export const DibujoBar = ({ trazos, onBorrarTodo, onListo, pantallaCompleta = false, onPantallaCompleta, media = [], dibujoEn = 'todo', onDibujoEn }) => {
     const { t } = useTranslation()
     const sin = trazos === 0
     return (
         <div className={bar.bar} data-edit-keep>
-            <span className={own.dibujoBarPunto} style={{ background: pincel.brush === 'borrador' ? '#C9C5CE' : pincel.color }} />
-            <span className={own.barText}>{t(`side_events.draw_brush_${pincel.brush}`)} · {pincel.size} px</span>
-            <span className={bar.divider} />
-            <button type="button" className={bar.textBtn} data-off={sin || undefined} disabled={sin} onClick={onDeshacer}>
-                <Undo2 size={16} /> {t('side_events.draw_undo')}
-            </button>
-            <button type="button" className={bar.textBtn} data-off={sin || undefined} disabled={sin} onClick={onBorrarTodo}>
-                <Trash2 size={16} /> {t('side_events.draw_clear')}
-            </button>
+            {media.length > 1 && onDibujoEn && (
+                <>
+                    <span className={own.dibujoEnLabel}>{t('side_events.draw_on')}</span>
+                    <DibujarEn media={media} dibujoEn={dibujoEn} onDibujoEn={onDibujoEn} />
+                    <span className={bar.divider} />
+                </>
+            )}
+            <Tooltip placement="bottom" title={t('side_events.draw_clear')}>
+                <button type="button" className={bar.iconBtn} data-off={sin || undefined} disabled={sin} onClick={onBorrarTodo} aria-label={t('side_events.draw_clear')}>
+                    <Trash2 size={18} />
+                </button>
+            </Tooltip>
+            {onPantallaCompleta && (
+                <Tooltip placement="bottom" title={t(pantallaCompleta ? 'side_events.draw_fullscreen_exit' : 'side_events.draw_fullscreen')}>
+                    <button
+                        type="button"
+                        className={bar.iconBtn}
+                        data-on={pantallaCompleta || undefined}
+                        onClick={() => onPantallaCompleta(!pantallaCompleta)}
+                        aria-label={t(pantallaCompleta ? 'side_events.draw_fullscreen_exit' : 'side_events.draw_fullscreen')}
+                    >
+                        {pantallaCompleta ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                    </button>
+                </Tooltip>
+            )}
             <button type="button" className={own.dibujoListo} onClick={onListo}>{t('side_events.draw_done')}</button>
         </div>
     )

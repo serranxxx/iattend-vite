@@ -9,11 +9,17 @@ import { ButtonsMenu } from './ButtonsMenu'
 import { BuildMenu } from './BuildMenu'
 import { BuildContent } from './BuildContent'
 import { EditorWorkspace } from './EditorWorkspace'
+import movilStyles from './BuildMovil.module.css'
+
+// Celular (≤ 750 px): el editor nuevo con el diseño del Pop (EditorWorkspace
+// `movil` → Editor/EditorMovilShell). En false regresa el de antes
+// (ButtonsMenu + BuildMenu + BuildContent). Ver docs/editor-movil-invitacion.md.
+const EDITOR_MOVIL_INVITACION = true
 import { BuildTour, BUILD_TOUR_STORAGE_KEY } from './BuildTour'
 import { load } from '../../../../helpers/assets/images'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
-import { BookUser, Camera, Feather, Gift, HeartHandshake, MapPinned, MessageSquareHeart, ScanHeart, ScrollText, Settings, Shirt } from 'lucide-react'
+import { ArrowUpFromLine, BookUser, Camera, Feather, Gift, HeartHandshake, MapPinned, MessageSquareHeart, ScanHeart, ScrollText, Settings, Shirt } from 'lucide-react'
 import { UpgradeBanner } from '../../../../components/Payment/UpgradeBanner/UpgradeBanner'
 import { translateInvitation } from '../../../../helpers/services/translationApi'
 import { sha1 } from '../../../../helpers/services/sha1'
@@ -328,6 +334,7 @@ export const BuildPage = () => {
     const pendingSaveRef = useRef(null) // 'write' | 'save'
 
     const session = JSON.parse(localStorage.getItem("session"));
+    const navigate = useNavigate()
     const menuTimerRef = useRef(null);
 
     const getActiveInvitation = () => {
@@ -753,6 +760,9 @@ export const BuildPage = () => {
                 })
                 if (error) { console.error('Error actualizando:', error); return }
                 messageApi.success(t('buttons_menu.msg_saved'))
+                // Los pases de Apple Wallet que ya tienen los invitados se
+                // actualizan (foto, título, direcciones, horario). Sin esperar.
+                axios.post(`${import.meta.env.VITE_API_URL}/api/wallet/actualizar`, { kind: 'invitacion', eventoId: id }).catch(() => {})
             }
             setSaved(true)
             lastSavedTextsRef.current = extractTextFields(copy)
@@ -1013,9 +1023,12 @@ export const BuildPage = () => {
                 copy ?
                     <Layout className='main-build-layout' style={{ minHeight: '100vh', overflow: 'clip' }}>
 
+                        {/* El editor nuevo del celular trae su propio header (EditorMovilShell). */}
+                        {!(EDITOR_MOVIL_INVITACION && !tourAvailable) && (
                         <HeaderDashboard
                             saved={saved} mode={'edit'} onSaveChanges={onSaveChanges} session={session} onWriteChanges={onWriteChanges}
                         />
+                        )}
 
                         {/* Escritorio: área de trabajo del handoff "Editor Workspace"
                             (riel, lienzo, Secciones y dock). El celular sigue con
@@ -1024,6 +1037,7 @@ export const BuildPage = () => {
                             <EditorWorkspace
                                 invitation={getActiveInvitation()}
                                 invitationID={id}
+                                plan={plan}
                                 positionY={positionY}
                                 onSectionChange={handleSectionChange}
                                 activeLang={activeLang}
@@ -1045,6 +1059,49 @@ export const BuildPage = () => {
                                 deselectSignal={deselectSignal}
                                 setInvitation={setActiveField}
                                 setSaved={setSaved}
+                            />
+                        ) : EDITOR_MOVIL_INVITACION ? (
+                            <EditorWorkspace
+                                movil
+                                invitation={getActiveInvitation()}
+                                invitationID={id}
+                                plan={plan}
+                                positionY={positionY}
+                                onSectionChange={handleSectionChange}
+                                activeLang={activeLang}
+                                live={false}
+                                setLive={setLive}
+                                device={device}
+                                setDevice={setDevice}
+                                onUndo={onUndo}
+                                onRedo={onRedo}
+                                canUndo={undoStack.length > 0}
+                                canRedo={redoStack.length > 0}
+                                selectedSection={buttons[currentSection - 1]?.type ?? null}
+                                onSelectSection={selectFromCanvas}
+                                onFieldChange={setFieldByPath}
+                                selectedField={selectedField}
+                                onClearField={() => setSelectedField(null)}
+                                onCanvasBlur={onCanvasBlur}
+                                deselectSignal={deselectSignal}
+                                setInvitation={setActiveField}
+                                setSaved={setSaved}
+                                // Salir: con cambios sin publicar pregunta antes (como el header de escritorio).
+                                onBack={() => { if (saved || window.confirm(t('dashboard_header.unsaved_desc_short'))) navigate(-1) }}
+                                // La invitación no se autoguarda (publicar crea una versión,
+                                // docs/historial-versiones.md): Publicar va a la derecha del header.
+                                headerDerecha={(
+                                    <button
+                                        type="button"
+                                        className={movilStyles.publicar}
+                                        data-pendiente={!saved || undefined}
+                                        onClick={session?.user?.role === 'Administration' ? onWriteChanges : onSaveChanges}
+                                    >
+                                        <ArrowUpFromLine size={16} strokeWidth={2.2} />
+                                        {session?.user?.role === 'Administration' ? t('dashboard_header.write') : t('dashboard_header.publish')}
+                                        {!saved && <span className={movilStyles.punto} aria-hidden />}
+                                    </button>
+                                )}
                             />
                         ) : (
 

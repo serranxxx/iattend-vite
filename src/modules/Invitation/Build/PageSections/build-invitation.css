@@ -930,11 +930,11 @@
 
 /* Control del panel al que llevó un toque en la pieza (modo edición). */
 .build-field-flash {
-    animation: buildFieldFlash 1.4s ease;
+    animation: buildFieldPop 1.4s ease;
     border-radius: 8px;
 }
 
-@keyframes buildFieldFlash {
+@keyframes buildFieldPop {
     0%, 60% { box-shadow: 0 0 0 4px rgba(205, 190, 247, 0.65); }
     100% { box-shadow: 0 0 0 4px rgba(205, 190, 247, 0); }
 }

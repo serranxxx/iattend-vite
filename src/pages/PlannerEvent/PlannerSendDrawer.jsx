@@ -3,21 +3,21 @@ import { Drawer, Grid, Segmented, Select } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, MailCheck, Send } from 'lucide-react'
 import { Screen, ScreenHeader, StickyFooter, PrimaryButton, Field, TextInput, Hint } from '../../modules/Sales/SalesUi'
-import { asignarCliente, asignarClienteFlash } from './plannerEventApi'
+import { asignarCliente, asignarClientePop } from './plannerEventApi'
 import salesStyles from '../../modules/Sales/VendorNewSale.module.css'
 import styles from './PlannerEventDrawer.module.css'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
- * Envía a su cliente un evento (invitación o Evento Flash) que el planner
+ * Envía a su cliente un evento (invitación o Pop) que el planner
  * creó "para enviar después" (sin user_id).
  *   Cliente nuevo: con nombre y correo se crea su cuenta, se le asigna el
  *   evento y le llega su usuario y contraseña.
  *   Cliente existente: se elige de `clientes` (los correos de sus eventos de
  *   clientes); solo se le asigna y le llega un aviso de que tiene un evento
  *   nuevo (sin contraseña).
- * Backend: controllers/planner.js → asignarCliente / asignarClienteFlash
+ * Backend: controllers/planner.js → asignarCliente / asignarClientePop
  * (resuelve por correo si la cuenta ya existe).
  */
 export const PlannerSendDrawer = ({ invitation, clientes = [], onClose, onSent }) => {
@@ -63,9 +63,9 @@ const SendFlow = ({ invitation, clientes, onClose, onSent }) => {
             const payload = existente
                 ? { correo_cliente: elegido }
                 : { correo_cliente: correo.trim(), nombre_cliente: nombre.trim() }
-            // Un Evento Flash es un side event: su envío va por otra ruta.
-            const { data } = invitation._flash
-                ? await asignarClienteFlash(invitation._flash.id, payload)
+            // Un Pop es un side event: su envío va por otra ruta.
+            const { data } = invitation._pop
+                ? await asignarClientePop(invitation._pop.id, payload)
                 : await asignarCliente(invitation.id, payload)
             setEnviado(data)
         } catch (err) {

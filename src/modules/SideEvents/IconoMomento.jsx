@@ -2,7 +2,7 @@ import { DynamicIcon } from 'lucide-react/dynamic'
 import { iconsItinerary } from '../../helpers/services/menuIcons'
 
 /*
-  Ícono de un momento del itinerario de un Flash. Dos catálogos:
+  Ícono de un momento del itinerario de un Pop. Dos catálogos:
   · número: los clásicos del itinerario de la invitación (iconsItinerary).
   · "lucide:<nombre>": cualquier ícono de Lucide, cargado bajo demanda con
     DynamicIcon (así no se meten los ~1,600 al bundle).

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { arrayMove } from '@dnd-kit/sortable'
-import { CalendarDays, ClipboardList, CloudSun, Image as ImageIcon, Info, ListOrdered, Map as MapIcon, MapPin, MessageCircle, Music, StickyNote, Type, Users } from 'lucide-react'
-import { conModificador, alternar } from '../stickersFlashData'
+import { CalendarDays, ClipboardList, CloudSun, Image as ImageIcon, Info, Layers, ListOrdered, Map as MapIcon, MapPin, MessageCircle, Music, StickyNote, Type, Users } from 'lucide-react'
+import { conModificador, alternar } from '../stickersPopData'
 import { MiniaturaElemento } from '../../Editor/Elemento'
 import { etiquetaElemento } from '../../Editor/elementoInfo'
 import { LayersPanel } from '../../Editor/LayersPanel'
@@ -9,7 +9,7 @@ import { formPublicado } from '../Formularios/modelo'
 import { activasPrimero, agruparTarjetas, parcheOcultarPortada, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos } from '../tarjetasSide'
 
 /*
-  Panel "Capas" de un side event / Flash (LayersPanel, el de todos los
+  Panel "Capas" de un side event / Pop (LayersPanel, el de todos los
   editores, variante "secciones"): tres secciones con su etiqueta —
   PORTADA, FORMULARIO (aviso al confirmar) y PÁGINA (arrastra para
   ordenar)—. Lo que todavía no tiene contenido lleva "+ Agregar" en vez del
@@ -19,8 +19,8 @@ import { activasPrimero, agruparTarjetas, parcheOcultarPortada, parcheOcultarTar
     textos, íconos…; se arrastran para cambiar el orden —el último del
     arreglo va encima—, ⌘ / Shift + clic suma a la selección, el ojo los
     oculta) y hasta abajo el fondo.
-  · Formulario (Flash): fijo, con su ojo. No va en el scroll de la página
-    (al invitado le llega como aviso al confirmar, handoff "Flash Layout"
+  · Formulario (Pop): fijo, con su ojo. No va en el scroll de la página
+    (al invitado le llega como aviso al confirmar, handoff "Pop Layout"
     3a), así que no se arrastra entre las tarjetas.
   · Debajo, las tarjetas en sus grupos, como las etiquetas de la página:
     Información (Itinerario, Notas), Ubicación (Cómo llegar, Clima) y
@@ -45,7 +45,7 @@ const GRUPOS = {
     gente: { label: 'layers_group_gente', Icon: Users },
 }
 
-export const SideLayers = ({ stickers, selected, onSelect, onChange, section, onZone, conCancion, esFlash, body, setBody }) => {
+export const SideLayers = ({ stickers, selected, onSelect, onChange, section, onZone, conCancion, esPop, body, setBody }) => {
     const { t } = useTranslation()
     // La lista va al revés del arreglo: la de hasta arriba primero.
     const enLista = [...stickers].reverse()
@@ -63,22 +63,106 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
         onToggleHidden: () => setBody(parcheOcultarPortada(body, key, !portadaOculta(body, key))),
     })
 
+    // Una capa (un elemento).
+    const filaDe = (s) => ({
+        id: s.id,
+        label: etiquetaElemento(s, t),
+        icon: <MiniaturaElemento s={s} />,
+        selected: selected.includes(s.id),
+        hidden: Boolean(s.hidden),
+        onSelect: (e) => onSelect(conModificador(e) ? alternar(selected, s.id) : [s.id]),
+        onToggleHidden: () => onChange(stickers.map((o) => (o.id === s.id ? { ...o, hidden: !o.hidden || undefined } : o))),
+    })
+    // Bloques: un elemento suelto o un grupo (stickersPopData.js → agrupar),
+    // en el lugar del primero de sus elementos.
+    const bloques = []
+    enLista.forEach((s) => {
+        if (!s.grupo) { bloques.push({ id: s.id, miembros: [s] }); return }
+        const b = bloques.find((x) => x.grupo === s.grupo)
+        if (b) b.miembros.push(s)
+        else bloques.push({ id: `grupo:${s.grupo}`, grupo: s.grupo, miembros: [s] })
+    })
+    const filaDeGrupo = (b) => {
+        const ids = b.miembros.map((m) => m.id)
+        const ocultos = b.miembros.every((m) => m.hidden)
+        const soloDibujos = b.miembros.every((m) => m.kind === 'dibujo')
+        // Nombre propio (doble clic en Capas → body.grupos[id].nombre) o el de siempre.
+        const nombre = body.grupos?.[b.grupo]?.nombre || t(soloDibujos ? 'side_events.layers_group_drawings' : 'side_events.layers_group_elements')
+        return {
+            id: b.id,
+            label: `${nombre} · ${b.miembros.length}`,
+            nombre,
+            renameHint: t('side_events.layers_group_rename'),
+            onRename: (valor) => {
+                const resto = { ...(body.grupos ?? {}) }
+                if (valor) resto[b.grupo] = { ...(resto[b.grupo] ?? {}), nombre: valor }
+                else delete resto[b.grupo]
+                setBody({ grupos: Object.keys(resto).length ? resto : undefined })
+            },
+            icon: <Layers size={14} />,
+            selected: ids.every((id) => selected.includes(id)),
+            hidden: ocultos,
+            onSelect: (e) => onSelect(conModificador(e) ? [...new Set([...selected, ...ids])] : ids),
+            onToggleHidden: () => onChange(stickers.map((o) => (ids.includes(o.id) ? { ...o, hidden: !ocultos || undefined } : o))),
+            children: b.miembros.map(filaDe),
+        }
+    }
+
     const elementos = {
         kind: 'items',
         id: 'elementos',
-        rows: enLista.map((s) => ({
-            id: s.id,
-            label: etiquetaElemento(s, t),
-            icon: <MiniaturaElemento s={s} />,
-            selected: selected.includes(s.id),
-            hidden: Boolean(s.hidden),
-            onSelect: (e) => onSelect(conModificador(e) ? alternar(selected, s.id) : [s.id]),
-            onToggleHidden: () => onChange(stickers.map((o) => (o.id === s.id ? { ...o, hidden: !o.hidden || undefined } : o))),
-        })),
+        rows: bloques.map((b) => (b.grupo && b.miembros.length > 1 ? filaDeGrupo(b) : filaDe(b.miembros[0]))),
+        // Arrastrar en Capas (también las capas de adentro de un grupo):
+        // · un grupo, o una capa suelta sobre otra suelta o sobre un grupo
+        //   cerrado → se mueve el bloque completo;
+        // · una capa sobre una capa de un grupo → queda en ese grupo, en ese
+        //   lugar (reordena adentro, o entra si venía de fuera);
+        // · una capa de un grupo sobre una suelta → sale del grupo.
+        // Un grupo que se queda con una sola capa se deshace.
         onReorder: (activeId, overId) => {
-            const de = enLista.findIndex((s) => s.id === activeId)
-            const a = enLista.findIndex((s) => s.id === overId)
-            onChange(arrayMove(enLista, de, a).reverse())
+            const bloqueDe = (id) => bloques.find((b) => b.id === id || (b.miembros.length === 1 && b.miembros[0].id === id))
+            const activo = enLista.find((x) => x.id === activeId)
+            const sobre = enLista.find((x) => x.id === overId)
+            const bloqueActivo = bloqueDe(activeId)
+            const bloqueSobre = bloqueDe(overId)
+            const enGrupo = (x) => Boolean(x?.grupo) && bloques.some((b) => b.grupo === x.grupo && b.miembros.length > 1)
+            // Bloques completos.
+            if ((bloqueActivo && !enGrupo(activo)) && (bloqueSobre || !enGrupo(sobre))) {
+                const de = bloques.indexOf(bloqueActivo)
+                const a = bloqueSobre ? bloques.indexOf(bloqueSobre) : bloques.findIndex((b) => b.miembros.some((m) => m.id === overId))
+                if (de < 0 || a < 0) return
+                onChange(arrayMove(bloques, de, a).flatMap((b) => b.miembros).reverse())
+                return
+            }
+            if (!activo) {
+                // Un grupo entero soltado sobre una capa de otro grupo: junto a ese grupo.
+                const de = bloques.indexOf(bloqueActivo)
+                const a = bloques.findIndex((b) => b.miembros.some((m) => m.id === overId))
+                if (de < 0 || a < 0) return
+                onChange(arrayMove(bloques, de, a).flatMap((b) => b.miembros).reverse())
+                return
+            }
+            // Una capa: a la posición de `sobre`, con el grupo de `sobre` (o sin grupo).
+            const plana = [...enLista]
+            const de = plana.indexOf(activo)
+            const a = sobre ? plana.indexOf(sobre) : plana.findIndex((x) => bloqueSobre?.miembros.some((m) => m.id === x.id))
+            if (de < 0 || a < 0) return
+            const destino = sobre && enGrupo(sobre) ? sobre.grupo : null
+            let nueva = arrayMove(plana, de, a).map((x) => {
+                if (x.id !== activeId) return x
+                if (destino) return { ...x, grupo: destino }
+                const { grupo: _grupo, ...sin } = x
+                return sin
+            })
+            // Grupos de una sola capa: se deshacen.
+            const cuantos = {}
+            nueva.forEach((x) => { if (x.grupo) cuantos[x.grupo] = (cuantos[x.grupo] ?? 0) + 1 })
+            nueva = nueva.map((x) => {
+                if (!x.grupo || cuantos[x.grupo] > 1) return x
+                const { grupo: _grupo, ...sin } = x
+                return sin
+            })
+            onChange(nueva.reverse())
         },
     }
 
@@ -106,7 +190,7 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
     // FORMULARIO: no va en el scroll (al invitado le llega como aviso al
     // confirmar). Sin preguntas todavía, "+ Agregar" abre su panel; con ellas,
     // el ojo lo prende o apaga.
-    const todas = tarjetasDe(body, esFlash)
+    const todas = tarjetasDe(body, esPop)
     const conFormulario = todas.some((c) => c.key === 'registration')
     const preguntas = (formPublicado(body.form)?.sections ?? []).reduce((n, sec) => n + (sec.fields ?? []).length, 0)
     const formulario = conFormulario ? [{

@@ -1,0 +1,136 @@
+/* Simulación de un mensaje de WhatsApp con la tarjeta del link. */
+.vista {
+    width: 272px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat {
+    padding: 14px 12px 14px 28px;
+    border-radius: 14px;
+    background-color: #EFE7DE;
+    background-image: radial-gradient(rgba(120, 100, 80, 0.10) 1px, transparent 1px);
+    background-size: 14px 14px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.burbuja {
+    position: relative;
+    width: 100%;
+    padding: 0 0 6px;
+    border-radius: 8px 0 8px 8px;
+    background: #D9FDD3;
+    box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+/* Colita de la burbuja enviada. */
+.burbuja::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -7px;
+    border-top: 8px solid #D9FDD3;
+    border-right: 8px solid transparent;
+}
+
+/* Como WhatsApp: la foto a sangre arriba y el texto en una franja un poco
+   más oscura. */
+.tarjeta {
+    border-radius: 8px 0 0 0;
+    overflow: hidden;
+}
+
+.foto {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1.91 / 1;
+    background: #D7DCD3;
+}
+
+.foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Con imagen, sin recorte: el alto lo da la imagen (o la proporción de la
+   pieza en vivo, que llega en línea). Sin imagen queda el 1.91 : 1. */
+.foto[data-natural] {
+    aspect-ratio: auto;
+}
+
+.foto[data-natural] img {
+    height: auto;
+    object-fit: contain;
+}
+
+.pieza {
+    position: absolute;
+    left: 0;
+    transform-origin: top left;
+    pointer-events: none;
+}
+
+.textos {
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(11, 20, 26, 0.04);
+}
+
+.titulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111B21;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.descripcion,
+.dominio {
+    font-size: 12px;
+    color: #667781;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dominio {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    color: #111B21;
+}
+
+.hora {
+    align-self: flex-end;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    color: #667781;
+}
+
+.hora svg {
+    width: 16px;
+    height: 10px;
+    color: #53BDEB;
+}
+
+.nota {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #787878;
+}

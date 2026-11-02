@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { colorDeVelo, darker, sombraDeTexto } from '../../helpers/assets/functions'
 import { lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
-import { alternar, conModificador, esImagen, lienzoCover, nuevoIdElemento, PIEZA_ALTO, PIEZA_ANCHO } from './stickersFlashData'
-import { FlashElemento } from '../Editor/Elemento'
+import { alternar, conModificador, esImagen, lienzoCover, miembrosDe, nuevoIdElemento, PIEZA_ALTO, PIEZA_ANCHO } from './stickersPopData'
+import { PopElemento } from '../Editor/Elemento'
 import { TrazoSvg } from '../Editor/Dibujo'
 import { PINCEL, simplificar } from '../Editor/dibujoData'
 import { EfectosCapa } from './EfectosCapa'
@@ -14,6 +14,7 @@ import { AsistentesMuestra } from './AsistentesMuestra'
 import { estiloDe, tintaDeNotas, variablesDeEstilo } from './estilosBloque'
 import { formPublicado } from './Formularios/modelo'
 import { activasPrimero, agruparTarjetas, estiloNotas, modoClima, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos } from './tarjetasSide'
+import { ajusteDe, AJUSTE_ZOOM_MAX, CAMBIO_CARRUSEL_MS, cubrir, desenfoqueDe, estiloAjuste, esVideo, mediaDePortada, parcheAjuste, variablesDesenfoque } from './fotosPortada'
 
 /**
  * Lienzo editable del side event.
@@ -77,11 +78,14 @@ export const SideCanvas = ({
     readOnly = false,
     fullBleed = false,       // móvil: la pieza ocupa toda la pantalla
     liftBottom = 0,          // móvil: cuánto sube el contenido para librar la hoja
-    conCancion = false,      // Flash: chip de la canción (panel Canción)
-    conAsistentes = false,   // Flash: cuadro "Asistentes" si body.showAttendees
-    asistentes = null,       // Flash: confirmados reales ({ total, asistentes }) para el cuadro
+    conCancion = false,      // Pop: chip de la canción (panel Canción)
+    movil = false,           // Editor del celular: disco de la canción y aviso del formulario más grandes (para el dedo)
+    conAsistentes = false,   // Pop: cuadro "Asistentes" si body.showAttendees
+    asistentes = null,
+    // Pop: los mensajes reales del chat (useMensajesChat, el más reciente primero).
+    chatMensajes = null,       // Pop: confirmados reales ({ total, asistentes }) para el cuadro
     storyMode = false,       // móvil "story": sin chips arriba ni contornos punteados
-    stickerSel = [],         // Flash: ids de los PNG seleccionados (StickersFlash)
+    stickerSel = [],         // Pop: ids de los PNG seleccionados (StickersPop)
     onStickerSel,
     // Editor de escritorio con barras (SideWorkspace): sin los chips de fondo
     // y color (el fondo se toca en la pieza y el color vive en Diseño).
@@ -91,6 +95,22 @@ export const SideCanvas = ({
     pincel = null,
     onTrazo,
     sinTrazos = false,
+    // Dibujo a pantalla completa: solo se puede dibujar y hacer scroll; tocar
+    // el título, los PNG, las tarjetas o los botones no hace nada.
+    soloDibujo = false,
+    // Portada (fotosPortada.js): `fotoFija` (url) deja quieta esa foto o video
+    // del carrusel (la elegida en la barra Fondo); `ajustarFoto` (url) la
+    // ajusta: arrastrar la mueve y la rueda la acerca o aleja.
+    fotoFija = null,
+    ajustarFoto = null,
+    // Con varias fotos / videos en la portada, dónde va el trazo nuevo:
+    // 'todo' (toda la portada, se ve en todas) o la url de una (anclado a
+    // ella, solo se ve cuando le toca; el editor la deja fija al dibujar).
+    dibujoEn = null,
+    // Solo la portada (Compartir, CompartirPop): fondo, color, velo,
+    // efectos, elementos y dibujos, sin título, fecha, lugar, botones ni
+    // tarjetas (siguen montados, invisibles, para no mover las medidas).
+    soloPortada = false,
 }) => {
 
     const { t } = useTranslation()
@@ -117,8 +137,16 @@ export const SideCanvas = ({
     // El trazo en curso: puntos en pantalla (clientX/Y) y, para verlo, en las
     // unidades del recuadro donde se dibuja.
     const [trazo, setTrazo] = useState(null)
+    // Tarjeta donde empezó el trazo en curso (si empezó encima de una): se
+    // ve en la caja de la tarjeta y no en la capa de la portada, que crece
+    // con el zoom del scroll y lo hacía ver más grueso que como queda.
+    const [trazoEn, setTrazoEn] = useState(null)
     const trazoRef = useRef(null)
+    const rectDeTrazo = (t) => (t.tarjeta
+        ? infoRef.current?.querySelector(`[data-tarjeta="${t.tarjeta}"]`)?.getBoundingClientRect() ?? t.el.getBoundingClientRect()
+        : t.el.getBoundingClientRect())
     const fotoRef = useRef(null)
+    const fotoRefs = useRef({})
     const lienzoRef = useRef(null)
     const marcoUnidades = (rect) => ({ ancho: PIEZA_ANCHO, alto: PIEZA_ANCHO * (rect.height / rect.width) })
     const aUnidades = (pts, rect) => {
@@ -129,9 +157,12 @@ export const SideCanvas = ({
         if (!pincel || e.button !== 0) return
         e.preventDefault()
         e.stopPropagation()
-        e.currentTarget.setPointerCapture?.(e.pointerId)
-        trazoRef.current = { el: e.currentTarget, pts: [[e.clientX, e.clientY]] }
-        setTrazo(aUnidades(trazoRef.current.pts, e.currentTarget.getBoundingClientRect()))
+        try { e.currentTarget.setPointerCapture?.(e.pointerId) } catch { /* puntero ya suelto */ }
+        // El borrador no se ancla: borra en cualquier recuadro.
+        const sobre = PINCEL[pincel.brush]?.borra ? null : tarjetaEn(e.clientX, e.clientY)
+        trazoRef.current = { el: e.currentTarget, pts: [[e.clientX, e.clientY]], tarjeta: sobre?.key ?? null }
+        setTrazoEn(sobre?.key ?? null)
+        setTrazo(aUnidades(trazoRef.current.pts, rectDeTrazo(trazoRef.current)))
     }
     const moverTrazo = (e) => {
         const t = trazoRef.current
@@ -139,12 +170,13 @@ export const SideCanvas = ({
         const u = t.pts[t.pts.length - 1]
         if (Math.hypot(e.clientX - u[0], e.clientY - u[1]) < 0.8) return
         t.pts = [...t.pts, [e.clientX, e.clientY]]
-        setTrazo(aUnidades(t.pts, t.el.getBoundingClientRect()))
+        setTrazo(aUnidades(t.pts, rectDeTrazo(t)))
     }
     const terminarTrazo = () => {
         const t = trazoRef.current
         trazoRef.current = null
         setTrazo(null)
+        setTrazoEn(null)
         if (!t || !pincel) return
         const p = PINCEL[pincel.brush] ?? PINCEL.pluma
         const r1 = (n) => Math.round(n * 10) / 10
@@ -156,7 +188,11 @@ export const SideCanvas = ({
             let toco = false
             const nueva = lista.map((o) => {
                 if (o.kind !== 'dibujo' || o.hidden) return o
-                const marco = (o.foto && fotoRef.current ? fotoRef.current : lienzoRef.current)?.getBoundingClientRect()
+                // Lo de otra foto del carrusel no se ve: no se borra.
+                if (o.fotoSrc && o.fotoSrc !== media[activa]) return o
+                const marco = (o.tarjeta ? cajasRef.current[o.tarjeta]
+                    : o.fotoSrc ? fotoRefs.current[o.fotoSrc]
+                        : o.foto && fotoRef.current ? fotoRef.current : lienzoRef.current)?.getBoundingClientRect()
                 if (!marco?.width) return o
                 const u = marcoUnidades(marco)
                 const pts = aUnidades(t.pts, marco)
@@ -181,8 +217,10 @@ export const SideCanvas = ({
             onTrazo?.('borrar')
             return
         }
-        // Se dibuja en el recuadro de la capa de dibujo (foto, o lienzo sin foto).
-        const rect = t.el.getBoundingClientRect()
+        // Se dibuja en el recuadro de la capa de dibujo (foto, o lienzo sin
+        // foto) o, si empezó encima de una tarjeta, en la tarjeta.
+        const sobre = t.tarjeta ? { key: t.tarjeta } : null
+        const rect = rectDeTrazo(t)
         const u = marcoUnidades(rect)
         const ancho = pincel.size * p.k
         const puntos = simplificar(aUnidades(t.pts, rect), 0.6)
@@ -196,8 +234,8 @@ export const SideCanvas = ({
         const nuevo = {
             id: nuevoIdElemento('d'),
             kind: 'dibujo',
-            // Anclado a la foto (x / y / w en % de la foto como se ve).
-            ...(marcoFoto ? { foto: true } : {}),
+            // Anclado a la tarjeta o a la foto (x / y / w en % de su recuadro).
+            ...(sobre ? { tarjeta: sobre.key } : srcDibujo ? { foto: true, fotoSrc: srcDibujo } : marcoDibujo ? { foto: true } : {}),
             brush: pincel.brush,
             color: pincel.color,
             size: pincel.size,
@@ -378,7 +416,7 @@ export const SideCanvas = ({
         ? base
         : `${base} ${styles.pickable} ${selected === section ? styles.picked : ''}`)
 
-    // PNG de un Flash (body.stickers, ver StickersFlash.jsx): se arrastran en
+    // PNG de un Pop (body.stickers, ver StickersPop.jsx): se arrastran en
     // la pieza; x/y en % de la capa (ancho y alto de la pantalla).
     // Los ocultos (`hidden`, panel de capas) siguen guardados pero no se pintan.
     const stickers = (Array.isArray(body.stickers) ? body.stickers : []).filter(s => !s.hidden)
@@ -427,19 +465,165 @@ export const SideCanvas = ({
     // se escala por el alto y se recorta un poco a los lados, así los PNG
     // conservan su tamaño respecto a la pantalla.
     const lienzo = zona ? lienzoCover(zona.ancho, zona.alto) : undefined
-    // Recuadro de la foto (o del video) de fondo tal como se ve (cover de la
-    // pantalla, centrado): ahí van los dibujos, para que cuadren con la foto.
-    const [tamFoto, setTamFoto] = useState(null)
-    const fotoActual = body.video || body.image || null
-    useEffect(() => { setTamFoto(null) }, [fotoActual])
-    const marcoFoto = zona && tamFoto ? (() => {
-        const escala = Math.max(zona.ancho / tamFoto.w, zona.alto / tamFoto.h)
-        const width = tamFoto.w * escala
-        const height = tamFoto.h * escala
-        return { left: (zona.ancho - width) / 2, top: (zona.alto - height) / 2, width, height }
-    })() : null
+    // Portada: fotos y videos (fotosPortada.js). Con varios, carrusel: cada
+    // foto dura CAMBIO_CARRUSEL_MS y cada video se reproduce completo.
+    const media = mediaDePortada(body)
+    const claveMedia = media.join('|')
+    const carrusel = media.length > 1
+    const [fotoActiva, setFotoActiva] = useState(0)
+    const indiceFijo = fotoFija ? media.indexOf(fotoFija) : -1
+    const activa = indiceFijo >= 0 ? indiceFijo : Math.min(fotoActiva, Math.max(0, media.length - 1))
+    useEffect(() => { setFotoActiva(0) }, [claveMedia])
+    // Tamaño natural de cada foto / video (para el ajuste y los dibujos).
+    const [tamanos, setTamanos] = useState({})
+    const medirMedia = (src, el) => {
+        const w = el?.naturalWidth || el?.videoWidth
+        const h = el?.naturalHeight || el?.videoHeight
+        if (!w || !h) return
+        setTamanos((t) => (t[src]?.w === w && t[src]?.h === h ? t : { ...t, [src]: { w, h } }))
+    }
+    // Lo que ya estaba cargado (caché) pudo avisar antes de montarse.
+    const mediaRefs = useRef({})
+    useEffect(() => {
+        Object.entries(mediaRefs.current).forEach(([src, el]) => {
+            if (el && (el.complete || el.readyState >= 1)) medirMedia(src, el)
+        })
+    }, [claveMedia])
+    // El carrusel avanza solo (no con una foto fija): el video que le toca
+    // empieza desde el principio y los demás se pausan.
+    useEffect(() => {
+        if (!carrusel) return undefined
+        Object.entries(mediaRefs.current).forEach(([src, el]) => {
+            if (el?.tagName !== 'VIDEO') return
+            if (src === media[activa]) { el.currentTime = 0; el.play?.().catch(() => {}) } else el.pause?.()
+        })
+        if (indiceFijo >= 0) return undefined
+        const siguiente = () => setFotoActiva((i) => (i + 1) % media.length)
+        const el = mediaRefs.current[media[activa]]
+        if (esVideo(media[activa]) && el) {
+            // Al terminar el video; si no carga, como una foto.
+            const t = setTimeout(siguiente, el.duration ? el.duration * 1000 + 400 : 30000)
+            el.addEventListener('ended', siguiente)
+            el.addEventListener('error', siguiente)
+            return () => { clearTimeout(t); el.removeEventListener('ended', siguiente); el.removeEventListener('error', siguiente) }
+        }
+        const t = setTimeout(siguiente, CAMBIO_CARRUSEL_MS)
+        return () => clearTimeout(t)
+    }, [carrusel, activa, indiceFijo, claveMedia])
+    // Los dibujos van anclados al recuadro de la primera foto (o video), con
+    // su ajuste, tal como se ve (cover de la pantalla).
+    const tamFoto = tamanos[media[0]] ?? null
+    const marcoFoto = zona && tamFoto ? cubrir(tamFoto, zona.ancho, zona.alto, ajusteDe(body, media[0])) : null
+    // El recuadro de cada foto / video (para los dibujos anclados a una).
+    const marcos = zona ? Object.fromEntries(media.filter((src) => tamanos[src]).map((src) => [src, cubrir(tamanos[src], zona.ancho, zona.alto, ajusteDe(body, src))])) : {}
+    // Dónde va el trazo nuevo: con una sola, en la foto (como siempre); con
+    // varias, en la elegida (`dibujoEn`) o en toda la portada.
+    const multiple = media.length > 1
+    const srcDibujo = multiple && dibujoEn && dibujoEn !== 'todo' && marcos[dibujoEn] ? dibujoEn : null
+    const marcoDibujo = multiple ? (srcDibujo ? marcos[srcDibujo] : null) : marcoFoto
+    // Lo que se está ajustando (url de la portada).
+    const srcAjustable = ajustarFoto && media.includes(ajustarFoto) ? ajustarFoto : null
+    const ajuste = ajusteDe(body, srcAjustable)
+
+    // Ajustar la foto: arrastrar mueve el encuadre (en % del sobrante, como
+    // object-position) y la rueda cambia el zoom. Un solo paso de deshacer
+    // por arrastre.
+    const arrastreFoto = useRef(null)
+    const guardarAjuste = (a, opts) => onChange((prev) => ({
+        ...prev,
+        body: { ...prev.body, ...parcheAjuste(prev.body, srcAjustable, a) },
+    }), opts)
+    const empezarAjuste = (e) => {
+        if (!srcAjustable || !tamanos[srcAjustable] || !zona) return
+        e.stopPropagation()
+        try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* puntero ya suelto */ }
+        const r = e.currentTarget.getBoundingClientRect()
+        arrastreFoto.current = {
+            id: e.pointerId, x: e.clientX, y: e.clientY,
+            escala: r.width / (e.currentTarget.offsetWidth || r.width),
+            a: ajuste ?? { z: 1, x: 50, y: 50 },
+            primero: true,
+        }
+    }
+    const moverAjuste = (e) => {
+        const g = arrastreFoto.current
+        const tam = tamanos[srcAjustable]
+        if (!g || g.id !== e.pointerId || !tam || !zona) return
+        const m = cubrir(tam, zona.ancho, zona.alto, g.a)
+        const sobraX = zona.ancho - m.width
+        const sobraY = zona.alto - m.height
+        const dx = (e.clientX - g.x) / g.escala
+        const dy = (e.clientY - g.y) / g.escala
+        const acotar = (v) => Math.round(Math.min(100, Math.max(0, v)) * 10) / 10
+        const a = {
+            z: g.a.z,
+            x: sobraX < -0.5 ? acotar(g.a.x + (dx / sobraX) * 100) : g.a.x,
+            y: sobraY < -0.5 ? acotar(g.a.y + (dy / sobraY) * 100) : g.a.y,
+        }
+        guardarAjuste(a, { snapshot: g.primero })
+        g.primero = false
+    }
+    const soltarAjuste = (e) => {
+        if (arrastreFoto.current?.id === e.pointerId) arrastreFoto.current = null
+    }
+    const capaAjusteRef = useRef(null)
+    const ajusteVivo = useRef(ajuste)
+    useEffect(() => { ajusteVivo.current = ajuste })
+    useEffect(() => {
+        const el = capaAjusteRef.current
+        if (!ajustarFoto || !el) return undefined
+        const onWheel = (e) => {
+            e.preventDefault()
+            const a = ajusteVivo.current ?? { z: 1, x: 50, y: 50 }
+            const z = Math.round(Math.min(AJUSTE_ZOOM_MAX, Math.max(1, a.z * (1 - e.deltaY * 0.0025))) * 100) / 100
+            if (z !== a.z) guardarAjuste({ ...a, z }, { coalesce: 'ajuste-foto' })
+        }
+        el.addEventListener('wheel', onWheel, { passive: false })
+        return () => el.removeEventListener('wheel', onWheel)
+    }, [srcAjustable])
     // Dibujos anclados a la foto (si no hay foto, van en el lienzo).
-    const enFoto = (st) => st.kind === 'dibujo' && st.foto && marcoFoto
+    // Anclado a la primera foto, sin `fotoSrc` (los de antes y los de una
+    // sola foto): se ven siempre.
+    const enFoto = (st) => st.kind === 'dibujo' && st.foto && !st.fotoSrc && marcoFoto
+    // Anclados a una foto / video del carrusel (`fotoSrc`): en su recuadro.
+    const enFotoDe = (src) => (st) => st.kind === 'dibujo' && st.foto && st.fotoSrc === src
+    const conFotoSrc = (st) => st.kind === 'dibujo' && Boolean(st.fotoSrc)
+    // Dibujos hechos encima de una tarjeta (`tarjeta` = su clave de
+    // body.cards): x / y / w en % de la tarjeta; se pintan en una capa dentro
+    // del scroll, encima de las tarjetas, y suben con ellas.
+    const enTarjeta = (st) => st.kind === 'dibujo' && Boolean(st.tarjeta)
+    const [cajas, setCajas] = useState({})
+    const cajasRef = useRef({})
+    const [medirCajas, setMedirCajas] = useState(0)
+    const conDibujosEnTarjetas = stickers.some(enTarjeta)
+    useLayoutEffect(() => {
+        const info = infoRef.current
+        if (!info || (!conDibujosEnTarjetas && !pincel)) return
+        const r0 = info.getBoundingClientRect()
+        const k = r0.width / (info.offsetWidth || r0.width) || 1
+        const nuevas = {}
+        info.querySelectorAll('[data-tarjeta]').forEach((el) => {
+            const r = el.getBoundingClientRect()
+            nuevas[el.dataset.tarjeta] = { left: (r.left - r0.left) / k, top: (r.top - r0.top) / k, width: r.width / k, height: r.height / k }
+        })
+        const igual = (a, b) => a && b && ['left', 'top', 'width', 'height'].every((p) => Math.abs(a[p] - b[p]) < 0.5)
+        const cambio = Object.keys(nuevas).length !== Object.keys(cajas).length || Object.keys(nuevas).some((key) => !igual(nuevas[key], cajas[key]))
+        if (cambio) setCajas(nuevas)
+    })
+    // Lo que cambia de alto sin volver a pintar (fuentes, mapa, imágenes).
+    useEffect(() => {
+        const info = infoRef.current
+        if (!info || typeof ResizeObserver === 'undefined') return undefined
+        const ro = new ResizeObserver(() => setMedirCajas((n) => n + 1))
+        ro.observe(info)
+        return () => ro.disconnect()
+    }, [])
+    // La tarjeta debajo de un punto de la pantalla (si hay).
+    const tarjetaEn = (x, y) => {
+        const els = [...(infoRef.current?.querySelectorAll('[data-tarjeta]') ?? [])]
+        const el = els.find((e) => { const r = e.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom })
+        return el ? { key: el.dataset.tarjeta, rect: el.getBoundingClientRect() } : null
+    }
     const seleccion = Array.isArray(stickerSel) ? stickerSel : (stickerSel ? [stickerSel] : [])
     // ⌘/Ctrl/Shift + clic suma o quita de la selección (y si lo quita, no lo
     // arrastra). Arrastrar uno que ya está en la selección mueve a todo el
@@ -459,7 +643,8 @@ export const SideCanvas = ({
         // Sin abrir la hoja: se ajusta con gestos y la píldora de arriba.
         // Si había otra hoja abierta, se cierra.
         if (selected && selected !== 'stickers') onSelect(null)
-        onStickerSel?.([s.id])
+        // Un elemento de un grupo elige al grupo entero.
+        onStickerSel?.(miembrosDe(stickers, s))
     }
 
     // Móvil "story": con un PNG elegido, dos dedos en cualquier parte de la
@@ -550,7 +735,8 @@ export const SideCanvas = ({
             onStickerSel?.(grupo)
             if (!grupo.includes(s.id)) return
         } else {
-            grupo = seleccion.includes(s.id) ? seleccion : [s.id]
+            // Un elemento de un grupo (stickersPopData.js) arrastra al grupo entero.
+            grupo = seleccion.includes(s.id) ? seleccion : miembrosDe(stickers, s)
             onStickerSel?.(grupo)
         }
         const capa = e.currentTarget.parentElement.getBoundingClientRect()
@@ -677,7 +863,7 @@ export const SideCanvas = ({
                                             onClick={elegirSticker(s)}
                                         />
                                     ) : (
-                                        // Texto, ícono, forma, línea o decoración (FlashElemento).
+                                        // Texto, ícono, forma, línea o decoración (PopElemento).
                                         <div
                                             key={s.id}
                                             className={`${styles.sticker} ${styles.elemento}`}
@@ -685,7 +871,7 @@ export const SideCanvas = ({
                                             onPointerDown={arrastrarSticker(s)}
                                             onClick={elegirSticker(s)}
                                         >
-                                            <FlashElemento s={s} titleFont={tituloFuente} />
+                                            <PopElemento s={s} titleFont={tituloFuente} />
                                         </div>
                                     )))
 
@@ -706,7 +892,7 @@ export const SideCanvas = ({
                                             ? <img src={s.url} alt='' draggable={false} className={styles.stickerHueco} />
                                             : (
                                                 <div className={`${styles.stickerHueco} ${editando === s.id ? styles.huecoEditando : ''}`}>
-                                                    <FlashElemento s={s} titleFont={tituloFuente} editable={editando === s.id} onTextDone={terminarTexto(s.id)} />
+                                                    <PopElemento s={s} titleFont={tituloFuente} editable={editando === s.id} onTextDone={terminarTexto(s.id)} />
                                                 </div>
                                             )}
                                         {manijas && editando !== s.id && (
@@ -724,7 +910,7 @@ export const SideCanvas = ({
     const setName = (value) => onChange((prev) => ({ ...prev, name: value }), { coalesce: 'name' })
     const setExtras = (value) => onChange((prev) => ({ ...prev, body: { ...prev.body, extras: value } }), { coalesce: 'extras' })
 
-    // Un Flash puede tener varias fechas: las de mismo mes y hora van juntas.
+    // Un Pop puede tener varias fechas: las de mismo mes y hora van juntas.
     const dateLabels = lineasDeFechas(body, { state: address.state, timezone: body.timezone })
     const placeLabel = body.place_name
         || (address.street && address.number ? `${address.street} ${address.number}` : null)
@@ -736,12 +922,14 @@ export const SideCanvas = ({
         <div
             ref={cardRef}
             className={`${styles.card} ${barMode ? styles.cardIphone : ''} ${fullBleed ? styles.cardFull : ''} ${storyMode ? styles.cardStory : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
-            // Estilo de bloques (Flash): sus variables y data-estilo (solo si no es vidrio).
+            // Estilo de bloques (Pop): sus variables y data-estilo (solo si no es vidrio).
             style={{ '--blur-color': themeColor, '--blur-color--dark': tint, ...variablesDeEstilo(estiloDe(body), body.color) }}
             data-estilo={estiloDe(body) === 'vidrio' ? undefined : estiloDe(body)}
             data-side-card
+            data-solo-dibujo={(soloDibujo && pincel) || undefined}
+            data-movil={movil || undefined}
             onClick={() => {
-                if (readOnly) return
+                if (readOnly || soloDibujo) return
                 onSelect(null)
                 if (storyMode) onStickerSel?.([])
             }}
@@ -749,11 +937,25 @@ export const SideCanvas = ({
 
             {/* ── Hero ── */}
             <div className={cls('background', styles.hero)} onClick={pick('background')}>
-                {/* Flash con video de fondo: la imagen es su cuadro fijo. */}
-                {body.video
-                    ? <video src={body.video} poster={body.image || undefined} autoPlay muted loop playsInline preload='auto' className={styles.heroBg} onLoadedMetadata={(e) => setTamFoto({ w: e.currentTarget.videoWidth, h: e.currentTarget.videoHeight })} />
-                    : body.image
-                    ? <img src={body.image} alt='' className={styles.heroBg} onLoad={(e) => setTamFoto({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
+                {/* Fotos y videos de la portada (uno o carrusel), dentro de .heroBg
+                    (el zoom al subir los botones), cada uno con su ajuste. Un
+                    video solo va en bucle; con un video solo, la imagen es su
+                    cuadro fijo. */}
+                {media.length
+                    ? (
+                        <div className={styles.heroBg}>
+                            {media.map((src, i) => {
+                                const props = {
+                                    ref: (el) => { mediaRefs.current[src] = el },
+                                    className: styles.carruselFoto,
+                                    style: { opacity: i === activa ? 1 : 0, ...estiloAjuste(ajusteDe(body, src)) },
+                                }
+                                return esVideo(src)
+                                    ? <video key={src + i} {...props} src={src} poster={!carrusel ? body.image || undefined : undefined} autoPlay={!carrusel} loop={!carrusel || i === indiceFijo} muted playsInline preload='auto' onLoadedMetadata={(e) => medirMedia(src, e.currentTarget)} />
+                                    : <img key={src + i} {...props} src={src} alt='' onLoad={(e) => medirMedia(src, e.currentTarget)} />
+                            })}
+                        </div>
+                    )
                     : (
                         <div className={styles.heroEmpty}>
                             <ImagePlus size={26} />
@@ -761,7 +963,9 @@ export const SideCanvas = ({
                         </div>
                     )
                 }
-                <div aria-hidden className={styles.blurCover} />
+                {/* Compartir (soloPortada): sin el desenfoque; un backdrop-filter
+                    dentro de la pieza escalada podía dejar la foto sin pintar. */}
+                {!soloPortada && desenfoqueDe(body).amount > 0 && <div aria-hidden className={styles.blurCover} style={variablesDesenfoque(body)} />}
                 <div aria-hidden className={styles.shadow} />
             </div>
 
@@ -773,7 +977,7 @@ export const SideCanvas = ({
             {/* En modo story sus funciones pasan a los botones del editor. */}
             {!readOnly && !storyMode &&
                 <div className={styles.topRow}>
-                    {/* Flash: canción, arriba a la izquierda como su reproductor en
+                    {/* Pop: canción, arriba a la izquierda como su reproductor en
                         la página del invitado (SongPlayer). Solo el disco. */}
                     {conCancion &&
                         <button
@@ -814,6 +1018,7 @@ export const SideCanvas = ({
                 ref={scrollRef}
                 className={`${styles.scrollArea} scroll-invitation`}
                 onClick={(e) => {
+                    if (soloDibujo) { e.stopPropagation(); return }
                     if (clicDeSticker.current) { e.stopPropagation(); return }
                     if (e.target === e.currentTarget) pick('background')(e)
                 }}
@@ -832,7 +1037,7 @@ export const SideCanvas = ({
                     {stickers.length > 0 && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={marco}>
                             <div ref={lienzoRef} className={styles.lienzo} style={lienzo}>
-                                {pintarStickers(stickers.filter((x) => !enFoto(x)))}
+                                {pintarStickers(stickers.filter((x) => !enFoto(x) && !enTarjeta(x) && !conFotoSrc(x)))}
                             </div>
                             {/* Dibujos anclados a la foto: en su recuadro (cover de la foto). */}
                             {marcoFoto && (
@@ -840,6 +1045,16 @@ export const SideCanvas = ({
                                     {pintarStickers(stickers.filter(enFoto))}
                                 </div>
                             )}
+                            {/* Anclados a una foto / video del carrusel: se ven con ella. */}
+                            {media.map((src, i) => {
+                                const lista = stickers.filter(enFotoDe(src))
+                                if (!lista.length || !marcos[src]) return null
+                                return (
+                                    <div key={src + i} ref={(el) => { fotoRefs.current[src] = el }} className={styles.lienzo} style={{ ...marcos[src], opacity: i === activa ? 1 : 0, transition: 'opacity 0.9s ease', pointerEvents: i === activa ? undefined : 'none' }}>
+                                        {pintarStickers(lista)}
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                     {/* Efectos animados (panel Efectos): encima de la portada y los PNG,
@@ -876,11 +1091,16 @@ export const SideCanvas = ({
                     {!readOnly && !pincel && seleccion.length > 0 && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAgarre}`} style={marco}>
                             <div className={styles.lienzo} style={lienzo}>
-                                {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && !enFoto(x)))}
+                                {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && !enFoto(x) && !enTarjeta(x) && !conFotoSrc(x)))}
                             </div>
                             {marcoFoto && (
                                 <div className={styles.lienzo} style={marcoFoto}>
                                     {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && enFoto(x)))}
+                                </div>
+                            )}
+                            {media[activa] && marcos[media[activa]] && (
+                                <div className={styles.lienzo} style={marcos[media[activa]]}>
+                                    {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && enFotoDe(media[activa])(x)))}
                                 </div>
                             )}
                         </div>
@@ -891,20 +1111,43 @@ export const SideCanvas = ({
                         <div className={`${styles.stickersCapa} ${styles.capaDibujo}`} style={marco}>
                             <div
                                 className={`${styles.lienzo} ${styles.lienzoDibujo}`}
-                                style={marcoFoto ?? lienzo}
+                                style={marcoDibujo ?? lienzo}
                                 onPointerDown={empezarTrazo}
                                 onPointerMove={moverTrazo}
                                 onPointerUp={terminarTrazo}
                                 onPointerCancel={terminarTrazo}
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                {trazo && (
+                                {trazo && !trazoEn && (
                                     <div className={styles.trazoVivo} style={{ opacity: Math.min(pincel.opacity / 100, PINCEL[pincel.brush]?.maxA ?? 1) }}>
-                                        <TrazoSvg s={{ ...pincel, points: trazo }} vbW={PIEZA_ANCHO} vbH={marcoFoto ? PIEZA_ANCHO * (marcoFoto.height / marcoFoto.width) : PIEZA_ALTO} preview />
+                                        <TrazoSvg s={{ ...pincel, points: trazo }} vbW={PIEZA_ANCHO} vbH={marcoDibujo ? PIEZA_ANCHO * (marcoDibujo.height / marcoDibujo.width) : PIEZA_ALTO} preview />
                                     </div>
                                 )}
                             </div>
-                            {sinTrazos && !trazo && <span className={styles.dibujoAviso}>{t('side_events.draw_canvas_hint')}</span>}
+                        </div>
+                    )}
+                    {/* El aviso va fuera de la capa de dibujo: esa crece con el zoom
+                        del scroll y lo agrandaba. */}
+                    {pincel && !readOnly && sinTrazos && !trazo && (
+                        <div aria-hidden className={styles.dibujoAvisoCapa} style={marco}>
+                            <span className={styles.dibujoAviso}>{t('side_events.draw_canvas_hint')}</span>
+                        </div>
+                    )}
+                    {/* Ajustar la foto: encima de todo; la cuadrícula de tercios
+                        ayuda a encuadrar. */}
+                    {ajustarFoto && !readOnly && srcAjustable && (
+                        <div
+                            ref={capaAjusteRef}
+                            className={`${styles.stickersCapa} ${styles.capaAjuste}`}
+                            style={marco}
+                            onPointerDown={empezarAjuste}
+                            onPointerMove={moverAjuste}
+                            onPointerUp={soltarAjuste}
+                            onPointerCancel={soltarAjuste}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <span aria-hidden className={styles.ajusteTercios} />
+                            <span className={styles.dibujoAviso}>{t('side_events.photo_adjust_hint')}</span>
                         </div>
                     )}
                 </div>
@@ -912,7 +1155,7 @@ export const SideCanvas = ({
                 <div
                     ref={infoRef}
                     className={styles.infoCont}
-                    style={padBottom ? { paddingBottom: padBottom + 24 } : undefined}
+                    style={{ ...(padBottom ? { paddingBottom: padBottom + 24 } : {}), ...(soloPortada ? { visibility: 'hidden' } : {}) }}
                 >
 
                     {/* Primera pantalla: título, fecha, lugar y botones, con los
@@ -990,7 +1233,7 @@ export const SideCanvas = ({
                     {/* Tarjetas debajo de la portada, en el orden del panel Capas
                         (tarjetasSide.js), agrupadas bajo su etiqueta
                         (INFORMACIÓN · UBICACIÓN · ASISTENTES), como la página del
-                        invitado (handoff "Flash Layout" 3a). El formulario no va en
+                        invitado (handoff "Pop Layout" 3a). El formulario no va en
                         el scroll: al invitado le llega como aviso al confirmar.
                         Al editar, como los módulos deshabilitados de la
                         invitación: las ocultas y las que no tienen datos salen
@@ -1031,7 +1274,7 @@ export const SideCanvas = ({
                                 else onSelect(zona)
                             }
                             return (
-                                <div key={key} className={cls(zona, styles.apagada)} data-zone={zona} onClick={agregar ? alTocarAgregar : (e) => { e.stopPropagation(); onSelect(zona) }}>
+                                <div key={key} data-tarjeta={key} className={cls(zona, styles.apagada)} data-zone={zona} onClick={agregar ? alTocarAgregar : (e) => { e.stopPropagation(); onSelect(zona) }}>
                                     <div className={styles.apagadaMuestra} aria-hidden>{muestra}</div>
                                     {!readOnly && (
                                         <button type='button' className={styles.activar} onClick={agregar ? alTocarAgregar : activar(key, zona)}>
@@ -1116,12 +1359,12 @@ export const SideCanvas = ({
                                     <span className={styles.grupoEtiqueta}>{t(`side_events.canvas_group_${id}`)}</span>
                                 )}
                                 {delGrupo.map((key) => {
-                                    // Asistentes (Flash, opcional), con asistentes de ejemplo.
+                                    // Asistentes (Pop, opcional), con asistentes de ejemplo.
                                     if (key === 'attendees') {
-                                        const muestra = <AsistentesMuestra colorTema={body.color} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={Boolean(body.chat?.enabled)} sinTitulo />
+                                        const muestra = <AsistentesMuestra colorTema={body.color} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={Boolean(body.chat?.enabled)} chatMensajes={chatMensajes} sinTitulo />
                                         if (oculta(key)) return apagada(key, 'attendees', muestra)
                                         return (
-                                            <div key={key} className={cls('attendees', styles.itineraryZona)} data-zone='attendees' onClick={pick('attendees')}>
+                                            <div key={key} data-tarjeta={key} className={cls('attendees', styles.itineraryZona)} data-zone='attendees' onClick={pick('attendees')}>
                                                 {muestra}
                                             </div>
                                         )
@@ -1133,7 +1376,7 @@ export const SideCanvas = ({
                                             return apagada(key, 'itinerary', <ItinerarioWidget body={ejemplo} sinTitulo />, conItinerario ? null : t('side_events.canvas_add_itinerary'))
                                         }
                                         return (
-                                            <div key={key} className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
+                                            <div key={key} data-tarjeta={key} className={cls('itinerary', styles.itineraryZona)} data-zone='itinerary' onClick={pick('itinerary')}>
                                                 <ItinerarioWidget body={body} sinTitulo />
                                             </div>
                                         )
@@ -1144,7 +1387,7 @@ export const SideCanvas = ({
                                             return apagada(key, zonaDe('map'), <div className={`${styles.block} ${styles.lugarBlock}`}>{tarjetaLugar(!conMapa, false)}</div>, conMapa ? null : t('side_events.canvas_add_place'))
                                         }
                                         return (
-                                            <div key={key} className={cls(zonaDe('map'), `${styles.block} ${styles.lugarBlock}`)} data-zone={zonaDe('map')} onClick={pick(zonaDe('map'))}>
+                                            <div key={key} data-tarjeta={key} className={cls(zonaDe('map'), `${styles.block} ${styles.lugarBlock}`)} data-zone={zonaDe('map')} onClick={pick(zonaDe('map'))}>
                                                 {tarjetaLugar(false, climaEnLugar)}
                                             </div>
                                         )
@@ -1164,7 +1407,7 @@ export const SideCanvas = ({
                                             })
                                         }
                                         return (
-                                            <div key={key} className={cls('extras', `${styles.block} ${styles.notasBlock}`)} data-zone='extras' onClick={pick('extras')}>
+                                            <div key={key} data-tarjeta={key} className={cls('extras', `${styles.block} ${styles.notasBlock}`)} data-zone='extras' onClick={pick('extras')}>
                                                 {/* El texto se copia al montarse (y no como hijo de React,
                                                     que movería el caret al escribir): así también sale bien
                                                     al volver a mostrar la tarjeta desde Capas. */}
@@ -1196,7 +1439,7 @@ export const SideCanvas = ({
                                         return apagada(key, zonaDe('weather'), <div className={`${styles.block} ${styles.weatherBlock}`}>{tarjetaClima(address.city || t('side_events.canvas_sample_city'))}</div>, address.city ? null : t('side_events.canvas_add_city'))
                                     }
                                     return (
-                                        <div key={key} className={cls(zonaDe('weather'), `${styles.block} ${styles.weatherBlock}`)} data-zone={zonaDe('weather')} onClick={pick(zonaDe('weather'))}>
+                                        <div key={key} data-tarjeta={key} className={cls(zonaDe('weather'), `${styles.block} ${styles.weatherBlock}`)} data-zone={zonaDe('weather')} onClick={pick(zonaDe('weather'))}>
                                             {tarjetaClima(address.city)}
                                         </div>
                                     )
@@ -1206,10 +1449,34 @@ export const SideCanvas = ({
                     })()}
 
                     <div aria-hidden className={styles.footer}>I attend</div>
+
+                    {/* Dibujos encima de las tarjetas: cada uno en la caja de su
+                        tarjeta (medida arriba), con su agarradera si está elegido. */}
+                    {(conDibujosEnTarjetas || trazoEn) && (
+                        <div className={styles.capaTarjetas} data-medida={medirCajas}>
+                            {Object.entries(cajas).map(([key, caja]) => {
+                                const lista = stickers.filter((x) => x.tarjeta === key && x.kind === 'dibujo')
+                                const vivo = trazo && trazoEn === key
+                                if (!lista.length && !vivo) return null
+                                return (
+                                    <div key={key} ref={(el) => { cajasRef.current[key] = el }} className={styles.lienzo} style={caja}>
+                                        {pintarStickers(lista)}
+                                        {!readOnly && !pincel && pintarAgarres(lista.filter((x) => seleccion.includes(x.id)))}
+                                        {/* El trazo en curso, a la escala de la tarjeta (como queda). */}
+                                        {vivo && (
+                                            <div className={styles.trazoVivo} style={{ opacity: Math.min(pincel.opacity / 100, PINCEL[pincel.brush]?.maxA ?? 1) }}>
+                                                <TrazoSvg s={{ ...pincel, points: trazo }} vbW={PIEZA_ANCHO} vbH={PIEZA_ANCHO * (caja.height / caja.width)} preview />
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Formulario (Flash): al invitado le llega como aviso fijo
+            {/* Formulario (Pop): al invitado le llega como aviso fijo
                 arriba de la pantalla al confirmar. Aquí solo una píldora
                 chica en la esquina (no estorba al editar la portada): con
                 formulario dice "Formulario"; sin él, "+ Formulario" (como el

@@ -22,7 +22,7 @@ const target = (name) => () => document.querySelector(`[data-tour="${name}"]`)
 // `section` elige esa zona en la pieza al llegar al paso (sale su barra) y
 // `tool` abre ese panel del riel, como hace BuildTour con los módulos del
 // editor de la invitación. En móvil no se aplica: la hoja inferior taparía el
-// dock, que es justo lo que el paso señala. `flash`: solo en Eventos Flash.
+// dock, que es justo lo que el paso señala. `pop`: solo en Pops.
 const BLOCKS = [
     {
         key: 'diseno',
@@ -36,12 +36,11 @@ const BLOCKS = [
             { key: 'date', target: target('bar'), section: 'date', placement: 'bottom' },
             { key: 'place', target: target('bar'), section: 'place', placement: 'bottom' },
             { key: 'notes', target: target('canvas'), section: 'extras', placement: 'right' },
-            { key: 'elements', target: target('tool-elements'), tool: 'elements', placement: 'right', flash: true },
-            { key: 'layers', target: target('layers'), placement: 'left', flash: true },
+            { key: 'elements', target: target('tool-elements'), tool: 'elements', placement: 'right', pop: true },
+            { key: 'layers', target: target('layers'), placement: 'left', pop: true },
             { key: 'dock', target: target('dock'), placement: 'top' },
             { key: 'live', target: target('live'), placement: 'top' },
             { key: 'share', target: target('share'), placement: 'bottomRight' },
-            { key: 'save', target: target('save'), placement: 'bottomRight' },
         ],
     },
     {
@@ -64,17 +63,17 @@ const BLOCKS = [
 ]
 
 // Lista plana que consume <Tour>, con metadatos de bloque por paso.
-const flatSteps = (esFlash) => BLOCKS.flatMap((block, blockIndex) =>
+const flatSteps = (esPop) => BLOCKS.flatMap((block, blockIndex) =>
     block.steps
-        .filter((step) => !step.flash || esFlash)
+        .filter((step) => !step.pop || esPop)
         .map((step) => ({ ...step, tab: block.tab, listKey: block.listKey, blockIndex })),
 )
 
-export const SideEventsTour = ({ open, onClose, isMobile, setActiveTab, setSection, setActiveKey, setTool, esFlash = false }) => {
+export const SideEventsTour = ({ open, onClose, isMobile, setActiveTab, setSection, setActiveKey, setTool, esPop = false }) => {
 
     const { t } = useTranslation()
     const [current, setCurrent] = useState(0)
-    const FLAT_STEPS = flatSteps(esFlash)
+    const FLAT_STEPS = flatSteps(esPop)
     const blockStartIndex = (blockIndex) => FLAT_STEPS.findIndex((s) => s.blockIndex === blockIndex)
 
     // El cambio de modo, de panel y de paso van en el mismo commit: cuando el

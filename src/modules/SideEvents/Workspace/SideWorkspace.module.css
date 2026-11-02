@@ -1,4 +1,4 @@
-/* Editor de side events / Eventos Flash en escritorio. El área de trabajo es
+/* Editor de side events / Pops en escritorio. El área de trabajo es
    EditorShell (la misma de la invitación); aquí solo va lo propio: la página
    (barra arriba + área que llena el resto), la leyenda de la pieza y piezas
    de sus paneles y barras. Ver docs/sistema-diseno-editor.md. */
@@ -145,13 +145,6 @@
     min-width: 320px;
 }
 
-.linkThumb {
-    width: 100%;
-    max-height: 160px;
-    object-fit: cover;
-    border-radius: 12px;
-    background: #F1EFEA;
-}
 
 /* Fecha con hora (DD/MM/YYYY HH:mm): más ancha que la de la portada. */
 .dateTime {
@@ -357,7 +350,7 @@
     color: #9A6B00;
 }
 
-/* Miniatura de un estilo de bloques (panel Diseño): la foto del Flash con
+/* Miniatura de un estilo de bloques (panel Diseño): la foto del Pop con
    una tarjetita del estilo encima. */
 .estiloMini {
     position: relative;
@@ -484,4 +477,268 @@
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+}
+
+
+/* Carrusel de la portada en la barra Fondo: miniaturas con su ✕. */
+.carrusel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.carruselFoto {
+    position: relative;
+    display: inline-flex;
+}
+
+.carruselQuitar {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 50%;
+    background: #29262D;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.carruselFoto:hover .carruselQuitar,
+.carruselQuitar:focus-visible {
+    opacity: 1;
+}
+
+/* Barra Ajustar foto (AjusteFotoBar): slider del zoom en línea. */
+.ajusteSlider {
+    width: 120px;
+    margin: 0 6px;
+}
+
+.ajusteValor {
+    min-width: 40px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #29262D;
+}
+
+.barText svg {
+    vertical-align: -2px;
+    margin-right: 2px;
+}
+
+/* Barra Fondo (BackgroundBar): la portada como tira de miniaturas. */
+.fondoTira {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 4px;
+}
+
+.fondoItem {
+    position: relative;
+    display: inline-flex;
+}
+
+.fondoMini {
+    position: relative;
+    display: block;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: none;
+    border-radius: 13px;
+    overflow: hidden;
+    background: #EFEDF0;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fondoMini img,
+.fondoMini video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+.fondoMini:hover {
+    transform: translateY(-1px);
+}
+
+/* Elegida: aro blanco y orilla oscura, como los colores de la paleta. */
+.fondoItem[data-on] .fondoMini {
+    box-shadow: 0 0 0 2.5px #fff, 0 0 0 4.5px #29262D;
+}
+
+.fondoDuracion {
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 5px;
+    border-radius: 99px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* La foto que va de imagen del link. */
+.fondoLink {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #D9CCF5;
+    color: #4B2E91;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+.fondoQuitar {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #29262D;
+    color: #fff;
+    box-shadow: 0 0 0 2px #fff;
+    cursor: pointer;
+}
+
+.fondoAgregar {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: 1.5px dashed #C9C6CD;
+    border-radius: 13px;
+    background: transparent;
+    color: #29262D;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.fondoAgregar:hover {
+    border-color: #8E8A93;
+    background: #F7F6F8;
+}
+
+.fondoMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Reordenar arrastrando: la que se arrastra se apaga y la de destino se
+   marca. */
+.fondoItem[draggable="true"] {
+    cursor: grab;
+}
+
+.fondoItem[data-arrastrando] {
+    opacity: 0.35;
+}
+
+.fondoItem[data-sobre] .fondoMini {
+    box-shadow: 0 0 0 2.5px #fff, 0 0 0 4.5px #8E8A93;
+    transform: scale(1.06);
+}
+
+/* Barra de dibujo → "Dibujar en": segmentado con Portada (toda la portada)
+   y una miniatura por foto / video. */
+.dibujoEnLabel {
+    padding: 0 4px 0 8px;
+    font-size: 13.5px;
+    color: #8A8790;
+    white-space: nowrap;
+}
+
+.dibujoEnSeg {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px;
+    border-radius: 16px;
+    background: #F2F1F3;
+}
+
+.dibujoEnTodo {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 13px;
+    background: transparent;
+    color: #29262D;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dibujoEnTodo[data-on] {
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(23, 22, 27, 0.12);
+}
+
+.dibujoEnMini {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    margin: 0 2px;
+    padding: 0;
+    border: none;
+    border-radius: 9px;
+    overflow: hidden;
+    background: #E6E4E8;
+    cursor: pointer;
+    flex: none;
+    transition: box-shadow 0.15s ease;
+}
+
+.dibujoEnMini img,
+.dibujoEnMini video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+.dibujoEnMini[data-on] {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px #29262D;
+}
+
+/* Color del tema en el drawer del celular (DesignPanel movil): la
+   cuadrícula estilo iOS a lo ancho. */
+.coloresMovil {
+    width: 100%;
 }

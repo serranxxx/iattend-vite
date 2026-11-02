@@ -1,0 +1,83 @@
+/* Grosor y opacidad del pincel (AjustesPincel.jsx), como en Notas: cinco
+   grosores en un riel gris y la barra de opacidad del color. Los usan la
+   hoja de la paleta (PaletaDibujo) y el panel Dibujar (DrawPanel). */
+.ajustes {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.grosores {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px;
+    border-radius: 20px;
+    background: #F5F4F6;
+}
+
+.grosor {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 16px;
+    background: transparent;
+    color: #29262D;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.grosor svg {
+    width: 34px;
+    height: 28px;
+}
+
+.grosor:hover:not([data-on]) {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+/* Elegido: tarjeta blanca encima del riel gris. */
+.grosor[data-on] {
+    background: #fff;
+    color: #17161B;
+    box-shadow: 0 2px 8px rgba(23, 22, 27, 0.12), 0 0 0 1px rgba(23, 22, 27, 0.04);
+}
+
+/* Opacidad: el color se difumina de transparente a sólido (sobre el
+   blanco de la hoja), sin borde. */
+.opacidad {
+    position: relative;
+    height: 40px;
+    border-radius: 20px;
+    background: linear-gradient(to right, color-mix(in srgb, var(--c) 0%, transparent) 0%, var(--c) 100%);
+    cursor: pointer;
+    touch-action: none;
+    outline: none;
+}
+
+.opacidad:focus-visible {
+    box-shadow: 0 0 0 3px rgba(76, 139, 245, 0.35);
+}
+
+/* Perilla: el color con la opacidad elegida, dentro de un aro blanco. */
+.opacidadPerilla {
+    position: absolute;
+    top: 50%;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    box-shadow: 0 0 0 3px #fff, 0 2px 10px rgba(23, 22, 27, 0.22);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.opacidadPerilla span {
+    position: absolute;
+    inset: 0;
+    background: var(--c);
+}
+

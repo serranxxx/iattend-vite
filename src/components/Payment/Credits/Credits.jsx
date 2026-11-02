@@ -3,12 +3,12 @@ import React, { useEffect, useState } from 'react'
 import './credits.css'
 import { Button, Dropdown, Progress } from 'antd';
 import { LuChevronDown, LuCoins, LuInfo, LuRefreshCcw, LuShoppingCart } from 'react-icons/lu';
-import { fetchPrices, handleCheckout, handleCheckoutFlashCredits, PRICE_IDS, PRODUCTS } from '../functions';
+import { fetchPrices, handleCheckout, handleCheckoutPopCredits, PRICE_IDS, PRODUCTS } from '../functions';
 import { useTranslation } from 'react-i18next';
 import { Info, ShoppingCart } from 'lucide-react';
 
-// `flashId`: compra créditos para un Evento Flash en vez de una invitación.
-export const CreditsComponent = ({ invitationID, flashId, creditsDisplay }) => {
+// `popId`: compra créditos para un Pop en vez de una invitación.
+export const CreditsComponent = ({ invitationID, popId, creditsDisplay }) => {
 
     const { t } = useTranslation()
     const [prices, setPrices] = useState([])
@@ -90,8 +90,8 @@ export const CreditsComponent = ({ invitationID, flashId, creditsDisplay }) => {
                 <Button
                     style={{ flex: 1, fontSize: '16px', minHeight: '44px' }}
                     icon={<ShoppingCart size={16} />}
-                    onClick={() => flashId
-                        ? handleCheckoutFlashCredits(flashId, selectedItem)
+                    onClick={() => popId
+                        ? handleCheckoutPopCredits(popId, selectedItem)
                         : handleCheckout(invitationID, selectedItem)}
                     disabled={loading}
                     type='primary'

@@ -1,20 +1,19 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { message } from 'antd'
 import { Info, MessageCircle, Pin, Trash2, Users } from 'lucide-react'
-import { supabase } from '../../../lib/supabase'
 import { supabaseAuthHeaders } from '../../../lib/authHeaders'
 import { emojiAsistente, fondoAsistente } from '../datosAsistentes'
 import styles from './InteractionMenu.module.css'
 
 /*
-  Herramienta "Interacción" del panel lateral de un Flash (handoff "Editor —
+  Herramienta "Interacción" del panel lateral de un Pop (handoff "Editor —
   botón Interacción", opción 1c, llevado al sider para no tapar la pieza; se
   abre desde el riel o al elegir Asistentes en Capas o en la pieza): dos
   tarjetas (Lista de asistentes y Chat de invitados), cada una con su
   interruptor y sus opciones plegadas cuando está apagada.
-  Los cambios van al Flash como todo lo demás del editor (se ven en la pieza
+  Los cambios van al Pop como todo lo demás del editor (se ven en la pieza
   al momento y se guardan con "Guardar"). Los mensajes del chat se piden al
   backend con la sesión del organizador (iattend--backend
   router/sideEventChat.js) y se mantienen al día con el aviso del canal
@@ -30,29 +29,6 @@ const Interruptor = ({ on }) => (
 
 const marcarVisto = (eventoId) => localStorage.setItem(visto(eventoId), new Date().toISOString())
 
-// Mensajes del chat para moderar (con la sesión del organizador) y su aviso en vivo.
-const useMensajesChat = (eventoId, activo) => {
-    const [mensajes, setMensajes] = useState(null)
-    const cargar = useCallback(async () => {
-        if (!eventoId) return
-        try {
-            const { data } = await axios.get(`${API}/api/side-events/${eventoId}/chat-moderacion`, { headers: await supabaseAuthHeaders() })
-            setMensajes(data.mensajes ?? [])
-        } catch {
-            setMensajes((prev) => prev ?? [])
-        }
-    }, [eventoId])
-    useEffect(() => {
-        if (!activo || !eventoId) return
-        cargar()
-        const canal = supabase.channel(`side_chat_${eventoId}`)
-            .on('broadcast', { event: 'cambio' }, () => cargar())
-            .subscribe()
-        return () => { supabase.removeChannel(canal) }
-    }, [activo, eventoId, cargar])
-    return { mensajes, setMensajes, cargar }
-}
-
 const estadoDe = (body) => {
     const asistentes = Boolean(body?.showAttendees)
     const chatVisible = asistentes && Boolean(body?.chat?.enabled)
@@ -60,14 +36,16 @@ const estadoDe = (body) => {
 }
 
 // Contenido de la herramienta "Interacción" del panel lateral.
-export const InteractionPanel = ({ body, setBody, eventoId }) => {
+// `chatMensajes`: { mensajes, setMensajes, cargar } de useMensajesChat (lo
+// tiene SideWorkspace, que también lo usa para la pieza y "Ver en vivo").
+export const InteractionPanel = ({ body, setBody, eventoId, chatMensajes }) => {
     const { t } = useTranslation()
     const { asistentes, chatVisible } = estadoDe(body)
     const chat = Boolean(body?.chat?.enabled)
     const modo = body?.attendeesStyle === 'initials' ? 'initials' : 'emoji'
     const fijado = body?.chat?.pinned?.text ?? null
     const [borrador, setBorrador] = useState(fijado ?? '')
-    const { mensajes, setMensajes, cargar } = useMensajesChat(eventoId, chatVisible)
+    const { mensajes, setMensajes, cargar } = chatMensajes
     const [todos, setTodos] = useState(false)
     const [saliendo, setSaliendo] = useState(null)
 

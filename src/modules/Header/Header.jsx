@@ -304,7 +304,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     // con su código) o pública (`'open'`, cualquiera con el link entra y al
     // confirmar escribe su nombre y sus acompañantes; ver iattend-events
     // Confirm.tsx y POST /api/invitations/:id/confirmacion-publica). Igual que
-    // el candado de los Flash. Se guarda al momento: decide quién puede abrir
+    // el candado de los Pops. Se guarda al momento: decide quién puede abrir
     // la invitación, no es parte del diseño.
     const [invType, setInvType] = useState(null)
     const [changingAccess, setChangingAccess] = useState(false)

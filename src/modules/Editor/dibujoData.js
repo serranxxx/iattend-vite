@@ -1,4 +1,4 @@
-// Pinceles, suavizado y simplificación del dibujo a mano de un Flash (ver
+// Pinceles, suavizado y simplificación del dibujo a mano de un Pop (ver
 // Dibujo.jsx). Gemela en iattend-events: components/SideEvent/Dibujo.tsx.
 
 // Pinceles: ancho = grosor × k, punta y estilo.
@@ -7,10 +7,19 @@ export const PINCELES = [
     { id: 'marcador', k: 1.8, cap: 'square' },
     { id: 'resaltador', k: 3, cap: 'butt', maxA: 0.45 },
     { id: 'lapiz', k: 0.55, cap: 'round', grano: true },
-    { id: 'neon', k: 0.9, cap: 'round', brillo: true },
+    { id: 'neon', k: 1.3, cap: 'round', brillo: true },
     { id: 'borrador', k: 2, cap: 'round', borra: true },
 ]
 export const PINCEL = Object.fromEntries(PINCELES.map((p) => [p.id, p]))
+
+// Un color hacia el blanco (`t` 0–1): el tubo del neón.
+export const aclarar = (hex, t) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex ?? ''))
+    if (!m) return '#FFFFFF'
+    const n = parseInt(m[1], 16)
+    const c = (v) => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')
+    return `#${c(n >> 16)}${c((n >> 8) & 255)}${c(n & 255)}`
+}
 
 // Curvas cuadráticas por los puntos medios (el suavizado del pincel).
 export const pathDe = (pts) => {

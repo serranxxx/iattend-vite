@@ -1,4 +1,4 @@
-// Nombre de un elemento suelto en el panel Capas (invitación y Flash): un
+// Nombre de un elemento suelto en el panel Capas (invitación y Pop): un
 // texto se reconoce por lo que dice; lo demás por su tipo.
 export const etiquetaElemento = (s, t) => {
     if (s.kind === 'text') return s.text?.trim() || t('build_editor.lp_el_text')

@@ -5,9 +5,9 @@ import axios from 'axios'
 import { ClipboardPaste, CloudUpload, LoaderCircle, Trash2, X } from 'lucide-react'
 import { supabase } from '../../../../lib/supabase'
 import { deleteImageFromSupabase, deleteVideoFromSupabase, subirSticker, subirVector, uploadEventVideo, uploadImagesSupabase } from '../../../../helpers/services/uploadImage'
-import { startLayerDrag, stickerItem, uploadStickers } from './layerItems'
+import { startLayerDrag, stickerItem, tocarParaAgregar, uploadStickers } from './layerItems'
 import { useEditorCatalog } from './useEditorCatalog'
-import { MB, getStorageQuota, invitationOfFolder } from '../../../../helpers/services/storageQuota'
+import { MB, getStorageQuota, quotaTargetOfFolder } from '../../../../helpers/services/storageQuota'
 import { liaHeaders } from '../../../../pages/Lia/liaApi'
 import { useLia } from '../../../../context/LiaContext'
 import base from './ToolPanels.module.css'
@@ -27,6 +27,7 @@ import styles from './UploadsPanel.module.css'
 // Espacio extra: 10 → 30 MB por 100 créditos (el backend es la fuente:
 // GET /api/storage/package; esto es solo el texto mientras carga).
 const EXTRA = { extra_mb: 30, cost: 100 }
+const POP_EXTRA = { base_mb: 5, mb_cost: 5, levels: [15, 30] }
 const esVideo = (name) => /\.(mp4|webm|mov|m4v)$/i.test(name)
 const esAudio = (name) => /\.(mp3|wav|m4a|aac|ogg)$/i.test(name)
 // PNG (o WebP / GIF con transparencia): lo que va encima de la pieza.
@@ -57,21 +58,28 @@ const mb = (bytes) => (bytes >= 1024 * 1024 * 100 ? Math.round(bytes / 1024 / 10
 const REQUEST_SECTION = { cover: 'cover', 'side-events': 'cover', quote: 'quote', dresscode: 'dresscode' }
 
 // Es el panel Subidos de todos los editores (invitación, side events y
-// Eventos Flash; EditorShell). `folders` cambia de dónde lee y a dónde sube:
-// por omisión los de una invitación ({id}, {id}/video, inv-{id}); un Flash
+// Pops; EditorShell). `folders` cambia de dónde lee y a dónde sube:
+// por omisión los de una invitación ({id}, {id}/video, inv-{id}); un Pop
 // pasa { root: 'flash-<id>', videos: 'flash-<id>/video', pngs: null } y sus
 // PNG se reconocen por la extensión dentro de `root`. `inUse(url)`: no
 // borrar un PNG que la pieza está usando. `onPaste`: botón "Pegar imagen
 // copiada" (sin ⌘V en iPad). `draggable`: fotos y PNG se arrastran a la pieza.
-export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedia, folders: foldersProp, inUse, onPaste, draggable = true }) => {
+// `onElegir(item, f)` (editor del celular): tocar una foto, PNG o vector lo
+// agrega (sin arrastrar), con el mismo `item` que se soltaría en la pieza.
+// `movil`: textos del celular (sin "arrastra" ni ⌘V), también al elegir.
+export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedia, folders: foldersProp, inUse, onPaste, draggable = true, onElegir, movil = false }) => {
     const folders = foldersProp ?? { root: invitationID, videos: `${invitationID}/video`, pngs: `inv-${invitationID}` }
-    // Límite de espacio: solo carpetas de una invitación.
-    const quotaId = invitationOfFolder(folders.root)
+    // Límite de espacio: carpetas de una invitación o de un Pop (flash-<id>).
+    const quotaTarget = quotaTargetOfFolder(folders.root)
+    const quotaId = quotaTarget?.id ?? null
+    const esPopQuota = quotaTarget?.tipo === 'pop'
     const { t } = useTranslation()
     const [filter, setFilter] = useState('all')
     const [source, setSource] = useState('uploads')
     const catalog = useEditorCatalog()
     const isVideoRequest = mediaRequest?.mediaType === 'video'
+    // `mediaType: 'mixto'`: se puede elegir foto o video (portada de un Pop).
+    const isMixto = mediaRequest?.mediaType === 'mixto'
     const sectionKey = REQUEST_SECTION[mediaRequest?.type]
     // Ideas: todas las categorías de fotos del catálogo, primero las de la
     // sección que pidió la imagen. Los subgrupos llevan el nombre de su padre.
@@ -101,6 +109,9 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
     // Límite de "Subidos" (storageQuota.js): usado según Storage y límite de la invitación.
     const [quota, setQuota] = useState(null)
     const [pkg, setPkg] = useState(EXTRA)
+    // Pops: niveles 15 / 30 MB a 5 créditos del Pop por MB (GET /api/storage/package → pop).
+    const [popPkg, setPopPkg] = useState(POP_EXTRA)
+    const [elegidoMb, setElegidoMb] = useState(null)
     const [buyOpen, setBuyOpen] = useState(false)
     // Dos pasos: la oferta y "¿Estás seguro?" antes de descontar créditos.
     const [confirming, setConfirming] = useState(false)
@@ -108,10 +119,13 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
     // Burbuja "-100 créditos" y recarga del contador del header (CreditController).
     const { setCreditSuccess } = useLia()
     const [buying, setBuying] = useState(false)
-    const cargarQuota = () => quotaId && getStorageQuota(quotaId).then(setQuota).catch(() => {})
+    const cargarQuota = () => quotaTarget && getStorageQuota(quotaTarget).then(setQuota).catch(() => {})
     useEffect(() => {
         cargarQuota()
-        axios.get(`${import.meta.env.VITE_API_URL}/api/storage/package`).then(({ data }) => data?.package && setPkg(data.package)).catch(() => {})
+        axios.get(`${import.meta.env.VITE_API_URL}/api/storage/package`).then(({ data }) => {
+            if (data?.package) setPkg(data.package)
+            if (data?.pop) setPopPkg(data.pop)
+        }).catch(() => {})
         const onChange = () => cargarQuota()
         // Una subida chocó con el límite: se ofrece ampliar.
         const onFull = (e) => { if (quotaId && (!e.detail?.invitationID || e.detail.invitationID === quotaId)) { cargarQuota(); setBuyOpen(true) } }
@@ -126,16 +140,19 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
     const comprar = async () => {
         setBuying(true)
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/storage/upgrade`, { invitation_id: quotaId }, { headers: await liaHeaders() })
+            const { data } = esPopQuota
+                ? await axios.post(`${import.meta.env.VITE_API_URL}/api/storage/pop-upgrade`, { side_event_id: quotaId, mb: opcion.mb }, { headers: await liaHeaders() })
+                : await axios.post(`${import.meta.env.VITE_API_URL}/api/storage/upgrade`, { invitation_id: quotaId }, { headers: await liaHeaders() })
             if (data?.success) {
                 message.success(t('build_editor.up_upgraded', { mb: data.storage_limit_mb }))
                 setBuyOpen(false)
+                setElegidoMb(null)
                 cargarQuota()
-                setCreditSuccess?.(pkg.cost)
+                setCreditSuccess?.(data.cost ?? opcion.cost)
             }
         } catch (err) {
             const code = err?.response?.data?.code
-            message.warning(code === 'NOT_ENOUGH_CREDITS' ? t('build_editor.up_no_credits') : err?.response?.data?.message || t('build_editor.up_upgrade_error'))
+            message.warning(code === 'NOT_ENOUGH_CREDITS' ? t(esPopQuota ? 'build_editor.up_no_credits_pop' : 'build_editor.up_no_credits') : err?.response?.data?.message || t('build_editor.up_upgrade_error'))
         } finally {
             setBuying(false)
         }
@@ -201,18 +218,26 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
     }
 
     // Pidiendo un archivo: solo lo que sirve (imágenes o videos).
-    const show = mediaRequest ? (isVideoRequest ? 'videos' : filter === 'videos' ? 'all' : filter) : filter
+    const show = mediaRequest ? (isVideoRequest ? 'videos' : filter === 'videos' && !isMixto ? 'all' : filter) : filter
     const items = [
         ...(show === 'all' || show === 'photos' ? files.photos.map((f) => ({ ...f, kind: 'photo' })) : []),
         ...(show === 'all' || show === 'png' ? files.pngs.map((f) => ({ ...f, kind: 'png' })) : []),
         // Los vectores no sirven de foto (fondo, portada…): no salen al elegir.
         ...(!mediaRequest && (show === 'all' || show === 'vectors') ? files.vectors.map((f) => ({ ...f, kind: 'vector' })) : []),
-        ...((!mediaRequest && (show === 'all' || show === 'videos')) || isVideoRequest ? files.videos.map((f) => ({ ...f, kind: 'video' })) : []),
+        ...(((!mediaRequest || isMixto) && (show === 'all' || show === 'videos')) || isVideoRequest ? files.videos.map((f) => ({ ...f, kind: 'video' })) : []),
     ]
     const used = quota?.used ?? [...files.photos, ...files.pngs, ...files.vectors, ...files.videos].reduce((n, f) => n + f.size, 0)
     const limitMb = quota?.limitMb ?? null
     const ratio = limitMb ? used / (limitMb * MB) : 0
-    const canUpgrade = limitMb != null && limitMb < pkg.extra_mb
+    // Lo que se puede comprar desde el límite actual: la invitación, un solo
+    // paquete; el Pop, cada nivel arriba del suyo cobrando la diferencia.
+    const opciones = limitMb == null ? []
+        : esPopQuota
+            ? popPkg.levels.filter((n) => n > limitMb).map((n) => ({ mb: n, cost: (n - limitMb) * popPkg.mb_cost }))
+            : (limitMb < pkg.extra_mb ? [{ mb: pkg.extra_mb, cost: pkg.cost }] : [])
+    const opcion = opciones.find((o) => o.mb === elegidoMb) ?? opciones[0]
+    const canUpgrade = opciones.length > 0
+    const sufijo = esPopQuota ? '_pop' : ''
 
     return (
         <div className={styles.wrap}>
@@ -261,7 +286,7 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                 <span className={styles.dropIcon}>{uploading ? <LoaderCircle size={18} className={styles.spin} /> : <CloudUpload size={18} />}</span>
                 <span className={styles.dropText}>
                     <strong>{uploading ? t('build_editor.up_uploading', { n: uploading }) : t('build_editor.up_title')}</strong>
-                    <span>{t('build_editor.up_hint')}</span>
+                    <span>{t(onElegir || movil ? 'build_editor.up_hint_mobile' : 'build_editor.up_hint')}</span>
                 </span>
                 <input ref={inputRef} type="file" multiple accept="image/*,video/*" hidden onChange={(e) => { subir(e.target.files); e.target.value = '' }} />
             </button>
@@ -282,7 +307,7 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                             ['photos', t('build_editor.up_photos')],
                             ['png', 'PNG'],
                             ...(mediaRequest ? [] : [['vectors', t('build_editor.up_vectors')]]),
-                            ...(mediaRequest ? [] : [['videos', t('build_editor.up_videos')]]),
+                            ...(mediaRequest && !isMixto ? [] : [['videos', t('build_editor.up_videos')]]),
                         ].map(([key, label]) => (
                             <button key={key} type="button" className={styles.chip} data-on={show === key || undefined} onClick={() => setFilter(key)}>
                                 {label}
@@ -304,10 +329,12 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                             data-pick={mediaRequest ? true : undefined}
                             title={mediaRequest ? t('build_editor.up_pick') : f.kind === 'video' ? t('build_editor.up_video_hint') : f.name}
                             onClick={mediaRequest ? (e) => { if (!e.target.closest('button')) apply(f.url) } : undefined}
-                            onPointerDown={mediaRequest || !draggable || f.kind === 'video' ? undefined : (e) => {
+                            onPointerDown={mediaRequest || (!draggable && !onElegir) || f.kind === 'video' ? undefined : (e) => {
                                 if (e.target.closest('button')) return
                                 // Un vector entra como ícono que se pinta del color que se elija.
-                                startLayerDrag(e, f.kind === 'vector' ? vectorItem(f.url) : stickerItem(f.url))
+                                const item = f.kind === 'vector' ? vectorItem(f.url) : stickerItem(f.url)
+                                if (onElegir) tocarParaAgregar(e, () => onElegir(item, f))
+                                else startLayerDrag(e, item)
                             }}
                         >
                             {f.kind === 'video'
@@ -343,16 +370,35 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                                 <div className={styles.buy} data-text-bar>
                                     {!confirming ? (
                                         <>
-                                            <strong>{t('build_editor.up_buy_title', { mb: pkg.extra_mb })}</strong>
-                                            <span>{t('build_editor.up_buy_desc', { from: limitMb, to: pkg.extra_mb, cost: pkg.cost })}</span>
+                                            <strong>{t('build_editor.up_buy_title', { mb: opcion.mb })}</strong>
+                                            {/* Pop: elegir entre los niveles que quedan (15 / 30 MB). */}
+                                            {opciones.length > 1 && (
+                                                <div className={styles.buyOpciones} role="radiogroup">
+                                                    {opciones.map((o) => (
+                                                        <button
+                                                            key={o.mb}
+                                                            type="button"
+                                                            role="radio"
+                                                            aria-checked={o.mb === opcion.mb}
+                                                            data-on={o.mb === opcion.mb || undefined}
+                                                            className={styles.buyOpcion}
+                                                            onClick={() => setElegidoMb(o.mb)}
+                                                        >
+                                                            <strong>{o.mb} MB</strong>
+                                                            <span>{t('build_editor.up_option_cost', { cost: o.cost })}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <span>{t(`build_editor.up_buy_desc${sufijo}`, { from: limitMb, to: opcion.mb, cost: opcion.cost })}</span>
                                             <button type="button" className={styles.buyBtn} onClick={() => setConfirming(true)}>
-                                                {t('build_editor.up_buy_cta', { cost: pkg.cost })}
+                                                {t('build_editor.up_buy_cta', { cost: opcion.cost })}
                                             </button>
                                         </>
                                     ) : (
                                         <>
                                             <strong>{t('build_editor.up_confirm_title')}</strong>
-                                            <span>{t('build_editor.up_confirm_desc', { cost: pkg.cost, from: limitMb, to: pkg.extra_mb })}</span>
+                                            <span>{t(`build_editor.up_confirm_desc${sufijo}`, { cost: opcion.cost, from: limitMb, to: opcion.mb })}</span>
                                             <div className={styles.buyRow}>
                                                 <button type="button" className={styles.cancelBtn} disabled={buying} onClick={() => setConfirming(false)}>
                                                     {t('build_editor.up_confirm_no')}
@@ -367,7 +413,7 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                                 </div>
                             )}
                         >
-                            <button type="button" className={styles.upgrade}>{t('build_editor.up_upgrade', { mb: pkg.extra_mb })}</button>
+                            <button type="button" className={styles.upgrade}>{t('build_editor.up_upgrade', { mb: opciones[0].mb })}</button>
                         </Popover>
                     )}
                 </div>

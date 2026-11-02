@@ -121,6 +121,18 @@
     transform: scale(calc(1 + 0.5 * var(--portada-avance, 0)));
 }
 
+/* Carrusel de la portada (fotosPortada.js): las fotos encimadas, se ve la
+   activa y cambian con un fundido. */
+.carruselFoto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.9s ease;
+}
+
 .heroEmpty {
     position: absolute;
     inset: 0;
@@ -144,10 +156,11 @@
     position: absolute;
     inset: 0;
     z-index: 1;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    mask-image: linear-gradient(to bottom, transparent 0%, transparent 40%, black 80%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 40%, black 80%);
+    /* Intensidad y altura: barra Fondo → Desenfoque (variablesDesenfoque). */
+    backdrop-filter: blur(var(--blur-portada, 6px));
+    -webkit-backdrop-filter: blur(var(--blur-portada, 6px));
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent var(--blur-inicio, 40%), black var(--blur-fin, 80%));
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent var(--blur-inicio, 40%), black var(--blur-fin, 80%));
     pointer-events: none;
 }
 
@@ -224,7 +237,7 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
 
-/* Canción (Flash): solo el disco, redondo. */
+/* Canción (Pop): solo el disco, redondo. */
 .chipDisco {
     width: 32px;
     padding: 0;
@@ -437,7 +450,7 @@
 .buttonsCont {
     width: 100%;
     max-width: 450px;
-    /* Mismo alto que la cápsula del remoto (80 px, handoff "Flash Layout"
+    /* Mismo alto que la cápsula del remoto (80 px, handoff "Pop Layout"
        3a): si no, la fecha y el título quedaban más abajo que en la página. */
     height: 80px;
     box-sizing: border-box;
@@ -808,7 +821,7 @@
     cursor: default;
 }
 
-/* Zona del itinerario de un Flash: el widget trae su propio panel. */
+/* Zona del itinerario de un Pop: el widget trae su propio panel. */
 .itineraryZona {
     width: 100%;
     max-width: 450px;
@@ -817,7 +830,7 @@
     border-radius: 28px;
 }
 
-/* PNG de un Flash sobre la portada (StickersFlash): capa del alto visible del
+/* PNG de un Pop sobre la portada (StickersPop): capa del alto visible del
    scroller que se mueve con el contenido. Misma receta que el remoto. */
 .stickersCapa {
     position: absolute;
@@ -1028,7 +1041,7 @@
     background: #FFFFFF;
 }
 
-/* Elementos que no son imagen (FlashElemento): el lienzo mide en cqw para
+/* Elementos que no son imagen (PopElemento): el lienzo mide en cqw para
    que los textos escalen igual que una imagen. */
 .lienzo {
     container-type: inline-size;
@@ -1091,7 +1104,7 @@
     text-shadow: var(--etiqueta-sombra);
 }
 
-/* Marca del formulario (Flash): en la página llega como aviso fijo arriba
+/* Marca del formulario (Pop): en la página llega como aviso fijo arriba
    al confirmar (NotificacionFormulario en iattend-events). En la pieza es una
    píldora chica en la esquina de arriba a la derecha, del alto del disco de
    la canción, para no estorbar al editar la portada. Sin formulario dice
@@ -1173,4 +1186,98 @@
     font-weight: 600;
     white-space: nowrap;
     pointer-events: none;
+}
+
+/* Dibujo a pantalla completa (soloDibujo): nada responde al clic salvo la
+   capa del trazo; el contenedor del scroll sí recibe la rueda/el arrastre
+   (sus hijos no), así que la pieza se sigue recorriendo. */
+.card[data-solo-dibujo] * {
+    pointer-events: none;
+}
+
+.card[data-solo-dibujo] .scrollArea {
+    pointer-events: auto;
+}
+
+.card[data-solo-dibujo] .capaDibujo,
+.card[data-solo-dibujo] .capaDibujo * {
+    pointer-events: auto;
+}
+
+/* Ajustar la foto de fondo (SideCanvas `ajustarFoto`): la capa toma el
+   puntero sobre toda la pantalla de la pieza; tercios para encuadrar. */
+.capaAjuste {
+    pointer-events: auto;
+    z-index: 40;
+    cursor: grab;
+    touch-action: none;
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.capaAjuste:active {
+    cursor: grabbing;
+}
+
+.ajusteTercios {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(to right, transparent calc(33.333% - 0.5px), rgba(255, 255, 255, 0.55) calc(33.333% - 0.5px), rgba(255, 255, 255, 0.55) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px), transparent calc(66.666% - 0.5px), rgba(255, 255, 255, 0.55) calc(66.666% - 0.5px), rgba(255, 255, 255, 0.55) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)),
+        linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgba(255, 255, 255, 0.55) calc(33.333% - 0.5px), rgba(255, 255, 255, 0.55) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px), transparent calc(66.666% - 0.5px), rgba(255, 255, 255, 0.55) calc(66.666% - 0.5px), rgba(255, 255, 255, 0.55) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px));
+}
+
+/* Dibujos encima de las tarjetas (SideCanvas, `tarjeta`): una capa dentro
+   del scroll, encima de las tarjetas; solo los trazos reciben el puntero. */
+.capaTarjetas {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.infoCont > .capaTarjetas {
+    pointer-events: none;
+}
+
+/* Capa del aviso "Dibuja sobre la pieza": del alto de la pantalla, sin el
+   zoom del scroll (a diferencia de .stickersCapa) y sin tomar el puntero. */
+.dibujoAvisoCapa {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 41;
+    pointer-events: none;
+}
+
+/* Editor del celular (SideCanvas `movil`): el disco de la canción y el aviso
+   del formulario más grandes, a la medida del dedo (44 px). */
+.card[data-movil] .chipDisco {
+    width: 44px;
+    height: 44px;
+}
+
+.card[data-movil] .chipDiscoArte {
+    width: 36px;
+    height: 36px;
+}
+
+.card[data-movil] .chipDisco svg {
+    width: 20px;
+    height: 20px;
+}
+
+.card[data-movil] .formAviso {
+    height: 44px;
+    max-width: calc(100% - 80px);
+    padding: 0 16px;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.card[data-movil] .formAviso svg {
+    width: 18px;
+    height: 18px;
 }

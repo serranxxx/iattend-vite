@@ -13,7 +13,7 @@ import layout from './PlannerLayout.module.css'
  *   esperando), ordenadas por fecha; las que no tienen fecha al final.
  *   Historial: los que ya pasaron, plegado, en tarjetas horizontales con
  *   cuántos llegaron (lector de pases) o, si no se usó, cuántos confirmaron.
- * statsPorId: buildStats de cada invitación (los Eventos Flash no tienen).
+ * statsPorId: buildStats de cada invitación (los Pops no tienen).
  */
 export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAbrir, vacioProximos }) => {
     const { t, i18n } = useTranslation()
@@ -52,7 +52,7 @@ export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAb
     // daban porcentajes como "1 de 133 asistieron".
     const asistencia = (inv) => {
         const s = statsPorId[inv.id]
-        if (inv._flash || !s) return null
+        if (inv._pop || !s) return null
         if (s.total > 0) return { parte: s.confirmed, total: s.total, texto: t('planner_list.confirmed', { count: s.total }) }
         return null
     }
@@ -110,14 +110,14 @@ export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAb
                                     <button key={inv.id} type='button' className={styles.pasado} onClick={() => onAbrir(inv)}>
                                         <span className={styles.pasadoCabeza}>
                                             <span className={styles.miniatura}>
-                                                {foto ? <img src={foto} alt='' loading='lazy' /> : inv._flash ? <Zap size={20} /> : null}
+                                                {foto ? <img src={foto} alt='' loading='lazy' /> : inv._pop ? <Zap size={20} /> : null}
                                             </span>
                                             <span className={styles.pasadoTexto}>
                                                 <strong>{tituloDe(inv)}</strong>
                                                 <small>{t('planner_list.ended', { date: fmtLong(fechaDe(inv), locale) })}</small>
                                             </span>
                                             <span className={styles.badge}>
-                                                {inv._flash ? t('invitations.flash_badge') : t('planner_list.finished')}
+                                                {inv._pop ? t('invitations.pop_badge') : t('planner_list.finished')}
                                             </span>
                                         </span>
                                         {a ? (

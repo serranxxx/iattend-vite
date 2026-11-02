@@ -604,6 +604,74 @@
     pointer-events: auto;
 }
 
+/* Ocultar Capas (EditorShell): el panel se va hacia la derecha y se apaga;
+   sigue montado (el contenido llega por portal). */
+.layersDock {
+    transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.layersDock[data-ocultas] {
+    opacity: 0;
+    transform: translateX(24px);
+}
+
+.layersDock[data-ocultas] > * {
+    pointer-events: none;
+}
+
+.layersHide {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: #787878;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.layersHide:hover {
+    background: #F5F3F2;
+    color: #29262D;
+}
+
+/* Píldora para volver a abrir Capas. */
+.layersShow {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    z-index: 30;
+    height: 40px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 99px;
+    background: #fff;
+    color: #29262D;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.12);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    animation: capasAparece 0.25s ease both;
+}
+
+.layersShow:hover {
+    background: #F5F3F2;
+}
+
+@keyframes capasAparece {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: none; }
+}
+
 /* Columna a la derecha que reemplaza riel y dock (Envío de los side events,
    EditorShell `column`). */
 .column {
@@ -628,4 +696,114 @@
 .column > * {
     flex: 1;
     min-height: 0;
+}
+
+/* Aviso en una herramienta del riel (EditorShell, `tools[].aviso`): punto rojo
+   en la esquina del ícono. */
+.railButton {
+    position: relative;
+}
+
+.railAviso {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #E5484D;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+/* Modo inmersivo (EditorShell `lateral`): la paleta a la derecha, centrada a
+   lo alto. */
+.lateral {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 32px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.lateral > * {
+    pointer-events: auto;
+}
+
+/* Tablero del modo inmersivo (LienzoInmersivo): la pieza se mueve y escala
+   con transform; el resto del tablero se arrastra. */
+.lienzoInmersivo {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.lienzoInmersivoPieza {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.lienzoInmersivoMano {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+}
+
+.lienzoInmersivoZoom {
+    min-width: 46px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #29262D;
+}
+
+.dockIcon[data-on] {
+    background: #29262D;
+    color: #fff;
+}
+
+/* Entrar / salir del modo inmersivo (EditorShell): la pieza viaja con WAAPI;
+   al entrar llegan la paleta y el dock del tablero, al salir vuelven riel,
+   Capas y dock (data-entrada mientras dura). */
+@keyframes entraIzquierda {
+    from { opacity: 0; transform: translateX(-28px); }
+}
+
+@keyframes entraDerecha {
+    from { opacity: 0; transform: translateX(32px); }
+}
+
+@keyframes entraDock {
+    from { opacity: 0; transform: translate(-50%, 18px); }
+}
+
+.left[data-entrada] {
+    animation: entraIzquierda 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) 0.06s backwards;
+}
+
+.layersDock[data-entrada]:not([data-ocultas]) {
+    animation: entraDerecha 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) 0.06s backwards;
+}
+
+.dock[data-entrada] {
+    animation: entraDock 0.36s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s backwards;
+}
+
+.lateral {
+    animation: entraDerecha 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.08s backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .left[data-entrada],
+    .layersDock[data-entrada],
+    .dock[data-entrada],
+    .lateral {
+        animation: none;
+    }
 }

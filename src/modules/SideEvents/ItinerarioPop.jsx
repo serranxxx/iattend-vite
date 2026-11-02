@@ -10,10 +10,10 @@ import { IconoMomento } from './IconoMomento'
 import ed from './SideEventEditor.module.css'
 
 /*
-  Mini itinerario de un Evento Flash (panel del editor). Bloques { id, name,
+  Mini itinerario de un Pop (panel del editor). Bloques { id, name,
   time "HH:mm", desc (detalle opcional, ≤ 60; los viejos traen place), icon ("lucide:<nombre>", de cualquier ícono de Lucide; los
   números de antes son del catálogo del itinerario de la invitación y se
-  siguen pintando, ver IconoMomento.jsx), date "YYYY-MM-DD" solo si el Flash tiene varias fechas }.
+  siguen pintando, ver IconoMomento.jsx), date "YYYY-MM-DD" solo si el Pop tiene varias fechas }.
 
   El orden es el de la lista: se acomoda arrastrando la manija (⋮⋮) y así se
   muestra (itinerarioPorDia en helpers/assets/eventDateTime.js). La manija es
@@ -111,7 +111,7 @@ const Momento = ({ momento: m, dias, onCambiar, onQuitar }) => {
     )
 }
 
-export const ItinerarioFlash = ({ itinerario, dias, onChange }) => {
+export const ItinerarioPop = ({ itinerario, dias, onChange }) => {
     const { t } = useTranslation()
     // Un poco de recorrido antes de arrastrar: un clic en la manija no mueve nada.
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))

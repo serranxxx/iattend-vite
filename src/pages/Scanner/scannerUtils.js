@@ -15,7 +15,7 @@ export const isArrived = (g) => g?.state === 'asistente'
 export const firstName = (name) => (name || '').split(' ')[0]
 
 // En side_events_guests `companion_id` es texto ("2047") y el id un número: sin igualarlos, un acompañante
-// de un Flash no caería en el pase de su titular (buildParties / findParty comparan con ===).
+// de un Pop no caería en el pase de su titular (buildParties / findParty comparan con ===).
 export const normGuest = (g) =>
   typeof g?.companion_id === 'string' && /^\d+$/.test(g.companion_id) ? { ...g, companion_id: Number(g.companion_id) } : g
 
@@ -47,7 +47,7 @@ export const findParty = (guests, guestId) => {
   return members.sort((a, b) => (a.id === rootId ? -1 : b.id === rootId ? 1 : 0))
 }
 
-// Lo que trae un QR: el pase de un side event / Flash lleva "side:<id>" (iattend-events, helpers/paseSide.ts)
+// Lo que trae un QR: el pase de un side event / Pop lleva "side:<id>" (iattend-events, helpers/paseSide.ts)
 // porque los ids de side_events_guests y de guests se repiten; el Ticket de la invitación, el id del invitado.
 export const leerQr = (text) => {
   const raw = (text || '').trim()
@@ -58,9 +58,9 @@ export const leerQr = (text) => {
   return { kind: 'guest', id: isNaN(Number(raw)) ? raw : Number(raw), raw }
 }
 
-// Clave del lector de un Flash. En las invitaciones son los 4 primeros caracteres del uuid, pero el id de un
-// Flash es un número corto, así que sale de un hash de su id (siempre 4 caracteres en minúsculas).
-export const claveFlash = (id) => {
+// Clave del lector de un Pop. En las invitaciones son los 4 primeros caracteres del uuid, pero el id de un
+// Pop es un número corto, así que sale de un hash de su id (siempre 4 caracteres en minúsculas).
+export const clavePop = (id) => {
   let h = 2166136261
   for (const c of `flash-${id}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) }
   return (h >>> 0).toString(36).padStart(4, '0').slice(-4)
@@ -68,7 +68,7 @@ export const claveFlash = (id) => {
 
 export const formatEventDate = (value) => {
   if (!value) return ''
-  // las horas de un Flash son "YYYY-MM-DD HH:mm:00" de pared: con la T, Safari también las lee como hora local
+  // las horas de un Pop son "YYYY-MM-DD HH:mm:00" de pared: con la T, Safari también las lee como hora local
   const d = new Date(typeof value === 'string' ? value.replace(/^(\d{4}-\d{2}-\d{2}) /, '$1T') : value)
   if (isNaN(d)) return ''
   const part = (opts) => d.toLocaleDateString('es-MX', opts).replace(/\./g, '')

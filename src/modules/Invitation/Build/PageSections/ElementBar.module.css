@@ -569,16 +569,20 @@
 .texGrid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: max-content;
+    align-content: start;
     gap: 6px;
     max-height: 220px;
     overflow-y: auto;
 }
 
+/* El alto sale del padding (3:4) y no de aspect-ratio: en Safari, dentro de
+   la cuadrícula con alto máximo y scroll, las filas se encogían y las
+   texturas se encimaban. */
 .texCell {
-    aspect-ratio: 3 / 4;
-    display: grid;
-    place-items: center;
-    padding: 0;
+    position: relative;
+    height: 0;
+    padding: 0 0 133.33%;
     border: 2px solid transparent;
     border-radius: 10px;
     overflow: hidden;
@@ -588,10 +592,23 @@
     cursor: pointer;
 }
 
-.texCell img {
+.texCell img,
+.texCell > svg {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* "Sin textura": el ícono al centro. */
+.texCell > svg {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translate(-50%, -50%);
 }
 
 .texCell[data-on] {
@@ -626,7 +643,7 @@
     background: #F0EBFF;
 }
 
-/* "3 seleccionados" (varios elementos elegidos, side events / Flash). */
+/* "3 seleccionados" (varios elementos elegidos, side events / Pop). */
 .barCount {
     font-size: 12.5px;
     color: #787878;
@@ -670,4 +687,57 @@
     position: absolute;
     right: 3px;
     bottom: 3px;
+}
+
+/* Todos los popovers de las barras y paneles del editor (su contenido lleva
+   data-text-bar) con el mismo redondeo que la hoja del pincel
+   (PaletaDibujo). En antd v6 la caja es .ant-popover-container. */
+:global(.ant-popover .ant-popover-container:has([data-text-bar])) {
+    border-radius: 32px;
+    padding: 18px;
+}
+
+/* LiveSlider en el celular: opciones ya hechas en un riel gris (como los
+   grosores del pincel), la elegida en blanco. */
+.opciones {
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 18px;
+    background: #F5F4F6;
+}
+
+.opcion {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0 4px;
+    border: none;
+    border-radius: 14px;
+    background: transparent;
+    color: #5F5B66;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.opcion[data-on] {
+    background: #FFFFFF;
+    color: #17161B;
+    box-shadow: 0 2px 8px rgba(23, 22, 27, 0.12), 0 0 0 1px rgba(23, 22, 27, 0.04);
+}
+
+/* Celular (tarjeta flotante a lo ancho): el panel Fondo ocupa todo el ancho
+   y la cuadrícula de texturas muestra más. */
+:global(body[data-editor-movil]) .fondo {
+    width: 100%;
+}
+
+:global(body[data-editor-movil]) .texGrid {
+    max-height: 40dvh;
+    gap: 8px;
 }

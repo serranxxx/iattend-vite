@@ -70,7 +70,7 @@ Leyenda: **[anon]** lo usa una pantalla sin sesión · **[auth]** organizador/pl
 
 ### invitation_message_dispatches — ALTO
 - Ningún uso anónimo (ni events ni vite sin sesión).
-- [auth] Dashboard (realtime + lookup por id), Side events Flash por `side_event_id`,
+- [auth] Dashboard (realtime + lookup por id), Side events Pop por `side_event_id`,
   RPC `get_latest_invitation_dispatches`. [admin] analítica entera.
 
 ### whatsapp_incoming_messages — ALTO
@@ -167,7 +167,7 @@ returns boolean language sql stable security definer set search_path = public, p
 $$;
 grant execute on function public.es_admin() to authenticated;
 
--- ¿Puede gestionar este side event? (Flash: dueño o planner; de boda: su invitación)
+-- ¿Puede gestionar este side event? (Pop: dueño o planner; de boda: su invitación)
 create or replace function public.can_manage_side_event(p_side_event_id bigint)
 returns boolean language sql stable security definer set search_path = public, pg_temp as $$
   select exists (
@@ -277,7 +277,7 @@ Después de **Fase 1** (solo deberían seguir igual):
 - `/dashboard` del organizador: bento, conversaciones de WhatsApp, realtime.
 - `/dashboard/guests`: estatus de envíos (RPC de dispatches).
 - `/dashboard/build`: publicar (crea `invitation_versions`), historial.
-- `/dashboard/side` y Flash: estatus de envíos.
+- `/dashboard/side` y Pop: estatus de envíos.
 - `/admin`: Hoy, Buzón (conversaciones), Analítica, Usuarios.
 - Página del invitado en iattend.events: abrir, confirmar, rechazar (no usa estas tablas).
 
@@ -285,7 +285,7 @@ Después de **Fase 2/3** (cambian):
 - Invitación cerrada: entrar con `?password=`, con código manual y recargando
   (localStorage); confirmar, rechazar, acompañantes.
 - Invitación abierta: registrarse, acompañantes, volver a entrar.
-- Side event y Flash: entrar con código, confirmar/rechazar, acompañantes.
+- Side event y Pop: entrar con código, confirmar/rechazar, acompañantes.
 - Pases: panel "Pases" del dock y Apple Wallet (`/api/wallet/pass`).
 - Photo Wall: contador de la cámara y tiempo real.
 - Save the date: abrir, reacciones (insert + realtime).

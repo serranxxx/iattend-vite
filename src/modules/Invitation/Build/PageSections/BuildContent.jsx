@@ -98,7 +98,7 @@ export const BuildContent = ({
                 <div
                     onClick={screens.xs ? () => !onHide ? setOnHide(true) : () => {} : () => {}}
                     // Modo edición: tocar el tablero fuera de la pieza (y fuera de los
-                    // popovers) suelta lo elegido adentro, como en los Eventos Flash.
+                    // popovers) suelta lo elegido adentro, como en los Pops.
                     onPointerDown={!live && onToggleLive ? (e) => { if (!e.target.closest('[data-tour="preview"], [data-edit-keep], .ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-color-picker')) onCanvasBlur?.() } : undefined}
                     className='web-devices device-container'
                     style={{

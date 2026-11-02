@@ -1,5 +1,5 @@
 /*
-  Tarjetas de un side event / Flash debajo de la portada (Asistentes,
+  Tarjetas de un side event / Pop debajo de la portada (Asistentes,
   Itinerario, Cómo llegar, Notas, Clima): su orden y cuáles se ocultan. Las
   ordena y oculta el panel Capas (SideLayers) y las pintan la pieza del
   editor (SideCanvas) y la página del invitado (iattend-events,
@@ -20,9 +20,9 @@ import { itinerarioPorDia } from '../../helpers/assets/eventDateTime'
 // no va en el scroll de la página.
 export const ORDEN_TARJETAS = ['registration', 'itinerary', 'map', 'notes', 'attendees', 'weather']
 
-// Qué tarjetas existen: Formulario, Asistentes e Itinerario son solo de los Flash.
-const SOLO_FLASH = new Set(['registration', 'attendees', 'itinerary'])
-const aplica = (key, esFlash) => esFlash || !SOLO_FLASH.has(key)
+// Qué tarjetas existen: Formulario, Asistentes e Itinerario son solo de los Pops.
+const SOLO_POP = new Set(['registration', 'attendees', 'itinerary'])
+const aplica = (key, esPop) => esPop || !SOLO_POP.has(key)
 
 const ocultaDe = (body, key) => {
     if (key === 'registration') return !body?.form?.enabled
@@ -31,13 +31,13 @@ const ocultaDe = (body, key) => {
     return Boolean((body?.cards ?? []).find((c) => c.key === key)?.hidden)
 }
 
-export const tarjetasDe = (body, esFlash) => {
+export const tarjetasDe = (body, esPop) => {
     const guardadas = (Array.isArray(body?.cards) ? body.cards : []).map((c) => c.key).filter((k) => ORDEN_TARJETAS.includes(k))
     const orden = [...new Set([...guardadas, ...ORDEN_TARJETAS])]
-    return orden.filter((k) => aplica(k, esFlash)).map((key) => ({ key, hidden: ocultaDe(body, key) }))
+    return orden.filter((k) => aplica(k, esPop)).map((key) => ({ key, hidden: ocultaDe(body, key) }))
 }
 
-// Grupos de la página (handoff "Flash Layout" 3a): cada uno con su etiqueta
+// Grupos de la página (handoff "Pop Layout" 3a): cada uno con su etiqueta
 // centrada (INFORMACIÓN · UBICACIÓN · ASISTENTES). El formulario no está: ya
 // no va en el scroll (al invitado le llega como aviso al confirmar). Recibe
 // las llaves que de verdad se pintan, en orden; el grupo sale donde aparece

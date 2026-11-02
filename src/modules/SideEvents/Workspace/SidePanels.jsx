@@ -2,15 +2,17 @@ import { useTranslation } from 'react-i18next'
 import { Segmented } from 'antd'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import { SelectorColor } from '../SelectorColor'
-import { ItinerarioFlash } from '../ItinerarioFlash'
+import { ColoresIOS } from '../../Editor/ColoresIOS'
+import { ItinerarioPop } from '../ItinerarioPop'
 import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from '../efectosData'
 import { ESTILOS_BLOQUE, MINI_ESTILO, estiloDe } from '../estilosBloque'
 import { PINCEL, PINCELES } from '../../Editor/dibujoData'
+import { AjustesPincel } from './AjustesPincel'
 import base from '../../Invitation/Build/PageSections/ToolPanels.module.css'
 import ed from '../SideEventEditor.module.css'
 import own from './SideWorkspace.module.css'
 
-// Contenido propio de los paneles Diseño e Itinerario de un side event / Flash
+// Contenido propio de los paneles Diseño e Itinerario de un side event / Pop
 // (lo que solo existe ahí: color del tema, velo, efectos, mini itinerario).
 // Elementos, Fotos y Subidos son los mismos paneles de la invitación. Todo
 // va dentro de EditorShell.
@@ -20,7 +22,7 @@ const THEME_SWATCHES = ['#16323d', '#000000', '#E7E0CC', '#B9BBA6', '#D1BEDD', '
 const VELO_INICIAL = 35
 const EMOJI_EFECTO = { none: '⊘', sparkles: '✨', confetti: '🎉', bubbles: '🫧', snow: '❄️', petals: '🌸' }
 
-// Miniatura de un estilo de bloques: la foto del Flash (o el degradado del
+// Miniatura de un estilo de bloques: la foto del Pop (o el degradado del
 // tema) con una tarjetita de ese estilo encima.
 const MiniEstilo = ({ estilo, color, imagen }) => (
     <span className={own.estiloMini} style={imagen ? undefined : { background: `linear-gradient(160deg, ${color}, color-mix(in srgb, ${color} 60%, #000))` }} aria-hidden>
@@ -29,8 +31,10 @@ const MiniEstilo = ({ estilo, color, imagen }) => (
     </span>
 )
 
-/* ── Diseño: color del tema, estilo de bloques (Flash), velo y efectos ── */
-export const DesignPanel = ({ current, setBody, esFlash }) => {
+/* ── Diseño: color del tema, estilo de bloques (Pop), velo y efectos ── */
+// `movil`: el drawer del editor del celular (EditorMovil): el color del tema
+// se elige con la cuadrícula estilo iOS (ColoresIOS) en lugar del selector.
+export const DesignPanel = ({ current, setBody, esPop, movil = false }) => {
     const { t } = useTranslation()
     const body = current?.body ?? {}
     const color = body.color ?? '#000000'
@@ -42,18 +46,24 @@ export const DesignPanel = ({ current, setBody, esFlash }) => {
             <div className={base.group}>
                 <span className={base.groupLabel}>{t('side_events.theme_color')}</span>
                 <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.panel_color_hint')}</span>
-                <SelectorColor value={color} onChange={(hex) => setBody({ color: hex })} imagenFondo={body.image} />
-                <div className={own.swatchRow}>
-                    {THEME_SWATCHES.map((c) => (
-                        <button key={c} type="button" className={own.swatch} data-on={color.toLowerCase() === c.toLowerCase() || undefined} style={{ background: c }} aria-label={c} onClick={() => setBody({ color: c })} />
-                    ))}
-                </div>
+                {movil ? (
+                    <ColoresIOS value={color} onChange={(hex, o) => setBody({ color: hex }, o)} className={own.coloresMovil} cabeza={false} conGuardados={false} />
+                ) : (
+                    <>
+                        <SelectorColor value={color} onChange={(hex) => setBody({ color: hex })} imagenFondo={body.image} />
+                        <div className={own.swatchRow}>
+                            {THEME_SWATCHES.map((c) => (
+                                <button key={c} type="button" className={own.swatch} data-on={color.toLowerCase() === c.toLowerCase() || undefined} style={{ background: c }} aria-label={c} onClick={() => setBody({ color: c })} />
+                            ))}
+                        </div>
+                    </>
+                )}
             </div>
 
-            {/* Estilo de bloques (handoff "Estilo de bloques del Evento Flash"):
+            {/* Estilo de bloques (handoff "Estilo de bloques del Pop"):
                 la piel de todas las tarjetas de la página. body.blockStyle;
                 vidrio = sin valor (lo de siempre). */}
-            {esFlash && (
+            {esPop && (
                 <div className={base.group}>
                     <span className={base.groupLabel}>{t('side_events.block_style')}</span>
                     <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.block_style_hint')}</span>
@@ -84,7 +94,7 @@ export const DesignPanel = ({ current, setBody, esFlash }) => {
                 {veil > 0 && <LiveSlider label={t('side_events.veil_intensity')} value={veil} min={5} max={90} format={(v) => `${v}%`} onChange={(v, o) => setBody({ veil: v }, o)} />}
             </div>
 
-            {esFlash && (
+            {esPop && (
                 <div className={base.group}>
                     <span className={base.groupLabel}>{t('side_events.panel_effects')}</span>
                     <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.panel_effects_hint')}</span>
@@ -120,14 +130,14 @@ export const DesignPanel = ({ current, setBody, esFlash }) => {
     )
 }
 
-/* ── Itinerario (solo Flash) ── */
+/* ── Itinerario (solo Pop) ── */
 export const ItineraryPanel = ({ current, setBody, dias }) => {
     const { t } = useTranslation()
     const itinerario = Array.isArray(current?.body?.itinerary) ? current.body.itinerary : []
     return (
         <div className={base.group}>
             <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.panel_itinerary_hint')}</span>
-            <ItinerarioFlash itinerario={itinerario} dias={dias} onChange={(lista) => setBody({ itinerary: lista.length ? lista : null })} />
+            <ItinerarioPop itinerario={itinerario} dias={dias} onChange={(lista) => setBody({ itinerary: lista.length ? lista : null })} />
         </div>
     )
 }
@@ -216,26 +226,8 @@ export const DrawPanel = ({ current, pincel, setPincel, onOtroColor }) => {
                 </div>
             )}
 
-            <div className={own.dibujoGrosor}>
-                <div className={own.dibujoGrosorSlider}>
-                    <LiveSlider label={t('side_events.draw_size')} value={pincel.size} min={2} max={40} format={(v) => `${v} px`} onChange={(v) => cambiar({ size: v })} />
-                </div>
-                <span className={own.dibujoPunto} aria-hidden>
-                    <span
-                        style={{
-                            width: Math.min(40, pincel.size * (PINCEL[pincel.brush]?.k ?? 1)),
-                            height: Math.min(40, pincel.size * (PINCEL[pincel.brush]?.k ?? 1)),
-                            background: borrador ? '#C9C5CE' : pincel.color,
-                            opacity: borrador ? 1 : Math.min(pincel.opacity / 100, PINCEL[pincel.brush]?.maxA ?? 1),
-                            borderRadius: PINCEL[pincel.brush]?.cap === 'square' ? 3 : 99,
-                        }}
-                    />
-                </span>
-            </div>
-
-            {!borrador && (
-                <LiveSlider label={t('side_events.draw_opacity')} value={pincel.opacity} min={10} max={100} step={5} format={(v) => `${v}%`} onChange={(v) => cambiar({ opacity: v })} />
-            )}
+            {/* Grosor y opacidad: los mismos de la hoja de la paleta (AjustesPincel). */}
+            <AjustesPincel pincel={pincel} setPincel={setPincel} claseTitulo={base.groupLabel} />
 
             <div className={own.dibujoNota}>
                 <span>{t('side_events.draw_note')}</span>

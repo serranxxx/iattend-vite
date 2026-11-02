@@ -4,12 +4,12 @@ import { supabase } from '../../../lib/supabase'
 import { supabaseAuthHeaders } from '../../../lib/authHeaders'
 
 /*
-  Datos de los formularios de un Flash:
+  Datos de los formularios de un Pop:
   · useMisFormularios — "Mis formularios" del organizador, directo a Supabase
     con su sesión (tabla forms, RLS por dueño; migración
     iattend--backend/migrations/2026-10-30_forms.sql). Cuenta en cuántos
-    Flash se usa cada uno (side_events.body.form.formId).
-  · useRespuestasFormulario — las respuestas del Flash, por el backend con la
+    Pop se usa cada uno (side_events.body.form.formId).
+  · useRespuestasFormulario — las respuestas del Pop, por el backend con la
     sesión (datos personales: side_event_form_responses no se lee con la anon
     key) y al día con el aviso sin contenido del canal side_form_<id>.
 */
@@ -69,7 +69,7 @@ export const useMisFormularios = () => {
     return { formularios, usos, error, cargar, crear, cambiarLocal, guardar }
 }
 
-// Respuestas del Flash (lista para el panel, la tabla y la descarga).
+// Respuestas del Pop (lista para el panel, la tabla y la descarga).
 export const useRespuestasFormulario = (eventoId, activo) => {
     const [respuestas, setRespuestas] = useState(null)
     const vivo = useRef(true)

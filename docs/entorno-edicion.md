@@ -72,7 +72,7 @@ Todos pasan por `iattend-events/src/components/Invitation/EditableText.tsx`:
 
 | Módulo | Campos (`path`) |
 |---|---|
-| Portada | Título y fecha son **bloques** con borde punteado siempre visible (como en Flash): un toque elige el bloque, **arrastrarlo** lo acomoda (título: los cuadrantes de la retícula 3×3 del panel → `cover.title.position.align_x/align_y`; fecha: arriba o abajo del título → `column_reverse`, el "Invertir" del panel), y con el título ya elegido otro toque entra a escribir (`cover.title.text.value`, Enter suelta el foco). Sin asas ni botones. |
+| Portada | Título y fecha son **bloques** con borde punteado siempre visible (como en Pop): un toque elige el bloque, **arrastrarlo** lo acomoda (título: los cuadrantes de la retícula 3×3 del panel → `cover.title.position.align_x/align_y`; fecha: arriba o abajo del título → `column_reverse`, el "Invertir" del panel), y con el título ya elegido otro toque entra a escribir (`cover.title.text.value`, Enter suelta el foco). Sin asas ni botones. |
 | Bienvenida | `greeting.title`, `greeting.description` |
 | Frase | `quote.text.font.value` (con o sin imagen) |
 | Avisos | `notices.title`, `notices.notices.N` (uno por aviso) |
@@ -188,8 +188,8 @@ intuición) o se vuelve a tocar para escribir. Tocar fuera la suelta. Abajo va
 
 ## Chips de la portada, canción y fecha
 
-- Arriba: **Canción** (popover con `CancionFlash`, el mismo buscador de
-  Spotify / subir audio de Flash y Save the Date, sobre `cover.song`) y
+- Arriba: **Canción** (popover con `CancionPop`, el mismo buscador de
+  Spotify / subir audio de Pop y Save the Date, sobre `cover.song`) y
   **Color del tema**. **Cambiar fondo** es un botón **dentro de la pieza**
   (Cover.tsx, `.edit_center_btn--always`) al centro de la portada, así se
   mueve con la imagen al hacer scroll; manda `REMOTE_FIELD_TOOL { field:
@@ -358,7 +358,7 @@ mismo panel (`DressImages module="gallery"`, escribe `gallery.dev`). Sin
 imágenes, recuadro con "Agregar imágenes".
 
 Footer de la invitación: ahora es el mismo `FooterCompact` de los Eventos
-Flash / side events (antes `FooterLand`), sin fondo propio (queda bajo la
+Pop / side events (antes `FooterLand`), sin fondo propio (queda bajo la
 textura) y con el color de texto del tema (`<FooterCompact color={accent} />`;
 sin `color` sigue blanco en side/pop events). Cambia también en la invitación
 publicada.

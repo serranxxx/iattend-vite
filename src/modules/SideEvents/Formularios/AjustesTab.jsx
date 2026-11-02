@@ -2,10 +2,11 @@ import { useTranslation } from 'react-i18next'
 import styles from './FormularioVista.module.css'
 
 /*
-  Pestaña Ajustes de la vista completa (handoff 1b): reglas de ESTE Flash
-  (body.form), no del formulario: quién responde, si acepta respuestas, si
-  se puede dejar para después, prefijo del folio y link del aviso de
-  privacidad. Entran al historial del editor y se guardan con el Flash.
+  Pestaña Ajustes de la vista completa (handoff 1b): reglas de ESTE Pop
+  (body.form), no del formulario: quién responde, si es obligatorio (al
+  confirmar se abre solo y no se puede cerrar hasta responderlo), si acepta
+  respuestas, si se puede dejar para después, prefijo del folio y link del
+  aviso de privacidad. Entran al historial del editor y se guardan con el Pop.
 */
 
 const Interruptor = ({ on, onClick, label }) => (
@@ -20,6 +21,7 @@ export const AjustesTab = ({ reglas, updateForm }) => {
     const scope = reglas?.scope === 'grupo' ? 'grupo' : 'persona'
     const abierto = reglas?.accepting !== false
     const despues = reglas?.allowLater !== false
+    const obligatorio = reglas?.required === true
 
     return (
         <div className={styles.ajustes}>
@@ -33,6 +35,14 @@ export const AjustesTab = ({ reglas, updateForm }) => {
                     ))}
                 </div>
                 <span className={styles.ajusteNota}>{t(`side_events.frm_scope_${scope}_hint`)}</span>
+            </section>
+
+            <section className={styles.ajuste} data-fila>
+                <span className={styles.ajusteCol}>
+                    <span className={styles.ajusteTitulo}>{t('side_events.frm_set_required')}</span>
+                    <span className={styles.ajusteNota}>{t(obligatorio ? 'side_events.frm_set_required_on' : 'side_events.frm_set_required_off')}</span>
+                </span>
+                <Interruptor on={obligatorio} label={t('side_events.frm_set_required')} onClick={() => set({ required: !obligatorio })} />
             </section>
 
             <section className={styles.ajuste} data-fila>

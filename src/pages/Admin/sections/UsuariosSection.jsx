@@ -64,12 +64,13 @@ const OPCIONES_ROL = [
 // celular). El correo se muestra pero no se edita: es el login de la cuenta.
 // Planners: además de nombre y rol, sus beneficios (eventos gratis y % de
 // descuento en toda compra suya). Se guardan después del rol porque el
-// backend solo los acepta en cuentas que ya son planner.
+// backend decide con el rol ya guardado qué acepta. Clientes: solo Pops
+// gratis (los usan desde su página de invitaciones).
 const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar, onGuardado, onBeneficiosGuardados }) => {
     const [nombre, setNombre] = useState(perfil.full_name ?? '')
     const [rol, setRol] = useState(ROLES[perfil.role] ? perfil.role : '')
     const [eventosGratis, setEventosGratis] = useState(beneficios?.free_events ?? 0)
-    const [flashGratis, setFlashGratis] = useState(beneficios?.free_flash_events ?? 0)
+    const [popGratis, setPopGratis] = useState(beneficios?.free_flash_events ?? 0)
     const [descuento, setDescuento] = useState(beneficios?.discount_pct ?? 0)
     const [guardando, setGuardando] = useState(false)
 
@@ -79,13 +80,15 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
     if (rol !== rolOriginal) cambios.role = rol || null
     // Planner o Administración: mismas funciones, mismos beneficios.
     const esPlanner = esRolPlanner(rol)
+    const esCliente = rol === ''
     // Hasta que carguen los beneficios los campos arrancan en 0: guardar ahí
     // los borraría. Sin cargar, no se mandan.
-    const beneficiosSucios = esPlanner && beneficiosListos && (
-        (eventosGratis ?? 0) !== (beneficios?.free_events ?? 0)
-        || (flashGratis ?? 0) !== (beneficios?.free_flash_events ?? 0)
-        || (descuento ?? 0) !== (beneficios?.discount_pct ?? 0)
-    )
+    const popsSucios = (popGratis ?? 0) !== (beneficios?.free_flash_events ?? 0)
+    const beneficiosSucios = beneficiosListos && (esPlanner
+        ? (eventosGratis ?? 0) !== (beneficios?.free_events ?? 0)
+            || popsSucios
+            || (descuento ?? 0) !== (beneficios?.discount_pct ?? 0)
+        : esCliente && popsSucios)
     const sucio = Object.keys(cambios).length > 0 || beneficiosSucios
 
     const guardar = async () => {
@@ -99,11 +102,9 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
                 actualizado = data.perfil
             }
             if (beneficiosSucios) {
-                const { data } = await updateBeneficiosPlanner(perfil.user_id, {
-                    free_events: eventosGratis ?? 0,
-                    free_flash_events: flashGratis ?? 0,
-                    discount_pct: descuento ?? 0,
-                })
+                const { data } = await updateBeneficiosPlanner(perfil.user_id, esPlanner
+                    ? { free_events: eventosGratis ?? 0, free_flash_events: popGratis ?? 0, discount_pct: descuento ?? 0 }
+                    : { free_flash_events: popGratis ?? 0 })
                 onBeneficiosGuardados?.(data.beneficios)
             }
             onGuardado(actualizado)
@@ -151,16 +152,28 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
                         <InputNumber min={0} max={100} precision={0} value={eventosGratis} onChange={setEventosGratis} />
                     </label>
                     <label className={styles.editorCampo}>
-                        <span>Flash gratis</span>
-                        <InputNumber min={0} max={100} precision={0} value={flashGratis} onChange={setFlashGratis} />
+                        <span>Pop gratis</span>
+                        <InputNumber min={0} max={100} precision={0} value={popGratis} onChange={setPopGratis} />
                     </label>
                     <label className={styles.editorCampo}>
                         <span>Descuento</span>
                         <InputNumber min={0} max={90} precision={0} value={descuento} onChange={setDescuento} suffix='%' />
                     </label>
                     <small className={styles.editorBeneficiosNota}>
-                        Los eventos gratis son PRO y los Flash son side events sueltos; los dos le aparecen en su página de invitaciones. El descuento aplica en toda compra suya.
-                        {usados && ` Ya usó ${usados.gratis} gratis, compró ${usados.compra} y creó ${usados.flash ?? 0} Flash.`}
+                        Los eventos gratis son PRO y los Pops son side events sueltos; los dos le aparecen en su página de invitaciones. El descuento aplica en toda compra suya.
+                        {usados && ` Ya usó ${usados.gratis} gratis, compró ${usados.compra} y creó ${usados.pop ?? 0} Pop.`}
+                    </small>
+                </div>
+            )}
+            {esCliente && (
+                <div className={styles.editorBeneficios}>
+                    <label className={styles.editorCampo}>
+                        <span>Pops gratis</span>
+                        <InputNumber min={0} max={100} precision={0} value={popGratis} onChange={setPopGratis} />
+                    </label>
+                    <small className={styles.editorBeneficiosNota}>
+                        Le aparecen en su página de invitaciones para crear Pops propios sin pagar.
+                        {usados && ` Ya creó ${usados.pop_gratis ?? 0} con Pops gratis.`}
                     </small>
                 </div>
             )}
@@ -176,12 +189,12 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
 // Columnas de cada pantalla de Usuarios (una por rol, ver AdminLayout).
 const COLUMNAS = {
     clientes: {
-        grid: 'minmax(160px, 1.2fr) minmax(180px, 1.6fr) 80px 110px 110px 80px 190px',
-        titulos: ['Nombre', 'Email', 'Eventos', 'Plan', 'Acceso', 'Alta', ''],
+        grid: 'minmax(160px, 1.2fr) minmax(180px, 1.6fr) 80px 110px 120px 110px 80px 190px',
+        titulos: ['Nombre', 'Email', 'Eventos', 'Plan', 'Pops gratis', 'Acceso', 'Alta', ''],
     },
     planners: {
         grid: 'minmax(160px, 1.3fr) minmax(180px, 1.5fr) 120px 120px 110px 90px 110px 190px',
-        titulos: ['Planner', 'Email', 'Eventos', 'PRO gratis', 'Flash gratis', 'Descuento', 'Acceso', ''],
+        titulos: ['Planner', 'Email', 'Eventos', 'PRO gratis', 'Pop gratis', 'Descuento', 'Acceso', ''],
     },
     admin: {
         grid: 'minmax(160px, 1.3fr) minmax(180px, 1.6fr) 110px minmax(160px, 1.4fr) 60px',
@@ -218,8 +231,9 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
         fetchProveedores()
             .then(({ data }) => setProveedores(data.proveedores ?? {}))
             .catch(error => console.error('No se pudo cargar cómo entra cada usuario:', error.response?.data || error.message))
-        // Administración también tiene beneficios (mismas funciones que un planner).
-        if (esPlanners || rol === 'admin') cargarBeneficios()
+        // Administración también tiene beneficios (mismas funciones que un
+        // planner); los clientes, Pops gratis.
+        if (esPlanners || rol === 'admin' || rol === 'clientes') cargarBeneficios()
     }, [rol])
 
     // Eventos de cada cuenta: como dueño (user_id) y, en planners, también los
@@ -267,7 +281,7 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
             type='button'
             className={`${styles.action} ${styles.actionIcono}`}
             aria-label={`Editar a ${perfil.full_name || perfil.user_email}`}
-            title={esPlanners ? 'Editar nombre, rol y beneficios' : 'Editar nombre y rol'}
+            title={esPlanners ? 'Editar nombre, rol y beneficios' : rol === 'clientes' ? 'Editar nombre, rol y Pops gratis' : 'Editar nombre y rol'}
             onClick={() => setEditando(perfil.user_id)}
         >
             <Pencil size={12} />
@@ -335,6 +349,9 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
             nombre, correo,
             <span key='ev' className={styles.cell}>{eventos.length}</span>,
             <span key='plan' className={styles.cell}>{celdaPlan(eventos)}</span>,
+            <span key='pop' className={styles.cell}>
+                {celdaBeneficio(beneficios.usados[perfil.user_id]?.pop_gratis ?? 0, beneficios.beneficios[perfil.user_id]?.free_flash_events ?? 0)}
+            </span>,
             acceso,
             <span key='alta' className={`${styles.cell} ${styles.celdaTenue}`}>{fechaCorta(perfil.created_at)}</span>,
             <span key='acc' className={`${styles.cell} ${styles.acciones}`}>{botonEditar(perfil)}{botonEvento(perfil)}</span>,
@@ -355,7 +372,7 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
                     </span>
                 </span>,
                 <span key='pro' className={styles.cell}>{celdaBeneficio(u.gratis ?? 0, b?.free_events ?? 0)}</span>,
-                <span key='flash' className={styles.cell}>{celdaBeneficio(u.flash_gratis ?? 0, b?.free_flash_events ?? 0)}</span>,
+                <span key='pop' className={styles.cell}>{celdaBeneficio(u.pop_gratis ?? 0, b?.free_flash_events ?? 0)}</span>,
                 <span key='desc' className={styles.cell}>
                     {b?.discount_pct ? `${b.discount_pct}%` : <span className={styles.celdaTenue}>—</span>}
                 </span>,

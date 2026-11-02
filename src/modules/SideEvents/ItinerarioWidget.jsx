@@ -4,7 +4,7 @@ import { IconoMomento } from "./IconoMomento";
 import styles from "./ItinerarioWidget.module.css";
 
 /*
-  Itinerario de un Evento Flash (handoff "Itinerario del Evento Flash", opción
+  Itinerario de un Pop (handoff "Itinerario del Pop", opción
   6c: barra del día + lista). Funciona igual con 2 momentos (Llegada / Salida)
   que con 5 o más:
   · Barra del día: de la primera a la última hora, un punto por momento y el

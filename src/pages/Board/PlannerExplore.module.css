@@ -367,3 +367,17 @@
         font-size: 14px;
     }
 }
+
+/* Clientes (sin invitación de ejemplo): el carrusel llena el alto que queda
+   bajo el saludo (main es columna flex de toda la pantalla). Al final para
+   ganarle a las alturas fijas de los media queries. */
+.completo {
+    flex: 1;
+    min-height: 0;
+}
+
+.completo .carrusel {
+    flex: 1;
+    height: auto;
+    min-height: 340px;
+}

@@ -210,3 +210,26 @@
     overflow: hidden;
     box-sizing: border-box;
 }
+
+/* Editor del celular (EditCanvas `movil`): el chip de la canción a la medida
+   del dedo (44 px). "Cambiar fondo" vive en la pieza (iattend-events,
+   html[data-edit-movil] .edit_center_btn). */
+.card[data-movil] .chip {
+    height: 44px;
+    max-width: 210px;
+    padding: 0 16px 0 7px;
+    gap: 9px;
+    font-size: 15px;
+}
+
+.card[data-movil] .chipIcon,
+.card[data-movil] .chipArt {
+    width: 32px;
+    height: 32px;
+}
+
+.card[data-movil] .chipIcon svg {
+    width: 17px;
+    height: 17px;
+}
+

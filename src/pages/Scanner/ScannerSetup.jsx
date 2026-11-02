@@ -33,7 +33,7 @@ export const ScannerSetup = ({ events, eventsLoading, selectedEvent, onSelectEve
                 onSelectEvent(events.find(e => e.key === val) ?? null)
                 setTimeout(() => pinRef.current?.focus(), 50)
               }}
-              options={events.map(e => ({ value: e.key, label: `${e.name ?? String(e.id)}${e.kind === 'flash' ? ' · Flash' : ''}` }))}
+              options={events.map(e => ({ value: e.key, label: `${e.name ?? String(e.id)}${e.kind === 'flash' ? ' · Pop' : ''}` }))}
               showSearch
               filterOption={(input, option) => norm(option?.label).includes(norm(input))}
               suffixIcon={<ChevronDown size={18} />}

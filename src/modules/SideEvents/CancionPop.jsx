@@ -5,17 +5,17 @@ import { Music as SiSpotify } from 'lucide-react';
 import { useTranslation } from 'react-i18next'
 import { searchSpotifyTracks } from '../../helpers/services/spotify'
 import { uploadSongAudio } from '../../helpers/services/uploadAudio'
-import styles from './CancionFlash.module.css'
+import styles from './CancionPop.module.css'
 import ed from './SideEventEditor.module.css'
 
 /*
-  Canción de un Evento Flash (panel del editor). Mismo flujo y mismo formato
+  Canción de un Pop (panel del editor). Mismo flujo y mismo formato
   que el Save the Date (SaveTheDatePage → panelSong): buscar en Spotify o
   subir un archivo. `body.song`: { id, source: 'spotify'|'upload', name,
   artist, albumArt, previewUrl }. La página del invitado la toca con
   SongPlayer (iattend-events), igual que el Save the Date.
 */
-export const CancionFlash = ({ song, onChange, carpeta }) => {
+export const CancionPop = ({ song, onChange, carpeta }) => {
     const { t } = useTranslation()
     const [modo, setModo] = useState('search')
     const [busqueda, setBusqueda] = useState('')

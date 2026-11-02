@@ -1,21 +1,21 @@
-# Editor de side events y Eventos Flash con la experiencia de la invitación
+# Editor de side events y Pops con la experiencia de la invitación
 
-El editor de escritorio de `/dashboard/side` (> 720 px; Eventos Flash
-`?flash=<id>` y side events de una boda `?id=<invitación>`) usa la misma
+El editor de escritorio de `/dashboard/side` (> 720 px; Pops
+`?pop=<id>` y side events de una boda `?id=<invitación>`) usa la misma
 experiencia que el editor de la invitación. Guía:
 [`sistema-diseno-editor.md`](./sistema-diseno-editor.md). El celular sigue con
 su editor "story" (`SideEvents.jsx`, `PANELS` + `BottomSheet`), sin cambios.
 
 ## Qué se adaptó
 
-| Invitación | Side event / Flash |
+| Invitación | Side event / Pop |
 |---|---|
-| Riel: Diseño · Elementos · Fotos · Subidos | Riel: **Diseño** · **Elementos** (Flash) · **Itinerario** (Flash) · **Subidos** |
+| Riel: Diseño · Elementos · Fotos · Subidos | Riel: **Diseño** · **Elementos** (Pop) · **Itinerario** (Pop) · **Subidos** |
 | La pieza real en un iframe, con zonas | `SideCanvas` (ya calcaba la página del invitado), con sus zonas |
 | Barras contextuales arriba de la pieza | **Título**, **Fecha y hora**, **Lugar**, **Fondo**, **Canción**, **PNG elegido(s)**, **Itinerario** |
-| Capas = módulos | Capas = los PNG del Flash (más el fondo, fijo) |
+| Capas = módulos | Capas = los PNG del Pop (más el fondo, fijo) |
 | Dock: deshacer · rehacer · Editar / Ver en vivo · dispositivos · zoom · tour | Igual (iPhone · iPad · Mac, girar el iPad) |
-| Publicar en el header | La barra de arriba de siempre: volver, Diseño / Envío, candado (Flash), link, Guardar |
+| Publicar en el header | La barra de arriba de siempre: volver, Diseño / Envío, candado (Pop), link, Guardar |
 
 Los side events de boda no tienen Elementos, Itinerario, Canción ni Efectos
 (igual que antes): su riel queda en Diseño y Subidos, sin Capas.
@@ -28,11 +28,11 @@ barra del elemento (`ElementBar` con `group`), la misma barra de texto para
 el título (`TextBar` con un adaptador a `body.title`) y el mismo panel Capas
 (`LayersPanel`). Ver la tabla en `docs/sistema-diseno-editor.md`.
 
-**Elementos de la portada de un Flash.** `body.stickers` guarda imágenes
+**Elementos de la portada de un Pop.** `body.stickers` guarda imágenes
 (sin `kind`) y, además, los elementos del panel Elementos con el modelo de
 la invitación (`icon`, `shape`, `text`, `line`, `separator`; vectores =
-`icon` con `src` y `tint`). Los dibuja `FlashElemento` en el editor y en la
-página del invitado (`iattend-events/src/components/SideEvent/FlashElemento.tsx`).
+`icon` con `src` y `tint`). Los dibuja `PopElemento` en el editor y en la
+página del invitado (`iattend-events/src/components/SideEvent/PopElemento.tsx`).
 Tope: 12 imágenes y 40 elementos (`cabeElemento`). La imagen del link solo
 dibuja las imágenes. El título acepta además color, cursiva, subrayado,
 tachado, mayúsculas y espacio entre letras (`fontExtras` en events).
@@ -79,7 +79,7 @@ tachado, mayúsculas y espacio entre letras (`fontExtras` en events).
   Sin riel ni dock.
 - **Tour** (`SideEventsTour`): los pasos señalan la barra (`data-tour="bar"`)
   eligiendo su zona, los botones del riel (`setTool`), Capas y el dock. Los
-  pasos `flash: true` solo salen en Flash.
+  pasos `pop: true` solo salen en Pop.
 
 ## Lo que quitó de `SideEvents.jsx`
 
@@ -91,7 +91,7 @@ quedan: los usa el editor móvil.
 ## Pendiente
 
 - El panel Elementos solo muestra lo subido a la carpeta del evento; no hay
-  catálogo (como el de la invitación) para Flash.
+  catálogo (como el de la invitación) para Pop.
 - iPad y Mac en "Ver en vivo" muestran la página del invitado a ese ancho; la
   página de un side event no tiene diseño de pantalla grande propio.
 - En pantallas de menos de 1100 px, con un panel abierto, Capas se esconde

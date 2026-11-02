@@ -111,3 +111,69 @@
         top: unset;
     }
 }
+
+/* Variante "envios" (encabezado de la vista compacta de invitados):
+   píldora en línea "✈ N envíos +". */
+.envios_pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 4px 0 14px;
+    border: 1px solid #E6E3DE;
+    border-radius: 99px;
+    background: #fff;
+    font-family: 'Work Sans', 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    color: #17161B;
+    white-space: nowrap;
+}
+
+.envios_pill--sending {
+    padding-right: 14px;
+    border-color: transparent;
+    background: #EFE8FA;
+}
+
+.envios_icon {
+    color: #6B4FB8;
+    flex: none;
+}
+
+.envios_num {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.envios_label {
+    color: #6E6A64;
+}
+
+.envios_mas {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    margin-left: 4px;
+    border: none;
+    border-radius: 50%;
+    background: #F1EFEC;
+    color: #17161B;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.envios_mas:hover {
+    background: #E6E3DE;
+}
+
+.envios_pill .credit_minus_bubble {
+    top: -26px;
+}
+
+/* La compra de créditos abre por encima de la barra del editor (topBar de
+   side events / Pop, z-index 1200) y del header del dashboard. */
+.ant-dropdown.credits-popup {
+    z-index: 1300;
+}

@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react'
 import { message } from 'antd'
 import { ChevronLeft, Link, Loader2, Plus, Search, Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import styles from './ListaInvitadosFlash.module.css'
+import styles from './ListaInvitadosPop.module.css'
 
 /*
-  Lista de invitados de un Evento Flash en el editor móvil "story"
-  (handoff design_handoff_flash_guest_list). Página completa encima del
+  Lista de invitados de un Pop en el editor móvil "story"
+  (handoff design_handoff_pop_guest_list). Página completa encima del
   editor: entra deslizando y el editor se queda montado debajo, así que no
   se pierde nada sin guardar.
 
@@ -45,7 +45,7 @@ const PILDORA = {
     no: 'side_events.guestlist_status_no',
 }
 
-export const ListaInvitadosFlash = ({
+export const ListaInvitadosPop = ({
     open,
     onClose,
     invitados = [],
@@ -71,7 +71,7 @@ export const ListaInvitadosFlash = ({
         try {
             await accion.enviar()
         } catch {
-            message.error(t('side_events.flash_send_error'))
+            message.error(t('side_events.pop_send_error'))
         } finally {
             setEnviando(null)
         }

@@ -1,4 +1,4 @@
-/* Efectos animados de un Flash (EfectosCapa.jsx). Capa del alto de la
+/* Efectos animados de un Pop (EfectosCapa.jsx). Capa del alto de la
    pantalla; las partículas solo animan transform y opacity. 100cqh = alto de
    la capa (container-type), para que caigan de arriba abajo sin medir nada.
    Misma hoja que iattend-events (components/SideEvent/efectos.module.css). */

@@ -82,6 +82,12 @@ export default function SideEventHost({
   useEffect(() => {
     function onMessage(ev) {
       if (!ALLOWED_ORIGINS.has(ev.origin)) return;
+      // Solo los mensajes del propio iframe. Las extensiones de Chrome (React
+      // DevTools, etc.) mandan mensajes a la página con el origen del editor
+      // (localhost:3001, permitido): tomarlos cambiaba el destino y cada
+      // envío al iframe se perdía en silencio (en Chrome "Ver en vivo" no se
+      // actualizaba; en el navegador de Claude, sin extensiones, sí).
+      if (ev.source !== iframeRef.current?.contentWindow) return;
       // El origen con el que de verdad responde el iframe
       targetOriginRef.current = ev.origin;
       if (ev.data?.type === "REMOTE_READY") {
