@@ -8,6 +8,11 @@
     flex-direction: column;
     height: 100vh;
     height: 100dvh;
+    /* Lo visible de verdad (EditorShell → useAltoVisible). Y sin el
+       min-height: 100vh de .pageContainer: en Safari de iPad 100vh mide más
+       que lo que se ve, estiraba la página y el dock quedaba fuera. */
+    height: var(--alto-visible, 100dvh);
+    min-height: 0;
     overflow: hidden;
 }
 

@@ -10,6 +10,9 @@
 .pageContainer {
     position: relative;
     min-height: 100vh;
+    /* En el editor de escritorio, lo visible de verdad (EditorShell →
+       --alto-visible): en Safari de iPad 100vh mide más y sacaba el dock. */
+    min-height: var(--alto-visible, 100vh);
     width: 100%;
     box-sizing: border-box;
     background-color: #EDEAE3;

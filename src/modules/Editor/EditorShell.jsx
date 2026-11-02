@@ -58,6 +58,28 @@ const useSize = (ref, topOffset) => {
     return size
 }
 
+// Pantalla táctil (iPad): los gestos del tablero (pellizcar, arrastrar con
+// un dedo) solo van ahí; en computadora el tablero funciona como siempre.
+const TACTIL = typeof window !== 'undefined' && Boolean(window.matchMedia?.('(pointer: coarse)').matches)
+
+// Alto visible real (--alto-visible en <html>): en Safari de iPad 100dvh
+// puede medir más que lo que se ve y el dock quedaba debajo de la orilla.
+// window.innerHeight sí es lo visible (sin contar el teclado).
+const useAltoVisible = () => {
+    useEffect(() => {
+        const raiz = document.documentElement
+        const medir = () => raiz.style.setProperty('--alto-visible', `${window.innerHeight}px`)
+        medir()
+        window.addEventListener('resize', medir)
+        window.addEventListener('orientationchange', medir)
+        return () => {
+            window.removeEventListener('resize', medir)
+            window.removeEventListener('orientationchange', medir)
+            raiz.style.removeProperty('--alto-visible')
+        }
+    }, [])
+}
+
 // Teclado de pantalla (iPad): tapa la mitad de abajo y el editor no hace
 // scroll, así que el texto que se está escribiendo quedaba debajo. La pieza
 // avisa dónde quedó ese texto (`iattend-text-focus`) y el escenario sube lo
@@ -140,6 +162,7 @@ export const EditorShell = ({
     const wsRef = useRef(null)
     const vp = useSize(wsRef, topOffset)
     const keyboardLift = useKeyboardLift()
+    useAltoVisible()
 
     // Número o 'fit'. Si al 80 % la pieza no cabe entre arriba y el dock
     // (iPad horizontal, laptops chicas), arranca en Ajustar.
@@ -198,13 +221,13 @@ export const EditorShell = ({
         return () => { rectNormal.current = { rect: el.getBoundingClientRect(), w: el.offsetWidth } }
     }, [])
 
-    // Navegar el tablero como el acomodo de mesas (TablesPage): pellizcar
+    // Solo en pantalla táctil (iPad). Navegar el tablero como el acomodo de mesas (TablesPage): pellizcar
     // con dos dedos (o ⌘/Ctrl + rueda, el pellizco del trackpad) acerca o
     // aleja alrededor de los dedos; arrastrar el fondo con un dedo (o la
     // rueda fuera de la pieza) lo mueve. Encima de la pieza, un dedo sigue
     // siendo de la pieza (scroll, elegir, arrastrar). El botón del zoom del
     // dock vuelve a centrar.
-    const gestos = !live && !withColumn && !inmersivo
+    const gestos = TACTIL && !live && !withColumn && !inmersivo
     const [pan, setPan] = useState({ x: 0, y: 0 })
     const [gestoVivo, setGestoVivo] = useState(false)
     const panRef = useRef(pan)
