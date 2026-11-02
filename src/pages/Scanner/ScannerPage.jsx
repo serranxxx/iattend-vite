@@ -17,6 +17,12 @@ const THEME_KEY = 'iattend_scanner_theme'
 const SOUND_KEY = 'iattend_scanner_sound'
 const TABLET_MIN = 820
 const BASE_COLS = 'id, name, state, table, companion_id'
+// Pops: la lista y las llegadas pasan por el backend (iattend--backend
+// router/lectorPop.js) con la clave del lector; la anon key ya no toca
+// side_events_guests. La clave se recuerda por Pop en este dispositivo.
+const API_LECTOR_POP = `${import.meta.env.VITE_API_URL}/api/lector/pop`
+const claveGuardadaPop = (id) => `iattend_lector_pop_${id}`
+const SONDEO_POP_MS = 5000
 
 const useIsTablet = () => {
   const [isTablet, setIsTablet] = useState(() => window.innerWidth >= TABLET_MIN)
@@ -39,6 +45,14 @@ export const ScannerPage = () => {
   const guestTable = esPop ? 'side_events_guests' : 'guests'
   const parentCol = esPop ? 'side_events_id' : 'invitation_id'
   const isTablet = useIsTablet()
+  // Clave del lector de este Pop (localStorage); `versionClave` repinta al guardarla o borrarla.
+  const [, setVersionClave] = useState(0)
+  const popClave = popId ? localStorage.getItem(claveGuardadaPop(popId)) : null
+  const guardarClavePop = (id, clave) => {
+    if (clave) localStorage.setItem(claveGuardadaPop(id), clave)
+    else localStorage.removeItem(claveGuardadaPop(id))
+    setVersionClave(v => v + 1)
+  }
 
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark')
   const [sound, setSound] = useState(() => localStorage.getItem(SOUND_KEY) !== 'off')
@@ -109,6 +123,33 @@ export const ScannerPage = () => {
     ].filter(e => !BANNED_EMAILS.includes(e.user_email)))
   }
 
+  // Pop: lista, nombre y fecha en una sola llamada al backend. `silencioso` = el sondeo.
+  const fetchPop = async (id, clave, silencioso = false) => {
+    if (!silencioso) setLoading(true)
+    try {
+      const { data } = await axios.get(`${API_LECTOR_POP}/${id}`, { headers: { 'x-clave-lector': clave } })
+      setGuests((data.invitados ?? []).map(normGuest))
+      if (data.nombre) setEventName(data.nombre)
+      setEventMeta(formatEventDate(data.hora))
+    } catch (e) {
+      if (e?.response?.status === 403) {
+        guardarClavePop(id, null)
+        setPinError('Clave incorrecta. Son los 4 caracteres que te compartimos.')
+      } else if (!silencioso) console.error('Error al obtener invitados:', e)
+    }
+    if (!silencioso) setLoading(false)
+  }
+
+  const guardarLlegadasPop = async (cambios) => {
+    try {
+      await axios.post(`${API_LECTOR_POP}/${popId}/llegadas`, { cambios }, { headers: { 'x-clave-lector': popClave } })
+      return true
+    } catch (e) {
+      console.error('Error al registrar llegada:', e)
+      return false
+    }
+  }
+
   const fetchGuests = async (id) => {
     setLoading(true)
     const run = () => supabase
@@ -136,6 +177,7 @@ export const ScannerPage = () => {
 
   const fetchEventInfo = async (id) => {
     if (esPop) {
+      // Solo para la pantalla de la clave (con clave, el nombre llega en fetchPop).
       // RPC side_event_lector: el lector corre sin sesión y la anon key ya no
       // lee la tabla side_events. Sin la RPC todavía (PGRST202), la tabla.
       let { data, error } = await supabase.rpc('side_event_lector', { p_id: Number(id) }).maybeSingle()
@@ -172,9 +214,10 @@ export const ScannerPage = () => {
     if (hasArrivedAtRef.current) patch.arrived_at = arrived ? at : null
     const prev = guestsRef.current
     setGuests(gs => gs.map(g => ids.includes(g.id) ? { ...g, ...patch } : g))
-    const { error } = await supabase.from(guestTable).update(patch).in('id', ids)
-    if (error) {
-      console.error('Error al registrar llegada:', error)
+    const ok = esPop
+      ? await guardarLlegadasPop(ids.map(id => ({ id, state: patch.state, arrived_at: patch.arrived_at ?? null })))
+      : !(await supabase.from(guestTable).update(patch).in('id', ids)).error
+    if (!ok) {
       setGuests(prev)
       showToast('No se pudo guardar. Revisa tu conexión.')
       return false
@@ -185,6 +228,11 @@ export const ScannerPage = () => {
 
   const restoreSnapshot = async (snapshot) => {
     setGuests(gs => gs.map(g => snapshot.find(s => s.id === g.id) ?? g))
+    if (esPop) {
+      await guardarLlegadasPop(snapshot.map(s => ({ id: s.id, state: s.state, arrived_at: s.arrived_at ?? null })))
+      setToast(null)
+      return
+    }
     await Promise.all(snapshot.map(s => {
       const patch = { state: s.state }
       if (hasArrivedAtRef.current) patch.arrived_at = s.arrived_at ?? null
@@ -197,6 +245,18 @@ export const ScannerPage = () => {
     if (!eventId) {
       if (!events.length) fetchEvents()
       return
+    }
+    if (esPop) {
+      // Sin clave: la pantalla de la clave (con el nombre del Pop).
+      if (!popClave) { fetchEventInfo(eventId); return }
+      fetchPop(eventId, popClave)
+      setTables([])
+      // Sin tiempo real (la anon key ya no lee la tabla): se vuelve a pedir
+      // cada 5 s y al regresar a la pestaña, por si otro lector registró a alguien.
+      const sondeo = setInterval(() => { if (!document.hidden) fetchPop(eventId, popClave, true) }, SONDEO_POP_MS)
+      const alVolver = () => { if (!document.hidden) fetchPop(eventId, popClave, true) }
+      document.addEventListener('visibilitychange', alVolver)
+      return () => { clearInterval(sondeo); document.removeEventListener('visibilitychange', alVolver) }
     }
     fetchGuests(eventId)
     fetchTables(eventId)
@@ -223,7 +283,7 @@ export const ScannerPage = () => {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [invitationId, popId])
+  }, [invitationId, popId, popClave])
 
   useEffect(() => () => {
     stopScanner()
@@ -244,11 +304,24 @@ export const ScannerPage = () => {
     setPinError('')
     setPin('')
     setEventName(selectedEvent.name ?? '')
+    if (pop) guardarClavePop(selectedEvent.id, pin.trim().toLowerCase())
     setSearchParams(pop ? { pop: String(selectedEvent.id) } : { id: String(selectedEvent.id) })
+  }
+
+  // Link directo /scanner?pop=<id> sin clave guardada: se pide aquí.
+  const handlePopLogin = () => {
+    if (pin.trim().toLowerCase() !== clavePop(popId)) {
+      setPinError('Clave incorrecta. Son los 4 caracteres que te compartimos.')
+      return
+    }
+    setPinError('')
+    setPin('')
+    guardarClavePop(popId, pin.trim().toLowerCase())
   }
 
   const handleLogout = async () => {
     await stopScanner()
+    if (popId) guardarClavePop(popId, null)
     setScannerOpen(false)
     setScanResult(null)
     setSheet(null)
@@ -526,8 +599,9 @@ export const ScannerPage = () => {
   // ───────────────────────────────────────────────────────
   return (
     <div className={styles.root} data-theme={theme}>
-      {!eventId ? (
+      {!eventId || (esPop && !popClave) ? (
         <ScannerSetup
+          fixedEvent={esPop ? { name: eventName || 'Pop' } : null}
           events={events}
           eventsLoading={eventsLoading}
           selectedEvent={selectedEvent}
@@ -535,7 +609,7 @@ export const ScannerPage = () => {
           pin={pin}
           onPin={(v) => { setPin(v); setPinError('') }}
           pinError={pinError}
-          onLogin={handleLogin}
+          onLogin={esPop ? handlePopLogin : handleLogin}
         />
       ) : (
         <ScannerList

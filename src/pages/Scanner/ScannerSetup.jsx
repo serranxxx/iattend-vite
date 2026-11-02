@@ -4,7 +4,8 @@ import { ChevronDown } from 'lucide-react'
 import { norm } from './scannerUtils'
 import styles from './Scanner.module.css'
 
-export const ScannerSetup = ({ events, eventsLoading, selectedEvent, onSelectEvent, pin, onPin, pinError, onLogin }) => {
+// `fixedEvent`: link directo de un Pop (/scanner?pop=<id>); solo falta la clave.
+export const ScannerSetup = ({ fixedEvent, events, eventsLoading, selectedEvent, onSelectEvent, pin, onPin, pinError, onLogin }) => {
   const pinRef = useRef(null)
   const activeBox = Math.min(pin.length, 3)
 
@@ -15,13 +16,19 @@ export const ScannerSetup = ({ events, eventsLoading, selectedEvent, onSelectEve
 
         <div>
           <h1 className={`${styles.display} ${styles.setupTitle}`}>Control de acceso</h1>
-          <p className={styles.setupSub}>Elige tu evento e ingresa la clave que recibiste.</p>
+          <p className={styles.setupSub}>{fixedEvent ? 'Ingresa la clave que recibiste.' : 'Elige tu evento e ingresa la clave que recibiste.'}</p>
         </div>
 
         {/* inputs ocultos para que el navegador no autollene los campos reales */}
         <input type='text' style={{ display: 'none' }} autoComplete='username' readOnly />
         <input type='password' style={{ display: 'none' }} autoComplete='current-password' readOnly />
 
+        {fixedEvent ? (
+          <div className={styles.field}>
+            <label className={styles.label}>Evento</label>
+            <p className={styles.display}>{fixedEvent.name}</p>
+          </div>
+        ) : (
         <div className={styles.field}>
           <label className={styles.label}>Evento</label>
           <div className={styles.selectWrap}>
@@ -42,6 +49,7 @@ export const ScannerSetup = ({ events, eventsLoading, selectedEvent, onSelectEve
             />
           </div>
         </div>
+        )}
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor='scanner-pin'>Clave de acceso</label>
