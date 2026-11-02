@@ -1,4 +1,4 @@
-import { agrupar, contarImagenes, desagrupar, duplicarStickers, grupoDeSeleccion, MAX_ELEMENTOS, MAX_STICKERS, quitarStickers } from '../stickersPopData'
+import { agrupar, contarElementos, contarImagenes, desagrupar, duplicarStickers, grupoDeSeleccion, MAX_ELEMENTOS, MAX_STICKERS, quitarStickers } from '../stickersPopData'
 
 /*
   Lo que necesita la barra del elemento elegido (ElementBar de la invitación)
@@ -12,7 +12,7 @@ export const barraElemento = ({ stickers, stickerSel, setStickers, setStickerSel
     const actual = stickers.find((x) => x.id === stickerSel.find((id) => grupo.some((g) => g.id === id))) ?? null
     const cambiarGrupo = (fn, o) => setStickers(stickers.map((x) => (stickerSel.includes(x.id) ? { ...x, ...fn(x) } : x)), o)
     const redondear = (v) => Math.round(v * 100) / 100
-    const noCabe = stickers.length + grupo.length > MAX_ELEMENTOS || contarImagenes(stickers) + contarImagenes(grupo) > MAX_STICKERS
+    const noCabe = contarElementos(stickers) + contarElementos(grupo) > MAX_ELEMENTOS || contarImagenes(stickers) + contarImagenes(grupo) > MAX_STICKERS
     const elementGroup = actual && {
         count: grupo.length,
         onScale: (v, o) => {

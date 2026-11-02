@@ -12,9 +12,12 @@ export const MAX_ELEMENTOS = 40
 // text, line, separator). Ver PopElemento.jsx.
 export const esImagen = (s) => !s?.kind || s.kind === 'sticker'
 export const contarImagenes = (lista) => (lista ?? []).filter(esImagen).length
+// Los trazos de Dibujar también viven en `body.stickers`, pero no cuentan
+// para el tope de elementos (solo PNG, textos, íconos, formas…).
+export const contarElementos = (lista) => (lista ?? []).filter((s) => s?.kind !== 'dibujo').length
 // ¿Cabe uno más de este tipo?
 export const cabeElemento = (lista, imagen = true) =>
-    (lista ?? []).length < MAX_ELEMENTOS && (!imagen || contarImagenes(lista) < MAX_STICKERS)
+    contarElementos(lista) < MAX_ELEMENTOS && (!imagen || contarImagenes(lista) < MAX_STICKERS)
 
 // Id de un elemento nuevo (prefijo: 's' elementos, 'd' dibujos).
 export const nuevoIdElemento = (prefijo = 's') => `${prefijo}${Date.now()}${Math.random().toString(36).slice(2, 5)}`

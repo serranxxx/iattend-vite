@@ -218,6 +218,26 @@
     padding-right: 6px !important;
 }
 
+/* La acción de "Por invitar" (Enviar invitación + marcar), compacta. */
+.accionPropia {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.accionPropia :global(.gx-btn--sm) {
+    height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.accionPropia :global(.gx-icon-btn) {
+    width: 26px;
+    height: 26px;
+}
+
 .accion {
     display: inline-grid;
     place-items: center;

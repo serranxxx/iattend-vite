@@ -868,6 +868,67 @@ export const SideCanvas = ({
         pointerEvents: readOnly ? 'none' : 'auto',
     })
 
+    // Pluma de selección: arrastrar sobre lo vacío de la pieza dibuja un
+    // recuadro y elige los trazos que toca (con ⇧/⌘ se suman a lo elegido).
+    // El recuadro va en px de la tarjeta (sin la escala del tablero).
+    const [recuadro, setRecuadro] = useState(null)
+    const recuadroRef = useRef(null)
+    const empezarRecuadro = (e) => {
+        if (e.button !== 0 && e.pointerType === 'mouse') return
+        if (e.target.closest('[data-dibujo], [data-sticker]')) return
+        const r = cardRef.current?.getBoundingClientRect()
+        if (!r) return
+        recuadroRef.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, r, k: r.width / (cardRef.current.offsetWidth || r.width), suma: conModificador(e), hecho: false }
+        try { e.currentTarget.setPointerCapture?.(e.pointerId) } catch { /* puntero ya suelto */ }
+    }
+    const moverRecuadro = (e) => {
+        const q = recuadroRef.current
+        if (!q || q.id !== e.pointerId) return
+        if (!q.hecho && Math.hypot(e.clientX - q.x0, e.clientY - q.y0) < 4) return
+        q.hecho = true
+        q.x1 = e.clientX
+        q.y1 = e.clientY
+        setRecuadro({
+            left: (Math.min(q.x0, q.x1) - q.r.left) / q.k,
+            top: (Math.min(q.y0, q.y1) - q.r.top) / q.k,
+            width: Math.abs(q.x1 - q.x0) / q.k,
+            height: Math.abs(q.y1 - q.y0) / q.k,
+        })
+    }
+    const soltarRecuadro = (e) => {
+        const q = recuadroRef.current
+        if (!q || q.id !== e.pointerId) return
+        recuadroRef.current = null
+        setRecuadro(null)
+        if (e.type !== 'pointerup') return
+        // Un arrastre muy rápido puede llegar sin movimientos en medio.
+        if (Math.hypot(e.clientX - q.x0, e.clientY - q.y0) >= 4) { q.hecho = true; q.x1 = e.clientX; q.y1 = e.clientY }
+        if (!q.hecho) return
+        // El clic que sigue al soltar no debe soltar lo que se acaba de elegir.
+        clicDeSticker.current = true
+        setTimeout(() => { clicDeSticker.current = false }, 0)
+        const [x0, x1] = [Math.min(q.x0, q.x1), Math.max(q.x0, q.x1)]
+        const [y0, y1] = [Math.min(q.y0, q.y1), Math.max(q.y0, q.y1)]
+        // Se mide el trazo dibujado (sus paths), no la caja del elemento.
+        const toca = (el) => [...el.querySelectorAll('path, polyline, line, circle')].some((n) => {
+            const b = n.getBoundingClientRect()
+            return b.right >= x0 && b.left <= x1 && b.bottom >= y0 && b.top <= y1
+        })
+        const ids = [...(cardRef.current?.querySelectorAll('[data-dibujo]') ?? [])]
+            .filter((el) => el.getClientRects().length && toca(el))
+            .map((el) => el.dataset.dibujo)
+        // Un trazo de un grupo elige a su grupo (solo sus trazos).
+        const elegidos = new Set(q.suma ? seleccion : [])
+        stickers.filter((x) => ids.includes(x.id)).forEach((x) => miembrosDe(stickers, x).forEach((id) => {
+            if (stickers.find((o) => o.id === id)?.kind === 'dibujo') elegidos.add(id)
+        }))
+        onStickerSel?.([...elegidos])
+    }
+
+    // Los trazos solo se eligen y mueven con la pluma de selección de
+    // Dibujar (`seleccionDibujos`); fuera de ahí el puntero los atraviesa.
+    const dibujoFijo = (s) => s.kind === 'dibujo' && !seleccionDibujos
+
     // Los elementos de la portada en un recuadro (lienzo de los PNG o foto).
     const pintarStickers = (lista) => lista.map(s => (esImagen(s)
                                     ? (
@@ -886,17 +947,17 @@ export const SideCanvas = ({
                                         <div
                                             key={s.id}
                                             className={`${styles.sticker} ${styles.elemento}`}
-                                            data-dibujo={s.kind === 'dibujo' || undefined}
-                                            style={{ ...estiloSticker(s), ...(editando === s.id ? { visibility: 'hidden' } : {}) }}
-                                            onPointerDown={arrastrarSticker(s)}
-                                            onClick={elegirSticker(s)}
+                                            data-dibujo={s.kind === 'dibujo' ? s.id : undefined}
+                                            style={{ ...estiloSticker(s), ...(editando === s.id ? { visibility: 'hidden' } : {}), ...(dibujoFijo(s) ? { pointerEvents: 'none' } : {}) }}
+                                            onPointerDown={dibujoFijo(s) ? undefined : arrastrarSticker(s)}
+                                            onClick={dibujoFijo(s) ? undefined : elegirSticker(s)}
                                         >
                                             <PopElemento s={s} titleFont={tituloFuente} />
                                         </div>
                                     )))
 
     // Agarraderas (contorno, manijas) de los elegidos en un recuadro.
-    const pintarAgarres = (lista) => lista.map(s => (
+    const pintarAgarres = (lista) => lista.filter((s) => !dibujoFijo(s)).map(s => (
                                     // El img (transparente) le da al div el tamaño del PNG;
                                     // el contorno punteado es del div y sí se ve.
                                     <div
@@ -1043,6 +1104,8 @@ export const SideCanvas = ({
             }
 
             {/* ── Columna de info, encima del hero ── */}
+            {recuadro && <div aria-hidden className={styles.recuadroSel} style={recuadro} />}
+
             {/* Tocar el hueco de arriba (sin texto ni PNG) elige el fondo. */}
             <div
                 ref={scrollRef}
@@ -1058,6 +1121,12 @@ export const SideCanvas = ({
                     onPointerMove: moverTrazo,
                     onPointerUp: terminarTrazo,
                     onPointerCancel: terminarTrazo,
+                } : {})}
+                {...(soloDibujo && seleccionDibujos && !readOnly ? {
+                    onPointerDown: empezarRecuadro,
+                    onPointerMove: moverRecuadro,
+                    onPointerUp: soltarRecuadro,
+                    onPointerCancel: soltarRecuadro,
                 } : {})}
                 onClick={(e) => {
                     if (soloDibujo) {

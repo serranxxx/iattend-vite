@@ -42,7 +42,8 @@ const ChipGrid = ({ levels, value, onChange }) => (
     </div>
 )
 
-export const CalculateTier = ({ drawerState, updateGuestField, owners = [] }) => {
+// `children` (opcional): el disparador; sin él, el botón "Calcular prioridad" de siempre.
+export const CalculateTier = ({ drawerState, updateGuestField, owners = [], children = null }) => {
     const { t } = useTranslation()
     const [priorityCalc, setPriorityCalc] = useState(INITIAL_STATE)
 
@@ -289,13 +290,15 @@ export const CalculateTier = ({ drawerState, updateGuestField, owners = [] }) =>
                 </div>
             )}
         >
-            <Button
-                icon={<FaStar />}
-                style={{ maxHeight: 24, color: '#6D3CFA', fontSize: '13px', fontWeight: 600 }}
-                type="text"
-            >
-                {t('calculate_tier.btn_open')}
-            </Button>
+            {children ?? (
+                <Button
+                    icon={<FaStar />}
+                    style={{ maxHeight: 24, color: '#6D3CFA', fontSize: '13px', fontWeight: 600 }}
+                    type="text"
+                >
+                    {t('calculate_tier.btn_open')}
+                </Button>
+            )}
         </Dropdown>
     )
 }

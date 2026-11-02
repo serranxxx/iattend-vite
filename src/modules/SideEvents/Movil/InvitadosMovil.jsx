@@ -11,6 +11,9 @@ import s from './InvitadosMovil.module.css'
   titular con su inicial, "+N acompañante(s) · código" y su estado; sus
   acompañantes debajo, sangrados ("con …"). Tocar a alguien abre su edición
   (el mismo cajón de escritorio). "+ Agregar" flota abajo a la derecha.
+  `accion(g)` (opcional): en lugar del estado, lo que va a la derecha de la
+  fila (SideEvents: Enviar / marcar a los que están por invitar); va fuera del
+  botón de la fila para no anidar botones.
 */
 
 const ESTADOS = ['confirmado', 'esperando', 'creado', 'rechazado']
@@ -18,7 +21,7 @@ const CHIP = { confirmado: 'chip_confirmados', esperando: 'chip_esperando', crea
 
 const inicial = (nombre) => String(nombre ?? '').trim().charAt(0).toUpperCase() || '?'
 
-export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onEditar, onDescargar, onRefrescar, refrescando = false }) => {
+export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onEditar, onDescargar, onRefrescar, refrescando = false, accion = null }) => {
     const { t } = useTranslation()
     const [busqueda, setBusqueda] = useState('')
     const [filtro, setFiltro] = useState('todos')
@@ -94,8 +97,10 @@ export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onE
 
             <ul className={s.lista}>
                 {filas.length === 0 && <li className={s.vacio}>{t('side_events.mobile_guests_empty')}</li>}
-                {filas.map(({ g, suyos, titular }) => (
-                    <li key={g.id}>
+                {filas.map(({ g, suyos, titular }) => {
+                    const propia = !titular ? accion?.(g) : null
+                    return (
+                    <li key={g.id} className={propia ? s.conAccion : undefined}>
                         <button type="button" className={s.fila} data-acompanante={titular ? true : undefined} onClick={() => onEditar?.(titular ?? g)}>
                             {titular && <CornerDownRight size={16} className={s.flecha} aria-hidden />}
                             <span className={s.avatar} aria-hidden>{inicial(g.name)}</span>
@@ -107,13 +112,17 @@ export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onE
                                         : [suyos?.length ? t('side_events.mobile_guests_companions', { count: suyos.length }) : null, g.password].filter(Boolean).join(' · ')}
                                 </span>
                             </span>
-                            <span className={s.estado} data-estado={g.state}>
-                                <span className={s.punto} aria-hidden />
-                                {etiqueta(g.state)}
-                            </span>
+                            {!propia && (
+                                <span className={s.estado} data-estado={g.state}>
+                                    <span className={s.punto} aria-hidden />
+                                    {etiqueta(g.state)}
+                                </span>
+                            )}
                         </button>
+                        {propia && <span className={s.accion}>{propia}</span>}
                     </li>
-                ))}
+                    )
+                })}
             </ul>
 
             <button type="button" className={s.agregar} onClick={onAgregar}>

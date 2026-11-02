@@ -1217,6 +1217,15 @@
     cursor: pointer;
 }
 
+/* El recuadro de la pluma de selección (arrastrar sobre lo vacío). */
+.recuadroSel {
+    position: absolute;
+    z-index: 60;
+    border: 1px solid #3B82F6;
+    background: rgba(59, 130, 246, 0.16);
+    pointer-events: none;
+}
+
 /* Ajustar la foto de fondo (SideCanvas `ajustarFoto`): la capa toma el
    puntero sobre toda la pantalla de la pieza; tercios para encuadrar. */
 .capaAjuste {

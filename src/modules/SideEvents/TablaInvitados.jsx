@@ -18,6 +18,10 @@ import s from './TablaInvitados.module.css'
   `formulario` (solo si el Pop tiene uno activo): { porInvitado: Map(guestId →
   respuesta del backend: estado 'completo' | 'pendiente', folio), onAbrir(g) }
   agrega la columna Formulario con un botón que abre sus respuestas.
+
+  `accion(g)` (opcional): lo que va antes de copiar link / abrir en la
+  columna de acciones; SideEvents pasa la de "Por invitar" (Enviar
+  invitación en un Pop, marcar a mano), la misma de la vista Pasos.
 */
 
 const ESTADOS = {
@@ -36,7 +40,7 @@ const fechaCorta = (iso) => {
     return d.isValid() ? d.format('DD MMM · HH:mm') : null
 }
 
-export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink, onOpen, formulario = null }) => {
+export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink, onOpen, formulario = null, accion = null }) => {
     const { t } = useTranslation()
     const [orden, setOrden] = useState(null) // { key, dir: 1 | -1 }
 
@@ -137,7 +141,9 @@ export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink,
         return texto ? <span className={s.fecha}>{texto}</span> : <span className={s.vacio}>—</span>
     }
 
-    const anchoTotal = COLUMNAS.reduce((a, c) => a + c.ancho, 0) + 40 + 76
+    // Con acción ("Enviar invitación" + marcar) la columna crece para que quepa.
+    const anchoAcciones = accion ? 250 : 76
+    const anchoTotal = COLUMNAS.reduce((a, c) => a + c.ancho, 0) + 40 + anchoAcciones
 
     return (
         <div className={s.marco}>
@@ -146,7 +152,7 @@ export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink,
                     <colgroup>
                         <col style={{ width: 40 }} />
                         {COLUMNAS.map((c) => <col key={c.key} style={{ width: c.ancho }} />)}
-                        <col style={{ width: 76 }} />
+                        <col style={{ width: anchoAcciones }} />
                     </colgroup>
                     <thead>
                         <tr>
@@ -204,6 +210,7 @@ export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink,
                                     <td>{celdaFecha(g.arrived_at)}</td>
                                     {formulario && <td>{celdaFormulario(g)}</td>}
                                     <td className={s.acciones}>
+                                        {accion && <span className={s.accionPropia} onDoubleClick={(ev) => ev.stopPropagation()}>{accion(g)}</span>}
                                         <button type='button' className={s.accion} title={t('guests.card_copy_link')} onClick={() => onCopyLink?.(g)}>
                                             <Link2 size={13} />
                                         </button>

@@ -171,6 +171,37 @@
 }
 
 /* Acompañante: sangrado, con flecha, sin línea entre él y su titular. */
+/* Fila con acción propia (Enviar / marcar): la acción va encima, a la
+   derecha, fuera del botón de la fila. */
+.conAccion {
+    position: relative;
+}
+
+.conAccion > .fila {
+    padding-right: 128px;
+}
+
+.accion {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transform: translateY(-50%);
+}
+
+.accion :global(.gx-btn--sm) {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+.accion :global(.gx-icon-btn) {
+    width: 36px;
+    height: 36px;
+}
+
 .fila[data-acompanante] {
     padding-left: 18px;
     gap: 10px;

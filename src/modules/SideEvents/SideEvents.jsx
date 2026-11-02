@@ -983,7 +983,8 @@ export const SideEvents = () => {
 
     // Acción del tab "Por invitar": marcar como invitado a mano. El envío por
     // WhatsApp de un side event es siempre por lote (renderBulkActionsBar).
-    const renderCreatedAction = (record) => {
+    // `corto`: "Enviar" en vez de "Enviar invitación" (lista del celular).
+    const renderCreatedAction = (record, { corto = false } = {}) => {
         if (record.companion_id !== null && record.companion_id !== undefined) return null
         if (SHOW_BULK_SEND && sendMode) return isSendableGuest(record) ? renderBulkCheck(record) : null
 
@@ -1026,7 +1027,7 @@ export const SideEvents = () => {
                                 .catch(() => message.error(t('side_events.pop_send_error')))
                         }}
                     >
-                        {t('guests.btn_send_invitation')}
+                        {t(corto ? 'guests.btn_send' : 'guests.btn_send_invitation')}
                     </button>
                 </Tooltip>
                 {marcar}
@@ -3841,6 +3842,9 @@ export const SideEvents = () => {
                 dispatchMap={dispatchMap}
                 onCopyLink={(g) => handleShare(sideLinkFor(g))}
                 onOpen={openGuestDrawer}
+                // Solo a los que agregó el organizador y aún no invita: la
+                // misma acción de "Por invitar" de la vista Pasos.
+                accion={(g) => (g.state === 'creado' ? renderCreatedAction(g) : null)}
                 formulario={formPop ? {
                     // guestId llega como texto del backend: la llave es String(id).
                     porInvitado: new Map((respuestasForm ?? []).map((r) => [String(r.guestId), r])),
@@ -4577,6 +4581,8 @@ export const SideEvents = () => {
                             creditos={esPop ? <CreditController id={popId} pop variante="envios" placement="bottomRight" /> : null}
                             onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                             onEditar={openGuestDrawer}
+                            // Por invitar (los que agregó el organizador): la misma acción de Pasos.
+                            accion={(g) => (g.state === 'creado' ? renderCreatedAction(g, { corto: true }) : null)}
                             onDescargar={descargarTablaCompacta}
                             onRefrescar={refrescarTabla}
                             refrescando={refrescando}

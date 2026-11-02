@@ -7,7 +7,7 @@ import SideEventHost from '../../../components/Host/SideEventHost'
 import { SongBar } from '../../Invitation/Build/PageSections/SongBar'
 import { EditorShell } from '../../Editor/EditorShell'
 import { fechasDelEvento } from '../../../helpers/assets/eventDateTime'
-import { agrupar, contarImagenes, desagrupar, esImagen, lienzoCover, MAX_ELEMENTOS, MAX_STICKERS, quitarStickers } from '../stickersPopData'
+import { agrupar, contarElementos, contarImagenes, desagrupar, esImagen, lienzoCover, MAX_ELEMENTOS, MAX_STICKERS, quitarStickers } from '../stickersPopData'
 import { ElementsPanel } from '../../Invitation/Build/PageSections/LayerPanels'
 import { stickerItem } from '../../Invitation/Build/PageSections/layerItems'
 import { agregarElemento } from './agregarElemento'
@@ -181,7 +181,15 @@ export const SideWorkspace = ({
     const [dibujoEn, setDibujoEn] = useState('todo')
     const dibujoEnValido = mediaFondo.includes(dibujoEn) ? dibujoEn : 'todo'
     const modoDibujo = esPop && !live && toolOpen && activeTool === 'draw'
-    useEffect(() => { if (modoDibujo) { setSection(null); setStickerSel([]) } }, [modoDibujo])
+    // Trazos elegidos en Capas: fuera de Dibujar no se editan, así que abren
+    // Dibujar con la pluma de selección y ya elegidos (los efectos de entrada
+    // los leen de aquí en lugar de limpiar).
+    const selAlEntrar = useRef(null)
+    useEffect(() => {
+        if (!modoDibujo) return
+        setSection(null)
+        setStickerSel(selAlEntrar.current ?? [])
+    }, [modoDibujo])
     // Dibujar siempre es a pantalla completa (ya no hay modo dibujo en el
     // panel lateral): sin riel, panel, Capas ni dock, la pieza completa a lo
     // largo en un tablero con gestos como Freeform (LienzoInmersivo) y la
@@ -192,10 +200,35 @@ export const SideWorkspace = ({
     // Pluma de selección (como el lazo de Freeform): solo con ella se eligen
     // y mueven los trazos; con un pincel de dibujo nunca.
     const [seleccionando, setSeleccionando] = useState(false)
-    useEffect(() => { if (modoDibujo) { setPincelActivo(true); setSeleccionando(false) } }, [modoDibujo])
+    useEffect(() => {
+        if (!modoDibujo) return
+        setPincelActivo(true)
+        setSeleccionando(Boolean(selAlEntrar.current))
+        selAlEntrar.current = null
+    }, [modoDibujo])
+    // Fuera de Dibujar no queda ningún trazo elegido.
+    useEffect(() => {
+        if (modoDibujo) return
+        const trazosIds = new Set(stickers.filter((x) => x.kind === 'dibujo').map((x) => x.id))
+        if (stickerSel.some((id) => trazosIds.has(id))) setStickerSel(stickerSel.filter((id) => !trazosIds.has(id)))
+    }, [modoDibujo])
+    const elegirEnCapas = (ids) => {
+        const trazosIds = new Set(stickers.filter((x) => x.kind === 'dibujo').map((x) => x.id))
+        if (esPop && ids.length && ids.every((id) => trazosIds.has(id))) {
+            selAlEntrar.current = ids
+            openTool('draw')
+            return
+        }
+        // Un grupo mixto (trazos + otros) se elige completo para moverse junto;
+        // sus trazos no llevan agarradera (SideCanvas `dibujoFijo`).
+        setStickerSel(ids)
+        setSection('stickers')
+    }
     const tomarPincel = () => { setPincelActivo(true); setSeleccionando(false); setStickerSel([]) }
     const inmersivo = modoDibujo
-    const deshacerTrazo = () => { if (!trazos.length) return; onUndo?.(); setTrazos((x) => x.slice(0, -1)) }
+    // Deshacer en Dibujar = el del editor (también mover / borrar trazos con
+    // la pluma de selección); solo se descuenta de `trazos` si había.
+    const deshacerTrazo = () => { onUndo?.(); setTrazos((x) => x.slice(0, -1)) }
     const borrarTodo = () => {
         const ids = trazos.filter((x) => x.id).map((x) => x.id)
         if (ids.length) setStickers(stickers.filter((x) => !ids.includes(x.id)))
@@ -254,7 +287,7 @@ export const SideWorkspace = ({
         paste: (clip) => {
             const lista = Array.isArray(body.stickers) ? body.stickers : []
             const imagenes = clip.items.filter(esImagen).length
-            if (lista.length + clip.items.length > MAX_ELEMENTOS || contarImagenes(lista) + imagenes > MAX_STICKERS) {
+            if (contarElementos(lista) + contarElementos(clip.items) > MAX_ELEMENTOS || contarImagenes(lista) + imagenes > MAX_STICKERS) {
                 message.warning(t('side_events.stickers_paste_max', { max: imagenes ? MAX_STICKERS : MAX_ELEMENTOS }))
                 return
             }
@@ -426,7 +459,7 @@ export const SideWorkspace = ({
                 <SideLayers
                     stickers={stickers}
                     selected={stickerSel}
-                    onSelect={(ids) => { setStickerSel(ids); setSection('stickers') }}
+                    onSelect={elegirEnCapas}
                     onChange={setStickers}
                     section={section}
                     onZone={selectZone}
@@ -460,7 +493,7 @@ export const SideWorkspace = ({
                     onEliminar={seleccionando && stickerSel.length ? () => { setStickers(quitarStickers(stickers, stickerSel)); setStickerSel([]) } : undefined}
                     temaColor={body.color}
                     onDeshacer={deshacerTrazo}
-                    puedeDeshacer={trazos.length > 0}
+                    puedeDeshacer={Boolean(canUndo)}
                     onRehacer={() => { onRedo?.(); setTrazos((x) => [...x, { tipo: 'rehacer' }]) }}
                     puedeRehacer={Boolean(canRedo)}
                     onOtroColor={() => pickColor('draw')}

@@ -1,28 +1,24 @@
-import {
-    App,
-    Button,
-    ConfigProvider,
-    Divider,
-    Drawer,
-    Grid,
-    Input,
-    Popconfirm,
-    Row,
-    Select,
-    Space,
-    theme,
-    Tooltip,
-} from 'antd'
+import { App, Drawer, Grid, Popconfirm, Select } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import './guests-crud.css'
+import { Check, ChevronDown, Minus, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import s from './GuestsCRUD.module.css'
 import { supabase } from '../../lib/supabase'
-import { FaCheck } from 'react-icons/fa'
 import { generateSimpleId } from '../../helpers/assets/functions'
 import { PHONE_CODE_OPTIONS, splitPhoneNumber, buildPhoneNumberSafe } from '../../helpers/assets/phoneCodes'
-import { IoMdAdd } from 'react-icons/io'
-import { FiMinus } from 'react-icons/fi'
 import { CalculateTier } from './CalculateTier/CalculateTier'
+
+/*
+  Panel para agregar o editar un invitado y sus acompañantes (handoff "Nuevo
+  invitado"): flota a la derecha (Drawer de antd sin encabezado, 16 px de la
+  orilla), lo esencial primero (nombre y teléfono), prioridad en un segmentado
+  con "Calcular" adentro, etiqueta / lado / categoría como chips y notas
+  colapsadas. Acompañantes compactos con un −/+; su etiqueta, lado y
+  categoría se heredan del titular (lila) hasta que se cambian (negro). En un
+  acompañante, `undefined` en tag / side / type = hereda; `null` = ninguno a
+  propósito. La prioridad siempre es la del titular. Sin X: se cierra con
+  Cancelar, un clic fuera o Esc.
+*/
 
 const { useBreakpoint } = Grid
 
@@ -54,6 +50,13 @@ const createPerson = (overrides = {}) => ({
 const pruneUndefined = (obj) =>
     Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined))
 
+// Lo que un acompañante hereda del titular mientras no lo cambie.
+const HEREDABLES = ['tag', 'side', 'type']
+const efectivo = (c, host, k) => (c?.[k] !== undefined ? c[k] : host?.[k] ?? null)
+const heredaTodo = { tag: undefined, side: undefined, type: undefined }
+// Teléfono a medias (se valida cuando se escribió algo).
+const telefonoIncompleto = (p) => (p?.phone_number?.length ?? 0) > 0 && p.phone_number.length < 10
+
 export const GuestsCRUD = ({
     rowData,
     invitationID,
@@ -62,8 +65,7 @@ export const GuestsCRUD = ({
     drawerState,
     isSideEvent,
     sideID,
-    // Editor móvil de un Pop (modo story, fondo oscuro): el panel
-    // también va oscuro y sin "Calcular prioridad".
+    // Editor móvil viejo de un Pop (modo story): sin "Calcular prioridad".
     oscuro = false,
 }) => {
 
@@ -75,7 +77,8 @@ export const GuestsCRUD = ({
     const PARENT_ID = isSideEvent ? sideID : invitationID
 
     const screens = useBreakpoint()
-    const inputRef = useRef(null)
+    const nombreRef = useRef(null)
+    const nuevaRef = useRef(null)
 
     const CATEGORY_OPTIONS = useMemo(() => [
         { label: t('guests.type_female'), value: 'female' },
@@ -92,12 +95,17 @@ export const GuestsCRUD = ({
     ], [t])
 
     const [newTag, setNewTag] = useState(null)
+    const [creandoTag, setCreandoTag] = useState(false)
+    const [notasAbiertas, setNotasAbiertas] = useState(false)
+    const [abierto, setAbierto] = useState(null) // índice del acompañante expandido
     const [localTags, setLocalTags] = useState([])
     const [owners, setOwners] = useState([])
     const [guestData, setGuestData] = useState(null)
     const [companionsData, setCompanionsData] = useState([])
 
     const isEditing = !!drawerState.onEditGuest
+    const guardados = isEditing ? (drawerState.companions?.length ?? 0) : 0
+    const puedeQuitar = companionsData.length > guardados
 
     const handleClose = () => {
         setDrawerState({
@@ -125,20 +133,15 @@ export const GuestsCRUD = ({
         const isAdd = action === 'add'
 
         if (isAdd) {
-            setCompanionsData((prev) => [
-                ...prev,
-                createPerson({
-                    tier: guestData?.tier,
-                    tag: guestData?.tag,
-                    side: guestData?.side,
-                }),
-            ])
+            setCompanionsData((prev) => [...prev, createPerson(heredaTodo)])
             return
         }
 
-        if (companionsData?.length > 0) {
-            setCompanionsData((prev) => prev.slice(0, -1))
-        }
+        // Editando, el − solo quita los que aún no se guardan; los guardados
+        // se eliminan desde su tarjeta.
+        if (!puedeQuitar) return
+        setCompanionsData((prev) => prev.slice(0, -1))
+        setAbierto((a) => (a === companionsData.length - 1 ? null : a))
     }
 
     const getTags = async () => {
@@ -189,6 +192,9 @@ export const GuestsCRUD = ({
 
         setLocalTags(updatedData?.[0]?.tags || [])
         setNewTag(null)
+        setCreandoTag(false)
+        // La recién creada queda elegida.
+        updateGuestField('tag', newTag.trim())
     }
 
     const handleCompanions = (id) => {
@@ -247,10 +253,10 @@ export const GuestsCRUD = ({
                     password: generateSimpleId(),
                     phone_number: buildPhoneNumberSafe(c.phone_code, c.phone_number),
                     name: c.name?.trim() || t('guests.crud_companion_of_name', { name: guestName }),
-                    tier: c.tier ?? guestData.tier ?? null,
-                    tag: c.tag ?? guestData.tag ?? null,
-                    side: c.side ?? guestData.side ?? null,
-                    type: c.type ?? guestData.type ?? null,
+                    tier: guestData.tier ?? null,
+                    tag: efectivo(c, guestData, 'tag'),
+                    side: efectivo(c, guestData, 'side'),
+                    type: efectivo(c, guestData, 'type'),
                     table: null,
                     state: 'creado',
                     last_action: 'creado',
@@ -280,8 +286,12 @@ export const GuestsCRUD = ({
 
             message.success(t('guests.crud_msg_added'))
             refreshPage()
+            // El panel se queda abierto y limpio para seguir agregando.
             setGuestData(createPerson())
             setCompanionsData([])
+            setNotasAbiertas(false)
+            setAbierto(null)
+            setTimeout(() => nombreRef.current?.focus(), 0)
         } catch (err) {
             console.error('Fallo general al guardar cambios:', err)
         }
@@ -341,10 +351,10 @@ export const GuestsCRUD = ({
                     const patch = pruneUndefined({
                         phone_number: cPhone || undefined,
                         name: (edit.name ?? '').trim(),
-                        tier: edit.tier || null,
-                        tag: edit.tag || null,
-                        type: edit.type || null,
-                        side: edit.side || null,
+                        tier: guestData.tier || null,
+                        tag: efectivo(edit, guestData, 'tag'),
+                        type: efectivo(edit, guestData, 'type'),
+                        side: efectivo(edit, guestData, 'side'),
                         state: edit.state,
                         notes: edit.notes,
                         last_action: dbComps[i].state,
@@ -372,12 +382,12 @@ export const GuestsCRUD = ({
                         [FOREIGN_KEY]: PARENT_ID,
                         password: generateSimpleId(),
                         phone_number: cPhone || '',
-                        name: (edit.name ?? t('guests.crud_companion_default')).trim(),
-                        tier: edit.tier ?? guestData.tier ?? null,
-                        tag: edit.tag ?? guestData.tag ?? null,
+                        name: edit.name?.trim() || t('guests.crud_companion_of_name', { name: guestData.name?.trim() || '' }),
+                        tier: guestData.tier ?? null,
+                        tag: efectivo(edit, guestData, 'tag'),
                         table: null,
-                        type: edit.type ?? guestData.type ?? null,
-                        side: edit.side ?? guestData.side ?? null,
+                        type: efectivo(edit, guestData, 'type'),
+                        side: efectivo(edit, guestData, 'side'),
                         state: 'creado',
                         notes: edit.notes ?? null,
                         meal: null,
@@ -486,11 +496,14 @@ export const GuestsCRUD = ({
         if (!drawerState.visible) return
 
         setNewTag(null)
+        setCreandoTag(false)
+        setAbierto(null)
+        setNotasAbiertas(Boolean(drawerState.currentGuest?.notes))
         getTags()
 
         if (drawerState.currentGuest) {
             const guest = drawerState.currentGuest
-            const { code, number } = splitPhoneNumber(guest.phone_number)
+            const { code, number } = splitPhoneNumber(guest.phone_number ?? '')
 
             setGuestData(
                 createPerson({
@@ -506,17 +519,20 @@ export const GuestsCRUD = ({
                 })
             )
 
+            // Lo que coincide con el titular se toma como heredado.
+            const host = drawerState.currentGuest
+            const propio = (c, k) => ((c[k] ?? null) === (host[k] ?? null) ? undefined : c[k] ?? null)
             setCompanionsData(
                 (drawerState?.companions || []).map((guest) => {
-                    const { code, number } = splitPhoneNumber(guest.phone_number)
+                    const { code, number } = splitPhoneNumber(guest.phone_number ?? '')
                     return createPerson({
                         phone_code: code || '+52',
                         phone_number: number,
                         name: guest.name || '',
                         tier: guest.tier || null,
-                        tag: guest.tag || null,
-                        side: guest.side || null,
-                        type: guest.type || null,
+                        tag: propio(guest, 'tag'),
+                        side: propio(guest, 'side'),
+                        type: propio(guest, 'type'),
                         notes: guest.notes || '',
                         state: guest.state || null,
                     })
@@ -528,445 +544,396 @@ export const GuestsCRUD = ({
         }
     }, [drawerState])
 
-    const tagOptions = localTags
-        .filter((i) => i !== null)
-        .map((item) => ({ label: item, value: item }))
 
-    const sideOptions = owners.map((owner) => ({ label: owner, value: owner }))
+    const tagOptions = localTags.filter((i) => i !== null)
+    const sideOptions = owners.filter(Boolean)
+    const stateOptions = STATE_OPTIONS
 
-    const renderPhoneField = (data, onChange) => {
-        const hasError = data.phone_number.length > 0 && data.phone_number.length < 10
+    const titular = isEditing && drawerState.currentGuest?.companion_id && !drawerState.currentGuest?.has_companion
+        ? rowData?.find((c) => c.id === Number(drawerState.currentGuest.companion_id))
+        : null
+    const abrirTitular = () => setDrawerState({
+        currentGuest: titular,
+        onEditGuest: true,
+        companions: handleCompanions(titular.id),
+        visible: true,
+    })
 
+    if (!guestData) return null
+
+    const nombre = guestData.name?.trim() ?? ''
+    const primerNombre = nombre.split(' ')[0]
+    const nombreHost = primerNombre || t('guests.crud_the_guest')
+    const total = 1 + companionsData.length
+    const tituloCabeza = nombre
+        ? `${nombre}${companionsData.length ? ` + ${companionsData.length}` : ''}`
+        : t('guests.crud_no_name')
+    const bloqueado = !nombre || telefonoIncompleto(guestData) || companionsData.some(telefonoIncompleto)
+    const enviar = () => {
+        if (bloqueado) return
+        if (isEditing) onSaveChanges()
+        else onAddingGuest()
+    }
+
+    // Chips de una sola opción: tocar la elegida la suelta.
+    const chips = (opciones, valor, onPick, { chico = false, heredado = false } = {}) => opciones.map((o) => {
+        const on = valor === o.value
         return (
-            <Space.Compact style={{ width: '100%' }}>
+            <button
+                key={o.value}
+                type="button"
+                className={chico ? s.chipChico : s.chip}
+                data-on={on || undefined}
+                data-heredado={(on && heredado) || undefined}
+                aria-pressed={on}
+                onClick={() => onPick(on ? null : o.value)}
+            >
+                {o.label}
+            </button>
+        )
+    })
+    const opcionesTag = tagOptions.map((v) => ({ value: v, label: v }))
+    const opcionesLado = sideOptions.map((v) => ({ value: v, label: v }))
+    const etiquetaDe = (k, v) => (k === 'type' ? CATEGORY_OPTIONS.find((o) => o.value === v)?.label ?? v : v)
+
+    const telefono = (data, onChange, { corto = false } = {}) => {
+        const mal = telefonoIncompleto(data)
+        if (corto) {
+            return (
+                <input
+                    type="tel"
+                    inputMode="numeric"
+                    className={s.inputChico}
+                    data-error={mal || undefined}
+                    placeholder={t('guests.crud_phone_short')}
+                    value={data.phone_number}
+                    onChange={(e) => onChange('phone_number', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                />
+            )
+        }
+        return (
+            <div className={s.telefono} data-error={mal || undefined}>
                 <Select
+                    variant="borderless"
+                    className={s.lada}
+                    popupMatchSelectWidth={false}
                     value={data.phone_code}
                     onChange={(value) => onChange('phone_code', value)}
-                    style={{ width: '100px' }}
                     options={PHONE_CODE_OPTIONS}
+                    suffixIcon={<ChevronDown size={14} />}
                 />
-                <Input
+                <input
                     type="tel"
-                    placeholder={t('guests.crud_phone_placeholder')}
-                    className="gc-input-text"
-                    style={{
-                        borderRadius: '0px 99px 99px 0px',
-                        color: hasError ? 'red' : undefined,
-                        border: hasError ? '1px solid red' : undefined,
-                    }}
+                    inputMode="numeric"
+                    placeholder={t('guests.crud_phone_whatsapp')}
                     value={data.phone_number}
-                    onChange={(e) =>
-                        onChange('phone_number', e.target.value.replace(/\D/g, '').slice(0, 10))
-                    }
-                    maxLength={10}
+                    onChange={(e) => onChange('phone_number', e.target.value.replace(/\D/g, '').slice(0, 10))}
                 />
-            </Space.Compact>
+            </div>
         )
     }
 
-    const renderTagSelect = (value, onChange) => (
-        <Select
-            style={{ width: '100%' }}
-            placeholder={t('guests.crud_tag_select')}
-            value={value}
-            onChange={(val) => onChange('tag', val)}
-            dropdownRender={(menu) => (
-                <>
-                    {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <Space style={{ padding: '0 8px 4px' }}>
-                        <Input
-                            placeholder={t('guests.crud_tag_new')}
-                            ref={inputRef}
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            onKeyDown={(e) => e.stopPropagation()}
-                        />
-                        <Button icon={<IoMdAdd />} onClick={addTagsToInvitation}>
-                            {t('guests.crud_tag_add')}
-                        </Button>
-                    </Space>
-                </>
-            )}
-            options={tagOptions}
-        />
+    const seccion = (titulo, contenido) => (
+        <div className={s.seccion}>
+            <div className={s.etiqueta}>{titulo}</div>
+            {contenido}
+        </div>
     )
 
-    const renderSelectField = (value, onChange, options, placeholder) => (
-        <Select
-            value={value}
-            placeholder={placeholder}
-            onChange={onChange}
-            style={{ width: '100%' }}
-            options={options}
-        />
-    )
+    const resumenAcompanante = (c) => {
+        const propio = HEREDABLES.some((k) => c[k] !== undefined)
+        const valores = HEREDABLES
+            .map((k) => ({ k, v: efectivo(c, guestData, k) }))
+            .filter(({ v }) => v)
+        const estado = propio
+            ? t('guests.crud_custom')
+            : valores.length ? t('guests.crud_inherited', { name: nombreHost }) : t('guests.crud_none')
+        return { propio, valores, estado }
+    }
 
-    const renderNotesField = (value, onChange, minRows = 2, maxRows = 3) => (
-        <Input.TextArea
-            placeholder={t('guests.crud_notes_placeholder')}
-            value={value}
-            onChange={(e) => onChange('notes', e.target.value)}
-            autoSize={{ minRows, maxRows }}
-            style={{ borderRadius: '8px' }}
-        />
-    )
-
-    const panel = (
-        <Drawer
-            placement="right"
-            className="help-drawer"
-            rootClassName={oscuro ? 'gc-oscuro' : undefined}
-            closable
-            onClose={handleClose}
-            open={drawerState.visible}
-            // Arriba de la barra del editor de side events (z-index 1200, ver
-            // SideEventEditor.module.css): si no, su "Guardar" tapa el de este
-            // panel y el invitado nunca se guarda.
-            zIndex={1300}
-            width={screens.xs ? '100%' : '40%'}
-            styles={{ body: { padding: '12px' } }}
-            extra={
-                <Row style={{ gap: '12px' }}>
-                    {isEditing ? (
-                        <Button
-                            icon={<FaCheck style={{ marginTop: '2px' }} />}
-                            onClick={onSaveChanges}
-                            className="primarybutton--active"
-                            style={{ borderRadius: '99px' }}
-                        >
-                            {t('guests.crud_btn_save')}
-                        </Button>
-                    ) : (
-                        <Button
-                            icon={<IoMdAdd style={{ marginTop: '2px' }} />}
-                            onClick={onAddingGuest}
-                            className="primarybutton--active"
-                            style={{ borderRadius: '99px' }}
-                        >
-                            {t('guests.crud_btn_add')}
-                        </Button>
-                    )}
-                </Row>
-            }
-            title={isEditing ? t('guests.crud_title_edit') : t('guests.crud_title_new')}
-            style={{ zIndex: 99 }}
-        >
-            {guestData && (
-                <div className="new-guest-container">
-                    <div className="new-guest-form-container" style={{ alignItems: 'center' }}>
-                        <div className="add_guest_title_cont">
-                            <span className="gc-content-label">
-                                <b>{t('guests.crud_section_data')}</b>
-                            </span>
-                        </div>
-
-                        <div className="guest_form_row">
-                            <div className="guest_form_col">
-                                <span className="gc-content-label">{t('guests.crud_label_name')}</span>
-                                <Input
-                                    placeholder={t('guests.crud_label_name')}
-                                    value={guestData.name}
-                                    onChange={(e) => updateGuestField('name', e.target.value)}
-                                    className="gc-input-text"
-                                />
-                            </div>
-
-                            <div className="guest_form_col">
-                                <span className="gc-content-label">{t('guests.crud_label_contact')}</span>
-                                {renderPhoneField(guestData, updateGuestField)}
-                            </div>
-                        </div>
-
-                        <div className="guest_form_row">
-                            <div className="guest_form_col">
-                                <span className="gc-content-label">{t('guests.crud_label_tag')}</span>
-                                {renderTagSelect(guestData.tag, updateGuestField)}
-                            </div>
-
-                            <div className="guest_form_col">
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        width: '100%',
-                                    }}
-                                >
-                                    <span className="gc-content-label">{t('guests.crud_label_priority')}</span>
-                                    {!oscuro && <CalculateTier drawerState={drawerState} updateGuestField={updateGuestField} owners={owners} />}
-                                </div>
-
-                                {renderSelectField(
-                                    guestData.tier,
-                                    (value) => updateGuestField('tier', value),
-                                    TIER_OPTIONS,
-                                    t('guests.crud_priority_placeholder')
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="guest_form_row">
-                            <div className="guest_form_col">
-                                <span className="gc-content-label">{t('guests.crud_label_category')}</span>
-                                {renderSelectField(
-                                    guestData.type,
-                                    (value) => updateGuestField('type', value),
-                                    CATEGORY_OPTIONS,
-                                    t('guests.crud_category_placeholder')
-                                )}
-                            </div>
-
-                            {/* Lado: solo si la invitación tiene anfitriones (owners) con
-                                los que elegir; un Pop no tiene. */}
-                            {sideOptions.length > 0 && (
-                                <div className="guest_form_col">
-                                    <span className="gc-content-label">{t('guests.crud_label_side')}</span>
-                                    {renderSelectField(
-                                        guestData.side,
-                                        (value) => updateGuestField('side', value),
-                                        sideOptions,
-                                        t('guests.crud_side_placeholder')
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {isEditing && (
-                            <div className="guest_form_row">
-                                <div className="guest_form_col">
-                                    <span className="gc-content-label">{t('guests.crud_label_state')}</span>
-                                    {renderSelectField(
-                                        guestData.state,
-                                        (value) => updateGuestField('state', value),
-                                        STATE_OPTIONS,
-                                        t('guests.crud_state_placeholder')
-                                    )}
+    const tarjetaAcompanante = (c, i) => {
+        const open = abierto === i
+        const { propio, valores, estado } = resumenAcompanante(c)
+        const set = (k, v) => updateCompanionField(i, k, v)
+        const guardado = isEditing && Boolean(drawerState.companions?.[i]?.id)
+        const grupo = (k, titulo, opciones) => opciones.length > 0 && (
+            <div className={s.subSeccion}>
+                <div className={s.etiquetaChica}>{titulo}</div>
+                <div className={s.chips}>
+                    {chips(opciones, efectivo(c, guestData, k), (v) => set(k, v), { chico: true, heredado: c[k] === undefined })}
+                </div>
+            </div>
+        )
+        return (
+            <div key={i} className={s.acompanante} data-abierto={open || undefined}>
+                <div className={s.filaAcompanante}>
+                    <span className={s.numero}>{i + 1}</span>
+                    <input
+                        className={s.inputChico}
+                        style={{ flex: 1 }}
+                        placeholder={t('guests.crud_companion_n', { n: i + 1 })}
+                        value={c.name}
+                        onChange={(e) => set('name', e.target.value)}
+                    />
+                    {telefono(c, (k, v) => set(k, v), { corto: true })}
+                </div>
+                <button type="button" className={s.resumen} onClick={() => setAbierto(open ? null : i)} aria-expanded={open}>
+                    {valores.map(({ k, v }) => (
+                        <span key={k} className={s.chipResumen} data-propio={propio || undefined}>{etiquetaDe(k, v)}</span>
+                    ))}
+                    <span className={s.estadoHerencia}>{estado}</span>
+                    <ChevronDown size={14} className={s.flecha} data-abierto={open || undefined} />
+                </button>
+                {open && (
+                    <div className={s.detalle}>
+                        {invitationID && grupo('tag', t('guests.crud_label_tag'), opcionesTag)}
+                        {grupo('side', t('guests.crud_label_side'), opcionesLado)}
+                        {grupo('type', t('guests.crud_label_category'), CATEGORY_OPTIONS)}
+                        {isEditing && guardado && (
+                            <div className={s.subSeccion}>
+                                <div className={s.etiquetaChica}>{t('guests.crud_label_state')}</div>
+                                <div className={s.chips}>
+                                    {chips(stateOptions, c.state, (v) => v && set('state', v), { chico: true })}
                                 </div>
                             </div>
                         )}
-
-                        <div className="guest_form_col" style={{ width: '100%' }}>
-                            <span className="gc-content-label">Notas</span>
-                            {renderNotesField(guestData.notes, updateGuestField, 3, 5)}
+                        <div className={s.subSeccion}>
+                            <div className={s.etiquetaChica}>{t('guests.crud_note_label')}</div>
+                            <textarea
+                                className={s.notaChica}
+                                placeholder={t('guests.crud_note_placeholder')}
+                                value={c.notes ?? ''}
+                                onChange={(e) => set('notes', e.target.value)}
+                            />
                         </div>
-
-                        {isEditing && (
-                            <Tooltip title={`Eliminar ${guestData.name}`}>
+                        <div className={s.accionesDetalle}>
+                            {propio && (
+                                <button
+                                    type="button"
+                                    className={s.enlace}
+                                    onClick={() => setCompanionsData((prev) => prev.map((x, j) => (j === i ? { ...x, ...heredaTodo } : x)))}
+                                >
+                                    {t('guests.crud_reinherit', { name: nombreHost })}
+                                </button>
+                            )}
+                            {guardado && (
                                 <Popconfirm
                                     title={t('guests.crud_delete_title')}
-                                    description={
-                                        companionsData?.length > 0
-                                            ? t('guests.crud_delete_desc_companions', { name: guestData.name })
-                                            : t('guests.crud_delete_desc', { name: guestData?.name })
-                                    }
-                                    onConfirm={() => deleteGuestWithCompanions(drawerState.currentGuest.id)}
+                                    description={t('guests.crud_delete_desc', { name: c.name })}
+                                    onConfirm={() => { setAbierto(null); deleteCompanionAtIndex(i) }}
                                     okText={t('guests.crud_btn_delete')}
                                     cancelText={t('guests.btn_cancel')}
                                 >
-                                    <Button className="primarybutton">{t('guests.crud_btn_delete')}</Button>
+                                    <button type="button" className={s.enlacePeligro}>
+                                        <Trash2 size={13} />{t('guests.crud_remove_companion')}
+                                    </button>
                                 </Popconfirm>
-                            </Tooltip>
-                        )}
-                    </div>
-
-                    {isEditing &&
-                        !drawerState.currentGuest.has_companion &&
-                        drawerState.currentGuest.companion_id ? (
-                        <span style={{ fontSize: '16px' }}>
-                            <b>{drawerState.currentGuest.name} </b>
-                            {t('guests.crud_companion_of')}{' '}
-                            <b
-                                onClick={() =>
-                                    setDrawerState({
-                                        currentGuest: rowData.find(
-                                            (c) => c.id === Number(drawerState.currentGuest.companion_id)
-                                        ),
-                                        onEditGuest: true,
-                                        companions: handleCompanions(
-                                            rowData.find(
-                                                (c) => c.id === Number(drawerState.currentGuest.companion_id)
-                                            )?.id
-                                        ),
-                                        visible: true,
-                                    })
-                                }
-                                style={{ textDecoration: 'underline', cursor: 'pointer', color: '#6D3CFA' }}
-                            >
-                                {
-                                    rowData.find(
-                                        (c) => c.id === Number(drawerState.currentGuest.companion_id)
-                                    )?.name
-                                }
-                            </b>
-                        </span>
-                    ) : (
-                        <div className="new-guest-form-container">
-                            <div className="add_companions_container">
-                                <span className="gc-content-label">
-                                    <b>{t('guests.crud_companions_title', { count: companionsData?.length })}</b>
-                                </span>
-
-                                <div
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                                >
-                                    {companionsData?.length > 0 && !isEditing && (
-                                        <Button
-                                            onClick={() => updateTicketCount('remove')}
-                                            icon={<FiMinus />}
-                                            className="primarybutton"
-                                        />
-                                    )}
-                                    <Button
-                                        onClick={() => updateTicketCount('add')}
-                                        icon={<IoMdAdd />}
-                                        className="primarybutton"
-                                    />
-                                </div>
-                            </div>
-
-                            <span
-                                style={{ marginTop: '-12px', fontStyle: 'italic', opacity: '0.5' }}
-                                className="gc-content-label"
-                            >
-                                {t('guests.crud_companions_optional')}
-                            </span>
-
-                            <div className="companions-name-container">
-                                {companionsData?.map((companion, index) => (
-                                    <div key={index} className="companions_cont">
-                                        <div className="guest_form_row">
-                                            <div className="guest_form_col">
-                                                <span className="gc-content-label">Nombre</span>
-                                                <Input
-                                                    placeholder="Nombre"
-                                                    value={companion.name}
-                                                    onChange={(e) =>
-                                                        updateCompanionField(index, 'name', e.target.value)
-                                                    }
-                                                    className="gc-input-text"
-                                                />
-                                            </div>
-
-                                            <div className="guest_form_col">
-                                                <span className="gc-content-label">{t('guests.crud_label_contact')}</span>
-                                                {renderPhoneField(companion, (field, value) =>
-                                                    updateCompanionField(index, field, value)
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="guest_form_row">
-                                            <div className="guest_form_col">
-                                                <span className="gc-content-label">{t('guests.crud_label_tag')}</span>
-                                                {renderTagSelect(companion.tag, (field, value) =>
-                                                    updateCompanionField(index, field, value)
-                                                )}
-                                            </div>
-
-                                            <div className="guest_form_col">
-                                                <span className="gc-content-label">{t('guests.crud_label_priority')}</span>
-                                                {renderSelectField(
-                                                    companion.tier,
-                                                    (value) => updateCompanionField(index, 'tier', value),
-                                                    TIER_OPTIONS,
-                                                    t('guests.crud_priority_placeholder')
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="guest_form_row">
-                                            <div className="guest_form_col">
-                                                <span className="gc-content-label">{t('guests.crud_label_category')}</span>
-                                                {renderSelectField(
-                                                    companion.type,
-                                                    (value) => updateCompanionField(index, 'type', value),
-                                                    CATEGORY_OPTIONS,
-                                                    t('guests.crud_category_placeholder')
-                                                )}
-                                            </div>
-
-                                            {/* Lado: solo si la invitación tiene anfitriones (owners) con
-                                                los que elegir; un Pop no tiene. */}
-                                            {sideOptions.length > 0 && (
-                                                <div className="guest_form_col">
-                                                    <span className="gc-content-label">{t('guests.crud_label_side')}</span>
-                                                    {renderSelectField(
-                                                        companion.side,
-                                                        (value) => updateCompanionField(index, 'side', value),
-                                                        sideOptions,
-                                                        t('guests.crud_side_placeholder')
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {isEditing && (
-                                            <div className="guest_form_row">
-                                                <div className="guest_form_col">
-                                                    <span className="gc-content-label">{t('guests.crud_label_state')}</span>
-                                                    {renderSelectField(
-                                                        companion.state,
-                                                        (value) => updateCompanionField(index, 'state', value),
-                                                        STATE_OPTIONS,
-                                                        t('guests.crud_state_placeholder')
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="guest_form_col" style={{ width: '100%' }}>
-                                            <span className="gc-content-label">{t('guests.crud_label_notes')}</span>
-                                            {renderNotesField(companion.notes, (field, value) =>
-                                                updateCompanionField(index, field, value)
-                                            )}
-                                        </div>
-
-                                        {isEditing && (
-                                            <Tooltip title={`Eliminar ${companion.name}`}>
-                                                <Popconfirm
-                                                    title={t('guests.crud_delete_title')}
-                                                    description={t('guests.crud_delete_desc', { name: companion.name })}
-                                                    onConfirm={() => deleteCompanionAtIndex(index)}
-                                                    okText={t('guests.crud_btn_delete')}
-                                                    cancelText={t('guests.btn_cancel')}
-                                                >
-                                                    <Button className="primarybutton">{t('guests.crud_btn_delete')}</Button>
-                                                </Popconfirm>
-                                            </Tooltip>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            )}
-        </Drawer>
-    )
+                    </div>
+                )}
+            </div>
+        )
+    }
 
-    if (!oscuro) return panel
+    const inset = screens.xs ? 8 : 16
 
-    // Tema oscuro de antd solo para este panel: también tiñe los desplegables
-    // de los Select, que se abren en un portal.
     return (
-        <ConfigProvider
-            theme={{
-                algorithm: theme.darkAlgorithm,
-                token: {
-                    colorPrimary: '#d2bfdd',
-                    colorBgElevated: '#1A191F',
-                    colorBgContainer: 'rgba(255, 255, 255, 0.06)',
-                    colorBorder: 'rgba(255, 255, 255, 0.12)',
-                    fontFamily: 'Poppins, sans-serif',
+        <Drawer
+            placement="right"
+            open={drawerState.visible}
+            onClose={handleClose}
+            closable={false}
+            title={null}
+            footer={null}
+            // Arriba de la barra del editor de side events (z-index 1200, ver
+            // SideEventEditor.module.css): si no, la tapa.
+            zIndex={1300}
+            size={screens.xs ? `calc(100% - ${inset * 2}px)` : 560}
+            rootClassName={s.raiz}
+            styles={{
+                wrapper: {
+                    top: inset,
+                    right: inset,
+                    bottom: inset,
+                    height: 'auto',
+                    maxWidth: `calc(100% - ${inset * 2}px)`,
+                    borderRadius: 28,
+                    overflow: 'hidden',
+                    boxShadow: '0 24px 60px rgba(0,0,0,.22), 0 0 0 1px rgba(0,0,0,.04)',
                 },
-                components: {
-                    Input: { colorBorder: 'rgba(255, 255, 255, 0.12)', activeBorderColor: '#d2bfdd', hoverBorderColor: 'rgba(255, 255, 255, 0.3)' },
-                    Select: { optionSelectedBg: 'rgba(210, 191, 221, 0.18)' },
-                },
+                section: { borderRadius: 28 },
+                body: { padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
             }}
         >
-            {panel}
-        </ConfigProvider>
+            <div className={s.cabeza}>
+                <span className={s.avatar}>{(primerNombre || '?').charAt(0).toUpperCase()}</span>
+                <div className={s.cabezaTextos}>
+                    <div className={s.titulo}>{tituloCabeza}</div>
+                    <div className={s.subtitulo}>{isEditing ? t('guests.crud_title_edit') : t('guests.crud_title_new')}</div>
+                </div>
+            </div>
+
+            <div className={s.cuerpo}>
+                <div className={s.seccionJunta}>
+                    <input
+                        ref={nombreRef}
+                        className={s.nombre}
+                        placeholder={t('guests.crud_name_placeholder')}
+                        value={guestData.name ?? ''}
+                        onChange={(e) => updateGuestField('name', e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') enviar() }}
+                        autoFocus={!isEditing}
+                    />
+                    {telefono(guestData, updateGuestField)}
+                </div>
+
+                {seccion(t('guests.crud_label_priority'), (
+                    <div className={s.segmentado}>
+                        {TIER_OPTIONS.map((o) => {
+                            const on = guestData.tier === o.value
+                            return (
+                                <button
+                                    key={o.value}
+                                    type="button"
+                                    className={s.segmento}
+                                    data-on={on || undefined}
+                                    aria-pressed={on}
+                                    onClick={() => updateGuestField('tier', on ? null : o.value)}
+                                >
+                                    {o.label}
+                                </button>
+                            )
+                        })}
+                        {!oscuro && (
+                            <CalculateTier drawerState={drawerState} updateGuestField={updateGuestField} owners={owners}>
+                                <button type="button" className={s.calcular}>
+                                    <Sparkles size={15} className={s.estrella} />
+                                    {t('guests.crud_calc')}
+                                </button>
+                            </CalculateTier>
+                        )}
+                    </div>
+                ))}
+
+                {/* Etiquetas: las de la invitación (un Pop no tiene). */}
+                {invitationID && seccion(t('guests.crud_label_tag'), (
+                    <div className={s.chips}>
+                        {chips(opcionesTag, guestData.tag, (v) => updateGuestField('tag', v))}
+                        {creandoTag ? (
+                            <span className={s.chipNueva}>
+                                <input
+                                    ref={nuevaRef}
+                                    autoFocus
+                                    placeholder={t('guests.crud_tag_new')}
+                                    value={newTag ?? ''}
+                                    onChange={(e) => setNewTag(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') { e.preventDefault(); addTagsToInvitation() }
+                                        if (e.key === 'Escape') { e.stopPropagation(); setCreandoTag(false); setNewTag(null) }
+                                    }}
+                                />
+                                <button type="button" aria-label={t('guests.crud_tag_create')} disabled={!newTag?.trim()} onClick={addTagsToInvitation}>
+                                    <Check size={14} />
+                                </button>
+                                <button type="button" aria-label={t('guests.crud_btn_cancel')} onClick={() => { setCreandoTag(false); setNewTag(null) }}>
+                                    <X size={14} />
+                                </button>
+                            </span>
+                        ) : (
+                            <button type="button" className={s.chipMas} onClick={() => setCreandoTag(true)}>
+                                <Plus size={14} />{t('guests.crud_tag_new_chip')}
+                            </button>
+                        )}
+                    </div>
+                ))}
+
+                {/* Lado: solo si la invitación tiene anfitriones (owners). */}
+                {opcionesLado.length > 0 && seccion(t('guests.crud_label_side'), (
+                    <div className={s.chips}>{chips(opcionesLado, guestData.side, (v) => updateGuestField('side', v))}</div>
+                ))}
+
+                {seccion(t('guests.crud_label_category'), (
+                    <div className={s.chips}>{chips(CATEGORY_OPTIONS, guestData.type, (v) => updateGuestField('type', v))}</div>
+                ))}
+
+                {isEditing && seccion(t('guests.crud_label_state'), (
+                    <div className={s.chips}>{chips(stateOptions, guestData.state, (v) => v && updateGuestField('state', v))}</div>
+                ))}
+
+                {notasAbiertas ? seccion(t('guests.crud_note_label'), (
+                    <textarea
+                        className={s.nota}
+                        autoFocus={!guestData.notes}
+                        placeholder={t('guests.crud_note_placeholder')}
+                        value={guestData.notes ?? ''}
+                        onChange={(e) => updateGuestField('notes', e.target.value)}
+                    />
+                )) : (
+                    <button type="button" className={s.agregarNota} onClick={() => setNotasAbiertas(true)}>
+                        <Pencil size={16} />{t('guests.crud_add_note')}
+                    </button>
+                )}
+
+                <div className={s.divisor} />
+
+                {titular ? (
+                    <p className={s.esAcompanante}>
+                        <b>{drawerState.currentGuest.name}</b> {t('guests.crud_companion_of')}{' '}
+                        <button type="button" className={s.enlace} onClick={abrirTitular}>{titular.name}</button>
+                    </p>
+                ) : (
+                    <div className={s.seccionAcompanantes}>
+                        <div className={s.cabezaAcompanantes}>
+                            <div className={s.cabezaTextos}>
+                                <div className={s.tituloSeccion}>{t('guests.crud_companions')}</div>
+                                <div className={s.subtitulo}>{t('guests.crud_companions_hint')}</div>
+                            </div>
+                            <div className={s.stepper}>
+                                <button
+                                    type="button"
+                                    aria-label="−"
+                                    data-apagado={!puedeQuitar || undefined}
+                                    onClick={() => updateTicketCount('remove')}
+                                >
+                                    <Minus size={16} strokeWidth={2.4} />
+                                </button>
+                                <span>{companionsData.length}</span>
+                                <button type="button" aria-label="+" onClick={() => updateTicketCount('add')}>
+                                    <Plus size={16} strokeWidth={2.4} />
+                                </button>
+                            </div>
+                        </div>
+                        {companionsData.map(tarjetaAcompanante)}
+                    </div>
+                )}
+            </div>
+
+            <div className={s.pie}>
+                <button type="button" className={s.cancelar} onClick={handleClose}>{t('guests.crud_btn_cancel')}</button>
+                {isEditing && (
+                    <Popconfirm
+                        title={t('guests.crud_delete_title')}
+                        description={
+                            companionsData?.length > 0
+                                ? t('guests.crud_delete_desc_companions', { name: guestData.name })
+                                : t('guests.crud_delete_desc', { name: guestData?.name })
+                        }
+                        onConfirm={() => deleteGuestWithCompanions(drawerState.currentGuest.id)}
+                        okText={t('guests.crud_btn_delete')}
+                        cancelText={t('guests.btn_cancel')}
+                    >
+                        <button type="button" className={s.eliminar}><Trash2 size={16} />{t('guests.crud_btn_delete')}</button>
+                    </Popconfirm>
+                )}
+                <span style={{ flex: 1 }} />
+                <button type="button" className={s.primario} aria-disabled={bloqueado || undefined} onClick={enviar}>
+                    {isEditing ? <Check size={18} strokeWidth={2.4} /> : <Plus size={18} strokeWidth={2.4} />}
+                    {isEditing
+                        ? t('guests.crud_btn_save_changes')
+                        : total > 1 ? t('guests.crud_btn_add_many', { count: total }) : t('guests.crud_btn_add_one')}
+                </button>
+            </div>
+        </Drawer>
     )
 }
