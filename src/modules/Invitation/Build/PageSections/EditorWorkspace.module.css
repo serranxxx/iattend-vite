@@ -738,6 +738,15 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
+    /* Touch: los gestos (pellizcar, dos dedos, arrastrar) son del tablero,
+       no del navegador (no hace zoom de la página ni scroll). */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.lienzoInmersivo * {
+    touch-action: none;
 }
 
 .lienzoInmersivoPieza {
@@ -806,4 +815,11 @@
     .lateral {
         animation: none;
     }
+}
+
+/* Tablero con gestos (EditorShell): el fondo no hace scroll ni zoom del
+   navegador; el pellizco y el arrastre los maneja el editor. Dentro de la
+   pieza, su propio scroll sigue igual (su scroller tiene su touch-action). */
+.stage[data-gestos] {
+    touch-action: none;
 }

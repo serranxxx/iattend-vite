@@ -232,3 +232,14 @@
         conic-gradient(from 0deg, #FF5A5F, #FFC93C, #3DDC97, #4CC9F0, #4C8BF5, #B36BF5, #FF5A5F);
     box-shadow: 0 1px 3px rgba(23, 22, 27, 0.12);
 }
+
+/* Eliminar los trazos elegidos con la pluma de selección. */
+.eliminar {
+    background: #FDE8E7;
+    color: #D93F3A;
+}
+
+.eliminar:hover:not(:disabled) {
+    background: #FBD9D7;
+    color: #C2322D;
+}

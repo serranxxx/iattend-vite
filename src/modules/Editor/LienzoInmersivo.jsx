@@ -16,6 +16,13 @@ import { INMERSIVO_EASE, INMERSIVO_MS, reducirMovimiento } from './inmersivo'
     arrastrar en cualquier lado, también sobre la pieza → mueve el tablero.
     Con la mano no se dibuja: una capa encima toma el puntero.
   · Abajo: −, %, +, mano y centrar.
+  · Touch (iPad), como Freeform: dos dedos en cualquier lado = pellizcar
+    para acercar / alejar y arrastrar para moverse (el trazo que el primer
+    dedo había empezado se descarta: `iattend-dibujo-cancelar`, SideCanvas).
+    Un dedo sobre la pieza = dibujar; fuera de la pieza = mover el tablero.
+    Tocar (sin arrastrar) fuera de la pieza → `onTapFuera` (suelta el
+    pincel). Sin pincel (`sinHerramienta`) un dedo mueve el tablero en
+    cualquier lado.
   `area`: márgenes que no tapa la pieza al centrarla (barra arriba, paleta a
   la derecha).
   Transición: al montarse la pieza viaja desde `desde` (ref con su recuadro
@@ -29,7 +36,7 @@ const PASO = 0.15
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const escribiendo = (el) => el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable
 
-export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSalida }) => {
+export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSalida, sinHerramienta = false, onTapFuera }) => {
     const { t } = useTranslation()
     const stageRef = useRef(null)
     const piezaRef = useRef(null)
@@ -44,7 +51,7 @@ export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSa
     useEffect(() => { vistaRef.current = vista }, [vista])
     const [manoFija, setManoFija] = useState(false)
     const [manoEspacio, setManoEspacio] = useState(false)
-    const mano = manoFija || manoEspacio
+    const mano = manoFija || manoEspacio || sinHerramienta
     const [paneando, setPaneando] = useState(false)
     const arrastre = useRef(null)
     // Centrar y los botones − / + llegan con transición; rueda y arrastre no.
@@ -66,7 +73,9 @@ export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSa
         if (!el) return
         const w = el.clientWidth - area.left - area.right
         const h = el.clientHeight - area.top - area.bottom
-        const v = { z, x: area.left + (w - card.w * z) / 2, y: area.top + Math.max(0, (h - card.h * z) / 2) }
+        // Alto real de la pieza: en el dibujo va completa, a lo largo.
+        const alto = piezaRef.current?.offsetHeight || card.h
+        const v = { z, x: area.left + (w - card.w * z) / 2, y: area.top + Math.max(0, (h - alto * z) / 2) }
         setVista(v)
         return v
     }, [zoomInicial, area.left, area.right, area.top, area.bottom, card.w, card.h])
@@ -99,7 +108,8 @@ export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSa
         setVista({ z, x: cx - (cx - v.x) * (z / v.z), y: cy - (cy - v.y) * (z / v.z) })
     }, [])
 
-    // Rueda: ⌘/Ctrl = zoom; sobre la pieza, su scroll; fuera, mover el tablero.
+    // Rueda: ⌘/Ctrl = zoom; si no, mover el tablero (la pieza va completa,
+    // sin scroll propio).
     useEffect(() => {
         const el = stageRef.current
         if (!el) return undefined
@@ -114,7 +124,6 @@ export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSa
                 zoomEn(v.z * (1 + delta), e.clientX - r.left, e.clientY - r.top)
                 return
             }
-            if (e.target.closest?.('[data-side-card]') && !mano) return
             e.preventDefault()
             setVista({ ...v, x: v.x - e.deltaX, y: v.y - e.deltaY })
         }
@@ -141,19 +150,70 @@ export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSa
         }
     }, [])
 
+    // ── Dos dedos: pellizcar y mover (touch). Se ve en la fase de captura,
+    // antes que la pieza, para que el segundo dedo no empiece otro trazo. ──
+    const dedos = useRef(new Map()) // pointerId → { x, y }
+    const gesto = useRef(null) // { d0, m0, v0 }
+    const distancia = (a, b) => Math.hypot(a.x - b.x, a.y - b.y)
+    const medio = (a, b, r) => ({ x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top })
+    const capturaDown = (e) => {
+        if (e.pointerType !== 'touch') return
+        dedos.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        if (dedos.current.size < 2) return
+        e.stopPropagation()
+        e.preventDefault()
+        if (gesto.current) return
+        // Empieza el gesto: se descarta el trazo del primer dedo y el arrastre.
+        window.dispatchEvent(new Event('iattend-dibujo-cancelar'))
+        arrastre.current = null
+        setPaneando(false)
+        setSuave(false)
+        const [a, b] = [...dedos.current.values()]
+        const r = stageRef.current.getBoundingClientRect()
+        gesto.current = { d0: distancia(a, b) || 1, m0: medio(a, b, r), v0: vistaRef.current }
+    }
+    const capturaMove = (e) => {
+        if (e.pointerType !== 'touch' || !dedos.current.has(e.pointerId)) return
+        dedos.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        const g = gesto.current
+        if (!g) return
+        e.stopPropagation()
+        e.preventDefault()
+        if (dedos.current.size < 2 || !g.v0) return
+        const [a, b] = [...dedos.current.values()]
+        const r = stageRef.current.getBoundingClientRect()
+        const m = medio(a, b, r)
+        const z = clamp(g.v0.z * (distancia(a, b) / g.d0), MIN, MAX)
+        const k = z / g.v0.z
+        setVista({ z, x: m.x - (g.m0.x - g.v0.x) * k, y: m.y - (g.m0.y - g.v0.y) * k })
+    }
+    const capturaUp = (e) => {
+        if (e.pointerType !== 'touch') return
+        dedos.current.delete(e.pointerId)
+        if (gesto.current) {
+            e.stopPropagation()
+            // El gesto termina cuando se levantan todos los dedos (el que queda
+            // no dibuja ni mueve).
+            if (dedos.current.size === 0) gesto.current = null
+        }
+    }
+
     // Arrastre del tablero: fondo siempre; sobre la pieza solo con la mano.
+    // Un toque corto sin moverse fuera de la pieza = onTapFuera.
     const empezar = (e) => {
         if (e.button !== 0 && e.pointerType === 'mouse') return
-        if (!mano && e.target.closest('[data-side-card]')) return
+        if (gesto.current) return
+        const sobrePieza = Boolean(e.target.closest('[data-side-card]'))
+        if (!mano && sobrePieza) return
         if (e.target.closest('button, input, [data-edit-keep]')) return
         setSuave(false)
-        arrastre.current = { id: e.pointerId, x: e.clientX, y: e.clientY }
+        arrastre.current = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: Date.now(), fuera: !sobrePieza }
         e.currentTarget.setPointerCapture?.(e.pointerId)
         setPaneando(true)
     }
     const mover = (e) => {
         const a = arrastre.current
-        if (!a || a.id !== e.pointerId) return
+        if (!a || a.id !== e.pointerId || gesto.current) return
         const dx = e.clientX - a.x
         const dy = e.clientY - a.y
         a.x = e.clientX
@@ -161,9 +221,12 @@ export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSa
         setVista((v) => (v ? { ...v, x: v.x + dx, y: v.y + dy } : v))
     }
     const soltar = (e) => {
-        if (arrastre.current?.id !== e.pointerId) return
+        const a = arrastre.current
+        if (a?.id !== e.pointerId) return
         arrastre.current = null
         setPaneando(false)
+        const toque = Math.hypot(e.clientX - a.x0, e.clientY - a.y0) < 8 && Date.now() - a.t0 < 350
+        if (toque && a.fuera && e.type === 'pointerup') onTapFuera?.()
     }
 
     const z = vista?.z ?? zoomInicial
@@ -173,6 +236,10 @@ export const LienzoInmersivo = ({ canvas, card, zoomInicial, area, desde, rectSa
                 ref={stageRef}
                 className={ws.lienzoInmersivo}
                 style={{ cursor: paneando ? 'grabbing' : mano ? 'grab' : undefined }}
+                onPointerDownCapture={capturaDown}
+                onPointerMoveCapture={capturaMove}
+                onPointerUpCapture={capturaUp}
+                onPointerCancelCapture={capturaUp}
                 onPointerDown={empezar}
                 onPointerMove={mover}
                 onPointerUp={soltar}

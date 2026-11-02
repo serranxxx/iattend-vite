@@ -35,6 +35,8 @@ import eb from '../Invitation/Build/PageSections/ElementBar.module.css'
 */
 
 const ZOOM_MIN = 0.5
+// Hasta dónde acerca el pellizco / ⌘ + rueda en el tablero.
+const ZOOM_GESTO_MAX = 2.5
 const ZOOM_STEPS = [0.8, 1, 'fit']
 const COLUMN_MIN = 420
 const DEVICES = [{ id: 'ios', Icon: Smartphone, label: 'iPhone' }, { id: 'ipad', Icon: Tablet, label: 'iPad' }, { id: 'mac', Icon: Laptop, label: 'Mac' }]
@@ -129,6 +131,9 @@ export const EditorShell = ({
     // dock; la pieza centrada y 50 % más grande en un tablero con zoom y
     // arrastre (LienzoInmersivo) y `lateral` a la derecha (la paleta de dibujo).
     inmersivo = false, lateral = null,
+    // Gestos del tablero inmersivo (LienzoInmersivo): `sinHerramienta` (sin
+    // pincel, un dedo mueve el tablero) y `onTapFuera` (tocar fuera de la pieza).
+    inmersivoGestos = null,
     children,
 }) => {
     const { t } = useTranslation()
@@ -179,10 +184,129 @@ export const EditorShell = ({
         : fitFor(DEVICE_SIZES[liveDevice] ?? DEVICE_SIZES.ios)
     const zoomBase = withColumn ? columnScale
         : live ? Math.min(zoomMode === 'fit' ? liveFit : zoomMode, liveFit)
-        : zoomMode === 'fit' ? fitScale : hideLayers ? Math.min(zoomMode, fitScale) : zoomMode
+        : zoomMode === 'fit' ? fitScale : hideLayers && ZOOM_STEPS.includes(zoomMode) ? Math.min(zoomMode, fitScale) : zoomMode
     const zoom = inmersivo ? zoomBase * 1.5 : zoomBase
     const zoomLabel = zoomMode === 'fit' ? t('build_editor.zoom_fit') : `${Math.round(zoom * 100)}%`
     const center = `calc(${padL}px + (100% - ${padL + padR}px) / 2)`
+
+    const canvasScaleRef = useRef(null)
+    const rectNormal = useRef(null)
+    const rectInmersivo = useRef(null)
+    const refCanvasScale = useCallback((el) => {
+        canvasScaleRef.current = el
+        if (!el) return undefined
+        return () => { rectNormal.current = { rect: el.getBoundingClientRect(), w: el.offsetWidth } }
+    }, [])
+
+    // Navegar el tablero como el acomodo de mesas (TablesPage): pellizcar
+    // con dos dedos (o ⌘/Ctrl + rueda, el pellizco del trackpad) acerca o
+    // aleja alrededor de los dedos; arrastrar el fondo con un dedo (o la
+    // rueda fuera de la pieza) lo mueve. Encima de la pieza, un dedo sigue
+    // siendo de la pieza (scroll, elegir, arrastrar). El botón del zoom del
+    // dock vuelve a centrar.
+    const gestos = !live && !withColumn && !inmersivo
+    const [pan, setPan] = useState({ x: 0, y: 0 })
+    const [gestoVivo, setGestoVivo] = useState(false)
+    const panRef = useRef(pan)
+    const zoomRef = useRef(zoom)
+    useLayoutEffect(() => {
+        panRef.current = pan
+        zoomRef.current = zoom
+    })
+    const dedos = useRef(new Map())
+    const gesto = useRef(null)
+    const arrastre = useRef(null)
+    useEffect(() => { setPan({ x: 0, y: 0 }) }, [live, withColumn, inmersivo])
+    const fijarZoom = (z) => setZoomMode(clamp(Math.round(z * 1000) / 1000, ZOOM_MIN, ZOOM_GESTO_MAX))
+    // Centro de la pieza sin el arrastre (el escalado va desde su centro).
+    const centroPieza = () => {
+        const r = canvasScaleRef.current?.getBoundingClientRect()
+        if (!r) return null
+        return { x: r.left + r.width / 2 - panRef.current.x, y: r.top + r.height / 2 - panRef.current.y }
+    }
+    const dedosDown = (e) => {
+        if (!gestos || e.pointerType !== 'touch') return
+        dedos.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        if (dedos.current.size < 2) return
+        e.stopPropagation()
+        if (gesto.current) return
+        const [a, b] = [...dedos.current.values()]
+        const c = centroPieza()
+        if (!c) return
+        // El trazo o el arrastre que empezó el primer dedo no cuenta.
+        window.dispatchEvent(new Event('iattend-dibujo-cancelar'))
+        arrastre.current = null
+        gesto.current = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, z0: zoomRef.current, p0: panRef.current, c }
+        setGestoVivo(true)
+    }
+    const dedosMove = (e) => {
+        if (!dedos.current.has(e.pointerId)) return
+        dedos.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        const g = gesto.current
+        if (!g || dedos.current.size < 2) return
+        e.stopPropagation()
+        const [a, b] = [...dedos.current.values()]
+        const z = clamp(g.z0 * (Math.hypot(a.x - b.x, a.y - b.y) / g.d0), ZOOM_MIN, ZOOM_GESTO_MAX)
+        const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+        // El punto de la pieza que estaba bajo los dedos sigue bajo los dedos.
+        const qx = (g.m0.x - g.c.x - g.p0.x) / g.z0
+        const qy = (g.m0.y - g.c.y - g.p0.y) / g.z0
+        fijarZoom(z)
+        setPan({ x: m.x - g.c.x - z * qx, y: m.y - g.c.y - z * qy })
+    }
+    const dedosUp = (e) => {
+        dedos.current.delete(e.pointerId)
+        if (dedos.current.size === 0 && gesto.current) {
+            gesto.current = null
+            setGestoVivo(false)
+        }
+    }
+    const fueraDePieza = (el) => !el.closest('[data-tour="preview"], [data-side-card], [data-edit-keep], button, input, textarea, .ant-dropdown, .ant-popover')
+    const arrastreDown = (e) => {
+        if (!gestos || gesto.current || e.pointerType !== 'touch' || !fueraDePieza(e.target)) return
+        arrastre.current = { id: e.pointerId, x: e.clientX, y: e.clientY }
+        setGestoVivo(true)
+    }
+    const arrastreMove = (e) => {
+        const a = arrastre.current
+        if (!a || a.id !== e.pointerId || gesto.current) return
+        const dx = e.clientX - a.x
+        const dy = e.clientY - a.y
+        a.x = e.clientX
+        a.y = e.clientY
+        setPan((p) => ({ x: p.x + dx, y: p.y + dy }))
+    }
+    const arrastreUp = (e) => {
+        if (arrastre.current?.id !== e.pointerId) return
+        arrastre.current = null
+        if (!gesto.current) setGestoVivo(false)
+    }
+    // Rueda: ⌘/Ctrl = zoom al cursor; fuera de la pieza, mover el tablero.
+    const stageRef = useRef(null)
+    useEffect(() => {
+        const el = stageRef.current
+        if (!el || !gestos) return undefined
+        const onWheel = (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault()
+                const c = centroPieza()
+                if (!c) return
+                const z0 = zoomRef.current
+                const z = clamp(z0 * (1 + e.deltaY * (e.deltaMode === 1 ? -0.05 : -0.0025)), ZOOM_MIN, ZOOM_GESTO_MAX)
+                const p0 = panRef.current
+                const qx = (e.clientX - c.x - p0.x) / z0
+                const qy = (e.clientY - c.y - p0.y) / z0
+                fijarZoom(z)
+                setPan({ x: e.clientX - c.x - z * qx, y: e.clientY - c.y - z * qy })
+                return
+            }
+            if (!fueraDePieza(e.target)) return
+            e.preventDefault()
+            setPan((p) => ({ x: p.x - e.deltaX, y: p.y - e.deltaY }))
+        }
+        el.addEventListener('wheel', onWheel, { passive: false })
+        return () => el.removeEventListener('wheel', onWheel)
+    }, [gestos])
 
     const setMode = (mode) => {
         if ((mode === 'live') === live) return
@@ -194,14 +318,6 @@ export const EditorShell = ({
     // tablero normal al del inmersivo (LienzoInmersivo, `desde`) y de regreso
     // (abajo). Cada tablero deja su recuadro al desmontarse; riel, Capas y
     // dock vuelven deslizándose (`volviendo` → data-entrada).
-    const canvasScaleRef = useRef(null)
-    const rectNormal = useRef(null)
-    const rectInmersivo = useRef(null)
-    const refCanvasScale = useCallback((el) => {
-        canvasScaleRef.current = el
-        if (!el) return undefined
-        return () => { rectNormal.current = { rect: el.getBoundingClientRect(), w: el.offsetWidth } }
-    }, [])
     const [volviendo, setVolviendo] = useState(false)
     const inmersivoAntes = useRef(inmersivo)
     useLayoutEffect(() => {
@@ -325,7 +441,16 @@ export const EditorShell = ({
             {/* Tocar el tablero fuera de la pieza (y de lo marcado data-edit-keep
                 y los popovers) suelta lo elegido. */}
             <div
+                ref={stageRef}
                 className={ws.stage}
+                data-gestos={gestos || undefined}
+                onPointerDownCapture={dedosDown}
+                onPointerMoveCapture={dedosMove}
+                onPointerUpCapture={dedosUp}
+                onPointerCancelCapture={dedosUp}
+                onPointerMove={arrastreMove}
+                onPointerUp={arrastreUp}
+                onPointerCancel={arrastreUp}
                 style={{
                     padding: `${bar || barraVivo ? 92 : 20}px ${padR}px ${withColumn ? 20 : 92}px ${padL}px`,
                     transform: keyboardLift ? `translateY(-${keyboardLift}px)` : undefined,
@@ -333,14 +458,15 @@ export const EditorShell = ({
                     // Inmersivo: el tablero de LienzoInmersivo ocupa su lugar.
                     ...(inmersivo ? { display: 'none' } : {}),
                 }}
-                onPointerDown={!live && onBlur ? (e) => {
-                    if (!e.target.closest('[data-tour="preview"], [data-side-card], [data-edit-keep], .ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-picker-dropdown, .ant-color-picker, .pac-container')) onBlur()
-                } : undefined}
+                onPointerDown={(e) => {
+                    arrastreDown(e)
+                    if (!live && onBlur && !e.target.closest('[data-tour="preview"], [data-side-card], [data-edit-keep], .ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-picker-dropdown, .ant-color-picker, .pac-container')) onBlur()
+                }}
             >
                 {/* --canvas-zoom: lo que no deba achicarse con el zoom (manijas,
                     columnas) usa su inverso. */}
                 {!inmersivo && (
-                    <div ref={refCanvasScale} className={ws.canvasScale} style={{ transform: `scale(${zoom})`, '--canvas-zoom': zoom }}>
+                    <div ref={refCanvasScale} className={ws.canvasScale} style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, '--canvas-zoom': zoom, ...(gestoVivo ? { transition: 'none' } : {}) }}>
                         {live || withColumn
                             ? <DevicePreview device={liveDevice} landscape={landscape} rotated={rotated}>{liveContent}</DevicePreview>
                             : canvas}
@@ -357,6 +483,8 @@ export const EditorShell = ({
                     desde={rectNormal}
                     rectSalida={rectInmersivo}
                     area={{ left: 40, right: LATERAL_W + 64, top: bar ? 92 : 24, bottom: 96 }}
+                    sinHerramienta={Boolean(inmersivoGestos?.sinHerramienta)}
+                    onTapFuera={inmersivoGestos?.onTapFuera}
                 />
             )}
 
@@ -480,7 +608,11 @@ export const EditorShell = ({
                     </div>
 
                     <span className={ws.dockDivider} />
-                    <button type="button" className={ws.dockText} data-tour="zoom" onClick={() => setZoomMode(ZOOM_STEPS[(ZOOM_STEPS.indexOf(zoomMode) + 1) % ZOOM_STEPS.length])}>
+                    <button type="button" className={ws.dockText} data-tour="zoom" onClick={() => {
+                        setPan({ x: 0, y: 0 })
+                        // Tras un pellizco (zoom libre) vuelve a Ajustar.
+                        setZoomMode(ZOOM_STEPS.includes(zoomMode) ? ZOOM_STEPS[(ZOOM_STEPS.indexOf(zoomMode) + 1) % ZOOM_STEPS.length] : 'fit')
+                    }}>
                         <Scan size={14} /> {zoomLabel}
                     </button>
                     {onReplayTour && (

@@ -1550,6 +1550,8 @@
     "draw_brush_lapiz": "Pencil",
     "draw_brush_neon": "Neon",
     "draw_brush_borrador": "Eraser",
+    "draw_select": "Select strokes",
+    "draw_delete_selection": "Delete strokes",
     "draw_color": "Color",
     "draw_theme_color": "Theme color",
     "draw_other_color": "Other color",

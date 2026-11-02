@@ -77,6 +77,10 @@ const { Option } = Select;
 // mientras sus herramientas pasan al nuevo.
 const EDITOR_MOVIL_NUEVO = true
 
+// Tour guiado del editor (SideEventsTour): apagado. Con false no se abre
+// solo, no se pinta y no salen sus botones "?". En true vuelve todo.
+const TOUR_SIDE_ACTIVO = false
+
 // Autoguardado del editor: cuánto después del último cambio se guarda (con
 // cambios seguidos, a lo más AUTOGUARDADO_MAX_MS desde el primero sin
 // guardar), y cuánto debe estar quieta la portada para rehacer la imagen del
@@ -1289,7 +1293,7 @@ export const SideEvents = () => {
                         </span>
                     </button>
                 ))}
-                {tourAvailable &&
+                {TOUR_SIDE_ACTIVO && tourAvailable &&
                     <Tooltip title={t('guests_tour.replay')}>
                         <button
                             type="button"
@@ -3020,7 +3024,7 @@ export const SideEvents = () => {
     // que la pieza y la barra estén pintadas cuando el primer paso resuelva
     // su anclaje.
     useEffect(() => {
-        if (!current?.id || !tourAvailable) return
+        if (!TOUR_SIDE_ACTIVO || !current?.id || !tourAvailable) return
         if (localStorage.getItem(SIDE_TOUR_STORAGE_KEY)) return
         const timer = setTimeout(() => openTour(), 800)
         return () => clearTimeout(timer)
@@ -4516,7 +4520,7 @@ export const SideEvents = () => {
             }
 
             <SideEventsTour
-                open={tourOpen && tourAvailable}
+                open={TOUR_SIDE_ACTIVO && tourOpen && tourAvailable}
                 onClose={closeTour}
                 isMobile={isMobile}
                 setActiveTab={setActiveTab}
@@ -4880,16 +4884,18 @@ export const SideEvents = () => {
                         <span className={ed.crumb}>
                             <span className={wso.crumbKind}>{esPop ? t('invitations.pop_badge') : 'Side event'} · </span><strong>{current?.name || t('side_events.no_name')}</strong>
                         </span>
-                        <Tooltip title={t('guests_tour.replay')}>
-                            <button
-                                className={ed.helpBtn}
-                                data-tour="tour-replay"
-                                aria-label={t('guests_tour.replay')}
-                                onClick={openTour}
-                            >
-                                <CircleHelp size={16} />
-                            </button>
-                        </Tooltip>
+                        {TOUR_SIDE_ACTIVO && (
+                            <Tooltip title={t('guests_tour.replay')}>
+                                <button
+                                    className={ed.helpBtn}
+                                    data-tour="tour-replay"
+                                    aria-label={t('guests_tour.replay')}
+                                    onClick={openTour}
+                                >
+                                    <CircleHelp size={16} />
+                                </button>
+                            </Tooltip>
+                        )}
                         {/* Pop: sus créditos junto al título; en Invitados van
                             en el encabezado de la lista (headCompacto). */}
                         {esPop && activeTab !== 'envio' && (
@@ -4911,6 +4917,9 @@ export const SideEvents = () => {
                     />
 
                     <div className={ed.actionsBar}>
+                        {/* Autoguardado: su estado a la izquierda de Público /
+                            Compartir (solo se ve mientras guarda y un momento después). */}
+                        <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} />
                         {/* "Ver en vivo" vive en el dock del área de trabajo. */}
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 
@@ -4937,9 +4946,6 @@ export const SideEvents = () => {
                             )}
                         </span>
 
-                        {/* Autoguardado: su estado sale como aviso flotante (no
-                            ocupa lugar en el header). */}
-                        <EstadoGuardado flotante estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} />
                     </div>
                 </div>
 
@@ -4967,7 +4973,7 @@ export const SideEvents = () => {
                     onRedo={onRedo}
                     canUndo={undoStack.length > 0}
                     canRedo={redoStack.length > 0}
-                    onReplayTour={tourAvailable ? openTour : undefined}
+                    onReplayTour={TOUR_SIDE_ACTIVO && tourAvailable ? openTour : undefined}
                     onPaste={esPop && puedeLeerPortapapeles ? pegarDesdePortapapeles : null}
                     toolRequest={toolRequest}
                     stageMorphState={stageMorphState}

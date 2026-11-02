@@ -182,12 +182,19 @@ export const SideWorkspace = ({
     const dibujoEnValido = mediaFondo.includes(dibujoEn) ? dibujoEn : 'todo'
     const modoDibujo = esPop && !live && toolOpen && activeTool === 'draw'
     useEffect(() => { if (modoDibujo) { setSection(null); setStickerSel([]) } }, [modoDibujo])
-    // Dibujo a pantalla completa (botón de la barra): sin riel, panel, Capas ni
-    // dock, la pieza 50 % más grande y la paleta a la derecha (PaletaDibujo).
-    // Solo se dibuja y se hace scroll. Al salir del modo dibujo se apaga.
-    const [dibujoFull, setDibujoFull] = useState(false)
-    useEffect(() => { if (!modoDibujo) setDibujoFull(false) }, [modoDibujo])
-    const inmersivo = modoDibujo && dibujoFull
+    // Dibujar siempre es a pantalla completa (ya no hay modo dibujo en el
+    // panel lateral): sin riel, panel, Capas ni dock, la pieza completa a lo
+    // largo en un tablero con gestos como Freeform (LienzoInmersivo) y la
+    // paleta a la derecha (PaletaDibujo). Esc o Listo terminan.
+    // Pincel tomado: tocar fuera de la pieza lo suelta (un dedo mueve el
+    // tablero); tocar una pluma de la paleta lo vuelve a tomar.
+    const [pincelActivo, setPincelActivo] = useState(true)
+    // Pluma de selección (como el lazo de Freeform): solo con ella se eligen
+    // y mueven los trazos; con un pincel de dibujo nunca.
+    const [seleccionando, setSeleccionando] = useState(false)
+    useEffect(() => { if (modoDibujo) { setPincelActivo(true); setSeleccionando(false) } }, [modoDibujo])
+    const tomarPincel = () => { setPincelActivo(true); setSeleccionando(false); setStickerSel([]) }
+    const inmersivo = modoDibujo
     const deshacerTrazo = () => { if (!trazos.length) return; onUndo?.(); setTrazos((x) => x.slice(0, -1)) }
     const borrarTodo = () => {
         const ids = trazos.filter((x) => x.id).map((x) => x.id)
@@ -203,14 +210,15 @@ export const SideWorkspace = ({
             if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) setTrazos((x) => x.slice(0, -1))
             else if (e.metaKey || e.ctrlKey || e.altKey) return
-            else if (e.key.toLowerCase() === 'p') setPincel((x) => ({ ...x, brush: 'pluma' }))
-            else if (e.key.toLowerCase() === 'e') setPincel((x) => ({ ...x, brush: 'borrador' }))
-            // Esc: primero sale de pantalla completa; si no, termina el dibujo.
-            else if (e.key === 'Escape') { if (dibujoFull) setDibujoFull(false); else setToolOpen(false) }
+            else if (e.key.toLowerCase() === 'p') { setPincel((x) => ({ ...x, brush: 'pluma' })); tomarPincel() }
+            else if (e.key.toLowerCase() === 'e') { setPincel((x) => ({ ...x, brush: 'borrador' })); tomarPincel() }
+            else if (e.key.toLowerCase() === 'v') { setSeleccionando(true); setPincelActivo(true) }
+            // Esc: con trazos elegidos los suelta; si no, termina el dibujo.
+            else if (e.key === 'Escape') { if (stickerSel.length) setStickerSel([]); else setToolOpen(false) }
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
-    }, [modoDibujo, dibujoFull])
+    }, [modoDibujo, stickerSel])
 
     // Supr / Backspace quita los PNG elegidos; Escape suelta lo elegido.
     useEffect(() => {
@@ -309,7 +317,7 @@ export const SideWorkspace = ({
         : barra.colorTarget
 
     const bar = live ? null
-        : modoDibujo ? <DibujoBar trazos={trazos.length} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} pantallaCompleta={dibujoFull} onPantallaCompleta={setDibujoFull} media={mediaFondo} dibujoEn={dibujoEnValido} onDibujoEn={setDibujoEn} />
+        : modoDibujo ? <DibujoBar trazos={trazos.length} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} media={mediaFondo} dibujoEn={dibujoEnValido} onDibujoEn={setDibujoEn} />
         : barra.bar
 
     const panelProps = { current, setBody, esPop, carpeta }
@@ -381,10 +389,12 @@ export const SideWorkspace = ({
                         asistentes={asistentesReales}
                         chatMensajes={chatMensajes.mensajes}
                         barMode
-                        pincel={modoDibujo ? pincel : null}
+                        pincel={modoDibujo && pincelActivo && !seleccionando ? pincel : null}
                         onTrazo={(tipo, id) => setTrazos((x) => [...x, { tipo, id }])}
                         sinTrazos={trazos.length === 0}
                         soloDibujo={inmersivo}
+                        seleccionDibujos={inmersivo && pincelActivo && seleccionando}
+                        completa={inmersivo ? CARD.h : null}
                         fotoFija={modoDibujo && dibujoEnValido !== 'todo' ? dibujoEnValido : section === 'background' ? fotoElegida : null}
                         dibujoEn={dibujoEnValido}
                         ajustarFoto={ajustandoFoto && section === 'background' ? fotoElegida : null}
@@ -438,10 +448,16 @@ export const SideWorkspace = ({
             onReplayTour={onReplayTour}
             mediaSider={mediaSider}
             inmersivo={inmersivo}
+            inmersivoGestos={{ sinHerramienta: !pincelActivo, onTapFuera: () => { setPincelActivo(false); setStickerSel([]) } }}
             lateral={inmersivo ? (
                 <PaletaDibujo
                     pincel={pincel}
                     setPincel={setPincel}
+                    activo={pincelActivo}
+                    onActivar={tomarPincel}
+                    seleccionando={pincelActivo && seleccionando}
+                    onSeleccionar={() => { setSeleccionando(true); setPincelActivo(true) }}
+                    onEliminar={seleccionando && stickerSel.length ? () => { setStickers(quitarStickers(stickers, stickerSel)); setStickerSel([]) } : undefined}
                     temaColor={body.color}
                     onDeshacer={deshacerTrazo}
                     puedeDeshacer={trazos.length > 0}

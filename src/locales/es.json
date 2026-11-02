@@ -1550,6 +1550,8 @@
     "draw_brush_lapiz": "Lápiz",
     "draw_brush_neon": "Neón",
     "draw_brush_borrador": "Borrador",
+    "draw_select": "Seleccionar trazos",
+    "draw_delete_selection": "Eliminar trazos",
     "draw_color": "Color",
     "draw_theme_color": "Color del tema",
     "draw_other_color": "Otro color",

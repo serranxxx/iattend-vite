@@ -15,6 +15,10 @@ import movilStyles from './BuildMovil.module.css'
 // `movil` → Editor/EditorMovilShell). En false regresa el de antes
 // (ButtonsMenu + BuildMenu + BuildContent). Ver docs/editor-movil-invitacion.md.
 const EDITOR_MOVIL_INVITACION = true
+
+// Tour guiado del editor (BuildTour): apagado. Con false no se abre solo, no
+// se pinta y no sale su botón "?". En true vuelve todo.
+const TOUR_INVITACION_ACTIVO = false
 import { BuildTour, BUILD_TOUR_STORAGE_KEY } from './BuildTour'
 import { load } from '../../../../helpers/assets/images'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -650,7 +654,7 @@ export const BuildPage = () => {
     }, [])
 
     useEffect(() => {
-        if (!copy || !id || !tourAvailable) return
+        if (!TOUR_INVITACION_ACTIVO || !copy || !id || !tourAvailable) return
         if (localStorage.getItem(BUILD_TOUR_STORAGE_KEY)) return
 
         let cancelled = false
@@ -1049,7 +1053,7 @@ export const BuildPage = () => {
                                 onRedo={onRedo}
                                 canUndo={undoStack.length > 0}
                                 canRedo={redoStack.length > 0}
-                                onReplayTour={() => { setLive(false); setTourOpen(true) }}
+                                onReplayTour={TOUR_INVITACION_ACTIVO ? () => { setLive(false); setTourOpen(true) } : undefined}
                                 selectedSection={buttons[currentSection - 1]?.type ?? null}
                                 onSelectSection={selectFromCanvas}
                                 onFieldChange={setFieldByPath}
@@ -1131,7 +1135,7 @@ export const BuildPage = () => {
                                 languages={copy?.generals?.languages ?? []} disabledLanguages={copy?.generals?.disabledLanguages ?? []} activeLang={activeLang} onActiveLangChange={setActiveLang}
                                 onAddLanguage={addLanguage} onToggleLanguageEnabled={toggleLanguageEnabled} onRetranslate={retranslate} translating={translating}
                                 onUndo={onUndo} onRedo={onRedo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0}
-                                onReplayTour={tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen}
+                                onReplayTour={TOUR_INVITACION_ACTIVO && tourAvailable ? () => setTourOpen(true) : undefined} tourOpen={tourOpen}
                                 live={live} onToggleLive={() => setLive((v) => !v)}
                                 selectedSection={buttons[currentSection - 1]?.type ?? null}
                                 onSelectSection={selectFromCanvas} onFieldChange={setFieldByPath}
@@ -1147,7 +1151,7 @@ export const BuildPage = () => {
 
                         {/* Tour del editor: recorre la barra de módulos explicando
                             qué vive en cada uno (Generales, Portada, Bienvenida...). */}
-                        <BuildTour open={tourOpen && tourAvailable} onClose={closeTour} onSelectSection={selectSection} />
+                        <BuildTour open={TOUR_INVITACION_ACTIVO && tourOpen && tourAvailable} onClose={closeTour} onSelectSection={selectSection} />
                     </Layout >
                     : <div className='build-loading-container'>
                         <img alt='' src={load} style={{

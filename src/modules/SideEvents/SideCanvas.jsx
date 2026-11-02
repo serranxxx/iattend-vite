@@ -98,6 +98,13 @@ export const SideCanvas = ({
     // Dibujo a pantalla completa: solo se puede dibujar y hacer scroll; tocar
     // el título, los PNG, las tarjetas o los botones no hace nada.
     soloDibujo = false,
+    // Dibujo a pantalla completa: la pieza entera a lo largo, sin scroll
+    // propio (el tablero se mueve y se acerca). Es el alto de la pantalla
+    // (px): la portada, los PNG y la foto siguen midiéndose con él.
+    completa = null,
+    // Pluma de selección del dibujo: con `soloDibujo`, solo los trazos se
+    // pueden elegir y mover (lo demás sigue sin responder).
+    seleccionDibujos = false,
     // Portada (fotosPortada.js): `fotoFija` (url) deja quieta esa foto o video
     // del carrusel (la elegida en la barra Fondo); `ajustarFoto` (url) la
     // ajusta: arrastrar la mueve y la rueda la acerca o aleja.
@@ -172,6 +179,18 @@ export const SideCanvas = ({
         t.pts = [...t.pts, [e.clientX, e.clientY]]
         setTrazo(aUnidades(t.pts, rectDeTrazo(t)))
     }
+    // Dos dedos (zoom / mover el tablero, LienzoInmersivo): el trazo que el
+    // primer dedo empezó se descarta, no se guarda.
+    useEffect(() => {
+        const cancelar = () => {
+            if (!trazoRef.current) return
+            trazoRef.current = null
+            setTrazo(null)
+            setTrazoEn(null)
+        }
+        window.addEventListener('iattend-dibujo-cancelar', cancelar)
+        return () => window.removeEventListener('iattend-dibujo-cancelar', cancelar)
+    }, [])
     const terminarTrazo = () => {
         const t = trazoRef.current
         trazoRef.current = null
@@ -451,7 +470,7 @@ export const SideCanvas = ({
     useLayoutEffect(() => {
         const info = infoRef.current
         const botones = botonesRef.current
-        const alto = scrollRef.current?.clientHeight
+        const alto = completa || scrollRef.current?.clientHeight
         const ancho = scrollRef.current?.clientWidth
         if (!info || !botones || !alto || !ancho) return
         const top = 0
@@ -867,6 +886,7 @@ export const SideCanvas = ({
                                         <div
                                             key={s.id}
                                             className={`${styles.sticker} ${styles.elemento}`}
+                                            data-dibujo={s.kind === 'dibujo' || undefined}
                                             style={{ ...estiloSticker(s), ...(editando === s.id ? { visibility: 'hidden' } : {}) }}
                                             onPointerDown={arrastrarSticker(s)}
                                             onClick={elegirSticker(s)}
@@ -923,17 +943,27 @@ export const SideCanvas = ({
             ref={cardRef}
             className={`${styles.card} ${barMode ? styles.cardIphone : ''} ${fullBleed ? styles.cardFull : ''} ${storyMode ? styles.cardStory : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
             // Estilo de bloques (Pop): sus variables y data-estilo (solo si no es vidrio).
-            style={{ '--blur-color': themeColor, '--blur-color--dark': tint, ...variablesDeEstilo(estiloDe(body), body.color) }}
+            style={{ '--blur-color': themeColor, '--blur-color--dark': tint, ...(completa ? { '--alto-pantalla': `${completa}px` } : {}), ...variablesDeEstilo(estiloDe(body), body.color) }}
             data-estilo={estiloDe(body) === 'vidrio' ? undefined : estiloDe(body)}
             data-side-card
-            data-solo-dibujo={(soloDibujo && pincel) || undefined}
+            data-solo-dibujo={soloDibujo || undefined}
+            data-sel-dibujos={(soloDibujo && seleccionDibujos) || undefined}
+            data-completa={completa ? true : undefined}
             data-movil={movil || undefined}
             onClick={() => {
+                if (soloDibujo && seleccionDibujos) onStickerSel?.([])
                 if (readOnly || soloDibujo) return
                 onSelect(null)
                 if (storyMode) onStickerSel?.([])
             }}
         >
+
+            {/* Pieza completa: debajo de la primera pantalla, la foto de la
+                portada desenfocada con el tinte (en la página la foto queda
+                fija detrás de las tarjetas). */}
+            {completa && (
+                <div aria-hidden className={styles.fondoCompleta} style={body.image ? { '--foto-completa': `url("${body.image}")` } : undefined} />
+            )}
 
             {/* ── Hero ── */}
             <div className={cls('background', styles.hero)} onClick={pick('background')}>
@@ -1017,8 +1047,25 @@ export const SideCanvas = ({
             <div
                 ref={scrollRef}
                 className={`${styles.scrollArea} scroll-invitation`}
+                // Pieza completa: la capa de dibujo cubre solo la primera
+                // pantalla; abajo, un trazo que empieza encima de una tarjeta
+                // se ancla a ella (lo demás no se dibuja).
+                {...(completa && pincel && !readOnly ? {
+                    onPointerDown: (e) => {
+                        if (e.target.closest(`.${styles.capaDibujo}`) || !tarjetaEn(e.clientX, e.clientY)) return
+                        empezarTrazo(e)
+                    },
+                    onPointerMove: moverTrazo,
+                    onPointerUp: terminarTrazo,
+                    onPointerCancel: terminarTrazo,
+                } : {})}
                 onClick={(e) => {
-                    if (soloDibujo) { e.stopPropagation(); return }
+                    if (soloDibujo) {
+                        e.stopPropagation()
+                        // Con la pluma de selección, tocar lo vacío suelta los trazos.
+                        if (seleccionDibujos && !clicDeSticker.current) onStickerSel?.([])
+                        return
+                    }
                     if (clicDeSticker.current) { e.stopPropagation(); return }
                     if (e.target === e.currentTarget) pick('background')(e)
                 }}

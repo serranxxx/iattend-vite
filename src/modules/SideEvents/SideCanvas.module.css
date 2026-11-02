@@ -1204,6 +1204,19 @@
     pointer-events: auto;
 }
 
+/* Pluma de selección del dibujo (SideCanvas `seleccionDibujos`): solo los
+   trazos y sus agarraderas reciben el puntero. */
+.card[data-sel-dibujos] [data-dibujo],
+.card[data-sel-dibujos] [data-dibujo] *,
+.card[data-sel-dibujos] [data-sticker],
+.card[data-sel-dibujos] [data-sticker] * {
+    pointer-events: auto;
+}
+
+.card[data-sel-dibujos] [data-dibujo] {
+    cursor: pointer;
+}
+
 /* Ajustar la foto de fondo (SideCanvas `ajustarFoto`): la capa toma el
    puntero sobre toda la pantalla de la pieza; tercios para encuadrar. */
 .capaAjuste {
@@ -1280,4 +1293,56 @@
 .card[data-movil] .formAviso svg {
     width: 18px;
     height: 18px;
+}
+
+/* Dibujo a pantalla completa (SideCanvas `completa`): la pieza entera a lo
+   largo, sin scroll propio. La portada (foto, PNG, velo) mide una pantalla
+   (--alto-pantalla) arriba; debajo, las tarjetas sobre el color del tema. */
+.card[data-completa] {
+    height: auto;
+    min-height: var(--alto-pantalla);
+}
+
+.fondoCompleta {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background: var(--blur-color);
+}
+
+.fondoCompleta::before,
+.fondoCompleta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+}
+
+.fondoCompleta::before {
+    inset: -40px;
+    background: var(--foto-completa, none) center / cover no-repeat;
+    filter: blur(24px);
+}
+
+.fondoCompleta::after {
+    background: var(--blur-color--dark);
+}
+
+.card[data-completa] .scrollArea {
+    height: auto;
+    overflow: visible;
+    container-type: inline-size;
+}
+
+.card[data-completa] .hero {
+    bottom: auto;
+    height: var(--alto-pantalla);
+}
+
+.card[data-completa] .primeraPantalla {
+    min-height: var(--alto-pantalla);
+}
+
+.card[data-completa] .capaFija {
+    height: var(--alto-pantalla);
 }

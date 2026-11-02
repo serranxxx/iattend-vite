@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Popover, Tooltip } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { Redo2, Undo2 } from 'lucide-react'
+import { Redo2, Trash2, Undo2 } from 'lucide-react'
 import { PINCEL, PINCELES } from '../../Editor/dibujoData'
 import { AjustesPincel } from './AjustesPincel'
 import s from './PaletaDibujo.module.css'
@@ -18,7 +18,18 @@ import s from './PaletaDibujo.module.css'
   las plumas paradas (punta arriba; caben cinco, el resto con scroll) y
   solo el botón de color (abre el selector a pantalla completa); deshacer y
   rehacer van en el header.
+  `activo = false`: sin pincel (se soltó tocando fuera de la pieza en el
+  tablero de pantalla completa): ninguna pluma sale; tocar una la toma
+  (`onActivar`).
+  Selección (como el lazo de Freeform): con `onSeleccionar`, una pluma más
+  al final. Con ella tomada (`seleccionando`) se eligen y mueven los
+  trazos; con un pincel de dibujo, nunca. Con trazos elegidos aparece
+  "Eliminar" (`onEliminar`).
 */
+
+// Con pantalla táctil (iPad) sin tooltips en las plumas: con un toque se
+// quedaban pegados encima del tablero.
+const TACTIL = typeof window !== 'undefined' && Boolean(window.matchMedia?.('(pointer: coarse)').matches)
 
 const COLORES = ['#FFFFFF', '#29262D', '#FFC93C', '#FF5A5F', '#4C8BF5', '#3DDC97']
 // Punta de cada pincel (la pluma apunta a la izquierda; el cuerpo sigue a la
@@ -62,6 +73,13 @@ const Punta = ({ id, color }) => {
             )
         case 'borrador':
             return <rect x="12" y="11" width="34" height="18" rx="5" fill="#E9A3A0" />
+        case 'seleccion':
+            return (
+                <>
+                    <path d="M44 13 L26 18 L26 22 L44 27 Z" fill="#F4F4F6" stroke="#E2E2E6" />
+                    <ellipse cx="17" cy="20" rx="8" ry="6" fill="none" stroke="#29262D" strokeWidth="1.8" strokeDasharray="3 2.4" />
+                </>
+            )
         default:
             return null
     }
@@ -82,13 +100,15 @@ const Pluma = ({ id, color, on }) => (
         </defs>
         <Punta id={id} color={color} />
         <rect x="44" y="9" width="110" height="22" rx="3" fill="url(#cuerpo)" stroke="#E4E4E8" />
-        {id !== 'borrador' && <rect x="86" y="9" width="6" height="22" fill={color} stroke="rgba(0,0,0,0.08)" />}
+        {id !== 'borrador' && id !== 'seleccion' && <rect x="86" y="9" width="6" height="22" fill={color} stroke="rgba(0,0,0,0.08)" />}
     </svg>
 )
 
-export const PaletaDibujo = ({ pincel, setPincel, temaColor, onDeshacer, onRehacer, puedeDeshacer, puedeRehacer, onOtroColor, horizontal = false }) => {
+export const PaletaDibujo = ({ pincel, setPincel, temaColor, onDeshacer, onRehacer, puedeDeshacer, puedeRehacer, onOtroColor, horizontal = false, activo = true, onActivar, seleccionando = false, onSeleccionar, onEliminar }) => {
     const { t } = useTranslation()
     const borrador = PINCEL[pincel.brush]?.borra
+    // Con la selección tomada ninguna pluma de dibujo sale.
+    const tomado = activo && !seleccionando
     const colores = [...new Set([temaColor, ...COLORES].filter(Boolean).map((c) => c.toUpperCase()))].slice(0, 7)
     const actual = String(pincel.color).toUpperCase()
     // En la barra del celular el botón de color siempre enseña el color actual.
@@ -133,29 +153,54 @@ export const PaletaDibujo = ({ pincel, setPincel, temaColor, onDeshacer, onRehac
                         <Redo2 size={18} strokeWidth={2.4} />
                     </button>
                 </Tooltip>
+                {onEliminar && (
+                    <Tooltip title={t('side_events.draw_delete_selection')} placement="left">
+                        <button type="button" className={`${s.circulo} ${s.eliminar}`} onClick={onEliminar} aria-label={t('side_events.draw_delete_selection')}>
+                            <Trash2 size={17} strokeWidth={2.2} />
+                        </button>
+                    </Tooltip>
+                )}
             </div>}
 
             <div className={s.plumas} role="radiogroup" aria-label={t('side_events.draw_brush')}>
                 {PINCELES.map((p) => hoja(p.id, horizontal ? 'top' : 'left', (
                     <span className={s.plumaHueco}>
-                        <Tooltip title={abierta || horizontal ? null : t(`side_events.draw_brush_${p.id}`)} placement="left">
+                        <Tooltip title={abierta || horizontal || TACTIL ? null : t(`side_events.draw_brush_${p.id}`)} placement="left">
                             <button
                                 type="button"
                                 role="radio"
-                                aria-checked={pincel.brush === p.id}
+                                aria-checked={tomado && pincel.brush === p.id}
                                 aria-label={t(`side_events.draw_brush_${p.id}`)}
                                 className={s.plumaBtn}
                                 onClick={() => {
+                                    // Sin pincel (se soltó tocando fuera de la pieza): tocar uno lo toma.
+                                    if (!tomado) { cambiar({ brush: p.id }); onActivar?.(); setAbierta(null); return }
                                     // El elegido abre (o cierra) sus ajustes; otro solo se elige.
                                     if (pincel.brush === p.id) setAbierta((a) => (a === p.id ? null : p.id))
                                     else { cambiar({ brush: p.id }); setAbierta(null) }
                                 }}
                             >
-                                <Pluma id={p.id} color={tinta === '#C9C5CE' ? '#29262D' : pincel.color} on={pincel.brush === p.id} />
+                                <Pluma id={p.id} color={tinta === '#C9C5CE' ? '#29262D' : pincel.color} on={tomado && pincel.brush === p.id} />
                             </button>
                         </Tooltip>
                     </span>
                 )))}
+                {onSeleccionar && (
+                    <span className={s.plumaHueco}>
+                        <Tooltip title={horizontal || TACTIL ? null : t('side_events.draw_select')} placement="left">
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked={seleccionando}
+                                aria-label={t('side_events.draw_select')}
+                                className={s.plumaBtn}
+                                onClick={() => { setAbierta(null); onSeleccionar() }}
+                            >
+                                <Pluma id="seleccion" on={seleccionando} />
+                            </button>
+                        </Tooltip>
+                    </span>
+                )}
             </div>
 
             <div className={s.colores} data-off={borrador || undefined} role="radiogroup" aria-label={t('side_events.draw_color')}>
