@@ -1,16 +1,21 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { Drawer, Dropdown, Grid, Popover } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
-import { CalendarHeart, ChevronRight, Compass, Gift, Info, LayoutDashboard, LogOut, Plus, Shield, Sparkles, Users, X, Zap } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { CalendarHeart, ChevronRight, Compass, Gift, Info, LayoutDashboard, LayoutGrid, LogOut, Plus, Shield, Sparkles, Users, X, Zap } from 'lucide-react'
 import { PlannerExplore } from './PlannerExplore'
 import { PlannerFeedback } from './PlannerFeedback'
 import { PlannerEventList } from './PlannerEventList'
 import { buildStats, fetchPlannerData } from '../../components/PlannerDashboard/plannerData'
 import logoBlue from '/images/logo_blue.png'
+import logoNegro from '/images/logo_negro.png'
 import styles from './PlannerLayout.module.css'
 import { PlannerSkeleton } from './PlannerSkeleton'
+import { PopsLogo } from '../../components/PopsLogo/PopsLogo'
+import { PopsSection } from './PopsSection'
+import { usePopsTransicion } from './usePopsTransicion'
+import { PopsOnboarding } from '../../components/PopsOnboarding/PopsOnboarding'
 
 
 /**
@@ -20,7 +25,8 @@ import { PlannerSkeleton } from './PlannerSkeleton'
  *     (PlannerEventDrawer).
  *   - Invitaciones: Explora I attend (carrusel + su invitación de ejemplo
  *     `is_test`, si la tiene), Mis clientes y Mis eventos (PlannerEventList:
- *     Próximos + Historial). Siempre se entra a Explora I attend.
+ *     Próximos + Historial). La sección va en la URL (?seccion=…) y se
+ *     recuerda en la pestaña; sin nada, Explora I attend.
  *   - Dashboard (?view=data) → PlannerDashboard.
  *   - Administración: además, Administrador bajo Dashboard.
  *   - Abajo, "¿Te falta algo?" (PlannerFeedback, solicitudes que llegan a
@@ -31,25 +37,40 @@ import { PlannerSkeleton } from './PlannerSkeleton'
  * eventos del dashboard se muestra en la barra, bajo "Dashboard".
  *
  * En celular (< 768 px) no hay barra lateral: arriba el logo (o "Dashboard")
- * y su avatar con el menú; abajo una barra de pestañas (Explora, Clientes,
- * Mis eventos, Dashboard) con un "+" al centro que abre la hoja de alta
- * (comprar o usar sus eventos gratis). "¿Te falta algo?" va como fila al
- * final del dashboard.
+ * y su avatar con el menú; abajo la barra flotante (handoff "Pops mobile"):
+ * una pastilla con Explora · Clientes · Eventos · Pops · Dashboard (con 5 se
+ * recorre de lado) y el "+" aparte, que abre "Comprar evento" (o la hoja con
+ * sus eventos regulares gratis, si tiene). En Pops la página es PopsSection
+ * `movil` a todo lo ancho, la pestaña activa va en negro y el "+" en lima.
+ * "¿Te falta algo?" va como fila al final del dashboard.
+ *
+ * Pops en escritorio (handoff "Sección Pops"): la barra cambia a la estética
+ * pop (blanca, pastillas) y el contenido es PopsSection; entrar y salir van
+ * con la transición circular desde el botón Pops (usePopsTransicion).
  *
  * `esCliente`: el mismo layout para una cuenta de cliente (InvitationsPage lo
  * usa para todos): sin Clientes, Dashboard, Administrador, "¿Te falta algo?"
  * ni invitación de ejemplo; Explora es solo el carrusel (con su slide de
  * regalo, `onRegalar`) y Eventos son todas sus invitaciones.
  */
+// Sección elegida de /invitations: va en la URL (?seccion=clients|own|pops;
+// Explora I attend = sin parámetro) para que recargar la deje donde estaba, y
+// en sessionStorage para que al volver con un `/invitations` pelón (salir de
+// un Pop o de un evento) regrese a la última. Una pestaña nueva entra a Explora.
+const SECCION_PARAM = 'seccion'
+const SECCION_GUARDADA = 'iattend_seccion_invitaciones'
+const leerGuardada = () => { try { return sessionStorage.getItem(SECCION_GUARDADA) } catch { return null } }
+const guardarSeccion = (key) => { try { sessionStorage.setItem(SECCION_GUARDADA, key) } catch { /* sin storage */ } }
+
 export const PlannerLayout = ({
     esCliente = false,
     greeting, user, invitations, beneficios, esDeCliente, renderInvitationCard,
     view, onViewChange, dashboard, setFilterSlot, loading,
-    onComprar, onGratis, onGratisPop, onEventoPersonal, onRegalar, onTour, onLogout, onAbrir, onCompartir,
+    onComprar, onComprarPop, onGratis, onGratisPop, onEventoPersonal, onRegalar, onTour, onLogout, onAbrir, onCompartir,
 }) => {
     const { t } = useTranslation()
     const navigate = useNavigate()
-    const [elegida, setElegida] = useState(null)
+    const [searchParams, setSearchParams] = useSearchParams()
     const celular = Grid.useBreakpoint().md === false
     const [hojaAlta, setHojaAlta] = useState(false)
     // Administración usa este mismo layout (helpers/roles.js) y aquí no está
@@ -79,8 +100,32 @@ export const PlannerLayout = ({
         { key: 'pops', title: t('invitations.planner_tab_pops'), items: lista.filter(inv => inv._pop && !esDeCliente(inv)) },
     ].filter(s => !esCliente || s.key !== 'clients')
 
-    // Siempre se entra a Explora I attend; después, la que elija.
-    const activa = secciones.find(s => s.key === (elegida ?? 'test'))
+    // De la URL o, sin parámetro, la última de esta pestaña; si no existe
+    // (p. ej. Clientes en una cuenta de cliente), Explora I attend.
+    const enUrl = searchParams.get(SECCION_PARAM)
+    const elegida = enUrl ?? leerGuardada()
+    const activa = secciones.find(s => s.key === elegida) ?? secciones.find(s => s.key === 'test')
+
+    // Sin parámetro pero con una guardada: que la URL la diga (recargar, compartir).
+    useEffect(() => {
+        if (enUrl || !activa || activa.key === 'test') return
+        setSearchParams(prev => { prev.set(SECCION_PARAM, activa.key); return prev }, { replace: true })
+    }, [enUrl, activa?.key])
+
+    // Cambia la sección (y sale del dashboard) en un solo cambio de URL.
+    const setElegida = (key) => {
+        guardarSeccion(key)
+        setSearchParams(prev => {
+            if (key === 'test') prev.delete(SECCION_PARAM)
+            else prev.set(SECCION_PARAM, key)
+            prev.delete('view')
+            return prev
+        }, { replace: true })
+    }
+    const [hoverPops, setHoverPops] = useState(false)
+    // "Conoce los Pops": modal con el video de onboarding (PopsOnboarding).
+    const [conocePops, setConocePops] = useState(false)
+    const popsRef = useRef(null)
 
     // Números de las tarjetas de Mis clientes y Mis eventos (mismo cálculo
     // que el dashboard). Sin números para los Pops: con stats la tarjeta
@@ -104,6 +149,27 @@ export const PlannerLayout = ({
         return Object.fromEntries(conNumeros.map(inv => [inv.id, buildStats(inv, datosEventos, hoy)]))
     }, [datosEventos, conNumerosKey])
     const enDashboard = view === 'data'
+    // Pastilla de la barra inferior (celular): el botón activo siempre a la
+    // vista (al montar sin animación; al cambiar de sección, deslizándose).
+    const pastillaRef = useRef(null)
+    const pestanaVisible = enDashboard ? 'data' : activa?.key
+    const pastillaMontada = useRef(false)
+    useEffect(() => {
+        const fila = pastillaRef.current
+        const activo = fila?.querySelector('[data-activa]')
+        if (!fila || !activo || fila.scrollWidth <= fila.clientWidth) return
+        fila.scrollTo({
+            left: activo.offsetLeft - (fila.clientWidth - activo.offsetWidth) / 2,
+            behavior: pastillaMontada.current ? 'smooth' : 'auto',
+        })
+        pastillaMontada.current = true
+    }, [celular, pestanaVisible])
+    // Sección Pops con su estética propia (escritorio y celular).
+    const modoPops = !enDashboard && activa?.key === 'pops'
+    const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef)
+    // Entrar o salir de Pops lleva la transición (origen: el botón Pops de la
+    // barra lateral o de la barra inferior); entre las demás, directo.
+    const navegar = (haciaPops, accion) => (haciaPops !== modoPops ? transicion(haciaPops, accion) : accion())
 
     const gratis = beneficios?.free_events ?? 0
     const gratisPop = beneficios?.free_flash_events ?? 0
@@ -112,10 +178,8 @@ export const PlannerLayout = ({
     // Crear un Pop: con uno gratis, directo a ese flujo; si no, la compra.
     const crearPop = gratisPop > 0 ? onGratisPop : onComprar
 
-    const abrirSeccion = (key) => {
-        setElegida(key)
-        if (enDashboard) onViewChange('invitations')
-    }
+    // setElegida también quita ?view=data: salir del dashboard va en el mismo cambio.
+    const abrirSeccion = (key) => navegar(key === 'pops', () => setElegida(key))
 
     const menuUsuario = {
         items: [
@@ -137,7 +201,9 @@ export const PlannerLayout = ({
     // explica qué es: casi nadie lo sabe todavía. En celular van en la hoja
     // del "+".
     const usarGratis = (fn) => () => { setHojaAlta(false); fn?.() }
-    const regalos = (gratis > 0 || gratisPop > 0) && (
+    // En la sección Pops el Pop gratis va en el aviso amarillo de la lista.
+    const popGratisEnBarra = gratisPop > 0 && !modoPops
+    const regalos = (gratis > 0 || popGratisEnBarra) && (
         <div className={styles.regalos}>
             <span className={styles.regalosTitulo}><Gift size={13} /> {t('planner_free.title')}</span>
             {gratis > 0 && (
@@ -148,7 +214,7 @@ export const PlannerLayout = ({
                     <ChevronRight size={16} className={styles.regaloFlecha} />
                 </button>
             )}
-            {gratisPop > 0 && (
+            {popGratisEnBarra && (
                 <button type='button' className={styles.regalo} onClick={usarGratis(onGratisPop)}>
                     <span className={styles.regaloIcono}><Zap size={15} /></span>
                     <span className={styles.regaloTexto}>
@@ -181,7 +247,19 @@ export const PlannerLayout = ({
     // (antes, la página se quedaba en blanco).
     const contenido = loading
         ? (enDashboard ? null : <PlannerSkeleton variante={!activa || activa.key === 'test' ? 'explora' : 'lista'} />)
-        : enDashboard ? dashboard : activa?.key === 'test' ? (
+        : enDashboard ? dashboard : modoPops ? (
+        <PopsSection
+            greeting={greeting}
+            items={activa.items}
+            gratisPop={gratisPop}
+            puedeCrear={!esCliente || gratisPop > 0}
+            onCrear={crearPop}
+            onComprarPop={esCliente ? undefined : onComprarPop}
+            onGratisPop={onGratisPop}
+            onConoce={() => setConocePops(true)}
+            onAbrir={onAbrir}
+        />
+    ) : activa?.key === 'test' ? (
         <PlannerExplore
             ejemplo={esCliente ? undefined : activa.items[0]}
             onRegalar={esCliente ? onRegalar : undefined}
@@ -236,75 +314,101 @@ export const PlannerLayout = ({
 
     const iniciales = (user?.name || '?').trim().charAt(0).toUpperCase()
 
+    const modalConocePops = (
+        <PopsOnboarding open={conocePops} onClose={() => setConocePops(false)} onCrear={!esCliente || gratisPop > 0 ? crearPop : undefined} />
+    )
+
     if (celular) {
+        // Barra inferior flotante (handoff "Pops mobile"): una pastilla con
+        // las secciones y el botón crear aparte. Con 5 secciones (Dashboard)
+        // la pastilla se recorre de lado; los botones no se aplastan.
         const pestanas = [
             { key: 'test', label: t('invitations.planner_tab_explore'), icon: Compass },
             { key: 'clients', label: t('invitations.planner_tab_clients'), icon: Users },
-            { key: 'nuevo' },
             { key: 'own', label: t('invitations.planner_tab_own'), icon: CalendarHeart },
             { key: 'pops', label: t('invitations.planner_tab_pops'), icon: Zap },
-            { key: 'data', label: t('planner.segment_data'), icon: LayoutDashboard },
+            { key: 'data', label: t('planner.segment_data'), icon: LayoutGrid },
         ].filter(p => !esCliente || (p.key !== 'clients' && p.key !== 'data'))
-        // Cliente: Explora · Eventos · + · Pops (el "+" sigue entre las pestañas).
-        if (esCliente) pestanas.splice(1, 0, ...pestanas.splice(pestanas.findIndex(p => p.key === 'own'), 1))
         const pestanaActiva = enDashboard ? 'data' : activa?.key
-        const tieneGratis = gratis > 0 || gratisPop > 0
+        const conScroll = pestanas.length > 4
+        // Con eventos regulares gratis, el "+" abre la hoja con ellos; si no,
+        // directo a "Comprar evento" (que ya enseña los Pops gratis).
+        const crear = () => (gratis > 0 || (esCliente && gratisPop > 0) ? setHojaAlta(true) : onComprar())
 
         return (
-            <div className={styles.movil}>
-                <main className={`${styles.main} ${styles.mainMovil}`}>
-                    <header className={styles.barraMovil}>
-                        {enDashboard
-                            ? <h1 className={styles.tituloMovilDashboard}>{t('planner.segment_data')}</h1>
-                            : <img src={logoBlue} alt='I attend' className={styles.logoMovil} />}
-                        <Dropdown menu={menuUsuario} trigger={['click']} placement='bottomRight'>
-                            <button type='button' className={styles.avatar} aria-label={user?.name}>{iniciales}</button>
-                        </Dropdown>
-                    </header>
+            <div className={`${styles.movil} ${modoPops ? styles.movilPop : ''}`}>
+                {veloPops}
+                {modalConocePops}
+                {modoPops ? (
+                    <main className={styles.mainMovilPop}>
+                        {loading
+                            ? <PlannerSkeleton variante='lista' />
+                            : (
+                                <PopsSection
+                                    movil
+                                    greeting={greeting}
+                                    items={activa.items}
+                                    gratisPop={gratisPop}
+                                    puedeCrear={!esCliente || gratisPop > 0}
+                                    onCrear={crearPop}
+                                    onComprarPop={esCliente ? undefined : onComprarPop}
+                                    onGratisPop={onGratisPop}
+                                    onConoce={() => setConocePops(true)}
+                                    onAbrir={onAbrir}
+                                />
+                            )}
+                    </main>
+                ) : (
+                    <main className={`${styles.main} ${styles.mainMovil}`}>
+                        <header className={styles.barraMovil}>
+                            {enDashboard
+                                ? <h1 className={styles.tituloMovilDashboard}>{t('planner.segment_data')}</h1>
+                                : <img src={logoBlue} alt='I attend' className={styles.logoMovil} />}
+                            <Dropdown menu={menuUsuario} trigger={['click']} placement='bottomRight'>
+                                <button type='button' className={styles.avatar} aria-label={user?.name}>{iniciales}</button>
+                            </Dropdown>
+                        </header>
 
-                    {!enDashboard && <h1 className={styles.titulo}>{greeting}</h1>}
-                    {!enDashboard && activa?.key === 'test' && (
-                        <button type='button' className={`${styles.conoce} ${styles.conoceMovil}`} onClick={onTour}>
-                            <Sparkles size={15} /> {t('invitations.planner_menu_tour')}
-                        </button>
-                    )}
-
-                    <div className={styles.contenidoMovil}>{contenido}</div>
-
-                    {enDashboard && <PlannerFeedback variante='fila' />}
-                </main>
-
-                <nav className={styles.pestanas} style={{ gridTemplateColumns: `repeat(${pestanas.length}, minmax(0, 1fr))` }} aria-label={t('invitations.planner_nav_label')}>
-                    {pestanas.map(p => {
-                        if (p.key === 'nuevo') {
-                            return (
-                                <button
-                                    key='nuevo'
-                                    type='button'
-                                    className={styles.pestanaNuevo}
-                                    aria-label={t('invitations.planner_new_title')}
-                                    onClick={() => (tieneGratis ? setHojaAlta(true) : onComprar())}
-                                >
-                                    <Plus size={26} strokeWidth={2.5} />
-                                </button>
-                            )
-                        }
-                        const Icono = p.icon
-                        const activaP = pestanaActiva === p.key
-                        return (
-                            <button
-                                key={p.key}
-                                type='button'
-                                className={`${styles.pestana} ${activaP ? styles.pestanaActiva : ''}`}
-                                aria-current={activaP ? 'page' : undefined}
-                                onClick={() => (p.key === 'data' ? onViewChange('data') : abrirSeccion(p.key))}
-                            >
-                                <span className={styles.pestanaIcono}><Icono size={20} strokeWidth={activaP ? 2.4 : 1.8} /></span>
-                                <span>{p.label}</span>
+                        {!enDashboard && <h1 className={styles.titulo}>{greeting}</h1>}
+                        {!enDashboard && activa?.key === 'test' && (
+                            <button type='button' className={`${styles.conoce} ${styles.conoceMovil}`} onClick={onTour}>
+                                <Sparkles size={15} /> {t('invitations.planner_menu_tour')}
                             </button>
-                        )
-                    })}
-                </nav>
+                        )}
+
+                        <div className={styles.contenidoMovil}>{contenido}</div>
+
+                        {enDashboard && <PlannerFeedback variante='fila' />}
+                    </main>
+                )}
+
+                <div className={styles.barraInferior}>
+                    <nav className={styles.pastilla} aria-label={t('invitations.planner_nav_label')}>
+                        <div ref={pastillaRef} className={`${styles.pastillaFila} ${conScroll ? styles.pastillaScroll : ''}`}>
+                            {pestanas.map(p => {
+                                const Icono = p.icon
+                                const activaP = pestanaActiva === p.key
+                                return (
+                                    <button
+                                        key={p.key}
+                                        ref={p.key === 'pops' ? popsRef : undefined}
+                                        type='button'
+                                        data-activa={activaP || undefined}
+                                        className={`${styles.pestana} ${p.key === 'pops' ? styles.pestanaPops : ''}`}
+                                        aria-current={activaP ? 'page' : undefined}
+                                        onClick={() => (p.key === 'data' ? navegar(false, () => onViewChange('data')) : abrirSeccion(p.key))}
+                                    >
+                                        <Icono size={19} strokeWidth={activaP ? 2.3 : 1.8} />
+                                        <span>{p.label}</span>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </nav>
+                    <button type='button' className={styles.crear} aria-label={t('invitations.planner_new_title')} onClick={crear}>
+                        <Plus size={30} strokeWidth={2.2} />
+                    </button>
+                </div>
 
                 <Drawer
                     open={hojaAlta}
@@ -335,9 +439,11 @@ export const PlannerLayout = ({
     }
 
     return (
-        <div className={styles.layout}>
-            <aside className={styles.sidebar}>
-                <img src={logoBlue} alt='I attend' className={styles.logo} />
+        <div className={`${styles.layout} ${modoPops ? styles.layoutPop : ''}`}>
+            {veloPops}
+            {modalConocePops}
+            <aside className={`${styles.sidebar} ${modoPops ? styles.sidebarPop : ''}`}>
+                <img src={modoPops ? logoNegro : logoBlue} alt='I attend' className={styles.logo} />
 
                 <div className={styles.acciones}>
                     <button type='button' className={styles.comprar} onClick={onComprar}>
@@ -353,13 +459,21 @@ export const PlannerLayout = ({
                     {secciones.map(s => (
                         <button
                             key={s.key}
+                            ref={s.key === 'pops' ? popsRef : undefined}
                             type='button'
-                            className={`${styles.navItem} ${!enDashboard && activa?.key === s.key ? styles.navItemActivo : ''}`}
+                            className={`${styles.navItem} ${s.key === 'pops' ? styles.navPops : ''} ${!enDashboard && activa?.key === s.key ? styles.navItemActivo : ''}`}
                             aria-current={!enDashboard && activa?.key === s.key ? 'page' : undefined}
                             onClick={() => abrirSeccion(s.key)}
+                            // Dentro de Pops el botón ya es el activo: sin animación al pasar el mouse.
+                            onMouseEnter={s.key === 'pops' && !modoPops ? () => setHoverPops(true) : undefined}
+                            onMouseLeave={s.key === 'pops' ? () => setHoverPops(false) : undefined}
                         >
-                            <span>{s.title}</span>
-                            {!(esCliente && s.key === 'test') && <small>{s.items.length}</small>}
+                            {s.key === 'pops' && (hoverPops || modoPops)
+                                // En reposo "Pops" se ve como las demás; con el hover (o
+                                // dentro de Pops) es el wordmark animado (handoff "Pops Logo").
+                                ? <PopsLogo size={20} activo={hoverPops && !modoPops} />
+                                : <span>{s.title}</span>}
+                            {!(esCliente && s.key === 'test') && <small className={s.key === 'pops' ? styles.navPopsCuenta : undefined}>{s.items.length}</small>}
                         </button>
                     ))}
 
@@ -368,7 +482,7 @@ export const PlannerLayout = ({
                             type='button'
                             className={`${styles.navItem} ${styles.navDashboard} ${enDashboard ? styles.navItemActivo : ''}`}
                             aria-current={enDashboard ? 'page' : undefined}
-                            onClick={() => onViewChange('data')}
+                            onClick={() => navegar(false, () => onViewChange('data'))}
                         >
                             <span className={styles.navConIcono}><LayoutDashboard size={16} /> {t('planner.segment_data')}</span>
                         </button>
@@ -388,7 +502,7 @@ export const PlannerLayout = ({
                 <div className={styles.pie}>
                     {!esCliente && (
                         <div className={styles.sugerencias}>
-                            <PlannerFeedback />
+                            <PlannerFeedback variante={modoPops ? 'pop' : 'tarjeta'} />
                         </div>
                     )}
                     <Dropdown menu={menuUsuario} trigger={['click']} placement='topLeft'>
@@ -400,8 +514,8 @@ export const PlannerLayout = ({
                 </div>
             </aside>
 
-            <main className={styles.main}>
-                <div className={`${styles.encabezadoWrap} ${enDashboard ? styles.encabezadoOculto : ''}`} aria-hidden={enDashboard}>
+            <main className={`${styles.main} ${modoPops ? styles.mainPop : ''}`}>
+                {!modoPops && <div className={`${styles.encabezadoWrap} ${enDashboard ? styles.encabezadoOculto : ''}`} aria-hidden={enDashboard}>
                     <div className={styles.encabezadoInner}>
                         <div className={styles.encabezado}>
                             <h1 className={styles.titulo}>{greeting}</h1>
@@ -410,7 +524,7 @@ export const PlannerLayout = ({
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>}
 
                 {contenido}
             </main>

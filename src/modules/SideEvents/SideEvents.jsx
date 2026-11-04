@@ -15,6 +15,8 @@ import { BsArrowReturnRight } from 'react-icons/bs'
 import axios from 'axios'
 import { HeaderDashboard } from '../Header/Header'
 import { CreditController } from '../../components/Payment/CreditController/CreditController'
+import { EmojiPop } from './EmojiPop'
+import { emojiSugerido } from '../../helpers/invitation/popEmojis'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
@@ -2713,6 +2715,17 @@ export const SideEvents = () => {
         versionRef.current += 1
     }
 
+    // Emoji del Pop (popEmojis.js): si nunca se eligió uno, al abrirlo se le
+    // pone el sugerido (por su nombre o fijo por su id) y se guarda con el
+    // autoguardado, fuera del historial de deshacer. '' = lo quitó a propósito.
+    const popIdActual = esPop ? current?.id : null
+    useEffect(() => {
+        if (!popIdActual) return
+        const pop = currentRef.current
+        if (!pop || pop.body?.emoji !== undefined) return
+        updateCurrent((prev) => ({ ...prev, body: { ...prev.body, emoji: emojiSugerido(prev) } }), { snapshot: false })
+    }, [popIdActual])
+
     const applyHistory = (entry) => {
         currentRef.current = entry
         setCurrent(entry)
@@ -2880,6 +2893,7 @@ export const SideEvents = () => {
 
     const closeToList = () => {
         // Un Pop no tiene listado: regresa a la página de invitaciones.
+        // Regresa a la sección de donde vino (PlannerLayout la recuerda en la pestaña).
         if (esPop) return navigate('/invitations')
         startMorph('out', current)
         setMorphedIn(false)
@@ -4887,6 +4901,14 @@ export const SideEvents = () => {
                         <button className={ed.backBtn} onClick={handleBack} aria-label={t('side_events.back')}>
                             <ArrowLeft size={17} />
                         </button>
+                        {/* Pop: su emoji junto al nombre; se elige desde aquí. */}
+                        {esPop && (
+                            <EmojiPop
+                                value={current?.body?.emoji ?? ''}
+                                color={current?.body?.color}
+                                onChange={(emoji) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, emoji } }))}
+                            />
+                        )}
                         <span className={ed.crumb}>
                             <span className={wso.crumbKind}>{esPop ? t('invitations.pop_badge') : 'Side event'} · </span><strong>{current?.name || t('side_events.no_name')}</strong>
                         </span>

@@ -431,6 +431,7 @@ export const InvitationsPage = () => {
                 onComprar={isPlanner ? () => setAltaEvento('compra') : () => navigate('/checkout')}
                 onGratis={() => setAltaEvento('gratis')}
                 onGratisPop={() => setAltaEvento('pop-gratis')}
+                onComprarPop={isPlanner ? () => setAltaEvento('pop-compra') : undefined}
                 onEventoPersonal={() => navigate('/checkout')}
                 onRegalar={() => setRegalaVisible(true)}
                 onTour={() => setOnboardingOpen(true)}

@@ -1,0 +1,733 @@
+/* /invitations › Pops (handoff "Sección Pops"). Colores en :root (src/styles/index.css, --pops-*). */
+
+.seccion {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background-color: #FFF;
+    background-image: radial-gradient(var(--pops-punto) 1.2px, transparent 1.2px);
+    background-size: 18px 18px;
+    color: var(--pops-tinta);
+    font-family: 'Poppins', sans-serif;
+    animation: riseIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes riseIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.995); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ── Banda negra ── */
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    padding: 44px 56px 130px;
+    /* El negro termina 76 px antes: ahí entra el zigzag sobre los puntos. */
+    background: linear-gradient(var(--pops-negro) calc(100% - 76px), transparent calc(100% - 76px));
+    color: #FFF;
+}
+
+.heroFila {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    align-items: center;
+}
+
+.heroTexto {
+    flex: 1 1 470px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    container-type: inline-size;
+}
+
+.saludo {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--pops-texto-claro);
+    white-space: nowrap;
+}
+
+.logo {
+    height: 210px;
+    display: flex;
+    align-items: center;
+    margin: 0 0 6px -12px;
+}
+
+.titular {
+    margin-top: 4px;
+    font-size: clamp(22px, 5.5cqw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.resaltaRosa {
+    padding: 0 8px;
+    background: var(--pops-rosa);
+    color: var(--pops-tinta);
+}
+
+.lede {
+    max-width: min(100%, 660px);
+    margin-top: 14px;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--pops-texto-claro);
+    text-wrap: pretty;
+}
+
+.heroBotones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.botonLima,
+.botonContorno {
+    white-space: nowrap;
+    padding: 13px 24px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.botonLima {
+    border: none;
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+    font-weight: 700;
+}
+
+.botonLima:hover {
+    background: #FFF;
+}
+
+.botonContorno {
+    padding: 13px 20px;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: #FFF;
+    font-weight: 600;
+}
+
+.botonContorno:hover {
+    border-color: #FFF;
+}
+
+.collage {
+    position: relative;
+    flex: 0 0 300px;
+    height: 320px;
+    margin: 0 auto;
+}
+
+.zigzag {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 80px;
+    display: block;
+}
+
+.zigzag polygon {
+    fill: var(--pops-negro);
+}
+
+.zigzag polyline {
+    fill: none;
+    stroke: var(--pops-rosa);
+    stroke-width: 5;
+    stroke-linejoin: round;
+}
+
+/* ── Stickers ── */
+
+.sticker {
+    position: absolute;
+    pointer-events: none;
+    animation: popIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.stickerFlota {
+    display: block;
+    transform: rotate(var(--r));
+    animation-name: flota;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0) rotate(-25deg); }
+    70% { opacity: 1; transform: scale(1.15) rotate(4deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes flota {
+    0%, 100% { transform: translateY(0) rotate(var(--r)); }
+    50% { transform: translateY(-10px) rotate(calc(var(--r) + 6deg)); }
+}
+
+/* ── Lista ── */
+
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    padding: 16px 56px 64px;
+}
+
+.listaCabeza {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.listaTitulos {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.listaTitulo {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.2;
+}
+
+.resaltaLima {
+    padding: 0 8px;
+    background: var(--pops-lima);
+}
+
+.listaSub {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--pops-texto-suave);
+}
+
+.comprarPop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 52px;
+    padding: 0 24px 0 8px;
+    border: none;
+    border-radius: 99px;
+    background: var(--pops-tinta);
+    color: #FFF;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.comprarPop:hover {
+    background: var(--pops-azul);
+    transform: translateY(-2px) rotate(-1deg);
+}
+
+.mas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.listaCuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.aviso {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 18px 20px 18px 22px;
+    border-radius: 20px;
+    background: var(--pops-amarillo);
+}
+
+.avisoTexto {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.avisoTexto > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.avisoTexto strong {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.avisoTexto div span {
+    font-size: 14px;
+    color: var(--pops-amarillo-tinta);
+}
+
+.avisoEmoji {
+    font-size: 34px;
+    line-height: 1;
+}
+
+.avisoBoton {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 99px;
+    background: #FFF;
+    color: var(--pops-tinta);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.avisoBoton:hover {
+    background: var(--pops-tinta);
+    color: #FFF;
+}
+
+.filas {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--pops-linea);
+}
+
+.pasadosTitulo {
+    padding: 4px 12px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pops-texto-suave);
+}
+
+.fila {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) 110px 120px 28px;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 12px 16px 12px 12px;
+    border: none;
+    border-radius: 16px;
+    background: transparent;
+    color: var(--pops-tinta);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.fila:hover {
+    background: var(--pops-superficie);
+}
+
+.filaPasada .mini {
+    opacity: 0.55;
+}
+
+/* Miniatura: color del Pop con su emoji (o el lugar vacío del emoji). */
+.mini {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.miniEmoji {
+    font-size: 26px;
+    line-height: 1;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+.miniVacio {
+    opacity: 0.55;
+}
+
+.filaTexto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.filaNombre {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.estado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--pops-texto-medio);
+}
+
+.punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--pops-verde);
+    animation: late 1.6s infinite;
+}
+
+.puntoPasado {
+    background: var(--pops-contador);
+    animation: none;
+}
+
+@keyframes late {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(46, 190, 136, 0.7); }
+    60% { box-shadow: 0 0 0 6px rgba(46, 190, 136, 0); }
+}
+
+.fecha {
+    font-size: 14px;
+    color: var(--pops-texto-medio);
+}
+
+.chip {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.flecha {
+    color: var(--pops-tinta);
+}
+
+.vacio {
+    margin: 0;
+    padding: 18px 12px;
+    font-size: 15px;
+    color: var(--pops-texto-medio);
+}
+
+/* ── Celular (handoff "Pops mobile") ── */
+
+.mSeccion {
+    min-height: 100dvh;
+    animation: none;
+}
+
+.mHero {
+    position: relative;
+    flex: none;
+    padding: calc(14px + env(safe-area-inset-top)) 22px 46px;
+    background: var(--pops-negro);
+    color: #FFF;
+    overflow: hidden;
+}
+
+.mCollage {
+    position: absolute;
+    right: 4px;
+    top: calc(56px + env(safe-area-inset-top));
+    width: 150px;
+    height: 150px;
+}
+
+.mHeroTexto {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.mSaludo {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--pops-texto-claro);
+    white-space: nowrap;
+}
+
+.mLogo {
+    height: 104px;
+    display: flex;
+    align-items: center;
+    margin-left: -6px;
+}
+
+.mTitular {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1.15;
+}
+
+.mTitular .resaltaRosa {
+    padding: 0 6px;
+}
+
+.mLede {
+    margin-top: 10px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--pops-texto-claro);
+}
+
+.mConoce {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 46px;
+    margin-top: 14px;
+    padding: 0 20px;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 99px;
+    background: transparent;
+    color: #FFF;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mConoce span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pops-texto-claro);
+}
+
+.mZigzag {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 40px;
+    display: block;
+}
+
+.mZigzag polygon {
+    fill: #FFF;
+}
+
+.mZigzag polyline {
+    fill: none;
+    stroke: var(--pops-rosa);
+    stroke-width: 4;
+    stroke-linejoin: round;
+}
+
+/* Lo último queda libre de la barra inferior. */
+.mLista {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 8px 20px calc(120px + env(safe-area-inset-bottom));
+}
+
+.mCabeza {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.mTitulo {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.mTitulo .resaltaLima {
+    padding: 0 6px;
+}
+
+.mSub {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pops-texto-suave);
+}
+
+.mComprar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 14px 0 5px;
+    border: none;
+    border-radius: 99px;
+    background: var(--pops-tinta);
+    color: #FFF;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mMas {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+    font-weight: 800;
+}
+
+.mAviso {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 18px;
+    background: var(--pops-amarillo);
+    color: var(--pops-tinta);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mAvisoEmoji {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.mAvisoTexto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.mAvisoTexto strong {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.mAvisoTexto span {
+    font-size: 12px;
+    color: var(--pops-amarillo-tinta);
+}
+
+.mAvisoFlecha {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.mFilas {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--pops-linea);
+}
+
+.mFila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 4px;
+    border: none;
+    background: transparent;
+    color: var(--pops-tinta);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mFila .filaTexto {
+    flex: 1;
+}
+
+.mMini {
+    flex: none;
+    width: 50px;
+    height: 50px;
+}
+
+.mMini .miniEmoji {
+    font-size: 24px;
+}
+
+.mNombre {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mEstado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--pops-texto-medio);
+}
+
+.mPunto {
+    width: 6px;
+    height: 6px;
+}
+
+.mChip {
+    flex: none;
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .seccion,
+    .sticker,
+    .stickerFlota,
+    .punto {
+        animation: none;
+    }
+}

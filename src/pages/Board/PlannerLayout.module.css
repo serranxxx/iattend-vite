@@ -649,69 +649,128 @@
     max-width: none;
 }
 
-.pestanas {
+/* Barra inferior flotante (handoff "Pops mobile"): pastilla con las
+   secciones + botón crear aparte. Activa = navy; dentro de Pops, negra y
+   el crear en lima. */
+.barraInferior {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 14px;
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
     z-index: 20;
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    display: flex;
     align-items: center;
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid #EFEDEA;
+    gap: 10px;
+}
+
+.pastilla {
+    flex: 1;
+    min-width: 0;
+    height: 66px;
+    border-radius: 99px;
+    background: #FFF;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+    overflow: hidden;
+}
+
+.pastillaFila {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+}
+
+/* 5 secciones: se recorre de lado con desvanecido a la derecha. */
+.pastillaScroll {
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+}
+
+.pastillaScroll::-webkit-scrollbar {
+    display: none;
 }
 
 .pestana {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 4px 0;
+    justify-content: center;
+    gap: 2px;
+    padding: 0;
     border: none;
-    background: none;
-    color: #8A8E92;
-    font-family: inherit;
-    font-size: 11px;
+    border-radius: 99px;
+    background: transparent;
+    color: var(--pops-texto-suave);
+    font-family: 'Poppins', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
-}
-
-.pestanaIcono {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 32px;
-    border-radius: 12px;
+    scroll-snap-align: start;
     transition: background 0.2s ease, color 0.2s ease;
 }
 
-.pestanaActiva {
-    color: #1c3249;
+.pastillaScroll .pestana {
+    flex: none;
+    width: 68px;
+}
+
+.pestana[data-activa] {
+    background: var(--pops-navy);
+    color: #FFF;
     font-weight: 700;
 }
 
-.pestanaActiva .pestanaIcono {
-    background: #1c3249;
-    color: #fff;
+.movilPop .pestana[data-activa] {
+    background: var(--pops-tinta);
 }
 
-.pestanaNuevo {
-    justify-self: center;
+.pestanaPops[data-activa] span {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+}
+
+.crear {
+    flex: none;
     display: grid;
     place-items: center;
-    width: 58px;
-    height: 58px;
-    margin-top: -18px;
-    border: 4px solid #fff;
+    width: 66px;
+    height: 66px;
+    padding: 0;
+    border: none;
     border-radius: 50%;
-    background: #1c3249;
-    color: var(--light-green-500, #AAC187);
-    box-shadow: 0 6px 18px rgba(28, 50, 73, 0.28);
+    background: var(--pops-navy);
+    color: var(--pops-verde-marca);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.crear:active {
+    transform: scale(0.94);
+}
+
+.movilPop .crear {
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+}
+
+/* Pops en celular: la sección pinta todo, de orilla a orilla. */
+.movilPop {
+    background: #FFF;
+}
+
+.mainMovilPop {
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* Hoja del "+": comprar evento y sus gratis. */
@@ -755,4 +814,133 @@
     background: #F4F3F1;
     color: #1c3249;
     cursor: pointer;
+}
+
+/* ── Pops (handoff "Sección Pops") ──
+   El botón Pops en cualquier sección: wordmark animado; en hover se vuelve
+   pastilla negra. Dentro de Pops, toda la barra pasa a la estética pop. */
+
+.navPops {
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+}
+
+.navPops:hover {
+    background: var(--pops-tinta);
+    transform: scale(1.03);
+    --pops-color: #FFF;
+}
+
+.navPops.navItemActivo,
+.navPops.navItemActivo:hover {
+    background: var(--pops-tinta);
+    box-shadow: none;
+    transform: none;
+    --pops-color: #FFF;
+}
+
+.sidebarPop .navPops.navItemActivo {
+    padding: 0 10px 0 16px;
+    cursor: default;
+}
+
+.navPops.navItemActivo .navPopsCuenta {
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: var(--pops-rosa);
+    color: var(--pops-tinta);
+    font-size: 12px;
+    font-weight: 800;
+    /* Hay un `small { opacity: 0.5 }` global que apagaba el rosa. */
+    opacity: 1;
+}
+
+.sidebarPop {
+    background: #FFF;
+    border-right-color: var(--pops-linea);
+}
+
+.sidebarPop .logo {
+    align-self: center;
+    margin-left: 0;
+    height: 42px;
+}
+
+.sidebarPop .comprar {
+    height: 52px;
+    min-height: 52px;
+    padding: 0 18px 0 8px;
+    border-radius: 99px;
+    background: var(--pops-tinta);
+    font-weight: 700;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sidebarPop .comprar:hover {
+    transform: translateY(-2px) rotate(-1deg);
+    box-shadow: none;
+}
+
+.sidebarPop .comprarIcono {
+    width: 36px;
+    height: 36px;
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+}
+
+.sidebarPop .navTitulo {
+    font-weight: 700;
+    color: var(--pops-texto-suave);
+}
+
+.sidebarPop .nav {
+    gap: 2px;
+}
+
+.sidebarPop .navItem:not(.navPops) {
+    height: auto;
+    padding: 11px 14px;
+    border-radius: 99px;
+    color: var(--pops-tinta);
+    font-weight: 500;
+}
+
+.sidebarPop .navItem:not(.navPops):hover {
+    background: var(--pops-hover);
+}
+
+.sidebarPop .navItem small {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pops-contador);
+}
+
+/* Separador antes de Dashboard. */
+.sidebarPop .navDashboard {
+    position: relative;
+    margin-top: 25px;
+}
+
+.sidebarPop .navDashboard::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: -13px;
+    height: 1px;
+    background: var(--pops-linea);
+}
+
+.sidebarPop .usuario:hover {
+    background: var(--pops-hover);
+}
+
+/* Contenido de Pops: la sección pinta su propio fondo de puntos, de orilla a orilla. */
+.mainPop {
+    padding: 0;
+    background: #FFF;
+    animation: none;
+}
+
+.mainPop::before {
+    display: none;
 }

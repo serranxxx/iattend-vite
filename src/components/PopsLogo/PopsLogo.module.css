@@ -1,0 +1,68 @@
+/* Wordmark: tamaño por prop (--pops-size, en línea desde el componente). */
+.logo {
+    display: inline-flex;
+    cursor: inherit;
+    user-select: none;
+    color: var(--pops-color, var(--pops-tinta, #111));
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: var(--pops-size);
+    line-height: 1.1;
+    letter-spacing: -0.07em;
+}
+
+.slot {
+    position: relative;
+    display: inline-block;
+}
+
+/* Fija el ancho / alto del lugar con la letra original (sin saltos). */
+.medida {
+    visibility: hidden;
+}
+
+.capa {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.emoji {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-size: calc(var(--pops-size) * 0.6);
+}
+
+.estiloA {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--pops-logo-azul);
+}
+
+.estiloB {
+    color: var(--pops-logo-coral);
+}
+
+.estiloC {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    color: var(--pops-logo-turquesa);
+}
+
+.estiloD {
+    font-family: 'Abril Fatface', serif;
+    font-weight: 400;
+    color: var(--pops-logo-morado);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .capa {
+        transition: none;
+    }
+}

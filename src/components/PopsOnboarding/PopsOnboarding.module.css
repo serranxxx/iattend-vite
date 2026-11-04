@@ -1,0 +1,159 @@
+/* "Conoce los Pops" (handoff "Video Promo Pops → Onboarding"). Colores --pops-* en src/styles/index.css. */
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+    background: #FFF;
+    color: var(--pops-tinta);
+    font-family: 'Poppins', sans-serif;
+}
+
+.cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 4px;
+}
+
+.titulo {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+.saltar {
+    height: 38px;
+    padding: 0 16px;
+    border: 1.5px solid var(--pops-tinta);
+    border-radius: 99px;
+    background: #FFF;
+    color: var(--pops-tinta);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.saltar:hover {
+    background: var(--pops-tinta);
+    color: #FFF;
+}
+
+/* Video 4:3 */
+.marco {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #FFF;
+    box-shadow: inset 0 0 0 1px var(--pops-linea);
+}
+
+.video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    padding: 0 0 0 4px;
+    border: none;
+    border-radius: 50%;
+    background: var(--pops-tinta);
+    color: var(--pops-lima);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Al terminar: sobre el video, abajo a la izquierda. */
+.pie {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    animation: aparece 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes aparece {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+}
+
+.repetir,
+.crear {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 52px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.repetir {
+    padding: 0 22px;
+    border: 1.5px solid var(--pops-borde-campo);
+    background: #FFF;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    color: var(--pops-tinta);
+    transition: border-color 0.2s ease;
+}
+
+.repetir:hover {
+    border-color: var(--pops-tinta);
+}
+
+.crear {
+    padding: 0 24px 0 8px;
+    border: none;
+    background: var(--pops-tinta);
+    color: #FFF;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.crear:hover {
+    transform: translateY(-2px) rotate(-1deg);
+}
+
+.mas {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+    font-size: 20px;
+    font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pie { animation: none; }
+}
+
+@media (max-width: 640px) {
+    .panel { padding: 14px; gap: 12px; }
+    .marco { border-radius: 22px; }
+    .pie { left: 12px; bottom: 12px; gap: 8px; }
+    .pie > button { height: 44px; padding-inline: 8px 14px; font-size: 14px; }
+    .pie .mas { width: 30px; height: 30px; font-size: 18px; }
+}

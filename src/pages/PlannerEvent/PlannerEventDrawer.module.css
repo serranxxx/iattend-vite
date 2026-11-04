@@ -176,6 +176,84 @@
     color: var(--s-muted);
 }
 
+/* Tarjeta Pop del paso 0 (handoff "Crear Pop"). */
+.opcionPop {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 22px 18px;
+    border: none;
+    border-radius: 22px;
+    background: var(--pops-negro);
+    color: #FFF;
+    font-family: 'Poppins', sans-serif;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.opcionPop:hover {
+    transform: translateY(-3px) rotate(-1deg);
+}
+
+.opcionPopSticker {
+    top: -22px;
+    right: -10px;
+}
+
+.opcionPopIcono {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+}
+
+.opcionPop .opcionPopTitulo {
+    display: flex;
+    color: #FFF;
+    align-items: center;
+    gap: 8px;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+}
+
+.opcionPopGratis {
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: var(--pops-rosa);
+    color: var(--pops-tinta);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.opcionPop .opcionPopTexto {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--pops-texto-claro);
+}
+
+.opcionPopFlecha {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--pops-lima);
+    color: var(--pops-tinta);
+    font-size: 16px;
+    font-weight: 800;
+}
+
 /* Solo Administración: crear sin pasar por Stripe. */
 .sinCosto {
     height: 40px;
@@ -214,4 +292,32 @@
     color: #8C8C8C;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Hoja del celular (handoff "Pops mobile"): asa arriba para arrastrar. */
+.asaZona {
+    flex: none;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 4px;
+    touch-action: none;
+}
+
+.asa {
+    width: 40px;
+    height: 5px;
+    border-radius: 99px;
+    background: var(--pops-punto);
+}
+
+.hojaCuerpo {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.hojaCuerpo > * {
+    flex: 1;
+    min-height: 0;
 }

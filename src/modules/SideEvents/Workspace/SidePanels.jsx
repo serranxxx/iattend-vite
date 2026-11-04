@@ -8,6 +8,7 @@ import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from '../efectosData'
 import { ESTILOS_BLOQUE, MINI_ESTILO, estiloDe } from '../estilosBloque'
 import { PINCEL, PINCELES } from '../../Editor/dibujoData'
 import { AjustesPincel } from './AjustesPincel'
+import { EMOJIS_POP } from '../../../helpers/invitation/popEmojis'
 import base from '../../Invitation/Build/PageSections/ToolPanels.module.css'
 import ed from '../SideEventEditor.module.css'
 import own from './SideWorkspace.module.css'
@@ -21,6 +22,7 @@ import own from './SideWorkspace.module.css'
 const THEME_SWATCHES = ['#16323d', '#000000', '#E7E0CC', '#B9BBA6', '#D1BEDD', '#C67C6C']
 const VELO_INICIAL = 35
 const EMOJI_EFECTO = { none: '⊘', sparkles: '✨', confetti: '🎉', bubbles: '🫧', snow: '❄️', petals: '🌸' }
+
 
 // Miniatura de un estilo de bloques: la foto del Pop (o el degradado del
 // tema) con una tarjetita de ese estilo encima.
@@ -43,6 +45,38 @@ export const DesignPanel = ({ current, setBody, esPop, movil = false }) => {
 
     return (
         <>
+            {/* Emoji del Pop: en escritorio se elige en el encabezado, junto al
+                nombre (EmojiPop); en el celular, aquí. '' = sin emoji. */}
+            {esPop && movil && (
+                <div className={base.group}>
+                    <span className={base.groupLabel}>{t('side_events.pop_emoji')}</span>
+                    <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.pop_emoji_hint')}</span>
+                    <div className={own.emojiActual}>
+                        {/* Así se ve en la lista de Pops: su emoji sobre el color del tema. */}
+                        <span className={own.emojiMuestra} style={{ background: color }} aria-hidden>{body.emoji || ''}</span>
+                        <span className={own.emojiActualTexto}>{body.emoji ? t('side_events.pop_emoji_selected') : t('side_events.pop_emoji_none')}</span>
+                        {body.emoji && (
+                            <button type='button' className={own.pasteBtn} onClick={() => setBody({ emoji: '' })}>{t('side_events.pop_emoji_remove')}</button>
+                        )}
+                    </div>
+                    <div className={own.emojiGrid} role='radiogroup' aria-label={t('side_events.pop_emoji')}>
+                        {EMOJIS_POP.map((e) => (
+                            <button
+                                key={e}
+                                type='button'
+                                role='radio'
+                                aria-checked={body.emoji === e}
+                                className={own.emojiOpcion}
+                                data-on={body.emoji === e || undefined}
+                                onClick={() => setBody({ emoji: body.emoji === e ? '' : e })}
+                            >
+                                {e}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className={base.group}>
                 <span className={base.groupLabel}>{t('side_events.theme_color')}</span>
                 <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.panel_color_hint')}</span>

@@ -100,6 +100,47 @@
   /* ── Global ──────────────────────────────────────────── */
   --font-family: 'Poppins';
   --borders: #EBEBEB;
+
+  /* Pops (handoff "Sección Pops"): estética pop de /invitations › Pops. */
+  --pops-negro: #0E0E10;
+  --pops-tinta: #111111;
+  --pops-texto-claro: #BDB9B6;
+  --pops-texto-suave: #8A8582;
+  --pops-texto-medio: #6E6965;
+  --pops-texto-fuerte: #5A5552;
+  --pops-contador: #B0AAA6;
+  --pops-linea: #EEEBE8;
+  --pops-hover: #F2F0EE;
+  --pops-superficie: #F5F3F2;
+  --pops-punto: #DEDBD8;
+  --pops-lima: #C8F560;
+  --pops-rosa: #FF5FA8;
+  --pops-amarillo: #FFE14D;
+  --pops-amarillo-tinta: #5A4E12;
+  --pops-azul: #2F5BFF;
+  --pops-verde: #2EBE88;
+  --pops-rojo: #FF4D3D;
+  /* Barra inferior del celular (fuera de Pops) */
+  --pops-navy: #1C2A44;
+  --pops-verde-marca: #A9C47F;
+  /* Flujo "Crear Pop" */
+  --pops-borde-campo: #E7E3E0;
+  --pops-campo: #FAFAF9;
+  --pops-placeholder: #A8A39F;
+  --pops-rosa-suave: #FFF0F7;
+  --pops-amarillo-suave: #FFFBE0;
+  --pops-amarillo-texto: #3D3510;
+  /* Stickers de trama */
+  --pops-magenta: #FF2BD6;
+  --pops-cian: #3FE0F0;
+  --pops-amarillo-neon: #F5F51E;
+  --pops-menta: #2BF5B0;
+  --pops-naranja: #FF5A1F;
+  /* Letras del wordmark animado (PopsLogo) */
+  --pops-logo-azul: #3B6FE0;
+  --pops-logo-coral: #FF6B5E;
+  --pops-logo-turquesa: #3FA7C4;
+  --pops-logo-morado: #A06CF0;
   --error-color: #D32F2F;
   --gradient: linear-gradient(to right, var(--mid-blue-500), var(--mid-blue-300));
   --gradient-reverse: linear-gradient(to left, var(--brand-color-500), var(--brand-color-300));

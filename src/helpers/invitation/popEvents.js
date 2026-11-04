@@ -48,3 +48,9 @@ export const popComoInvitacion = (se) => ({
         },
     },
 })
+
+// Emoji del Pop: reglas en popEmojis.js (aquí se reexporta para la lista).
+export { emojiDePop } from './popEmojis'
+
+/** Color del Pop: el del tema (`body.color`), si tiene. */
+export const colorDePop = (pop) => pop?.body?.color || null

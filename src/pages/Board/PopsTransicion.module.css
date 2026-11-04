@@ -1,0 +1,76 @@
+/* Velo de la transición Inicio ⇄ Pops (usePopsTransicion.jsx). */
+
+.capa {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    pointer-events: all;
+}
+
+.velo {
+    position: absolute;
+    inset: 0;
+    background: var(--pops-negro);
+}
+
+.grow {
+    clip-path: circle(0px at var(--x) var(--y));
+    animation: crece 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.fade {
+    animation: sale 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.cover {
+    opacity: 0;
+    animation: entra 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.shrink {
+    clip-path: circle(var(--R) at var(--x) var(--y));
+    animation: encoge 0.85s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.onda {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: 260px;
+    height: 260px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 4px solid var(--pops-rosa);
+    opacity: 0;
+    animation: onda 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s forwards;
+}
+
+.ondaSalida {
+    border-color: var(--pops-tinta);
+    animation-delay: 0s;
+}
+
+@keyframes crece {
+    from { clip-path: circle(0px at var(--x) var(--y)); }
+    to { clip-path: circle(var(--R) at var(--x) var(--y)); }
+}
+
+@keyframes encoge {
+    from { clip-path: circle(var(--R) at var(--x) var(--y)); }
+    to { clip-path: circle(0px at var(--x) var(--y)); }
+}
+
+@keyframes sale {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes entra {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes onda {
+    0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.15); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}

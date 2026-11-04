@@ -54,6 +54,60 @@
     text-decoration: underline;
 }
 
+/* Variante 'pop' (sección Pops). */
+.tarjetaPop {
+    position: relative;
+    margin-top: 14px;
+    border: none;
+    border-radius: 22px;
+    background: var(--pops-superficie);
+}
+
+.tarjetaPop .titulo {
+    font-family: 'Poppins', sans-serif;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--pops-tinta);
+}
+
+.tarjetaPop .texto {
+    color: var(--pops-texto-fuerte);
+}
+
+.tarjetaPop .enlace {
+    padding: 8px 14px;
+    border: 1.5px solid var(--pops-tinta);
+    border-radius: 99px;
+    background: #FFF;
+    color: var(--pops-tinta);
+    font-size: 13px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tarjetaPop .enlace:hover {
+    background: var(--pops-tinta);
+    color: #FFF;
+    text-decoration: none;
+}
+
+.destello {
+    position: absolute;
+    top: -14px;
+    right: 10px;
+    transform: rotate(10deg);
+    animation: destello 4s ease-in-out infinite;
+}
+
+@keyframes destello {
+    0%, 100% { transform: translateY(0) rotate(10deg); }
+    50% { transform: translateY(-6px) rotate(16deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .destello { animation: none; }
+}
+
 /* ── Formulario ── */
 
 .formulario {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Drawer, Grid } from 'antd'
 import { PlannerPopFlow } from './PlannerPopFlow'
+import { StickerFlotante } from '../Board/PopsSection'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Check, ChevronDown, CreditCard, Gift, Mail, PartyPopper, X, Zap } from 'lucide-react'
 import { checkUrlDisponible } from '../../modules/Sales/salesApi'
@@ -25,65 +26,141 @@ const PLANES_COMPRA = ['pro', 'lite']
  * En los dos casos el cliente recibe su usuario y contraseña por correo y el
  * planner queda asignado al evento. Backend: controllers/planner.js.
  * `onCreated` corre al cerrar tras crear un evento gratis (para recargar).
+ * modo 'pop-compra' → directo a comprar un Pop (botón "Comprar Pop" de la
+ * sección Pops).
  * modo 'pop-gratis' → un Pop gratis (PlannerPopFlow). En
  * 'compra' el primer paso deja elegir Invitación o Pop.
+ * El flujo del Pop (handoff "Crear Pop") va en un panel de 480 px con 28 px
+ * de redondeo; el resto sigue con el de siempre. En celular (handoff "Pops
+ * mobile") todo es una hoja que sube desde abajo, con su asa: se cierra
+ * arrastrándola hacia abajo o tocando el fondo.
  */
 export const PlannerEventDrawer = ({ open, modo, soloParaMi, onClose, onCreated }) => {
     const screens = Grid.useBreakpoint()
+    const movil = screens.sm === false
+    const [tipo, setTipo] = useState(null)
+    const esPop = tipo === 'pop'
+    const radio = movil ? '28px 28px 0 0' : esPop ? '28px 0 0 28px' : '20px 0 0 20px'
+    // Alto de la hoja en celular: la elección de tipo mide lo que su contenido.
+    const altoMovil = !tipo ? 'auto' : esPop ? 'min(780px, 94dvh)' : '94dvh'
+    const hoja = useArrastreHoja(onClose)
     return (
         <Drawer
             open={open}
             onClose={onClose}
-            placement='right'
-            width={screens.sm ? 520 : '100%'}
+            afterOpenChange={(abierto) => { if (!abierto) setTipo(null) }}
+            placement={movil ? 'bottom' : 'right'}
+            size={movil ? altoMovil : (esPop ? 480 : 520)}
             destroyOnHidden
             closable={false}
             title={null}
-            // Esquinas izquierdas redondeadas; en celular ocupa toda la pantalla.
-            style={{ borderRadius: screens.sm ? '20px 0 0 20px' : 0, overflow: 'hidden' }}
-            styles={{ header: { display: 'none' }, body: { padding: 0 } }}
+            style={{ borderRadius: radio, overflow: 'hidden' }}
+            styles={{
+                header: { display: 'none' },
+                body: { padding: 0, display: 'flex', flexDirection: 'column' },
+                mask: movil ? { background: 'rgba(0, 0, 0, 0.45)' } : undefined,
+                wrapper: {
+                    borderRadius: radio,
+                    ...(movil ? { maxHeight: '94dvh' } : {}),
+                    ...(esPop && !movil ? { boxShadow: '-20px 0 60px rgba(0, 0, 0, 0.25)' } : {}),
+                },
+            }}
         >
-            <AltaEvento modo={modo} soloParaMi={soloParaMi} onClose={onClose} onCreated={onCreated} />
+            {movil && (
+                <div className={styles.asaZona} {...hoja} aria-hidden>
+                    <span className={styles.asa} />
+                </div>
+            )}
+            <div className={styles.hojaCuerpo}>
+                <AltaEvento modo={modo} soloParaMi={soloParaMi} onClose={onClose} onCreated={onCreated} onTipo={setTipo} />
+            </div>
         </Drawer>
     )
+}
+
+// Arrastrar el asa hacia abajo mueve la hoja; soltándola más de 90 px (o
+// rápido) la cierra, si no regresa a su lugar.
+const useArrastreHoja = (onClose) => {
+    const inicio = useRef(null)
+    const hojaDe = (el) => el.closest('.ant-drawer-content-wrapper')
+    return {
+        onTouchStart: (e) => { inicio.current = { y: e.touches[0].clientY, t: Date.now() } },
+        onTouchMove: (e) => {
+            if (!inicio.current) return
+            const dy = Math.max(0, e.touches[0].clientY - inicio.current.y)
+            const el = hojaDe(e.currentTarget)
+            if (el) { el.style.transition = 'none'; el.style.transform = `translateY(${dy}px)` }
+        },
+        onTouchEnd: (e) => {
+            if (!inicio.current) return
+            const dy = Math.max(0, e.changedTouches[0].clientY - inicio.current.y)
+            const rapido = dy > 40 && Date.now() - inicio.current.t < 250
+            inicio.current = null
+            const el = hojaDe(e.currentTarget)
+            if (el) {
+                el.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                el.style.transform = ''
+                // Que no pise la animación de entrada / salida de antd.
+                setTimeout(() => { el.style.transition = '' }, 300)
+            }
+            if (dy > 90 || rapido) onClose()
+        },
+    }
 }
 
 // Dentro del drawer (se monta al abrir): elige el flujo según lo que se crea.
 // Al comprar, lo primero es elegir Evento regular o Pop; con eso se
 // muestra su flujo y "atrás" en su primer paso regresa a esta elección. Los
 // botones de gratis ya traen el tipo definido.
-const AltaEvento = ({ modo, soloParaMi, onClose, onCreated }) => {
+const AltaEvento = ({ modo, soloParaMi, onClose, onCreated, onTipo }) => {
     const { t } = useTranslation()
-    const [tipo, setTipo] = useState(modo === 'pop-gratis' ? 'pop' : modo === 'gratis' ? 'regular' : null)
+    const [tipo, setTipo] = useState(modo === 'pop-gratis' || modo === 'pop-compra' ? 'pop' : modo === 'gratis' ? 'regular' : null)
     const volverAElegir = modo === 'compra' ? () => setTipo(null) : undefined
+    // Pops gratis para el badge de la tarjeta Pop.
+    const [popsGratis, setPopsGratis] = useState(0)
+
+    useEffect(() => { onTipo?.(tipo) }, [tipo])
+    useEffect(() => {
+        if (tipo) return
+        fetchBeneficios()
+            .then(({ data }) => setPopsGratis(data.beneficios?.free_flash_events ?? 0))
+            .catch(() => setPopsGratis(0))
+    }, [tipo])
 
     if (!tipo) {
-        const opciones = [
-            { key: 'regular', icono: <Mail size={22} />, titulo: t('planner_pop.kind_regular'), texto: t('planner_pop.kind_regular_text') },
-            { key: 'pop', icono: <Zap size={22} />, titulo: t('planner_pop.kind_pop'), texto: t('planner_pop.kind_pop_text') },
-        ]
         return (
             <Screen embedded>
                 <ScreenHeader title={t('planner_event.title_buy')} onBack={onClose} backLabel={t('planner_event.cancel')} />
                 <p className={styles.eleccionIntro}>{t('planner_pop.kind_label')}</p>
                 <div className={styles.eleccion}>
-                    {opciones.map(({ key, icono, titulo, texto }) => (
-                        <button key={key} type='button' className={styles.opcion} onClick={() => setTipo(key)}>
-                            <span className={styles.opcionIcono}>{icono}</span>
-                            <span className={styles.opcionTexto}>
-                                <strong>{titulo}</strong>
-                                <span>{texto}</span>
+                    <button type='button' className={styles.opcion} onClick={() => setTipo('regular')}>
+                        <span className={styles.opcionIcono}><Mail size={22} /></span>
+                        <span className={styles.opcionTexto}>
+                            <strong>{t('planner_pop.kind_regular')}</strong>
+                            <span>{t('planner_pop.kind_regular_text')}</span>
+                        </span>
+                        <ArrowRight size={18} className={styles.opcionFlecha} aria-hidden='true' />
+                    </button>
+                    {/* Tarjeta Pop con la estética de Pops (handoff "Crear Pop"). */}
+                    <button type='button' className={styles.opcionPop} onClick={() => setTipo('pop')}>
+                        <StickerFlotante kind='bubble' color='var(--pops-cian)' size={62} rot={10} className={styles.opcionPopSticker} />
+                        <span className={styles.opcionPopIcono}><Zap size={22} /></span>
+                        <span className={styles.opcionTexto}>
+                            <span className={styles.opcionPopTitulo}>
+                                {t('planner_pop.kind_pop')}
+                                {popsGratis > 0 && <span className={styles.opcionPopGratis}>{t('pop_flow.free_badge', { count: popsGratis })}</span>}
                             </span>
-                            <ArrowRight size={18} className={styles.opcionFlecha} aria-hidden='true' />
-                        </button>
-                    ))}
+                            <span className={styles.opcionPopTexto}>{t('pop_flow.kind_text')}</span>
+                        </span>
+                        <span className={styles.opcionPopFlecha} aria-hidden='true'>→</span>
+                    </button>
                 </div>
             </Screen>
         )
     }
 
     return tipo === 'pop'
-        ? <PlannerPopFlow modo={modo === 'pop-gratis' ? 'gratis' : 'compra'} soloParaMi={soloParaMi} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
+        ? <PlannerPopFlow soloParaMi={soloParaMi} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
         : <PlannerEventFlow modo={modo} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
 }
 
