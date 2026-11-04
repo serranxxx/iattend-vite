@@ -167,6 +167,12 @@ export const PlannerLayout = ({
     // Sección Pops con su estética propia (escritorio y celular).
     const modoPops = !enDashboard && activa?.key === 'pops'
     const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef)
+    // Al entrar a Pops (de otra sección, del dashboard o al volver de otra
+    // página) se empieza siempre desde arriba. Con la transición, el salto
+    // ocurre mientras el velo negro tapa la pantalla.
+    useEffect(() => {
+        if (modoPops) window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }, [modoPops])
     // Entrar o salir de Pops lleva la transición (origen: el botón Pops de la
     // barra lateral o de la barra inferior); entre las demás, directo.
     const navegar = (haciaPops, accion) => (haciaPops !== modoPops ? transicion(haciaPops, accion) : accion())
@@ -473,7 +479,8 @@ export const PlannerLayout = ({
                                 // dentro de Pops) es el wordmark animado (handoff "Pops Logo").
                                 ? <PopsLogo size={20} activo={hoverPops && !modoPops} />
                                 : <span>{s.title}</span>}
-                            {!(esCliente && s.key === 'test') && <small className={s.key === 'pops' ? styles.navPopsCuenta : undefined}>{s.items.length}</small>}
+                            {/* Sin Pops todavía: sin contador (el estado inicial lo dice). */}
+                            {!(esCliente && s.key === 'test') && !(s.key === 'pops' && s.items.length === 0) && <small className={s.key === 'pops' ? styles.navPopsCuenta : undefined}>{s.items.length}</small>}
                         </button>
                     ))}
 

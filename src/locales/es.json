@@ -3492,7 +3492,17 @@
     "buy_short": "Comprar",
     "free_text_short": "Úsalos en lo que surja.",
     "days_one": "{{count}} día",
-    "days_other": "{{count}} días"
+    "days_other": "{{count}} días",
+    "empty_title": "Tus Pops.",
+    "empty_sub": "Todavía no hay ninguno.",
+    "first_title": "Tu primer Pop te está esperando.",
+    "first_text": "Un brunch, la junta del lunes o el cumple de tu equipo. Arma una invitación en minutos y aparecerá aquí.",
+    "first_step_1": "Elige un estilo",
+    "first_step_2": "Agrega los datos",
+    "first_step_3": "Compártelo",
+    "free_have_one": "Tienes {{count}} Pop gratis",
+    "free_have_other": "Tienes {{count}} Pops gratis",
+    "free_first": "Úsalos en tu primer Pop."
   },
   "pop_flow": {
     "title": "Nuevo Pop",

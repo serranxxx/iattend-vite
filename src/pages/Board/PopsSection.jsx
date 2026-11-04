@@ -34,6 +34,25 @@ const STICKERS_MOVIL = [
     { kind: 'spark', color: 'var(--pops-menta)', pos: { right: 6, top: 110 }, size: 28, rot: 0, delay: 0.9 },
 ]
 
+// Estado inicial (sin Pops): stickers de la tarjeta "Tu primer Pop".
+const STICKERS_PRIMERO = [
+    { kind: 'eyes', color: 'var(--pops-amarillo-neon)', pos: { left: 0, top: 10 }, size: 104, rot: -8, delay: 0 },
+    { kind: 'spark', color: 'var(--pops-menta)', pos: { right: 10, top: 0 }, size: 56, rot: 0, delay: 0.9 },
+    { kind: 'bubble', color: 'var(--pops-cian)', pos: { left: 120, top: 70 }, size: 130, rot: 8, delay: 0.4 },
+    { kind: 'heart', color: 'var(--pops-naranja)', pos: { left: 20, top: 190 }, size: 76, rot: -14, delay: 0.6 },
+]
+const STICKERS_PRIMERO_MOVIL = [
+    { kind: 'eyes', color: 'var(--pops-amarillo-neon)', pos: { left: 4, top: 14 }, size: 70, rot: -8, delay: 0 },
+    { kind: 'bubble', color: 'var(--pops-cian)', pos: { left: 96, top: 8 }, size: 82, rot: 6, delay: 0.4 },
+    { kind: 'spark', color: 'var(--pops-menta)', pos: { left: 190, top: 0 }, size: 36, rot: 0, delay: 0.9 },
+    { kind: 'heart', color: 'var(--pops-naranja)', pos: { left: 228, top: 40 }, size: 50, rot: -14, delay: 0.6 },
+]
+const PASOS_PRIMERO = [
+    { n: 1, color: 'var(--pops-lima)' },
+    { n: 2, color: 'var(--pops-cian)' },
+    { n: 3, color: 'var(--pops-rosa)' },
+]
+
 // Sin color de tema, los Pops se turnan estos (con su tinta legible).
 const PALETA = [
     { fondo: 'var(--pops-azul)', tinta: '#FFF' },
@@ -127,6 +146,40 @@ export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, pue
         </button>
     )
 
+    // Sin ningún Pop: "Tus Pops." + la tarjeta "Tu primer Pop te está esperando".
+    const sinPops = items.length === 0
+    const primerPop = (
+        <div className={`${styles.primero} ${movil ? styles.primeroMovil : ''}`}>
+            <div className={styles.primeroStickers} aria-hidden>
+                {(movil ? STICKERS_PRIMERO_MOVIL : STICKERS_PRIMERO).map((s, i) => (
+                    <StickerFlotante key={s.kind + i} {...s} indice={i} entrada={0.2} style={s.pos} />
+                ))}
+            </div>
+            <div className={styles.primeroTexto}>
+                <h3 className={styles.primeroTitulo}>{t('pops_section.first_title')}</h3>
+                <p className={styles.primeroLede}>{t('pops_section.first_text')}</p>
+                <ol className={styles.primeroPasos}>
+                    {PASOS_PRIMERO.map(p => (
+                        <li key={p.n}>
+                            <span className={styles.primeroNumero} style={{ background: p.color }}>{p.n}</span>
+                            {t(`pops_section.first_step_${p.n}`)}
+                        </li>
+                    ))}
+                </ol>
+                <div className={styles.primeroBotones}>
+                    {puedeCrear && (
+                        <button type='button' className={styles.primeroCrear} onClick={onCrear}>
+                            <span className={styles.mas}>+</span>{t('pops_section.send')}
+                        </button>
+                    )}
+                    {!movil && (
+                        <button type='button' className={styles.primeroConoce} onClick={onConoce}>{t('pops_section.learn')}</button>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+
     if (movil) {
         const filaMovil = ({ item, fecha, dias, color, emoji, nombre }, pasado = false) => (
             <button key={item.id} type='button' className={`${styles.mFila} ${pasado ? styles.filaPasada : ''}`} onClick={() => onAbrir(item)}>
@@ -182,10 +235,10 @@ export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, pue
                 <section className={styles.mLista}>
                     <div className={styles.mCabeza}>
                         <div className={styles.listaTitulos} style={{ gap: 2 }}>
-                            <span className={styles.mTitulo}><span className={styles.resaltaLima}>{t('pops_section.active_title')}</span></span>
-                            <span className={styles.mSub}>{t('pops_section.active_count', { count: activos.length })}</span>
+                            <span className={styles.mTitulo}><span className={styles.resaltaLima}>{t(sinPops ? 'pops_section.empty_title' : 'pops_section.active_title')}</span></span>
+                            <span className={styles.mSub}>{sinPops ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
                         </div>
-                        {onComprarPop && (
+                        {onComprarPop && !sinPops && (
                             <button type='button' className={styles.mComprar} onClick={onComprarPop}>
                                 <span className={styles.mMas}>+</span>{t('pops_section.buy_short')}
                             </button>
@@ -196,18 +249,20 @@ export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, pue
                         <button type='button' className={styles.mAviso} onClick={onGratisPop}>
                             <span className={styles.mAvisoEmoji} aria-hidden>🎁</span>
                             <span className={styles.mAvisoTexto}>
-                                <strong>{t('pops_section.free_title', { count: gratisPop })}</strong>
-                                <span>{t('pops_section.free_text_short')}</span>
+                                <strong>{t(sinPops ? 'pops_section.free_have' : 'pops_section.free_title', { count: gratisPop })}</strong>
+                                <span>{t(sinPops ? 'pops_section.free_first' : 'pops_section.free_text_short')}</span>
                             </span>
                             <span className={styles.mAvisoFlecha} aria-hidden>→</span>
                         </button>
                     )}
 
-                    <div className={styles.mFilas}>
-                        {activos.length > 0
-                            ? activos.map(f => filaMovil(f))
-                            : <p className={styles.vacio}>{t('pops_section.empty')}</p>}
-                    </div>
+                    {sinPops ? primerPop : (
+                        <div className={styles.mFilas}>
+                            {activos.length > 0
+                                ? activos.map(f => filaMovil(f))
+                                : <p className={styles.vacio}>{t('pops_section.empty')}</p>}
+                        </div>
+                    )}
 
                     {pasados.length > 0 && (
                         <div className={styles.mFilas}>
@@ -255,8 +310,8 @@ export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, pue
             <section className={styles.lista}>
                 <div className={styles.listaCabeza}>
                     <div className={styles.listaTitulos}>
-                        <h2 className={styles.listaTitulo}><span className={styles.resaltaLima}>{t('pops_section.active_title')}</span></h2>
-                        <span className={styles.listaSub}>{t('pops_section.active_count', { count: activos.length })}</span>
+                        <h2 className={styles.listaTitulo}><span className={styles.resaltaLima}>{t(sinPops ? 'pops_section.empty_title' : 'pops_section.active_title')}</span></h2>
+                        <span className={styles.listaSub}>{sinPops ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
                     </div>
                     {onComprarPop && (
                         <button type='button' className={styles.comprarPop} onClick={onComprarPop}>
@@ -279,11 +334,13 @@ export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, pue
                         </div>
                     )}
 
-                    <div className={styles.filas}>
-                        {activos.length > 0
-                            ? activos.map(f => fila(f))
-                            : <p className={styles.vacio}>{t('pops_section.empty')}</p>}
-                    </div>
+                    {sinPops ? primerPop : (
+                        <div className={styles.filas}>
+                            {activos.length > 0
+                                ? activos.map(f => fila(f))
+                                : <p className={styles.vacio}>{t('pops_section.empty')}</p>}
+                        </div>
+                    )}
 
                     {pasados.length > 0 && (
                         <div className={styles.filas}>

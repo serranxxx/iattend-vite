@@ -452,6 +452,191 @@
     color: var(--pops-texto-medio);
 }
 
+/* ── Estado inicial: sin Pops ── */
+
+.primero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 48px 52px;
+    border: 2px dashed var(--pops-punto);
+    border-radius: 28px;
+    background: #FFF;
+}
+
+.primeroTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.primeroStickers {
+    position: relative;
+    order: 2;
+    flex: 0 0 300px;
+    height: 270px;
+}
+
+.primeroTitulo {
+    margin: 0;
+    max-width: 440px;
+    font-size: 46px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1.02;
+}
+
+.primeroLede {
+    margin: 0;
+    max-width: 580px;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--pops-texto-fuerte);
+}
+
+.primeroPasos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.primeroPasos li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px 8px 8px;
+    border-radius: 99px;
+    background: var(--pops-superficie);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.primeroNumero {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: var(--pops-tinta);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.primeroBotones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.primeroCrear,
+.primeroConoce {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 60px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.primeroCrear {
+    padding: 0 26px 0 10px;
+    border: none;
+    background: var(--pops-tinta);
+    color: #FFF;
+    transition: background 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.primeroCrear:hover {
+    background: var(--pops-azul);
+    transform: translateY(-2px) rotate(-1deg);
+}
+
+.primeroCrear .mas {
+    width: 40px;
+    height: 40px;
+}
+
+.primeroConoce {
+    padding: 0 26px;
+    border: 1.5px solid var(--pops-tinta);
+    background: #FFF;
+    color: var(--pops-tinta);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.primeroConoce:hover {
+    background: var(--pops-tinta);
+    color: #FFF;
+}
+
+/* Celular: stickers arriba, pasos en lista, botón a todo lo ancho. */
+.primeroMovil {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 22px 20px 20px;
+    border-radius: 24px;
+}
+
+.primeroMovil .primeroStickers {
+    order: 0;
+    flex: none;
+    width: 280px;
+    max-width: 100%;
+    height: 110px;
+    margin: 0 auto;
+}
+
+.primeroMovil .primeroTexto {
+    gap: 12px;
+}
+
+.primeroMovil .primeroTitulo {
+    font-size: 30px;
+}
+
+.primeroMovil .primeroLede {
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.primeroMovil .primeroPasos {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.primeroMovil .primeroPasos li {
+    padding: 0;
+    background: none;
+}
+
+.primeroMovil .primeroBotones {
+    margin-top: 6px;
+}
+
+.primeroMovil .primeroCrear {
+    flex: 1;
+    height: 56px;
+    padding: 0 20px 0 8px;
+}
+
+@media (max-width: 1180px) {
+    .primero:not(.primeroMovil) .primeroStickers {
+        display: none;
+    }
+}
+
 /* ── Celular (handoff "Pops mobile") ── */
 
 .mSeccion {
