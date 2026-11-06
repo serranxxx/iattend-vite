@@ -1,0 +1,490 @@
+/* Hero de Pops para Business y Craft (PopsHero.jsx, handoff §11). */
+
+.hero {
+    position: relative;
+    padding: 44px 56px 130px;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    color: #FFFFFF;
+}
+
+/* Fondo (Business) hasta antes del borde de abajo. */
+.hero::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 40px;
+    pointer-events: none;
+}
+
+.texto {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 640px;
+}
+
+.saludo {
+    font-size: 17px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.wordmark {
+    margin: 8px 0 0 -7px;
+    font-size: 170px;
+    font-weight: 900;
+    letter-spacing: -0.07em;
+    line-height: 0.9;
+}
+
+/* margin-top 40: libra el descendente de la "p" del wordmark. */
+/* Wordmark animado (PopsLogo), con las medidas del hero de Pop. */
+.logo {
+    height: 210px;
+    display: flex;
+    align-items: center;
+    margin: 0 0 6px -12px;
+}
+
+.logoMovil {
+    height: 104px;
+    display: flex;
+    align-items: center;
+    margin-left: -6px;
+}
+
+.hero[data-tema='craft'] .logo,
+.hero[data-tema='craft'] .logoMovil {
+    filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.14)) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.25));
+}
+
+/* Titular, párrafo y saludo con las medidas del hero de Pop (el titular
+   escala con el ancho de la columna: container-type en .fila .texto). */
+.titular {
+    margin-top: 4px;
+    font-size: clamp(22px, 5.5cqw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.resalte {
+    position: relative;
+    display: inline-block;
+    padding: 0 8px;
+}
+
+.lede {
+    max-width: min(100%, 660px);
+    margin: 14px 0 0;
+    font-size: 18px;
+    line-height: 1.55;
+    text-wrap: pretty;
+}
+
+.botones {
+    display: flex;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.botonPrincipal,
+.botonContorno {
+    height: 48px;
+    padding: 0 22px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.botonPrincipal:hover,
+.botonContorno:hover {
+    transform: translateY(-1px);
+}
+
+/* Texto y collage en fila, como el hero de Pop (PopsSection .heroFila). */
+.fila {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    align-items: center;
+}
+
+.fila .texto {
+    flex: 1 1 470px;
+    min-width: 0;
+    container-type: inline-size;
+}
+
+/* Collage: la misma caja de 300 × 320 que el de Pop. */
+.collage {
+    position: relative;
+    flex: 0 0 300px;
+    height: 320px;
+    margin: 0 auto;
+}
+
+.sticker {
+    position: absolute;
+    pointer-events: none;
+    animation: popIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.flota {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform: rotate(var(--r));
+    animation-name: flota;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+.flota img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0) rotate(-25deg); }
+    70% { opacity: 1; transform: scale(1.15) rotate(4deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes flota {
+    0%, 100% { transform: translateY(0) rotate(var(--r)); }
+    50% { transform: translateY(-10px) rotate(calc(var(--r) + 6deg)); }
+}
+
+.pop {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 34%;
+    text-align: center;
+    font-size: 31px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+}
+
+.cinta {
+    position: absolute;
+    height: 20px;
+    background: rgba(238, 232, 212, 0.88);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.borde {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    display: block;
+}
+
+/* Igual que el hero de Pop (PopsSection): en tableta horizontal / laptop
+   chica el texto y el collage no caben lado a lado; el collage va arriba a
+   la derecha, a escala, y el texto ocupa todo el ancho. */
+@media (min-width: 768px) and (max-width: 1240px) {
+    .hero:not(.movil) .fila {
+        flex-wrap: nowrap;
+    }
+
+    .hero:not(.movil) .collage {
+        position: absolute;
+        width: 300px;
+        top: -14px;
+        right: -12px;
+        margin: 0;
+        transform: scale(0.72);
+        transform-origin: top right;
+        pointer-events: none;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1080px) {
+    .hero:not(.movil) .collage {
+        transform: scale(0.6);
+    }
+}
+
+/* ── Business: azul con cuadrícula y degradado, onda lima ── */
+.hero[data-tema='business']::before {
+    /* Hasta la parte de abajo de la onda; la orilla de abajo toma la forma de
+       la onda con la máscara (así el degradado sigue sin cortes). */
+    bottom: 26px;
+    -webkit-mask: linear-gradient(#000, #000) top / 100% calc(100% - 40px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1100 40' preserveAspectRatio='none'%3E%3Cpath d='M0 22 Q 27.5 4 55 22 T 110 22 Q 137.5 4 165 22 T 220 22 Q 247.5 4 275 22 T 330 22 Q 357.5 4 385 22 T 440 22 Q 467.5 4 495 22 T 550 22 Q 577.5 4 605 22 T 660 22 Q 687.5 4 715 22 T 770 22 Q 797.5 4 825 22 T 880 22 Q 907.5 4 935 22 T 990 22 Q 1017.5 4 1045 22 T 1100 22 L1100 0 L0 0Z'/%3E%3C/svg%3E") bottom / 100% 40px no-repeat;
+    mask: linear-gradient(#000, #000) top / 100% calc(100% - 40px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1100 40' preserveAspectRatio='none'%3E%3Cpath d='M0 22 Q 27.5 4 55 22 T 110 22 Q 137.5 4 165 22 T 220 22 Q 247.5 4 275 22 T 330 22 Q 357.5 4 385 22 T 440 22 Q 467.5 4 495 22 T 550 22 Q 577.5 4 605 22 T 660 22 Q 687.5 4 715 22 T 770 22 Q 797.5 4 825 22 T 880 22 Q 907.5 4 935 22 T 990 22 Q 1017.5 4 1045 22 T 1100 22 L1100 0 L0 0Z'/%3E%3C/svg%3E") bottom / 100% 40px no-repeat;
+    background-color: #1E45FB;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.09) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1.5px, transparent 1.5px),
+        radial-gradient(120% 90% at 78% 30%, #4F74FF 0%, #2F57FC 38%, #1E45FB 70%, #1838D6 100%);
+    background-size: 64px 64px, 64px 64px, 100% 100%;
+}
+
+.hero[data-tema='business'] .saludo,
+.hero[data-tema='business'] .lede {
+    color: #DCE6FF;
+}
+
+.hero[data-tema='business'] .resalte {
+    border-radius: 10px;
+    background: #CDF22B;
+    color: #0B1F3A;
+}
+
+.hero[data-tema='business'] .botonPrincipal {
+    border: none;
+    border-radius: 12px;
+    background: #CDF22B;
+    color: #0B1F3A;
+}
+
+.hero[data-tema='business'] .botonContorno {
+    border: 2px solid #FFFFFF;
+    border-radius: 12px;
+    background: transparent;
+    color: #FFFFFF;
+}
+
+.hero[data-tema='business'] .flota img {
+    filter: drop-shadow(0 12px 16px rgba(11, 31, 58, 0.35));
+}
+
+.hero[data-tema='business'] .pop {
+    color: #0B1F3A;
+}
+
+.hero[data-tema='business'] .borde {
+    bottom: 26px;
+    height: 40px;
+}
+
+.ondaLinea {
+    fill: none;
+    stroke: #CDF22B;
+    stroke-width: 5;
+    stroke-linecap: round;
+}
+
+/* ── Craft: sobre el tapete, recortes con cinta, papel rasgado ── */
+.hero[data-tema='craft'] .saludo {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 21px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hero[data-tema='craft'] .wordmark {
+    color: #F3F2EE;
+    text-shadow: 0 5px 0 rgba(0, 0, 0, 0.14), 0 10px 18px rgba(0, 0, 0, 0.25);
+}
+
+.hero[data-tema='craft'] .lede {
+    margin-top: 14px;
+    color: #F3F2EE;
+}
+
+.hero[data-tema='craft'] .resalte {
+    padding: 0 12px;
+    background: #F2D21B;
+    color: #1D1D1B;
+    transform: rotate(-2deg);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.cintaResalte {
+    position: absolute;
+    right: -14px;
+    top: -8px;
+    width: 44px;
+    height: 18px;
+    background: rgba(238, 232, 212, 0.88);
+    transform: rotate(18deg);
+}
+
+.hero[data-tema='craft'] .botones {
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.hero[data-tema='craft'] .botonPrincipal,
+.hero[data-tema='craft'] .botonContorno {
+    padding: 0 20px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hero[data-tema='craft'] .botonPrincipal {
+    border: none;
+    border-radius: 0;
+    background: #F2D21B;
+    color: #1D1D1B;
+    box-shadow: 0 3px 0 #B89D0E, 0 6px 12px rgba(0, 0, 0, 0.2);
+    transform: rotate(-1deg);
+}
+
+/* "Conoce los Pops" como ficha de papel (antes contorno punteado sobre el
+   tapete: poco contraste). */
+.hero[data-tema='craft'] .botonContorno {
+    border: none;
+    border-radius: 0;
+    background: #F3F2EE;
+    color: #1D1D1B;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.25);
+    transform: rotate(0.8deg);
+}
+
+.hero[data-tema='craft'] .conoceMovil span {
+    font-family: inherit;
+    color: #6B6A65;
+    opacity: 1;
+}
+
+.hero[data-tema='craft'] .flota img {
+    filter: drop-shadow(3px 6px 5px rgba(0, 0, 0, 0.35));
+}
+
+.hero[data-tema='craft'] .pop {
+    color: #1D1D1B;
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+    .botonPrincipal,
+    .botonContorno {
+        transition: none;
+    }
+
+    .sticker,
+    .flota {
+        animation: none;
+    }
+}
+
+/* ══ Celular: igual al hero móvil de Pop (PopsSection .mHero) ══ */
+.movil {
+    flex: none;
+    padding: calc(14px + env(safe-area-inset-top)) 22px 64px;
+}
+
+.movil .collage {
+    position: absolute;
+    right: 4px;
+    top: calc(56px + env(safe-area-inset-top));
+    z-index: 1;
+    width: 190px;
+    height: 150px;
+    margin: 0;
+}
+
+.movil .texto {
+    max-width: none;
+}
+
+.movil .saludo {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.movil .wordmark {
+    display: flex;
+    align-items: center;
+    height: 104px;
+    margin: 0 0 0 -4px;
+    font-size: 96px;
+}
+
+.movil .titular {
+    display: block;
+    margin-top: 0;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1.15;
+}
+
+.movil .resalte {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 0 6px;
+}
+
+.movil .lede {
+    margin-top: 10px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.movil .pop {
+    font-size: 18px;
+}
+
+.conoceMovil {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 46px !important;
+    margin-top: 14px;
+    padding: 0 20px !important;
+}
+
+.conoceMovil span {
+    font-weight: 500;
+    opacity: 0.75;
+}
+
+.movil .borde {
+    height: 28px !important;
+}
+
+.movil[data-tema='business'] .borde {
+    bottom: 22px;
+}
+
+.movil[data-tema='business']::before {
+    bottom: 22px;
+    -webkit-mask-size: 100% calc(100% - 28px), 100% 28px;
+    mask-size: 100% calc(100% - 28px), 100% 28px;
+}
+
+
+.movil[data-tema='craft'] .saludo {
+    font-size: 18px;
+}
+
+.movil[data-tema='craft'] .conoceMovil {
+    font-size: 17px !important;
+    white-space: nowrap;
+}
+
+.conoceMovil {
+    white-space: nowrap;
+}
+
+/* Craft sin borde propio: menos aire abajo (el corcho trae la orilla rasgada). */
+.hero[data-tema='craft'] {
+    padding-bottom: 72px;
+}
+
+.movil[data-tema='craft'] {
+    padding-bottom: 28px;
+}

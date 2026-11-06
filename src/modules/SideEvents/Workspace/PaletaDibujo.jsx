@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Popover, Tooltip } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { Redo2, Trash2, Undo2 } from 'lucide-react'
@@ -39,44 +39,44 @@ const Punta = ({ id, color }) => {
         case 'pluma':
             return (
                 <>
-                    <path d="M44 13 L14 19 Q12 20 14 21 L44 27 Z" fill="url(#metal)" />
+                    <path className={s.cono} d="M44 13 L14 19 Q12 20 14 21 L44 27 Z" fill="url(#metal)" />
                     <circle cx="13" cy="20" r="1.6" fill="#2A2A2E" />
                 </>
             )
         case 'marcador':
             return (
                 <>
-                    <path d="M44 12 L30 15 L30 25 L44 28 Z" fill="#F4F4F6" stroke="#E2E2E6" />
+                    <path className={s.cono} d="M44 12 L30 15 L30 25 L44 28 Z" fill="#F4F4F6" stroke="#E2E2E6" />
                     <path d="M30 16 L18 18 L18 22 L30 24 Z" fill={color} />
                 </>
             )
         case 'resaltador':
             return (
                 <>
-                    <path d="M44 11 L30 14 L30 26 L44 29 Z" fill="#F4F4F6" stroke="#E2E2E6" />
+                    <path className={s.cono} d="M44 11 L30 14 L30 26 L44 29 Z" fill="#F4F4F6" stroke="#E2E2E6" />
                     <path d="M30 14 L18 16 L22 26 L30 26 Z" fill={color} opacity="0.85" />
                 </>
             )
         case 'lapiz':
             return (
                 <>
-                    <path d="M44 12 L20 20 L44 28 Z" fill="#EBCFA6" />
+                    <path className={s.madera} d="M44 12 L20 20 L44 28 Z" fill="#EBCFA6" />
                     <path d="M22 19.3 L14 20 L22 20.7 Z" fill={color} stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
                 </>
             )
         case 'neon':
             return (
                 <>
-                    <path d="M44 13 L22 18 L22 22 L44 27 Z" fill="#F4F4F6" stroke="#E2E2E6" />
+                    <path className={s.cono} d="M44 13 L22 18 L22 22 L44 27 Z" fill="#F4F4F6" stroke="#E2E2E6" />
                     <rect x="12" y="18" width="11" height="4" rx="2" fill={color} style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
                 </>
             )
         case 'borrador':
-            return <rect x="12" y="11" width="34" height="18" rx="5" fill="#E9A3A0" />
+            return <rect className={s.goma} x="12" y="11" width="34" height="18" rx="5" fill="#E9A3A0" />
         case 'seleccion':
             return (
                 <>
-                    <path d="M44 13 L26 18 L26 22 L44 27 Z" fill="#F4F4F6" stroke="#E2E2E6" />
+                    <path className={s.cono} d="M44 13 L26 18 L26 22 L44 27 Z" fill="#F4F4F6" stroke="#E2E2E6" />
                     <ellipse cx="17" cy="20" rx="8" ry="6" fill="none" stroke="#29262D" strokeWidth="1.8" strokeDasharray="3 2.4" />
                 </>
             )
@@ -85,8 +85,11 @@ const Punta = ({ id, color }) => {
     }
 }
 
+// Partes con clase (cono, madera, goma, barril, bandas): el editor de Pops
+// las pinta según su estilo (Pop · Business · Craft) desde el CSS; sin estilo
+// (I attend) quedan los colores de aquí. `bandaPunta` solo se ve con estilo.
 const Pluma = ({ id, color, on }) => (
-    <svg viewBox="0 0 150 40" className={s.pluma} data-on={on || undefined} aria-hidden>
+    <svg viewBox="0 0 150 40" className={s.pluma} data-on={on || undefined} data-brush={id} aria-hidden>
         <defs>
             <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#D9D9DE" />
@@ -99,8 +102,9 @@ const Pluma = ({ id, color, on }) => (
             </linearGradient>
         </defs>
         <Punta id={id} color={color} />
-        <rect x="44" y="9" width="110" height="22" rx="3" fill="url(#cuerpo)" stroke="#E4E4E8" />
-        {id !== 'borrador' && id !== 'seleccion' && <rect x="86" y="9" width="6" height="22" fill={color} stroke="rgba(0,0,0,0.08)" />}
+        <rect className={s.barril} x="44" y="9" width="110" height="22" rx="3" fill="url(#cuerpo)" stroke="#E4E4E8" />
+        {id !== 'borrador' && id !== 'seleccion' && <rect className={s.banda} x="86" y="9" width="6" height="22" fill={color} stroke="rgba(0,0,0,0.08)" />}
+        {id !== 'borrador' && id !== 'seleccion' && <rect className={s.bandaPunta} x="52" y="9" width="6" height="22" fill={color} />}
     </svg>
 )
 
@@ -115,6 +119,30 @@ export const PaletaDibujo = ({ pincel, setPincel, temaColor, onDeshacer, onRehac
     const otro = horizontal || !colores.includes(actual)
     const cambiar = (patch) => setPincel((p) => ({ ...p, ...patch }))
     const tinta = borrador ? '#C9C5CE' : pincel.color
+
+    // Etiqueta con el nombre de la herramienta activa, a la izquierda de la
+    // paleta y a la altura de su fila (handoff "Pinceles"). Solo se ve en el
+    // editor de Pops con estilo (CSS); se mide con la fila y el scroll.
+    const paletaRef = useRef(null)
+    const plumasRef = useRef(null)
+    const activaId = seleccionando ? 'seleccion' : (tomado ? pincel.brush : null)
+    const [etiquetaTop, setEtiquetaTop] = useState(null)
+    useLayoutEffect(() => {
+        if (horizontal) return undefined
+        const medir = () => {
+            const fila = plumasRef.current?.querySelector('[role="radio"][aria-checked="true"]')
+            const paleta = paletaRef.current
+            if (!fila || !paleta) { setEtiquetaTop(null); return }
+            const a = fila.getBoundingClientRect()
+            const b = paleta.getBoundingClientRect()
+            const visible = a.bottom > b.top && a.top < b.bottom
+            setEtiquetaTop(visible ? a.top - b.top + a.height / 2 : null)
+        }
+        medir()
+        const lista = plumasRef.current
+        lista?.addEventListener('scroll', medir, { passive: true })
+        return () => lista?.removeEventListener('scroll', medir)
+    }, [activaId, horizontal])
 
     // Hoja de ajustes del pincel: abierta junto al pincel elegido (al tocarlo
     // otra vez).
@@ -141,7 +169,12 @@ export const PaletaDibujo = ({ pincel, setPincel, temaColor, onDeshacer, onRehac
     )
 
     return (
-        <div className={s.paleta} data-edit-keep data-paleta-dibujo data-horizontal={horizontal || undefined}>
+        <div ref={paletaRef} className={s.paleta} data-edit-keep data-paleta-dibujo data-horizontal={horizontal || undefined}>
+            {!horizontal && activaId && etiquetaTop != null && (
+                <span className={s.etiqueta} style={{ top: etiquetaTop }} aria-hidden>
+                    {t(activaId === 'seleccion' ? 'side_events.draw_select' : `side_events.draw_brush_${activaId}`)}
+                </span>
+            )}
             {!horizontal && <div className={s.historial}>
                 <Tooltip title={t('side_events.draw_undo')} placement="left">
                     <button type="button" className={s.circulo} disabled={!puedeDeshacer} onClick={onDeshacer} aria-label={t('side_events.draw_undo')}>
@@ -162,7 +195,7 @@ export const PaletaDibujo = ({ pincel, setPincel, temaColor, onDeshacer, onRehac
                 )}
             </div>}
 
-            <div className={s.plumas} role="radiogroup" aria-label={t('side_events.draw_brush')}>
+            <div ref={plumasRef} className={s.plumas} role="radiogroup" aria-label={t('side_events.draw_brush')}>
                 {PINCELES.map((p) => hoja(p.id, horizontal ? 'top' : 'left', (
                     <span className={s.plumaHueco}>
                         <Tooltip title={abierta || horizontal || TACTIL ? null : t(`side_events.draw_brush_${p.id}`)} placement="left">

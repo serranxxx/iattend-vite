@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { SmilePlus } from 'lucide-react'
 import { emojiDePop } from '../../helpers/invitation/popEvents'
 import { horaDePop, useConfirmados } from './popsDatos'
+import { PopsHero } from './PopsHero'
 import styles from './PopsCraft.module.css'
 
 /**
@@ -25,14 +26,6 @@ const GIROS = [-0.6, 0.6, -0.4, 0.5]
 /** Cinta adhesiva: ancho, posición (% del ancho) y giro. */
 const Cinta = ({ ancho = 90, x = 50, giro = -3, color }) => (
     <span aria-hidden className={styles.cinta} style={{ width: ancho, left: `${x}%`, marginLeft: -ancho / 2, transform: `rotate(${giro}deg)`, ...(color ? { '--cinta': color } : {}) }} />
-)
-
-/** Sticker de estrella "Pops" (borde blanco, amarillo encima). */
-const Estrella = ({ className }) => (
-    <span aria-hidden className={`${styles.estrella} ${className ?? ''}`}>
-        <span className={styles.estrellaBlanca} />
-        <span className={styles.estrellaAmarilla}><span>Pops</span></span>
-    </span>
 )
 
 export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema }) => {
@@ -159,22 +152,12 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
         </div>
     )
 
-    const saludo = `${greeting}\u00a0✌️`
-
     if (movil) {
         const lista = pestana === 'pasados' ? pasados : activos
         return (
             <div className={`${styles.seccion} ${styles.movil}`}>
                 {switchTema}
-                <section className={styles.mHero}>
-                    <span className={styles.saludo}>{saludo}</span>
-                    <span className={styles.paraLoQue}>{t('pops_section.craft_headline_a')}</span>
-                    <span className={styles.surjaCaja}>
-                        <span className={styles.surja}>{t('pops_section.craft_headline_b')}</span>
-                        <Estrella className={styles.mEstrella} />
-                    </span>
-                    <button type='button' className={styles.mConoce} onClick={onConoce}>▷ {t('pops_section.learn')}</button>
-                </section>
+                <PopsHero tema='craft' movil greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />
 
                 {!sinPops && (
                     <div className={styles.pestanas} role='tablist'>
@@ -205,29 +188,10 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
     }
 
     return (
-        <div className={styles.seccion}>
+        <div className={`${styles.seccion} ${styles.conHero}`}>
             {switchTema}
-            <section className={styles.hero}>
-                <div className={styles.heroTexto}>
-                    <span className={styles.saludo}>{saludo}</span>
-                    <span className={styles.paraLoQue}>{t('pops_section.craft_headline_a')}</span>
-                    <span className={styles.surjaCaja}>
-                        <span className={styles.surja}>{t('pops_section.craft_headline_b')}</span>
-                        <Estrella />
-                    </span>
-                </div>
-                <div className={styles.semana}>
-                    <Cinta x={30} giro={-4} />
-                    <span className={styles.semanaEtiqueta}>{t('pops_section.craft_week')}</span>
-                    <span className={styles.semanaTitulo}>{t('pops_section.headline_b')}</span>
-                    <span className={styles.semanaSub}>{t('pops_section.craft_week_sub')}</span>
-                    <span className={styles.semanaTexto}>{t('pops_section.lede')}</span>
-                    <div className={styles.semanaBotones}>
-                        {puedeCrear && <button type='button' className={styles.botonVerde} onClick={onCrear}>{t('pops_section.send')} ↗</button>}
-                        <button type='button' className={styles.botonContorno} onClick={onConoce}>▷ {t('pops_section.learn')}</button>
-                    </div>
-                </div>
-            </section>
+            {/* El hero común de los tres estilos (PopsHero, handoff §11). */}
+            <PopsHero tema='craft' greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />
 
             <section className={styles.corcho}>
                 <div className={styles.cabeza}>

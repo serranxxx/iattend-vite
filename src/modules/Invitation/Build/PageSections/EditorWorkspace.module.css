@@ -824,3 +824,269 @@
 .stage[data-gestos] {
     touch-action: none;
 }
+
+/* ══ Editor de Pops en su estilo (Pop · Business · Craft) ══
+   html[data-pops-editor] lo pone SideEvents.jsx solo al editar un Pop en
+   escritorio; los tokens --ed-* están en SideEvents/popsEditorTema.css.
+   Solo el cromo: la pieza del usuario no se toca y el dock sigue blanco. */
+:global(html[data-pops-editor]) .workspace {
+    background: var(--ed-tablero);
+}
+
+:global(html[data-pops-editor]) .rail {
+    gap: 8px;
+    padding: 14px 11px;
+    background: var(--ed-rail-bg);
+    border-right: var(--ed-rail-borde);
+}
+
+:global(html[data-pops-editor]) .railButton {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--ed-rail-radio);
+    color: var(--ed-rail-ink);
+}
+
+:global(html[data-pops-editor]) .railButton:hover {
+    background: var(--ed-rail-hover);
+    color: var(--ed-rail-ink-hover);
+}
+
+:global(html[data-pops-editor]) .railButton[data-on] {
+    background: var(--ed-rail-on-bg);
+    color: var(--ed-rail-on-ink);
+}
+
+/* Craft: el activo es un cuadro de papel rotado sobre el tapete. */
+:global(html[data-pops-editor='craft']) .railButton[data-on] {
+    transform: rotate(-3deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+:global(html[data-pops-editor]) .toolPanel,
+:global(html[data-pops-editor]) .toolInner {
+    background: var(--ed-surface);
+    border-radius: 0 var(--ed-radio-panel) var(--ed-radio-panel) 0;
+}
+
+:global(html[data-pops-editor]) .toolPanel[data-open] {
+    border-right-color: var(--ed-line);
+}
+
+:global(html[data-pops-editor]) .toolHead {
+    align-items: center;
+    padding: 20px 20px 12px;
+}
+
+:global(html[data-pops-editor]) .toolTitle {
+    align-self: flex-start;
+    font-family: var(--ed-font-titulo);
+    font-size: var(--ed-titulo-tam);
+    font-weight: var(--ed-titulo-peso);
+    letter-spacing: var(--ed-titulo-track);
+    text-transform: var(--ed-titulo-mayus);
+    line-height: 1.15;
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .toolHint {
+    font-size: 12.5px;
+    color: var(--ed-ink-2);
+}
+
+:global(html[data-pops-editor]) .toolIcon {
+    display: none;
+}
+
+:global(html[data-pops-editor]) .toolBody {
+    padding: 4px 20px 20px;
+}
+
+/* Pop: título con resaltado rosa y punto final ("Diseño."). */
+:global(html[data-pops-editor='pop']) .toolTitle {
+    padding: 0 7px;
+    background: var(--ed-rosa);
+}
+
+:global(html[data-pops-editor='pop']) .toolTitle::after {
+    content: '.';
+}
+
+/* Business: ícono en caja azul clara junto al título en mayúsculas. */
+:global(html[data-pops-editor='business']) .toolIcon {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #EEF2FF;
+    color: var(--ed-azul);
+}
+
+/* Craft: el panel es una hoja de papel sobre el tapete, con cinta y un poco
+   girada; despegada de la orilla. */
+:global(html[data-pops-editor='craft']) .left {
+    top: 14px;
+    bottom: 14px;
+}
+
+:global(html[data-pops-editor='craft']) .toolPanel[data-open] {
+    margin-left: 4px;
+    transform: rotate(-0.5deg);
+    box-shadow: var(--ed-papel-sombra);
+    border-right-color: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .toolPanel[data-open]::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    z-index: 3;
+    width: 106px;
+    height: 24px;
+    margin-left: -53px;
+    background: var(--ed-cinta);
+    transform: rotate(-2deg);
+    pointer-events: none;
+}
+
+/* Asa para plegar el panel. */
+:global(html[data-pops-editor]) .toolHandle {
+    border-color: var(--ed-line);
+    background: var(--ed-surface);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor='pop']) .toolHandle {
+    border: none;
+    background: #111111;
+    color: #FFFFFF;
+}
+
+:global(html[data-pops-editor='business']) .toolHandle {
+    border-radius: 0 8px 8px 0;
+}
+
+:global(html[data-pops-editor='craft']) .toolHandle {
+    border: none;
+    border-radius: 0;
+}
+
+/* ── Dock: siempre blanco ── */
+:global(html[data-pops-editor]) .dock {
+    background: var(--ed-dock-bg);
+    border-radius: var(--ed-radio-ctl);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+}
+
+:global(html[data-pops-editor='business']) .dock {
+    border: 1px solid #E3E7F2;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(11, 31, 58, 0.08);
+}
+
+:global(html[data-pops-editor='craft']) .dock {
+    border-radius: 0;
+    transform: translateX(-50%) rotate(0.6deg);
+    box-shadow: var(--ed-papel-sombra);
+}
+
+:global(html[data-pops-editor]) .dockDivider {
+    background: var(--ed-line);
+}
+
+:global(html[data-pops-editor='craft']) .dockDivider {
+    width: 0;
+    background: none;
+    border-left: 1.5px dashed var(--ed-line);
+}
+
+:global(html[data-pops-editor]) .dockIcon,
+:global(html[data-pops-editor]) .dockText {
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .dockIcon:disabled {
+    color: #C9C6C0;
+}
+
+:global(html[data-pops-editor]) .dockIcon:hover:not(:disabled),
+:global(html[data-pops-editor]) .dockText:hover {
+    background: var(--ed-hover);
+}
+
+:global(html[data-pops-editor]) .segment {
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-surface-soft);
+}
+
+:global(html[data-pops-editor='craft']) .segment {
+    background: transparent;
+}
+
+:global(html[data-pops-editor]) .segBtn {
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink-2);
+}
+
+:global(html[data-pops-editor='craft']) .segBtn {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Activo de un segmento (dispositivos, Sin confirmar / Confirmado). */
+:global(html[data-pops-editor]) .segBtn[data-on] {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    box-shadow: none;
+}
+
+:global(html[data-pops-editor='craft']) .segBtn[data-on] {
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Editar / Ver en vivo del dock: "Editar" es la acción de hacer (lima en
+   Pop y Business, amarillo en Craft); el punto de "Ver en vivo" va con el
+   acento del estilo. */
+:global(html[data-pops-editor]) .dock > .segment > .segBtn[data-on]:not(.segLive) {
+    background: var(--ed-hacer-bg);
+    color: var(--ed-hacer-ink);
+    font-weight: 800;
+}
+
+:global(html[data-pops-editor='business']) .dock > .segment > .segBtn {
+    border-radius: 9px;
+}
+
+:global(html[data-pops-editor]) .segLive[data-on] {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+}
+
+:global(html[data-pops-editor='pop']) .segDot {
+    background: var(--ed-rosa);
+}
+
+:global(html[data-pops-editor='business']) .segDot {
+    background: var(--ed-azul);
+}
+
+:global(html[data-pops-editor='craft']) .segDot {
+    background: var(--ed-verde);
+}
+
+/* Aviso de "Ver en vivo" y botón para volver a abrir Capas. */
+:global(html[data-pops-editor]) .liveHint {
+    border-radius: var(--ed-radio-panel);
+    border: var(--ed-panel-borde);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .layersHide {
+    border-radius: var(--ed-radio-caja);
+    color: var(--ed-ink-2);
+}

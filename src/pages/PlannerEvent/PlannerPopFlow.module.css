@@ -641,3 +641,320 @@
         animation: none;
     }
 }
+
+/* ══ Nuevo Pop en el estilo de la sección Pops (Business · Craft) ══
+   html[data-pops-tema] lo pone PlannerLayout mientras se está en Pops. El
+   flujo usa los colores --pops-*: aquí se cambian para el estilo, y abajo
+   van las formas (radios, letra) que cambian. Pop queda como siempre. */
+
+/* ── Business: navy + azul + lima, ejecutivo ── */
+:global(html[data-pops-tema='business']) .panel {
+    --pops-tinta: #0B1F3A;
+    --pops-lima: #CDF22B;
+    --pops-linea: #E3E7F2;
+    --pops-campo: #F6F8FB;
+    --pops-borde-campo: #E3E7F2;
+    --pops-hover: #EEF2FF;
+    --pops-negro: #0B1F3A;
+    --pops-rosa: #1E45FB;
+    --pops-rosa-suave: #EEF2FF;
+    --pops-amarillo: #CDF22B;
+    --pops-amarillo-suave: #F4FBD6;
+    --pops-amarillo-tinta: #0B1F3A;
+    --pops-amarillo-texto: #0B1F3A;
+    --pops-texto-fuerte: #5B6B85;
+    --pops-texto-medio: #5B6B85;
+    --pops-texto-suave: #9FB0D0;
+    --pops-texto-claro: #DCE6FF;
+    --pops-placeholder: #9FB0D0;
+    --pops-punto: #E3E7F2;
+}
+
+:global(html[data-pops-tema='business']) .titulo {
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-tema='business']) .pregunta {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+:global(html[data-pops-tema='business']) .atras,
+:global(html[data-pops-tema='business']) .chip {
+    border-radius: 10px;
+}
+
+:global(html[data-pops-tema='business']) .barra {
+    border-radius: 2px;
+}
+
+:global(html[data-pops-tema='business']) .segmento[data-estado='actual'] .barra {
+    background: #1E45FB;
+}
+
+:global(html[data-pops-tema='business']) .etiqueta,
+:global(html[data-pops-tema='business']) .label,
+:global(html[data-pops-tema='business']) .previaLabel {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5B6B85;
+}
+
+:global(html[data-pops-tema='business']) .opcion,
+:global(html[data-pops-tema='business']) .pago {
+    border-width: 1.5px;
+    border-radius: 12px;
+}
+
+:global(html[data-pops-tema='business']) .opcion[data-on],
+:global(html[data-pops-tema='business']) .pago[data-on] {
+    border-color: #1E45FB;
+    box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+:global(html[data-pops-tema='business']) .opcion[data-on] .radio {
+    border-color: #1E45FB;
+    background: #1E45FB;
+}
+
+:global(html[data-pops-tema='business']) .opcionEmoji,
+:global(html[data-pops-tema='business']) .previaMini,
+:global(html[data-pops-tema='business']) .ticketMini {
+    border-radius: 10px;
+}
+
+:global(html[data-pops-tema='business']) .input,
+:global(html[data-pops-tema='business']) .picker {
+    border-width: 1px;
+    border-radius: 10px;
+}
+
+:global(html[data-pops-tema='business']) .input:focus,
+:global(html[data-pops-tema='business']) .picker:global(.ant-picker-focused) {
+    border-color: #1E45FB;
+    box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+:global(html[data-pops-tema='business']) .cliente,
+:global(html[data-pops-tema='business']) .previaFila,
+:global(html[data-pops-tema='business']) .ticket {
+    border-radius: 14px;
+}
+
+:global(html[data-pops-tema='business']) .previaChip {
+    border-radius: 6px;
+}
+
+:global(html[data-pops-tema='business']) .cta {
+    border-radius: 12px;
+    background: #1E45FB;
+}
+
+:global(html[data-pops-tema='business']) .cta:hover:not(:disabled) {
+    background: #0B1F3A;
+}
+
+:global(html[data-pops-tema='business']) .ctaPunto {
+    border-radius: 8px;
+}
+
+:global(html[data-pops-tema='business']) .cta:disabled {
+    background: #E3E7F2;
+}
+
+
+
+/* ── Craft: hoja de papel, fichas blancas, amarillo y verde ── */
+:global(html[data-pops-tema='craft']) .panel {
+    --pops-tinta: #1D1D1B;
+    --pops-lima: #F2D21B;
+    --pops-linea: #CFCEC8;
+    --pops-campo: #FFFFFF;
+    --pops-borde-campo: transparent;
+    --pops-hover: rgba(0, 0, 0, 0.05);
+    --pops-negro: #1E6B60;
+    --pops-rosa: #F2D21B;
+    --pops-rosa-suave: #FBF3C0;
+    --pops-amarillo: #F2D21B;
+    --pops-amarillo-suave: #FBF3C0;
+    --pops-amarillo-tinta: #1D1D1B;
+    --pops-amarillo-texto: #1D1D1B;
+    --pops-texto-fuerte: #6B6A65;
+    --pops-texto-medio: #6B6A65;
+    --pops-texto-suave: #8A8A85;
+    --pops-texto-claro: #F3F2EE;
+    --pops-placeholder: #A5A49E;
+    --pops-punto: #CFCEC8;
+    background: #F3F2EE;
+}
+
+:global(html[data-pops-tema='craft']) :global(.ant-drawer-content-wrapper):has(.panel) {
+    border-radius: 0 !important;
+}
+
+:global(html[data-pops-tema='craft']) :global(.ant-drawer-content-wrapper):has(.panel) :global(.ant-drawer-section) {
+    background: #F3F2EE;
+}
+
+:global(html[data-pops-tema='craft']) .titulo {
+    letter-spacing: -0.05em;
+}
+
+/* Etiquetas, chips y botones en Patrick Hand MAYÚSCULAS. */
+:global(html[data-pops-tema='craft']) .etiqueta,
+:global(html[data-pops-tema='craft']) .label,
+:global(html[data-pops-tema='craft']) .previaLabel,
+:global(html[data-pops-tema='craft']) .chip,
+:global(html[data-pops-tema='craft']) .cta,
+:global(html[data-pops-tema='craft']) .previaChip {
+    font-family: 'Patrick Hand', cursive;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-tema='craft']) .etiqueta,
+:global(html[data-pops-tema='craft']) .label {
+    font-size: 16px;
+}
+
+:global(html[data-pops-tema='craft']) .chip {
+    border-radius: 0;
+    background: #F2D21B;
+    font-size: 16px;
+    transform: rotate(-2deg);
+}
+
+:global(html[data-pops-tema='craft']) .atras {
+    border: 1.5px dashed #8A8A85;
+    background: transparent;
+}
+
+:global(html[data-pops-tema='craft']) .barra {
+    height: 5px;
+    border-radius: 0;
+}
+
+:global(html[data-pops-tema='craft']) .segmento[data-estado='actual'] .barra {
+    background: #1E6B60;
+}
+
+/* Opciones y pagos: fichas blancas; la elegida con aro amarillo y girada. */
+:global(html[data-pops-tema='craft']) .opcion,
+:global(html[data-pops-tema='craft']) .pago {
+    border: none;
+    border-radius: 0;
+    background: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+:global(html[data-pops-tema='craft']) .opcion[data-on],
+:global(html[data-pops-tema='craft']) .pago[data-on] {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px #F2D21B, 0 4px 10px rgba(0, 0, 0, 0.15);
+    transform: rotate(-0.6deg);
+}
+
+:global(html[data-pops-tema='craft']) .pago[data-on][data-gratis] {
+    background: #FBF3C0;
+}
+
+:global(html[data-pops-tema='craft']) .opcionEmoji {
+    border-radius: 0;
+    transform: rotate(-4deg);
+}
+
+:global(html[data-pops-tema='craft']) .radio {
+    border-radius: 0;
+}
+
+:global(html[data-pops-tema='craft']) .radio span {
+    border-radius: 0;
+}
+
+:global(html[data-pops-tema='craft']) .input,
+:global(html[data-pops-tema='craft']) .picker {
+    border: none;
+    border-radius: 0;
+    background: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+:global(html[data-pops-tema='craft']) .input:focus,
+:global(html[data-pops-tema='craft']) .picker:global(.ant-picker-focused) {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 -3px 0 #F2D21B;
+}
+
+:global(html[data-pops-tema='craft']) .cliente,
+:global(html[data-pops-tema='craft']) .previaFila,
+:global(html[data-pops-tema='craft']) .previaMini,
+:global(html[data-pops-tema='craft']) .ticketMini,
+:global(html[data-pops-tema='craft']) .previaChip {
+    border-radius: 0;
+}
+
+/* Vista previa: ficha verde (tapete) con el emoji amarillo girado. */
+:global(html[data-pops-tema='craft']) .previaFila {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+:global(html[data-pops-tema='craft']) .previaMini {
+    border: 3px solid #FFFFFF;
+    transform: rotate(-4deg);
+}
+
+/* Ticket: nota adhesiva amarilla con cinta. */
+:global(html[data-pops-tema='craft']) .ticket {
+    position: relative;
+    border-radius: 0;
+    transform: rotate(-0.6deg);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-pops-tema='craft']) .ticket::before {
+    content: '';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    width: 84px;
+    height: 22px;
+    margin-left: -42px;
+    background: rgba(238, 232, 212, 0.88);
+    transform: rotate(-2deg);
+}
+
+:global(html[data-pops-tema='craft']) .ticketCorte::before,
+:global(html[data-pops-tema='craft']) .ticketCorte::after {
+    background: #F3F2EE;
+}
+
+:global(html[data-pops-tema='craft']) .total,
+:global(html[data-pops-tema='craft']) .pie {
+    border-top: 1.5px dashed #CFCEC8;
+}
+
+:global(html[data-pops-tema='craft']) .cta {
+    border-radius: 0;
+    background: #1E6B60;
+    font-size: 21px;
+    box-shadow: 0 3px 0 #134A42;
+}
+
+:global(html[data-pops-tema='craft']) .cta:hover:not(:disabled) {
+    background: #1E6B60;
+    transform: translateY(-1px);
+}
+
+:global(html[data-pops-tema='craft']) .ctaPunto {
+    border-radius: 0;
+}
+
+:global(html[data-pops-tema='craft']) .cta:disabled {
+    background: #E4E3DD;
+    box-shadow: none;
+}

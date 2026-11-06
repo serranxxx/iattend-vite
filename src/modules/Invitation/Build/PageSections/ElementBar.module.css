@@ -741,3 +741,152 @@
     max-height: 40dvh;
     gap: 8px;
 }
+
+/* ══ Barras de arriba del editor de Pops en su estilo (Pop · Business · Craft) ══
+   html[data-pops-editor]: SideEvents.jsx; tokens en SideEvents/popsEditorTema.css.
+   Texto, elemento, fondo, dibujo y demás comparten .bar y sus botones. */
+:global(html[data-pops-editor]) .bar {
+    border: var(--ed-panel-borde);
+    border-radius: var(--ed-radio-panel);
+    background: #FFFFFF;
+    box-shadow: var(--ed-panel-sombra);
+}
+
+:global(html[data-pops-editor='pop']) .bar {
+    border-radius: 99px;
+    padding: 5px 10px;
+}
+
+:global(html[data-pops-editor]) .iconBtn,
+:global(html[data-pops-editor]) .swatchBtn,
+:global(html[data-pops-editor]) .textBtn {
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink);
+    font-family: 'Poppins', sans-serif;
+}
+
+:global(html[data-pops-editor]) .iconBtn:hover,
+:global(html[data-pops-editor]) .swatchBtn:hover,
+:global(html[data-pops-editor]) .textBtn:hover {
+    background: var(--ed-hover);
+}
+
+/* Activo (negrita, sombra, ojo…): negro en Pop, azul claro en Business,
+   etiqueta amarilla en Craft. */
+:global(html[data-pops-editor]) .iconBtn[data-on],
+:global(html[data-pops-editor]) .swatchBtn[data-on],
+:global(html[data-pops-editor]) .textBtn[data-on] {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+}
+
+:global(html[data-pops-editor='business']) .iconBtn[data-on],
+:global(html[data-pops-editor='business']) .swatchBtn[data-on],
+:global(html[data-pops-editor='business']) .textBtn[data-on] {
+    background: #EEF2FF;
+    color: var(--ed-azul);
+}
+
+:global(html[data-pops-editor='craft']) .iconBtn[data-on],
+:global(html[data-pops-editor='craft']) .swatchBtn[data-on],
+:global(html[data-pops-editor='craft']) .textBtn[data-on] {
+    transform: rotate(-2deg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-pops-editor]) .divider {
+    background: var(--ed-line);
+}
+
+:global(html[data-pops-editor='craft']) .divider {
+    width: 0;
+    background: none;
+    border-left: 1.5px dashed var(--ed-line);
+}
+
+:global(html[data-pops-editor]) .stepper {
+    border: 1.5px solid var(--ed-line);
+    border-radius: var(--ed-radio-ctl);
+}
+
+:global(html[data-pops-editor='business']) .stepper {
+    border-width: 1px;
+}
+
+:global(html[data-pops-editor='craft']) .stepper {
+    border-style: dashed;
+}
+
+:global(html[data-pops-editor]) .stepBtn,
+:global(html[data-pops-editor]) .stepValue {
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .stepBtn:hover:not(:disabled) {
+    background: var(--ed-hover);
+}
+
+/* Selector de fuente (antd Select). */
+:global(html[data-pops-editor]) .bar :global(.ant-select) {
+    border-radius: var(--ed-radio-ctl);
+}
+
+:global(html[data-pops-editor]) .bar :global(.ant-select-selector),
+:global(html[data-pops-editor]) .bar :global(.ant-select) {
+    border-color: var(--ed-line) !important;
+}
+
+:global(html[data-pops-editor='pop']) .bar :global(.ant-select),
+:global(html[data-pops-editor='pop']) .bar :global(.ant-select-selector) {
+    border-radius: 99px !important;
+}
+
+:global(html[data-pops-editor='business']) .bar :global(.ant-select),
+:global(html[data-pops-editor='business']) .bar :global(.ant-select-selector) {
+    border-radius: 10px !important;
+}
+
+:global(html[data-pops-editor='craft']) .bar :global(.ant-select),
+:global(html[data-pops-editor='craft']) .bar :global(.ant-select-selector) {
+    border-style: dashed !important;
+    border-radius: 0 !important;
+}
+
+/* Craft: la barra es una tira de papel, sin redondeo, un poco girada, y los
+   botones con texto en Patrick Hand. */
+:global(html[data-pops-editor='craft']) .bar {
+    transform: rotate(-0.4deg);
+}
+
+:global(html[data-pops-editor='craft']) .textBtn {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Menús de las barras (alinear, separadores…). */
+:global(html[data-pops-editor]) .menuItem {
+    border-radius: var(--ed-radio-caja);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .menuItem:hover {
+    background: var(--ed-hover);
+}
+
+:global(html[data-pops-editor]) .menuItem[data-on] {
+    background: var(--ed-fila-sel-bg);
+    color: var(--ed-fila-sel-ink);
+}
+
+/* Popovers de las barras (data-text-bar): el redondeo del estilo. */
+:global(html[data-pops-editor='business'] .ant-popover .ant-popover-container:has([data-text-bar])) {
+    border: 1px solid #E3E7F2;
+    border-radius: 14px;
+}
+
+:global(html[data-pops-editor='craft'] .ant-popover .ant-popover-container:has([data-text-bar])) {
+    border-radius: 0;
+    background: #F3F2EE;
+}

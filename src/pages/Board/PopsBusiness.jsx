@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Plus } from 'lucide-react'
 import { useConfirmados } from './popsDatos'
+import { PopsHero } from './PopsHero'
 import styles from './PopsBusiness.module.css'
 
 /**
@@ -59,10 +60,6 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
 
     const idsActivos = activos.map(f => f.popId).filter(Boolean)
     const confirmados = useConfirmados(idsActivos)
-    const total = idsActivos.reduce((acc, id) => ({
-        si: acc.si + (confirmados[id]?.si ?? 0),
-        total: acc.total + (confirmados[id]?.total ?? 0),
-    }), { si: 0, total: 0 })
 
     const fechaCorta = (fecha) => fecha
         .toDate()
@@ -72,11 +69,6 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
         ? t('pops_section.today')
         : dias === 1 ? t('pops_section.tomorrow')
             : t(corto ? 'pops_section.days' : 'pops_section.in_days', { count: dias }))
-
-    // Tarjeta de la derecha del hero: Pops gratis si tiene; si no, los activos.
-    const tarjetaLima = gratisPop > 0
-        ? { etiqueta: t('pops_section.biz_available'), valor: gratisPop, accion: onGratisPop }
-        : { etiqueta: t('pops_section.biz_active_card'), valor: activos.length, accion: puedeCrear ? (onComprarPop ?? onCrear) : null }
 
     const estadoDe = (f, pasado) => {
         const c = confirmados[f.popId]
@@ -198,50 +190,8 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
     return (
         <div className={`${styles.seccion} ${movil ? styles.movil : ''}`}>
             {switchTema}
-            <section className={styles.hero}>
-                <span className={styles.saludo}>{greeting}</span>
-                <div className={styles.heroFila}>
-                    <div className={styles.heroTexto}>
-                        <div className={styles.marca}>
-                            <span className={styles.wordmark}>Pops</span>
-                            <span className={styles.tag}>{t('pops_section.biz_tag')}</span>
-                        </div>
-                        <span className={styles.titular}>
-                            {t('pops_section.headline_a')} <span className={styles.lima}>{t('pops_section.headline_b')}</span>
-                        </span>
-                        {!movil && <p className={styles.lede}>{t('pops_section.lede')}</p>}
-                        {!movil && (
-                            <div className={styles.botones}>
-                                {puedeCrear && <button type='button' className={styles.botonLima} onClick={onCrear}>{t('pops_section.send')} ↗</button>}
-                                <button type='button' className={styles.botonContorno} onClick={onConoce}>{t('pops_section.learn')}</button>
-                            </div>
-                        )}
-                    </div>
-                    <div className={styles.tarjetas}>
-                        {total.total > 0 && (
-                            <div className={styles.vidrio}>
-                                <span className={styles.vidrioEtiqueta}>{t('pops_section.biz_confirmed')}</span>
-                                <span className={styles.vidrioValor}>{total.si}<small> / {total.total}</small></span>
-                                <span className={styles.barra}><span style={{ width: `${Math.round((total.si / total.total) * 100)}%` }} /></span>
-                            </div>
-                        )}
-                        <div className={styles.tarjetaLima}>
-                            <span className={styles.limaTexto}>
-                                <span className={styles.limaEtiqueta}>{tarjetaLima.etiqueta}</span>
-                                <span className={styles.limaValor}>{tarjetaLima.valor}</span>
-                            </span>
-                            {tarjetaLima.accion && !movil && (
-                                <button type='button' className={styles.limaMas} onClick={tarjetaLima.accion} aria-label={t('pops_section.buy')}>
-                                    <Plus size={22} strokeWidth={3} />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                {movil && (
-                    <button type='button' className={styles.mConoce} onClick={onConoce}>{t('pops_section.learn')} →</button>
-                )}
-            </section>
+            {/* El hero común de los tres estilos (PopsHero, handoff §11), también en el celular. */}
+            <PopsHero tema='business' movil={movil} greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />
 
             <section className={styles.panel}>
                 <div className={styles.cabeza}>

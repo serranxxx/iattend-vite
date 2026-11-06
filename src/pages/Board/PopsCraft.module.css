@@ -8,6 +8,9 @@
     display: flex;
     flex-direction: column;
     min-height: 100%;
+    /* border-box: con el padding de arriba, min-height: 100% se pasaba 96 px
+       del layout y abajo quedaba una franja blanca sin tapete. */
+    box-sizing: border-box;
     padding: 96px 0 0 24px;
     /* En escritorio el tapete lo pinta el layout (layoutCraft), así sigue
        la misma cuadrícula detrás de la barra lateral. */
@@ -658,19 +661,23 @@
     gap: 8px;
     padding: 0 12px 0 5px;
     border: none;
-    background: var(--craft-verde);
-    color: #FFF;
+    /* Amarillo con sombra dura (como Send a Pop): el verde se perdía sobre
+       el tapete verde. */
+    background: var(--craft-amarillo, #F2D21B);
+    color: var(--craft-tinta);
     font-family: 'Patrick Hand', cursive;
     font-size: 17px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    box-shadow: 0 3px 0 var(--craft-verde-sombra), 0 6px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 0 #B89D0E, 0 6px 12px rgba(0, 0, 0, 0.25);
     cursor: pointer;
 }
 
 .mComprar .comprarMas {
     width: 28px;
     height: 28px;
+    background: var(--craft-tinta);
+    color: var(--craft-amarillo, #F2D21B);
     font-size: 16px;
 }
 
@@ -811,3 +818,26 @@
     font-size: 26px;
 }
 
+
+/* Escritorio con el hero común (PopsHero): sin el aire de arriba del hero
+   viejo; el corcho empieza justo debajo del papel rasgado. */
+.seccion.conHero {
+    padding: 0;
+}
+
+.conHero .corcho {
+    margin: 0 0 0 24px;
+}
+
+/* Orilla de arriba del corcho rasgada (antes era una tira de papel suelta
+   debajo del hero). El corcho sube un poco para que el rasgado quede sobre
+   el tapete; la sombra va con drop-shadow porque clip-path corta box-shadow. */
+.conHero .corcho,
+.movil .mCorcho {
+    padding-top: 56px;
+    clip-path: polygon(0 100%, 0.0% 6px, 1.67% 4px, 3.33% 8px, 5.0% 12px, 6.67% 2px, 8.33% 2px, 10.0% 14px, 11.67% 10px, 13.33% 2px, 15.0% 6px, 16.67% 10px, 18.33% 2px, 20.0% 10px, 21.67% 4px, 23.33% 2px, 25.0% 2px, 26.67% 8px, 28.33% 8px, 30.0% 2px, 31.67% 4px, 33.33% 2px, 35.0% 10px, 36.67% 8px, 38.33% 2px, 40.0% 14px, 41.67% 10px, 43.33% 2px, 45.0% 4px, 46.67% 12px, 48.33% 12px, 50.0% 10px, 51.67% 2px, 53.33% 10px, 55.0% 10px, 56.67% 8px, 58.33% 2px, 60.0% 4px, 61.67% 2px, 63.33% 10px, 65.0% 14px, 66.67% 4px, 68.33% 6px, 70.0% 8px, 71.67% 4px, 73.33% 10px, 75.0% 2px, 76.67% 10px, 78.33% 6px, 80.0% 10px, 81.67% 14px, 83.33% 12px, 85.0% 4px, 86.67% 2px, 88.33% 10px, 90.0% 10px, 91.67% 12px, 93.33% 4px, 95.0% 6px, 96.67% 2px, 98.33% 10px, 100.0% 12px, 100% 100%);
+}
+
+.movil .mCorcho {
+    padding-top: 34px;
+}

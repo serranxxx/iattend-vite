@@ -58,6 +58,9 @@ import sl from './SideEventsList.module.css'
 import { asistentesDe } from './datosAsistentes'
 import { MODOS_CLIMA, modoClima, parcheModoClima } from './tarjetasSide'
 import { FormularioPanel } from './Formularios/FormularioPanel'
+import { TEMA_IATTEND, TEMAS_POPS, usePopsTema } from '../../pages/Board/usePopsTema'
+import { PopsTemaSwitch } from '../../pages/Board/PopsTemaSwitch'
+import './popsEditorTema.css'
 import { FormularioVista } from './Formularios/FormularioVista'
 import { useMisFormularios, useRespuestasFormulario } from './Formularios/useFormularios'
 import { formPublicado } from './Formularios/modelo'
@@ -1280,7 +1283,7 @@ export const SideEvents = () => {
         }
 
         return (
-            <div className="gx gx-steps" role="tablist" data-tour="se-steps">
+            <div className="gx gx-steps" role="tablist" data-tour="se-steps" data-tema-propio>
                 {STEP_DEFS.map((d) => (
                     <button
                         key={d.key}
@@ -3140,6 +3143,27 @@ export const SideEvents = () => {
     // (blanco en el nuevo, EditorMovil; negro en el modo story viejo) y nada
     // hace zoom al escribir.
     const editorMovil = !!current && isMobile
+
+    // Editor de Pops en el estilo elegido en la sección Pops (Pop · Business ·
+    // Craft, localStorage pops_theme): en <html> para que también lo lean los
+    // popovers de antd. Solo el editor de escritorio de un Pop (popsEditorTema.css).
+    // Se cambia desde la barra (PopsTemaSwitch) con la misma transición
+    // circular de la sección Pops. useLayoutEffect: el cambio va dentro de la
+    // View Transition (flushSync), así la foto nueva ya trae el estilo nuevo.
+    const temaEditorPop = esPop && !!current && !isMobile
+    // Administradores: además el estilo "I attend" (el editor original, sin
+    // data-pops-editor). Rol leído de la sesión, como AdminHOC.
+    const esAdminEditor = useMemo(() => {
+        try { return JSON.parse(localStorage.getItem('session'))?.user?.role === 'Administration' } catch { return false }
+    }, [])
+    const temasEditor = esAdminEditor ? [...TEMAS_POPS, TEMA_IATTEND] : TEMAS_POPS
+    const { tema: temaPops, cambiar: cambiarTemaPops } = usePopsTema({ temas: temasEditor })
+    useLayoutEffect(() => {
+        if (!temaEditorPop || temaPops === TEMA_IATTEND) return undefined
+        const raiz = document.documentElement
+        raiz.setAttribute('data-pops-editor', temaPops)
+        return () => raiz.removeAttribute('data-pops-editor')
+    }, [temaEditorPop, temaPops])
     useEffect(() => {
         if (!editorMovil) return
         const html = document.documentElement
@@ -4965,6 +4989,7 @@ export const SideEvents = () => {
                     <Segmented
                         className={ed.tabs}
                         data-tour="tabs"
+                        data-tema-propio
                         value={activeTab}
                         onChange={changeTab}
                         options={[
@@ -4977,6 +5002,9 @@ export const SideEvents = () => {
                         {/* Autoguardado: su estado a la izquierda de Público /
                             Compartir (solo se ve mientras guarda y un momento después). */}
                         <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} />
+                        {/* Pop: su estilo de editor (Pop · Business · Craft), el mismo
+                            de la sección Pops; se cambia aquí sin salir. */}
+                        {esPop && <PopsTemaSwitch tema={temaPops} onCambiar={cambiarTemaPops} enLinea temas={temasEditor} />}
                         {/* "Ver en vivo" vive en el dock del área de trabajo. */}
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 

@@ -111,3 +111,338 @@
         display: none;
     }
 }
+
+/* Título, ✕ y etiqueta del link: solo con estilo (abajo). */
+.cabeza,
+.linkEtiqueta {
+    display: none;
+}
+
+/* ══ Desplegable Compartir del editor de Pops en su estilo (handoff
+   "Editor de Pops — 3 estilos", §9). Solo con `tema` (data-compartir); los
+   colores del botón global .primarybutton--active van con !important. ══ */
+.panel[data-compartir] {
+    gap: 12px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.panel[data-compartir] .cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.panel[data-compartir] .titulo {
+    color: var(--ed-ink);
+    line-height: 1.2;
+}
+
+.panel[data-compartir] .url {
+    text-align: left;
+}
+
+.panel[data-compartir] .copiar {
+    height: 50px !important;
+    border: none !important;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px !important;
+    font-weight: 700;
+    box-shadow: none !important;
+}
+
+/* La caja del popover (antd) en el estilo. */
+:global(.ant-popover .ant-popover-container:has([data-compartir='pop'])) {
+    padding: 16px;
+    border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+}
+
+:global(.ant-popover .ant-popover-container:has([data-compartir='business'])) {
+    padding: 0;
+    border: 1px solid #E3E7F2;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(11, 31, 58, 0.18);
+    overflow: hidden;
+}
+
+:global(.ant-popover .ant-popover-container:has([data-compartir='craft'])) {
+    position: relative;
+    padding: 22px 16px 20px;
+    border-radius: 0;
+    background: #F3F2EE;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06), 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+/* ── Pop ── */
+.panel[data-compartir='pop'] {
+    animation: entraPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    transform-origin: top right;
+}
+
+@keyframes entraPop {
+    from { opacity: 0; transform: scale(0.92); }
+}
+
+.panel[data-compartir='pop'] .titulo {
+    align-self: flex-start;
+    padding: 0 7px;
+    background: #FF5FA8;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.panel[data-compartir='pop'] .titulo::after {
+    content: '.';
+}
+
+.panel[data-compartir='pop'] .portada {
+    border-radius: 20px;
+}
+
+.panel[data-compartir='pop'] .url {
+    font-size: 13px;
+    color: #8A8582;
+}
+
+/* "Copiar link" + círculo lima a la derecha con el ícono. */
+.panel[data-compartir='pop'] .copiar {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    padding: 0 6px 0 22px !important;
+    border-radius: 99px !important;
+    background: #111111 !important;
+    color: #FFFFFF !important;
+}
+
+.panel[data-compartir='pop'] .copiar :global(.ant-btn-icon) {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #C8F560;
+}
+
+.panel[data-compartir='pop'] .copiar svg {
+    color: #111111 !important;
+}
+
+.panel[data-compartir='pop'] .copiar[data-copiado] {
+    background: #C8F560 !important;
+    color: #111111 !important;
+}
+
+.panel[data-compartir='pop'] .copiar[data-copiado] :global(.ant-btn-icon) {
+    background: #111111;
+}
+
+.panel[data-compartir='pop'] .copiar[data-copiado] svg {
+    color: #C8F560 !important;
+}
+
+/* ── Business: cabecera con borde, link en un campo con Copiar adentro ── */
+.panel[data-compartir='business'] {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0;
+    width: 320px !important;
+    animation: entraBiz 0.18s ease-out both;
+}
+
+@keyframes entraBiz {
+    from { opacity: 0; transform: translateY(6px); }
+}
+
+.panel[data-compartir='business'] > * {
+    flex: 0 0 100%;
+}
+
+.panel[data-compartir='business'] .cabeza {
+    box-sizing: border-box;
+    padding: 14px 16px;
+    border-bottom: 1px solid #E3E7F2;
+}
+
+.panel[data-compartir='business'] .titulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.panel[data-compartir='business'] .titulo::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #CDF22B;
+}
+
+.panel[data-compartir='business'] .cerrar {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #5B6B85;
+    cursor: pointer;
+}
+
+.panel[data-compartir='business'] .cerrar:hover {
+    background: #F6F8FB;
+}
+
+.panel[data-compartir='business'] .portada {
+    flex-basis: calc(100% - 32px);
+    margin: 16px 16px 0;
+    border-radius: 16px;
+}
+
+.panel[data-compartir='business'] .linkEtiqueta {
+    display: block;
+    margin: 14px 16px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5B6B85;
+}
+
+/* El link y "Copiar" comparten el campo: el link es la parte izquierda y el
+   botón la derecha. */
+.panel[data-compartir='business'] .url {
+    flex: 1 1 0;
+    box-sizing: border-box;
+    height: 44px;
+    margin: 0 0 16px 16px;
+    padding: 0 10px 0 12px;
+    border: 1px solid #E3E7F2;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    background: #F6F8FB;
+    font-size: 13px;
+    line-height: 42px;
+    color: #0B1F3A;
+}
+
+.panel[data-compartir='business'] .botones {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    height: 44px;
+    margin: 0 16px 16px 0;
+    padding: 4px;
+    border: 1px solid #E3E7F2;
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    background: #F6F8FB;
+}
+
+.panel[data-compartir='business'] .copiar {
+    height: 34px !important;
+    padding: 0 12px !important;
+    border-radius: 7px !important;
+    background: #1E45FB !important;
+    color: #FFFFFF !important;
+    font-size: 13px !important;
+}
+
+.panel[data-compartir='business'] .copiar svg {
+    color: #FFFFFF !important;
+}
+
+.panel[data-compartir='business'] .copiar[data-copiado] {
+    background: #CDF22B !important;
+    color: #0B1F3A !important;
+}
+
+.panel[data-compartir='business'] .copiar[data-copiado] svg {
+    color: #0B1F3A !important;
+}
+
+/* ── Craft: ficha de papel con cinta, polaroid y bloque verde ── */
+:global(.ant-popover .ant-popover-container:has([data-compartir='craft']))::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 90px;
+    height: 24px;
+    margin-left: -45px;
+    background: rgba(238, 232, 212, 0.85);
+    transform: rotate(-2deg);
+    pointer-events: none;
+}
+
+.panel[data-compartir='craft'] {
+    animation: entraCraft 0.3s ease both;
+}
+
+@keyframes entraCraft {
+    from { opacity: 0; transform: scale(1.03); }
+}
+
+.panel[data-compartir='craft'] .titulo {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+/* La portada como polaroid: marco blanco. Sin girar (ni la ficha): en
+   Chrome, la portada en vivo (SideCanvas escalada, con sus capas de foto y
+   efectos) dentro de un contenedor girado se quedaba sin pintar la foto. */
+.panel[data-compartir='craft'] .portada {
+    border: solid #FFFFFF;
+    border-width: 8px 8px 10px;
+    border-radius: 0;
+    box-sizing: content-box;
+    margin: 0 -8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+}
+
+.panel[data-compartir='craft'] .url {
+    padding-bottom: 4px;
+    border-bottom: 1.5px dashed #CFCEC8;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    color: #6B6A65;
+}
+
+.panel[data-compartir='craft'] .copiar {
+    border-radius: 0 !important;
+    background: #1E6B60 !important;
+    color: #FFFFFF !important;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 21px !important;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 3px 0 #134A42 !important;
+}
+
+.panel[data-compartir='craft'] .copiar svg {
+    color: #FFFFFF !important;
+}
+
+.panel[data-compartir='craft'] .copiar[data-copiado] {
+    background: #F2D21B !important;
+    color: #1D1D1B !important;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+.panel[data-compartir='craft'] .copiar[data-copiado] svg {
+    color: #1D1D1B !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel[data-compartir] {
+        animation: none;
+    }
+}

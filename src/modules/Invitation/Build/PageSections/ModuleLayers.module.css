@@ -438,3 +438,174 @@
     color: #29262D;
     outline: none;
 }
+
+/* ══ Capas del editor de Pops en su estilo (Pop · Business · Craft) ══
+   html[data-pops-editor]: SideEvents.jsx; tokens en SideEvents/popsEditorTema.css. */
+:global(html[data-pops-editor]) .panel {
+    padding: 18px 12px 12px;
+    border: var(--ed-panel-borde);
+    border-radius: var(--ed-radio-panel);
+    background: var(--ed-surface);
+    box-shadow: var(--ed-panel-sombra);
+}
+
+:global(html[data-pops-editor]) .title {
+    align-self: flex-start;
+    margin: 0 6px 4px;
+    padding: 0;
+    font-family: var(--ed-font-titulo);
+    font-size: var(--ed-titulo-tam);
+    font-weight: var(--ed-titulo-peso);
+    letter-spacing: var(--ed-titulo-track);
+    text-transform: var(--ed-titulo-mayus);
+    line-height: 1.15;
+    color: var(--ed-ink);
+}
+
+/* Pop: "Capas." sobre lima. */
+:global(html[data-pops-editor='pop']) .title {
+    padding: 0 8px;
+    background: var(--ed-lima);
+}
+
+:global(html[data-pops-editor='pop']) .title::after {
+    content: '.';
+}
+
+/* Business: cuadro lima a la izquierda del título. */
+:global(html[data-pops-editor='business']) .title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+:global(html[data-pops-editor='business']) .title::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--ed-lima);
+}
+
+/* Craft: hoja de papel con cinta, un poco girada. */
+:global(html[data-pops-editor='craft']) .panel {
+    position: relative;
+    transform: rotate(0.5deg);
+    overflow: visible;
+}
+
+:global(html[data-pops-editor='craft']) .panel::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 100px;
+    height: 24px;
+    margin-left: -50px;
+    background: var(--ed-cinta);
+    transform: rotate(2deg);
+    pointer-events: none;
+}
+
+:global(html[data-pops-editor]) .seccion {
+    font-family: var(--ed-etiqueta-fuente);
+    font-size: var(--ed-etiqueta-tam);
+    font-weight: var(--ed-etiqueta-peso);
+    letter-spacing: var(--ed-etiqueta-track);
+    text-transform: var(--ed-etiqueta-mayus);
+    color: var(--ed-etiqueta-ink);
+}
+
+:global(html[data-pops-editor]) .seccion:not(:first-child) {
+    border-top: 1px var(--ed-line-estilo) var(--ed-line);
+}
+
+:global(html[data-pops-editor='craft']) .seccion:not(:first-child) {
+    border-top-width: 1.5px;
+}
+
+:global(html[data-pops-editor]) .seccionHint {
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ed-ink-3);
+}
+
+:global(html[data-pops-editor]) .row {
+    color: var(--ed-ink);
+    font-family: var(--ed-fila-fuente);
+    text-transform: var(--ed-fila-mayus);
+}
+
+:global(html[data-pops-editor]) .panelSecciones .child,
+:global(html[data-pops-editor]) .panelSecciones .groupHead {
+    font-size: var(--ed-fila-tam);
+}
+
+:global(html[data-pops-editor]) .panelSecciones .groupHead {
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor='pop']) .panelSecciones .groupHead,
+:global(html[data-pops-editor='business']) .panelSecciones .groupHead {
+    font-weight: 700;
+}
+
+:global(html[data-pops-editor]) .row:hover {
+    background: var(--ed-hover);
+}
+
+:global(html[data-pops-editor]) .row[data-selected] {
+    background: var(--ed-fila-sel-bg);
+    color: var(--ed-fila-sel-ink);
+}
+
+:global(html[data-pops-editor]) .panelSecciones .thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ed-radio-caja);
+    background: var(--ed-icono-caja);
+    color: var(--ed-icono-ink);
+}
+
+/* Las miniaturas con imagen (fondo, PNG, dibujos) no llevan caja de color. */
+:global(html[data-pops-editor]) .panelSecciones .thumb:has(img) {
+    background: transparent;
+}
+
+:global(html[data-pops-editor]) .panelSecciones .eye {
+    color: var(--ed-ink-3);
+}
+
+:global(html[data-pops-editor]) .panelSecciones .eye:hover {
+    background: var(--ed-hover);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .caret {
+    color: var(--ed-ink-2);
+}
+
+/* "+ Agregar": acción secundaria del estilo. */
+:global(html[data-pops-editor]) .action {
+    border: var(--ed-secundario-borde);
+    border-radius: var(--ed-radio-ctl);
+    background: transparent;
+    color: var(--ed-ink);
+    font-family: 'Poppins', sans-serif;
+    text-transform: none;
+}
+
+:global(html[data-pops-editor='business']) .action {
+    color: var(--ed-azul);
+}
+
+:global(html[data-pops-editor]) .action:hover {
+    background: var(--ed-hover);
+}
+
+:global(html[data-pops-editor]) .groupHead[data-drop] {
+    background: var(--ed-fila-sel-bg);
+    color: var(--ed-fila-sel-ink);
+}

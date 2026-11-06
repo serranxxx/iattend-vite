@@ -657,3 +657,697 @@
         padding: 0 18px;
     }
 }
+
+/* ══ Editor de Pops en su estilo (handoff "Editor de Pops — 3 estilos", §8
+   Modal "Nuevo invitado"). html[data-pops-editor] lo pone SideEvents.jsx
+   solo al editar un Pop en escritorio; tokens en
+   modules/SideEvents/popsEditorTema.css. Misma estructura; cambian
+   superficie, campos, selecciones y CTA. La caja del Drawer la escribe antd
+   en línea (styles.wrapper): por eso los !important. ══ */
+:global(html[data-pops-editor]) .raiz :global(.ant-drawer-content-wrapper) {
+    border-radius: var(--ed-radio-panel) !important;
+}
+
+:global(html[data-pops-editor]) .raiz :global(.ant-drawer-section),
+:global(html[data-pops-editor]) .raiz :global(.ant-drawer-content) {
+    border-radius: var(--ed-radio-panel) !important;
+}
+
+:global(html[data-pops-editor]) .raiz input::placeholder,
+:global(html[data-pops-editor]) .raiz textarea::placeholder {
+    color: var(--ed-ink-3);
+}
+
+:global(html[data-pops-editor]) .raiz {
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .titulo {
+    font-family: var(--ed-font-titulo);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+:global(html[data-pops-editor]) .subtitulo,
+:global(html[data-pops-editor]) .estadoHerencia {
+    color: var(--ed-ink-3);
+}
+
+:global(html[data-pops-editor]) .etiqueta,
+:global(html[data-pops-editor]) .etiquetaChica {
+    font-family: var(--ed-etiqueta-fuente);
+    font-size: var(--ed-etiqueta-tam);
+    font-weight: var(--ed-etiqueta-peso);
+    letter-spacing: var(--ed-etiqueta-track);
+    text-transform: var(--ed-etiqueta-mayus);
+    color: var(--ed-etiqueta-ink);
+}
+
+:global(html[data-pops-editor]) .nombre,
+:global(html[data-pops-editor]) .telefono > input,
+:global(html[data-pops-editor]) .inputChico,
+:global(html[data-pops-editor]) .nota,
+:global(html[data-pops-editor]) .notaChica {
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .divisor {
+    background: var(--ed-line);
+}
+
+:global(html[data-pops-editor]) .pie {
+    border-top-color: var(--ed-line);
+}
+
+/* Selecciones de una opción (prioridad, categoría, etiqueta, lado…). */
+:global(html[data-pops-editor]) .chip[data-on],
+:global(html[data-pops-editor]) .chipChico[data-on],
+:global(html[data-pops-editor]) .chipResumen[data-propio] {
+    border-color: var(--ed-activo-bg);
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+}
+
+:global(html[data-pops-editor]) .segmento[data-on] {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    box-shadow: none;
+}
+
+:global(html[data-pops-editor]) .primario {
+    background: var(--ed-primario-bg);
+    color: var(--ed-primario-ink);
+}
+
+/* ── Pop: píldoras, negro + rosa + lima ── */
+:global(html[data-pops-editor='pop']) .raiz :global(.ant-drawer-mask) {
+    background: rgba(14, 14, 16, 0.55);
+}
+
+:global(html[data-pops-editor='pop']) .raiz :global(.ant-drawer-content-wrapper) {
+    border-radius: 30px !important;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35) !important;
+}
+
+:global(html[data-pops-editor='pop']) .raiz :global(.ant-drawer-section),
+:global(html[data-pops-editor='pop']) .raiz :global(.ant-drawer-content) {
+    border-radius: 30px !important;
+}
+
+:global(html[data-pops-editor='pop']) .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--ed-rosa);
+    color: #111111;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+:global(html[data-pops-editor='pop']) .titulo {
+    font-size: 24px;
+}
+
+:global(html[data-pops-editor='pop']) .nombre {
+    background: #F2F0EE;
+}
+
+:global(html[data-pops-editor='pop']) .nombre:focus-visible {
+    box-shadow: 0 0 0 2px #111111;
+}
+
+:global(html[data-pops-editor='pop']) .telefono,
+:global(html[data-pops-editor='pop']) .inputChico,
+:global(html[data-pops-editor='pop']) .nota,
+:global(html[data-pops-editor='pop']) .notaChica {
+    border: 1.5px solid #E7E3E0;
+}
+
+:global(html[data-pops-editor='pop']) .telefono:focus-within,
+:global(html[data-pops-editor='pop']) .inputChico:focus,
+:global(html[data-pops-editor='pop']) .nota:focus,
+:global(html[data-pops-editor='pop']) .notaChica:focus {
+    border-color: #111111;
+}
+
+:global(html[data-pops-editor='pop']) .segmentado {
+    height: 48px;
+    border-radius: 24px;
+    background: #F2F0EE;
+}
+
+:global(html[data-pops-editor='pop']) .calcular {
+    color: #111111;
+}
+
+:global(html[data-pops-editor='pop']) .estrella {
+    box-sizing: content-box;
+    padding: 4px;
+    border-radius: 50%;
+    background: var(--ed-lima);
+    color: #111111;
+    fill: #111111;
+}
+
+:global(html[data-pops-editor='pop']) .chip,
+:global(html[data-pops-editor='pop']) .chipChico {
+    border: 1.5px solid #E7E3E0;
+}
+
+:global(html[data-pops-editor='pop']) .chip {
+    height: 42px;
+    border-radius: 21px;
+}
+
+:global(html[data-pops-editor='pop']) .chip:hover,
+:global(html[data-pops-editor='pop']) .chipChico:hover {
+    border-color: #111111;
+}
+
+/* Acompañantes. con resaltado lima. */
+:global(html[data-pops-editor='pop']) .tituloSeccion {
+    align-self: flex-start;
+    padding: 0 6px;
+    background: var(--ed-lima);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+:global(html[data-pops-editor='pop']) .tituloSeccion::after {
+    content: '.';
+}
+
+:global(html[data-pops-editor='pop']) .stepper {
+    background: #F2F0EE;
+}
+
+:global(html[data-pops-editor='pop']) .stepper span {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+:global(html[data-pops-editor='pop']) .stepper button:last-child {
+    background: var(--ed-lima);
+}
+
+:global(html[data-pops-editor='pop']) .numero {
+    background: var(--ed-rosa);
+    color: #111111;
+    font-weight: 800;
+}
+
+:global(html[data-pops-editor='pop']) .primario {
+    height: 52px;
+    padding: 0 8px 0 24px;
+    border-radius: 26px;
+    flex-direction: row-reverse;
+    font-weight: 800;
+}
+
+/* El "+" va en un círculo lima a la derecha del texto. */
+:global(html[data-pops-editor='pop']) .primario > svg {
+    box-sizing: content-box;
+    padding: 10px;
+    border-radius: 50%;
+    background: var(--ed-lima);
+    color: #111111;
+}
+
+:global(html[data-pops-editor='pop']) .acompanante[data-abierto] {
+    background: #F7F6F4;
+}
+
+/* ── Business: formulario con etiquetas, azul ── */
+:global(html[data-pops-editor='business']) .raiz :global(.ant-drawer-mask) {
+    background: rgba(11, 31, 58, 0.5);
+}
+
+:global(html[data-pops-editor='business']) .raiz :global(.ant-drawer-content-wrapper) {
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(11, 31, 58, 0.25) !important;
+}
+
+:global(html[data-pops-editor='business']) .cabeza {
+    border-bottom: 1px solid #E3E7F2;
+    padding-bottom: 16px;
+}
+
+:global(html[data-pops-editor='business']) .cuerpo {
+    padding-top: 18px;
+}
+
+:global(html[data-pops-editor='business']) .avatar {
+    border-radius: 10px;
+    background: #EEF2FF;
+    color: var(--ed-azul);
+    font-weight: 800;
+}
+
+:global(html[data-pops-editor='business']) .titulo {
+    font-weight: 900;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+/* "NUEVO INVITADO" va como etiqueta arriba del nombre. */
+:global(html[data-pops-editor='business']) .cabeza .cabezaTextos {
+    flex-direction: column-reverse;
+}
+
+:global(html[data-pops-editor='business']) .cabeza .subtitulo {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5B6B85;
+}
+
+:global(html[data-pops-editor='business']) .nombre,
+:global(html[data-pops-editor='business']) .telefono,
+:global(html[data-pops-editor='business']) .inputChico,
+:global(html[data-pops-editor='business']) .nota,
+:global(html[data-pops-editor='business']) .notaChica {
+    height: 44px;
+    border: 1px solid #E3E7F2;
+    border-radius: 10px;
+    background: #FFFFFF;
+}
+
+:global(html[data-pops-editor='business']) .nota,
+:global(html[data-pops-editor='business']) .notaChica {
+    height: auto;
+    min-height: 64px;
+}
+
+:global(html[data-pops-editor='business']) .nombre:focus-visible,
+:global(html[data-pops-editor='business']) .telefono:focus-within,
+:global(html[data-pops-editor='business']) .inputChico:focus,
+:global(html[data-pops-editor='business']) .nota:focus,
+:global(html[data-pops-editor='business']) .notaChica:focus {
+    border-color: var(--ed-azul);
+    box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+:global(html[data-pops-editor='business']) .lada {
+    border-right-color: #E3E7F2;
+    background: #F6F8FB;
+}
+
+:global(html[data-pops-editor='business']) .segmentado {
+    height: 44px;
+    border-radius: 10px;
+    background: #F6F8FB;
+}
+
+:global(html[data-pops-editor='business']) .segmento {
+    border-radius: 8px;
+}
+
+:global(html[data-pops-editor='business']) .calcular {
+    border-radius: 8px;
+    color: var(--ed-azul);
+}
+
+:global(html[data-pops-editor='business']) .estrella {
+    color: var(--ed-azul);
+    fill: var(--ed-azul);
+}
+
+:global(html[data-pops-editor='business']) .chip,
+:global(html[data-pops-editor='business']) .chipChico,
+:global(html[data-pops-editor='business']) .chipMas {
+    border-color: #E3E7F2;
+    border-radius: 8px;
+}
+
+:global(html[data-pops-editor='business']) .chip {
+    height: 40px;
+}
+
+:global(html[data-pops-editor='business']) .chip[data-on],
+:global(html[data-pops-editor='business']) .chipChico[data-on] {
+    border-color: var(--ed-azul);
+    background: var(--ed-azul);
+}
+
+:global(html[data-pops-editor='business']) .agregarNota {
+    color: var(--ed-azul);
+    font-weight: 600;
+}
+
+/* Acompañantes en una tarjeta con borde y cabecera gris con cuadro lima. */
+:global(html[data-pops-editor='business']) .seccionAcompanantes {
+    gap: 0;
+    border: 1px solid #E3E7F2;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+:global(html[data-pops-editor='business']) .cabezaAcompanantes {
+    padding: 10px 14px;
+    background: #F6F8FB;
+}
+
+:global(html[data-pops-editor='business']) .seccionAcompanantes > :not(.cabezaAcompanantes) {
+    margin: 4px 10px;
+}
+
+:global(html[data-pops-editor='business']) .tituloSeccion {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='business']) .tituloSeccion::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--ed-lima);
+}
+
+:global(html[data-pops-editor='business']) .stepper {
+    height: 38px;
+    padding: 0;
+    gap: 0;
+    border: 1px solid #E3E7F2;
+    border-radius: 9px;
+    background: #FFFFFF;
+    overflow: hidden;
+}
+
+:global(html[data-pops-editor='business']) .stepper button {
+    height: 36px;
+    border-radius: 0;
+}
+
+:global(html[data-pops-editor='business']) .stepper button:last-child {
+    background: var(--ed-azul);
+    color: #FFFFFF;
+}
+
+:global(html[data-pops-editor='business']) .stepper span {
+    height: 36px;
+    line-height: 36px;
+    border-left: 1px solid #E3E7F2;
+    border-right: 1px solid #E3E7F2;
+    font-weight: 800;
+}
+
+:global(html[data-pops-editor='business']) .numero {
+    border-radius: 6px;
+    background: var(--ed-azul);
+    color: #FFFFFF;
+}
+
+:global(html[data-pops-editor='business']) .acompanante {
+    border-radius: 8px;
+}
+
+:global(html[data-pops-editor='business']) .acompanante[data-abierto] {
+    background: #F6F8FB;
+}
+
+:global(html[data-pops-editor='business']) .pie > span {
+    flex: 0 !important;
+}
+
+:global(html[data-pops-editor='business']) .pie {
+    justify-content: flex-end;
+    background: #F6F8FB;
+    border-top-color: #E3E7F2;
+}
+
+:global(html[data-pops-editor='business']) .cancelar {
+    height: 44px;
+    border: 1px solid #E3E7F2;
+    border-radius: 10px;
+    background: #FFFFFF;
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor='business']) .primario {
+    height: 44px;
+    border-radius: 10px;
+}
+
+:global(html[data-pops-editor='business']) .primario > svg {
+    color: var(--ed-lima);
+}
+
+/* ── Craft: ficha de papel sobre el tapete ── */
+:global(html[data-pops-editor='craft']) .raiz :global(.ant-drawer-mask) {
+    background: rgba(0, 0, 0, 0.28);
+}
+
+:global(html[data-pops-editor='craft']) .raiz :global(.ant-drawer-content-wrapper) {
+    border-radius: 0 !important;
+    overflow: visible !important;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06), 0 14px 30px rgba(0, 0, 0, 0.3) !important;
+    transform: rotate(-0.5deg);
+}
+
+:global(html[data-pops-editor='craft']) .raiz :global(.ant-drawer-section),
+:global(html[data-pops-editor='craft']) .raiz :global(.ant-drawer-content) {
+    border-radius: 0 !important;
+    background: #F3F2EE;
+}
+
+/* Cinta arriba de la ficha. */
+:global(html[data-pops-editor='craft']) .raiz :global(.ant-drawer-content-wrapper)::before {
+    content: '';
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    z-index: 2;
+    width: 120px;
+    height: 26px;
+    margin-left: -60px;
+    background: var(--ed-cinta);
+    transform: rotate(-2deg);
+    pointer-events: none;
+}
+
+:global(html[data-pops-editor='craft']) .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 0;
+    background: var(--ed-amarillo);
+    color: var(--ed-ink);
+    font-weight: 900;
+    transform: rotate(-4deg);
+}
+
+:global(html[data-pops-editor='craft']) .titulo {
+    font-size: 25px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+:global(html[data-pops-editor='craft']) .subtitulo {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .nombre,
+:global(html[data-pops-editor='craft']) .telefono,
+:global(html[data-pops-editor='craft']) .inputChico,
+:global(html[data-pops-editor='craft']) .nota,
+:global(html[data-pops-editor='craft']) .notaChica {
+    height: 48px;
+    border: none;
+    border-radius: 0;
+    background: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+:global(html[data-pops-editor='craft']) .inputChico {
+    height: 44px;
+}
+
+:global(html[data-pops-editor='craft']) .nota,
+:global(html[data-pops-editor='craft']) .notaChica {
+    height: auto;
+    min-height: 64px;
+}
+
+:global(html[data-pops-editor='craft']) .nombre:focus-visible,
+:global(html[data-pops-editor='craft']) .telefono:focus-within,
+:global(html[data-pops-editor='craft']) .inputChico:focus,
+:global(html[data-pops-editor='craft']) .nota:focus,
+:global(html[data-pops-editor='craft']) .notaChica:focus {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 -3px 0 var(--ed-amarillo);
+}
+
+:global(html[data-pops-editor='craft']) .lada {
+    border-right: 1.5px dashed #CFCEC8;
+}
+
+/* Prioridad: casillas; la elegida es una etiqueta amarilla girada. */
+:global(html[data-pops-editor='craft']) .segmentado {
+    height: 48px;
+    gap: 8px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .segmento {
+    border: 1.5px dashed #A5A49E;
+    border-radius: 0;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+}
+
+:global(html[data-pops-editor='craft']) .segmento[data-on] {
+    border-color: transparent;
+    font-weight: 400;
+    transform: rotate(-2deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-pops-editor='craft']) .calcular {
+    border-radius: 0;
+    color: var(--ed-verde);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .estrella {
+    color: var(--ed-verde);
+    fill: var(--ed-verde);
+}
+
+:global(html[data-pops-editor='craft']) .chip,
+:global(html[data-pops-editor='craft']) .chipChico,
+:global(html[data-pops-editor='craft']) .chipMas,
+:global(html[data-pops-editor='craft']) .chipResumen {
+    border-radius: 0;
+    font-family: 'Patrick Hand', cursive;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .chip,
+:global(html[data-pops-editor='craft']) .chipChico {
+    border-color: transparent;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    font-size: 16px;
+}
+
+:global(html[data-pops-editor='craft']) .chip[data-on],
+:global(html[data-pops-editor='craft']) .chipChico[data-on] {
+    border-color: #1D1D1B;
+    background: #1D1D1B;
+    color: #FFFFFF;
+    transform: rotate(-1.5deg);
+}
+
+:global(html[data-pops-editor='craft']) .agregarNota,
+:global(html[data-pops-editor='craft']) .enlace {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .tituloSeccion {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+:global(html[data-pops-editor='craft']) .stepper {
+    height: auto;
+    gap: 8px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .stepper button {
+    width: 34px;
+    height: 34px;
+    border-radius: 0;
+}
+
+:global(html[data-pops-editor='craft']) .stepper button:first-child {
+    border: 1.5px dashed #8A8A85;
+    background: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .stepper button:last-child {
+    background: var(--ed-verde);
+    color: #FFFFFF;
+    box-shadow: 0 3px 0 var(--ed-verde-sombra);
+}
+
+:global(html[data-pops-editor='craft']) .stepper span {
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 22px;
+    font-weight: 400;
+}
+
+:global(html[data-pops-editor='craft']) .numero {
+    border-radius: 0;
+    background: var(--ed-amarillo);
+    color: var(--ed-ink);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    transform: rotate(-3deg);
+}
+
+:global(html[data-pops-editor='craft']) .acompanante {
+    border-radius: 0;
+}
+
+:global(html[data-pops-editor='craft']) .acompanante[data-abierto] {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+:global(html[data-pops-editor='craft']) .divisor {
+    height: 0;
+    background: none;
+    border-top: 1.5px dashed #CFCEC8;
+}
+
+:global(html[data-pops-editor='craft']) .pie {
+    border-top: 1.5px dashed #CFCEC8;
+}
+
+:global(html[data-pops-editor='craft']) .cancelar {
+    border-radius: 0;
+    color: var(--ed-ink);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .cancelar:hover {
+    background: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .primario {
+    border-radius: 0;
+    box-shadow: 0 3px 0 var(--ed-verde-sombra);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}

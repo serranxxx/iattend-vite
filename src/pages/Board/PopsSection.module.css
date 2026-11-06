@@ -685,7 +685,7 @@
     position: absolute;
     right: 4px;
     top: calc(56px + env(safe-area-inset-top));
-    width: 150px;
+    width: 190px;
     height: 150px;
 }
 

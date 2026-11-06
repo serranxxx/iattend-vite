@@ -516,3 +516,27 @@
     height: 22px;
     border-radius: 6px;
 }
+
+/* ══ Editor de Pops en su estilo (html[data-pops-editor], SideEvents/popsEditorTema.css) ══
+   Etiquetas y notas de todos los paneles del editor de un Pop. */
+:global(html[data-pops-editor]) .groupLabel {
+    font-family: var(--ed-etiqueta-fuente);
+    font-size: var(--ed-etiqueta-tam);
+    font-weight: var(--ed-etiqueta-peso);
+    letter-spacing: var(--ed-etiqueta-track);
+    text-transform: var(--ed-etiqueta-mayus);
+    color: var(--ed-etiqueta-ink);
+}
+
+/* Pop: la etiqueta es un subtítulo negro, sin mayúsculas. */
+:global(html[data-pops-editor='pop']) .groupLabel {
+    font-size: 13.5px;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .hint {
+    font-size: 12px;
+    color: var(--ed-ink-2);
+}

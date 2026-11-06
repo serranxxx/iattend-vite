@@ -1,0 +1,1012 @@
+/*
+    Editor de Pops en el estilo elegido (handoff "Editor de Pops — 3 estilos").
+    El estilo es el mismo de la sección Pops de /invitations (localStorage
+    `pops_theme`, usePopsTema): SideEvents.jsx pone `data-pops-editor` en
+    <html> mientras se edita un Pop en escritorio (en <html> y no en la página
+    para que también lo lean los popovers que antd manda a <body>).
+
+    Aquí solo van los tokens --ed-*; cada módulo del editor los usa con
+    `:global(html[data-pops-editor]) .clase { … }`. Solo cambia el cromo
+    (barra, riel, paneles, Capas, dock): la pieza del usuario nunca se tiñe.
+    El dock siempre es blanco.
+*/
+
+html[data-pops-editor] {
+    --ed-font-titulo: 'Poppins', sans-serif;
+    --ed-dock-bg: #FFFFFF;
+}
+
+/* ── Pop: negro + rosa, juguetón ── */
+html[data-pops-editor='pop'] {
+    --ed-tablero: radial-gradient(#DEDBD8 1.2px, transparent 1.2px) 0 0 / 18px 18px, #FFFFFF;
+    --ed-barra-bg: #FFFFFF;
+    --ed-barra-borde: 1px solid #EEEBE8;
+    --ed-barra-sombra: none;
+    --ed-surface: #FFFFFF;
+    --ed-surface-soft: #F2F0EE;
+    --ed-hover: #F5F3F2;
+    --ed-line: #EEEBE8;
+    --ed-line-estilo: solid;
+    --ed-ink: #111111;
+    --ed-ink-2: #6E6965;
+    --ed-ink-3: #8A8582;
+    --ed-rosa: #FF5FA8;
+    --ed-lima: #C8F560;
+
+    --ed-radio-ctl: 99px;
+    --ed-radio-panel: 22px;
+    --ed-radio-caja: 9px;
+    --ed-panel-borde: none;
+    --ed-panel-sombra: 0 10px 30px rgba(0, 0, 0, 0.1);
+
+    --ed-rail-bg: #FFFFFF;
+    --ed-rail-borde: 1px solid #EEEBE8;
+    --ed-rail-ink: #5A5551;
+    --ed-rail-hover: #F5F3F2;
+    --ed-rail-ink-hover: #111111;
+    --ed-rail-on-bg: #111111;
+    --ed-rail-on-ink: #C8F560;
+    --ed-rail-radio: 14px;
+
+    --ed-activo-bg: #111111;
+    --ed-activo-ink: #FFFFFF;
+    --ed-hacer-bg: #C8F560;
+    --ed-hacer-ink: #111111;
+    --ed-primario-bg: #111111;
+    --ed-primario-ink: #FFFFFF;
+    --ed-secundario-borde: 1.5px solid #111111;
+
+    --ed-titulo-tam: 22px;
+    --ed-titulo-peso: 800;
+    --ed-titulo-track: -0.04em;
+    --ed-titulo-mayus: none;
+
+    --ed-etiqueta-fuente: 'Poppins', sans-serif;
+    --ed-etiqueta-tam: 11px;
+    --ed-etiqueta-peso: 800;
+    --ed-etiqueta-track: 0.12em;
+    --ed-etiqueta-mayus: uppercase;
+    --ed-etiqueta-ink: #8A8582;
+
+    --ed-fila-fuente: 'Poppins', sans-serif;
+    --ed-fila-tam: 13.5px;
+    --ed-fila-mayus: none;
+    --ed-icono-caja: #F2F0EE;
+    --ed-icono-ink: #111111;
+    --ed-fila-sel-bg: #F2F0EE;
+    --ed-fila-sel-ink: #111111;
+
+    --ed-tile-borde: 1.5px solid #EEEBE8;
+    --ed-tile-on: 0 0 0 2px #111111;
+    --ed-tile-radio: 16px;
+}
+
+/* ── Business: navy + azul + lima, ejecutivo ── */
+html[data-pops-editor='business'] {
+    --ed-tablero:
+        linear-gradient(#E3E7F2 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(90deg, #E3E7F2 1px, transparent 1px) 0 0 / 32px 32px,
+        #F6F8FB;
+    --ed-barra-bg: #FFFFFF;
+    --ed-barra-borde: 1px solid #E3E7F2;
+    --ed-barra-sombra: none;
+    --ed-surface: #FFFFFF;
+    --ed-surface-soft: #F6F8FB;
+    --ed-hover: #F6F8FB;
+    --ed-line: #E3E7F2;
+    --ed-line-estilo: solid;
+    --ed-ink: #0B1F3A;
+    --ed-ink-2: #5B6B85;
+    --ed-ink-3: #9FB0D0;
+    --ed-azul: #1E45FB;
+    --ed-lima: #CDF22B;
+
+    --ed-radio-ctl: 10px;
+    --ed-radio-panel: 14px;
+    --ed-radio-caja: 7px;
+    --ed-panel-borde: 1px solid #E3E7F2;
+    --ed-panel-sombra: 0 10px 30px rgba(11, 31, 58, 0.08);
+
+    --ed-rail-bg: #0B1F3A;
+    --ed-rail-borde: none;
+    --ed-rail-ink: #9FB0D0;
+    --ed-rail-hover: rgba(255, 255, 255, 0.08);
+    --ed-rail-ink-hover: #FFFFFF;
+    --ed-rail-on-bg: #1E45FB;
+    --ed-rail-on-ink: #FFFFFF;
+    --ed-rail-radio: 10px;
+
+    --ed-activo-bg: #0B1F3A;
+    --ed-activo-ink: #FFFFFF;
+    --ed-hacer-bg: #CDF22B;
+    --ed-hacer-ink: #0B1F3A;
+    --ed-primario-bg: #1E45FB;
+    --ed-primario-ink: #FFFFFF;
+    --ed-secundario-borde: 1px solid #E3E7F2;
+
+    --ed-titulo-tam: 18px;
+    --ed-titulo-peso: 900;
+    --ed-titulo-track: 0.01em;
+    --ed-titulo-mayus: uppercase;
+
+    --ed-etiqueta-fuente: 'Poppins', sans-serif;
+    --ed-etiqueta-tam: 11px;
+    --ed-etiqueta-peso: 700;
+    --ed-etiqueta-track: 0.12em;
+    --ed-etiqueta-mayus: uppercase;
+    --ed-etiqueta-ink: #5B6B85;
+
+    --ed-fila-fuente: 'Poppins', sans-serif;
+    --ed-fila-tam: 13.5px;
+    --ed-fila-mayus: none;
+    --ed-icono-caja: #EEF2FF;
+    --ed-icono-ink: #1E45FB;
+    --ed-fila-sel-bg: #EEF2FF;
+    --ed-fila-sel-ink: #1E45FB;
+
+    --ed-tile-borde: 1px solid #E3E7F2;
+    --ed-tile-on: 0 0 0 2px #1E45FB;
+    --ed-tile-radio: 10px;
+}
+
+/* ── Craft: tapete de corte, hecho a mano ── */
+html[data-pops-editor='craft'] {
+    --ed-tablero:
+        linear-gradient(rgba(255, 255, 255, 0.55) 2px, transparent 2px) 0 0 / 180px 180px,
+        linear-gradient(90deg, rgba(255, 255, 255, 0.55) 2px, transparent 2px) 0 0 / 180px 180px,
+        linear-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px) 0 0 / 36px 36px,
+        linear-gradient(90deg, rgba(255, 255, 255, 0.22) 1px, transparent 1px) 0 0 / 36px 36px,
+        #1E6B60;
+    --ed-barra-bg: #F3F2EE;
+    --ed-barra-borde: none;
+    --ed-barra-sombra: 0 2px 0 rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.22);
+    --ed-surface: #F3F2EE;
+    --ed-surface-soft: #FFFFFF;
+    --ed-hover: rgba(0, 0, 0, 0.04);
+    --ed-line: #CFCEC8;
+    --ed-line-estilo: dashed;
+    --ed-ink: #1D1D1B;
+    --ed-ink-2: #6B6A65;
+    --ed-ink-3: #8A8A85;
+    --ed-verde: #1E6B60;
+    --ed-verde-sombra: #134A42;
+    --ed-amarillo: #F2D21B;
+    --ed-cinta: rgba(238, 232, 212, 0.85);
+    --ed-papel-sombra: 0 2px 0 rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.22);
+
+    --ed-radio-ctl: 0;
+    --ed-radio-panel: 0;
+    --ed-radio-caja: 0;
+    --ed-panel-borde: none;
+    --ed-panel-sombra: 0 2px 0 rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.22);
+
+    --ed-rail-bg: transparent;
+    --ed-rail-borde: none;
+    --ed-rail-ink: #FFFFFF;
+    --ed-rail-hover: rgba(255, 255, 255, 0.14);
+    --ed-rail-ink-hover: #FFFFFF;
+    --ed-rail-on-bg: #F3F2EE;
+    --ed-rail-on-ink: #1E6B60;
+    --ed-rail-radio: 0;
+
+    --ed-activo-bg: #F2D21B;
+    --ed-activo-ink: #1D1D1B;
+    --ed-hacer-bg: #F2D21B;
+    --ed-hacer-ink: #1D1D1B;
+    --ed-primario-bg: #1E6B60;
+    --ed-primario-ink: #FFFFFF;
+    --ed-secundario-borde: 1.5px dashed #1D1D1B;
+
+    --ed-titulo-tam: 22px;
+    --ed-titulo-peso: 900;
+    --ed-titulo-track: -0.05em;
+    --ed-titulo-mayus: none;
+
+    --ed-etiqueta-fuente: 'Patrick Hand', cursive;
+    --ed-etiqueta-tam: 15px;
+    --ed-etiqueta-peso: 400;
+    --ed-etiqueta-track: 0.08em;
+    --ed-etiqueta-mayus: uppercase;
+    --ed-etiqueta-ink: #6B6A65;
+
+    --ed-fila-fuente: 'Patrick Hand', cursive;
+    --ed-fila-tam: 16px;
+    --ed-fila-mayus: uppercase;
+    --ed-icono-caja: transparent;
+    --ed-icono-ink: #1E6B60;
+    --ed-fila-sel-bg: rgba(242, 210, 27, 0.55);
+    --ed-fila-sel-ink: #1D1D1B;
+
+    --ed-tile-borde: none;
+    --ed-tile-on: 0 0 0 3px #F2D21B;
+    --ed-tile-radio: 0;
+}
+
+/* ══ Pestaña Invitados del editor de Pops (clases globales gx-* de
+   GuestManagement/guests-redesign.css) ══
+   Misma estructura en los tres; cambian superficies, acentos, radios y
+   etiquetas. Las vistas Pasos y Compacta comparten encabezado y barra. */
+html[data-pops-editor] .gx {
+    --gx-ink: var(--ed-ink);
+    --gx-border: var(--ed-line);
+    --gx-border-soft: var(--ed-line);
+    --gx-muted: var(--ed-ink-2);
+    --gx-muted-2: var(--ed-ink-2);
+    --gx-sand: var(--ed-ink-3);
+    --gx-beige: var(--ed-hover);
+    --gx-chip: var(--ed-surface-soft);
+}
+
+html[data-pops-editor] .gx-compact-head-title {
+    font-family: var(--ed-font-titulo);
+    font-size: var(--ed-titulo-tam);
+    font-weight: var(--ed-titulo-peso);
+    letter-spacing: var(--ed-titulo-track);
+    text-transform: var(--ed-titulo-mayus);
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='pop'] .gx-compact-head-title {
+    align-self: flex-start;
+    padding: 0 7px;
+    background: var(--ed-rosa);
+}
+
+html[data-pops-editor='pop'] .gx-compact-head-title::after {
+    content: '.';
+}
+
+html[data-pops-editor] .gx-compact-head-hint {
+    color: var(--ed-ink-2);
+}
+
+/* Herramientas (Descargables, Filtros, recargar) = acción secundaria;
+   Agregar = primaria. */
+html[data-pops-editor] .gx-tool,
+html[data-pops-editor] .gx-sort-chip,
+html[data-pops-editor] .gx-chev,
+html[data-pops-editor] .gx-icon-btn,
+html[data-pops-editor] .gx-pill {
+    border: var(--ed-secundario-borde);
+    border-radius: var(--ed-radio-ctl);
+    background: transparent;
+    color: var(--ed-ink);
+    font-family: 'Poppins', sans-serif;
+}
+
+html[data-pops-editor] .gx-tool:hover,
+html[data-pops-editor] .gx-sort-chip:hover,
+html[data-pops-editor] .gx-chev:hover,
+html[data-pops-editor] .gx-icon-btn:hover,
+html[data-pops-editor] .gx-pill:hover {
+    background: var(--ed-hover);
+    border-color: var(--ed-ink);
+}
+
+html[data-pops-editor='business'] .gx-tool:hover,
+html[data-pops-editor='business'] .gx-sort-chip:hover,
+html[data-pops-editor='business'] .gx-chev:hover,
+html[data-pops-editor='business'] .gx-icon-btn:hover,
+html[data-pops-editor='business'] .gx-pill:hover {
+    border-color: var(--ed-azul);
+}
+
+html[data-pops-editor] .gx-tool[data-active='true'],
+html[data-pops-editor] .gx-sort-chip[data-active='true'] {
+    border-color: transparent;
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+}
+
+html[data-pops-editor] .gx-tool--primary,
+html[data-pops-editor] .gx-tool--primary:hover {
+    border: none;
+    background: var(--ed-primario-bg);
+    color: var(--ed-primario-ink);
+    font-weight: 700;
+}
+
+html[data-pops-editor='craft'] .gx-tool--primary {
+    box-shadow: 0 3px 0 var(--ed-verde-sombra);
+}
+
+/* Vista Pasos / Compacta (íconos). */
+html[data-pops-editor] .gx-view-toggle {
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-surface-soft);
+}
+
+html[data-pops-editor] .gx-view-toggle button {
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink-2);
+}
+
+html[data-pops-editor] .gx-view-toggle button[data-active='true'] {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    box-shadow: none;
+}
+
+/* Escalera de pasos. */
+html[data-pops-editor] .gx-steps {
+    border: var(--ed-panel-borde);
+    border-radius: var(--ed-radio-panel);
+    background: var(--ed-surface-soft);
+}
+
+html[data-pops-editor='business'] .gx-steps {
+    background: #FFFFFF;
+}
+
+html[data-pops-editor] .gx-step {
+    border-radius: calc(var(--ed-radio-panel) - 4px);
+    color: var(--ed-ink-2);
+}
+
+html[data-pops-editor] .gx-step[aria-selected='true'],
+html[data-pops-editor] .gx-step[aria-selected='true']:hover {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+}
+
+html[data-pops-editor='business'] .gx-step[aria-selected='true'],
+html[data-pops-editor='business'] .gx-step[aria-selected='true']:hover {
+    background: var(--ed-azul);
+}
+
+html[data-pops-editor] .gx-step-kicker {
+    font-family: var(--ed-etiqueta-fuente);
+    letter-spacing: var(--ed-etiqueta-track);
+}
+
+/* Buscador. */
+html[data-pops-editor] .gx-search {
+    border: 1.5px solid var(--ed-line);
+    border-radius: var(--ed-radio-ctl);
+    background: #FFFFFF;
+    color: var(--ed-ink-2);
+}
+
+html[data-pops-editor] .gx-search:focus-within {
+    border-color: var(--ed-ink);
+    box-shadow: none;
+}
+
+html[data-pops-editor='business'] .gx-search {
+    border-width: 1px;
+}
+
+html[data-pops-editor='business'] .gx-search:focus-within {
+    border-color: var(--ed-azul);
+    box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+/* Avisos (fecha límite…) y su botón = acción de hacer. */
+html[data-pops-editor] .gx-alert,
+html[data-pops-editor] .gx-hero {
+    border-radius: var(--ed-radio-panel);
+}
+
+html[data-pops-editor] .gx-alert--accent {
+    border: var(--ed-panel-borde);
+    background: var(--ed-surface-soft);
+}
+
+html[data-pops-editor] .gx-alert--accent .gx-alert-badge {
+    border-radius: var(--ed-radio-caja);
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+}
+
+html[data-pops-editor='pop'] .gx-alert--accent .gx-alert-badge {
+    color: var(--ed-lima);
+}
+
+html[data-pops-editor='business'] .gx-alert--accent {
+    border-left: 4px solid var(--ed-lima);
+}
+
+html[data-pops-editor='business'] .gx-alert--accent .gx-alert-badge {
+    background: #EEF2FF;
+    color: var(--ed-azul);
+}
+
+html[data-pops-editor] .gx-alert--accent .gx-alert-title {
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor] .gx-alert--accent .gx-alert-text {
+    color: var(--ed-ink-2);
+}
+
+html[data-pops-editor] .gx-btn--accent,
+html[data-pops-editor] .gx-card .gx-btn--accent,
+html[data-pops-editor] .gx-card .gx-icon-btn--primary {
+    border-color: transparent;
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-hacer-bg);
+    color: var(--ed-hacer-ink);
+    font-weight: 700;
+}
+
+html[data-pops-editor] .gx-card .gx-btn--accent:not([aria-disabled='true']):hover,
+html[data-pops-editor] .gx-card .gx-icon-btn--primary:hover {
+    background: var(--ed-hacer-bg);
+    color: var(--ed-hacer-ink);
+    filter: brightness(0.96);
+}
+
+html[data-pops-editor] .gx-sortbar-label {
+    font-family: var(--ed-etiqueta-fuente);
+    font-size: var(--ed-etiqueta-tam);
+    font-weight: var(--ed-etiqueta-peso);
+    letter-spacing: var(--ed-etiqueta-track);
+    color: var(--ed-etiqueta-ink);
+}
+
+/* Lista de invitados. */
+html[data-pops-editor] .gx-card {
+    border: 1px solid var(--ed-line);
+    border-radius: calc(var(--ed-radio-panel) - 4px);
+}
+
+html[data-pops-editor] .gx-card[data-selected='true'] {
+    border-color: var(--ed-ink);
+    box-shadow: 0 0 0 1px var(--ed-ink);
+}
+
+html[data-pops-editor='business'] .gx-card[data-selected='true'] {
+    border-color: var(--ed-azul);
+    box-shadow: 0 0 0 1px var(--ed-azul);
+}
+
+html[data-pops-editor] .gx-row {
+    min-height: 56px;
+}
+
+html[data-pops-editor] .gx-card:hover {
+    box-shadow: none;
+    background: var(--ed-hover);
+}
+
+html[data-pops-editor] .gx-avatar,
+html[data-pops-editor] .gx-avatar--accent {
+    background: var(--ed-icono-caja);
+    color: var(--ed-icono-ink);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+}
+
+html[data-pops-editor='pop'] .gx-avatar--accent {
+    background: var(--ed-rosa);
+    color: #111111;
+}
+
+html[data-pops-editor='business'] .gx-avatar,
+html[data-pops-editor='business'] .gx-avatar--accent {
+    border-radius: 8px;
+}
+
+html[data-pops-editor] .gx-name {
+    font-family: 'Poppins', sans-serif;
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor] .gx-code:hover {
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor] .gx-companions {
+    border-top: 1px var(--ed-line-estilo) var(--ed-line);
+    background: transparent;
+}
+
+html[data-pops-editor] .gx-companion {
+    border-bottom: 1px var(--ed-line-estilo) var(--ed-line);
+}
+
+html[data-pops-editor] .gx-companion-name {
+    color: var(--ed-ink);
+}
+
+/* Chips de estado: misma forma que los controles del estilo. Pop pinta los
+   tonos con su paleta (confirmó = lima, no = rosa, pendiente = gris). */
+html[data-pops-editor] .gx-status-badge,
+html[data-pops-editor] .gx-chip {
+    border-radius: var(--ed-radio-ctl);
+}
+
+html[data-pops-editor='business'] .gx-status-badge,
+html[data-pops-editor='business'] .gx-chip {
+    border-radius: 6px;
+}
+
+html[data-pops-editor='pop'] .gx-status-badge[data-tone='blue'] {
+    background: var(--ed-lima);
+    color: #111111;
+}
+
+html[data-pops-editor='pop'] .gx-status-badge[data-tone='red'] {
+    background: var(--ed-rosa);
+    color: #111111;
+}
+
+html[data-pops-editor='pop'] .gx-status-badge[data-tone='gray'],
+html[data-pops-editor='pop'] .gx-status-badge[data-tone='yellow'] {
+    background: var(--ed-surface-soft);
+    color: #111111;
+}
+
+html[data-pops-editor] .gx-empty {
+    border: 1.5px dashed var(--ed-line);
+    border-radius: var(--ed-radio-panel);
+    background: transparent;
+    color: var(--ed-ink-2);
+}
+
+/* ── Craft: lista de papel con renglones punteados y etiquetas giradas ── */
+html[data-pops-editor='craft'] .gx-compact-head-title {
+    font-family: var(--ed-font-titulo);
+}
+
+html[data-pops-editor='craft'] .gx-tool,
+html[data-pops-editor='craft'] .gx-sort-chip,
+html[data-pops-editor='craft'] .gx-step-label,
+html[data-pops-editor='craft'] .gx-pill,
+html[data-pops-editor='craft'] .gx-view-toggle button {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+html[data-pops-editor='craft'] .gx-step[aria-selected='true'],
+html[data-pops-editor='craft'] .gx-tool[data-active='true'],
+html[data-pops-editor='craft'] .gx-sort-chip[data-active='true'],
+html[data-pops-editor='craft'] .gx-view-toggle button[data-active='true'] {
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* La escalera es sticky (la lista pasa por debajo al hacer scroll): fondo
+   del papel, nunca transparente. */
+html[data-pops-editor='craft'] .gx-steps {
+    border: none;
+    background: var(--ed-surface);
+}
+
+html[data-pops-editor='craft'] .gx-view-toggle {
+    background: transparent;
+}
+
+html[data-pops-editor='craft'] .gx-search {
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+html[data-pops-editor='craft'] .gx-search:focus-within {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 -3px 0 var(--ed-amarillo);
+}
+
+html[data-pops-editor='craft'] .gx-alert--accent {
+    border: none;
+    background: #FFFFFF;
+    transform: rotate(-0.4deg);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+html[data-pops-editor='craft'] .gx-btn--accent {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    font-weight: 400;
+    text-transform: uppercase;
+    transform: rotate(-1.5deg);
+}
+
+/* Cada invitado es un bloque: ficha blanca recortada sobre el papel, sin
+   redondeo, con sombra de papel y un giro mínimo alternado (al pasar se
+   endereza). Sus acompañantes van dentro, separados con línea punteada. */
+html[data-pops-editor='craft'] .gx-list {
+    gap: 14px;
+}
+
+html[data-pops-editor='craft'] .gx-card {
+    border: none;
+    border-radius: 0;
+    background: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 6px 14px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+html[data-pops-editor='craft'] .gx-card:nth-child(odd) {
+    transform: rotate(-0.25deg);
+}
+
+html[data-pops-editor='craft'] .gx-card:nth-child(even) {
+    transform: rotate(0.25deg);
+}
+
+html[data-pops-editor='craft'] .gx-card:hover {
+    background: #FFFFFF;
+    transform: rotate(0deg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 10px 22px rgba(0, 0, 0, 0.16);
+}
+
+html[data-pops-editor='craft'] .gx-card[data-selected='true'] {
+    box-shadow: 0 0 0 3px var(--ed-amarillo), 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+html[data-pops-editor='craft'] .gx-companions {
+    border-top: 1.5px dashed var(--ed-line);
+    background: #FAF9F6;
+}
+
+html[data-pops-editor='craft'] .gx-companion:last-child {
+    border-bottom: none;
+}
+
+html[data-pops-editor='craft'] .gx-name,
+html[data-pops-editor='craft'] .gx-companion-name {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+html[data-pops-editor='craft'] .gx-avatar,
+html[data-pops-editor='craft'] .gx-avatar--accent {
+    border: 1.5px solid var(--ed-ink);
+    background: transparent;
+    color: var(--ed-ink);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    font-weight: 400;
+}
+
+html[data-pops-editor='craft'] .gx-status-badge {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+html[data-pops-editor='craft'] .gx-status-badge[data-tone='blue'] {
+    background: var(--ed-verde);
+    color: #FFFFFF;
+}
+
+html[data-pops-editor='craft'] .gx-status-badge[data-tone='yellow'] {
+    background: var(--ed-amarillo);
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='craft'] .gx-status-badge[data-tone='gray'] {
+    background: #E4E3DD;
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='craft'] .gx-empty {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* ══ Píldora de créditos (CreditController variante="envios") ══
+   La misma en la barra de arriba y en el encabezado de Invitados: negra
+   (Pop), borde fino (Business), nota adhesiva (Craft). */
+html[data-pops-editor] .envios_pill {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Pop: gris (en la barra y en Invitados), para no competir con los botones
+   negros; conserva el avión rosa y el "+" lima. */
+html[data-pops-editor='pop'] .envios_pill {
+    border-color: var(--ed-surface-soft);
+    background: var(--ed-surface-soft);
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='pop'] .envios_label {
+    color: var(--ed-ink-2);
+}
+
+html[data-pops-editor='pop'] .envios_icon {
+    color: var(--ed-rosa);
+}
+
+html[data-pops-editor='pop'] .envios_mas {
+    background: var(--ed-lima);
+    color: #111111;
+}
+
+html[data-pops-editor='business'] .envios_pill {
+    border-color: var(--ed-line);
+    border-radius: 10px;
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='business'] .envios_icon {
+    color: var(--ed-azul);
+}
+
+html[data-pops-editor='business'] .envios_mas {
+    border-radius: 8px;
+    background: var(--ed-azul);
+    color: #FFFFFF;
+}
+
+/* Craft: ficha blanca recta (en la barra y en Invitados), para no competir
+   con las etiquetas amarillas; el "+" sigue negro con cruz amarilla. */
+html[data-pops-editor='craft'] .envios_pill {
+    border: none;
+    border-radius: 0;
+    background: #FFFFFF;
+    color: var(--ed-ink);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+html[data-pops-editor='craft'] .envios_label {
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='craft'] .envios_icon {
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='craft'] .envios_mas {
+    border-radius: 0;
+    background: var(--ed-ink);
+    color: var(--ed-amarillo);
+}
+
+/* ══ Menú de Agregar invitados (GuestAddTiles, guest-add-tiles.css) ══
+   Va en un dropdown portaleado a <body>: por eso todo cuelga de <html>. */
+html[data-pops-editor] .guest-add-tiles {
+    border: var(--ed-panel-borde);
+    border-radius: var(--ed-radio-panel);
+    background: #FFFFFF;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+    font-family: 'Poppins', sans-serif;
+}
+
+html[data-pops-editor='business'] .guest-add-tiles {
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(11, 31, 58, 0.14);
+}
+
+html[data-pops-editor] .guest-add-tile {
+    border: 1.5px solid var(--ed-line);
+    border-radius: calc(var(--ed-radio-panel) - 6px);
+}
+
+html[data-pops-editor] .guest-add-tile--individual:hover {
+    border-color: var(--ed-ink);
+    background: var(--ed-hover);
+}
+
+html[data-pops-editor='business'] .guest-add-tile--individual:hover {
+    border-color: var(--ed-azul);
+}
+
+html[data-pops-editor] .guest-add-tile-icon {
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-icono-caja);
+    color: var(--ed-icono-ink);
+}
+
+html[data-pops-editor] .guest-add-tile-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor] .guest-add-tile-sub {
+    color: var(--ed-ink-2);
+}
+
+/* Excel con Lia: el acento del estilo (lima en Pop, azul claro en Business,
+   nota amarilla en Craft), con borde punteado de "suelta aquí". */
+html[data-pops-editor] .guest-add-tile--excel {
+    border: 1.5px dashed var(--ed-ink);
+    background: var(--ed-hacer-bg);
+}
+
+html[data-pops-editor] .guest-add-tile--excel:hover,
+html[data-pops-editor] .guest-add-tile--excel.is-dragover {
+    border-style: solid;
+    border-color: var(--ed-ink);
+    background: var(--ed-hacer-bg);
+    box-shadow: none;
+    filter: brightness(0.97);
+}
+
+html[data-pops-editor='business'] .guest-add-tile--excel,
+html[data-pops-editor='business'] .guest-add-tile--excel:hover,
+html[data-pops-editor='business'] .guest-add-tile--excel.is-dragover {
+    border-color: var(--ed-azul);
+    background: #EEF2FF;
+}
+
+html[data-pops-editor] .guest-add-tile--excel .guest-add-tile-icon--excel {
+    background: #FFFFFF;
+    color: var(--ed-ink);
+    box-shadow: none;
+}
+
+html[data-pops-editor='business'] .guest-add-tile--excel .guest-add-tile-icon--excel {
+    color: var(--ed-azul);
+}
+
+html[data-pops-editor] .guest-add-tile--excel .guest-add-tile-title {
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor] .guest-add-tile--excel .guest-add-tile-sub {
+    color: var(--ed-ink-2);
+}
+
+/* Craft: hoja de papel con cinta, fichas blancas sin redondeo y textos a mano. */
+html[data-pops-editor='craft'] .guest-add-tiles {
+    position: relative;
+    background: #F3F2EE;
+    box-shadow: var(--ed-papel-sombra);
+    transform: rotate(-0.5deg);
+}
+
+html[data-pops-editor='craft'] .guest-add-tiles::before {
+    content: '';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    width: 84px;
+    height: 22px;
+    margin-left: -42px;
+    background: var(--ed-cinta);
+    transform: rotate(-2deg);
+    pointer-events: none;
+}
+
+html[data-pops-editor='craft'] .guest-add-tile {
+    border: none;
+    background: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+html[data-pops-editor='craft'] .guest-add-tile--individual:hover {
+    background: #FFFFFF;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+html[data-pops-editor='craft'] .guest-add-tile--excel {
+    border: 1.5px dashed var(--ed-ink);
+    background: var(--ed-amarillo);
+    transform: rotate(0.8deg);
+}
+
+html[data-pops-editor='craft'] .guest-add-tile-icon {
+    border: 1.5px solid var(--ed-ink);
+    background: transparent;
+    color: var(--ed-ink);
+}
+
+html[data-pops-editor='craft'] .guest-add-tile-title {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* ══ Switches / pestañas de los paneles (Frente · Detalles del pase,
+   Segmented de antd, pestañas de formularios…) ══
+   Todos los [role=tablist] y .ant-segmented del editor, igual que las
+   pestañas del color (ColoresIOS). Nunca los de la pieza (data-side-card):
+   eso es contenido del usuario. Los que ya tienen su tema en su módulo
+   (Diseño / Invitados de la barra, pestañas de ColoresIOS) llevan
+   data-tema-propio y se quedan fuera. */
+html[data-pops-editor] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) {
+    padding: 3px;
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-surface-soft);
+}
+
+html[data-pops-editor] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) :is([role='tab'], .ant-segmented-item) {
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink-2);
+    font-family: 'Poppins', sans-serif;
+}
+
+html[data-pops-editor] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) :is([role='tab'][aria-selected='true'], [role='tab'][data-on], .ant-segmented-item-selected, .ant-segmented-thumb) {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    font-weight: 700;
+    box-shadow: none;
+}
+
+/* Business: subrayado azul sobre una línea base. */
+html[data-pops-editor='business'] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 -1px 0 var(--ed-line);
+}
+
+html[data-pops-editor='business'] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) :is([role='tab'], .ant-segmented-item, .ant-segmented-thumb) {
+    border-radius: 0;
+}
+
+html[data-pops-editor='business'] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) :is([role='tab'][aria-selected='true'], [role='tab'][data-on], .ant-segmented-item-selected, .ant-segmented-thumb) {
+    background: transparent;
+    color: var(--ed-azul);
+    box-shadow: inset 0 -2.5px 0 var(--ed-azul);
+}
+
+/* Craft: sin contenedor; la activa es una etiqueta amarilla girada y todo va
+   en Patrick Hand. */
+html[data-pops-editor='craft'] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) {
+    background: transparent;
+}
+
+html[data-pops-editor='craft'] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) :is([role='tab'], .ant-segmented-item) {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+html[data-pops-editor='craft'] :is([role='tablist'], .ant-segmented):not([data-side-card] *, [data-tema-propio]) :is([role='tab'][aria-selected='true'], [role='tab'][data-on], .ant-segmented-item-selected) {
+    font-weight: 400;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Interruptores (antd Switch) de los paneles: encendido con el color activo
+   del estilo (negro, azul, verde). */
+/* !important: styles/create/modules-layout.css fuerza el morado de marca
+   con !important en todos los .ant-switch-checked. */
+html[data-pops-editor] .ant-switch.ant-switch-checked:not([data-side-card] *),
+html[data-pops-editor] .ant-switch.ant-switch-checked:not([data-side-card] *):hover:not(.ant-switch-disabled) {
+    background-color: var(--ed-primario-bg) !important;
+}
+
+html[data-pops-editor='craft'] .ant-switch:not([data-side-card] *) {
+    border-radius: 0;
+}
+
+html[data-pops-editor='craft'] .ant-switch:not([data-side-card] *) .ant-switch-handle,
+html[data-pops-editor='craft'] .ant-switch:not([data-side-card] *) .ant-switch-handle::before {
+    border-radius: 0;
+}
+
+/* ══ Jerarquía del encabezado de Invitados ══
+   Ahí van juntos la vista (Pasos / Compacta), los créditos y Agregar: solo
+   Agregar es la acción principal. La vista es un segmento discreto (el
+   activo en blanco) y los créditos una píldora secundaria; en la barra de
+   arriba los créditos siguen con su estilo de siempre. */
+html[data-pops-editor] .gx-compact-head-actions .gx-view-toggle button[data-active='true'] {
+    background: #FFFFFF;
+    color: var(--ed-ink);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+html[data-pops-editor='business'] .gx-compact-head-actions .gx-view-toggle button[data-active='true'] {
+    color: var(--ed-azul);
+}
+
+html[data-pops-editor='craft'] .gx-compact-head-actions .gx-view-toggle {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+html[data-pops-editor='craft'] .gx-compact-head-actions .gx-view-toggle button[data-active='true'] {
+    color: var(--ed-verde);
+    transform: none;
+}
+

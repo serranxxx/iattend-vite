@@ -747,3 +747,207 @@
 .coloresMovil {
     width: 100%;
 }
+
+/* ══ Lienzo del editor de Pops en su estilo (html[data-pops-editor], popsEditorTema.css) ══
+   La pieza no se tiñe: solo su marco y la leyenda de abajo. */
+:global(html[data-pops-editor]) .caption {
+    font-size: 13px;
+    color: var(--ed-ink-2);
+}
+
+/* Business: contorno azul a 8 px de la pieza. */
+:global(html[data-pops-editor='business']) .canvasWrap > [data-side-card] {
+    outline: 1.5px solid #1E45FB;
+    outline-offset: 8px;
+}
+
+/* Craft: la pieza va montada en un marco blanco con dos cintas en las
+   esquinas de arriba; la leyenda en Patrick Hand blanca sobre el tapete. */
+:global(html[data-pops-editor='craft']) .canvasWrap {
+    position: relative;
+}
+
+:global(html[data-pops-editor='craft']) .canvasWrap > [data-side-card] {
+    /* Recorte de papel: esquinas rectas, la pieza y su marco. */
+    border-radius: 0;
+    box-shadow: 0 0 0 10px #FFFFFF, 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+:global(html[data-pops-editor='craft']) .canvasWrap::before,
+:global(html[data-pops-editor='craft']) .canvasWrap::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    z-index: 2;
+    width: 84px;
+    height: 24px;
+    background: var(--ed-cinta);
+    pointer-events: none;
+}
+
+:global(html[data-pops-editor='craft']) .canvasWrap::before {
+    left: -34px;
+    transform: rotate(-38deg);
+}
+
+:global(html[data-pops-editor='craft']) .canvasWrap::after {
+    right: -34px;
+    transform: rotate(38deg);
+}
+
+:global(html[data-pops-editor='craft']) .caption {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+/* Barras de Fondo y de Dibujar (miniaturas, agregar, Listo) en el estilo. */
+:global(html[data-pops-editor]) .fondoMini,
+:global(html[data-pops-editor]) .fondoAgregar {
+    border-radius: var(--ed-radio-ctl);
+}
+
+:global(html[data-pops-editor='pop']) .fondoMini,
+:global(html[data-pops-editor='pop']) .fondoAgregar {
+    border-radius: 14px;
+}
+
+:global(html[data-pops-editor]) .fondoItem[data-on] .fondoMini {
+    box-shadow: 0 0 0 2.5px #FFFFFF, 0 0 0 4.5px var(--ed-ink);
+}
+
+:global(html[data-pops-editor='business']) .fondoItem[data-on] .fondoMini {
+    box-shadow: 0 0 0 2.5px #FFFFFF, 0 0 0 4.5px var(--ed-azul);
+}
+
+:global(html[data-pops-editor='craft']) .fondoItem[data-on] .fondoMini {
+    box-shadow: 0 0 0 3px var(--ed-amarillo);
+}
+
+:global(html[data-pops-editor]) .fondoQuitar {
+    background: var(--ed-ink);
+}
+
+:global(html[data-pops-editor='pop']) .fondoLink {
+    background: var(--ed-rosa);
+    color: #111111;
+}
+
+:global(html[data-pops-editor='business']) .fondoLink {
+    background: var(--ed-azul);
+    color: #FFFFFF;
+}
+
+:global(html[data-pops-editor='craft']) .fondoLink {
+    border-radius: 0;
+    background: var(--ed-amarillo);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .fondoAgregar {
+    border-color: var(--ed-line);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor='business']) .fondoAgregar {
+    border-color: var(--ed-ink-3);
+    color: var(--ed-azul);
+}
+
+:global(html[data-pops-editor]) .fondoAgregar:hover {
+    border-color: var(--ed-ink);
+    background: var(--ed-hover);
+}
+
+:global(html[data-pops-editor]) .dibujoListo {
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-primario-bg);
+    color: var(--ed-primario-ink);
+}
+
+:global(html[data-pops-editor='pop']) .dibujoListo {
+    background: var(--ed-lima);
+    color: #111111;
+}
+
+:global(html[data-pops-editor='craft']) .dibujoListo {
+    box-shadow: 0 3px 0 var(--ed-verde-sombra);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor]) .dibujoEnLabel {
+    color: var(--ed-ink-2);
+}
+
+:global(html[data-pops-editor='craft']) .dibujoEnLabel {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor]) .dibujoEnSeg {
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-surface-soft);
+}
+
+:global(html[data-pops-editor='pop']) .dibujoEnSeg {
+    border-radius: 18px;
+}
+
+:global(html[data-pops-editor='craft']) .dibujoEnSeg {
+    background: transparent;
+}
+
+:global(html[data-pops-editor]) .dibujoEnTodo {
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink-2);
+}
+
+:global(html[data-pops-editor]) .dibujoEnTodo[data-on] {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    box-shadow: none;
+}
+
+:global(html[data-pops-editor='business']) .dibujoEnTodo[data-on] {
+    background: var(--ed-azul);
+}
+
+:global(html[data-pops-editor='craft']) .dibujoEnTodo {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .dibujoEnTodo[data-on] {
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-pops-editor='business']) .dibujoEnMini {
+    border-radius: 6px;
+}
+
+:global(html[data-pops-editor='craft']) .dibujoEnMini {
+    border-radius: 0;
+}
+
+:global(html[data-pops-editor]) .dibujoEnMini[data-on] {
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 3.5px var(--ed-ink);
+}
+
+:global(html[data-pops-editor='business']) .dibujoEnMini[data-on] {
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 3.5px var(--ed-azul);
+}
+
+:global(html[data-pops-editor='craft']) .dibujoEnMini[data-on] {
+    box-shadow: 0 0 0 3px var(--ed-amarillo);
+}

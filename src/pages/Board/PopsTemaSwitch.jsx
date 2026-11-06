@@ -13,7 +13,7 @@ import styles from './PopsTemaSwitch.module.css'
  * onCambiar(tema, elemento): el elemento (el botón) es el origen del círculo.
  */
 
-const EMOJI = { pop: '🎉', business: '💼', craft: '✂️' }
+const EMOJI = { pop: '🎉', business: '💼', craft: '✂️', iattend: '✦' }
 
 // Miniatura del hero de cada estilo (dibujada con CSS, sin imágenes).
 const Mini = ({ tema }) => (
@@ -40,6 +40,15 @@ const Mini = ({ tema }) => (
                 <span className={styles.miniBizLinea} />
             </>
         )}
+        {tema === 'iattend' && (
+            <>
+                <span className={styles.miniIaRiel} />
+                <span className={styles.miniIaPanel} />
+                <span className={styles.miniIaPieza} />
+                <span className={styles.miniIaCapas} />
+                <span className={styles.miniIaDock} />
+            </>
+        )}
         {tema === 'craft' && (
             <>
                 <span className={styles.miniCraftEstrella} />
@@ -52,7 +61,10 @@ const Mini = ({ tema }) => (
     </span>
 )
 
-export const PopsTemaSwitch = ({ tema, onCambiar, movil = false }) => {
+// `enLinea`: dentro de una barra (editor de Pops) en vez de flotar en la
+// esquina de la sección; botón compacto como en celular y panel hacia abajo.
+// `temas`: las opciones (el editor de un admin suma 'iattend', el original).
+export const PopsTemaSwitch = ({ tema, onCambiar, movil = false, enLinea = false, temas = TEMAS_POPS }) => {
     const { t } = useTranslation()
     const [abierto, setAbierto] = useState(false)
     const raiz = useRef(null)
@@ -99,7 +111,7 @@ export const PopsTemaSwitch = ({ tema, onCambiar, movil = false }) => {
     }
 
     return (
-        <div ref={raiz} className={`${styles.selector} ${movil ? styles.movil : ''}`}>
+        <div ref={raiz} className={`${styles.selector} ${movil || enLinea ? styles.movil : ''} ${enLinea ? styles.enLinea : ''}`}>
             <button
                 ref={boton}
                 type='button'
@@ -112,7 +124,7 @@ export const PopsTemaSwitch = ({ tema, onCambiar, movil = false }) => {
                 onClick={() => setAbierto(a => !a)}
             >
                 <span className={styles.icono} aria-hidden>{EMOJI[tema]}</span>
-                {!movil && (
+                {!movil && !enLinea && (
                     <span className={styles.textos}>
                         <span className={styles.etiqueta}>{t('pops_section.theme_label_short')}</span>
                         <span className={styles.nombre}>{t(`pops_section.theme_${tema}`)}</span>
@@ -132,7 +144,7 @@ export const PopsTemaSwitch = ({ tema, onCambiar, movil = false }) => {
                         className={styles.opciones}
                         onKeyDown={teclas}
                     >
-                        {TEMAS_POPS.map(op => {
+                        {temas.map(op => {
                             const activo = op === tema
                             return (
                                 <button

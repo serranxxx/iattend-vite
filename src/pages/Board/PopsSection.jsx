@@ -33,11 +33,12 @@ const STICKERS = [
 ]
 
 // Collage del celular (150 × 150, handoff "Pops mobile"): libre del wordmark.
+// Más abierto hacia la izquierda (caja de 190 × 150), igual que PopsHero.
 const STICKERS_MOVIL = [
-    { kind: 'burst', color: 'var(--pops-magenta)', pos: { left: 44, top: 36 }, size: 92, rot: -8, delay: 0 },
-    { kind: 'bubble', color: 'var(--pops-cian)', pos: { left: 70, top: 54 }, size: 68, rot: 6, delay: 0.4 },
+    { kind: 'burst', color: 'var(--pops-magenta)', pos: { left: 34, top: 24 }, size: 92, rot: -8, delay: 0 },
+    { kind: 'bubble', color: 'var(--pops-cian)', pos: { left: 74, top: 46 }, size: 68, rot: 6, delay: 0.4 },
     { kind: 'eyes', color: 'var(--pops-amarillo-neon)', pos: { right: 0, top: -6 }, size: 50, rot: -10, delay: 1.2 },
-    { kind: 'spark', color: 'var(--pops-menta)', pos: { right: 6, top: 110 }, size: 28, rot: 0, delay: 0.9 },
+    { kind: 'spark', color: 'var(--pops-menta)', pos: { left: 2, top: 104 }, size: 28, rot: 0, delay: 0.9 },
 ]
 
 // Estado inicial (sin Pops): stickers de la tarjeta "Tu primer Pop".

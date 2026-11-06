@@ -103,3 +103,24 @@
     background: rgba(41, 38, 45, 0.1);
     box-shadow: inset 0 0 0 2px #29262d;
 }
+
+/* ══ Editor de Pops en su estilo (html[data-pops-editor], popsEditorTema.css) ══ */
+:global(html[data-pops-editor]) .boton {
+    width: 40px;
+    height: 40px;
+}
+
+:global(html[data-pops-editor='pop']) .boton {
+    border-radius: 12px;
+}
+
+:global(html[data-pops-editor='business']) .boton {
+    border-radius: 8px;
+}
+
+/* Craft: polaroid blanca, girada. */
+:global(html[data-pops-editor='craft']) .boton {
+    border-radius: 0;
+    box-shadow: 0 0 0 3px #FFFFFF, 0 3px 8px rgba(0, 0, 0, 0.25);
+    transform: rotate(-4deg);
+}

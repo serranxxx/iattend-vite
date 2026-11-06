@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { Drawer, Dropdown, Grid, Popover } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { CalendarHeart, ChevronRight, Compass, Gift, Info, LayoutDashboard, LayoutGrid, LogOut, Plus, Shield, Sparkles, Users, X, Zap } from 'lucide-react'
+import { CalendarHeart, Check, ChevronRight, ChevronsUpDown, ChevronUp, Compass, Gift, Info, LayoutDashboard, LayoutGrid, LogOut, Palette, Plus, Shield, Sparkles, Users, X, Zap } from 'lucide-react'
 import { PlannerExplore } from './PlannerExplore'
 import { PlannerFeedback } from './PlannerFeedback'
 import { PlannerEventList } from './PlannerEventList'
@@ -15,7 +15,7 @@ import { PlannerSkeleton } from './PlannerSkeleton'
 import { PopsLogo } from '../../components/PopsLogo/PopsLogo'
 import { PopsSection } from './PopsSection'
 import { usePopsTransicion } from './usePopsTransicion'
-import { usePopsTema } from './usePopsTema'
+import { TEMAS_POPS, usePopsTema } from './usePopsTema'
 import { useTextures } from '../../context/TexturesContext'
 import { PopsOnboarding } from '../../components/PopsOnboarding/PopsOnboarding'
 
@@ -174,6 +174,15 @@ export const PlannerLayout = ({
     const business = temaPops === 'business'
     const modoBiz = modoPops && business
     const modoCraft = modoPops && temaPops === 'craft'
+    // El estilo de Pops en <html> mientras se está en la sección: lo leen los
+    // paneles que se abren desde ahí (Comprar evento, Nuevo Pop), que antd
+    // manda a <body>.
+    useEffect(() => {
+        if (!modoPops) return undefined
+        const raiz = document.documentElement
+        raiz.setAttribute('data-pops-tema', temaPops)
+        return () => raiz.removeAttribute('data-pops-tema')
+    }, [modoPops, temaPops])
     // Craft usa la textura "Papel" del Laboratorio de texturas (tabla
     // textures); si cambia allá, cambia aquí. Sin ella, la de index.css.
     const { textures } = useTextures()
@@ -200,16 +209,40 @@ export const PlannerLayout = ({
     // setElegida también quita ?view=data: salir del dashboard va en el mismo cambio.
     const abrirSeccion = (key) => navegar(key === 'pops', () => setElegida(key))
 
+    // La flecha del bloque del usuario gira mientras su menú está abierto.
+    const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false)
     const menuUsuario = {
         items: [
             { key: 'email', label: <span className={styles.menuCorreo}>{user?.email}</span>, disabled: true },
             { type: 'divider' },
+            // Pops (handoff §10): Pops gratis con su cuenta y "Cambia tu estilo"
+            // con el estilo actual; abre las tres opciones.
+            ...(modoPops && gratisPop > 0 ? [{
+                key: 'pops_gratis',
+                label: <span className={styles.menuFila}>{t('invitations.menu_free_pops')}<span className={styles.menuCuenta}>{gratisPop}</span></span>,
+                icon: <Gift size={14} />,
+            }] : []),
+            ...(modoPops ? [{
+                key: 'estilo',
+                label: <span className={styles.menuFila}>{t('pops_section.theme_title_short')}<span className={styles.menuEstilo}>{t(`pops_section.theme_${temaPops}`)}</span></span>,
+                icon: <Palette size={14} />,
+                popupClassName: modoCraft ? styles.menuCraft : modoBiz ? styles.menuBiz : styles.menuPop,
+                children: TEMAS_POPS.map((op) => ({
+                    key: `tema:${op}`,
+                    label: <span className={styles.menuFila}>{t(`pops_section.theme_${op}`)}{op === temaPops && <Check size={14} />}</span>,
+                })),
+            }] : []),
             { key: 'tour', label: t('invitations.planner_menu_tour'), icon: <Sparkles size={14} /> },
             // En celular no hay barra lateral: Administrador va en este menú.
             ...(esAdmin && celular ? [{ key: 'admin', label: t('invitations.planner_menu_admin'), icon: <Shield size={14} /> }] : []),
             { key: 'logout', label: t('invitations.planner_menu_logout'), icon: <LogOut size={14} />, danger: true },
         ],
         onClick: ({ key }) => {
+            if (key === 'pops_gratis') onGratisPop?.()
+            if (key.startsWith('tema:')) {
+                // El círculo del cambio sale del selector de estilo (si está a la vista).
+                cambiarTemaPops(key.slice(5), document.querySelector('[aria-haspopup="listbox"]'), { movil: celular })
+            }
             if (key === 'tour') onTour?.()
             if (key === 'admin') navigate('/admin')
             if (key === 'logout') onLogout?.()
@@ -535,10 +568,31 @@ export const PlannerLayout = ({
                             <PlannerFeedback variante={modoCraft ? 'craft' : modoPops && !modoBiz ? 'pop' : 'tarjeta'} />
                         </div>
                     )}
-                    <Dropdown menu={menuUsuario} trigger={['click']} placement='topLeft'>
-                        <button type='button' className={styles.usuario}>
+                    <Dropdown
+                        menu={menuUsuario}
+                        trigger={['click']}
+                        placement='topLeft'
+                        onOpenChange={setMenuUsuarioAbierto}
+                        // Pops: el menú en el estilo de la sección (handoff §10).
+                        rootClassName={modoPops ? (modoCraft ? styles.menuCraft : modoBiz ? styles.menuBiz : styles.menuPop) : undefined}
+                    >
+                        <button type='button' className={styles.usuario} data-abierto={menuUsuarioAbierto || undefined}>
                             <span className={styles.avatar}>{iniciales}</span>
-                            <span className={styles.usuarioNombre}>{user?.name?.split(' ')[0]}</span>
+                            <span className={styles.usuarioTextos}>
+                                <span className={styles.usuarioNombre}>{user?.name?.split(' ')[0]}</span>
+                                {/* Pops: bloque del usuario de cada estilo (Pop · Business · Craft):
+                                    "Mi cuenta" o, en Business, su rol; y la flecha del menú. */}
+                                {modoPops && (
+                                    <span className={styles.usuarioSub}>
+                                        {modoBiz
+                                            ? t(user?.role === 'Administration' ? 'invitations.planner_menu_admin' : esCliente ? 'invitations.role_client' : 'invitations.role_planner')
+                                            : t('invitations.my_account')}
+                                    </span>
+                                )}
+                            </span>
+                            {modoPops && (modoBiz
+                                ? <ChevronsUpDown size={18} className={styles.usuarioFlecha} aria-hidden />
+                                : <ChevronUp size={18} strokeWidth={2.4} className={styles.usuarioFlecha} aria-hidden />)}
                         </button>
                     </Dropdown>
                 </div>

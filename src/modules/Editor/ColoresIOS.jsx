@@ -169,7 +169,7 @@ export const ColoresIOS = ({ value, onChange, opacity = null, onOpacity = null, 
                         <Pipette size={18} />
                     </button>
                 )}
-                <div className={s.segmento} role="tablist">
+                <div className={s.segmento} role="tablist" data-tema-propio>
                     {VISTAS.map((v) => (
                         <button key={v} type="button" role="tab" aria-selected={vista === v} className={s.segBtn} data-on={vista === v || undefined} onClick={() => cambiarVista(v)}>
                             {t(`build_editor.colors_${v}`)}

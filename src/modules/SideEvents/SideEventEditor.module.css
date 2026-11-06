@@ -1810,3 +1810,273 @@
     width: 26px;
     height: 26px;
 }
+
+/* ══ Barra superior del editor de Pops en su estilo (Pop · Business · Craft) ══
+   html[data-pops-editor]: SideEvents.jsx; tokens en popsEditorTema.css. */
+:global(html[data-pops-editor]) .topBar {
+    min-height: 68px;
+    padding: 0 18px;
+    background: var(--ed-barra-bg);
+    border-bottom: var(--ed-barra-borde);
+    box-shadow: var(--ed-barra-sombra);
+}
+
+:global(html[data-pops-editor]) .backBtn {
+    width: 40px;
+    height: 40px;
+    border: 1.5px solid var(--ed-ink);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor='business']) .backBtn {
+    border: 1px solid var(--ed-line);
+    border-radius: 10px;
+}
+
+:global(html[data-pops-editor='craft']) .backBtn {
+    border: 1.5px dashed var(--ed-ink-3);
+}
+
+:global(html[data-pops-editor]) .crumb {
+    color: var(--ed-ink-2);
+}
+
+:global(html[data-pops-editor]) .crumb strong {
+    color: var(--ed-ink);
+    font-weight: 800;
+}
+
+/* Business: "POP" como etiqueta y el nombre en mayúsculas. */
+:global(html[data-pops-editor='business']) .crumb > span:first-child {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='business']) .crumb strong {
+    font-size: 15px;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .crumb > span:first-child {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Créditos: la píldora va tematizada en popsEditorTema.css (.envios_pill),
+   igual en la barra y en el encabezado de Invitados. */
+
+/* Diseño / Invitados. */
+:global(html[data-pops-editor]) .tabs {
+    padding: 3px;
+    background: var(--ed-surface-soft);
+}
+
+:global(html[data-pops-editor]) .tabs :global(.ant-segmented-item) {
+    color: var(--ed-ink-2);
+    font-family: 'Poppins', sans-serif;
+}
+
+:global(html[data-pops-editor]) .tabs :global(.ant-segmented-item-selected),
+:global(html[data-pops-editor]) .tabs :global(.ant-segmented-thumb) {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    font-weight: 700;
+    box-shadow: none;
+}
+
+:global(html[data-pops-editor='business']) .tabs,
+:global(html[data-pops-editor='business']) .tabs :global(.ant-segmented-group) {
+    border-radius: 10px;
+}
+
+:global(html[data-pops-editor='business']) .tabs {
+    border: 1px solid var(--ed-line);
+}
+
+:global(html[data-pops-editor='business']) .tabs :global(.ant-segmented-item),
+:global(html[data-pops-editor='business']) .tabs :global(.ant-segmented-thumb) {
+    border-radius: 8px;
+}
+
+:global(html[data-pops-editor='craft']) .tabs {
+    background: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .tabs :global(.ant-segmented-item),
+:global(html[data-pops-editor='craft']) .tabs :global(.ant-segmented-thumb) {
+    border-radius: 0;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .tabs :global(.ant-segmented-item-selected) {
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Público (acción de hacer) y Compartir. */
+:global(html[data-pops-editor]) .livePill {
+    height: 40px;
+    padding: 0 18px;
+    border: var(--ed-secundario-borde);
+    border-radius: var(--ed-radio-ctl);
+    background: transparent;
+    color: var(--ed-ink);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+:global(html[data-pops-editor]) .livePill.accesoPublico {
+    border: none;
+    background: var(--ed-hacer-bg);
+    color: var(--ed-hacer-ink);
+}
+
+:global(html[data-pops-editor='craft']) .livePill.accesoPublico {
+    background: var(--ed-verde);
+    color: #FFFFFF;
+    box-shadow: 0 3px 0 var(--ed-verde-sombra);
+}
+
+:global(html[data-pops-editor='craft']) .livePill {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor]) .actionsBar :global(.ant-btn) {
+    height: 40px;
+    padding: 0 18px;
+    border: var(--ed-secundario-borde) !important;
+    border-radius: var(--ed-radio-ctl) !important;
+    background: transparent !important;
+    color: var(--ed-ink) !important;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    box-shadow: none !important;
+}
+
+:global(html[data-pops-editor='business']) .actionsBar :global(.ant-btn) {
+    border: none !important;
+    background: var(--ed-azul) !important;
+    color: #FFFFFF !important;
+}
+
+:global(html[data-pops-editor='craft']) .actionsBar :global(.ant-btn) {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Estilo de bloques y efectos del panel Diseño: tarjetas del estilo. */
+:global(html[data-pops-editor]) .efectoTile {
+    border: var(--ed-tile-borde);
+    border-radius: var(--ed-tile-radio);
+    color: var(--ed-ink);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+:global(html[data-pops-editor]) .efectoTile:hover {
+    background: var(--ed-hover);
+}
+
+:global(html[data-pops-editor]) .efectoTileActivo {
+    border-color: transparent;
+    box-shadow: var(--ed-tile-on);
+}
+
+:global(html[data-pops-editor='pop']) .efectoTile:hover {
+    transform: translateY(-2px);
+}
+
+:global(html[data-pops-editor='business']) .efectoTile:hover {
+    border-color: var(--ed-azul);
+}
+
+/* Craft: polaroids blancas con giro alternado; al pasar se enderezan. */
+:global(html[data-pops-editor='craft']) .efectoTile {
+    background: #FFFFFF;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    font-weight: 400;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+}
+
+:global(html[data-pops-editor='craft']) .efectoTile:nth-child(6n + 1) { transform: rotate(-2deg); }
+:global(html[data-pops-editor='craft']) .efectoTile:nth-child(6n + 2) { transform: rotate(1.5deg); }
+:global(html[data-pops-editor='craft']) .efectoTile:nth-child(6n + 3) { transform: rotate(-1deg); }
+:global(html[data-pops-editor='craft']) .efectoTile:nth-child(6n + 4) { transform: rotate(2deg); }
+:global(html[data-pops-editor='craft']) .efectoTile:nth-child(6n + 5) { transform: rotate(-1.5deg); }
+:global(html[data-pops-editor='craft']) .efectoTile:nth-child(6n) { transform: rotate(1deg); }
+
+:global(html[data-pops-editor='craft']) .efectoTile:hover {
+    background: #FFFFFF;
+    transform: rotate(0deg);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+:global(html[data-pops-editor='craft']) .efectoTileActivo,
+:global(html[data-pops-editor='craft']) .efectoTileActivo:hover {
+    box-shadow: var(--ed-tile-on), 0 2px 6px rgba(0, 0, 0, 0.14);
+}
+
+/* Columna de Invitados: panel del estilo (Craft = hoja de papel con cinta). */
+:global(html[data-pops-editor]) .block.sendCol {
+    border: var(--ed-panel-borde);
+    border-radius: var(--ed-radio-panel);
+    background: var(--ed-surface);
+    box-shadow: var(--ed-panel-sombra);
+}
+
+:global(html[data-pops-editor='craft']) .block.sendCol {
+    position: relative;
+    overflow: visible;
+}
+
+:global(html[data-pops-editor='craft']) .block.sendCol::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    z-index: 5;
+    width: 110px;
+    height: 24px;
+    margin-left: -55px;
+    background: var(--ed-cinta);
+    transform: rotate(-2deg);
+    pointer-events: none;
+}
+
+/* Compartir con su desplegable abierto (antd le pone .ant-popover-open). */
+:global(html[data-pops-editor='pop']) .actionsBar :global(.ant-btn.ant-popover-open) {
+    border-color: #111111 !important;
+    background: #111111 !important;
+    color: #FFFFFF !important;
+}
+
+:global(html[data-pops-editor='business']) .actionsBar :global(.ant-btn.ant-popover-open) {
+    background: #0B1F3A !important;
+}
+
+:global(html[data-pops-editor='craft']) .actionsBar :global(.ant-btn.ant-popover-open) {
+    border: none !important;
+    background: var(--ed-amarillo) !important;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+}

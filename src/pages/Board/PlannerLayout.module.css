@@ -1067,9 +1067,11 @@
 
 .sidebarCraft {
     top: 40px;
-    height: calc(100vh - 70px);
-    height: calc(100dvh - 70px);
-    margin: 40px 22px 30px 28px;
+    /* La hoja deja abajo el lugar del bloque del usuario (otra ficha de papel
+       debajo de la hoja, ver .sidebarCraft .usuario). */
+    height: calc(100vh - 160px);
+    height: calc(100dvh - 160px);
+    margin: 40px 22px 120px 28px;
     padding: 30px 18px 18px;
     gap: 22px;
     border: none;
@@ -1147,8 +1149,22 @@
 }
 
 .sidebarCraft .navItem:not(.navPops):hover,
+/* El usuario es su propio bloque: una ficha de papel debajo de la hoja, sobre
+   el tapete (así nunca se sale de la hoja ni hace falta scroll). */
+.sidebarCraft .usuario {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 22px);
+    padding: 14px 16px 14px 18px;
+    border-radius: 0;
+    background: var(--craft-papel);
+    box-shadow: var(--craft-sombra-papel);
+    transform: rotate(-0.6deg);
+}
+
 .sidebarCraft .usuario:hover {
-    background: rgba(242, 210, 27, 0.18);
+    background: var(--craft-papel);
 }
 
 .sidebarCraft .navItem small {
@@ -1254,4 +1270,422 @@
     background: var(--craft-verde);
     color: #FFF;
     box-shadow: 0 3px 0 var(--craft-verde-sombra), 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Craft en ventanas bajas: la hoja no hace scroll; se aprieta (menos aire,
+   filas más bajas y el sticky de sugerencias sin su texto) para que todo
+   quepa dentro y el bloque del usuario quede debajo, a la vista. */
+@media (max-height: 900px) {
+    .sidebarCraft {
+        gap: 12px;
+        padding-top: 24px;
+    }
+
+    .sidebarCraft .navItem:not(.navPops) {
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+
+    .sidebarCraft :global([class*='_tarjetaCraft_']) p {
+        display: none;
+    }
+}
+
+/* ══ Bloque del usuario en la sección Pops (Pop · Business · Craft) ══
+   Avatar, nombre, "Mi cuenta" (o el rol en Business) y la flecha del menú.
+   Fuera de Pops no hay subtítulo ni flecha. */
+.usuarioTextos {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.usuarioSub {
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.usuarioFlecha {
+    flex: none;
+}
+
+.sidebarPop .avatar {
+    position: relative;
+}
+
+.sidebarPop .usuarioNombre {
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+}
+
+/* Pop: píldora blanca con borde, avatar rosa con el punto verde de en línea. */
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuario {
+    padding: 6px 18px 6px 6px;
+    border: 1.5px solid #EBEBEB;
+    border-radius: 99px;
+    background: #FFFFFF;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .avatar {
+    width: 50px;
+    height: 50px;
+    background: var(--pops-rosa);
+    color: #111111;
+    font-family: 'Poppins', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .avatar::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 11px;
+    height: 11px;
+    border: 3px solid #FFFFFF;
+    border-radius: 50%;
+    background: #4CBF86;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuarioNombre {
+    color: #111111;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuarioSub {
+    font-size: 14px;
+    color: #8A8582;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuarioFlecha {
+    color: #111111;
+}
+
+/* Business: tarjeta gris clara con borde, avatar azul cuadrado con marca lima. */
+.sidebarBiz .usuario {
+    padding: 10px 14px 10px 10px;
+    border: 1px solid var(--biz-linea, #E3E7F2);
+    border-radius: 14px;
+    background: var(--biz-superficie, #F6F8FB);
+}
+
+.sidebarBiz .avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    background: var(--biz-azul, #1E45FB);
+    color: #FFFFFF;
+    font-family: 'Poppins', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.sidebarBiz .avatar::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 10px;
+    height: 10px;
+    border: 3px solid #FFFFFF;
+    border-radius: 3px;
+    background: var(--biz-lima, #CDF22B);
+}
+
+.sidebarBiz .usuarioNombre {
+    color: var(--biz-navy, #0B1F3A);
+}
+
+.sidebarBiz .usuarioSub {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5B6B85;
+}
+
+.sidebarBiz .usuarioFlecha {
+    color: #5B6B85;
+}
+
+/* Craft: ficha de papel con cinta en la esquina; avatar amarillo como foto
+   con marco blanco, girado. */
+.sidebarCraft .usuario::after {
+    content: '';
+    position: absolute;
+    right: -18px;
+    top: -12px;
+    width: 92px;
+    height: 24px;
+    background: var(--craft-cinta);
+    transform: rotate(32deg);
+    pointer-events: none;
+}
+
+.sidebarCraft .avatar {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #FFFFFF;
+    border-radius: 0;
+    background: var(--craft-amarillo);
+    color: var(--craft-tinta);
+    font-family: 'Poppins', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    transform: rotate(-4deg);
+}
+
+.sidebarCraft .usuarioNombre {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    color: var(--craft-tinta);
+}
+
+.sidebarCraft .usuarioSub {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--craft-gris-2, #8A8A85);
+}
+
+.sidebarCraft .usuarioFlecha {
+    color: var(--craft-tinta);
+}
+
+/* Pops (los tres estilos) en ventanas bajas: el bloque del usuario cabe sin
+   que la barra haga scroll; menos aire y el sugerencias sin su párrafo. */
+@media (max-height: 900px) {
+    .sidebarPop:not(.sidebarCraft) {
+        gap: 16px;
+    }
+
+    .sidebarPop :global([class*='_tarjeta_']) p {
+        display: none;
+    }
+}
+
+/* ── Medidas del handoff §10 (usuario en el sidebar de Pops) ── */
+.sidebarPop .usuarioFlecha {
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* La flecha gira con el menú abierto (Business usa el doble chevron fijo). */
+.sidebarPop:not(.sidebarBiz) .usuario[data-abierto] .usuarioFlecha {
+    transform: rotate(180deg);
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuario {
+    min-height: 58px;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuario:hover {
+    background: #F5F3F2;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuarioNombre {
+    font-size: 16px;
+}
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .usuarioSub {
+    font-size: 12px;
+}
+
+.sidebarBiz .usuario {
+    min-height: 60px;
+    border-radius: 12px;
+    transition: border-color 0.18s ease;
+}
+
+.sidebarBiz .usuario:hover {
+    border-color: var(--biz-azul, #1E45FB);
+}
+
+.sidebarBiz .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    font-size: 17px;
+}
+
+.sidebarBiz .usuarioNombre {
+    font-size: 15px;
+}
+
+.sidebarBiz .usuarioSub {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+}
+
+.sidebarCraft .usuario {
+    min-height: 68px;
+}
+
+.sidebarCraft .avatar {
+    width: 46px;
+    height: 50px;
+    transform: rotate(-5deg);
+}
+
+.sidebarCraft .usuarioNombre {
+    font-size: 19px;
+}
+
+/* ── Menú del usuario en el estilo (Dropdown rootClassName) ── */
+.menuPop :global(.ant-dropdown-menu) {
+    padding: 8px;
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+    font-family: 'Poppins', sans-serif;
+}
+
+.menuPop :global(.ant-dropdown-menu-item) {
+    min-height: 40px;
+    border-radius: 14px !important;
+    font-weight: 600;
+}
+
+.menuBiz :global(.ant-dropdown-menu) {
+    padding: 6px;
+    border: 1px solid #E3E7F2;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(11, 31, 58, 0.14);
+    font-family: 'Poppins', sans-serif;
+}
+
+.menuBiz :global(.ant-dropdown-menu-item) {
+    border-radius: 8px !important;
+    color: #0B1F3A;
+    font-weight: 600;
+}
+
+.menuBiz :global(.ant-dropdown-menu-item:not(.ant-dropdown-menu-item-disabled):hover) {
+    background: #EEF2FF !important;
+    color: #1E45FB;
+}
+
+.menuCraft :global(.ant-dropdown-menu) {
+    position: relative;
+    padding: 14px 8px 8px;
+    border-radius: 0;
+    background: #F3F2EE;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06), 0 10px 22px rgba(0, 0, 0, 0.25);
+    transform: rotate(-0.6deg);
+}
+
+.menuCraft :global(.ant-dropdown-menu)::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -11px;
+    width: 76px;
+    height: 22px;
+    margin-left: -38px;
+    background: rgba(238, 232, 212, 0.88);
+    transform: rotate(-2deg);
+}
+
+.menuCraft :global(.ant-dropdown-menu-item) {
+    border-radius: 0 !important;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px !important;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.menuCraft :global(.ant-dropdown-menu-item-divider) {
+    height: 0 !important;
+    background: none !important;
+    border-top: 1.5px dashed #CFCEC8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebarPop .usuarioFlecha {
+        transition: none;
+    }
+}
+
+/* Filas del menú del usuario con su cuenta / estilo a la derecha (Pops). */
+.menuFila {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-width: 170px;
+    width: 100%;
+}
+
+.menuCuenta,
+.menuEstilo {
+    flex: none;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 18px;
+}
+
+/* Pop: cuenta en píldora negra, estilo en píldora rosa. */
+.menuPop .menuCuenta {
+    border-radius: 99px;
+    background: #111111;
+    color: #FFFFFF;
+}
+
+.menuPop .menuEstilo {
+    border-radius: 99px;
+    background: #FF5FA8;
+    color: #111111;
+}
+
+/* Business: cuenta en cuadro azul, estilo con borde lima. */
+.menuBiz .menuCuenta {
+    border-radius: 6px;
+    background: #1E45FB;
+    color: #FFFFFF;
+}
+
+.menuBiz .menuEstilo {
+    border: 1.5px solid #CDF22B;
+    border-radius: 6px;
+    color: #0B1F3A;
+}
+
+/* Craft: etiquetas de papel. */
+.menuCraft .menuCuenta,
+.menuCraft .menuEstilo {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.menuCraft .menuCuenta {
+    border: 1.5px solid #1D1D1B;
+    border-radius: 50%;
+    padding: 0 6px;
+}
+
+.menuCraft .menuEstilo {
+    background: #F2D21B;
+    color: #1D1D1B;
+    transform: rotate(-2deg);
+}
+
+/* Submenú de estilos: mismas cajas que el menú. */
+.menuPop:global(.ant-dropdown-menu-submenu-popup) :global(.ant-dropdown-menu),
+.menuBiz:global(.ant-dropdown-menu-submenu-popup) :global(.ant-dropdown-menu),
+.menuCraft:global(.ant-dropdown-menu-submenu-popup) :global(.ant-dropdown-menu) {
+    min-width: 160px;
 }

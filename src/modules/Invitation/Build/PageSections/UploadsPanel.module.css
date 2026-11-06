@@ -438,3 +438,67 @@
     background: #FAF9F7;
 }
 
+/* ══ Editor de Pops en su estilo (html[data-pops-editor], SideEvents/popsEditorTema.css) ══
+   Chips de filtro = las mismas pestañas del selector de color (ColoresIOS):
+   Pop píldora negra, Business subrayado azul, Craft etiqueta amarilla girada. */
+:global(html[data-pops-editor]) .sticky {
+    background: var(--ed-surface);
+}
+
+:global(html[data-pops-editor]) .chip {
+    border: none;
+    border-radius: var(--ed-radio-ctl);
+    background: transparent;
+    color: var(--ed-ink-2);
+    font-family: 'Poppins', sans-serif;
+}
+
+:global(html[data-pops-editor]) .chip:hover {
+    background: var(--ed-hover);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .chip[data-on] {
+    border: none;
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    font-weight: 700;
+}
+
+:global(html[data-pops-editor='business']) .chips {
+    box-shadow: inset 0 -1px 0 var(--ed-line);
+}
+
+:global(html[data-pops-editor='business']) .chip,
+:global(html[data-pops-editor='business']) .chip:hover {
+    border-radius: 0;
+    background: transparent;
+}
+
+:global(html[data-pops-editor='business']) .chip[data-on] {
+    background: transparent;
+    color: var(--ed-azul);
+    box-shadow: inset 0 -2.5px 0 var(--ed-azul);
+}
+
+:global(html[data-pops-editor='craft']) .chips {
+    padding-top: 6px;
+    padding-bottom: 8px;
+}
+
+:global(html[data-pops-editor='craft']) .chip {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .chip:hover {
+    background: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .chip[data-on] {
+    font-weight: 400;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}

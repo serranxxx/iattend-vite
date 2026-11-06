@@ -266,3 +266,146 @@
 .agregar:hover {
     background: #DFDDE2;
 }
+
+/* ══ Editor de Pops en su estilo (html[data-pops-editor], SideEvents/popsEditorTema.css) ══
+   El color que se elige es del usuario y no cambia: solo el cromo. */
+:global(html[data-pops-editor]) .titulo {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .gotero {
+    border: 1px solid var(--ed-line);
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor='pop']) .gotero {
+    border: none;
+    background: #111111;
+    color: var(--ed-lima);
+}
+
+:global(html[data-pops-editor='business']) .gotero {
+    border-radius: 10px;
+}
+
+:global(html[data-pops-editor='craft']) .gotero {
+    border: none;
+    background: var(--ed-amarillo);
+    color: var(--ed-ink);
+    transform: rotate(-2deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-pops-editor]) .segmento {
+    border-radius: var(--ed-radio-ctl);
+    background: var(--ed-surface-soft);
+}
+
+:global(html[data-pops-editor]) .segBtn {
+    border-radius: var(--ed-radio-ctl);
+    color: var(--ed-ink-2);
+    font-family: 'Poppins', sans-serif;
+}
+
+:global(html[data-pops-editor]) .segBtn[data-on] {
+    background: var(--ed-activo-bg);
+    color: var(--ed-activo-ink);
+    font-weight: 700;
+    box-shadow: none;
+}
+
+/* Business: pestañas subrayadas sobre una línea base. */
+:global(html[data-pops-editor='business']) .segmento {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 -1px 0 var(--ed-line);
+}
+
+:global(html[data-pops-editor='business']) .segBtn {
+    border-radius: 0;
+}
+
+:global(html[data-pops-editor='business']) .segBtn[data-on] {
+    background: transparent;
+    color: var(--ed-azul);
+    box-shadow: inset 0 -2.5px 0 var(--ed-azul);
+}
+
+/* Craft: Patrick Hand y la pestaña activa como etiqueta amarilla. */
+:global(html[data-pops-editor='craft']) .segmento {
+    background: transparent;
+}
+
+:global(html[data-pops-editor='craft']) .segBtn {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:global(html[data-pops-editor='craft']) .segBtn[data-on] {
+    font-weight: 400;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-pops-editor='business']) .cuadricula {
+    border-radius: 8px;
+}
+
+/* Craft: la cuadrícula es una ficha blanca, un poco girada, sin redondeo. */
+:global(html[data-pops-editor='craft']) .cuadricula {
+    padding: 5px;
+    border-radius: 0;
+    background: #FFFFFF;
+    transform: rotate(0.6deg);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+}
+
+:global(html[data-pops-editor]) .celda[data-on] {
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .linea {
+    background: var(--ed-line);
+}
+
+:global(html[data-pops-editor='craft']) .linea {
+    height: 0;
+    background: none;
+    border-top: 1.5px dashed var(--ed-line);
+}
+
+:global(html[data-pops-editor='pop']) .agregar {
+    background: var(--ed-lima);
+    color: #111111;
+}
+
+:global(html[data-pops-editor='business']) .agregar {
+    border: 1.5px dashed var(--ed-ink-3);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ed-azul);
+}
+
+:global(html[data-pops-editor='craft']) .agregar {
+    border: 1.5px solid var(--ed-ink);
+    background: transparent;
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .guardado[data-on] {
+    box-shadow: inset 0 0 0 3px #FFFFFF, 0 0 0 2px var(--ed-ink);
+}
+
+:global(html[data-pops-editor='business']) .guardado {
+    border-radius: 8px;
+}
+
+:global(html[data-pops-editor='craft']) .guardado {
+    border-radius: 0;
+}

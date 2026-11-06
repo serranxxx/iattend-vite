@@ -12,7 +12,7 @@
     Gemela: iattend-events/src/helpers/estilosBloque.ts (mismas reglas; si cambias una, cambia la otra).
 */
 
-export const ESTILOS_BLOQUE = ['vidrio', 'hielo', 'noche', 'papel', 'tema', 'sticker', 'contorno']
+export const ESTILOS_BLOQUE = ['vidrio', 'hielo', 'noche', 'papel', 'tema', 'sticker', 'contorno', 'recorte']
 
 export const estiloDe = (body) => (ESTILOS_BLOQUE.includes(body?.blockStyle) ? body.blockStyle : 'vidrio')
 
@@ -93,6 +93,19 @@ const pielDe = (estilo, tema) => {
                 botonFondo: '#FFFFFF', botonTinta: TINTA_OSCURA, botonBorde: 'none', avatarBorde: '2px solid #FFFFFF',
                 reflejo: false, hoja: 'rgba(20,16,44,0.72)', base: '#3A3550',
             }
+        case 'recorte': {
+            // Recortes de papel pegados con cinta: papel crema, esquinas casi rectas,
+            // sombra de papel encima de la foto, botones del color del tema y cinta
+            // adhesiva bajo las etiquetas de grupo (--etiqueta-cinta).
+            const claro = contraste(tema, TINTA_OSCURA) > contraste(tema, '#FFFFFF')
+            return {
+                fondo: '#F4F1E8', blur: 'none', borde: 'none',
+                sombra: '0 1px 1px rgba(0,0,0,0.30), 0 4px 8px rgba(0,0,0,0.28), 0 16px 32px rgba(0,0,0,0.38)', radio: 4, botonesRadio: 4,
+                tinta: '#1E1B18', suave: '#E8E3D6', linea: 'rgba(30,27,24,0.16)', relieve: '#FBF9F4',
+                botonFondo: tema, botonTinta: claro ? TINTA_OSCURA : '#FFFFFF', botonBorde: 'none', avatarBorde: '3px solid #F4F1E8',
+                reflejo: false, hoja: '#F4F1E8', base: '#F4F1E8', cinta: 'rgba(232,224,196,0.88)',
+            }
+        }
         default:
             return null
     }
@@ -132,6 +145,10 @@ export const variablesDeEstilo = (estilo, colorTema) => {
         '--boton-sombra-texto': 'none',
         // Texto sobre la foto (etiquetas de grupo): sombra para que se lea.
         '--etiqueta-sombra': '0 0 12px rgba(0,0,0,0.35)',
+        // Recorte: cinta adhesiva bajo la etiqueta de grupo.
+        '--etiqueta-cinta': p.cinta ?? 'transparent',
+        // Cápsula de Asistiré / No asistiré: redondeo propio (Recorte = rectángulo).
+        '--botones-radio': p.botonesRadio != null ? `${p.botonesRadio}px` : '999px',
     }
 }
 
@@ -153,4 +170,5 @@ export const MINI_ESTILO = {
     tema: { boxShadow: '0 3px 8px rgba(60,40,140,0.35)', borderRadius: 12 },
     sticker: { background: '#FFFFFF', border: '2px solid #1F1B2E', boxShadow: '3px 3px 0 #1F1B2E', borderRadius: 7 },
     contorno: { background: 'rgba(20,16,44,0.16)', border: '1.5px solid #FFFFFF', borderRadius: 9 },
+    recorte: { background: '#F4F1E8', boxShadow: '0 3px 6px rgba(0,0,0,0.3)', borderRadius: 2, borderTop: '5px solid rgba(232,224,196,0.95)' },
 }

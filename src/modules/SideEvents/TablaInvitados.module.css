@@ -375,3 +375,90 @@
         box-shadow: none;
     }
 }
+
+/* ══ Editor de Pops en su estilo (html[data-pops-editor], popsEditorTema.css) ══ */
+:global(html[data-pops-editor]) .marco {
+    border-color: var(--ed-line);
+    border-radius: calc(var(--ed-radio-panel) - 4px);
+    font-family: 'Poppins', sans-serif;
+}
+
+:global(html[data-pops-editor]) .tabla {
+    color: var(--ed-ink);
+}
+
+:global(html[data-pops-editor]) .tabla thead th {
+    background: var(--ed-surface-soft);
+    border-bottom-color: var(--ed-line);
+}
+
+:global(html[data-pops-editor]) .encabezado {
+    font-family: var(--ed-etiqueta-fuente);
+    font-size: var(--ed-etiqueta-tam);
+    font-weight: var(--ed-etiqueta-peso);
+    letter-spacing: var(--ed-etiqueta-track);
+    text-transform: var(--ed-etiqueta-mayus);
+    color: var(--ed-etiqueta-ink);
+}
+
+:global(html[data-pops-editor]) .tabla tbody tr:hover td {
+    background: var(--ed-hover);
+}
+
+:global(html[data-pops-editor]) .estado {
+    border-radius: var(--ed-radio-ctl);
+}
+
+:global(html[data-pops-editor='business']) .estado {
+    border-radius: 6px;
+}
+
+:global(html[data-pops-editor='pop']) .estado[data-estado='confirmado'],
+:global(html[data-pops-editor='pop']) .estado[data-estado='asistente'] {
+    background: var(--ed-lima);
+    color: #111111;
+}
+
+:global(html[data-pops-editor='pop']) .estado[data-estado='rechazado'] {
+    background: var(--ed-rosa);
+    color: #111111;
+}
+
+:global(html[data-pops-editor='pop']) .estado[data-estado='esperando'] {
+    background: var(--ed-surface-soft);
+    color: #111111;
+}
+
+/* Craft: hoja de papel con renglones punteados y estados como etiquetas. */
+:global(html[data-pops-editor='craft']) .marco {
+    border: none;
+    background: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+:global(html[data-pops-editor='craft']) .tabla thead th {
+    background: #F3F2EE;
+    border-bottom: 1.5px dashed var(--ed-line);
+}
+
+:global(html[data-pops-editor='craft']) .tabla tbody td {
+    border-bottom: 1px dashed var(--ed-line);
+}
+
+/* Sólido: # y Nombre son columnas fijas y las demás pasan por debajo al
+   recorrer la tabla de lado. */
+:global(html[data-pops-editor='craft']) .tabla tbody td,
+:global(html[data-pops-editor='craft']) .tabla tbody tr:nth-child(even) td {
+    background: #FFFFFF;
+}
+
+:global(html[data-pops-editor='craft']) .tabla tbody tr:hover td {
+    background: #F7F6F2;
+}
+
+:global(html[data-pops-editor='craft']) .estado {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 14px;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+}

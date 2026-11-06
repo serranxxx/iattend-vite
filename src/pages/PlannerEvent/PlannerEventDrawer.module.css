@@ -321,3 +321,212 @@
     flex: 1;
     min-height: 0;
 }
+
+/* ══ Comprar evento (elección de tipo) en el estilo de la sección Pops ══
+   html[data-pops-tema]: PlannerLayout. Solo la pantalla de elegir tipo
+   (`:has(.eleccion)`); el alta de un evento regular queda como siempre. */
+:global(html[data-pops-tema='business']) .hojaCuerpo:has(.eleccion) > *,
+:global(html[data-pops-tema='craft']) .hojaCuerpo:has(.eleccion) > * {
+    font-family: 'Poppins', sans-serif;
+}
+
+:global(html[data-pops-tema='business']) .hojaCuerpo:has(.eleccion) h1,
+:global(html[data-pops-tema='craft']) .hojaCuerpo:has(.eleccion) h1 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+}
+
+/* ── Business ── */
+:global(html[data-pops-tema='business']) .hojaCuerpo:has(.eleccion) > * {
+    background: #FFFFFF;
+}
+
+:global(html[data-pops-tema='business']) .hojaCuerpo:has(.eleccion) h1 {
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: #0B1F3A;
+}
+
+:global(html[data-pops-tema='business']) .hojaCuerpo:has(.eleccion) div:has(> h1) > button {
+    border: 1px solid #E3E7F2;
+    border-radius: 10px;
+    color: #0B1F3A;
+}
+
+:global(html[data-pops-tema='business']) .eleccionIntro {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5B6B85;
+}
+
+:global(html[data-pops-tema='business']) .opcion {
+    border: 1px solid #E3E7F2;
+    border-radius: 12px;
+    color: #0B1F3A;
+}
+
+:global(html[data-pops-tema='business']) .opcion:hover {
+    border-color: #1E45FB;
+    box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+:global(html[data-pops-tema='business']) .opcionIcono {
+    border-radius: 10px;
+    background: #EEF2FF;
+    color: #1E45FB;
+}
+
+:global(html[data-pops-tema='business']) .opcionPop {
+    border-radius: 14px;
+    background: #0B1F3A;
+}
+
+:global(html[data-pops-tema='business']) .opcionPop:hover {
+    transform: translateY(-2px);
+}
+
+:global(html[data-pops-tema='business']) .opcionPopIcono {
+    border-radius: 10px;
+    background: #CDF22B;
+    color: #0B1F3A;
+}
+
+:global(html[data-pops-tema='business']) .opcionPopGratis {
+    border-radius: 6px;
+    background: #1E45FB;
+    color: #FFFFFF;
+}
+
+:global(html[data-pops-tema='business']) .opcionPop .opcionPopTexto {
+    color: #DCE6FF;
+}
+
+:global(html[data-pops-tema='business']) .opcionPopFlecha {
+    border-radius: 8px;
+    background: #CDF22B;
+    color: #0B1F3A;
+}
+
+/* ── Craft ── */
+:global(html[data-pops-tema='craft']) .hojaCuerpo:has(.eleccion) > * {
+    background: #F3F2EE;
+}
+
+:global(html[data-pops-tema='craft']) .hojaCuerpo:has(.eleccion) h1 {
+    font-size: 26px;
+    letter-spacing: -0.05em;
+    text-transform: none;
+    color: #1D1D1B;
+}
+
+:global(html[data-pops-tema='craft']) .hojaCuerpo:has(.eleccion) div:has(> h1) > button {
+    border: 1.5px dashed #8A8A85;
+    background: transparent;
+    color: #1D1D1B;
+}
+
+:global(html[data-pops-tema='craft']) .eleccionIntro {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6B6A65;
+}
+
+:global(html[data-pops-tema='craft']) .eleccion {
+    gap: 22px;
+}
+
+:global(html[data-pops-tema='craft']) .opcion {
+    border: none;
+    border-radius: 0;
+    background: #FFFFFF;
+    color: #1D1D1B;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transform: rotate(-0.4deg);
+}
+
+:global(html[data-pops-tema='craft']) .opcion:hover {
+    box-shadow: 0 0 0 3px #F2D21B, 0 4px 10px rgba(0, 0, 0, 0.15);
+    transform: rotate(0deg);
+}
+
+:global(html[data-pops-tema='craft']) .opcionIcono {
+    border-radius: 0;
+    background: #F2D21B;
+    color: #1D1D1B;
+    transform: rotate(-4deg);
+}
+
+/* La tarjeta Pop: recorte del tapete verde con cinta. */
+:global(html[data-pops-tema='craft']) .opcionPop {
+    border-radius: 0;
+    background: #1E6B60;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transform: rotate(0.6deg);
+}
+
+:global(html[data-pops-tema='craft']) .opcionPop::before {
+    content: '';
+    position: absolute;
+    top: -11px;
+    left: 34px;
+    width: 76px;
+    height: 22px;
+    background: rgba(238, 232, 212, 0.88);
+    transform: rotate(-4deg);
+}
+
+:global(html[data-pops-tema='craft']) .opcionPop:hover {
+    transform: rotate(0deg);
+}
+
+:global(html[data-pops-tema='craft']) .opcionPopIcono {
+    border-radius: 0;
+    background: #F2D21B;
+    color: #1D1D1B;
+    transform: rotate(-4deg);
+}
+
+:global(html[data-pops-tema='craft']) .opcionPopGratis {
+    border-radius: 0;
+    background: #F2D21B;
+    color: #1D1D1B;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    font-weight: 400;
+    text-transform: uppercase;
+    transform: rotate(-3deg);
+}
+
+:global(html[data-pops-tema='craft']) .opcionPop .opcionPopTexto {
+    color: #F3F2EE;
+}
+
+:global(html[data-pops-tema='craft']) .opcionPopFlecha {
+    border-radius: 0;
+    background: #F2D21B;
+    color: #1D1D1B;
+}
+
+/* Hoja del drawer sin redondeo en Craft (antd escribe el radio en línea). */
+:global(html[data-pops-tema='craft']) :global(.ant-drawer-content-wrapper):has(.hojaCuerpo),
+:global(html[data-pops-tema='craft']) :global(.ant-drawer-content-wrapper):has(.hojaCuerpo) :global(.ant-drawer-section),
+:global(html[data-pops-tema='craft']) :global(.ant-drawer-content-wrapper):has(.hojaCuerpo) :global(.ant-drawer-content) {
+    border-radius: 0 !important;
+}
+
+/* Business: 16 px (a la izquierda en escritorio, arriba en la hoja del celular). */
+:global(html[data-pops-tema='business']) :global(.ant-drawer-content-wrapper):has(.hojaCuerpo) {
+    border-radius: 16px 16px 0 0 !important;
+}
+
+@media (min-width: 576px) {
+    :global(html[data-pops-tema='business']) :global(.ant-drawer-content-wrapper):has(.hojaCuerpo) {
+        border-radius: 16px 0 0 16px !important;
+    }
+}

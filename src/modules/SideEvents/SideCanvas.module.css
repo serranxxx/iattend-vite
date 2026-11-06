@@ -454,7 +454,7 @@
        3a): si no, la fecha y el título quedaban más abajo que en la página. */
     height: 80px;
     box-sizing: border-box;
-    border-radius: 999px;
+    border-radius: var(--botones-radio, 999px);
     background-color: var(--blur-color--dark);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1102,6 +1102,23 @@
 
 .card[data-estilo] .grupoEtiqueta {
     text-shadow: var(--etiqueta-sombra);
+    position: relative;
+    z-index: 1;
+}
+
+/* Recorte: cinta adhesiva bajo la etiqueta, pegada al borde de arriba de la
+   tarjeta (--etiqueta-cinta; transparente en los demás estilos). */
+.card[data-estilo='recorte'] .grupoEtiqueta::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -22px;
+    width: 92px;
+    height: 20px;
+    transform: translateX(-50%) rotate(-2deg);
+    background: var(--etiqueta-cinta);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
 }
 
 /* Marca del formulario (Pop): en la página llega como aviso fijo arriba

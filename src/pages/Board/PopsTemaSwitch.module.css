@@ -35,9 +35,16 @@
     outline-offset: 3px;
 }
 
+/* Business: la misma pieza que Pop y Craft ("TU ESTILO / Business" + flecha)
+   en rectángulo navy de 14 px con borde lima y el cuadro lima del ícono. */
 .trigger[data-tema='business'] {
     border-color: var(--biz-lima);
+    border-radius: 14px;
     background: var(--biz-navy);
+}
+
+.trigger[data-tema='business'] .chevron {
+    border-radius: 8px;
 }
 
 .trigger[data-tema='craft'] {
@@ -73,8 +80,17 @@
 }
 
 .trigger[data-tema='business'] .icono {
+    border-radius: 11px;
     background: var(--biz-lima);
 }
+
+/* Craft: el ícono como polaroid (marco blanco, girado). */
+.trigger[data-tema='craft'] .icono {
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: rotate(-4deg);
+}
+
 
 .trigger[data-tema='craft'] .icono {
     border-radius: 3px;
@@ -507,4 +523,112 @@
 .movil .miniMarco {
     width: 96px;
     height: 62px;
+}
+
+/* ── En una barra (editor de Pops, SideEvents.jsx): en el flujo, compacto y
+   con el nombre del estilo; el panel abre hacia abajo a la derecha. ── */
+.selector.enLinea {
+    position: relative;
+    top: auto;
+    right: auto;
+    flex: none;
+}
+
+.enLinea .trigger {
+    height: 40px;
+    padding: 0 12px 0 3px;
+    gap: 8px;
+    box-shadow: none;
+}
+
+.enLinea .icono {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+}
+
+
+.enLinea .panel {
+    top: 50px;
+}
+
+
+/* Craft sobre la barra de papel: que el botón se despegue un poco. */
+.enLinea .trigger[data-tema='craft'] {
+    background: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* ── I attend (solo admin, editor de Pops): el editor original ── */
+.trigger[data-tema='iattend'] {
+    border-color: #16323D;
+    background: #FFFFFF;
+    color: #16323D;
+}
+
+.trigger[data-tema='iattend'] .icono {
+    background: #16323D;
+    color: #FFFFFF;
+}
+
+.trigger[data-tema='iattend'] .chevron {
+    background: rgba(22, 50, 61, 0.08);
+}
+
+.opcion[data-tema='iattend'] .check {
+    color: #FFFFFF;
+}
+
+.mini[data-tema='iattend'] {
+    background-color: #F4F3F1;
+    background-image: radial-gradient(rgba(41, 38, 45, 0.18) 1px, transparent 1.4px);
+    background-size: 8px 8px;
+}
+
+.miniIaRiel {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background: #FFFFFF;
+    border-right: 1px solid #EBEBEB;
+}
+
+.miniIaPanel {
+    left: 12px;
+    top: 0;
+    bottom: 0;
+    width: 38px;
+    background: #FFFFFF;
+    border-radius: 0 8px 8px 0;
+}
+
+.miniIaPieza {
+    left: 50%;
+    top: 14px;
+    width: 30px;
+    height: 54px;
+    margin-left: 4px;
+    border-radius: 5px;
+    background: linear-gradient(160deg, #6E5BD0, #2D2550);
+}
+
+.miniIaCapas {
+    right: 6px;
+    top: 8px;
+    width: 30px;
+    height: 70px;
+    border-radius: 6px;
+    background: #FFFFFF;
+}
+
+.miniIaDock {
+    left: 50%;
+    bottom: 6px;
+    width: 40px;
+    height: 9px;
+    margin-left: -12px;
+    border-radius: 6px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }

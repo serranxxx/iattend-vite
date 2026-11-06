@@ -838,3 +838,13 @@
 .movil .primeroTitulo {
     font-size: 18px;
 }
+
+/* Escritorio con el hero común (PopsHero): el panel ya no se monta encima
+   del hero (el hero termina en su onda lima). */
+.seccion:not(.movil) .panel {
+    margin-top: 8px;
+}
+
+.movil .panel {
+    margin-top: 8px;
+}
