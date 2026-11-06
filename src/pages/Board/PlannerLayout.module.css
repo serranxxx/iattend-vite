@@ -1148,7 +1148,10 @@
     text-transform: uppercase;
 }
 
-.sidebarCraft .navItem:not(.navPops):hover,
+.sidebarCraft .navItem:not(.navPops):hover {
+    background: rgba(242, 210, 27, 0.18);
+}
+
 /* El usuario es su propio bloque: una ficha de papel debajo de la hoja, sobre
    el tapete (así nunca se sale de la hoja ni hace falta scroll). */
 .sidebarCraft .usuario {
