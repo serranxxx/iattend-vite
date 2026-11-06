@@ -10,7 +10,7 @@
 .velo {
     position: absolute;
     inset: 0;
-    background: var(--pops-negro);
+    background: var(--velo, var(--pops-negro));
 }
 
 .grow {
@@ -40,13 +40,13 @@
     height: 260px;
     box-sizing: border-box;
     border-radius: 50%;
-    border: 4px solid var(--pops-rosa);
+    border: 4px solid var(--onda, var(--pops-rosa));
     opacity: 0;
     animation: onda 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s forwards;
 }
 
 .ondaSalida {
-    border-color: var(--pops-tinta);
+    border-color: var(--onda-salida, var(--pops-tinta));
     animation-delay: 0s;
 }
 

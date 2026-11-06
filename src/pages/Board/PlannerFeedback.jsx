@@ -20,6 +20,7 @@ const TIPOS = ['feature', 'data', 'improve']
  * abre el formulario). En celular el formulario es una hoja inferior.
  * variante 'pop': la tarjeta con la estética de la sección Pops (sin ícono,
  * título en Poppins, botón contorno y un destello verde en la esquina).
+ * variante 'craft': sticky note amarilla con cinta (estilo Craft de Pops).
  */
 export const PlannerFeedback = ({ variante = 'tarjeta' }) => {
     const { t } = useTranslation()
@@ -38,14 +39,16 @@ export const PlannerFeedback = ({ variante = 'tarjeta' }) => {
                     <span className={styles.filaCta}>{t('planner_feedback.row_cta')} <ArrowRight size={15} /></span>
                 </button>
             ) : (
-                <div className={`${styles.tarjeta} ${variante === 'pop' ? styles.tarjetaPop : ''}`}>
+                <div className={`${styles.tarjeta} ${variante === 'pop' ? styles.tarjetaPop : ''} ${variante === 'craft' ? styles.tarjetaCraft : ''}`}>
                     {variante === 'pop'
                         ? <span className={styles.destello}><PopSticker kind='spark' color='var(--pops-menta)' size={40} /></span>
-                        : <span className={styles.icono}><Sparkle size={14} fill='currentColor' /></span>}
+                        : variante === 'craft'
+                            ? <span className={styles.cinta} aria-hidden />
+                            : <span className={styles.icono}><Sparkle size={14} fill='currentColor' /></span>}
                     <strong className={styles.titulo}>{t('planner_feedback.card_title')}</strong>
                     <p className={styles.texto}>{t('planner_feedback.card_text')}</p>
                     <button type='button' className={styles.enlace} onClick={() => setAbierto(true)}>
-                        {t('planner_feedback.card_cta')} {variante === 'pop' ? '→' : <ArrowRight size={15} />}
+                        {t('planner_feedback.card_cta')} {variante === 'pop' || variante === 'craft' ? '→' : <ArrowRight size={15} />}
                     </button>
                 </div>
             )}

@@ -1,0 +1,840 @@
+/* /invitations › Pops con estilo Business (PopsBusiness.jsx). Tokens --biz-*
+   en src/styles/index.css. */
+
+.seccion {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background: var(--biz-superficie);
+    color: var(--biz-navy);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* ── Hero ── */
+.hero {
+    position: relative;
+    padding: 44px 56px 110px;
+    background-color: var(--biz-azul);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.09) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1.5px, transparent 1.5px);
+    background-size: 64px 64px;
+    color: #FFF;
+    overflow: hidden;
+}
+
+.saludo {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--biz-claro);
+}
+
+.heroFila {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 40px;
+    margin-top: 18px;
+}
+
+.heroTexto {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.marca {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+}
+
+.wordmark {
+    font-size: clamp(110px, 11vw, 170px);
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 0.85;
+    text-transform: uppercase;
+}
+
+.tag {
+    flex: none;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 0 16px;
+    border: 2.5px solid var(--biz-lima);
+    border-radius: 12px;
+    color: var(--biz-lima);
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.titular {
+    font-size: clamp(30px, 3vw, 42px);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    text-transform: uppercase;
+}
+
+.lima {
+    color: var(--biz-lima);
+}
+
+.azul {
+    color: var(--biz-azul);
+}
+
+.lede {
+    max-width: 600px;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--biz-claro);
+}
+
+.botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.botonLima,
+.botonContorno {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 26px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.botonLima {
+    border: none;
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+    font-weight: 800;
+}
+
+.botonContorno {
+    padding: 0 24px;
+    border: 2px solid #FFF;
+    background: transparent;
+    color: #FFF;
+    font-weight: 700;
+}
+
+.botonLima:hover,
+.botonContorno:hover {
+    transform: translateY(-2px);
+}
+
+.tarjetas {
+    flex: none;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 6px;
+}
+
+.vidrio {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(12px);
+}
+
+.vidrioEtiqueta {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--biz-claro);
+}
+
+.vidrioValor {
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 1;
+}
+
+.vidrioValor small {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--biz-claro);
+    /* Hay un `small { opacity: 0.5 }` global. */
+    opacity: 1;
+}
+
+.barra {
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.25);
+    overflow: hidden;
+}
+
+.barra span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--biz-lima);
+}
+
+.tarjetaLima {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-radius: 24px;
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+}
+
+.limaTexto {
+    display: flex;
+    flex-direction: column;
+}
+
+.limaEtiqueta {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.limaValor {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 1;
+}
+
+.limaMas {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--biz-navy);
+    color: var(--biz-lima);
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.limaMas:hover {
+    transform: rotate(90deg);
+}
+
+/* ── Panel blanco montado sobre el hero ── */
+.panel {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    margin: -60px 32px 0;
+    padding: 40px 40px 48px;
+    border-radius: 32px 32px 0 0;
+    background: #FFF;
+}
+
+.cabeza {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.titulo {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 900;
+    letter-spacing: -0.045em;
+    line-height: 1.04;
+    text-transform: uppercase;
+    color: var(--biz-navy);
+}
+
+.sub {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--biz-texto-suave);
+}
+
+.botonAzul {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px 0 8px;
+    border: none;
+    border-radius: 99px;
+    background: var(--biz-azul);
+    color: #FFF;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.botonAzul:hover {
+    transform: translateY(-2px);
+}
+
+.mas {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+}
+
+/* Aviso de Pops gratis */
+.aviso {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px 18px 22px;
+    border-radius: 20px;
+    background: var(--biz-navy);
+    color: #FFF;
+}
+
+.avisoNumero {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.avisoTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.avisoTexto strong {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.avisoTexto span {
+    font-size: 14px;
+    color: var(--biz-contador);
+}
+
+.avisoBoton {
+    flex: none;
+    height: 44px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 99px;
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* Lista */
+.filas {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.columnas,
+.fila {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) 120px 130px 28px;
+    gap: 18px;
+    align-items: center;
+}
+
+.columnas {
+    padding: 0 16px 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--biz-contador);
+}
+
+.cuerpo {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--biz-linea);
+}
+
+.fila {
+    width: 100%;
+    padding: 14px 16px 14px 12px;
+    border: none;
+    border-bottom: 1px solid var(--biz-linea);
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.fila:last-child {
+    border-bottom: none;
+}
+
+.fila:hover {
+    background: var(--biz-superficie);
+}
+
+.fila:hover .flecha {
+    transform: translateX(4px);
+}
+
+.icono {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.filaTexto {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.nombre {
+    overflow: hidden;
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.estado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--biz-texto-medio);
+}
+
+.punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pops-verde);
+}
+
+.puntoPasado {
+    background: var(--biz-contador);
+}
+
+.fecha {
+    font-size: 14px;
+    color: var(--biz-texto-medio);
+}
+
+.chip {
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.flecha {
+    color: var(--biz-navy);
+    transition: transform 0.2s ease;
+}
+
+.pasada {
+    opacity: 0.55;
+}
+
+.pasadosTitulo {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--biz-contador);
+}
+
+.vacio {
+    margin: 0;
+    padding: 22px 12px;
+    color: var(--biz-texto-medio);
+}
+
+/* Sin Pops todavía */
+.primero {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 32px;
+    border: 1.5px dashed var(--biz-linea);
+    border-radius: 24px;
+    background: var(--biz-superficie);
+}
+
+.primeroTitulo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+}
+
+.primeroTexto {
+    max-width: 520px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--biz-texto-medio);
+}
+
+.pasos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin: 0 0 6px;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pasos li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pasoNumero {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--biz-azul);
+    color: #FFF;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* iPad horizontal: el hero se acomoda en columna cuando no cabe. */
+@media (max-width: 1180px) {
+    .hero {
+        padding: 40px 40px 100px;
+    }
+
+    .heroFila {
+        flex-wrap: wrap;
+    }
+
+    .tarjetas {
+        width: auto;
+        flex-direction: row;
+    }
+
+    .tarjetas > * {
+        flex: 1 1 220px;
+    }
+
+    .panel {
+        margin: -60px 20px 0;
+        padding: 32px 28px 40px;
+    }
+}
+
+/* ── Celular ── */
+.movil {
+    min-height: 100dvh;
+}
+
+.movil .hero {
+    padding: calc(14px + env(safe-area-inset-top)) 22px 64px;
+    background-size: 40px 40px;
+}
+
+.movil .saludo {
+    font-size: 14px;
+}
+
+.movil .heroFila {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.movil .heroTexto {
+    gap: 10px;
+}
+
+.movil .marca {
+    gap: 10px;
+}
+
+.movil .wordmark {
+    font-size: 72px;
+}
+
+.movil .tag {
+    height: 28px;
+    margin-bottom: 6px;
+    padding: 0 9px;
+    border-width: 2px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+.movil .titular {
+    font-size: 20px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.movil .tarjetas {
+    width: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 0;
+}
+
+.movil .vidrio {
+    gap: 6px;
+    padding: 12px 14px;
+    border-color: rgba(255, 255, 255, 0.45);
+    border-radius: 18px;
+}
+
+.movil .vidrioEtiqueta,
+.movil .limaEtiqueta {
+    font-size: 11px;
+}
+
+.movil .vidrioValor {
+    font-size: 26px;
+}
+
+.movil .vidrioValor small {
+    font-size: 13px;
+}
+
+.movil .barra {
+    height: 5px;
+}
+
+.movil .tarjetaLima {
+    padding: 12px 14px;
+    border-radius: 18px;
+}
+
+.movil .limaValor {
+    font-size: 30px;
+}
+
+.mConoce {
+    align-self: flex-start;
+    margin-top: 14px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--biz-claro);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.movil .panel {
+    gap: 12px;
+    margin: -40px 12px 0;
+    padding: 20px 16px calc(120px + env(safe-area-inset-bottom));
+    border-radius: 26px 26px 0 0;
+}
+
+.movil .cabeza {
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.movil .titulos {
+    gap: 0;
+}
+
+.movil .titulo {
+    font-size: 22px;
+    letter-spacing: -0.04em;
+}
+
+.movil .sub {
+    font-size: 12px;
+}
+
+.mComprar {
+    flex: none;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px 0 4px;
+    border: none;
+    border-radius: 99px;
+    background: var(--biz-azul);
+    color: #FFF;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mComprar .mas {
+    width: 30px;
+    height: 30px;
+}
+
+.mAviso {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 16px;
+    background: var(--biz-navy);
+    color: #FFF;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mAvisoNumero {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+    font-weight: 900;
+}
+
+.mAviso .avisoTexto strong {
+    font-size: 13px;
+}
+
+.mAviso .avisoTexto span {
+    font-size: 11px;
+}
+
+.mAvisoFlecha {
+    color: var(--biz-lima);
+    font-weight: 800;
+}
+
+.movil .cuerpo {
+    border-top: none;
+}
+
+.mFila {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid var(--biz-linea);
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mIcono {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.mNombre {
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mSub {
+    font-size: 12px;
+    color: var(--biz-texto-medio);
+}
+
+.mChip {
+    height: 26px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.movil .primero {
+    padding: 20px;
+}
+
+.movil .primeroTitulo {
+    font-size: 18px;
+}

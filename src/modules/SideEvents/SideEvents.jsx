@@ -17,6 +17,7 @@ import { HeaderDashboard } from '../Header/Header'
 import { CreditController } from '../../components/Payment/CreditController/CreditController'
 import { EmojiPop } from './EmojiPop'
 import { emojiSugerido } from '../../helpers/invitation/popEmojis'
+import { copia, estable, mezclarBody } from './mezclarBody'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
@@ -307,6 +308,9 @@ export const SideEvents = () => {
     const { TextArea } = Input;
     const screens = Grid.useBreakpoint();
     const currentRef = useRef(null);
+    // Body como estaba en la base la última vez que este editor lo leyó o lo
+    // guardó: con él, guardar no pisa lo que cambió en otra pestaña (mezclarBody.js).
+    const baseRef = useRef(null)
     // Ids del listado, para refrescar sus números desde la subscripción de
     // realtime sin meter la lista en las dependencias del efecto.
     const sideEventIdsRef = useRef([]);
@@ -2108,12 +2112,23 @@ export const SideEvents = () => {
         };
         const urlImage = link.url ?? (current.url_image === null ? current.body.image : current.url_image)
 
+        // Lo que hay ahora en la base: si otra pestaña (u otro lado) lo cambió
+        // desde que este editor lo leyó, se mezcla por campo en vez de pisarlo.
+        let bodyAGuardar = body
+        let traidos = []
+        const { data: enBase, error: errorLeer } = await supabase.from('side_events').select('body').eq('id', current.id).single()
+        if (!errorLeer && enBase && baseRef.current?.id === current.id) {
+            const mezcla = mezclarBody(baseRef.current.body, body, enBase.body)
+            bodyAGuardar = mezcla.body
+            traidos = mezcla.traidos
+        }
+
         const { error } = await supabase
             .from('side_events')
             .update({
                 name: current.name,
                 url_image: urlImage,
-                body,
+                body: bodyAGuardar,
             })
             .eq('id', current.id);
 
@@ -2123,13 +2138,26 @@ export const SideEvents = () => {
             return false;
         }
 
+        baseRef.current = { id: current.id, body: copia(bodyAGuardar) }
         // La tarjeta del listado también refleja el cambio sin recargar
-        setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, name: current.name, body, url_image: urlImage } : se))
+        setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, name: current.name, body: bodyAGuardar, url_image: urlImage } : se))
         // Ya guardada la nueva imagen del link, fuera las anteriores (sin esperar).
         // La anterior solo si era la automática (había firma) y cambió.
         const anteriorAutomatica = current.body?.linkFirma && current.url_image !== urlImage ? current.url_image : null
         if (esPop && popId) limpiarImagenesDelLink(popId, urlImage, body, anteriorAutomatica)
-        setCurrent((prev) => (prev?.id === current.id ? { ...prev, url_image: urlImage, body: { ...prev.body, linkFirma: body.linkFirma } } : prev))
+        setCurrent((prev) => {
+            if (prev?.id !== current.id) return prev
+            const nuevo = { ...prev.body, linkFirma: body.linkFirma }
+            // Lo que cambió en otro lado también se ve aquí (si no se tocó
+            // mientras se guardaba).
+            for (const k of traidos) {
+                if (estable(prev.body?.[k]) !== estable(body[k])) continue
+                if (bodyAGuardar[k] === undefined) delete nuevo[k]
+                else nuevo[k] = bodyAGuardar[k]
+            }
+            return { ...prev, url_image: urlImage, body: nuevo }
+        })
+        if (traidos.length) console.info('[SideEvents] Se conservaron cambios hechos en otro lado:', traidos.join(', '))
         if (!silencioso) message.success(t('side_events.saved'))
         return true;
     };
@@ -2781,6 +2809,7 @@ export const SideEvents = () => {
 
     const openSideEvent = (item) => {
         currentRef.current = item
+        baseRef.current = { id: item?.id, body: copia(item?.body ?? {}) }
         setCurrent(item)
         setGuestsOpen(false)
         setSection(null)

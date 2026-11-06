@@ -28,7 +28,14 @@ const enUnCuadro = (fn) => {
     setTimeout(una, 60)
 }
 
-export const usePopsTransicion = (origenRef) => {
+// `tema`: estilo de Pops. Business = velo azul y onda lima; Craft = velo
+// verde (el tapete) y onda amarilla; Pop = negro y rosa.
+const COLORES = {
+    business: { '--velo': 'var(--biz-azul)', '--onda': 'var(--biz-lima)', '--onda-salida': 'var(--biz-navy)' },
+    craft: { '--velo': 'var(--craft-verde)', '--onda': 'var(--craft-amarillo)', '--onda-salida': 'var(--craft-verde)' },
+}
+
+export const usePopsTransicion = (origenRef, { tema = 'pop' } = {}) => {
     const [ov, setOv] = useState(null)
     const accionRef = useRef(null)
 
@@ -83,7 +90,10 @@ export const usePopsTransicion = (origenRef) => {
     const overlay = ov && (
         <div
             className={styles.capa}
-            style={{ '--x': `${ov.x}px`, '--y': `${ov.y}px`, '--R': `${ov.R}px` }}
+            style={{
+                '--x': `${ov.x}px`, '--y': `${ov.y}px`, '--R': `${ov.R}px`,
+                ...(COLORES[tema] ?? {}),
+            }}
             aria-hidden
         >
             {ov.fase !== 'tail' && (

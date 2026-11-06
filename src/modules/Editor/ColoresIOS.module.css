@@ -42,6 +42,24 @@
     color: #17161B;
 }
 
+/* Cuentagotas + pestañas en una fila (sin encabezado). */
+.filaSegmento {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filaSegmento .segmento {
+    flex: 1;
+    min-width: 0;
+}
+
+.goteroChico {
+    flex: none;
+    width: 38px;
+    height: 38px;
+}
+
 .segmento {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

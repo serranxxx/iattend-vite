@@ -141,6 +141,40 @@
   --pops-logo-coral: #FF6B5E;
   --pops-logo-turquesa: #3FA7C4;
   --pops-logo-morado: #A06CF0;
+  /* Pops › estilo Business (handoff "Cambia tu estilo"): azul eléctrico + lima. */
+  --biz-azul: #1E45FB;
+  --biz-lima: #CDF22B;
+  --biz-navy: #0B1F3A;
+  --biz-superficie: #F2F4FA;
+  --biz-texto-medio: #4E6385;
+  --biz-texto-suave: #7D8BA3;
+  --biz-contador: #AFC0DB;
+  --biz-claro: #DCE6FF;
+  --biz-linea: #E3E7F2;
+  /* Pops › estilo Craft: tapete de corte, corcho, papel y cinta. */
+  --craft-verde: #1E6B60;
+  --craft-verde-sombra: #134A42;
+  --craft-amarillo: #F2D21B;
+  --craft-tinta: #1D1D1B;
+  --craft-gris-1: #4A4A45;
+  --craft-gris-2: #6A6A64;
+  --craft-gris-3: #8A8A85;
+  --craft-gris-4: #A5A49E;
+  --craft-linea: #D6D4CC;
+  --craft-papel: #F3F2EE;
+  /* Textura "Papel" del Laboratorio de texturas (tabla textures); PlannerLayout
+     la sobreescribe con la URL vigente del catálogo. */
+  --craft-textura-papel: url('https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/assets/Textures/paper.jpg');
+  --craft-sticky: #FFE97A;
+  --craft-sticky-tinta: #5A4E12;
+  --craft-cinta: rgba(238, 232, 212, 0.78);
+  --craft-corcho: #C8955A;
+  --craft-azul: #9FD8F5;
+  --craft-lima: #C8F560;
+  --craft-rosa: #FFB3C9;
+  --craft-sombra-papel: 0 2px 0 rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.22);
+  --craft-tapete: linear-gradient(rgba(255, 255, 255, 0.55) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 255, 255, 0.55) 2px, transparent 2px), linear-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+  --craft-corcho-trama: radial-gradient(#8A5A2B 1px, transparent 1.6px), radial-gradient(#E6BC80 1.1px, transparent 1.7px), radial-gradient(#A8743E 1.3px, transparent 2px), radial-gradient(#F0CF98 0.8px, transparent 1.3px);
   --error-color: #D32F2F;
   --gradient: linear-gradient(to right, var(--mid-blue-500), var(--mid-blue-300));
   --gradient-reverse: linear-gradient(to left, var(--brand-color-500), var(--brand-color-300));

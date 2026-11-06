@@ -944,3 +944,314 @@
 .mainPop::before {
     display: none;
 }
+
+/* ── Pops con estilo Business (handoff "Cambia tu estilo") ──
+   Sobre la estética pop de la barra: navy + azul eléctrico + lima. */
+.sidebarBiz {
+    border-right-color: var(--biz-linea);
+}
+
+.sidebarBiz .comprar {
+    background: var(--biz-navy);
+}
+
+.sidebarBiz .comprarIcono {
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+}
+
+.sidebarBiz .navTitulo {
+    color: var(--biz-texto-suave);
+}
+
+.sidebarBiz .navItem:not(.navPops) {
+    border-radius: 12px;
+    color: var(--biz-navy);
+}
+
+.sidebarBiz .navItem:not(.navPops):hover,
+.sidebarBiz .usuario:hover {
+    background: var(--biz-superficie);
+}
+
+.sidebarBiz .navItem small {
+    color: var(--biz-contador);
+}
+
+.sidebarBiz .navDashboard::before {
+    background: var(--biz-linea);
+}
+
+.sidebarBiz .navPops.navItemActivo,
+.sidebarBiz .navPops.navItemActivo:hover {
+    border-radius: 12px;
+    background: var(--biz-azul);
+    color: #FFF;
+}
+
+.sidebarBiz .navPops.navItemActivo .navPopsCuenta {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+}
+
+.navPopsBiz {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 19px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+}
+
+.navBizTag {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    padding: 0 7px;
+    border: 1.5px solid var(--biz-lima);
+    border-radius: 5px;
+    color: var(--biz-lima);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+/* Celular: pastilla navy, activa azul, "+" lima. */
+.movilBiz {
+    background: var(--biz-superficie);
+}
+
+.movilBiz .pastilla {
+    background: var(--biz-navy);
+    box-shadow: 0 10px 30px rgba(10, 30, 120, 0.3);
+}
+
+.movilBiz .pestana {
+    color: var(--biz-texto-suave);
+}
+
+.movilBiz .pestana[data-activa] {
+    background: var(--biz-azul);
+    color: #FFF;
+}
+
+.movilBiz .pestanaPops[data-activa] span {
+    text-transform: uppercase;
+}
+
+.movilBiz .crear {
+    background: var(--biz-lima);
+    color: var(--biz-navy);
+    box-shadow: 0 10px 30px rgba(10, 30, 120, 0.3);
+}
+
+/* ── Pops con estilo Craft (handoff "Cambia tu estilo", 3 estilos) ──
+   Todo va sobre el tapete de corte; la barra lateral es una hoja de papel
+   con cinta, ligeramente girada. */
+.layoutCraft {
+    background-color: var(--craft-verde);
+    background-image: var(--craft-tapete), var(--craft-textura-papel);
+    background-size: 180px 180px, 180px 180px, 36px 36px, 36px 36px, 900px auto;
+    background-blend-mode: normal, normal, normal, normal, multiply;
+}
+
+.layoutCraft .mainPop {
+    background: transparent;
+}
+
+.sidebarCraft {
+    top: 40px;
+    height: calc(100vh - 70px);
+    height: calc(100dvh - 70px);
+    margin: 40px 22px 30px 28px;
+    padding: 30px 18px 18px;
+    gap: 22px;
+    border: none;
+    border-radius: 0;
+    background: var(--craft-papel);
+    box-shadow: var(--craft-sombra-papel);
+    transform: rotate(-0.6deg);
+    overflow: visible;
+}
+
+.sidebarCraft::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -13px;
+    width: 110px;
+    height: 26px;
+    margin-left: -55px;
+    background: var(--craft-cinta);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    transform: rotate(-2deg);
+}
+
+.sidebarCraft .comprar {
+    height: 50px;
+    min-height: 50px;
+    padding: 0 10px;
+    gap: 8px;
+    border-radius: 0;
+    background: var(--craft-verde);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 3px 0 var(--craft-verde-sombra);
+}
+
+.sidebarCraft .comprar:hover {
+    transform: none;
+    box-shadow: 0 3px 0 var(--craft-verde-sombra);
+}
+
+.sidebarCraft .comprar:active {
+    transform: translateY(3px);
+    box-shadow: none;
+}
+
+.sidebarCraft .comprarIcono {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: none;
+    color: #FFF;
+}
+
+.sidebarCraft .navTitulo {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: var(--craft-gris-3);
+}
+
+.sidebarCraft .navItem:not(.navPops) {
+    padding: 8px 12px;
+    border-radius: 0;
+    color: var(--craft-tinta);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    font-weight: 400;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.sidebarCraft .navItem:not(.navPops):hover,
+.sidebarCraft .usuario:hover {
+    background: rgba(242, 210, 27, 0.18);
+}
+
+.sidebarCraft .navItem small {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--craft-gris-4);
+}
+
+.sidebarCraft .navConIcono svg {
+    display: none;
+}
+
+.sidebarCraft .navDashboard::before {
+    height: 0;
+    background: none;
+    border-top: 1.5px dashed #CFCEC8;
+}
+
+.sidebarCraft .navPops.navItemActivo,
+.sidebarCraft .navPops.navItemActivo:hover {
+    padding: 8px 12px;
+    border-radius: 0;
+    background-color: var(--craft-amarillo);
+    color: var(--craft-tinta);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    transform: rotate(-1.5deg);
+}
+
+.sidebarCraft .navPops.navItemActivo .navPopsCuenta {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--craft-tinta);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.navPopsCraft {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+}
+
+/* Celular: la barra inferior es una tira de papel con cinta; "+" verde cuadrado. */
+.movilCraft {
+    background-color: var(--craft-verde);
+    background-image: var(--craft-textura-papel);
+    background-size: 900px auto;
+    background-blend-mode: multiply;
+}
+
+.movilCraft .pastilla {
+    position: relative;
+    overflow: visible;
+    border-radius: 0;
+    background: var(--craft-papel);
+    box-shadow: var(--craft-sombra-papel);
+    transform: rotate(-0.5deg);
+}
+
+.movilCraft .pastilla::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -13px;
+    z-index: 1;
+    width: 70px;
+    height: 26px;
+    margin-left: -35px;
+    background: var(--craft-cinta);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    transform: rotate(-3deg);
+    pointer-events: none;
+}
+
+.movilCraft .pestana {
+    border-radius: 0;
+    color: var(--craft-gris-3);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.movilCraft .pestana[data-activa] {
+    background: transparent;
+    color: var(--craft-tinta);
+}
+
+.movilCraft .pestana[data-activa] span {
+    padding: 0 6px;
+    background: var(--craft-amarillo);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    text-transform: none;
+}
+
+.movilCraft .crear {
+    border-radius: 0;
+    background: var(--craft-verde);
+    color: #FFF;
+    box-shadow: 0 3px 0 var(--craft-verde-sombra), 0 10px 20px rgba(0, 0, 0, 0.25);
+}

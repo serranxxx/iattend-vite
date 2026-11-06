@@ -1,0 +1,813 @@
+/* /invitations › Pops con estilo Craft (PopsCraft.jsx). Tokens --craft-* en
+   src/styles/index.css. Patrick Hand en MAYÚSCULAS para la interfaz, DM Serif
+   Display para "SURJA," y Poppins 800–900 para nombres y el wordmark. Nunca
+   se gira texto largo de lectura, solo tarjetas, chips y etiquetas cortas. */
+
+.seccion {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 96px 0 0 24px;
+    /* En escritorio el tapete lo pinta el layout (layoutCraft), así sigue
+       la misma cuadrícula detrás de la barra lateral. */
+    color: var(--craft-tinta);
+    font-family: 'Poppins', sans-serif;
+}
+
+.cinta {
+    position: absolute;
+    top: -13px;
+    height: 26px;
+    background: var(--cinta, var(--craft-cinta));
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+}
+
+/* ── Hero ── */
+.hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 40px;
+    padding-right: 56px;
+}
+
+.heroTexto {
+    /* Con menos de ~440 px para el texto, la tarjeta de la semana baja. */
+    flex: 1 1 440px;
+    min-width: 0;
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #FFF;
+}
+
+.saludo {
+    white-space: nowrap;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #FFF;
+}
+
+.paraLoQue {
+    margin-top: 26px;
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: #FFF;
+}
+
+.surjaCaja {
+    position: relative;
+    align-self: flex-start;
+    margin-top: 6px;
+}
+
+.surja {
+    display: block;
+    font-family: 'DM Serif Display', serif;
+    /* "SURJA," mide ~3.2 veces su tamaño de letra: escala con el ancho. */
+    font-size: clamp(64px, 28cqi, 150px);
+    line-height: 0.9;
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #FFF;
+}
+
+/* Sticker de estrella de 18 puntas sobre el final de "SURJA,". */
+.estrella {
+    position: absolute;
+    /* Escala con "SURJA," (mismo contenedor). */
+    --e: clamp(80px, 28cqi, 150px);
+    left: calc(100% - var(--e) * 0.66);
+    top: calc(var(--e) * -0.39);
+    width: var(--e);
+    height: var(--e);
+    transform: rotate(12deg);
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.3));
+    animation: estrellaPega 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes estrellaPega {
+    from { opacity: 0; transform: rotate(-20deg) scale(0.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .estrella { animation: none; }
+}
+
+.estrellaBlanca,
+.estrellaAmarilla {
+    position: absolute;
+    clip-path: polygon(50% 0%, 56.3% 14.5%, 67.1% 3%, 68% 18.8%, 82.1% 11.7%, 77.6% 26.9%, 93.3% 25%, 83.8% 37.7%, 99.2% 41.3%, 86% 50%, 99.2% 58.7%, 83.8% 62.3%, 93.3% 75%, 77.6% 73.1%, 82.1% 88.3%, 68% 81.2%, 67.1% 97%, 56.3% 85.5%, 50% 100%, 43.7% 85.5%, 32.9% 97%, 32% 81.2%, 17.9% 88.3%, 22.4% 73.1%, 6.7% 75%, 16.2% 62.3%, 0.8% 58.7%, 14% 50%, 0.8% 41.3%, 16.2% 37.7%, 6.7% 25%, 22.4% 26.9%, 17.9% 11.7%, 32% 18.8%, 32.9% 3%, 43.7% 14.5%);
+}
+
+.estrellaBlanca {
+    inset: 0;
+    background: #FFF;
+}
+
+.estrellaAmarilla {
+    inset: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--craft-amarillo);
+}
+
+.estrellaAmarilla span {
+    font-size: calc(var(--e, 150px) * 0.27);
+    font-weight: 900;
+    letter-spacing: -0.07em;
+    color: var(--craft-tinta);
+}
+
+/* Tarjeta de papel "Pop de la semana". */
+.semana {
+    position: relative;
+    flex: none;
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 30px 28px 26px;
+    background: var(--craft-papel);
+    box-shadow: var(--craft-sombra-papel);
+    transform: rotate(1.2deg);
+}
+
+.semanaEtiqueta {
+    align-self: flex-start;
+    padding: 3px 10px;
+    background: var(--craft-amarillo);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.semanaTitulo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 48px;
+    line-height: 1;
+}
+
+.semanaSub {
+    font-size: 13px;
+    color: #9A9993;
+}
+
+.semanaTexto {
+    font-size: 15px;
+    line-height: 1.5;
+    color: #5A5A55;
+}
+
+.semanaBotones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.botonVerde,
+.botonContorno,
+.botonPapel {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    border: none;
+    border-radius: 0;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.botonVerde {
+    background: var(--craft-verde);
+    color: #FFF;
+    box-shadow: 0 3px 0 var(--craft-verde-sombra);
+}
+
+.botonVerde:active,
+.comprar:active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 var(--craft-verde-sombra);
+}
+
+.botonContorno {
+    padding: 0 16px;
+    border: 1.5px solid #B5B4AE;
+    background: transparent;
+    color: var(--craft-gris-1);
+}
+
+.botonContorno:hover {
+    border-color: var(--craft-gris-1);
+}
+
+.botonPapel {
+    height: 44px;
+    background: var(--craft-papel);
+    color: var(--craft-tinta);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* ── Tablero de corcho ── */
+.corcho {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 40px;
+    padding: 40px 56px 48px 40px;
+    background-color: var(--craft-corcho);
+    background-image: var(--craft-corcho-trama), var(--craft-textura-papel);
+    background-size: 7px 7px, 9px 11px, 13px 12px, 5px 6px, 900px auto;
+    background-position: 0 0, 3px 4px, 6px 2px, 2px 5px, -300px -200px;
+    background-blend-mode: normal, normal, normal, normal, multiply;
+    box-shadow: -8px 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.cabeza {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.etiquetaPapel {
+    position: relative;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px 22px 14px;
+    background: var(--craft-papel);
+    box-shadow: var(--craft-sombra-papel);
+    transform: rotate(-1deg);
+}
+
+.titulo {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -0.045em;
+    line-height: 1.05;
+    white-space: nowrap;
+}
+
+.resalte {
+    padding: 0 6px;
+    background: var(--craft-amarillo);
+}
+
+.sub {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    text-transform: uppercase;
+    color: var(--craft-gris-2);
+}
+
+.comprar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px 0 10px;
+    border: none;
+    background: var(--craft-verde);
+    color: #FFF;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 21px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 4px 0 var(--craft-verde-sombra), 0 10px 18px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.comprarMas {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: var(--craft-amarillo);
+    color: var(--craft-tinta);
+    font-family: 'Poppins', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+/* Sticky de Pops gratis */
+.sticky {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px 16px 22px;
+    background: var(--craft-sticky);
+    box-shadow: 0 8px 14px rgba(0, 0, 0, 0.2);
+    transform: rotate(-0.4deg);
+}
+
+.stickyEmoji {
+    font-size: 32px;
+}
+
+.stickyTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.stickyTitulo {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 24px;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.stickySub {
+    font-size: 14px;
+    color: var(--craft-sticky-tinta);
+}
+
+.stickyFlecha {
+    padding: 0 4px;
+    border: none;
+    background: none;
+    color: var(--craft-tinta);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* Hoja de papel con la lista */
+.hoja {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 22px 22px 10px;
+    background: var(--craft-papel);
+    box-shadow: var(--craft-sombra-papel);
+}
+
+.columnas,
+.fila {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) 130px 130px 28px;
+    gap: 18px;
+    align-items: center;
+}
+
+.columnas {
+    padding: 0 16px 10px 12px;
+    border-bottom: 2px solid var(--craft-tinta);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--craft-gris-3);
+}
+
+.fila {
+    width: 100%;
+    padding: 14px 16px 14px 12px;
+    border: none;
+    border-bottom: 1.5px dashed var(--craft-linea);
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.fila:last-child {
+    border-bottom: none;
+}
+
+.fila:hover {
+    background: rgba(242, 210, 27, 0.12);
+}
+
+.fila:hover .flecha {
+    transform: translateX(4px);
+}
+
+.cuadro {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    color: var(--craft-tinta);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
+    transform: rotate(-3deg);
+}
+
+.filaTexto {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nombre {
+    overflow: hidden;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.estado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    text-transform: uppercase;
+    color: var(--craft-gris-2);
+}
+
+.punto {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--pops-verde);
+}
+
+.puntoPasado {
+    background: var(--craft-gris-4);
+}
+
+.fecha {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    text-transform: uppercase;
+    color: var(--craft-gris-1);
+}
+
+.chip {
+    display: inline-block;
+    padding: 1px 10px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    transform: rotate(-1.5deg);
+}
+
+.flecha {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 22px;
+    transition: transform 0.2s ease;
+}
+
+.pasada {
+    opacity: 0.55;
+}
+
+.pasadosTitulo {
+    margin-top: 16px;
+    padding: 0 12px 6px;
+    border-bottom: 2px solid var(--craft-tinta);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--craft-gris-3);
+}
+
+.vacio {
+    margin: 0;
+    padding: 22px 12px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    color: var(--craft-gris-2);
+}
+
+/* Sin Pops todavía */
+.primero {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 10px 10px 22px;
+}
+
+.primeroTitulo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 34px;
+    line-height: 1.05;
+}
+
+.primeroTexto {
+    max-width: 520px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #5A5A55;
+}
+
+.pasos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin: 0 0 6px;
+    padding: 0;
+    list-style: none;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    text-transform: uppercase;
+}
+
+.pasos li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pasoNumero {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    transform: rotate(-3deg);
+}
+
+/* iPad horizontal: la tarjeta de la semana baja cuando no cabe. */
+@media (max-width: 1240px) {
+    .hero {
+        flex-wrap: wrap;
+        padding-right: 32px;
+    }
+
+    .semana {
+        width: min(380px, 100%);
+    }
+
+    .corcho {
+        padding: 36px 32px 40px 28px;
+    }
+
+    .columnas,
+    .fila {
+        grid-template-columns: 56px minmax(0, 1fr) 90px 120px 22px;
+        gap: 12px;
+    }
+}
+
+/* ── Celular ── */
+.movil {
+    min-height: 100dvh;
+    padding: 0;
+    background-color: var(--craft-verde);
+    background-image: var(--craft-tapete), var(--craft-textura-papel);
+    background-size: 180px 180px, 180px 180px, 36px 36px, 36px 36px, 900px auto;
+    background-blend-mode: normal, normal, normal, normal, multiply;
+}
+
+.mHero {
+    display: flex;
+    flex-direction: column;
+    padding: calc(20px + env(safe-area-inset-top)) 22px 0;
+    color: #FFF;
+}
+
+.movil .saludo {
+    white-space: normal;
+    font-size: 17px;
+    padding-right: 76px;
+}
+
+.movil .paraLoQue {
+    margin-top: 18px;
+    font-size: 26px;
+}
+
+.movil .surjaCaja {
+    margin-top: 4px;
+}
+
+.movil .surja {
+    font-size: 80px;
+}
+
+.mEstrella {
+    --e: 84px;
+    left: calc(100% - 28px);
+    top: -38px;
+}
+
+.mEstrella .estrellaAmarilla {
+    inset: 5px;
+}
+
+.mConoce {
+    align-self: flex-start;
+    height: 42px;
+    margin-top: 18px;
+    padding: 0 16px;
+    border: none;
+    background: var(--craft-papel);
+    color: var(--craft-tinta);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transform: rotate(-1deg);
+    cursor: pointer;
+}
+
+.pestanas {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: -8px;
+    padding: 26px 20px 0 22px;
+}
+
+.mComprar {
+    margin-left: auto;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px 0 5px;
+    border: none;
+    background: var(--craft-verde);
+    color: #FFF;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 3px 0 var(--craft-verde-sombra), 0 6px 12px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.mComprar .comprarMas {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+}
+
+.mComprar:active {
+    transform: translateY(3px);
+    box-shadow: none;
+}
+
+.pestana {
+    margin-top: 4px;
+    padding: 6px 14px 14px;
+    border: none;
+    background: rgba(243, 242, 238, 0.9);
+    color: var(--craft-tinta);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.pestana[data-on] {
+    margin-top: 0;
+    background-color: var(--craft-amarillo);
+}
+
+.mCorcho {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 22px 10px 0;
+    padding: 28px 16px calc(124px + env(safe-area-inset-bottom));
+    gap: 22px;
+    background-color: var(--craft-corcho);
+    background-image: var(--craft-corcho-trama), var(--craft-textura-papel);
+    background-size: 7px 7px, 9px 11px, 13px 12px, 5px 6px, 900px auto;
+    background-position: 0 0, 3px 4px, 6px 2px, 2px 5px, -300px -200px;
+    background-blend-mode: normal, normal, normal, normal, multiply;
+    box-shadow: inset 0 0 0 4px rgba(90, 55, 20, 0.35), inset 0 6px 14px rgba(0, 0, 0, 0.18), 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.pestanas + .mCorcho {
+    margin-top: 0;
+}
+
+.movil .sticky {
+    gap: 10px;
+    padding: 10px 14px;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.movil .stickyEmoji {
+    font-size: 22px;
+}
+
+.movil .stickyTitulo {
+    font-size: 18px;
+}
+
+.tira {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 14px 14px 12px;
+    border: none;
+    background: var(--craft-papel);
+    color: var(--craft-tinta);
+    font-family: inherit;
+    text-align: left;
+    box-shadow: var(--craft-sombra-papel);
+    cursor: pointer;
+}
+
+.tiraTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tiraNombre {
+    overflow: hidden;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.tiraCuadro {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    font-size: 21px;
+    color: var(--craft-tinta);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+    transform: rotate(-3deg);
+}
+
+.tiraFecha {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    text-transform: uppercase;
+    color: var(--craft-gris-2);
+}
+
+.tiraChip {
+    flex: none;
+    padding: 1px 8px;
+    transform: rotate(-2deg);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 15px;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.vacioPapel {
+    margin: 0;
+    padding: 16px;
+    background: var(--craft-papel);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    color: var(--craft-gris-2);
+    box-shadow: var(--craft-sombra-papel);
+}
+
+.movil .hoja {
+    padding: 18px 14px 6px;
+}
+
+.movil .primeroTitulo {
+    font-size: 26px;
+}
+

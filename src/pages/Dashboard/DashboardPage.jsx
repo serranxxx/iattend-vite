@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './dashboard.css'
 import { Button, Drawer, message } from 'antd'
-import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { FooterApp } from '../../modules/Footer/FooterApp'
 import { supabase } from '../../lib/supabase'
 import { HeaderDashboard } from '../../modules/Header/Header'
@@ -20,6 +19,8 @@ import { DashboardMobile } from './DashboardMobile'
 import { useBentoFit } from './useBentoFit'
 import { TablesSketch } from './TablesSketch'
 import { TablesPage } from '../../modules/GuestManagement/Tables/TablesPage'
+import { PortadaMiniatura } from './PortadaMiniatura';
+import { portadaDeInvitacion } from '../../helpers/invitation/portadaInvitacion';
 
 // Foto fija de la tarjeta del Save the Date (bento y versión móvil).
 const STD_CARD_IMG = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/f282bb98-6d9c-446d-8ef6-1dacff261732/1788881927563-savethed.jpg'
@@ -301,8 +302,10 @@ export const DashboardPage = () => {
         return { day: d.getDate(), month: month.charAt(0).toUpperCase() + month.slice(1), year: d.getFullYear() };
     };
 
-    const realCoverImg = toFirstString(invitation?.cover?.image?.prod);
-    const coverImg = realCoverImg;
+    // Portada (foto o, si solo hay videos, un cuadro del video): PortadaMiniatura.
+    const coverSrc = invitation?.cover?.image?.prod;
+    const portada = portadaDeInvitacion(coverSrc);
+    const coverImg = portada.foto ?? portada.video;
     const coverTitle = invitation?.cover?.title?.text?.value ?? '';
     const coverChip = invitation?.cover?.date?.value ? fmtChip(invitation.cover.date.value) : null;
 
@@ -487,7 +490,8 @@ export const DashboardPage = () => {
                         ) : isMobile ? <DashboardMobile
                             coverTitle={coverTitle}
                             coverChip={coverChip}
-                            coverImg={realCoverImg}
+                            coverImg={coverImg}
+                            coverSrc={coverSrc}
                             published={published}
                             stats={stats}
                             /* "137 de 150": enviados contra el cupo del plan */
@@ -521,7 +525,7 @@ export const DashboardPage = () => {
                                     <div className='bento_inv_scene'>
                                         <div className='bento_inv_minicard'>
                                             <div className='bento_inv_photo'>
-                                                {coverImg && <img src={coverImg} alt='' />}
+                                                <PortadaMiniatura src={coverSrc} />
                                             </div>
                                             <div className='bento_inv_names'>{coverTitle}</div>
                                             {coverChip && <div className='bento_inv_date'>{coverChip.day} · {coverChip.month} · {coverChip.year}</div>}

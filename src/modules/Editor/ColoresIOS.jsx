@@ -161,12 +161,21 @@ export const ColoresIOS = ({ value, onChange, opacity = null, onOpacity = null, 
                 <span className={s.goteroHueco} />
             </div>}
 
-            <div className={s.segmento} role="tablist">
-                {VISTAS.map((v) => (
-                    <button key={v} type="button" role="tab" aria-selected={vista === v} className={s.segBtn} data-on={vista === v || undefined} onClick={() => cambiarVista(v)}>
-                        {t(`build_editor.colors_${v}`)}
+            {/* Sin encabezado (drawer del celular), el cuentagotas va a la
+                izquierda de las pestañas. */}
+            <div className={!cabeza && gotero ? s.filaSegmento : undefined} style={cabeza || !gotero ? { display: 'contents' } : undefined}>
+                {!cabeza && gotero && (
+                    <button type="button" className={`${s.gotero} ${s.goteroChico}`} onClick={usarGotero} aria-label={t('build_editor.colors_eyedropper')} title={t('build_editor.colors_eyedropper')}>
+                        <Pipette size={18} />
                     </button>
-                ))}
+                )}
+                <div className={s.segmento} role="tablist">
+                    {VISTAS.map((v) => (
+                        <button key={v} type="button" role="tab" aria-selected={vista === v} className={s.segBtn} data-on={vista === v || undefined} onClick={() => cambiarVista(v)}>
+                            {t(`build_editor.colors_${v}`)}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {vista === 'grid' && (

@@ -3,6 +3,7 @@ import { ImageIcon, Share2, Star } from 'lucide-react'
 import { CountUp } from './CountUp'
 import { TablesSketch } from './TablesSketch'
 import styles from './DashboardMobile.module.css'
+import { PortadaMiniatura } from './PortadaMiniatura'
 
 /* ═══════════════════════════════════════════════════════════════
    Tablero del evento en móvil — handoff "1b · Hero + carriles".
@@ -26,6 +27,7 @@ export const DashboardMobile = ({
     coverTitle,
     coverChip,
     coverImg,
+    coverSrc,
     published,
     stats,
     totalPasses,
@@ -57,7 +59,7 @@ export const DashboardMobile = ({
             <button type="button" {...rise(0)} className={`${styles.hero} ${styles.rise}`} onClick={onOpen('build')}>
                 <span className={styles.heroThumb}>
                     {coverImg
-                        ? <img src={coverImg} alt="" />
+                        ? <PortadaMiniatura src={coverSrc} />
                         : <span className={styles.heroThumbEmpty}><ImageIcon size={20} /></span>
                     }
                     <span className={styles.heroThumbName}>{coverTitle}</span>

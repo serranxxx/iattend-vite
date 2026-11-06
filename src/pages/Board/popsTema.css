@@ -1,0 +1,26 @@
+/* Cambio de estilo de Pops (usePopsTema.js): View Transition con el círculo
+   que revela el tema nuevo. Global a propósito: los pseudo-elementos de
+   ::view-transition viven en la raíz del documento. Solo aplica mientras el
+   html lleva data-pops-tema-cambio, para no tocar otras transiciones. */
+
+html[data-pops-tema-cambio]::view-transition-old(root),
+html[data-pops-tema-cambio]::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+html[data-pops-tema-cambio]::view-transition-group(pops-anillo),
+html[data-pops-tema-cambio]::view-transition-new(pops-anillo) {
+    animation: none;
+}
+
+/* El anillo: existe solo durante la transición; lo anima usePopsTema. */
+.pops-anillo {
+    position: fixed;
+    z-index: 2000;
+    box-sizing: border-box;
+    border-style: solid;
+    border-radius: 50%;
+    pointer-events: none;
+    view-transition-name: pops-anillo;
+}

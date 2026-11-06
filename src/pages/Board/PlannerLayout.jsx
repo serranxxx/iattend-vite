@@ -15,6 +15,8 @@ import { PlannerSkeleton } from './PlannerSkeleton'
 import { PopsLogo } from '../../components/PopsLogo/PopsLogo'
 import { PopsSection } from './PopsSection'
 import { usePopsTransicion } from './usePopsTransicion'
+import { usePopsTema } from './usePopsTema'
+import { useTextures } from '../../context/TexturesContext'
 import { PopsOnboarding } from '../../components/PopsOnboarding/PopsOnboarding'
 
 
@@ -166,7 +168,18 @@ export const PlannerLayout = ({
     }, [celular, pestanaVisible])
     // Sección Pops con su estética propia (escritorio y celular).
     const modoPops = !enDashboard && activa?.key === 'pops'
-    const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef)
+    // Estilo de Pops (Pop | Business, handoff "Cambia tu estilo"): cambia la
+    // sección, la barra lateral / inferior y el velo de entrada.
+    const { tema: temaPops, cambiar: cambiarTemaPops } = usePopsTema()
+    const business = temaPops === 'business'
+    const modoBiz = modoPops && business
+    const modoCraft = modoPops && temaPops === 'craft'
+    // Craft usa la textura "Papel" del Laboratorio de texturas (tabla
+    // textures); si cambia allá, cambia aquí. Sin ella, la de index.css.
+    const { textures } = useTextures()
+    const texturaPapel = textures.find(tx => tx.name?.trim().toLowerCase() === 'papel')?.image
+    const varsCraft = modoCraft && texturaPapel ? { '--craft-textura-papel': `url("${texturaPapel}")` } : undefined
+    const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef, { tema: temaPops })
     // Al entrar a Pops (de otra sección, del dashboard o al volver de otra
     // página) se empieza siempre desde arriba. Con la transición, el salto
     // ocurre mientras el velo negro tapa la pantalla.
@@ -264,6 +277,8 @@ export const PlannerLayout = ({
             onGratisPop={onGratisPop}
             onConoce={() => setConocePops(true)}
             onAbrir={onAbrir}
+            tema={temaPops}
+            onCambiarTema={cambiarTemaPops}
         />
     ) : activa?.key === 'test' ? (
         <PlannerExplore
@@ -342,7 +357,7 @@ export const PlannerLayout = ({
         const crear = () => (gratis > 0 || (esCliente && gratisPop > 0) ? setHojaAlta(true) : onComprar())
 
         return (
-            <div className={`${styles.movil} ${modoPops ? styles.movilPop : ''}`}>
+            <div className={`${styles.movil} ${modoPops ? styles.movilPop : ''} ${modoBiz ? styles.movilBiz : ''} ${modoCraft ? styles.movilCraft : ''}`} style={varsCraft}>
                 {veloPops}
                 {modalConocePops}
                 {modoPops ? (
@@ -361,6 +376,8 @@ export const PlannerLayout = ({
                                     onGratisPop={onGratisPop}
                                     onConoce={() => setConocePops(true)}
                                     onAbrir={onAbrir}
+                                    tema={temaPops}
+                                    onCambiarTema={cambiarTemaPops}
                                 />
                             )}
                     </main>
@@ -445,10 +462,10 @@ export const PlannerLayout = ({
     }
 
     return (
-        <div className={`${styles.layout} ${modoPops ? styles.layoutPop : ''}`}>
+        <div className={`${styles.layout} ${modoPops ? styles.layoutPop : ''} ${modoCraft ? styles.layoutCraft : ''}`} style={varsCraft}>
             {veloPops}
             {modalConocePops}
-            <aside className={`${styles.sidebar} ${modoPops ? styles.sidebarPop : ''}`}>
+            <aside className={`${styles.sidebar} ${modoPops ? styles.sidebarPop : ''} ${modoBiz ? styles.sidebarBiz : ''} ${modoCraft ? styles.sidebarCraft : ''}`}>
                 <img src={modoPops ? logoNegro : logoBlue} alt='I attend' className={styles.logo} />
 
                 <div className={styles.acciones}>
@@ -474,7 +491,13 @@ export const PlannerLayout = ({
                             onMouseEnter={s.key === 'pops' && !modoPops ? () => setHoverPops(true) : undefined}
                             onMouseLeave={s.key === 'pops' ? () => setHoverPops(false) : undefined}
                         >
-                            {s.key === 'pops' && (hoverPops || modoPops)
+                            {s.key === 'pops' && modoCraft
+                                // Estilo Craft: "Pops" en Poppins 900 sobre la pestaña amarilla.
+                                ? <span className={styles.navPopsCraft}>Pops</span>
+                                : s.key === 'pops' && modoBiz
+                                // Estilo Business: "Pops" en negritas + la etiqueta BUSINESS.
+                                ? <span className={styles.navPopsBiz}>Pops<span className={styles.navBizTag}>{t('pops_section.biz_tag_short')}</span></span>
+                                : s.key === 'pops' && (hoverPops || modoPops)
                                 // En reposo "Pops" se ve como las demás; con el hover (o
                                 // dentro de Pops) es el wordmark animado (handoff "Pops Logo").
                                 ? <PopsLogo size={20} activo={hoverPops && !modoPops} />
@@ -509,7 +532,7 @@ export const PlannerLayout = ({
                 <div className={styles.pie}>
                     {!esCliente && (
                         <div className={styles.sugerencias}>
-                            <PlannerFeedback variante={modoPops ? 'pop' : 'tarjeta'} />
+                            <PlannerFeedback variante={modoCraft ? 'craft' : modoPops && !modoBiz ? 'pop' : 'tarjeta'} />
                         </div>
                     )}
                     <Dropdown menu={menuUsuario} trigger={['click']} placement='topLeft'>

@@ -4,6 +4,9 @@ import { ArrowRight, SmilePlus } from 'lucide-react'
 import { PopsLogo } from '../../components/PopsLogo/PopsLogo'
 import { PopSticker } from '../../components/PopSticker/PopSticker'
 import { colorDePop, emojiDePop } from '../../helpers/invitation/popEvents'
+import { PopsBusiness } from './PopsBusiness'
+import { PopsCraft } from './PopsCraft'
+import { PopsTemaSwitch } from './PopsTemaSwitch'
 import styles from './PopsSection.module.css'
 
 /**
@@ -14,6 +17,9 @@ import styles from './PopsSection.module.css'
  * todo hace scroll junto y crear va en el "+" de la barra inferior.
  *
  * items: los Pops en forma de invitación (popComoInvitacion, `_pop` = fila).
+ * tema / onCambiarTema: estilo de la sección ('pop' | 'business' | 'craft',
+ * handoff "Cambia tu estilo"); 'business' la pinta PopsBusiness y 'craft'
+ * PopsCraft. El selector de estilo va arriba a la derecha en los tres.
  */
 
 // Collage 300 × 320 (ST11 del prototipo).
@@ -96,7 +102,17 @@ export const StickerFlotante = ({ kind, color, size, rot = 0, delay = 0, entrada
     </span>
 )
 
-export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir }) => {
+export const PopsSection = (props) => {
+    const { movil = false, tema = 'pop', onCambiarTema } = props
+    const switchTema = onCambiarTema && (
+        <PopsTemaSwitch tema={tema} movil={movil} onCambiar={(nuevo, el) => onCambiarTema(nuevo, el, { movil })} />
+    )
+    if (tema === 'business') return <PopsBusiness {...props} switchTema={switchTema} />
+    if (tema === 'craft') return <PopsCraft {...props} switchTema={switchTema} />
+    return <PopsPop {...props} switchTema={switchTema} />
+}
+
+const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema }) => {
     const { t, i18n } = useTranslation()
     const hoy = dayjs().startOf('day')
 
@@ -206,6 +222,7 @@ export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, pue
 
         return (
             <div className={`${styles.seccion} ${styles.mSeccion}`}>
+                {switchTema}
                 <section className={styles.mHero}>
                     <div className={styles.mCollage}>
                         {STICKERS_MOVIL.map((s, i) => (
@@ -277,6 +294,7 @@ export const PopsSection = ({ movil = false, greeting, items, gratisPop = 0, pue
 
     return (
         <div className={styles.seccion}>
+            {switchTema}
             <section className={styles.hero}>
                 <div className={styles.heroFila}>
                     <div className={styles.heroTexto}>

@@ -8,7 +8,6 @@ import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from '../efectosData'
 import { ESTILOS_BLOQUE, MINI_ESTILO, estiloDe } from '../estilosBloque'
 import { PINCEL, PINCELES } from '../../Editor/dibujoData'
 import { AjustesPincel } from './AjustesPincel'
-import { EMOJIS_POP } from '../../../helpers/invitation/popEmojis'
 import base from '../../Invitation/Build/PageSections/ToolPanels.module.css'
 import ed from '../SideEventEditor.module.css'
 import own from './SideWorkspace.module.css'
@@ -45,43 +44,16 @@ export const DesignPanel = ({ current, setBody, esPop, movil = false }) => {
 
     return (
         <>
-            {/* Emoji del Pop: en escritorio se elige en el encabezado, junto al
-                nombre (EmojiPop); en el celular, aquí. '' = sin emoji. */}
-            {esPop && movil && (
-                <div className={base.group}>
-                    <span className={base.groupLabel}>{t('side_events.pop_emoji')}</span>
-                    <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.pop_emoji_hint')}</span>
-                    <div className={own.emojiActual}>
-                        {/* Así se ve en la lista de Pops: su emoji sobre el color del tema. */}
-                        <span className={own.emojiMuestra} style={{ background: color }} aria-hidden>{body.emoji || ''}</span>
-                        <span className={own.emojiActualTexto}>{body.emoji ? t('side_events.pop_emoji_selected') : t('side_events.pop_emoji_none')}</span>
-                        {body.emoji && (
-                            <button type='button' className={own.pasteBtn} onClick={() => setBody({ emoji: '' })}>{t('side_events.pop_emoji_remove')}</button>
-                        )}
-                    </div>
-                    <div className={own.emojiGrid} role='radiogroup' aria-label={t('side_events.pop_emoji')}>
-                        {EMOJIS_POP.map((e) => (
-                            <button
-                                key={e}
-                                type='button'
-                                role='radio'
-                                aria-checked={body.emoji === e}
-                                className={own.emojiOpcion}
-                                data-on={body.emoji === e || undefined}
-                                onClick={() => setBody({ emoji: body.emoji === e ? '' : e })}
-                            >
-                                {e}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             <div className={base.group}>
                 <span className={base.groupLabel}>{t('side_events.theme_color')}</span>
                 <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.panel_color_hint')}</span>
                 {movil ? (
                     <ColoresIOS value={color} onChange={(hex, o) => setBody({ color: hex }, o)} className={own.coloresMovil} cabeza={false} conGuardados={false} />
+                ) : esPop ? (
+                    // Pop en escritorio: el mismo selector estilo iOS del
+                    // dibujo (cuentagotas, Cuadrícula · Espectro · Deslizadores
+                    // y colores guardados), a lo ancho del panel.
+                    <ColoresIOS value={color} onChange={(hex, o) => setBody({ color: hex }, o)} className={own.coloresMovil} />
                 ) : (
                     <>
                         <SelectorColor value={color} onChange={(hex) => setBody({ color: hex })} imagenFondo={body.image} />
