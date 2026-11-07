@@ -2882,6 +2882,9 @@
     "submit": "Send access",
     "submit_existing": "Assign and notify",
     "pick_client_placeholder": "Search by email or event",
+    "use_email": "Send to {{correo}}",
+    "use_email_hint": "If they already have an I attend account they get a notice; if not, one is created.",
+    "type_email": "Type your client's email",
     "pick_client": "Client",
     "mode_existing": "Existing client",
     "mode_new": "New client",
@@ -3597,6 +3600,7 @@
     "kind_text": "For whatever comes up: a brunch, a dinner or the sales meeting. Ready in minutes."
   },
   "pops_onboarding": {
+    "loading": "Loading…",
     "title": "Meet Pops",
     "skip": "Skip",
     "close": "Close",

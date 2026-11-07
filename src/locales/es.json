@@ -2882,6 +2882,9 @@
     "submit": "Enviar accesos",
     "submit_existing": "Asignar y avisar",
     "pick_client_placeholder": "Busca por correo o evento",
+    "use_email": "Enviar a {{correo}}",
+    "use_email_hint": "Si ya tiene cuenta en I attend, le llega un aviso; si no, se le crea.",
+    "type_email": "Escribe el correo de tu cliente",
     "pick_client": "Cliente",
     "mode_existing": "Cliente existente",
     "mode_new": "Cliente nuevo",
@@ -3597,6 +3600,7 @@
     "kind_text": "Para lo que surja: un brunch, una cena o la junta de ventas. Listo en minutos."
   },
   "pops_onboarding": {
+    "loading": "Cargando…",
     "title": "Conoce los Pops",
     "skip": "Saltar",
     "close": "Cerrar",

@@ -157,3 +157,46 @@
     .pie > button { height: 44px; padding-inline: 8px 14px; font-size: 14px; }
     .pie .mas { width: 30px; height: 30px; font-size: 18px; }
 }
+
+/* Mientras se carga lo suficiente para arrancar sin tirones (sobre el póster). */
+.cargando {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 99px;
+    background: rgba(17, 17, 17, 0.82);
+    color: #FFFFFF;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transform: translateX(-50%);
+    animation: cargandoEntra 0.25s ease both;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--pops-lima, #C8F560);
+    border-radius: 50%;
+    animation: gira 0.8s linear infinite;
+}
+
+@keyframes gira {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes cargandoEntra {
+    from { opacity: 0; transform: translate(-50%, 6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner,
+    .cargando {
+        animation: none;
+    }
+}

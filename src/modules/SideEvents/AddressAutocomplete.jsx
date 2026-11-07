@@ -27,7 +27,7 @@ export const AddressAutocomplete = ({ onSelect, className = 'sidee_autocomplete_
         const init = () => {
             if (!inputRef.current) return
             const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-                fields: ['address_components', 'url'],
+                fields: ['address_components', 'url', 'name'],
             })
             autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace()
@@ -36,15 +36,22 @@ export const AddressAutocomplete = ({ onSelect, className = 'sidee_autocomplete_
                 const get = (type) =>
                     place.address_components.find(c => c.types.includes(type))?.long_name ?? ''
 
+                // Google no siempre trae número, colonia o código postal (una
+                // carretera, un rancho, un salón). La tarjeta de ubicación pide la
+                // dirección completa (direccionCompleta en tarjetasSide.js), así
+                // que lo que falte se rellena con algo razonable que el
+                // organizador puede corregir en "Agregar manual".
+                const ciudad = get('locality') || get('administrative_area_level_2')
+                const estado = get('administrative_area_level_1')
                 onSelect({
-                    street: get('route'),
-                    number: get('street_number'),
+                    street: get('route') || place.name || 'Domicilio conocido',
+                    number: get('street_number') || 'S/N',
                     neighborhood:
-                        get('sublocality_level_1') || get('neighborhood') || get('sublocality'),
-                    city: get('locality') || get('administrative_area_level_2'),
-                    state: get('administrative_area_level_1'),
-                    country: get('country'),
-                    zipcode: get('postal_code'),
+                        get('sublocality_level_1') || get('neighborhood') || get('sublocality') || 'Centro',
+                    city: ciudad || estado || 'Ciudad',
+                    state: estado || ciudad || 'Estado',
+                    country: get('country') || 'México',
+                    zipcode: get('postal_code') || '00000',
                     url: place.url ?? '',
                 })
 

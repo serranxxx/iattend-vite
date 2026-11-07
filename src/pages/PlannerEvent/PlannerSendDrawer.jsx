@@ -47,6 +47,13 @@ const SendFlow = ({ invitation, clientes, onClose, onSent }) => {
     const [nombre, setNombre] = useState('')
     const [correo, setCorreo] = useState('')
     const [elegido, setElegido] = useState(null)
+    // Lo que se escribe en el buscador de "Cliente existente": si es un correo
+    // que no está en la lista (una cuenta de I attend que aún no es su
+    // cliente), se ofrece usarlo; el backend la reconoce por correo. No se
+    // listan otras cuentas de la plataforma.
+    const [busqueda, setBusqueda] = useState('')
+    const correoEscrito = busqueda.trim().toLowerCase()
+    const otroCorreo = EMAIL_RE.test(correoEscrito) && !clientes.some(c => c.correo === correoEscrito) ? correoEscrito : null
     const [enviando, setEnviando] = useState(false)
     const [error, setError] = useState('')
     const [enviado, setEnviado] = useState(null)
@@ -128,8 +135,22 @@ const SendFlow = ({ invitation, clientes, onClose, onSent }) => {
                         placeholder={t('planner_send.pick_client_placeholder')}
                         value={elegido}
                         onChange={setElegido}
+                        onSearch={setBusqueda}
+                        searchValue={busqueda}
                         optionFilterProp='busqueda'
-                        options={clientes.map(c => ({
+                        notFoundContent={t('planner_send.type_email')}
+                        options={[
+                            ...(otroCorreo ? [{
+                                value: otroCorreo,
+                                busqueda: otroCorreo,
+                                label: (
+                                    <span className={styles.clienteOpcion}>
+                                        <span className={styles.clienteCorreo}>{t('planner_send.use_email', { correo: otroCorreo })}</span>
+                                        <span className={styles.clienteEventos}>{t('planner_send.use_email_hint')}</span>
+                                    </span>
+                                ),
+                            }] : []),
+                            ...clientes.map(c => ({
                             value: c.correo,
                             busqueda: `${c.nombre ?? ''} ${c.correo} ${c.eventos.join(' ')}`,
                             label: (
@@ -138,7 +159,7 @@ const SendFlow = ({ invitation, clientes, onClose, onSent }) => {
                                     <span className={styles.clienteEventos}>{c.nombre ? `${c.correo} · ` : ''}{c.eventos.join(' · ')}</span>
                                 </span>
                             ),
-                        }))}
+                        }))]}
                     />
                 </Field>
             ) : (<>

@@ -26,17 +26,80 @@ const CIERRE_SEG = 2.6
 
 const sinMovimiento = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+// Arranque sin tirones: el video (5 MB) no se reproduce en cuanto llegan los
+// primeros cuadros, sino cuando el navegador cree que puede seguir sin parar
+// (canplaythrough) o ya tiene ~4 s cargados, y nunca antes de que termine la
+// animación de entrada del modal. Mientras, póster con un loader. Si la red
+// es muy lenta, a los 8 s arranca de todos modos.
+const BUFFER_SEG = 4
+const ESPERA_MAX_MS = 8000
+const ENTRADA_MS = 350
+
 export const PopsOnboarding = ({ open, onClose, onCrear }) => {
     const { t } = useTranslation()
     const video = useRef(null)
     const [terminado, setTerminado] = useState(false)
     const [enPausa, setEnPausa] = useState(false)
+    const [cargando, setCargando] = useState(false)
+    const arrancado = useRef(false)
 
     useEffect(() => {
-        if (!open) return
+        if (!open) return undefined
         try { localStorage.setItem(POPS_ONBOARDING_VISTO, '1') } catch { /* sin storage */ }
         setTerminado(false)
-        setEnPausa(sinMovimiento())
+        arrancado.current = false
+        if (sinMovimiento()) {
+            setEnPausa(true)
+            setCargando(false)
+            return undefined
+        }
+        setEnPausa(false)
+        setCargando(true)
+        const abierto = Date.now()
+        let vigente = true
+        // Arranca una sola vez: con buffer suficiente y el modal ya abierto.
+        const arrancar = () => {
+            if (!vigente || arrancado.current) return
+            const v = video.current
+            if (!v) return
+            arrancado.current = true
+            const resta = Math.max(0, ENTRADA_MS - (Date.now() - abierto))
+            setTimeout(() => {
+                if (!vigente) return
+                setCargando(false)
+                v.play().catch(() => setEnPausa(true))
+            }, resta)
+        }
+        const revisar = () => {
+            const v = video.current
+            if (!v) return
+            const buffer = v.buffered.length ? v.buffered.end(v.buffered.length - 1) : 0
+            if (v.readyState >= 4 || buffer >= Math.min(BUFFER_SEG, v.duration || BUFFER_SEG)) arrancar()
+        }
+        // El video del modal puede montarse un momento después: se espera.
+        let v = null
+        const escuchar = () => {
+            v = video.current
+            if (!v) return false
+            v.addEventListener('canplaythrough', arrancar)
+            v.addEventListener('progress', revisar)
+            v.addEventListener('loadeddata', revisar)
+            revisar()
+            return true
+        }
+        let intentos = 0
+        const montaje = escuchar() ? null : setInterval(() => {
+            if (escuchar() || ++intentos > 40) clearInterval(montaje)
+        }, 50)
+        const limite = setTimeout(arrancar, ESPERA_MAX_MS)
+        return () => {
+            vigente = false
+            clearTimeout(limite)
+            if (montaje) clearInterval(montaje)
+            v?.removeEventListener('canplaythrough', arrancar)
+            v?.removeEventListener('progress', revisar)
+            v?.removeEventListener('loadeddata', revisar)
+        }
     }, [open])
 
     const reproducir = () => {
@@ -79,7 +142,6 @@ export const PopsOnboarding = ({ open, onClose, onCrear }) => {
                     <video
                         ref={video}
                         className={styles.video}
-                        autoPlay={!sinMovimiento()}
                         muted
                         playsInline
                         preload='auto'
@@ -89,13 +151,20 @@ export const PopsOnboarding = ({ open, onClose, onCrear }) => {
                             const v = e.currentTarget
                             if (!terminado && v.duration && v.currentTime >= v.duration - CIERRE_SEG) setTerminado(true)
                         }}
-                        // Safari a veces bloquea el autoplay: queda el botón de play.
-                        onCanPlay={(e) => { if (e.currentTarget.paused && !terminado) setEnPausa(true) }}
-                        onPlay={() => setEnPausa(false)}
+                        onPlay={() => { setEnPausa(false); setCargando(false) }}
+                        // Si se queda sin buffer a medio camino, vuelve el loader.
+                        onWaiting={() => { if (arrancado.current) setCargando(true) }}
+                        onPlaying={() => setCargando(false)}
                     >
                         <source src={VIDEO_WEBM} type='video/webm' />
                         <source src={VIDEO_MP4} type='video/mp4' />
                     </video>
+                    {cargando && !enPausa && (
+                        <div className={styles.cargando} role='status' aria-live='polite'>
+                            <span className={styles.spinner} aria-hidden />
+                            <span>{t('pops_onboarding.loading')}</span>
+                        </div>
+                    )}
                     {enPausa && !terminado && (
                         <button type='button' className={styles.play} onClick={reproducir} aria-label={t('pops_onboarding.play')}>
                             <Play size={30} fill='currentColor' />
