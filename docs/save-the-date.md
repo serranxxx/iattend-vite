@@ -263,3 +263,38 @@ estática tiene 28 familias y la tabla 26, así que la diferencia se nota.
 - Deuda heredada documentada de paso: la plantilla default está duplicada
   (`ventas.js:21-118` y `supabase.js:209-306`) y `createInvitationWithPlan`
   es fire-and-forget (no devuelve el id ni propaga errores).
+
+## Editor en el celular = el del Pop (2026-11-07)
+
+En ≤ 720 px, `SaveTheDatePage` ya no arma su propio header oscuro, dock y `BottomSheet`: usa
+`Editor/EditorMovilShell` (el mismo cascarón que la invitación, con las clases de
+`SideEvents/Movil/EditorMovil.module.css`), así se ve y se mueve igual que el editor del Pop
+(`docs/editor-movil-pop.md`). Las features son las mismas; solo cambia la experiencia.
+
+- **Pieza:** `StdCanvas` en tarjeta (390 × 700, sin `fullBleed`) sobre el tablero blanco con puntos.
+  Tocar un elemento de la pieza abre su panel; tocar el tablero lo cierra.
+- **Header:** salir · deshacer · rehacer · Crear / Respuestas (íconos, solo con cuenta) · compartir
+  (`handleCopyLink`) · **Guardar** (no se autoguarda: píldora de `BuildMovil.module.css`, como
+  Publicar en la invitación, con su punto rojo si hay cambios). Debajo, `EstadoGuardado` al guardar.
+- **Deshacer / rehacer:** historial de `cover` en `updateCover` (`hist`, hasta 50 pasos; los
+  cambios a menos de 700 ms se agrupan en uno, p. ej. escribir el título). La fecha no entra.
+- **Título:** tocarlo (en la pieza o en el footer) no abre panel: cambia el footer por la barra de
+  texto de todos los editores (`TextBar`, adaptador `titleTs` a `cover.title.text`), como el Pop.
+  Tipografía, tamaño (24–80), color (`ColoresIOS` en la tarjeta flotante), negrita, cursiva,
+  subrayado, tachado, mayúsculas, alineación, espaciado, transparencia y, al final, la posición
+  vertical (arriba / centro / abajo). `StdCanvas` pinta los extras igual que `fontExtras` en events.
+- **Fecha, fondo, botón y canción** también cambian el footer por su barra (`CON_BARRA`), con
+  las clases de las barras del Pop pero sobre `cover` / `event_date` (`StdBarras.jsx`):
+  `StdFechaBar` (día, tipografía y color del contador, "Usar el del título"), `StdFondoBar`
+  (fotos o video, tira de miniaturas con quitar y ‹ › para reordenar, "+" abre `StorageImages`,
+  imagen del link del video, Oscurecer y Difuminar), `StdBotonBar` (los colores de siempre y
+  "Color") y la `SongBar` del Pop tal cual. Todo color abre `ColoresIOS` en la tarjeta flotante
+  (`colorCampo`); el del botón con su opacidad (`colorTarget.opacity` / `onOpacity` en el
+  cascarón, `colorBoton.js`). Los paneles viejos (`PANELS`) quedan solo para escritorio.
+- **Footer:** **¿Cuándo enviar?** pasó del header al footer y abre el iframe en el modal
+  (`TOOL_URL` exportado de `WhenToSend`). El ojo abre Ver en vivo a pantalla completa
+  (`SaveTheDateHost`).
+- **Respuestas:** reacciones y mensajes en una hoja a lo ancho pegada al header (prop `cubierta`
+  de `EditorMovilShell`, como Invitados en el Pop); esconde la pieza y el footer.
+- Siguen igual: diálogo de cambios sin guardar, aviso de la imagen del link, modales del demo
+  (bienvenida, cuenta, elegir evento) y `GuestsCRUD`. El tour sigue siendo solo de escritorio.

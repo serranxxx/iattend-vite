@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { load } from '../../helpers/assets/images'
 import { Button, ColorPicker, DatePicker, Dropdown, Input, Popconfirm, Segmented, Select, Slider, Switch, Tooltip, message } from 'antd'
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Eye, Film, Heart, ImagePlus, Link2, MessageCircle, MousePointerClick, Music, Plus, Search, Send, Trash2, Type, Upload, Video, X } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Eye, Film, Heart, ImagePlus, Link2, MessageCircle, MousePointerClick, Music, Palette, Plus, Search, Send, Share, Trash2, Type, Upload, Video, X } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -19,8 +19,16 @@ import { uploadSongAudio } from '../../helpers/services/uploadAudio'
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
 import { useFonts } from '../../context/FontsContext'
 import SaveTheDateHost from '../../components/Host/SaveTheDateHost'
-import BottomSheet from '../../components/BottomSheet/BottomSheet'
-import WhenToSend from '../../components/WhenToSend/WhenToSend'
+import WhenToSend, { TOOL_URL as WHEN_TO_SEND_URL } from '../../components/WhenToSend/WhenToSend'
+import { EditorMovilShell } from '../Editor/EditorMovilShell'
+import { TextBar } from '../Invitation/Build/PageSections/TextBar'
+import barStyles from '../Invitation/Build/PageSections/ElementBar.module.css'
+import { SongBar } from '../Invitation/Build/PageSections/SongBar'
+import { StdBotonBar, StdFechaBar, StdFondoBar } from './StdBarras'
+import { colorAHexOpacidad, hexOpacidadAColor } from './colorBoton'
+import { EstadoGuardado } from '../SideEvents/EstadoGuardado'
+import movilShell from '../SideEvents/Movil/EditorMovil.module.css'
+import movilBuild from '../Invitation/Build/PageSections/BuildMovil.module.css'
 import StdCanvas from './StdCanvas'
 import { ColorField, DateField, FontPicker } from '../../components/MobileFields/MobileFields'
 import { SaveTheDateTour, STD_TOUR_STORAGE_KEY } from './SaveTheDateTour'
@@ -48,6 +56,19 @@ const CARD_W = 390
 const CARD_H = 700
 
 // Tintes sugeridos para el CTA glass — translúcidos, como en la pieza.
+const HIST_AGRUPAR_MS = 700
+const HIST_MAX = 50
+
+// Celular: el mismo editor que el Pop (EditorMovilShell). Herramientas del
+// footer y cómo abre cada una (0.5 = drawer de media pantalla).
+const MODOS_MOVIL = { when: 'modal' }
+// Título, fecha, fondo, botón y canción no abren panel: cambian el footer por
+// su barra (como el Pop). Solo "¿Cuándo enviar?" abre su modal.
+const CON_BARRA = ['title', 'date', 'background', 'button', 'song']
+// Posición vertical del título, que la barra recorre con un botón.
+const V_ALIGNS = ['flex-start', 'center', 'flex-end']
+const V_ICON = { 'flex-start': AlignVerticalJustifyStart, center: AlignVerticalJustifyCenter, 'flex-end': AlignVerticalJustifyEnd }
+
 const BUTTON_SWATCHES = [
     'rgba(74, 113, 145, 0.5)',
     'rgba(12, 23, 27, 0.45)',
@@ -101,6 +122,10 @@ export const SaveTheDatePage = ({ demo = false }) => {
     const [activeTab, setActiveTab] = useState('edicion')
     const [live, setLive] = useState(false)          // switch "ver en vivo"
     const [section, setSection] = useState(null)     // elemento en edición
+    // Celular: de qué es el color abierto en la tarjeta flotante ('title' |
+    // 'date' | 'button') y la foto elegida en la barra del fondo.
+    const [colorCampo, setColorCampo] = useState(null)
+    const [fotoElegida, setFotoElegida] = useState(null)
     const [std, setStd] = useState(null)          // fila de save_the_dates
     const [plan, setPlan] = useState(null)
     const [cover, setCover] = useState(null)
@@ -386,8 +411,35 @@ export const SaveTheDatePage = ({ demo = false }) => {
         return () => clearTimeout(timer)
     }, [songQuery])
 
+    // Deshacer / rehacer (header del celular, igual que el del Pop). Los
+    // cambios seguidos (escribir el título, arrastrar un slider) cuentan como
+    // uno solo si llegan a menos de HIST_AGRUPAR_MS del anterior.
+    const [hist, setHist] = useState({ pasado: [], futuro: [] })
+    const ultimoCambioRef = useRef(0)
+
     const updateCover = (updater) => {
+        const ahora = Date.now()
+        const agrupar = ahora - ultimoCambioRef.current < HIST_AGRUPAR_MS
+        ultimoCambioRef.current = ahora
+        if (cover && !agrupar) setHist((h) => ({ pasado: [...h.pasado.slice(-(HIST_MAX - 1)), cover], futuro: [] }))
+        else if (cover) setHist((h) => (h.futuro.length ? { ...h, futuro: [] } : h))
         setCover((prev) => updater(JSON.parse(JSON.stringify(prev))))
+        setDirty(true)
+    }
+
+    const undo = () => {
+        if (!hist.pasado.length) return
+        ultimoCambioRef.current = 0
+        setHist({ pasado: hist.pasado.slice(0, -1), futuro: [cover, ...hist.futuro] })
+        setCover(hist.pasado[hist.pasado.length - 1])
+        setDirty(true)
+    }
+
+    const redo = () => {
+        if (!hist.futuro.length) return
+        ultimoCambioRef.current = 0
+        setHist({ pasado: [...hist.pasado, cover], futuro: hist.futuro.slice(1) })
+        setCover(hist.futuro[0])
         setDirty(true)
     }
 
@@ -568,15 +620,6 @@ export const SaveTheDatePage = ({ demo = false }) => {
         return () => clearTimeout(timer)
     }, [demo, std?.id, isMobile])
 
-    // La hoja se queda montada mientras baja, para que la salida se vea
-    const [sheetSection, setSheetSection] = useState(null)
-
-    useEffect(() => {
-        if (section) return setSheetSection(section)
-        const timer = setTimeout(() => setSheetSection(null), 300)
-        return () => clearTimeout(timer)
-    }, [section])
-
     useEffect(() => {
         if (!welcomeOpen) return
         const enter = setTimeout(() => setWelcomeIn(true), 20)
@@ -605,29 +648,6 @@ export const SaveTheDatePage = ({ demo = false }) => {
         if (!demo || !cover) return
         saveDraft({ cover, eventDate })
     }, [demo, cover, eventDate])
-
-    // La hoja tapaba el título justo cuando se está escribiendo: reporta su
-    // alto y el contenido de la pieza sube ese tanto mientras está abierta.
-    // Se descuenta lo que hay entre el marco y el borde de la pantalla (el
-    // dock), que la hoja ya cubre — si no, el hueco quedaba enorme.
-    const stageRef = useRef(null)
-    const [sheetHeight, setSheetHeight] = useState(0)
-    const [stageGap, setStageGap] = useState(0)
-    const sheetOpen = !!section && !live && activeTab === 'edicion'
-
-    useEffect(() => {
-        const measure = () => {
-            const rect = stageRef.current?.getBoundingClientRect()
-            setStageGap(rect ? Math.max(0, Math.round(window.innerHeight - rect.bottom)) : 0)
-        }
-        measure()
-        window.addEventListener('resize', measure)
-        return () => window.removeEventListener('resize', measure)
-        // std entra en las dependencias porque el marco se monta cuando ya
-        // hay datos: sin eso la medida se quedaba en 0
-    }, [isMobile, activeTab, live, std?.id])
-
-    const contentLift = sheetOpen ? Math.max(0, sheetHeight - stageGap + 10) : 0
 
     const fitScale = (h) => Math.max(0.6, Math.min(1, availableH / h))
     const cardScale = fitScale(CARD_H)
@@ -2237,140 +2257,222 @@ export const SaveTheDatePage = ({ demo = false }) => {
     )
 
     /* ═══════════════════════════════════════════════════════════════
-       Móvil: la pieza ocupa la pantalla, con dock de herramientas y
-       hoja inferior. Los paneles son los mismos que en escritorio.
+       Móvil: el mismo editor que el Pop en el celular (EditorMovilShell,
+       docs/editor-movil-pop.md): tablero blanco con la pieza, header con
+       salir · deshacer · rehacer, footer flotante con las herramientas,
+       paneles en drawer y Ver en vivo a pantalla completa. Los paneles son
+       los mismos que en escritorio. Ver docs/save-the-date.md.
        ═══════════════════════════════════════════════════════════════ */
     if (isMobile) {
-        const sheetTitle = SECTIONS.find((x) => x.key === sheetSection)?.label ?? ''
+        const herramientas = [
+            { id: 'background', title: t('savethedate.background'), icon: ImagePlus },
+            { id: 'title', title: t('savethedate.event_title'), icon: Type },
+            { id: 'date', title: t('savethedate.event_date'), icon: CalendarDays },
+            { id: 'button', title: t('savethedate.button_section'), icon: MousePointerClick },
+            { id: 'song', title: t('build_generals.label_song'), icon: Music },
+            { id: 'when', title: t('savethedate.when_to_send'), icon: CircleHelp },
+        ]
+        const enRespuestas = !demo && activeTab === 'reacciones'
+        const conBarra = CON_BARRA.includes(section) && !enRespuestas
+        const abrirColor = (campo) => setColorCampo((c) => (c === campo ? null : campo))
+
+        // Barra de texto de todos los editores (TextBar) con un adaptador a
+        // cover.title.text; la alineación y la posición vertical van en la barra.
+        const titleText = cover.title.text
+        const titleTs = {
+            font: { ...titleText, size: titleText.size ?? 42, weight: titleText.weight ?? 600, color: titleText.color ?? '#FFFFFF' },
+            setFont: (patch) => updateCover((c) => { Object.assign(c.title.text, patch); return c }),
+            align: cover.title.position.align_x ?? 'center',
+            setAlign: (v) => updateCover((c) => { c.title.position.align_x = v; return c }),
+            minSize: 24,
+            maxSize: 80,
+            showSize: true,
+            showColor: true,
+        }
+        const vAlign = cover.title.position.align_y ?? 'center'
+        const VIcon = V_ICON[vAlign] ?? AlignVerticalJustifyCenter
+        const barraTitulo = (
+            <TextBar
+                target='std_title'
+                ts={titleTs}
+                onPickColor={() => abrirColor('title')}
+                colorOpen={colorCampo === 'title'}
+                extra={() => (
+                    <button
+                        type='button'
+                        className={barStyles.iconBtn}
+                        title={t('savethedate.position')}
+                        aria-label={t('savethedate.position')}
+                        onClick={() => updateCover((c) => { c.title.position.align_y = V_ALIGNS[(V_ALIGNS.indexOf(vAlign) + 1) % V_ALIGNS.length]; return c })}
+                    >
+                        <VIcon size={18} />
+                    </button>
+                )}
+            />
+        )
+
+        const titleColor = titleText.color ?? '#FFFFFF'
+        const dateColor = cover.date?.color ?? '#FFFFFF'
+        const setButtonColor = (c) => updateCover((cv) => { cv.button = { ...(cv.button ?? {}), color: c }; return cv })
+        const boton = colorAHexOpacidad(btnColor)
+        const barras = {
+            title: barraTitulo,
+            date: (
+                <StdFechaBar
+                    eventDate={eventDate}
+                    onDate={(v) => { setEventDate(v); setDirty(true) }}
+                    typeFace={cover.date?.typeFace ?? 'Poppins'}
+                    onTypeFace={(v) => updateCover((c) => { c.date.typeFace = v; return c })}
+                    color={dateColor}
+                    titleColor={titleColor}
+                    onColor={(hex) => updateCover((c) => { c.date.color = hex; return c })}
+                    onPickColor={() => abrirColor('date')}
+                    colorOpen={colorCampo === 'date'}
+                />
+            ),
+            background: (
+                <StdFondoBar
+                    carpeta={demo ? tempFolder : id}
+                    mediaMode={mediaMode}
+                    onMediaMode={changeMediaMode}
+                    images={images}
+                    onAddImage={addImage}
+                    onRemoveImage={removeImage}
+                    onMoveImage={moveImage}
+                    elegida={fotoElegida}
+                    onElegir={setFotoElegida}
+                    video={video}
+                    onVideo={setVideo}
+                    poster={poster}
+                    onPoster={setPoster}
+                    needsPoster={needsPoster}
+                    darken={!!cover.image.background}
+                    onDarken={(v) => updateCover((c) => { c.image.background = v; return c })}
+                    blur={!!cover.image.blur}
+                    onBlur={(v) => updateCover((c) => { c.image.blur = v; return c })}
+                />
+            ),
+            button: (
+                <StdBotonBar
+                    color={btnColor}
+                    swatches={BUTTON_SWATCHES}
+                    onColor={setButtonColor}
+                    onPickColor={() => abrirColor('button')}
+                    colorOpen={colorCampo === 'button'}
+                />
+            ),
+            song: (
+                <SongBar
+                    value={cover.song ?? null}
+                    onChange={(song) => updateCover((c) => { c.song = song; return c })}
+                    folder={demo ? tempFolder : id}
+                />
+            ),
+        }
+        // Destino de la tarjeta de colores (ColoresIOS), según lo abierto.
+        const colorTarget = colorCampo === 'title'
+            ? { value: titleColor, onPick: (hex) => updateCover((c) => { c.title.text.color = hex; return c }) }
+            : colorCampo === 'date'
+            ? { value: dateColor, onPick: (hex) => updateCover((c) => { c.date.color = hex; return c }) }
+            : colorCampo === 'button'
+            ? {
+                value: boton.hex,
+                onPick: (hex) => setButtonColor(hexOpacidadAColor(hex, boton.opacidad)),
+                opacity: boton.opacidad,
+                onOpacity: (o) => setButtonColor(hexOpacidadAColor(boton.hex, o)),
+            }
+            : null
 
         return (
-            <div className={styles.mobileRoot}>
-
-                {/* Header: su propia superficie, igual que el dock de abajo,
-                    para que no se sienta parte de la invitación */}
-                <div className={styles.mobileHeader}>
-                    <button className={styles.hBtn} onClick={handleBack} aria-label={t('savethedate.back')}>
-                        <X size={17} />
-                    </button>
-
-                    <div className={styles.hTabs} data-tour="std-tabs">
-                        <button
-                            className={`${styles.hTab} ${activeTab === 'edicion' ? styles.hTabOn : ''}`}
-                            onClick={() => setActiveTab('edicion')}
-                        >
-                            {t('savethedate.tab_edit_short')}
-                        </button>
-                        {!demo &&
-                            <button
-                                className={`${styles.hTab} ${activeTab === 'reacciones' ? styles.hTabOn : ''}`}
-                                onClick={() => setActiveTab('reacciones')}
-                            >
-                                {t('savethedate.tab_reactions_short')}
+            <>
+                <EditorMovilShell
+                    card={{ w: CARD_W, h: CARD_H }}
+                    canvas={
+                        <StdCanvas
+                            key={std.id}
+                            cover={cover}
+                            eventDate={eventDate}
+                            selected={section}
+                            onSelect={setSection}
+                            onTitleInput={setTitleValue}
+                        />
+                    }
+                    tools={herramientas}
+                    modos={MODOS_MOVIL}
+                    activeTool={section}
+                    toolOpen={Boolean(section) && !conBarra && !enRespuestas}
+                    onPickTool={(key) => setSection(section === key ? null : key)}
+                    onCloseTool={() => setSection(null)}
+                    bar={conBarra ? barras[section] : null}
+                    colorPop={conBarra && Boolean(colorTarget) && colorCampo === section}
+                    colorTarget={colorTarget}
+                    closeColor={() => setColorCampo(null)}
+                    renderTool={(key) => (key === 'when'
+                        ? <iframe src={WHEN_TO_SEND_URL} title={t('savethedate.when_to_send')} className={styles.whenFrameMovil} loading='lazy' />
+                        : <div className={styles.panelMovil}>{PANELS[key]}</div>
+                    )}
+                    liveContent={<SaveTheDateHost config={previewConfig} />}
+                    onBack={handleBack}
+                    onUndo={undo}
+                    onRedo={redo}
+                    canUndo={hist.pasado.length > 0}
+                    canRedo={hist.futuro.length > 0}
+                    estado={!demo && <EstadoGuardado estado={saving ? 'guardando' : 'guardado'} />}
+                    headerDerecha={
+                        <>
+                            {!demo && (
+                                <div className={movilShell.segmento} role='tablist'>
+                                    <button
+                                        type='button'
+                                        role='tab'
+                                        aria-selected={activeTab !== 'reacciones'}
+                                        aria-label={t('savethedate.tab_edit')}
+                                        className={movilShell.segBtn}
+                                        data-on={activeTab !== 'reacciones' || undefined}
+                                        onClick={() => setActiveTab('edicion')}
+                                    >
+                                        <Palette size={17} strokeWidth={2} />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        role='tab'
+                                        aria-selected={activeTab === 'reacciones'}
+                                        aria-label={t('savethedate.tab_reactions')}
+                                        className={movilShell.segBtn}
+                                        data-on={activeTab === 'reacciones' || undefined}
+                                        onClick={() => { setSection(null); setActiveTab('reacciones') }}
+                                    >
+                                        <Heart size={17} strokeWidth={2} />
+                                    </button>
+                                </div>
+                            )}
+                            <button type='button' className={movilShell.icono} onClick={handleCopyLink} aria-label={t('savethedate.copy_link')}>
+                                <Share size={18} strokeWidth={2} />
                             </button>
-                        }
-                    </div>
-
-                    <div className={styles.hRight}>
-                        {activeTab === 'edicion' &&
+                            {/* No se autoguarda: Guardar va en el header, como Publicar
+                                en el editor de la invitación, con su punto si hay cambios. */}
                             <button
-                                className={`${styles.hBtn} ${live ? styles.hBtnOn : ''}`}
-                                data-tour="std-live"
-                                onClick={() => { setLive((v) => !v); setSection(null) }}
-                                aria-label={t('savethedate.live')}
-                                aria-pressed={live}
-                            >
-                                <Eye size={17} />
-                            </button>
-                        }
-
-                        <span data-tour="std-when" style={{ display: 'inline-flex' }}>
-                            <WhenToSend compact className={styles.hBtn} />
-                        </span>
-
-                        <button className={styles.hBtn} data-tour="std-link" onClick={handleCopyLink} aria-label={t('savethedate.copy_link')}>
-                            <Link2 size={17} />
-                        </button>
-
-                        <span className={styles.saveWrap} data-tour="std-save">
-                            <button
-                                className={styles.hSave}
+                                type='button'
+                                className={`${movilBuild.publicar} ${styles.guardarMovil}`}
                                 onClick={() => { if (demo || dirty) handleSave() }}
                                 aria-disabled={!demo && !dirty}
-                                style={{ opacity: demo || dirty ? 1 : 0.6 }}
+                                disabled={saving}
                             >
                                 {saving ? '…' : t('savethedate.save')}
+                                {dirty && !saving && <span className={movilBuild.punto} aria-hidden />}
                             </button>
-                            {dirty && !saving && <span className={styles.saveDot} aria-hidden />}
-                        </span>
-                    </div>
-                </div>
-
-                {/* La invitación, enmarcada */}
-                <div ref={stageRef} className={styles.mobileStage} data-tour="std-canvas">
-                    {live || activeTab !== 'edicion'
-                        ? <SaveTheDateHost config={previewConfig} />
-                        : (
-                            <StdCanvas
-                                key={std.id}
-                                cover={cover}
-                                eventDate={eventDate}
-                                selected={section}
-                                onSelect={setSection}
-                                onTitleInput={setTitleValue}
-                                fullBleed
-                                liftBottom={contentLift}
-                            />
-                        )
+                        </>
                     }
-
-                    {/* Respuestas: encima de la pieza, difuminándola */}
-                    {activeTab === 'reacciones' &&
-                        <div className={`${styles.mobileAnswers} scroll-invitation`} data-tour="std-answers">{reactionsContent}</div>
+                    cubierta={enRespuestas
+                        ? <div className={`${styles.respuestasMovil} scroll-invitation`}>{reactionsContent}</div>
+                        : null
                     }
-                </div>
-
-                {/* Dock de herramientas */}
-                {activeTab === 'edicion' && !live &&
-                    <div className={styles.dock}>
-                        {SECTIONS.map((sec) => (
-                            <button
-                                key={sec.key}
-                                className={`${styles.dockBtn} ${section === sec.key ? styles.dockBtnOn : ''}`}
-                                data-tour={`std-tool-${sec.key}`}
-                                onClick={() => setSection(section === sec.key ? null : sec.key)}
-                                aria-pressed={section === sec.key}
-                            >
-                                {sec.icon}
-                                <span>{sec.short}</span>
-                            </button>
-                        ))}
-                    </div>
-                }
-
-                {/* Hoja inferior propia: sin capa que oscurezca el fondo, se
-                    cierra arrastrando, tocando fuera o con la X */}
-                <BottomSheet
-                    open={sheetOpen}
-                    onClose={() => setSection(null)}
-                    title={sheetTitle}
-                    bodyClass={styles.editorSheet}
-                    onHeightChange={setSheetHeight}
-                >
-                    {sheetSection && PANELS[sheetSection]}
-                </BottomSheet>
+                    onBlur={() => { setSection(null); setColorCampo(null); setFotoElegida(null) }}
+                />
 
                 {leaveDialog}
                 {posterDialog}
                 {demoModals}
-
-                <SaveTheDateTour
-                    open={tourOpen && !isMobile}
-                    onClose={closeTour}
-                    demo={demo}
-                    isMobile={isMobile}
-                    setActiveTab={setActiveTab}
-                    setSection={setSection}
-                />
 
                 {!demo && <GuestsCRUD
                     rowData={rawData}
@@ -2380,7 +2482,7 @@ export const SaveTheDatePage = ({ demo = false }) => {
                     drawerState={drawerState}
                     isSideEvent={false}
                 />}
-            </div>
+            </>
         )
     }
 

@@ -23,9 +23,12 @@ import s from '../SideEvents/Movil/EditorMovil.module.css'
     1 → pantalla completa), 'modal' = tarjeta centrada con velo.
   · `bar` (la barra contextual de lo elegido) reemplaza al footer, con su
     transición; con el teclado abierto sube encima de él.
-  · Color: `colorPop` + `colorTarget` abren la tarjeta flotante con ColoresIOS.
+  · Color: `colorPop` + `colorTarget` abren la tarjeta flotante con ColoresIOS
+    (`colorTarget.opacity` / `onOpacity`, 0–100, suman su opacidad).
   · Ver en vivo: `liveContent` a pantalla completa.
   · Tocar el tablero (fuera de la pieza) → `onBlur`.
+  · `cubierta`: una vista que reemplaza a la pieza y al footer, pegada al
+    header (como Invitados en el Pop; Respuestas en el Save the Date).
 */
 
 const CURVA_HOJA = 'cubic-bezier(0.32, 0.72, 0, 1)'
@@ -63,6 +66,7 @@ export const EditorMovilShell = ({
     canRedo,
     headerDerecha = null,
     estado = null,
+    cubierta = null,
     onBlur,
 }) => {
     const { t } = useTranslation()
@@ -207,10 +211,14 @@ export const EditorMovilShell = ({
                 </div>
             )}
 
+            {cubierta && (
+                <div className={s.invitados} style={{ top: `calc(env(safe-area-inset-top) + ${ALTO_HEADER + 4}px)` }}>{cubierta}</div>
+            )}
+
             <div
                 className={s.escenario}
                 data-animar={animar || undefined}
-                style={!tam.h ? { visibility: 'hidden' } : undefined}
+                style={cubierta || !tam.h ? { visibility: 'hidden' } : undefined}
                 onClick={(e) => { if (e.target === e.currentTarget) onBlur?.() }}
             >
                 <div
@@ -225,7 +233,7 @@ export const EditorMovilShell = ({
                 </div>
             </div>
 
-            <nav className={s.footer} data-oculto={(panel && !esModal) || conBarra || undefined} style={{ height: ALTO_FOOTER }} aria-label={t('side_events.mobile_tools')}>
+            <nav className={s.footer} data-oculto={(panel && !esModal) || conBarra || Boolean(cubierta) || undefined} style={{ height: ALTO_FOOTER }} aria-label={t('side_events.mobile_tools')}>
                 <div className={s.footerHerr}>
                     {herramientas.map((h) => (
                         <button
@@ -264,6 +272,8 @@ export const EditorMovilShell = ({
                         <ColoresIOS
                             value={colorTarget.value}
                             onChange={(hex, o) => colorTarget.onPick(hex, o)}
+                            opacity={colorTarget.opacity ?? null}
+                            onOpacity={colorTarget.onOpacity ?? null}
                             className={s.coloresDibujo}
                             conGuardados={false}
                         />

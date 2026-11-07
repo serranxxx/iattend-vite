@@ -1253,3 +1253,58 @@
     color: #D32F2F;
     background: #FFECEC;
 }
+
+/* ── Celular: editor del Pop (EditorMovilShell) ── */
+
+/* El drawer ya lleva el título: del encabezado del panel queda la ayuda. */
+.panelMovil {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.panelMovil .blockIcon,
+.panelMovil .blockTitle {
+    display: none;
+}
+
+.panelMovil .blockHead {
+    padding-right: 0;
+}
+
+/* "¿Cuándo enviar?" en el modal del editor: a todo el ancho de la tarjeta
+   (sin el padding del cuerpo), la herramienta no cabe en menos. */
+.whenFrameMovil {
+    display: block;
+    width: calc(100% + 40px);
+    margin: 0 -20px -22px;
+    height: min(70vh, 580px);
+    border: none;
+}
+
+.guardarMovil[aria-disabled='true'] {
+    opacity: 0.55;
+}
+
+/* Respuestas: hoja a lo ancho, pegada al header (como Invitados del Pop) */
+.respuestasMovil {
+    overflow-y: auto;
+    padding: 8px 16px calc(24px + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+}
+
+.respuestasMovil .answersCol {
+    width: 100%;
+    margin: 0;
+    height: auto !important;
+    opacity: 1;
+    transform: none;
+}
+
+/* Barra del fondo (StdBarras): falta la imagen del link de un video */
+.posterAlerta {
+    display: inline-flex;
+    border-radius: 14px;
+    box-shadow: 0 0 0 2px #E5484D;
+}

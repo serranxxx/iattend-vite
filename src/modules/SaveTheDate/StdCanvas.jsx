@@ -249,6 +249,13 @@ export const StdCanvas = ({
                                 opacity: titleText.opacity ?? 1,
                                 fontFamily: titleText.typeFace,
                                 fontWeight: titleText.weight ?? 600,
+                                // Barra de texto (celular): lo mismo que pinta la página
+                                // pública con fontExtras (Cover.tsx de iattend-events).
+                                ...(titleText.italic ? { fontStyle: 'italic' } : {}),
+                                ...((titleText.underline || titleText.strike) ? { textDecoration: [titleText.underline && 'underline', titleText.strike && 'line-through'].filter(Boolean).join(' ') } : {}),
+                                ...(titleText.transform && titleText.transform !== 'none' ? { textTransform: titleText.transform } : {}),
+                                ...(typeof titleText.letterSpacing === 'number' ? { letterSpacing: `${titleText.letterSpacing / 100}em` } : {}),
+                                ...(typeof titleText.lineHeight === 'number' ? { lineHeight: titleText.lineHeight } : {}),
                             }}
                         >
                             {initialTitle}

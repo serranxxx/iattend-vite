@@ -15,7 +15,7 @@ import styles from './WhenToSend.module.css'
 
 const EVENTS_URL = import.meta.env.VITE_IATTEND_EVENTS_URL || 'https://www.iattend.events'
 // Variante embebida: mismo cálculo, encabezado del save the date y sin CTA
-const TOOL_URL = new URL('/envio-invitacion/save-the-date', EVENTS_URL).toString()
+export const TOOL_URL = new URL('/envio-invitacion/save-the-date', EVENTS_URL).toString()
 
 export const WhenToSend = ({ compact = false, className = '' }) => {
 
