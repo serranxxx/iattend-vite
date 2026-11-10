@@ -3606,5 +3606,31 @@
     "close": "Cerrar",
     "replay": "Repetir",
     "play": "Reproducir"
+  },
+  "precios": {
+    "page_title": "Catálogo de precios · I attend",
+    "eyebrow": "Catálogo de precios",
+    "title": "Precios I attend",
+    "subtitle": "Toca una tarjeta para darle la vuelta: copia su link de pago o enseña su QR.",
+    "sections": {
+      "wedding": "Wedding",
+      "pops": "Pops",
+      "extras": "Extras",
+      "promos": "Promos"
+    },
+    "cash": "Pago de contado",
+    "installments": "{{months}} meses sin intereses",
+    "monthly": "{{amount}} al mes",
+    "copy_link": "Copiar link",
+    "copied": "Link copiado",
+    "show_qr": "Ver QR",
+    "open_link": "Abrir link",
+    "flip_hint": "Toca para voltear",
+    "flip_back": "Voltear",
+    "close": "Cerrar",
+    "scan": "Escanea para pagar",
+    "copy_error": "No se pudo copiar el link",
+    "collapse": "Guardar categoría",
+    "expand": "Mostrar categoría"
   }
 }

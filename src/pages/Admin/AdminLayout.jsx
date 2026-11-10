@@ -72,6 +72,7 @@ const SUBTABS = {
         { key: 'ingresos', label: 'Ingresos y comisiones' },
         { key: 'historico', label: 'Histórico' },
         { key: 'stripe', label: 'Stripe' },
+        { key: 'precios', label: 'Precios' },
     ],
     analitica: [
         { key: 'envios', label: 'Últimos 30 días' },

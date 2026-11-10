@@ -1,0 +1,60 @@
+/* Admin → Ventas → Precios. */
+
+.precios {
+    padding-bottom: 24px;
+}
+
+.acciones {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.principal,
+.secundaria {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-family: var(--ac-font-ui);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.principal {
+    border: none;
+    background: var(--ac-ink);
+    color: #fff;
+}
+
+.principal:hover {
+    background: var(--ac-ink-hover);
+}
+
+.secundaria {
+    border: 1px solid var(--ac-line-control);
+    background: var(--ac-surface);
+    color: var(--ac-ink);
+}
+
+.secundaria:hover {
+    background: var(--ac-surface-alt);
+    color: var(--ac-ink);
+}
+
+/* En pantallas chicas la topbar no alcanza: solo íconos. */
+@media (max-width: 720px) {
+    .principal,
+    .secundaria {
+        padding: 10px;
+    }
+
+    .texto {
+        display: none;
+    }
+}

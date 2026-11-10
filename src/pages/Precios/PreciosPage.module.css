@@ -1,0 +1,575 @@
+.pagina,
+.catalogo {
+    --navy: #1c3249;
+    --navy-ui: #16323d;
+    --lila: #d2bfdd;
+    --crema: #f5f3f2;
+    --tinta: #29262d;
+    --gris: #787878;
+    color: var(--tinta);
+    font-family: 'Poppins', var(--font-family), sans-serif;
+}
+
+.pagina {
+    min-height: 100vh;
+    padding: 56px clamp(20px, 5vw, 72px) 96px;
+    background: var(--crema);
+}
+
+/* ── Encabezado ─────────────────────────────────────────────────────────── */
+
+.encabezado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: 720px;
+    margin: 0 auto 22px;
+    text-align: center;
+}
+
+.logo {
+    height: 34px;
+    margin-bottom: 18px;
+}
+
+.eyebrow {
+    font-family: 'Luxora Grotesk', var(--font-family), sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gris);
+}
+
+.titulo {
+    margin: 0;
+    font-family: 'Denver-Serial', var(--font-family), serif;
+    font-size: clamp(40px, 6vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--navy);
+}
+
+.subtitulo {
+    margin: 4px 0 0;
+    max-width: 460px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--gris);
+}
+
+.indice {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 auto 56px;
+}
+
+.indiceLink {
+    padding: 8px 18px;
+    border-radius: 99px;
+    background: #fff;
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    text-decoration: none;
+    border: 0;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.indiceLink:hover {
+    background: var(--navy);
+    color: #fff;
+}
+
+/* ── Secciones ──────────────────────────────────────────────────────────── */
+
+.seccion {
+    max-width: 1240px;
+    margin: 0 auto 44px;
+    scroll-margin-top: 24px;
+}
+
+.seccionTitulo,
+.grupoTitulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.seccionTitulo {
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(28, 50, 73, 0.14);
+}
+
+.seccionNombre,
+.grupoNombre {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+.seccionNombre {
+    font-family: 'Denver-Serial', var(--font-family), serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.grupoNombre {
+    font-family: 'Luxora Grotesk', var(--font-family), sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gris);
+}
+
+.cuenta {
+    display: inline-grid;
+    place-items: center;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 99px;
+    background: rgba(28, 50, 73, 0.08);
+    color: var(--navy);
+    font-family: 'Poppins', var(--font-family), sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.chevron {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+    border-radius: 99px;
+    background: #fff;
+    color: var(--navy);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s ease;
+}
+
+.grupoTitulo .chevron {
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+}
+
+.chevron[data-cerrada] {
+    transform: rotate(-90deg);
+}
+
+.seccionTitulo:hover .chevron,
+.grupoTitulo:hover .chevron {
+    background: var(--lila);
+}
+
+.seccionTitulo:focus-visible,
+.grupoTitulo:focus-visible {
+    outline: 3px solid var(--lila);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+/* Pliegue con transición de alto (0fr ↔ 1fr). */
+.contenido {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.45s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease;
+}
+
+.contenido[data-cerrada] {
+    grid-template-rows: 0fr;
+    opacity: 0;
+}
+
+/* El padding deja aire para la sombra de las tarjetas, que el overflow cortaría. */
+.contenidoInterior {
+    min-height: 0;
+    overflow: hidden;
+    margin: 0 -14px;
+}
+
+.relleno {
+    padding: 24px 14px 14px;
+}
+
+.grupoTitulo + .contenido .relleno {
+    padding-top: 16px;
+}
+
+.grupo + .grupo {
+    margin-top: 28px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 28px 24px;
+}
+
+/* ── Tarjeta que se voltea ──────────────────────────────────────────────── */
+
+.producto {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.escena {
+    perspective: 1200px;
+    aspect-ratio: 1;
+}
+
+.tarjeta {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.tarjeta[data-volteada] {
+    transform: rotateY(180deg);
+}
+
+.cara {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 24px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+}
+
+.frente {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: #fff;
+    cursor: pointer;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.frente img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+}
+
+.frente:hover {
+    box-shadow: 0 10px 28px rgba(28, 50, 73, 0.22);
+}
+
+.frente:focus-visible,
+.boton:focus-visible,
+.voltear:focus-visible {
+    outline: 3px solid var(--lila);
+    outline-offset: 3px;
+}
+
+.pista {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 99px;
+    background: rgba(12, 23, 27, 0.62);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.frente:hover .pista,
+.frente:focus-visible .pista {
+    opacity: 1;
+    transform: none;
+}
+
+.reverso {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 22px 18px 18px;
+    background: var(--navy-ui);
+    color: #fff;
+    transform: rotateY(180deg);
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
+}
+
+/* La imagen del producto, muy desenfocada, tiñe el reverso. */
+.reversoFondo {
+    position: absolute;
+    inset: -20%;
+    width: 140%;
+    height: 140%;
+    object-fit: cover;
+    filter: blur(28px) saturate(1.2);
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.reverso::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(22, 50, 61, 0.35), rgba(12, 23, 27, 0.85));
+    pointer-events: none;
+}
+
+.reversoTextos,
+.acciones,
+.voltear {
+    position: relative;
+}
+
+.reversoTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 32px;
+}
+
+.reversoNombre {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.reversoPrecio {
+    font-family: 'Windsor', var(--font-family), serif;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.reversoPlazo {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 16px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.boton:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.boton:active {
+    transform: scale(0.97);
+}
+
+.botonPrincipal {
+    border-color: transparent;
+    background: var(--lila);
+    color: var(--navy);
+    font-weight: 600;
+}
+
+.botonPrincipal:hover {
+    background: #e0d2e8;
+}
+
+.voltear {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    cursor: pointer;
+}
+
+.voltear:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+/* ── Pie de la tarjeta ──────────────────────────────────────────────────── */
+
+.pie {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 4px;
+}
+
+.nombre {
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--navy);
+}
+
+.precio {
+    flex-shrink: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tinta);
+}
+
+.plazoPie {
+    margin-top: -6px;
+    padding: 0 4px;
+    font-size: 12px;
+    color: var(--gris);
+}
+
+/* ── Dentro de Admin › Ventas › Precios ─────────────────────────────────── */
+
+.embebido .indice {
+    justify-content: flex-start;
+    margin: 0 0 28px;
+}
+
+.embebido .seccion {
+    max-width: none;
+    margin-bottom: 32px;
+    scroll-margin-top: 8px;
+}
+
+.embebido .seccionNombre {
+    font-size: 30px;
+}
+
+.embebido .grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+@media (max-width: 600px) {
+    .pagina {
+        padding-top: 36px;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px 14px;
+    }
+
+    /* En celular el nombre y el plazo ya van debajo de la tarjeta. */
+    .reverso {
+        padding: 12px 10px 10px;
+    }
+
+    .reversoNombre,
+    .reversoPlazoTexto {
+        display: none;
+    }
+
+    .reversoTextos {
+        padding-top: 2px;
+    }
+
+    .reversoPrecio {
+        font-size: 22px;
+    }
+
+    .acciones {
+        gap: 6px;
+    }
+
+    .boton {
+        gap: 6px;
+        height: 36px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+
+    .boton svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .voltear {
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .pie {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .nombre,
+    .precio {
+        font-size: 13px;
+    }
+
+    .precio {
+        font-weight: 500;
+    }
+
+    .plazoPie {
+        margin-top: -8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contenido,
+    .chevron,
+    .tarjeta,
+    .frente,
+    .pista {
+        transition: none;
+    }
+}

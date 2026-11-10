@@ -3606,5 +3606,31 @@
     "close": "Close",
     "replay": "Replay",
     "play": "Play"
+  },
+  "precios": {
+    "page_title": "Price catalog · I attend",
+    "eyebrow": "Price catalog",
+    "title": "I attend prices",
+    "subtitle": "Tap a card to flip it: copy its payment link or show its QR.",
+    "sections": {
+      "wedding": "Wedding",
+      "pops": "Pops",
+      "extras": "Extras",
+      "promos": "Promos"
+    },
+    "cash": "One-time payment",
+    "installments": "{{months}} interest-free months",
+    "monthly": "{{amount}} per month",
+    "copy_link": "Copy link",
+    "copied": "Link copied",
+    "show_qr": "Show QR",
+    "open_link": "Open link",
+    "flip_hint": "Tap to flip",
+    "flip_back": "Flip back",
+    "close": "Close",
+    "scan": "Scan to pay",
+    "copy_error": "Couldn't copy the link",
+    "collapse": "Collapse category",
+    "expand": "Show category"
   }
 }

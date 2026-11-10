@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react'
 import { IngresosSection } from './IngresosSection'
 import { StripeSection } from './StripeSection'
+import { PreciosSection } from './PreciosSection'
 import { MESES } from '../ventasCalculos'
 import { EnTopbarFiltros, SelectFiltro } from '../AdminTopbar'
 import styles from './VentasSection.module.css'
 
-// Las pestañas (Ingresos y comisiones · Histórico · Stripe) viven en la topbar
-// del admin y llegan en `tab`; Mes y Año se dibujan a su derecha. Vendedores e
-// Interesados se mudaron a Usuarios › Vendedores.
+// Las pestañas (Ingresos y comisiones · Histórico · Stripe · Precios) viven
+// en la topbar del admin y llegan en `tab`; Mes y Año se dibujan a su derecha.
+// Vendedores e Interesados se mudaron a Usuarios › Vendedores.
 export const VentasSection = ({ tab = 'ingresos' }) => {
     const now = new Date()
 
@@ -51,6 +52,7 @@ export const VentasSection = ({ tab = 'ingresos' }) => {
                 />
             )}
             {tab === 'stripe' && <StripeSection />}
+            {tab === 'precios' && <PreciosSection />}
         </div>
     )
 }

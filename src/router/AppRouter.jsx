@@ -47,6 +47,8 @@ import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
 import { OnboardingPreviewPage } from '../pages/PreviewMood/OnboardingPreviewPage'
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
+import { PreciosPage } from '../pages/Precios/PreciosPage'
+import { RUTA_CATALOGO } from '../pages/Precios/catalogoPrecios'
 import { SalesApp } from '../modules/Sales/SalesApp'
 import { ProspectosPage } from '../modules/Prospectos/ProspectosPage'
 
@@ -85,6 +87,7 @@ export const AppRouter = () => {
       {/* Save the Date gratis, sin cuenta: mismo editor en modo demo */}
       <Route path="/save-the-date" element={<SaveTheDatePage demo />} />
       <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path={RUTA_CATALOGO} element={<PreciosPage />} />
       <Route path="/*" element={<PageNotFound />} />
 
       <Route path="/admin"

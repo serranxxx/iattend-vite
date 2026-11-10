@@ -1,0 +1,291 @@
+.velo {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    overflow-y: auto;
+    background: rgba(12, 23, 27, 0.62);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    animation: veloEntra 0.3s ease both;
+}
+
+.velo[data-saliendo] {
+    animation: veloSale 0.26s ease both;
+}
+
+.cerrar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.cerrar:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.contenido {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: min(340px, 100%, calc((100dvh - 200px) * 340 / 470));
+    animation: paseEntra 0.55s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.velo[data-saliendo] .contenido {
+    animation: paseSale 0.26s ease both;
+}
+
+/* ── Pase (como el frente de Wallet en iOS 18+) ─────────────────────────── */
+
+.pase {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 340 / 470;
+    container-type: inline-size;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #2b2a2e;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.foto {
+    position: absolute;
+    inset: 0 0 auto;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+/* Pie: la misma foto desenfocada debajo de la imagen. */
+.pieFondo {
+    position: absolute;
+    inset: auto 0 0;
+    height: calc(100% - 100% * 340 / 470 + 2px);
+    overflow: hidden;
+}
+
+.pieFondo img {
+    position: absolute;
+    inset: -40%;
+    width: 180%;
+    height: 180%;
+    object-fit: cover;
+    filter: blur(24px) saturate(1.3) brightness(0.7);
+}
+
+.pieFondo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4));
+}
+
+.encabezado {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 16px 28px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent);
+}
+
+.logo {
+    height: 22px;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35));
+}
+
+.precioCaja {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.1;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
+.precioEtiqueta {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    opacity: 0.85;
+}
+
+.precio {
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.qr {
+    position: absolute;
+    left: 50%;
+    top: 40cqw;
+    width: 54cqw;
+    overflow: hidden;
+    padding: 3cqw;
+    border-radius: 3cqw;
+    background: #fff;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    transform: translateX(-50%);
+    animation: halo 2.4s ease-in-out 0.6s infinite;
+}
+
+.qr > :global(.ant-qrcode) {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+}
+
+.qr svg {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Destello que cruza el QR, como en Compartir del Pop. */
+.destello {
+    position: absolute;
+    inset: -20% auto -20% -60%;
+    z-index: 1;
+    width: 40%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+    transform: skewX(-18deg);
+    pointer-events: none;
+    animation: destello 3.2s ease-in-out 0.8s infinite;
+}
+
+.pie {
+    position: absolute;
+    inset: auto 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    height: calc(100% - 100% * 340 / 470);
+    justify-content: center;
+    padding: 0 18px;
+}
+
+.nombre {
+    overflow: hidden;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.plazo {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 12px;
+    opacity: 0.85;
+}
+
+/* ── Debajo del pase ────────────────────────────────────────────────────── */
+
+.escanea {
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Poppins', var(--font-family), sans-serif;
+    font-size: 14px;
+}
+
+.acciones {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.boton {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: #fff;
+    color: #1c3249;
+    font-family: 'Poppins', var(--font-family), sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.boton:hover {
+    background: #f1ecf4;
+    color: #1c3249;
+}
+
+.boton:active {
+    transform: scale(0.97);
+}
+
+.boton:focus-visible,
+.cerrar:focus-visible {
+    outline: 3px solid #d2bfdd;
+    outline-offset: 3px;
+}
+
+@keyframes veloEntra {
+    from { opacity: 0; }
+}
+
+@keyframes veloSale {
+    to { opacity: 0; }
+}
+
+@keyframes paseEntra {
+    from {
+        opacity: 0;
+        transform: translateY(48px) scale(0.92) rotateX(12deg);
+    }
+}
+
+@keyframes paseSale {
+    to {
+        opacity: 0;
+        transform: translateY(24px) scale(0.96);
+    }
+}
+
+@keyframes destello {
+    0%, 55% { left: -60%; }
+    100% { left: 130%; }
+}
+
+@keyframes halo {
+    0%, 100% { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(210, 191, 221, 0.55); }
+    50% { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(210, 191, 221, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .velo,
+    .contenido,
+    .qr,
+    .destello {
+        animation: none;
+    }
+
+    .destello {
+        display: none;
+    }
+}
