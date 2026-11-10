@@ -7,6 +7,10 @@
 
   El PIN no se edita: es también la contraseña de la cuenta i attend del
   vendedor, así que regenerarlo desde aquí lo dejaría fuera sin avisarle.
+
+  Pops gratis: van a su cuenta i attend (`user_id`, que el backend encuentra
+  por su correo) en `planner_benefits.free_flash_events`, igual que a un
+  cliente; los usa desde su página de invitaciones. Sin cuenta, no hay dónde.
 */
 
 import { useEffect, useState } from 'react'
@@ -15,6 +19,8 @@ import { Copy, Pencil, Plus } from 'lucide-react'
 import { AdminModal } from '../AdminModal'
 import { AccionTopbar, EnTopbarAccion } from '../AdminTopbar'
 import { createAdminVendedor, fetchAdminVendedores, updateAdminVendedor } from '../salesAdminApi'
+import { fetchBeneficiosPlanners, updateBeneficiosPlanner } from '../usuariosAdminApi'
+import estilosUsuarios from './UsuariosSection.module.css'
 import styles from './VentasSection.module.css'
 
 const TIPOS = [
@@ -31,7 +37,13 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
     const [guardando, setGuardando] = useState(false)
     // Resultado del alta: el PIN solo se puede copiar en este momento.
     const [recienCreado, setRecienCreado] = useState(null)
+    // Pops gratis por cuenta: asignados libres y los que ya usó.
+    const [beneficios, setBeneficios] = useState({ beneficios: {}, usados: {}, listos: false })
     const [form] = Form.useForm()
+
+    const cargarBeneficios = () => fetchBeneficiosPlanners()
+        .then(({ data }) => setBeneficios({ beneficios: data.beneficios ?? {}, usados: data.usados ?? {}, listos: true }))
+        .catch(error => console.error('No se pudieron cargar los Pops gratis:', error.response?.data || error.message))
 
     const cargar = async () => {
         try {
@@ -44,7 +56,7 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
         }
     }
 
-    useEffect(() => { cargar() }, [])
+    useEffect(() => { cargar(); cargarBeneficios() }, [])
 
     useEffect(() => {
         if (!altaInicial) return
@@ -72,6 +84,7 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
             email: vendedor.email ?? '',
             descuento_max_pct: vendedor.descuento_max_pct,
             activo: vendedor.activo,
+            pops_gratis: beneficios.beneficios[vendedor.user_id]?.free_flash_events ?? 0,
         })
         setEditando(vendedor)
     }
@@ -83,11 +96,25 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
         setGuardando(true)
 
         try {
+            const { pops_gratis: popsGratis, ...datos } = valores
             if (esAlta) {
-                const { data } = await createAdminVendedor(valores)
+                const { data } = await createAdminVendedor(datos)
                 setRecienCreado(data)
             } else {
-                await updateAdminVendedor(editando.id, valores)
+                await updateAdminVendedor(editando.id, datos)
+                // Hasta que carguen los beneficios el campo arranca en 0:
+                // guardar ahí los borraría.
+                const actuales = beneficios.beneficios[editando.user_id]
+                if (editando.user_id && beneficios.listos && (popsGratis ?? 0) !== (actuales?.free_flash_events ?? 0)) {
+                    // Si su cuenta también es de planner, sus otros beneficios
+                    // se mandan como están para no borrarlos.
+                    await updateBeneficiosPlanner(editando.user_id, {
+                        free_events: actuales?.free_events ?? 0,
+                        discount_pct: actuales?.discount_pct ?? 0,
+                        free_flash_events: popsGratis ?? 0,
+                    })
+                    cargarBeneficios()
+                }
                 message.success('Vendedor actualizado')
             }
 
@@ -99,6 +126,19 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
         } finally {
             setGuardando(false)
         }
+    }
+
+    const celdaPops = (vendedor) => {
+        if (!vendedor.user_id) return <span className={styles.celdaTenue} title='Sin cuenta i attend con su correo'>—</span>
+        const usados = beneficios.usados[vendedor.user_id]?.pop_gratis ?? 0
+        const libres = beneficios.beneficios[vendedor.user_id]?.free_flash_events ?? 0
+        if (!usados && !libres) return <span className={styles.celdaTenue}>0</span>
+        return (
+            <span className={estilosUsuarios.beneficio}>
+                {usados} de {usados + libres}
+                {libres > 0 && <span className={estilosUsuarios.libre}>{libres} libre{libres === 1 ? '' : 's'}</span>}
+            </span>
+        )
     }
 
     const copiar = (texto, aviso) => {
@@ -132,6 +172,7 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
                             <span className={styles.cell}>Teléfono</span>
                             <span className={styles.cell}>Correo</span>
                             <span className={`${styles.cell} ${styles.cellNum}`}>Desc. máx.</span>
+                            <span className={styles.cell}>Pops gratis</span>
                             <span className={styles.cell}>PIN de acceso</span>
                             <span className={styles.cell}>Estado</span>
                             <span className={styles.cell} />
@@ -158,6 +199,8 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
                                 <span className={`${styles.cell} ${styles.cellNum}`}>
                                     {vendedor.descuento_max_pct}%
                                 </span>
+
+                                <span className={styles.cell}>{celdaPops(vendedor)}</span>
 
                                 <span className={styles.cell}>
                                     <button
@@ -236,9 +279,24 @@ export const VendedoresSection = ({ altaInicial = null, onAltaUsada }) => {
                             <Checkbox>Crear cuenta i attend</Checkbox>
                         </Form.Item>
                     ) : (
-                        <Form.Item name='activo' label='Activo' valuePropName='checked'>
-                            <Switch />
-                        </Form.Item>
+                        <>
+                            {editando?.user_id ? (
+                                <Form.Item
+                                    name='pops_gratis'
+                                    label='Pops gratis'
+                                    extra={`Le aparecen en su página de invitaciones para crear Pops sin pagar.${beneficios.usados[editando.user_id]?.pop_gratis ? ` Ya usó ${beneficios.usados[editando.user_id].pop_gratis}.` : ''}`}
+                                >
+                                    <InputNumber min={0} max={100} precision={0} style={{ width: '100%' }} disabled={!beneficios.listos} />
+                                </Form.Item>
+                            ) : (
+                                <p className={styles.celdaTenue} style={{ margin: '0 0 16px', fontSize: 12 }}>
+                                    Para darle Pops gratis necesita una cuenta i attend con este correo.
+                                </p>
+                            )}
+                            <Form.Item name='activo' label='Activo' valuePropName='checked'>
+                                <Switch />
+                            </Form.Item>
+                        </>
                     )}
                 </Form>
             </AdminModal>
