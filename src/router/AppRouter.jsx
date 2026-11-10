@@ -49,6 +49,7 @@ import { OnboardingPreviewPage } from '../pages/PreviewMood/OnboardingPreviewPag
 import { CheckoutPage } from '../pages/Checkout/CheckoutPage'
 import { PreciosPage } from '../pages/Precios/PreciosPage'
 import { RUTA_CATALOGO } from '../pages/Precios/catalogoPrecios'
+import { ComprarPage } from '../pages/Precios/ComprarPage'
 import { SalesApp } from '../modules/Sales/SalesApp'
 import { ProspectosPage } from '../modules/Prospectos/ProspectosPage'
 
@@ -88,6 +89,7 @@ export const AppRouter = () => {
       <Route path="/save-the-date" element={<SaveTheDatePage demo />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path={RUTA_CATALOGO} element={<PreciosPage />} />
+      <Route path="/comprar/:clave" element={<ComprarPage />} />
       <Route path="/*" element={<PageNotFound />} />
 
       <Route path="/admin"

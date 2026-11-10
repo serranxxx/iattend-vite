@@ -1,0 +1,92 @@
+.pagina {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 24px;
+    background: #f5f3f2;
+    color: #29262d;
+    font-family: 'Poppins', var(--font-family), sans-serif;
+}
+
+.tarjeta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: min(420px, 100%);
+    padding: 40px 28px 32px;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.logo {
+    height: 30px;
+    margin-bottom: 12px;
+}
+
+.icono {
+    display: grid;
+    place-items: center;
+    color: #1c3249;
+}
+
+.tarjeta[data-estado='lista'] .icono {
+    color: #43b75d;
+}
+
+.tarjeta[data-estado='error'] .icono,
+.tarjeta[data-estado='cancelada'] .icono {
+    color: #787878;
+}
+
+.titulo {
+    margin: 0;
+    font-family: 'Denver-Serial', var(--font-family), serif;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #1c3249;
+}
+
+.texto {
+    margin: 0;
+    max-width: 320px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #787878;
+}
+
+.boton {
+    margin-top: 8px;
+    height: 46px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 12px;
+    background: #1c3249;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.boton:hover {
+    background: #2a4763;
+}
+
+.girando {
+    animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .girando {
+        animation: none;
+    }
+}
