@@ -111,7 +111,9 @@ export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onC
         setSubmitting(true)
         try {
             if (gratisElegido || sinCosto) {
-                const { data } = await crearPopGratis(payload())
+                // `sin_costo`: el botón de Administración "Crear sin costo" no
+                // gasta un Pop gratis; "Usar un Pop gratis" sí (también a un admin).
+                const { data } = await crearPopGratis({ ...payload(), ...(sinCosto && !gratisElegido ? { sin_costo: true } : {}) })
                 setCreado(data)
                 setPaso(4)
             } else {

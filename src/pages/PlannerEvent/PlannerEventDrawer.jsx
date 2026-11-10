@@ -267,7 +267,8 @@ const PlannerEventFlow = ({ modo, onBackToStart, onClose, onCreated }) => {
         setSubmitting(true)
         try {
             if (modo === 'gratis' || sinCosto) {
-                const { data } = await crearEventoGratis(payload())
+                // `sin_costo`: "Crear sin costo" (Administración) no gasta un evento gratis.
+                const { data } = await crearEventoGratis({ ...payload(), ...(sinCosto && modo !== 'gratis' ? { sin_costo: true } : {}) })
                 setCreado(data)
             } else {
                 const { data } = await checkoutEvento({
