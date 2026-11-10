@@ -40,10 +40,10 @@ Extras (Side Event, Créditos, Cámbiate a PRO): sin meses (todos cuestan menos 
 
 En la UI **no se dice "sin intereses" ni "MSI"**: el precio a meses es más caro que el de contado. Se habla de "pagos" ("hasta 12 pagos de $375").
 
-- **iattend-vite `/checkout`** (`components/Payment/PlanPricing/`): "Contado | A meses (desde $375/mes)", y en A meses "desde $375/mes", "Hasta 12 pagos con tarjeta · eliges el plazo al pagar · +$500 vs. contado", total y "Pagar a meses · $4,499".
-- **Drawer de `/preview`** (`PublishModal.jsx` + `components/Payment/InstallmentPicker/`) y **compra de evento del planner** (`PlannerEventDrawer.jsx`): mismo "Contado | A meses". Helpers en `hooks/usePlans.js`: `planTerms`, `formatMXN`, `termCaption` ("Hasta 12 pagos de $375").
+- **iattend-vite `/checkout`** (`components/Payment/PlanPricing/`): "Contado | 3 meses | 6 meses | 12 meses" con su mensualidad; todos son el mismo precio a meses (`planTerms` abre `installments[0].plazos` en una opción por plazo, con el mismo `lookup_key`). Debajo: "6 pagos con tarjeta · confirmas el plazo al pagar · +$500 vs. contado", total y "Pagar 6 × $750".
+- **Drawer de `/preview`** (`PublishModal.jsx` + `components/Payment/InstallmentPicker/`) y **compra de evento del planner** (`PlannerEventDrawer.jsx`): mismos plazos. Helpers en `hooks/usePlans.js`: `planTerms`, `formatMXN`, `termCaption` ("6 pagos de $750").
 - **iattend-next `/about/pricing`**: "o hasta 12 pagos de $375" (redondeado hacia arriba).
-- **Catálogo `/precios/<id>`** (`pages/Precios/`): "Hasta 12 pagos con tarjeta · desde $375 al mes", "Contado o hasta 12 pagos · desde $334 al mes" en Bucket 10 y el precio por Pop en los Buckets.
+- **Catálogo `/precios/<id>`** (`pages/Precios/`): atrás de la tarjeta solo nombre, precio y un renglón ("desde $375 al mes" o "$449.80 por Pop"), con el texto cediendo espacio para que Copiar link y Ver QR se vean siempre; abajo, un renglón ("Hasta 12 pagos con tarjeta" o el precio por Pop).
 
 ## Cobro
 

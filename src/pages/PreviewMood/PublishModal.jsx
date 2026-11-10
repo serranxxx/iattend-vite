@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { supabaseAuthHeaders } from '../../lib/authHeaders'
 import { AuthModal } from './AuthModal'
 import { fetchPrices, PRODUCTS } from '../../components/Payment/functions'
-import { formatMXN, termCaption, usePlans } from '../../hooks/usePlans'
+import { formatMXN, planTerms, termCaption, usePlans } from '../../hooks/usePlans'
 import { InstallmentPicker } from '../../components/Payment/InstallmentPicker/InstallmentPicker'
 
 const API = import.meta.env.VITE_API_URL
@@ -82,12 +82,11 @@ export const PublishModal = ({ open, onClose, invitation }) => {
 
     const selectedEntry = planPrices.find(p => PRODUCTS[p.priceId]?.value === selected)
 
-    // Plazos a meses sin intereses del catálogo (GET /api/plans); el contado
-    // sigue saliendo de fetchPrices. 0 = contado.
+    // Contado (sale de fetchPrices) o a meses (GET /api/plans). 0 = contado.
     const { getPlan } = usePlans()
     const [meses, setMeses] = useState(0)
     const terms = selectedEntry
-        ? [{ months: 0, amount: selectedEntry.amount, monthly: null, lookup_key: null }, ...(getPlan(selected)?.installments ?? [])]
+        ? planTerms({ price: { amount: selectedEntry.amount }, installments: getPlan(selected)?.installments })
         : []
     const term = terms.find(t => t.months === meses) ?? terms[0] ?? null
     const selectedPriceFormatted = term ? formatMXN(term.amount) : '…'

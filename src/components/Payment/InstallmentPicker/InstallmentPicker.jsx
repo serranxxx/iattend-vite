@@ -1,8 +1,8 @@
 import { formatMonthly, formatMXN } from '../../../hooks/usePlans'
 import styles from './InstallmentPicker.module.css'
 
-// Selector de forma de pago (contado / a meses) de un plan; el plazo de "a
-// meses" lo elige el cliente en Stripe. `terms` sale
+// Selector de plazo (contado / 3 · 6 · 12 meses) de un plan; el cliente lo
+// confirma en Stripe. `terms` sale
 // de planTerms(plan); si el plan solo tiene contado no se pinta nada.
 // Tono claro, para drawers blancos (el checkout usa PlanPricing).
 export const InstallmentPicker = ({ terms, value, onChange }) => {
@@ -22,10 +22,10 @@ export const InstallmentPicker = ({ terms, value, onChange }) => {
                         onClick={() => onChange(term.months)}
                     >
                         <span className={styles.label}>
-                            {term.months ? 'A meses' : 'Contado'}
+                            {term.months ? `${term.months} meses` : 'Contado'}
                         </span>
                         <span className={styles.detail}>
-                            {term.months ? `desde ${formatMonthly(term.monthly)}/mes` : formatMXN(term.amount)}
+                            {term.months ? `${formatMonthly(term.monthly)}/mes` : formatMXN(term.amount)}
                         </span>
                     </button>
                 )

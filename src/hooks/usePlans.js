@@ -154,16 +154,27 @@ export const formatMXN = (amount) =>
 export const formatMonthly = (amount) => mxnSinCentavos.format(Math.ceil(amount))
 
 // Formas de pago del plan, contado primero: [{ months: 0, amount, monthly:
-// null, lookup_key: null }, { months: 12, amount, monthly, lookup_key, plazos }].
+// null, lookup_key: null }, { months: 3, amount, monthly, lookup_key }, …].
+// El pago a meses es un solo precio (`installments[0]`, con sus `plazos`
+// 3 · 6 · 12): se abre en una opción por plazo, todas con el mismo total y el
+// mismo lookup_key. El plazo elegido aquí es el que se anuncia; el cliente lo
+// confirma en Stripe. Sin `plazos` (backend de antes de nov 2026) se usan los
+// plazos tal como llegan.
 export const planTerms = (plan) => {
     if (!plan?.price) return []
     const contado = { months: 0, amount: plan.price.amount, monthly: null, lookup_key: null }
-    return [contado, ...(plan.installments ?? [])]
+    const plazos = (plan.installments ?? []).flatMap((t) =>
+        t.plazos?.length
+            ? t.plazos.map((p) => ({ months: p.months, amount: t.amount, monthly: p.monthly, currency: t.currency, lookup_key: t.lookup_key }))
+            : [t]
+    )
+    const unicos = [...new Map(plazos.map((t) => [t.months, t])).values()].sort((a, b) => a.months - b.months)
+    return [contado, ...unicos]
 }
 
-// Texto bajo el precio: "Pago único" o "Hasta 12 pagos de $375". No se dice
+// Texto bajo el precio: "Pago único" o "6 pagos de $750". No se dice
 // "sin intereses": el precio a meses es más caro que el de contado.
 export const termCaption = (term) =>
     term?.months
-        ? `Hasta ${term.months} pagos de ${formatMonthly(term.monthly)}`
+        ? `${term.months} pagos de ${formatMonthly(term.monthly)}`
         : 'Pago único'

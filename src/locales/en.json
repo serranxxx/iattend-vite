@@ -2844,7 +2844,7 @@
     "free_none_left": "You have no free events left.",
     "plan": "Plan",
     "how_to_pay": "Payment",
-    "months": "Installments",
+    "months": "{{n}} months",
     "one_payment": "One payment",
     "list_price": "Price",
     "discount_line": "Your planner discount ({{pct}}%)",

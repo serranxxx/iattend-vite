@@ -2844,7 +2844,7 @@
     "free_none_left": "Ya no tienes eventos gratis disponibles.",
     "plan": "Plan",
     "how_to_pay": "Forma de pago",
-    "months": "A meses",
+    "months": "{{n}} meses",
     "one_payment": "Contado",
     "list_price": "Precio",
     "discount_line": "Tu descuento de planner ({{pct}}%)",
