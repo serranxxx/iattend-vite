@@ -589,6 +589,58 @@
     gap: 14px;
 }
 
+/* Save the Date y Pops apiladas: las dos en la misma celda; la de atrás asoma
+   por arriba (más chica y apagada) y al tocarla pasa al frente. */
+.pila {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    padding-top: 14px;
+}
+
+.pila > .card {
+    position: relative;
+    grid-area: 1 / 1;
+    transform-origin: 50% 0;
+    transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1), filter 0.38s ease, box-shadow 0.38s ease;
+}
+
+.pilaFrente {
+    z-index: 1;
+}
+
+.pilaAtras {
+    z-index: 0;
+    transform: translateY(-14px) scale(0.94);
+    filter: brightness(0.96);
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.pilaAtras * {
+    pointer-events: none;
+}
+
+.pilaAtras:hover {
+    transform: translateY(-20px) scale(0.94);
+    filter: none;
+}
+
+.pilaFrente {
+    cursor: pointer;
+}
+
+.pilaFrente:focus-visible {
+    outline: 2px solid var(--ac-line);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pila > .card {
+        transition: none;
+    }
+}
+
 .segmentado {
     display: flex;
     gap: 2px;

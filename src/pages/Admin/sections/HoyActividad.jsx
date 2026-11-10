@@ -10,7 +10,7 @@ import styles from './HoySection.module.css'
 dayjs.extend(relativeTime)
 dayjs.locale('es')
 
-// Tarjetas de la columna derecha de Hoy: Save the Dates y reportes. (La
+// Tarjetas de la columna derecha de Hoy: Save the Dates / Pops y reportes. (La
 // bandeja de mensajes salió de Hoy: vive en Buzón.)
 
 const mapaPor = (lista, llave) => new Map((lista ?? []).map(item => [item[llave], item]))
@@ -42,43 +42,34 @@ const Barras = ({ valores }) => {
     )
 }
 
-export const SaveTheDateCard = ({ invitations, profiles, esPrueba }) => {
+// Lee una tabla una sola vez al montar (Save the Dates, Pops).
+const useFilas = (cargar, etiqueta) => {
     const [filas, setFilas] = useState(null)
-    const [dias, setDias] = useState(30)
-
     useEffect(() => {
         let vivo = true
-        supabase
-            .from('save_the_dates')
-            .select('id, invitation_id, created_at')
-            .order('created_at', { ascending: false })
-            .then(({ data, error }) => {
-                if (!vivo) return
-                if (error) console.error('Error al cargar Save the Dates:', error)
-                setFilas(data ?? [])
-            })
+        cargar().then(({ data, error }) => {
+            if (!vivo) return
+            if (error) console.error(`Error al cargar ${etiqueta}:`, error)
+            setFilas(data ?? [])
+        })
         return () => { vivo = false }
     }, [])
+    return filas
+}
 
-    const invitationsById = useMemo(() => mapaPor(invitations, 'id'), [invitations])
-    const perfilesPorId = useMemo(() => mapaPor(profiles, 'user_id'), [profiles])
+// El último creado: el nombre del evento (o, si no tiene, el correo del dueño).
+const quienDe = ({ evento, correo }) => String(evento ?? '').replace(/\s+/g, ' ').trim() || correo || 'Sin nombre'
 
-    // Cada Save the Date con quién lo hizo (el dueño de su evento). Las cuentas
-    // internas quedan fuera: el producto es nuevo y las pruebas lo inflan.
+// La tarjeta de "creados en los últimos N días": cifra, quién, barras por
+// tramo y pie. `items` ya trae a cada uno con su dueño y si es de prueba; las
+// pruebas quedan fuera porque los productos son nuevos y las pruebas los inflan.
+const TarjetaCreados = ({ titulo, items, className = '', ...resto }) => {
+    const [dias, setDias] = useState(30)
+
     const { reales, pruebas } = useMemo(() => {
-        const todos = (filas ?? []).map(std => {
-            const invitacion = invitationsById.get(std.invitation_id)
-            const perfil = perfilesPorId.get(invitacion?.user_id)
-            return {
-                ...std,
-                prueba: invitacion ? esPrueba(invitacion) : false,
-                duenioId: invitacion?.user_id ?? null,
-                nombre: perfil?.full_name || invitacion?.user_email || perfil?.user_email || 'Sin dueño',
-            }
-        })
-        const lista = todos.filter(s => !s.prueba)
-        return { reales: lista, pruebas: todos.length - lista.length }
-    }, [filas, invitationsById, perfilesPorId, esPrueba])
+        const lista = (items ?? []).filter(s => !s.prueba)
+        return { reales: lista, pruebas: (items ?? []).length - lista.length }
+    }, [items])
 
     const { tramo } = VENTANAS.find(v => v.dias === dias)
     const desde = dayjs().startOf('day').subtract(dias - 1, 'day')
@@ -98,9 +89,9 @@ export const SaveTheDateCard = ({ invitations, profiles, esPrueba }) => {
     const ultimo = reales[0]
 
     return (
-        <section className={`${styles.card} ${styles.std}`}>
+        <section className={`${styles.card} ${styles.std} ${className}`} {...resto}>
             <header className={styles.cardHead}>
-                <h2 className={styles.label}>Save the Date</h2>
+                <h2 className={styles.label}>{titulo}</h2>
                 <div className={styles.segmentado} role='radiogroup' aria-label='Ventana de días'>
                     {VENTANAS.map(({ dias: valor }) => (
                         <button
@@ -135,15 +126,109 @@ export const SaveTheDateCard = ({ invitations, profiles, esPrueba }) => {
             </div>
 
             <p className={styles.stdPie}>
-                {filas === null ? 'Cargando…' : (
+                {items === null ? 'Cargando…' : (
                     <>
                         {reales.length} en total
-                        {ultimo && ` · Último: ${ultimo.nombre}, ${dayjs(ultimo.created_at).format('D MMM')}`}
+                        {ultimo && ` · Último: ${quienDe(ultimo)}, ${dayjs(ultimo.created_at).format('D MMM')}`}
                         {pruebas > 0 && ` · excluye ${pruebas} de prueba`}
                     </>
                 )}
             </p>
         </section>
+    )
+}
+
+// Save the Dates: el dueño es el de su invitación.
+const useSaveTheDates = ({ invitations, profiles, esPrueba }) => {
+    const filas = useFilas(() => supabase
+        .from('save_the_dates')
+        .select('id, invitation_id, created_at')
+        .order('created_at', { ascending: false }), 'Save the Dates')
+
+    const invitationsById = useMemo(() => mapaPor(invitations, 'id'), [invitations])
+    const perfilesPorId = useMemo(() => mapaPor(profiles, 'user_id'), [profiles])
+
+    return useMemo(() => filas && filas.map(std => {
+        const invitacion = invitationsById.get(std.invitation_id)
+        const perfil = perfilesPorId.get(invitacion?.user_id)
+        return {
+            ...std,
+            prueba: invitacion ? esPrueba(invitacion) : false,
+            duenioId: invitacion?.user_id ?? null,
+            // El título de la portada ("Andrés & Julieta"); `name` casi siempre va vacío.
+            evento: invitacion?.data?.cover?.title?.text?.value || invitacion?.name,
+            correo: invitacion?.user_email || perfil?.user_email,
+        }
+    }), [filas, invitationsById, perfilesPorId, esPrueba])
+}
+
+// Pops = side events sin invitación. El dueño es su cliente o, si todavía es
+// "por enviar", su planner (la misma regla de prueba que clasificarSide).
+const usePops = ({ profiles, esPrueba }) => {
+    const filas = useFilas(() => supabase
+        .from('side_events')
+        .select('id, name, user_id, planner_id, user_email, created_at')
+        .is('invitation_id', null)
+        .order('created_at', { ascending: false }), 'Pops')
+
+    const perfilesPorId = useMemo(() => mapaPor(profiles, 'user_id'), [profiles])
+
+    return useMemo(() => filas && filas.map(pop => {
+        const duenioId = pop.user_id ?? pop.planner_id ?? null
+        const perfil = perfilesPorId.get(duenioId)
+        return {
+            ...pop,
+            prueba: esPrueba({ user_id: duenioId, user_email: pop.user_email }),
+            duenioId,
+            evento: pop.name,
+            correo: pop.user_email || perfil?.user_email,
+        }
+    }), [filas, perfilesPorId, esPrueba])
+}
+
+// Save the Date y Pops apiladas en el mismo lugar: la de atrás asoma por
+// arriba y al tocarla pasa al frente, para no ocupar más espacio en Hoy.
+const PILA = [
+    { clave: 'std', titulo: 'Save the Date' },
+    { clave: 'pops', titulo: 'Pops' },
+]
+
+export const CreadosCard = (props) => {
+    const [frente, setFrente] = useState('std')
+    const items = { std: useSaveTheDates(props), pops: usePops(props) }
+    const otra = PILA.find(t => t.clave !== frente)
+    const cambiar = () => setFrente(otra.clave)
+
+    return (
+        <div className={styles.pila}>
+            {PILA.map(({ clave, titulo }) => {
+                const alFrente = clave === frente
+                return (
+                    <TarjetaCreados
+                        key={clave}
+                        titulo={titulo}
+                        items={items[clave]}
+                        className={alFrente ? styles.pilaFrente : styles.pilaAtras}
+                        title={alFrente ? `Toca para ver ${otra.titulo}` : `Ver ${titulo}`}
+                        aria-hidden={alFrente ? undefined : true}
+                        // Tocar la tarjeta (fuera de los botones de días) la
+                        // cambia por la de atrás.
+                        onClick={(e) => { if (!e.target.closest('button')) cambiar() }}
+                        {...(alFrente ? {
+                            role: 'button',
+                            tabIndex: 0,
+                            'aria-label': `${titulo}. Enter para ver ${otra.titulo}`,
+                            onKeyDown: (e) => {
+                                if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                                    e.preventDefault()
+                                    cambiar()
+                                }
+                            },
+                        } : {})}
+                    />
+                )
+            })}
+        </div>
     )
 }
 

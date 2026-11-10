@@ -7,7 +7,7 @@ import { fetchGastosFijos, sumarMeta } from '../gastosFijosApi'
 import { fetchStripeResumen } from '../stripeAdminApi'
 import { calcularCargosPorVenta, calcularKpis, formatCurrency, netoDeVenta } from '../ventasCalculos'
 import { useContador } from '../useContador'
-import { ReportesCard, SaveTheDateCard } from './HoyActividad'
+import { CreadosCard, ReportesCard } from './HoyActividad'
 import styles from './HoySection.module.css'
 
 dayjs.locale('es')
@@ -192,7 +192,7 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
 
     const columnaActividad = (
         <div className={styles.columna}>
-            <SaveTheDateCard invitations={invitations} profiles={profiles} esPrueba={esPrueba} />
+            <CreadosCard invitations={invitations} profiles={profiles} esPrueba={esPrueba} />
             <ReportesCard tickets={tickets} onNavigate={onNavigate} />
         </div>
     )
