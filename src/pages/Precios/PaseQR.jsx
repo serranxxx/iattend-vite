@@ -14,7 +14,7 @@ const SALIDA_MS = 260
 // y el plazo. Se cierra con ✕, Esc o tocando fuera.
 export const PaseQR = ({ producto, onCerrar }) => {
     const { t } = useTranslation()
-    const { precio, plazo, mensualidad } = useFormatoPrecio(producto)
+    const { precio, plazo, mensualidad, porPop } = useFormatoPrecio(producto)
     const [saliendo, setSaliendo] = useState(false)
     const cerrarRef = useRef(null)
 
@@ -61,7 +61,7 @@ export const PaseQR = ({ producto, onCerrar }) => {
                     <div className={styles.encabezado}>
                         <img className={styles.logo} src="/images/logo_cover.png" alt="I attend" />
                         <div className={styles.precioCaja}>
-                            <span className={styles.precioEtiqueta}>{producto.meses ? `${producto.meses} MSI` : 'TOTAL'}</span>
+                            <span className={styles.precioEtiqueta}>{producto.meses ? `HASTA ${producto.meses} PAGOS` : 'TOTAL'}</span>
                             <span className={styles.precio}>{precio}</span>
                         </div>
                     </div>
@@ -73,7 +73,8 @@ export const PaseQR = ({ producto, onCerrar }) => {
 
                     <div className={styles.pie}>
                         <span className={styles.nombre}>{producto.nombre}</span>
-                        <span className={styles.plazo}>{mensualidad ? `${plazo} · ${mensualidad}` : plazo}</span>
+                        <span className={styles.plazo}>{[plazo, mensualidad].filter(Boolean).join(' · ')}</span>
+                        {porPop && <span className={styles.plazo}>{porPop}</span>}
                     </div>
                 </div>
 

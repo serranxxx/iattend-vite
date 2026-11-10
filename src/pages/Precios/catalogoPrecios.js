@@ -1,10 +1,14 @@
 // Catálogo de precios (RUTA_CATALOGO y Admin › Ventas › Precios). Foto de lo
-// que hay en Stripe (live) al 2026-11-10: cada producto con su precio principal (`default_price`), la
-// imagen del producto y su Payment Link. Los links nuevos se crearon con
-// metadata `origen: catalogo_precios`; una compra por link no trae
-// `priceId` en la metadata, así que el webhook la ignora y la activa un asesor.
-// Si cambia un precio o un link en Stripe, hay que actualizarlo aquí a mano.
-// `meses`: plazo a meses sin intereses (el monto es el total).
+// que hay en Stripe (live) al 2026-11-10, ya con el catálogo nuevo (un precio
+// de contado y uno "a meses"; en Stripe los meses solo salen desde $4,000):
+// cada producto con su precio principal (`default_price`), la imagen del
+// producto y su Payment Link. Los
+// links llevan metadata `origen: catalogo_precios`; una compra por link no
+// trae `priceId` en la metadata, así que el webhook la ignora y la activa un
+// asesor. Si cambia un precio o un link en Stripe, hay que actualizarlo aquí.
+// `meses`: se puede pagar a meses (hasta ese plazo; el cliente lo elige en
+// Stripe). `mismoPrecio`: cuesta lo mismo de contado o a meses. `pops`: Pops
+// que incluye (para "$450 por Pop").
 
 // Ruta pública del catálogo. El id solo la hace difícil de adivinar: viaja en
 // el bundle, así que no es un secreto. Para cambiarla, cambiar el id aquí.
@@ -19,20 +23,12 @@ export const CATALOGO = [
           productos: [
             { id: 'wedding.pro_contado', nombre: 'PRO - Contado', monto: 3999,
               productId: 'prod_VbSVIYg0eJbVFv', priceId: 'price_1UaFaqAAdNlITNVb73fqH4yd',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfZmNFZ045MUxDd2hHdHcyRXl0N2l2S0E300QUdZB4HE',
+              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfbVNZWHY5azF2SHZlTUJRMXFzNnhnM2hJ00lw8PQ4jn',
               link: 'https://buy.stripe.com/aFa00i4OE8wNdyn8TEd7q0b' },
-            { id: 'wedding.pro_3_meses', nombre: 'PRO 3 meses', monto: 4349, meses: 3,
-              productId: 'prod_VbSVZzZnks5dVJ', priceId: 'price_1UaFawAAdNlITNVbVUKNNDOO',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfVjUzSHRtc3FLMGJpTjNSTWEwQ1Z3NEFX00aF61b0xE',
-              link: 'https://buy.stripe.com/cNi3cu3KAbIZ2TJ4Dod7q0c' },
-            { id: 'wedding.pro_6_meses', nombre: 'PRO 6 meses', monto: 4499, meses: 6,
-              productId: 'prod_VbSWr12X4xM4sY', priceId: 'price_1UaFbAAAdNlITNVb5rZP3BPt',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfMGE2eGI1am9ITnlrVDdpNGRrbVkzSXE500dzHrm68m',
-              link: 'https://buy.stripe.com/eVqaEWdla5kB79Z7PAd7q0d' },
-            { id: 'wedding.pro_12_meses', nombre: 'PRO 12 meses', monto: 4799, meses: 12,
-              productId: 'prod_VbSWQJp1oHEOTK', priceId: 'price_1UaFbGAAdNlITNVbO8YUryWU',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfVWtObTlGN0lySktjZjZGMWdDSTcyeDdF00Fz6rtVKP',
-              link: 'https://buy.stripe.com/8x2cN4bd24gx0LB2vgd7q0e' },
+            { id: 'wedding.pro_meses', nombre: 'PRO a meses', monto: 4499, meses: 12,
+              productId: 'prod_VbSVZzZnks5dVJ', priceId: 'price_1UaH1yAAdNlITNVbqdsGJJtf',
+              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfT2ltT0p4ZFJLTmN4QmxFY0Z3RHlLcVU100HhdAlFLA',
+              link: 'https://buy.stripe.com/cNi9ASbd2bIZ8e35Hsd7q0t' },
             { id: 'wedding.lite', nombre: 'Lite', monto: 2899,
               productId: 'prod_ThrfrgJ7bGsk3f', priceId: 'price_1Tl9jyAAdNlITNVbm0hq6omU',
               imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfQ0hjdFBORHpXbnpINnE2aE1YaU13VnVO00qPEwQwxV',
@@ -51,48 +47,18 @@ export const CATALOGO = [
         {
           titulo: null,
           productos: [
-            { id: 'pops.individual', nombre: 'Pop', monto: 549,
+            { id: 'pops.individual', nombre: 'Pop', monto: 549, pops: 1,
               productId: 'prod_VQ1P4AEuKpGcSY', priceId: 'price_1UPBMpAAdNlITNVbsMytTDx4',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfd09GVEdvVUxFWUdCYm91Q0dwSVVhWXBn00eYqtokUx',
+              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfdzJtaXVzaEU0N2J0VHBtRjBscndoOGZ600nxYcVVfQ',
               link: 'https://buy.stripe.com/6oU4gygxm14l0LB0n8d7q0g' },
-          ],
-        },
-        {
-          titulo: 'Bucket 5 Pops',
-          productos: [
-            { id: 'pops.bucket_5.contado', nombre: 'Bucket 5 Pops - Contado', monto: 2200,
-              productId: 'prod_VbRxwmHXwYccpu', priceId: 'price_1UaF3tAAdNlITNVbtOJvbjYq',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfUVlWWHFIdTVzZUdkUm9XajR4QjVrQWx400Wpmf8xpB',
-              link: 'https://buy.stripe.com/14AaEW4OE3ct8e35Hsd7q0h' },
-            { id: 'pops.bucket_5.3_msi', nombre: 'Bucket 5 Pops - 3 MSI', monto: 2370, meses: 3,
-              productId: 'prod_VbRy2LpnjgWX8A', priceId: 'price_1UaF4DAAdNlITNVbRh1q4NiT',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfZzVwOWdPYUpiNFUxeU1BaXJ1dWNyMXll00aA9mEUO8',
-              link: 'https://buy.stripe.com/3cI8wO80Q5kBgKz9XId7q0i' },
-            { id: 'pops.bucket_5.6_msi', nombre: 'Bucket 5 Pops - 6 MSI', monto: 2430, meses: 6,
-              productId: 'prod_VbRyQSHaLGudoi', priceId: 'price_1UaF4UAAdNlITNVbYMERH6f6',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfTUtDWDZOdk1FT0RXUmhicFBud2hxVnVT00A5QyDPYw',
-              link: 'https://buy.stripe.com/aFa28q5SIbIZ0LB7PAd7q0j' },
-          ],
-        },
-        {
-          titulo: 'Bucket 10 Pops',
-          productos: [
-            { id: 'pops.bucket_10.contado', nombre: 'Bucket 10 Pops - Contado', monto: 3850,
-              productId: 'prod_VbRy89kVxXQ6on', priceId: 'price_1UaF4aAAdNlITNVbvZ3h2Hkn',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfOUxOdEQxVW43TWtMVEZYVmg0d3lrZVA300bKUYAnNN',
-              link: 'https://buy.stripe.com/3cI3cuepe4gxcujgm6d7q0k' },
-            { id: 'pops.bucket_10.3_msi', nombre: 'Bucket 10 Pops - 3 MSI', monto: 4170, meses: 3,
-              productId: 'prod_VbRyEcK5qCIxNf', priceId: 'price_1UaF4qAAdNlITNVbZkkxzT6y',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfa1BnZUx0OHhobXVnQ0ZIUFZOTUlJWVpR00SVSzzFjr',
-              link: 'https://buy.stripe.com/8x214m4OE5kBeCr0n8d7q0l' },
-            { id: 'pops.bucket_10.6_msi', nombre: 'Bucket 10 Pops - 6 MSI', monto: 4320, meses: 6,
-              productId: 'prod_VbRyqVAzZZnk38', priceId: 'price_1UaF4wAAdNlITNVb5Mjjpl5m',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfS0ZuMlhxTUlIeXlvNXk1aUwweExxc0ZU008EfbuPcs',
-              link: 'https://buy.stripe.com/28EcN42Gw6oF8e39XId7q0m' },
-            { id: 'pops.bucket_10.12_msi', nombre: 'Bucket 10 Pops - 12 MSI', monto: 4560, meses: 12,
-              productId: 'prod_VbRz64IO41J7SX', priceId: 'price_1UaF58AAdNlITNVb7GhFSbuR',
-              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfRlVHZXN2Q1R1NHJ1dVRndzNKNDBlN2RY00UoFqfJrz',
-              link: 'https://buy.stripe.com/14A6oG3KAcN365V9XId7q0n' },
+            { id: 'pops.bucket_5', nombre: 'Bucket 5 Pops', monto: 2249, pops: 5,
+              productId: 'prod_VbRxwmHXwYccpu', priceId: 'price_1UaH4PAAdNlITNVbL15skW9Y',
+              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfUmpNNzdVcjdVZkV4NWVvVFgyUGZrNjRu00CxVf8WNW',
+              link: 'https://buy.stripe.com/bJe14m3KA28p65V0n8d7q0u' },
+            { id: 'pops.bucket_10', nombre: 'Bucket 10 Pops', monto: 4000, pops: 10, meses: 12, mismoPrecio: true,
+              productId: 'prod_VbRy89kVxXQ6on', priceId: 'price_1UaHjdAAdNlITNVbv6j6JQKZ',
+              imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfR0xvVnY0S29YeEdHSHVtUDR6Nm9VRW5k00f9LW2Dhr',
+              link: 'https://buy.stripe.com/9B6bJ0fti6oF51R6Lwd7q0x' },
           ],
         },
       ],
@@ -142,10 +108,10 @@ export const CATALOGO = [
               productId: 'prod_VbSSieDvJfgvz3', priceId: 'price_1UaFY1AAdNlITNVbWr0IC7SR',
               imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfYmx3cnhXWXphZW0yZ0ZyeU1udlp1cHR4005ovFFzAe',
               link: 'https://buy.stripe.com/bJe14mepedR78e35Hsd7q0a' },
-            { id: 'promos.pro_msi', nombre: 'PRO MSI', monto: 3999, meses: 12,
-              productId: 'prod_Va0VhUewMVIFcz', priceId: 'price_1UYqUXAAdNlITNVb74nl51hN',
+            { id: 'promos.pro_msi', nombre: 'PRO MSI', monto: 4000, meses: 12,
+              productId: 'prod_Va0VhUewMVIFcz', priceId: 'price_1UaHg5AAdNlITNVbpmncSmHc',
               imagen: 'https://files.stripe.com/links/MDB8YWNjdF8xU2M2ZDVBQWRObElUTlZifGZsX2xpdmVfejFENHUzVWVZZ2Q2d1dqak5RZDhtWGhv00cTadKe2x',
-              link: 'https://buy.stripe.com/fZu8wObd200h2TJ2vgd7q08' },
+              link: 'https://buy.stripe.com/bJe8wOdla5kB1PFb1Md7q0w' },
           ],
         },
       ],

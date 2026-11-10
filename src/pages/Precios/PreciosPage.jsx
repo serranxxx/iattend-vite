@@ -48,7 +48,8 @@ const Plegable = ({ abierta, onAlternar, encabezado, clase, children }) => {
 
 const TarjetaProducto = ({ producto, volteada, onVoltear, onQR }) => {
     const { t } = useTranslation()
-    const { precio, plazo, mensualidad } = useFormatoPrecio(producto)
+    const { precio, plazo, mensualidad, porPop } = useFormatoPrecio(producto)
+    const detalle = porPop
 
     return (
         <article className={styles.producto}>
@@ -75,6 +76,7 @@ const TarjetaProducto = ({ producto, volteada, onVoltear, onQR }) => {
                             <span className={styles.reversoPrecio}>{precio}</span>
                             <span className={`${styles.reversoPlazo} ${styles.reversoPlazoTexto}`}>{plazo}</span>
                             {mensualidad && <span className={`${styles.reversoPlazo} ${styles.reversoMensualidad}`}>{mensualidad}</span>}
+                            {detalle && <span className={`${styles.reversoPlazo} ${styles.reversoMensualidad}`}>{detalle}</span>}
                         </div>
                         <div className={styles.acciones}>
                             <button
@@ -111,6 +113,7 @@ const TarjetaProducto = ({ producto, volteada, onVoltear, onQR }) => {
                 <span className={styles.precio}>{precio}</span>
             </div>
             {producto.meses && <span className={styles.plazoPie}>{plazo}</span>}
+            {detalle && <span className={`${styles.plazoPie} ${styles.detallePie}`}>{detalle}</span>}
         </article>
     )
 }

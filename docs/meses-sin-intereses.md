@@ -1,71 +1,76 @@
 # Meses sin intereses (MSI) — estado real
 
-Implementado el 3 oct 2026. Toca iattend-vite, iattend--backend e iattend-next.
+Esquema actual desde el 10 nov 2026 (el del 3 oct, un precio por plazo, quedó archivado). Toca iattend-vite, iattend--backend e iattend-next.
 
-## Precios (Stripe, MXN, `one_time`)
+## Por qué cambió
 
-| Plan | Plazo | Precio | Mensualidad | Lookup key |
-|---|---|---|---|---|
-| Lite | Contado | $2,899 | — | (price del catálogo `plans.stripe_price_id`) |
-| PRO | Contado | $3,999 | — | (price del catálogo `plans.stripe_price_id`) |
-| PRO | 3 meses | $4,269 | $1,423 | `pro_msi_3` |
-| PRO | 6 meses | $4,399 | $733.17 | `pro_msi_6` |
-| PRO | 12 meses | $4,719 | $393.25 | `pro_msi_12` |
+Stripe **no deja fijar ni limitar el plazo por precio ni por producto**: Checkout y Payment Links muestran todos los plazos activos de la cuenta que quepan en los montos mínimos del Dashboard. El esquema anterior (un producto o precio por plazo) no servía para limitarlo. Ahora cada producto tiene **un precio**, y solo se decide si ofrece meses o no. El cliente elige el plazo en Stripe.
 
-Los precios MSI cuestan más para cubrir la comisión extra de Stripe por MSI (+5% a 3, +7.5% a 6, +12.5% a 12, más IVA). **Lite solo se vende de contado**: `lite_msi_3` ($3,099) y `lite_msi_6` ($3,199) están archivados en Stripe y no se usan. Hay precios viejos activos (Lite $2,499, PRO $3,499): no usarlos ni borrarlos.
+## La regla vive en Stripe: mínimo de $4,000
+
+En **Settings → Payment methods → Meses sin intereses → Configure**, los plazos de **3, 6 y 12 meses** tienen un mínimo de **$4,000 MXN** (9, 18 y 24 están apagados). Todo cobro menor a $4,000 no ofrece meses, venga de Payment Link, Checkout o Elements. Por eso:
+
+- Los productos "a meses" cuestan **$4,000 o más**.
+- **Ningún producto de contado debe llegar a $4,000**: quedaría con meses en sus Payment Links.
+- Cantidad siempre fija en 1. El mínimo aplica al total: 2 × PRO contado ($7,998) sí ofrecería meses.
+
+## Catálogo (Stripe, MXN, `one_time`, IVA incluido)
+
+| Clave | Producto | Precio | Meses |
+|---|---|---|---|
+| `pro_contado` | PRO - Contado | $3,999 | No |
+| `pro_meses` | PRO a meses | $4,499 | 3 / 6 / 12 |
+| `lite` / `paperless` | Lite / Paperless | $2,899 / $849 | No |
+| `pop_individual` | Pop | $549 | No |
+| `bucket_5` | Bucket 5 Pops | $2,249 | No (solo contado) |
+| `bucket_10` | Bucket 10 Pops | $4,000 (mismo de contado o a meses) | 3 / 6 / 12 |
+| `pro_20_off` | PRO 20% OFF (promo) | $3,199 | No |
+| `pro_msi` | PRO MSI (promo Buen Fin) | $4,000 | 3 / 6 / 12 |
+
+Extras (Side Event, Créditos, Cámbiate a PRO): sin meses (todos cuestan menos de $4,000).
 
 ## Fuente única
 
-- **Qué plazos tiene cada plan:** `MSI_TERMS` en `iattend--backend/config/stripe.installments.js` (solo `pro: [3, 6, 12]`). El lookup key se arma como `{plan}_msi_{meses}`.
-- **Montos:** salen de Stripe por `lookup_key` (caché de 5 min), igual que el contado sale de `plans.stripe_price_id`. Ningún front ni el backend tiene montos escritos.
-- `GET /api/plans` agrega a cada plan `installments: [{ months, amount, monthly, currency, lookup_key }]` (`[]` si no tiene MSI o el price no está activo).
-
-Para agregar o quitar un plazo: crear o archivar el price en Stripe con su lookup key y ajustar `MSI_TERMS`.
+- **`iattend--backend/config/stripe.catalog.js`**: `CATALOGO` (product y price de cada uno), `PRODUCTOS_CON_MSI`, `PRECIO_A_MESES` (`{ pro: price de "PRO a meses" }`), `PLAZOS_MSI` (`[3, 6, 12]`, los activos en el Dashboard) y `opcionesDePago(priceId)`.
+- `config/stripe.products.js`: price → acción del webhook, con una sección **legacy** (precios y productos archivados) de solo lectura para pagos viejos.
+- El contado de cada plan sigue en `plans.stripe_price_id` (Admin → Configuración → Planes).
+- `GET /api/plans` agrega a cada plan `installments: [{ months (el plazo más largo), amount, monthly, currency, lookup_key: 'pro_meses', plazos: [{ months, monthly }] }]`, con una sola entrada (`[]` si no tiene precio a meses activo). Se dejó en arreglo por compatibilidad.
 
 ## Fronts
 
-En la UI **no se dice "sin intereses" ni "MSI"**: el precio a meses es más caro que el de contado. Se habla de "pagos" ("12 pagos de $394").
+En la UI **no se dice "sin intereses" ni "MSI"**: el precio a meses es más caro que el de contado. Se habla de "pagos" ("hasta 12 pagos de $375").
 
-
-- **iattend-vite `/checkout`** (`CheckoutPage.jsx`): tarjeta `components/Payment/PlanPricing/`, con plan, control segmentado "Elige cómo pagar", precio grande (la mensualidad en MSI, el total en contado), "N pagos con tarjeta · +$X vs. contado", total y botón "Pagar 12 × $394".
-- **Drawer de `/preview`** (`PublishModal.jsx`): selector simple (`components/Payment/InstallmentPicker/`) sobre el precio. Al elegir plazo cambia el total y el texto "6 pagos de $734". Si el plan nuevo no tiene el plazo elegido (Lite no tiene meses), cae en contado y el selector no se pinta. Helpers en `hooks/usePlans.js`: `planTerms`, `formatMXN`, `termCaption`.
-- **iattend-next `/about/pricing`**: debajo del precio, la leyenda del plazo más largo, solo con la mensualidad ("o hasta 12 pagos de $394", sin centavos y redondeado hacia arriba); el total se ve en el checkout. Sin selector.
-- No llevan MSI: el alta dentro de la app (`NewInvitationDrawer`), el upgrade (`PlansModal`), créditos, side events y regalos.
+- **iattend-vite `/checkout`** (`components/Payment/PlanPricing/`): "Contado | A meses (desde $375/mes)", y en A meses "desde $375/mes", "Hasta 12 pagos con tarjeta · eliges el plazo al pagar · +$500 vs. contado", total y "Pagar a meses · $4,499".
+- **Drawer de `/preview`** (`PublishModal.jsx` + `components/Payment/InstallmentPicker/`) y **compra de evento del planner** (`PlannerEventDrawer.jsx`): mismo "Contado | A meses". Helpers en `hooks/usePlans.js`: `planTerms`, `formatMXN`, `termCaption` ("Hasta 12 pagos de $375").
+- **iattend-next `/about/pricing`**: "o hasta 12 pagos de $375" (redondeado hacia arriba).
+- **Catálogo `/precios/<id>`** (`pages/Precios/`): "Hasta 12 pagos con tarjeta · desde $375 al mes", "Contado o hasta 12 pagos · desde $334 al mes" en Bucket 10 y el precio por Pop en los Buckets.
 
 ## Cobro
 
-Se sigue usando **Checkout Session hospedado**. El front manda `lookupKey` (nunca el price de MSI). El backend lo resuelve en Stripe, usa ese price y prende `payment_method_options.card.installments.enabled`. Endpoints: `create-checkout-preview`, `create-checkout-plan` y `create-checkout-invitation`. Un price de MSI mandado como `priceId` se rechaza.
+Checkout Session hospedado. A meses, el front manda `lookupKey: 'pro_meses'` (nunca el price). El backend lo resuelve a `PRECIO_A_MESES` y manda `metadata.aMeses = '1'`. Los `pro_msi_{n}` viejos se siguen aceptando y caen en el mismo precio. Endpoints: `create-checkout-preview`, `create-checkout-plan`, `create-checkout-invitation` y la compra de evento del planner.
 
-Contado (y créditos, side events, regalos) manda `installments.enabled: false` **explícito**. Si no, al prender MSI en el Dashboard de Stripe, Checkout lo ofrecería en todo.
+**Toda** Checkout Session lleva `payment_method_options.card.installments.enabled` explícito, según el producto del precio (`opcionesDePago`): `true` solo para `PRODUCTOS_CON_MSI`, `false` para todo lo demás. Así no depende solo del Dashboard.
 
-### Plazo: rangos de monto en Stripe
+**Payment Links no tienen esa opción**: ofrecen meses según el mínimo del Dashboard (por eso la regla de los $4,000).
 
-En Checkout Session, `installments` **solo acepta `enabled`**: no se puede fijar el plazo. Lo acotan los montos mínimos por plazo del Dashboard de Stripe (**Settings → Payment methods → Meses sin intereses**), que aplican a todas las integraciones (Checkout y Payment Links):
+### Link propio: `/comprar/:clave`
 
-| Plazo | Desde |
-|---|---|
-| 3 meses | $4,269 |
-| 6 meses | $4,399 |
-| 12 meses | $4,700 |
-
-Resultado: Lite y PRO de contado no muestran meses; con `pro_msi_3` solo se puede elegir 3; con `pro_msi_6`, 3 o 6; con `pro_msi_12`, 3, 6 o 12. **Nadie puede elegir más meses de los que pagó.** Si se agregan productos o cambian precios, hay que revisar que sigan cuadrando con estos rangos.
-
-Forzar el plazo exacto requeriría PaymentIntent confirmado en el servidor (`installments.plan = { type: 'fixed_count', count, interval: 'month' }`) con formulario de tarjeta propio. Con los rangos no hace falta.
+Para vender sin Payment Links (WhatsApp, Instagram): `https://www.iattend.site/comprar/<clave>` con una clave de `CATALOGO` (`pro_contado`, `pro_meses`, `bucket_10`, `pro_msi`…). La página (`pages/Precios/ComprarPage.jsx`) pide `GET /api/comprar/:clave` (`iattend--backend/router/comprar.js`), que crea la Checkout Session (cantidad 1, meses según el producto, `metadata.origen = 'comprar'`) y redirige a Stripe. Stripe regresa a la misma página con `?estado=lista` (gracias, un asesor la activa) o `?estado=cancelada`.
 
 ## Webhook
 
 `checkout.session.completed` → `processingPayment` (`controllers/supabase.js`):
 
-1. Un price de MSI se mapea a su plan con `installmentByPriceId` (no está en `PRODUCTS` ni en el catálogo).
-2. `revisarPlazoMSI` (`controllers/msiPlazo.js`) lee `payment_intent.latest_charge.payment_method_details.card.installments.plan.count` (0 = contado) y lo compara con `metadata.msiMonths` de la sesión.
-3. Menos meses que los pagados (p. ej. precio de 12, eligió 3) no le cuesta a I attend: solo se anota. **Más meses** que los pagados (solo pasaría si los rangos de Stripe dejan de cuadrar): el plan se activa igual y se avisa con una fila en `support_tickets` (Admin → Buzón → Reportes, topic `help`) y correo a soporte.
-4. El plazo cobrado se anota en `pagos.nota` y `ventas.notas` de la venta ecommerce (`… · 6 MSI`, o `… · 6 MSI (precio de 3 MSI)` si no coincide). No se crearon columnas.
+1. El price se mapea con `PRODUCTS` (incluye el legacy). Los productos PRO (contado, a meses y las promos) activan PRO. Pop y Buckets suman 1, 5 o 10 Pops gratis a la cuenta (`sumarPopsGratis` → `planner_benefits.free_flash_events`), solo si la sesión trae `userId`.
+2. `revisarPlazoMSI` (`controllers/msiPlazo.js`) lee el plazo cobrado (`latest_charge…installments.plan.count`). Si el producto ofrece meses (`permiteMsi`, o `metadata.aMeses`), cualquier plazo vale y solo se anota. **Red de seguridad:** un producto sin meses que llegó a meses avisa con una fila en `support_tickets` (Admin → Buzón → Reportes) y correo a soporte, para reembolso manual. También corre en las compras de planners. Las sesiones viejas con `msiMonths` se revisan como antes.
+3. El plazo cobrado se anota en `pagos.nota` y `ventas.notas` (`… · 6 MSI`).
+
+Las compras por **Payment Link** no traen `priceId` en la metadata: el webhook las ignora y las activa un asesor, incluidos los Pops de los Buckets. Las de `/comprar` sí lo traen (para la red de seguridad), pero tampoco activan nada: no traen cuenta ni invitación.
 
 ## Comisiones
 
-Fija por plan, sin importar el plazo. La venta ecommerce no comisiona. En `ventas.precio_acordado` queda el monto cobrado (p. ej. $4,719).
+Fija por plan, sin importar el plazo. La venta ecommerce no comisiona.
 
 ## Pendiente
 
-- Los prices MSI solo existen en **live**. Para probar en test mode hay que crearlos en test con los mismos lookup keys. Tarjeta de prueba con MSI: `4000004840000008`.
-- `precios-costos-comisiones.md` no está en ningún repo. Falta actualizarlo con la tabla de arriba donde viva.
+- Los precios solo existen en **live**; no hay llave de test en el backend. Tarjeta de prueba con MSI en test mode: `4000004840000008`.

@@ -2,9 +2,10 @@ import { Shield, ShoppingCart } from 'lucide-react'
 import { formatMonthly, formatMXN } from '../../../hooks/usePlans'
 import styles from './PlanPricing.module.css'
 
-// Bloque de precio del checkout: plan, plazo (contado / meses sin intereses),
+// Bloque de precio del checkout: plan, forma de pago (contado / a meses),
 // precio grande y botón de pago. `terms` sale de planTerms(plan); con un solo
-// plazo (sin MSI) no se pinta el selector. `standalone={false}` quita el
+// plazo (sin MSI) no se pinta el selector. "A meses" es un solo precio: el
+// plazo (`term.plazos`, hasta `term.months`) lo elige el cliente en Stripe. `standalone={false}` quita el
 // encabezado con el nombre del plan y la nota de Stripe cuando la pantalla ya
 // los muestra (checkout en web).
 export const PlanPricing = ({ plan, terms, term, onTermChange, onBuy, loading, disabled, standalone = true }) => {
@@ -16,7 +17,7 @@ export const PlanPricing = ({ plan, terms, term, onTermChange, onBuy, loading, d
     const buyLabel = !term
         ? 'Pagar'
         : msi
-            ? `Pagar ${term.months} × ${formatMonthly(term.monthly)}`
+            ? `Pagar a meses · ${formatMXN(term.amount)}`
             : `Pagar ${formatMXN(term.amount)}`
 
     return (
@@ -47,10 +48,10 @@ export const PlanPricing = ({ plan, terms, term, onTermChange, onBuy, loading, d
                                     onClick={() => onTermChange(t.months)}
                                 >
                                     <span className={styles.optionLabel}>
-                                        {t.months ? `${t.months} meses` : 'Contado'}
+                                        {t.months ? 'A meses' : 'Contado'}
                                     </span>
                                     <span className={styles.optionDetail}>
-                                        {t.months ? `${formatMonthly(t.monthly)}/mes` : 'Mejor precio'}
+                                        {t.months ? `desde ${formatMonthly(t.monthly)}/mes` : 'Mejor precio'}
                                     </span>
                                 </button>
                             )
@@ -61,6 +62,7 @@ export const PlanPricing = ({ plan, terms, term, onTermChange, onBuy, loading, d
 
             <div className={styles.priceBox}>
                 <div className={styles.priceRow}>
+                    {msi && <span className={styles.perMonth}>desde</span>}
                     <span className={styles.price}>
                         {term ? (msi ? formatMonthly(term.monthly) : formatMXN(term.amount)) : '…'}
                     </span>
@@ -69,7 +71,7 @@ export const PlanPricing = ({ plan, terms, term, onTermChange, onBuy, loading, d
                 <div className={styles.priceFooter}>
                     <span className={styles.priceNote}>
                         {msi
-                            ? `${term.months} pagos con tarjeta${extra > 0 ? ` · +${formatMXN(extra)} vs. contado` : ''}`
+                            ? `Hasta ${term.months} pagos con tarjeta · eliges el plazo al pagar${extra > 0 ? ` · +${formatMXN(extra)} vs. contado` : ''}`
                             : 'Pago único con tarjeta'}
                     </span>
                     {term && <span className={styles.total}>Total {formatMXN(term.amount)}</span>}

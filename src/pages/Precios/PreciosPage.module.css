@@ -472,6 +472,16 @@
     color: var(--gris);
 }
 
+.plazoPie + .plazoPie {
+    margin-top: -8px;
+}
+
+/* Precio por Pop. */
+.detallePie {
+    color: #6b4f86;
+    font-weight: 500;
+}
+
 /* ── Dentro de Admin › Ventas › Precios ─────────────────────────────────── */
 
 .embebido .indice {

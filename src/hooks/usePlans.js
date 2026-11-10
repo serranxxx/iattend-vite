@@ -136,9 +136,11 @@ export const descriptionSegments = (text) => {
 }
 
 // ── Meses sin intereses ──────────────────────────────────────────────────────
-// `plan.installments` llega de GET /api/plans: cada plazo es un price propio
-// en Stripe (más caro que el contado) con su total y mensualidad. Aquí no se
-// escribe ningún monto.
+// `plan.installments` llega de GET /api/plans: el pago "a meses" del plan, un
+// solo precio en Stripe (más caro que el contado) con el que el cliente elige
+// el plazo al pagar: [{ months (el más largo), amount, monthly, lookup_key
+// ('pro_meses'), plazos: [{ months, monthly }] }]. Aquí no se escribe ningún
+// monto.
 
 const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 const mxnSinCentavos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 })
@@ -151,17 +153,17 @@ export const formatMXN = (amount) =>
 // redondea hacia arriba para nunca anunciar menos de lo que se cobra.
 export const formatMonthly = (amount) => mxnSinCentavos.format(Math.ceil(amount))
 
-// Plazos del plan, contado primero: [{ months: 0, amount, monthly: null,
-// lookup_key: null }, { months: 3, amount, monthly, lookup_key }, ...].
+// Formas de pago del plan, contado primero: [{ months: 0, amount, monthly:
+// null, lookup_key: null }, { months: 12, amount, monthly, lookup_key, plazos }].
 export const planTerms = (plan) => {
     if (!plan?.price) return []
     const contado = { months: 0, amount: plan.price.amount, monthly: null, lookup_key: null }
     return [contado, ...(plan.installments ?? [])]
 }
 
-// Texto bajo el precio: "Pago único" o "6 pagos de $734". No se dice
+// Texto bajo el precio: "Pago único" o "Hasta 12 pagos de $375". No se dice
 // "sin intereses": el precio a meses es más caro que el de contado.
 export const termCaption = (term) =>
     term?.months
-        ? `${term.months} pagos de ${formatMonthly(term.monthly)}`
+        ? `Hasta ${term.months} pagos de ${formatMonthly(term.monthly)}`
         : 'Pago único'
