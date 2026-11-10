@@ -149,7 +149,7 @@ export const PRICE_IDS = {
   // Plans
   PLAN_PAPERLESS:   'price_1SkRvtAAdNlITNVbj8BA6F2Q',
   PLAN_LITE:        'price_1Tl9jyAAdNlITNVbm0hq6omU',   // $2,899
-  PLAN_PRO:         'price_1Tl9fQAAdNlITNVb953oCZLs',   // $3,999
+  PLAN_PRO:         'price_1UaFaqAAdNlITNVb73fqH4yd',   // $3,999 — producto "PRO - Contado"
 
   // Upgrade
   UPGRADE_TO_PRO:   'price_1TlC4RAAdNlITNVbjcRtexSy',
