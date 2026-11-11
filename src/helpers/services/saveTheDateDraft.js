@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
+import { supabaseAuthHeaders } from '../../lib/authHeaders'
 
 /**
  * Borrador del Save the Date gratis (/save-the-date).
@@ -185,7 +186,7 @@ export const createFreeInvitation = async (user) => {
         userEmail: user.email ?? '',
         name: user.user_metadata?.full_name || 'Mi evento',
         plan: 'free',
-    })
+    }, { headers: await supabaseAuthHeaders() })
     return data?.id ?? null
 }
 

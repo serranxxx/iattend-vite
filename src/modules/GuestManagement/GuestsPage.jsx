@@ -9,6 +9,7 @@ import { Chart as ChartJS, ArcElement, Legend, } from 'chart.js';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoMdAdd, } from 'react-icons/io';
 import { FooterApp } from '../Footer/FooterApp';
 import { supabase } from '../../lib/supabase';
+import { supabaseAuthHeaders } from '../../lib/authHeaders';
 import { FaCheck, FaPlus, FaRegCopy, } from 'react-icons/fa';
 import { AiOutlineClockCircle, } from 'react-icons/ai';
 import { FiArrowUpRight, FiMinus } from 'react-icons/fi';
@@ -970,7 +971,8 @@ export default function GuestsPage() {
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats`,
                 // "http://localhost:4000/api/whats",
-                payload
+                payload,
+                { headers: await supabaseAuthHeaders() }
             );
             if (response.data.ok) {
                 if (!retry) {
@@ -1169,7 +1171,8 @@ export default function GuestsPage() {
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/reminders`,
-                payload
+                payload,
+                { headers: await supabaseAuthHeaders() }
             );
 
             if (response.data.ok) {
@@ -1596,7 +1599,8 @@ export default function GuestsPage() {
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/bulk`,
-                { invitationId: id, items }
+                { invitationId: id, items },
+                { headers: await supabaseAuthHeaders() }
             )
 
             if (response.data.ok) {
@@ -1642,7 +1646,8 @@ export default function GuestsPage() {
         try {
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/reminders/bulk`,
-                { invitationId: id, templateId: template.id, items: reminderItems }
+                { invitationId: id, templateId: template.id, items: reminderItems },
+                { headers: await supabaseAuthHeaders() }
             )
             if (!response.data.ok) return null
             const { batchId, total } = response.data.data

@@ -9,6 +9,7 @@ import './open-chat.css'
 import '../whatsapp-messages.css'
 import TextArea from 'antd/es/input/TextArea';
 import axios from 'axios';
+import { supabaseAuthHeaders } from '../../../../lib/authHeaders';
 import { FaWhatsapp } from 'react-icons/fa6';
 
 
@@ -113,7 +114,8 @@ export const OpenChat = ({ name, conversation, setOpenMessage, invitation_id, ph
         try {
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/freetext`,
-                { to, text: reply, invitation_id: invitation_id }
+                { to, text: reply, invitation_id: invitation_id },
+                { headers: await supabaseAuthHeaders() }
             );
             if (!response.data.ok) {
                 setOptimisticMessages(prev => prev.filter(m => m !== optimistic));

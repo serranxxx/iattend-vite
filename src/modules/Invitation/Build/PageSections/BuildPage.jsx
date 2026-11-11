@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './build-invitation.css'
 import { supabase } from '../../../../lib/supabase'
+import { supabaseAuthHeaders } from '../../../../lib/authHeaders'
 import { FooterApp } from '../../../Footer/FooterApp'
 import { HeaderDashboard } from '../../../Header/Header'
 import { ButtonsMenu } from './ButtonsMenu'
@@ -754,7 +755,8 @@ export const BuildPage = () => {
             if (type === 'write') {
                 await axios.patch(
                     `${import.meta.env.VITE_API_URL}/api/invitation/update-data`,
-                    { id, data: savedInvitation }
+                    { id, data: savedInvitation },
+                    { headers: await supabaseAuthHeaders() }
                 )
                 messageApi.info(t('buttons_menu.msg_written'))
             } else {

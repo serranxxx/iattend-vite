@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase'
 import { urlSide } from './sideEventLink'
+import { esRolPlanner } from '../roles'
 
 // Pops: side events sin invitación (invitation_id vacío) de un
 // planner o asignados a un cliente. Ver iattend--backend/helpers/popEvent.js
@@ -21,6 +22,23 @@ export const fetchPopEvents = async (uid, { esPlanner = false } = {}) => {
         return []
     }
     return data ?? []
+}
+
+/**
+ * ¿La sesión puede editar este Pop? Dueño (user_id), su planner (rol de
+ * planner + planner_id) o Administration activo; misma regla que la RLS de
+ * side_events (iattend--backend/migrations/2026-11-11_side_events_rls.sql).
+ * Es solo para la UX del editor: lo que protege es la RLS y el backend.
+ */
+export const puedeGestionarPop = async (pop) => {
+    if (!pop || pop.invitation_id) return false
+    const { data } = await supabase.auth.getSession()
+    const uid = data?.session?.user?.id
+    if (!uid) return false
+    if (pop.user_id === uid) return true
+    const { data: perfil } = await supabase.from('profiles').select('role, active').eq('user_id', uid).maybeSingle()
+    if (!perfil || perfil.active === false) return false
+    return perfil.role === 'Administration' || (esRolPlanner(perfil.role) && pop.planner_id === uid)
 }
 
 /**

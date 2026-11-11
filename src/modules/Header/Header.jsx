@@ -387,7 +387,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
         setPendingSaving(true)
         try {
-            await axios.patch(`${import.meta.env.VITE_API_URL}/api/invitation/update-fields`, { id, ...updates })
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/invitation/update-fields`, { id, ...updates }, { headers: await supabaseAuthHeaders() })
 
             if (updates.name) setName(updates.name)
             if (updates.phone_number) setInvPhone(updates.phone_number)
@@ -450,7 +450,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
     const updateURLimage = async (e) => {
         try {
-            await axios.patch(`${import.meta.env.VITE_API_URL}/api/invitation/update-fields`, { id, url_image: e })
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/invitation/update-fields`, { id, url_image: e }, { headers: await supabaseAuthHeaders() })
             message.success('Imagen actualizada')
             setUrlImage(e)
         } catch (error) {

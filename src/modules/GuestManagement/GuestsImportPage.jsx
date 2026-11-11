@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
+import { supabaseAuthHeaders } from '../../lib/authHeaders'
 import { PHONE_CODE_OPTIONS, buildPhoneNumberSafe, findPhoneCodeByDigits } from '../../helpers/assets/phoneCodes'
 import './guests-import.css'
 
@@ -123,7 +124,7 @@ const GuestsImportPage = () => {
                 owners: ownersOverride ?? owners,
                 tags: tagsOverride ?? existingTags,
                 rows: rawRows,
-            })
+            }, { headers: await supabaseAuthHeaders() })
 
             const rowsWithPhoneParts = data.rows.map((row, i) => {
                 const { code, number } = splitPhoneForImport(row.phone_number)
@@ -159,7 +160,7 @@ const GuestsImportPage = () => {
                 invitation_id: id,
                 side_events_id: sideEventsId || undefined,
                 rows: rowsForConfirm,
-            })
+            }, { headers: await supabaseAuthHeaders() })
 
             const newTags = tagOptions.filter(
                 (tag) => !existingTags.some((t) => t.toLowerCase() === tag.toLowerCase())

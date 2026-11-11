@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Modal, Input } from 'antd'
+import { Modal, Input, message } from 'antd'
 import { Download, Trash2, Search, Heart, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { supabaseAuthHeaders } from '../../lib/authHeaders'
 import styles from './PhotoWall.module.css'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
@@ -123,7 +124,14 @@ export const PhotoWall = ({ eventId, allowAdmin }) => {
             okButtonProps: { danger: true },
             cancelText: 'Cancelar',
             onOk: async () => {
-                await fetch(`${API_URL}/api/photos/${photo.id}`, { method: 'DELETE' })
+                const res = await fetch(`${API_URL}/api/photos/${photo.id}`, {
+                    method: 'DELETE',
+                    headers: await supabaseAuthHeaders(),
+                })
+                if (!res.ok) {
+                    message.error(res.status === 403 ? 'No tienes permiso para eliminar esta foto' : 'No se pudo eliminar la foto')
+                    return
+                }
                 setPhotos(prev => prev.filter(p => p.id !== photo.id))
                 setLastUpdated(new Date())
             },

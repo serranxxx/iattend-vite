@@ -119,7 +119,8 @@ export const handleCreateFree = async (invitation) => {
     const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/invitation/create-free`,
         // `http://localhost:4000/api/payment/create-free`,
-        invitation
+        invitation,
+        { headers: await supabaseAuthHeaders() }
     );
     return res.data;
 };

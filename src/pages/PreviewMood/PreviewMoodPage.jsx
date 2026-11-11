@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Grid, Layout, message } from 'antd'
 import axios from 'axios'
 import { supabase } from '../../lib/supabase'
+import { supabaseAuthHeaders } from '../../lib/authHeaders'
 import { BookUser, Camera, Feather, Gift, HeartHandshake, MapPinned, MessageSquareHeart, ScanHeart, ScrollText, Settings, Shirt } from 'lucide-react'
 import { BuildContent } from '../../modules/Invitation/Build/PageSections/BuildContent'
 import { ButtonsMenu } from '../../modules/Invitation/Build/PageSections/ButtonsMenu'
@@ -147,10 +148,12 @@ export const PreviewMoodPage = () => {
         setSaving(true)
 
         try {
+            const headers = await supabaseAuthHeaders()
+
             if (existingId) {
                 await axios.patch(`${API}/api/invitation/save-preview/${existingId}`, {
                     data: invitationData,
-                })
+                }, { headers })
 
                 message.success('Invitación guardada')
                 return existingId
@@ -171,7 +174,7 @@ export const PreviewMoodPage = () => {
                 user_email: session?.user?.email,
                 plan: null,
                 data: invData,
-            })
+            }, { headers })
 
             setSearchParams({ id: res.id }, { replace: true })
             message.success('Invitación guardada')

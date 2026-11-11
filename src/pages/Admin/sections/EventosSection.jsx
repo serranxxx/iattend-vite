@@ -6,6 +6,7 @@ import axios from 'axios'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
 import { supabase } from '../../../lib/supabase'
+import { supabaseAuthHeaders } from '../../../lib/authHeaders'
 import { esEventoActivo, fechaDeEvento } from '../adminConstants'
 import { AdminModal } from '../AdminModal'
 import { actualizarCreditosAdmin, asignarPlannerAdmin, sumarCreditosPopAdmin } from '../catalogoAdminApi'
@@ -209,7 +210,8 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
         try {
             await axios.patch(
                 `${import.meta.env.VITE_API_URL}/api/invitation/add-owner`,
-                { id: id, name: name }
+                { id: id, name: name },
+                { headers: await supabaseAuthHeaders() }
             );
             message.success('Editado con éxito')
             refreshEventos()
@@ -227,7 +229,8 @@ export const EventosSection = ({ tab: tabDeTopbar, newInvitations, profiles, ref
         try {
             await axios.patch(
                 `${import.meta.env.VITE_API_URL}/api/invitation/remove-owner`,
-                { id: id, index: index }
+                { id: id, index: index },
+                { headers: await supabaseAuthHeaders() }
             );
             message.success('Editado con éxito')
             refreshEventos()
