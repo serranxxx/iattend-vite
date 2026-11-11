@@ -1,0 +1,523 @@
+/* Panel "Patrocinadores" (PatrocinadoresPanel.jsx), handoff "Patrocinadores
+   en un Pop" v2 (opción 2a). Los neutros del editor; con un estilo de Pops
+   activo (data-pops-editor) toma sus tokens --ed-* como los demás paneles. */
+
+.panel {
+    --pt-tinta: var(--ed-ink, #1F1E24);
+    --pt-gris: var(--ed-ink-2, #6E6E78);
+    --pt-apagado: var(--ed-ink-3, #A3A3AD);
+    --pt-punteado: #C9C9D1;
+    --pt-punteado-suave: #D9D9DF;
+    --pt-borde: var(--ed-line, #E6E6EB);
+    --pt-suave: var(--ed-surface-soft, #F4F4F6);
+    --pt-borrar: #B23A48;
+
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    color: var(--pt-tinta);
+    font-family: Poppins, sans-serif;
+}
+
+/* ── Subir ── */
+.subir {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    border: 1.5px dashed var(--pt-punteado);
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: var(--pt-tinta);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.subir:hover,
+.subir[data-over] {
+    background: var(--pt-suave);
+}
+
+.subir[data-over] {
+    border-color: var(--pt-tinta);
+}
+
+.subir:focus-visible {
+    outline: 2px solid var(--pt-tinta);
+    outline-offset: 2px;
+}
+
+.subirIcono {
+    display: flex;
+    flex: none;
+}
+
+.subirTextos {
+    display: flex;
+    flex-direction: column;
+}
+
+.subirTitulo {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.subirHint {
+    font-size: 12px;
+    color: var(--pt-gris);
+}
+
+.girando {
+    animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Entradas (§4.3) ── */
+@keyframes zonaIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+
+@keyframes filaIn {
+    from { opacity: 0; transform: translateY(6px); }
+}
+
+/* ── Categorías ── */
+.categorias {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.nuevaCat {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px dashed var(--pt-punteado);
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: var(--pt-tinta);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    animation: zonaIn 280ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.nuevaCat:hover {
+    background: var(--pt-suave);
+}
+
+.categoria {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border: 1.5px dashed var(--pt-punteado-suave);
+    border-radius: 14px;
+    background: #FFFFFF;
+    transition: background 120ms ease, opacity 120ms ease, border-color 200ms ease;
+    animation: zonaIn 320ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* Una marca pasa por encima: el recuadro destino se marca. */
+.categoria[data-encima] {
+    border-color: var(--pt-tinta);
+    background: var(--pt-suave);
+}
+
+.categoria[data-dragging] {
+    z-index: 3;
+    opacity: 0.4;
+}
+
+/* Con su menú abierto va encima de las de abajo. */
+.categoria[data-menu] {
+    z-index: 4;
+}
+
+.catCabeza {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.catAgarre {
+    width: 22px;
+    height: 30px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--pt-apagado);
+    cursor: grab;
+    touch-action: none;
+}
+
+.catAgarre:hover {
+    background: var(--pt-suave);
+    color: var(--pt-tinta);
+}
+
+.catNombre {
+    flex: 1;
+    min-width: 0;
+    height: 30px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pt-tinta);
+    font-family: Poppins, sans-serif;
+    font-size: 14px !important;
+    font-weight: 600;
+    outline: none;
+}
+
+.catNombre:hover,
+.catNombre:focus {
+    background: var(--pt-suave);
+}
+
+.catNombre::placeholder {
+    color: var(--pt-apagado);
+    font-weight: 500;
+}
+
+.catCuenta {
+    padding: 0 2px;
+    font-size: 12px;
+    color: var(--pt-apagado);
+}
+
+.catMas {
+    width: 28px;
+    height: 28px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pt-gris);
+    cursor: pointer;
+}
+
+.catMas:hover,
+.catMas[data-on] {
+    background: var(--pt-suave);
+    color: var(--pt-tinta);
+}
+
+/* Menú ⋯ de la categoría. */
+.menu {
+    position: absolute;
+    top: 34px;
+    right: 0;
+    z-index: 30;
+    width: 220px;
+    box-sizing: border-box;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--pt-borde);
+    border-radius: 12px;
+    background: #FFFFFF;
+    box-shadow: 0 12px 32px rgba(31, 30, 36, 0.14);
+}
+
+.menuGrupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.menuTitulo {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pt-gris);
+}
+
+.segmentado {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 8px;
+    background: var(--pt-suave);
+}
+
+.segmento {
+    flex: 1;
+    height: 30px;
+    padding: 0 4px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pt-apagado);
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.segmento[data-on] {
+    background: #FFFFFF;
+    color: var(--pt-tinta);
+    box-shadow: 0 1px 3px rgba(31, 30, 36, 0.14);
+}
+
+.borrar {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 2px 0;
+    border: none;
+    border-top: 1px solid var(--pt-borde);
+    background: transparent;
+    color: var(--pt-borrar);
+    font-family: Poppins, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+
+.vacio {
+    padding: 10px 6px;
+    font-size: 12px;
+    color: var(--pt-apagado);
+}
+
+/* ── Marcas ── */
+.lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.lista:empty {
+    display: none;
+}
+
+.fila {
+    position: relative;
+    height: 52px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 6px 0 8px;
+    border: 1px solid var(--pt-borde);
+    border-radius: 12px;
+    background: #FFFFFF;
+    cursor: grab;
+    touch-action: manipulation;
+    animation: filaIn 280ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.fila[data-dragging] {
+    z-index: 5;
+    cursor: grabbing;
+    box-shadow: 0 8px 24px rgba(31, 30, 36, 0.14);
+}
+
+.agarre {
+    display: flex;
+    color: var(--pt-punteado);
+}
+
+.miniatura {
+    width: 60px;
+    height: 34px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--pt-suave);
+    overflow: hidden;
+}
+
+.miniatura img {
+    max-width: 52px;
+    max-height: 26px;
+    object-fit: contain;
+}
+
+/* Adaptar al diseño: el logo en tinta (como se verá, de un solo color). */
+.miniatura img[data-adaptar] {
+    filter: brightness(0);
+    opacity: 0.88;
+}
+
+.nombre {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.quitar {
+    width: 28px;
+    height: 28px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--pt-apagado);
+    cursor: pointer;
+}
+
+.quitar:hover {
+    background: var(--pt-suave);
+    color: var(--pt-tinta);
+}
+
+/* ── Etiquetas y "Cómo se ven" ── */
+.seccion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.etiqueta {
+    padding: 0 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pt-gris);
+}
+
+.acomodos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.acomodo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 4px;
+    border: 1px solid var(--pt-borde);
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: var(--pt-tinta);
+    font: inherit;
+    cursor: pointer;
+}
+
+.acomodo[data-on] {
+    border: 2px solid var(--pt-tinta);
+    padding: 9px 3px;
+}
+
+.acomodoNombre {
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.hint {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--pt-gris);
+    text-wrap: pretty;
+}
+
+.mini {
+    position: relative;
+    width: 34px;
+    height: 56px;
+    flex: none;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(#8AA0BA, #4B6078);
+}
+
+.mini > span {
+    position: absolute;
+}
+
+/* Portada: la cinta y los botones. */
+.mini[data-acomodo='portada'] > span:nth-child(1) {
+    left: 0; right: 0; top: 30px; height: 4px;
+    background: repeating-linear-gradient(90deg, #FFFFFF 0 4px, transparent 4px 7px);
+}
+
+.mini[data-acomodo='portada'] > span:nth-child(2) {
+    left: 5px; right: 5px; top: 40px; height: 8px; border-radius: 99px;
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Tarjeta: vidrio, un logo grande y un renglón. */
+.mini[data-acomodo='tarjeta'] > span:nth-child(1) {
+    left: 5px; right: 5px; top: 12px; bottom: 8px; border-radius: 6px; box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.mini[data-acomodo='tarjeta'] > span:nth-child(2) {
+    left: 11px; right: 11px; top: 22px; height: 5px; border-radius: 2px;
+    background: #FFFFFF;
+}
+
+.mini[data-acomodo='tarjeta'] > span:nth-child(3) {
+    left: 9px; right: 9px; top: 33px; height: 3px;
+    background: repeating-linear-gradient(90deg, #FFFFFF 0 4px, transparent 4px 6px);
+}
+
+/* Banda: la fija arriba y la banda de orilla a orilla. */
+.mini[data-acomodo='banda'] > span:nth-child(1) {
+    left: 10px; right: 10px; top: 16px; height: 5px; border-radius: 2px;
+    background: #FFFFFF;
+}
+
+.mini[data-acomodo='banda'] > span:nth-child(2) {
+    left: 0; right: 0; top: 28px; height: 12px; box-sizing: border-box;
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.mini[data-acomodo='banda'] > span:nth-child(3) {
+    left: 0; right: 0; top: 32px; height: 4px;
+    background: repeating-linear-gradient(90deg, #FFFFFF 0 5px, transparent 5px 8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nuevaCat,
+    .categoria,
+    .fila,
+    .girando {
+        animation: none;
+    }
+}

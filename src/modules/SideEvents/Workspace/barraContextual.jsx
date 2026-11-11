@@ -8,6 +8,8 @@ import { esImagen } from '../stickersPopData'
 import { NOTAS_DEFAULT } from '../tarjetasSide'
 import { AjusteFotoBar, BackgroundBar, DateBar, DEFAULT_SOMBRA_TITULO, PlaceBar, WeatherBar } from './SideBars'
 import { barraElemento } from './barraElemento'
+import { PatrocinadoresBar } from './PatrocinadoresBar'
+import { tieneBarraPatrocinadores } from '../patrocinadores'
 
 /*
   Barra contextual de la pieza de un side event / Pop: la que sale según lo
@@ -29,6 +31,7 @@ export const useBarraContextual = ({
     const body = current?.body ?? {}
     const setBody = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
     const setTitle = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, title: { ...prev.body?.title, ...patch } } }), opts)
+    const setSponsors = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, sponsors: fn(prev.body?.sponsors ?? {}) } }), opts)
     const setAddress = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, address: { ...prev.body?.address, ...patch } } }), opts)
     const stickers = Array.isArray(body.stickers) ? body.stickers : []
     const setStickers = (lista, opts) => setBody({ stickers: lista.length ? lista : null }, opts)
@@ -116,6 +119,8 @@ export const useBarraContextual = ({
         : section === 'weather' ? <WeatherBar body={body} setBody={setBody} />
         : section === 'background' && ajustandoFoto && fotoElegida ? <AjusteFotoBar body={body} setBody={setBody} src={fotoElegida} onListo={() => setAjustandoFoto(false)} />
         : section === 'background' ? <BackgroundBar current={current} setBody={setBody} onChange={onChange} esPop={esPop} pickMedia={pickMedia} fotoSel={fotoElegida} onFotoSel={setFotoSel} onAjustar={(src) => { setFotoSel(src); setAjustandoFoto(true) }} />
+        // Patrocinadores (Pop): velocidad y etiqueta, con logos y en Portada o Banda.
+        : section === 'sponsors' && esPop && tieneBarraPatrocinadores(body) ? <PatrocinadoresBar body={body} actualizar={setSponsors} />
         : section === 'song' ? <SongBar value={body.song ?? null} onChange={(song) => setBody({ song })} folder={carpeta} />
         : null
 

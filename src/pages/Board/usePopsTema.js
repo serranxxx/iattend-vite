@@ -18,45 +18,49 @@ import './popsTema.css'
  */
 
 export const TEMAS_POPS = ['pop', 'business', 'craft']
-// Solo administradores, y solo en el editor de Pops: 'iattend' = el editor
-// original de I attend (sin data-pops-editor, ningún tema encima). En la
-// sección Pops no existe: ahí se lee como 'pop'.
+// Solo en el editor de Pops: 'iattend' = el editor original de I attend (sin
+// data-pops-editor, ningún tema encima). En la sección Pops no existe.
 export const TEMA_IATTEND = 'iattend'
 const CLAVE = 'pops_theme'
+// El editor de Pops guarda su estilo aparte (`pops_editor_theme`), con I attend
+// por omisión para todos: quien ya tenía otro guardado en `pops_theme` (el de
+// la sección) arranca en I attend y, si lo cambia, se respeta el suyo.
+export const CLAVE_EDITOR = 'pops_editor_theme'
 const EVENTO = 'pops-tema-cambio'
 
-// Estilo guardado (también lo usa el editor de Pops: data-pops-editor).
-// `temas`: los que valen en esa pantalla (el editor de un admin suma 'iattend').
-export const leerTemaPops = (temas = TEMAS_POPS) => {
+// Estilo guardado. `temas`: los que valen en esa pantalla; `clave` y
+// `porOmision`: los de la sección (pops_theme, 'pop') o los del editor.
+export const leerTemaPops = (temas = TEMAS_POPS, { clave = CLAVE, porOmision = 'pop' } = {}) => {
     try {
-        const v = localStorage.getItem(CLAVE)
-        return temas.includes(v) ? v : 'pop'
+        const v = localStorage.getItem(clave)
+        return temas.includes(v) ? v : porOmision
     } catch {
-        return 'pop'
+        return porOmision
     }
 }
 
 const COLOR_ANILLO = { business: '#CDF22B', pop: '#FF5FA8', craft: '#F2D21B', iattend: '#16323D' }
 
-export const usePopsTema = ({ temas = TEMAS_POPS } = {}) => {
-    const [tema, setTema] = useState(() => leerTemaPops(temas))
+export const usePopsTema = ({ temas = TEMAS_POPS, clave: claveTema = CLAVE, porOmision = 'pop' } = {}) => {
+    const leer = (validos) => leerTemaPops(validos, { clave: claveTema, porOmision })
+    const [tema, setTema] = useState(() => leer(temas))
     const ocupado = useRef(false)
 
     // Siempre el mismo estilo en todas las pantallas abiertas (sección Pops y
     // editor, en esta pestaña o en otra): al cambiarlo en una, las demás lo
     // toman (evento storage entre pestañas y EVENTO dentro de la misma).
-    const clave = temas.join(',')
+    const clave = `${claveTema}:${temas.join(',')}`
     useEffect(() => {
-        const validos = clave.split(',')
+        const validos = clave.split(':')[1].split(',')
         const sincronizar = () => {
             // La que lo cambió con su transición circular ya lo pone ella.
             if (ocupado.current) return
             setTema((actual) => {
-                const v = leerTemaPops(validos)
+                const v = leer(validos)
                 return v === actual ? actual : v
             })
         }
-        const enStorage = (e) => { if (e.key === CLAVE) sincronizar() }
+        const enStorage = (e) => { if (e.key === claveTema) sincronizar() }
         window.addEventListener('storage', enStorage)
         window.addEventListener(EVENTO, sincronizar)
         // Por si cambió mientras esta pantalla no estaba montada.
@@ -69,7 +73,7 @@ export const usePopsTema = ({ temas = TEMAS_POPS } = {}) => {
 
     const cambiar = (nuevo, origenEl, { movil = false } = {}) => {
         if (nuevo === tema || ocupado.current || !temas.includes(nuevo)) return
-        try { localStorage.setItem(CLAVE, nuevo) } catch { /* sin almacenamiento */ }
+        try { localStorage.setItem(claveTema, nuevo) } catch { /* sin almacenamiento */ }
         // Avisa a otras instancias de esta misma pestaña (no reciben `storage`).
         queueMicrotask(() => window.dispatchEvent(new Event(EVENTO)))
 

@@ -6,6 +6,7 @@ import './side-events.css'
 import '../GuestManagement/guests-redesign.css'
 import { LuImage, LuPlus, LuShoppingCart } from 'react-icons/lu'
 import { supabase } from '../../lib/supabase'
+import { supabaseAuthHeaders } from '../../lib/authHeaders'
 import { storageChanged } from '../../helpers/services/storageQuota'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -58,7 +59,7 @@ import sl from './SideEventsList.module.css'
 import { asistentesDe } from './datosAsistentes'
 import { MODOS_CLIMA, modoClima, parcheModoClima } from './tarjetasSide'
 import { FormularioPanel } from './Formularios/FormularioPanel'
-import { TEMA_IATTEND, TEMAS_POPS, usePopsTema } from '../../pages/Board/usePopsTema'
+import { CLAVE_EDITOR, TEMA_IATTEND, TEMAS_POPS, usePopsTema } from '../../pages/Board/usePopsTema'
 import { PopsTemaSwitch } from '../../pages/Board/PopsTemaSwitch'
 import './popsEditorTema.css'
 import { FormularioVista } from './Formularios/FormularioVista'
@@ -70,6 +71,7 @@ import { VistaLinkWhatsApp } from './VistaLinkWhatsApp'
 import { EditorMovil } from './Movil/EditorMovil'
 import { InvitadosMovil } from './Movil/InvitadosMovil'
 import { codigoSide, urlSide } from '../../helpers/invitation/sideEventLink'
+import { puedeGestionarPop } from '../../helpers/invitation/popEvents'
 import { EstadoGuardado } from './EstadoGuardado'
 import { CompartirPop } from './CompartirPop'
 import { ajusteDe, fotosDePortada, MAX_FOTOS_CARRUSEL, parcheFotos, soloVideos } from './fotosPortada'
@@ -564,7 +566,8 @@ export const SideEvents = () => {
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/reminders`,
-                payload
+                payload,
+                { headers: await supabaseAuthHeaders() }
             );
 
             if (response.data.ok) {
@@ -817,7 +820,8 @@ export const SideEvents = () => {
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/bulk`,
-                { invitationId: esPop ? null : id, sideEventId: current.id, items }
+                { invitationId: esPop ? null : id, sideEventId: current.id, items },
+                { headers: await supabaseAuthHeaders() }
             )
 
             if (response.data.ok) {
@@ -1887,7 +1891,8 @@ export const SideEvents = () => {
                 const response = await axios.post(
                     `${import.meta.env.VITE_API_URL}/api/whats`,
                     // "http://localhost:4000/api/whats",
-                    payload
+                    payload,
+                    { headers: await supabaseAuthHeaders() }
                 );
                 if (response.data.ok) {
                     // Un reintento no consume créditos (igual que en GuestsPage)
@@ -1919,6 +1924,14 @@ export const SideEvents = () => {
         if (error) {
             console.error(error)
             setsideEvent([])
+            return
+        }
+
+        // Un Pop ajeno (o que no existe) no se abre: de regreso a /invitations.
+        // La RLS ya no lo deja leer ni guardar; esto es para no dejar un editor vacío.
+        if (esPop && !(await puedeGestionarPop(data?.[0]))) {
+            message.warning(t('side_events.pop_no_access'))
+            navigate('/invitations', { replace: true })
             return
         }
 
@@ -3144,20 +3157,19 @@ export const SideEvents = () => {
     // hace zoom al escribir.
     const editorMovil = !!current && isMobile
 
-    // Editor de Pops en el estilo elegido en la sección Pops (Pop · Business ·
-    // Craft, localStorage pops_theme): en <html> para que también lo lean los
+    // Editor de Pops en su estilo (I attend · Pop · Business · Craft,
+    // localStorage pops_editor_theme): en <html> para que también lo lean los
     // popovers de antd. Solo el editor de escritorio de un Pop (popsEditorTema.css).
     // Se cambia desde la barra (PopsTemaSwitch) con la misma transición
     // circular de la sección Pops. useLayoutEffect: el cambio va dentro de la
     // View Transition (flushSync), así la foto nueva ya trae el estilo nuevo.
     const temaEditorPop = esPop && !!current && !isMobile
-    // Administradores: además el estilo "I attend" (el editor original, sin
-    // data-pops-editor). Rol leído de la sesión, como AdminHOC.
-    const esAdminEditor = useMemo(() => {
-        try { return JSON.parse(localStorage.getItem('session'))?.user?.role === 'Administration' } catch { return false }
-    }, [])
-    const temasEditor = esAdminEditor ? [...TEMAS_POPS, TEMA_IATTEND] : TEMAS_POPS
-    const { tema: temaPops, cambiar: cambiarTemaPops } = usePopsTema({ temas: temasEditor })
+    // Para todos, con "I attend" (el editor original, sin data-pops-editor)
+    // por omisión: el estilo del editor se guarda aparte del de la sección
+    // (CLAVE_EDITOR), así arranca en I attend aunque la sección tenga otro y,
+    // si lo cambian aquí, se respeta.
+    const temasEditor = [TEMA_IATTEND, ...TEMAS_POPS]
+    const { tema: temaPops, cambiar: cambiarTemaPops } = usePopsTema({ temas: temasEditor, clave: CLAVE_EDITOR, porOmision: TEMA_IATTEND })
     useLayoutEffect(() => {
         if (!temaEditorPop || temaPops === TEMA_IATTEND) return undefined
         const raiz = document.documentElement

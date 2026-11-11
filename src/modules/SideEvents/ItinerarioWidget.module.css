@@ -292,3 +292,99 @@
   height: auto;
   background: var(--bloque-reflejo);
 }
+
+/* ── Un solo momento: la hora grande | ícono, título y detalle ── */
+.unico {
+    padding: 22px 24px;
+}
+
+.unicoCuerpo {
+    display: flex;
+    align-items: center;
+}
+
+.unicoHora {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-right: 20px;
+}
+
+.unicoTiempo {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.unicoChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 13px;
+    border-radius: 99px;
+    background: var(--bloque-suave, rgba(255, 255, 255, 0.18));
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.unicoChip::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 99px;
+    background: currentColor;
+    opacity: 0.55;
+}
+
+/* Está pasando: punto verde. */
+.unicoChip[data-ahora]::before {
+    background: #43B75D;
+    opacity: 1;
+}
+
+.unicoDivisor {
+    align-self: stretch;
+    flex: none;
+    border-left: 1px solid var(--bloque-linea, rgba(255, 255, 255, 0.35));
+}
+
+/* Estilos de papel: el divisor punteado, como un boleto. */
+.unico[data-estilo='papel'] .unicoDivisor,
+.unico[data-estilo='recorte'] .unicoDivisor {
+    border-left-style: dashed;
+}
+
+.unicoInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding-left: 20px;
+}
+
+.unicoInfo svg {
+    margin-bottom: 4px;
+    stroke-width: 1.8;
+}
+
+.unicoNombre {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-wrap: pretty;
+}
+
+.unicoDetalle {
+    font-size: 14px;
+    line-height: 1.35;
+    opacity: 0.85;
+    text-wrap: pretty;
+}

@@ -27,7 +27,7 @@ import styles from './UploadsPanel.module.css'
 // Espacio extra: 10 → 30 MB por 100 créditos (el backend es la fuente:
 // GET /api/storage/package; esto es solo el texto mientras carga).
 const EXTRA = { extra_mb: 30, cost: 100 }
-const POP_EXTRA = { base_mb: 5, mb_cost: 5, levels: [15, 30] }
+const POP_EXTRA = { base_mb: 10, mb_cost: 5, levels: [20, 30] }
 const esVideo = (name) => /\.(mp4|webm|mov|m4v)$/i.test(name)
 const esAudio = (name) => /\.(mp3|wav|m4a|aac|ogg)$/i.test(name)
 // PNG (o WebP / GIF con transparencia): lo que va encima de la pieza.

@@ -33,6 +33,8 @@ import { FormularioPanel } from '../Formularios/FormularioPanel'
 import { WalletPanelPop } from './WalletPanelPop'
 import { PaletaDibujo } from './PaletaDibujo'
 import { LinkPanel } from './LinkPanel'
+import { PatrocinadoresPanel } from './PatrocinadoresPanel'
+import { patrocinadoresDe } from '../patrocinadores'
 
 // Área de trabajo del editor de side events / Pops en escritorio,
 // con la misma experiencia que el editor de la invitación (ver
@@ -95,6 +97,7 @@ export const SideWorkspace = ({
     // modera el panel Interacción y los enseñan la pieza y "Ver en vivo".
     const chatMensajes = useMensajesChat(current?.id, esPop && Boolean(body.showAttendees) && Boolean(body.chat?.enabled))
     const setBody = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
+    const updateSponsors = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, sponsors: fn(prev.body?.sponsors ?? {}) } }), opts)
     const updateForm = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)
     const stickers = useMemo(() => (Array.isArray(body.stickers) ? body.stickers : []), [body.stickers])
     const setStickers = (lista, opts) => setBody({ stickers: lista.length ? lista : null }, opts)
@@ -144,6 +147,7 @@ export const SideWorkspace = ({
         if (s === 'attendees' && esPop) openTool('interaction')
         if (s === 'registration' && esPop) openTool('registration')
         if (s === 'itinerary' && esPop) openTool('itinerary')
+        if (s === 'sponsors' && esPop) openTool('sponsors')
         if (s !== 'stickers') setStickerSel([])
         setSection(s)
     }
@@ -378,6 +382,7 @@ export const SideWorkspace = ({
             : id === 'itinerary' ? <ItineraryPanel {...panelProps} dias={dias} />
             : id === 'draw' ? <DrawPanel current={current} pincel={pincel} setPincel={setPincel} onOtroColor={() => pickColor('draw')} />
             : id === 'interaction' ? <InteractionPanel body={body} setBody={setBody} eventoId={current?.id} chatMensajes={chatMensajes} />
+            : id === 'sponsors' ? <PatrocinadoresPanel body={body} actualizar={updateSponsors} carpeta={carpeta} abierto={toolOpen && activeTool === 'sponsors' && !live} />
             : id === 'registration' ? <FormularioPanel body={body} updateForm={updateForm} eventoId={current?.id} />
             // Elegir foto: abre Subidos y, al elegir, regresa al panel.
             : id === 'link' ? <LinkPanel current={current} setBody={setBody} onPickImage={(handleImage) => pickMedia({}, (url, ...rest) => { handleImage(url, ...rest); setActiveTool('link'); setToolOpen(true) })} />
@@ -432,7 +437,10 @@ export const SideWorkspace = ({
                         dibujoEn={dibujoEnValido}
                         ajustarFoto={ajustandoFoto && section === 'background' ? fotoElegida : null}
                     />
-                    {!inmersivo && <span className={own.caption}>{t('side_events.canvas_caption')}</span>}
+                    {/* Con Patrocinadores elegido, la leyenda dice dónde se ven. */}
+                    {!inmersivo && <span className={own.caption}>{esPop && section === 'sponsors'
+                        ? t(patrocinadoresDe(body).items.length ? `side_events.sponsors_caption_${patrocinadoresDe(body).layout}` : 'side_events.sponsors_caption_empty')
+                        : t('side_events.canvas_caption')}</span>}
                 </div>
             )}
             liveContent={<SideEventHost config={{

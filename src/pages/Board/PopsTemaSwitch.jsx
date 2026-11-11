@@ -13,7 +13,8 @@ import styles from './PopsTemaSwitch.module.css'
  * onCambiar(tema, elemento): el elemento (el botón) es el origen del círculo.
  */
 
-const EMOJI = { pop: '🎉', business: '💼', craft: '✂️', iattend: '✦' }
+// I attend: el sobre con corazón (una invitación), sobre su lila.
+const EMOJI = { pop: '🎉', business: '💼', craft: '✂️', iattend: '💌' }
 
 // Miniatura del hero de cada estilo (dibujada con CSS, sin imágenes).
 const Mini = ({ tema }) => (
@@ -40,13 +41,18 @@ const Mini = ({ tema }) => (
                 <span className={styles.miniBizLinea} />
             </>
         )}
+        {/* I attend: la misma composición que Pop, con los colores de I
+            attend (navy, lila, verde y azul claros). */}
         {tema === 'iattend' && (
             <>
-                <span className={styles.miniIaRiel} />
-                <span className={styles.miniIaPanel} />
-                <span className={styles.miniIaPieza} />
-                <span className={styles.miniIaCapas} />
-                <span className={styles.miniIaDock} />
+                <span className={styles.miniIaHero} />
+                <svg viewBox='0 0 100 10' preserveAspectRatio='none' className={styles.miniIaZigzag}>
+                    <polyline points='0,6 15,2 32,8 52,1 70,7 86,3 100,6' />
+                </svg>
+                <span className={styles.miniIaLogo}>Pops</span>
+                <span className={styles.miniIaLila} />
+                <span className={styles.miniIaVerde} />
+                <span className={styles.miniIaAzul} />
             </>
         )}
         {tema === 'craft' && (
@@ -63,7 +69,7 @@ const Mini = ({ tema }) => (
 
 // `enLinea`: dentro de una barra (editor de Pops) en vez de flotar en la
 // esquina de la sección; botón compacto como en celular y panel hacia abajo.
-// `temas`: las opciones (el editor de un admin suma 'iattend', el original).
+// `temas`: las opciones (el editor de Pops suma 'iattend', el original, primero).
 export const PopsTemaSwitch = ({ tema, onCambiar, movil = false, enLinea = false, temas = TEMAS_POPS }) => {
     const { t } = useTranslation()
     const [abierto, setAbierto] = useState(false)

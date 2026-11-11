@@ -4,7 +4,7 @@ import axios from 'axios'
 import { message } from 'antd'
 import { Info, MessageCircle, Pin, Trash2, Users } from 'lucide-react'
 import { supabaseAuthHeaders } from '../../../lib/authHeaders'
-import { emojiAsistente, fondoAsistente } from '../datosAsistentes'
+import { colorAvatares, colorDeMatiz, emojiAsistente, fondoAsistente, matizDe } from '../datosAsistentes'
 import styles from './InteractionMenu.module.css'
 
 /*
@@ -128,6 +128,35 @@ export const InteractionPanel = ({ body, setBody, eventoId, chatMensajes }) => {
                                 </button>
                             </div>
                         </div>
+                        {/* Iniciales: el color de los avatares se ajusta con un slider
+                            de matiz (body.attendeesColor); sin moverlo, salen con el
+                            del tema. Siempre oscuros, para que las letras se lean. */}
+                        {modo === 'initials' && (
+                            <div className={styles.colorIniciales}>
+                                <div className={styles.colorCabeza}>
+                                    <span className={styles.rowLabel}>{t('side_events.int_initials_color')}</span>
+                                    {body?.attendeesColor && (
+                                        <button type="button" className={styles.colorReset} onClick={() => setBody({ attendeesColor: undefined })}>
+                                            {t('side_events.int_initials_color_theme')}
+                                        </button>
+                                    )}
+                                </div>
+                                <div className={styles.colorMuestras} aria-hidden>
+                                    {['AB', 'CD', 'EF', 'GH', 'IJ'].map((ini, i) => (
+                                        <span key={ini} className={styles.colorMuestra} style={{ background: fondoAsistente({ id: `muestra-${i}` }, 'initials', colorAvatares(body)) }}>{ini}</span>
+                                    ))}
+                                </div>
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={359}
+                                    value={matizDe(colorAvatares(body))}
+                                    className={styles.colorSlider}
+                                    aria-label={t('side_events.int_initials_color')}
+                                    onChange={(e) => setBody({ attendeesColor: colorDeMatiz(Number(e.target.value)) }, { coalesce: 'asistentes-color' })}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -191,7 +220,7 @@ export const InteractionPanel = ({ body, setBody, eventoId, chatMensajes }) => {
                                         const iniciales = String(m.autor ?? '').trim().split(/\s+/).map((p) => p.match(/\p{L}/u)?.[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
                                         return (
                                             <div key={m.id} className={styles.msg} data-saliendo={saliendo === m.id || undefined}>
-                                                <span className={styles.msgAv} style={{ background: fondoAsistente(a, modo, body?.color) }}>
+                                                <span className={styles.msgAv} style={{ background: fondoAsistente(a, modo, colorAvatares(body)) }}>
                                                     {modo === 'initials' ? iniciales : emojiAsistente(a)}
                                                 </span>
                                                 <span className={styles.msgText}><b>{String(m.autor ?? '').split(' ')[0]}</b> {m.text}</span>

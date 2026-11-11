@@ -1,0 +1,160 @@
+/* Patrocinadores de un Pop en la pieza del editor (Patrocinadores.jsx,
+   Cinta.jsx). Mismas medidas que la página del invitado (iattend-events,
+   components/SideEvent/Patrocinadores/patrocinadores.module.css). */
+
+.logo {
+    display: block;
+    flex: none;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+/* ── Cinta (§3.1) ── de orilla a orilla de la pieza (sale del relleno de 24). */
+.cinta {
+    width: 100%;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+
+.cinta[data-arrastrable] {
+    cursor: grab;
+    touch-action: pan-y;
+}
+
+.cinta[data-arrastrable]:active {
+    cursor: grabbing;
+}
+
+.pista {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    will-change: transform;
+}
+
+.pasoCinta {
+    display: flex;
+    align-items: center;
+    flex: none;
+}
+
+.punto {
+    width: 4px;
+    height: 4px;
+    flex: none;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.fila {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── En la portada (§3.2) ── */
+.portada {
+    width: calc(100% + 48px);
+    margin: 6px -24px 10px;
+    padding: 16px 0 18px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.portadaEtiqueta {
+    font-family: Poppins, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #FFFFFF;
+    opacity: 0.85;
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
+    text-align: center;
+    padding: 0 24px;
+}
+
+/* ── Tarjeta por niveles (§3.3): el vidrio lo pone SideCanvas (.block) ── */
+.tarjeta {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    color: var(--bloque-tinta, #FFFFFF);
+    font-family: Poppins, sans-serif;
+}
+
+.nivel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.nivel + .nivel {
+    padding-top: 18px;
+    border-top: 1px solid var(--bloque-linea, rgba(255, 255, 255, 0.22));
+}
+
+.nivelTitulo {
+    font-family: Poppins, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    opacity: 0.8;
+    text-align: center;
+}
+
+.filas {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+/* ── Banda en movimiento (§3.4): sin vidrio, de orilla a orilla ── */
+.banda {
+    width: calc(100% + 48px);
+    margin: 0 -24px;
+    padding: 8px 0 4px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+}
+
+.bandaPrincipal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+}
+
+.bandaSegunda {
+    margin-top: 6px;
+}
+
+.bandaCinta {
+    width: 100%;
+    padding: 18px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.bandaPie {
+    font-size: 12px;
+    opacity: 0.7;
+}

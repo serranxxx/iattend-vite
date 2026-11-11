@@ -1,0 +1,75 @@
+/* Barra de Patrocinadores (PatrocinadoresBar.jsx), handoff §4.3. Sobre las
+   clases de ElementBar.module.css (que ya toman el estilo del editor). */
+
+/* Si no cabe entre el panel y Capas (--barra-max, EditorShell), baja a dos
+   renglones centrados en vez de tapar el panel. */
+.barra {
+    max-width: var(--barra-max, none);
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 4px;
+    box-sizing: border-box;
+}
+
+.grupo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.icono {
+    display: flex;
+    padding: 0 2px;
+    color: var(--ed-ink-2, #6E6A73);
+}
+
+.velocidades {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--ed-surface-soft, #F6F5F3);
+}
+
+.velocidad {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ed-ink-2, #6E6A73);
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.velocidad[data-on] {
+    background: #FFFFFF;
+    color: var(--ed-ink, #29262D);
+    box-shadow: 0 1px 3px rgba(11, 31, 58, 0.14);
+}
+
+.etiqueta {
+    width: 130px;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid var(--ed-line, #E8E6E3);
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: var(--ed-ink, #29262D);
+    font-family: Poppins, sans-serif;
+    font-size: 12px !important;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.etiqueta:focus {
+    outline: none;
+    border-color: var(--ed-primario-bg, #29262D);
+}

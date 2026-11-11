@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { getTimezoneForState, itinerarioPorDia } from "../../helpers/assets/eventDateTime";
 import { IconoMomento } from "./IconoMomento";
+import { estiloDe } from "./estilosBloque";
 import styles from "./ItinerarioWidget.module.css";
 
 /*
@@ -14,6 +15,9 @@ import styles from "./ItinerarioWidget.module.css";
     (punteada con 2 momentos). Estados: pasado, ahora y siguiente.
   · Varios días: selector de días arriba; abre en el de hoy si cae en el
     evento.
+  · Un solo momento: tarjeta propia, la hora grande con un chip de cuánto
+    falta ("En 2 h", "Ahora", "Mañana"…), un divisor y el ícono, título y
+    detalle a la derecha (punteado en los estilos de papel).
   Los blancos son las variables del estilo de bloques (estilosBloque.js) con
   el vidrio de respaldo. Pieza del editor; contraparte de
   components/SideEvent/ItinerarioWidget.tsx en iattend-events (la página del
@@ -55,6 +59,26 @@ const recortar = (n) => Math.max(0, Math.min(100, n));
 
 // El último momento cuenta como "ahora" esta hora después de empezar.
 const DURACION_ULTIMO = 60;
+
+// Días entre dos "YYYY-MM-DD".
+const diasEntre = (de, a) =>
+  Math.round((Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10)) - Date.UTC(+de.slice(0, 4), +de.slice(5, 7) - 1, +de.slice(8, 10))) / 86_400_000);
+
+// Cuánto falta para un momento (o si ya está pasando / terminó).
+const cuandoEs = (dia, hora, hoy, ahoraMin) => {
+  if (!hoy || !dia) return null;
+  if (hoy < dia) {
+    const n = diasEntre(hoy, dia);
+    return { texto: n === 1 ? "Mañana" : `En ${n} días`, ahora: false };
+  }
+  if (hoy > dia) return { texto: "Terminó", ahora: false };
+  const t = minutos(hora);
+  if (t == null || ahoraMin == null) return { texto: "Hoy", ahora: false };
+  const falta = t - ahoraMin;
+  if (falta > 0) return { texto: falta < 60 ? `En ${falta} min` : `En ${Math.round(falta / 60)} h`, ahora: false };
+  if (falta > -DURACION_ULTIMO) return { texto: "Ahora", ahora: true };
+  return { texto: "Terminó", ahora: false };
+};
 
 export const ItinerarioWidget = ({ body, sinTitulo }) => {
   const grupos = useMemo(() => itinerarioPorDia(body), [body]);
@@ -159,6 +183,34 @@ export const ItinerarioWidget = ({ body, sinTitulo }) => {
   }, [sel]);
 
   if (!grupos.length) return null;
+
+  // Un solo momento: la hora grande y su detalle, sin barra ni lista.
+  if (grupos.length === 1 && momentos.length === 1) {
+    const m = momentos[0];
+    const detalle = String(m.desc ?? m.place ?? "").trim();
+    const cuando = m.time ? cuandoEs(dia, m.time, hoy, ahoraMin) : null;
+    return (
+      <div className={`${styles.panel} ${styles.unico}`} data-estilo={estiloDe(body)}>
+        {!sinTitulo && <span className={styles.titulo}>Itinerario</span>}
+        <div className={styles.unicoCuerpo}>
+          {m.time && (
+            <>
+              <div className={styles.unicoHora}>
+                <span className={styles.unicoTiempo}>{m.time}</span>
+                {cuando && <span className={styles.unicoChip} data-ahora={cuando.ahora || undefined}>{cuando.texto}</span>}
+              </div>
+              <span className={styles.unicoDivisor} aria-hidden />
+            </>
+          )}
+          <div className={styles.unicoInfo}>
+            <IconoMomento icon={m.icon} size={24} />
+            <span className={styles.unicoNombre}>{m.name}</span>
+            {detalle && <span className={styles.unicoDetalle}>{detalle}</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.panel}>

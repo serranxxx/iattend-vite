@@ -21,7 +21,8 @@ const STACK = 7
 // mensaje real (`chatMensajes`, de useMensajesChat: el más reciente primero).
 const primerNombre = (n) => String(n ?? '').trim().split(/\s+/)[0] ?? ''
 
-export const AsistentesMuestra = ({ colorTema, reales = null, modo = 'emoji', chat = false, chatMensajes = null, sinTitulo }) => {
+// `colorAvatares`: base de las iniciales (colorAvatares de datosAsistentes.js).
+export const AsistentesMuestra = ({ colorTema, colorAvatares = colorTema, reales = null, modo = 'emoji', chat = false, chatMensajes = null, sinTitulo }) => {
     const { t } = useTranslation()
     // Los reales y, si son pocos, ejemplos para que se vea lleno (solo aquí).
     const conRelleno = rellenarConEjemplo(reales)
@@ -47,7 +48,7 @@ export const AsistentesMuestra = ({ colorTema, reales = null, modo = 'emoji', ch
                             <span
                                 key={a.id}
                                 className={`${styles.avatar} ${modo === 'initials' ? styles.letras : ''}`}
-                                style={{ left: i * 34, zIndex: 100 - i, background: fondoAsistente(a, modo, colorTema) }}
+                                style={{ left: i * 34, zIndex: 100 - i, background: fondoAsistente(a, modo, colorAvatares) }}
                             >
                                 {modo === 'initials' ? a.iniciales : emojiAsistente(a)}
                             </span>

@@ -11,9 +11,12 @@ import { TrazoSvg } from '../Editor/Dibujo'
 import { PINCEL, simplificar } from '../Editor/dibujoData'
 import { EfectosCapa } from './EfectosCapa'
 import { AsistentesMuestra } from './AsistentesMuestra'
+import { colorAvatares } from './datosAsistentes'
+import { BandaPatrocinadores, PortadaPatrocinadores, TarjetaPatrocinadores } from './Patrocinadores/Patrocinadores'
+import { hayPatrocinadores, patrocinadoresDe } from './patrocinadores'
 import { estiloDe, tintaDeNotas, variablesDeEstilo } from './estilosBloque'
 import { formPublicado } from './Formularios/modelo'
-import { activasPrimero, agruparTarjetas, estiloNotas, modoClima, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos } from './tarjetasSide'
+import { activasPrimero, agruparTarjetas, estiloNotas, modoClima, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos, variablesPosicionTitulo, posicionTitulo, POSICIONES_X, POSICIONES_Y } from './tarjetasSide'
 import { ajusteDe, AJUSTE_ZOOM_MAX, CAMBIO_CARRUSEL_MS, cubrir, desenfoqueDe, estiloAjuste, esVideo, mediaDePortada, parcheAjuste, variablesDesenfoque } from './fotosPortada'
 
 /**
@@ -309,7 +312,7 @@ export const SideCanvas = ({
 
     // Scroll con la curva y la duración de la hoja. `scrollTo({behavior})` no
     // sirve: su tiempo lo decide el navegador y se desincroniza de la hoja.
-    const glideTo = (el, to, onDone) => {
+    const glideTo = (el, to, onDone, ms = SHEET_MS) => {
         cancelAnimationFrame(scrollAnimRef.current)
         const from = el.scrollTop
         const delta = to - from
@@ -322,7 +325,7 @@ export const SideCanvas = ({
 
         const start = performance.now()
         const step = (now) => {
-            const p = Math.min(1, (now - start) / SHEET_MS)
+            const p = Math.min(1, (now - start) / ms)
             el.scrollTop = from + delta * ease(p)
             if (p < 1) scrollAnimRef.current = requestAnimationFrame(step)
             else onDone?.()
@@ -406,6 +409,94 @@ export const SideCanvas = ({
         const delta = (zoneRect.top - scrollerRect.top - margen) / escala
         glideTo(scroller, scroller.scrollTop + delta)
     }, [selected, liftBottom])
+
+    // ── Título: arrastrar a una celda de la cuadrícula 3 × 3 ──
+    // Con el título elegido, arrastrarlo (más de 6 px) lo mueve con el dedo y
+    // al soltar queda en la celda de abajo (body.titlePosition); un clic
+    // sigue siendo para escribir. Tocar una celda también lo lleva ahí.
+    const bloqueTituloRef = useRef(null)
+    const inicioTitulo = useRef(null)
+    const [arrastreTitulo, setArrastreTitulo] = useState(null)   // { dx, dy, x, y }
+    const posTitulo = posicionTitulo(current?.body)
+    const conCuadriculaTitulo = !readOnly && !storyMode && !soloPortada && !pincel && !soloDibujo && (selected === 'title' || Boolean(arrastreTitulo))
+    const moverTitulo = (x, y) => onChange((prev) => ({ ...prev, body: { ...prev.body, titlePosition: x === 'center' && y === 'bottom' ? undefined : { x, y } } }))
+    const celdaEn = (px, py) => {
+        const r = (bloqueTituloRef.current?.querySelector('[data-cuadricula-titulo]') ?? bloqueTituloRef.current)?.getBoundingClientRect()
+        if (!r) return null
+        const col = Math.max(0, Math.min(2, Math.floor(((px - r.left) / r.width) * 3)))
+        const fila = Math.max(0, Math.min(2, Math.floor(((py - r.top) / r.height) * 3)))
+        return { x: POSICIONES_X[col], y: POSICIONES_Y[fila] }
+    }
+    const empezarArrastreTitulo = (e) => {
+        if (readOnly || selected !== 'title' || e.button !== 0) return
+        // La pieza puede ir escalada (zoom): de px de pantalla a px de la pieza.
+        const card = cardRef.current
+        const escala = card ? card.getBoundingClientRect().width / (card.offsetWidth || 1) : 1
+        inicioTitulo.current = { x: e.clientX, y: e.clientY, escala, activo: false }
+    }
+    useEffect(() => {
+        const mover = (e) => {
+            const i = inicioTitulo.current
+            if (!i) return
+            const dx = e.clientX - i.x
+            const dy = e.clientY - i.y
+            if (!i.activo) {
+                if (Math.hypot(dx, dy) < 6) return
+                i.activo = true
+                window.getSelection?.()?.removeAllRanges()
+                titleRef.current?.blur()
+            }
+            e.preventDefault()
+            setArrastreTitulo({ dx: dx / i.escala, dy: dy / i.escala, ...(celdaEn(e.clientX, e.clientY) ?? {}) })
+        }
+        const soltar = (e) => {
+            const i = inicioTitulo.current
+            inicioTitulo.current = null
+            if (!i?.activo) return
+            const celda = celdaEn(e.clientX, e.clientY)
+            if (celda) moverTitulo(celda.x, celda.y)
+            setArrastreTitulo(null)
+            // El clic que llega después del arrastre no cuenta.
+            const anular = (ev) => { ev.stopPropagation(); ev.preventDefault() }
+            window.addEventListener('click', anular, { capture: true, once: true })
+            setTimeout(() => window.removeEventListener('click', anular, { capture: true }), 0)
+        }
+        window.addEventListener('pointermove', mover, { passive: false })
+        window.addEventListener('pointerup', soltar)
+        window.addEventListener('pointercancel', soltar)
+        return () => {
+            window.removeEventListener('pointermove', mover)
+            window.removeEventListener('pointerup', soltar)
+            window.removeEventListener('pointercancel', soltar)
+        }
+    }, [])
+
+    // Patrocinadores: al cambiar de acomodo, la pieza se desliza (scroll
+    // suave, ida y vuelta) hasta donde quedaron: arriba a la portada con
+    // Portada; con Tarjeta o Banda, a la sección (su borde a 70 px).
+    const acomodoPatrocinadores = patrocinadoresDe(current?.body).layout
+    const acomodoAntes = useRef(acomodoPatrocinadores)
+    useEffect(() => {
+        const antes = acomodoAntes.current
+        acomodoAntes.current = acomodoPatrocinadores
+        if (antes === acomodoPatrocinadores || liftBottom) return
+        requestAnimationFrame(() => {
+            const scroller = scrollRef.current
+            if (!scroller) return
+            let destino = 0
+            if (acomodoPatrocinadores !== 'portada') {
+                const zone = scroller.querySelector('[data-zone="sponsors"]')
+                if (!zone) return
+                const scrollerRect = scroller.getBoundingClientRect()
+                const escala = scrollerRect.height / (scroller.clientHeight || scrollerRect.height) || 1
+                const top = (zone.getBoundingClientRect().top - scrollerRect.top) / escala + scroller.scrollTop
+                destino = Math.max(0, Math.min(top - 70, scroller.scrollHeight - scroller.clientHeight))
+            }
+            // Más largo cuanto más lejos (entre 0.45 y 0.9 s), para que se lea el viaje.
+            const ms = Math.min(900, Math.max(450, Math.abs(destino - scroller.scrollTop) * 0.6))
+            glideTo(scroller, destino, undefined, ms)
+        })
+    }, [acomodoPatrocinadores])
 
     const body = current?.body ?? {}
     const title = body.title ?? {}
@@ -1279,10 +1370,41 @@ export const SideCanvas = ({
                         (.primera_pantalla). Al hacer scroll todo sube encima de la
                         portada fija. */}
                     <div className={styles.primeraPantalla}>
+                        {/* Título: va solo en un bloque que ocupa el alto libre y se
+                            acomoda en una cuadrícula 3 × 3 (body.titlePosition,
+                            tarjetasSide.js). Elegido, enseña la cuadrícula: se
+                            arrastra a una celda o se toca la celda. La fecha y el
+                            lugar se quedan abajo, como siempre. */}
+                        <div ref={bloqueTituloRef} className={styles.bloqueTitulo} style={variablesPosicionTitulo(body)}>
+                        {conCuadriculaTitulo && (
+                            <div className={styles.cuadriculaTitulo} aria-hidden data-cuadricula-titulo data-arrastrando={arrastreTitulo || undefined}>
+                                {POSICIONES_Y.flatMap((y) => POSICIONES_X.map((x) => {
+                                    const actual = posTitulo.x === x && posTitulo.y === y
+                                    const destino = arrastreTitulo && arrastreTitulo.x === x && arrastreTitulo.y === y
+                                    return (
+                                        <span
+                                            key={`${y}-${x}`}
+                                            className={styles.celdaTitulo}
+                                            data-actual={actual || undefined}
+                                            data-destino={destino || undefined}
+                                            onPointerDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => { e.stopPropagation(); moverTitulo(x, y) }}
+                                        />
+                                    )
+                                }))}
+                            </div>
+                        )}
                         {/* Título. Vacío no ocupa lugar (como en la página del
                             invitado, donde no se pinta): el texto de ejemplo flota
                             encima de la fecha para poder tocarlo y escribir. */}
-                        <div className={`${cls('title', styles.titleZone)} ${!current?.name?.trim() ? styles.titleVacio : ''}`} data-zone='title' onClick={pick('title')} style={portadaOculta(body, 'title') ? { display: 'none' } : undefined}>
+                        <div
+                            className={`${cls('title', styles.titleZone)} ${!current?.name?.trim() ? styles.titleVacio : ''}`}
+                            data-zone='title'
+                            data-arrastrando={arrastreTitulo || undefined}
+                            onClick={pick('title')}
+                            onPointerDown={empezarArrastreTitulo}
+                            style={portadaOculta(body, 'title') ? { display: 'none' } : arrastreTitulo ? { transform: `translate(${arrastreTitulo.dx}px, ${arrastreTitulo.dy}px)` } : undefined}
+                        >
                             <div
                                 ref={titleRef}
                                 className={styles.titleInput}
@@ -1311,6 +1433,7 @@ export const SideCanvas = ({
                                 {initialTitle}
                             </div>
                         </div>
+                        </div>
 
                         {/* Fecha y lugar van en un solo bloque, sin separación,
                             igual que la columna .col de la página del invitado. */}
@@ -1334,6 +1457,11 @@ export const SideCanvas = ({
                                 }
                             </div>
                         </div>
+                        {/* Patrocinadores en la portada (Pop, body.sponsors): la cinta
+                            entre el lugar y los botones, como la página. */}
+                        {conAsistentes && patrocinadoresDe(body).layout === 'portada' && hayPatrocinadores(body) && (
+                            <PortadaPatrocinadores body={body} className={cls('sponsors', '')} data-zone='sponsors' onClick={pick('sponsors')} />
+                        )}
                         {/* RSVP: maqueta de la píldora de la pieza */}
                         <div ref={botonesRef} aria-hidden className={styles.buttonsCont}>
                             <span className={styles.mockBtn}>
@@ -1356,7 +1484,10 @@ export const SideCanvas = ({
                         opacas, con una muestra y al centro "Activar …" (ocultas)
                         o "Agregar …" (sin datos). En la página no salen. */}
                     {(() => {
-                        const tarjetas = tarjetasDe(body, conAsistentes)
+                        // Patrocinadores con el acomodo Portada van en la primera pantalla;
+                        // inactivos (ocultos o sin logos), como las demás tarjetas: apagados
+                        // al fondo de la página, en su estado inicial.
+                        const tarjetas = tarjetasDe(body, conAsistentes).filter((c) => c.key !== 'sponsors' || patrocinadoresDe(body).layout !== 'portada' || !hayPatrocinadores(body))
                         const oculta = (k) => Boolean(tarjetas.find((c) => c.key === k)?.hidden)
                         const conItinerario = tieneDatos(body, 'itinerary')
                         const conMapa = tieneDatos(body, 'map')
@@ -1395,7 +1526,7 @@ export const SideCanvas = ({
                                     {!readOnly && (
                                         <button type='button' className={styles.activar} onClick={agregar ? alTocarAgregar : activar(key, zona)}>
                                             {agregar ? <Plus size={15} strokeWidth={2.2} /> : <Eye size={15} strokeWidth={2} />}
-                                            {agregar ?? t('side_events.canvas_activate', { name: t(`build_editor.${{ itinerary: 'lp_itinerary', map: 'lp_map', notes: 'lp_notes', attendees: 'lp_attendees', weather: 'lp_weather' }[key]}`) })}
+                                            {agregar ?? t('side_events.canvas_activate', { name: t(`build_editor.${{ itinerary: 'lp_itinerary', map: 'lp_map', notes: 'lp_notes', attendees: 'lp_attendees', weather: 'lp_weather', sponsors: 'lp_sponsors' }[key]}`) })}
                                         </button>
                                     )}
                                 </div>
@@ -1455,7 +1586,8 @@ export const SideCanvas = ({
                                 data-arrastrando={arrastre?.id === id || undefined}
                                 data-linea={lineaAntes === id ? 'antes' : lineaDespues === id ? 'despues' : undefined}
                             >
-                                {arrastrable(grupos.find((x) => x.id === id)) ? (
+                                {/* La banda de patrocinadores va sin etiqueta de grupo (§3.4). */}
+                                {id === 'marcas' && patrocinadoresDe(body).layout === 'banda' && lista('sponsors') ? null : arrastrable(grupos.find((x) => x.id === id)) ? (
                                     <span
                                         className={`${styles.grupoEtiqueta} ${styles.grupoArrastrable}`}
                                         data-arrastrable-grupo
@@ -1475,10 +1607,29 @@ export const SideCanvas = ({
                                     <span className={styles.grupoEtiqueta}>{t(`side_events.canvas_group_${id}`)}</span>
                                 )}
                                 {delGrupo.map((key) => {
+                                    // Patrocinadores (Pop): tarjeta por niveles o banda en movimiento.
+                                    if (key === 'sponsors') {
+                                        const acomodo = patrocinadoresDe(body).layout
+                                        if (!lista(key)) {
+                                            // Apagada (oculta o sin logos): renglones de ejemplo, del alto
+                                            // del estado inicial (no los logos, que pueden ser muchos).
+                                            const muestra = <div className={`${styles.block} ${styles.sponsorsBlock} ${styles.sponsorsMuestra}`}><span /><span /><span /></div>
+                                            return apagada(key, 'sponsors', muestra, conDatos(key) ? null : t('side_events.canvas_add_sponsors'))
+                                        }
+                                        if (acomodo === 'banda') {
+                                            return <BandaPatrocinadores key={key} body={body} scroller={() => scrollRef.current} data-tarjeta={key} className={cls('sponsors', styles.sponsorsBanda)} data-zone='sponsors' onClick={pick('sponsors')} />
+                                        }
+                                        return (
+                                            <div key={key} data-tarjeta={key} className={cls('sponsors', `${styles.block} ${styles.sponsorsBlock}`)} data-zone='sponsors' onClick={pick('sponsors')}>
+                                                <TarjetaPatrocinadores body={body} />
+                                            </div>
+                                        )
+                                    }
                                     // Asistentes (Pop, opcional), con asistentes de ejemplo.
                                     if (key === 'attendees') {
-                                        const muestra = <AsistentesMuestra colorTema={body.color} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={Boolean(body.chat?.enabled)} chatMensajes={chatMensajes} sinTitulo />
-                                        if (oculta(key)) return apagada(key, 'attendees', muestra)
+                                        const muestra = <AsistentesMuestra colorTema={body.color} colorAvatares={colorAvatares(body)} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={Boolean(body.chat?.enabled)} chatMensajes={chatMensajes} sinTitulo />
+                                        // Oculta: sin el chat, como en su estado inicial.
+                                        if (oculta(key)) return apagada(key, 'attendees', <AsistentesMuestra colorTema={body.color} colorAvatares={colorAvatares(body)} reales={asistentes} modo={body.attendeesStyle === 'initials' ? 'initials' : 'emoji'} chat={false} sinTitulo />)
                                         return (
                                             <div key={key} data-tarjeta={key} className={cls('attendees', styles.itineraryZona)} data-zone='attendees' onClick={pick('attendees')}>
                                                 {muestra}
@@ -1488,7 +1639,9 @@ export const SideCanvas = ({
                                     // Itinerario: el mismo widget que el remoto (vacío, uno de ejemplo).
                                     if (key === 'itinerary') {
                                         if (!lista(key)) {
-                                            const ejemplo = { ...body, itinerary: conItinerario ? body.itinerary : ITINERARIO_MUESTRA }
+                                            // Apagada (oculta o sin momentos): siempre la muestra corta del
+                                            // estado inicial, para que un itinerario largo oculto no ocupe su alto.
+                                            const ejemplo = { ...body, itinerary: ITINERARIO_MUESTRA }
                                             return apagada(key, 'itinerary', <ItinerarioWidget body={ejemplo} sinTitulo />, conItinerario ? null : t('side_events.canvas_add_itinerary'))
                                         }
                                         return (
@@ -1515,7 +1668,8 @@ export const SideCanvas = ({
                                             const conTexto = conDatos(key)
                                             return apagada(key, 'extras', (
                                                 <div className={`${styles.block} ${styles.notasBlock}`}>
-                                                    <div className={styles.extrasInput} style={estiloNotas(body)}>{body.extras || t('side_events.canvas_sample_notes')}</div>
+                                                    {/* Oculta: el texto de ejemplo (corto), no el suyo. */}
+                                                    <div className={styles.extrasInput} style={estiloNotas(body)}>{t('side_events.canvas_sample_notes')}</div>
                                                 </div>
                                             ), conTexto ? null : t('side_events.canvas_add_notes'), () => {
                                                 setNotasAbiertas(true)

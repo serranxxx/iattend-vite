@@ -6,8 +6,8 @@ import { supabase } from '../../lib/supabase'
 //   10 MB base, 30 MB comprando espacio extra (100 créditos, POST
 //   /api/storage/upgrade). Cuenta fotos, videos y stickers PNG; NO el Photo
 //   Wall ni el audio de la canción.
-// · Pop (carpeta `flash-<id>`, migración 2026-11-01_storage_pops.sql): 5 MB
-//   base, 15 y 30 MB a 5 créditos del Pop por MB (POST
+// · Pop (carpeta `flash-<id>`, migraciones 2026-11-01_storage_pops.sql y
+//   2026-11-11c_pops_storage_10mb.sql): 10 MB base, 15 y 30 MB a 5 créditos del Pop por MB (POST
 //   /api/storage/pop-upgrade). Cuenta todo lo de su carpeta menos el audio.
 // El Save the Date temporal (`temp/…`) no tiene límite.
 
@@ -40,7 +40,7 @@ export const getStorageQuota = async (target) => {
         ])
         return {
             used: usage.error ? null : Number(usage.data) || 0,
-            limitMb: pop.error ? null : (pop.data?.storage_limit_mb ?? 5),
+            limitMb: pop.error ? null : (pop.data?.storage_limit_mb ?? 10),
         }
     }
     const invitationID = target?.tipo === 'invitacion' ? target.id : target

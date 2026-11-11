@@ -1,5 +1,5 @@
 import imageCompression from 'browser-image-compression';
-import { message } from 'antd';
+import { message, Modal } from 'antd';
 import { supabase } from '../../lib/supabase';
 import { ensureQuota, storageChanged } from './storageQuota';
 
@@ -135,133 +135,120 @@ export const getImagesFromSupabase = async (invitationID, setImages) => {
     setImages(images)
 };
 
-const containsString = (obj, target) => {
-    if (typeof obj === "string") {
-        return obj === target;
-    }
+/* ─────────────── ¿Dónde se usa un archivo? ─────────────── */
+// Antes de borrar una foto o un video de "Subidos" se busca su URL en lo que
+// lo puede usar: la invitación (todas sus secciones, también las ocultas), sus
+// side events, su Save the Date y, en un Pop, el Pop. Si se usa, se dice
+// dónde y se deja borrar de todos modos (esos lugares se quedan sin él).
+const BASE_PUBLICA = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    if (Array.isArray(obj)) {
-        return obj.some(item => containsString(item, target));
-    }
+// Rutas ("cover.image.prod", "gallery.prod[0]"…) donde está `objetivo`.
+const rutasCon = (obj, objetivo) => {
+    const out = [];
+    const r = (o, p) => {
+        if (typeof o === 'string') { if (o === objetivo) out.push(p); return; }
+        if (Array.isArray(o)) o.forEach((x, i) => r(x, `${p}[${i}]`));
+        else if (o && typeof o === 'object') Object.entries(o).forEach(([k, v]) => r(v, p ? `${p}.${k}` : k));
+    };
+    r(obj, '');
+    return out;
+};
 
-    if (typeof obj === "object" && obj !== null) {
-        return Object.values(obj).some(value => containsString(value, target));
-    }
+const SECCIONES = {
+    cover: 'la portada', gallery: 'la galería', quote: 'la frase', itinerary: 'el itinerario',
+    destinations: 'destinos', wallet: 'el pase digital', dresscode: 'el código de vestimenta',
+    gifts: 'la mesa de regalos', greeting: 'el saludo', people: 'las personas', decorations: 'los elementos',
+    notices: 'los avisos', song: 'la canción', generals: 'el diseño general',
+};
+const lugarEnInvitacion = (ruta) => {
+    const k = ruta.split(/[.[]/)[0];
+    return `${SECCIONES[k] ?? `la sección «${k}»`} de la invitación`;
+};
+const lugarEnSide = (ruta, nombre, esPop) => {
+    const de = esPop ? '' : ` del side event «${nombre || 'sin nombre'}»`;
+    if (ruta === 'url_image' || ruta.startsWith('body.linkImage')) return `la imagen del link${de}`;
+    if (ruta.startsWith('body.wallet')) return `el pase digital${de}`;
+    if (ruta.startsWith('body.stickers')) return `los elementos${de}`;
+    if (/^body\.(image|images|video|poster)\b/.test(ruta)) return `la portada${de}`;
+    return esPop ? 'el Pop' : `el side event «${nombre || 'sin nombre'}»`;
+};
 
-    return false;
-}
+export const usosDeArchivo = async (carpeta, url) => {
+    const c = String(carpeta ?? '');
+    if (c.startsWith('flash-')) {
+        const { data: pop, error } = await supabase.from('side_events').select('*').eq('id', c.slice('flash-'.length)).maybeSingle();
+        if (error) throw error;
+        return [...new Set(rutasCon(pop ?? {}, url).map((r) => lugarEnSide(r, pop?.name, true)))];
+    }
+    const id = c.startsWith('inv-') ? c.slice(4) : c;
+    if (!UUID.test(id)) return [];
+    const [inv, sides, std] = await Promise.all([
+        supabase.from('invitations').select('data').eq('id', id).maybeSingle(),
+        supabase.from('side_events').select('id, name, body, url_image').eq('invitation_id', id),
+        supabase.from('save_the_dates').select('cover').eq('invitation_id', id).maybeSingle(),
+    ]);
+    if (inv.error) throw inv.error;
+    if (sides.error) throw sides.error;
+    return [...new Set([
+        ...rutasCon(inv.data?.data ?? {}, url).map(lugarEnInvitacion),
+        ...(sides.data ?? []).flatMap((s) => rutasCon({ body: s.body, url_image: s.url_image }, url).map((r) => lugarEnSide(r, s.name, false))),
+        // Sin Save the Date (o sin permiso para leerlo) no cuenta.
+        ...(!std.error && std.data?.cover && rutasCon(std.data.cover, url).length ? ['tu Save the Date'] : []),
+    ])];
+};
+
+const enLista = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`);
+
+// Borra una foto o un video de la carpeta: si se usa en algún lado, primero
+// dice dónde y pide confirmar.
+const borrarArchivo = async ({ path, carpeta, tipo, alTerminar }) => {
+    const esVideo = tipo === 'video';
+    const eliminar = async () => {
+        const { error } = await supabase.storage.from('user_images').remove([path]);
+        if (error) {
+            console.error('Error eliminando archivo:', error);
+            message.error(esVideo ? 'Ocurrió un error al eliminar el video.' : 'Ocurrió un error al eliminar la imagen.');
+            return;
+        }
+        storageChanged();
+        alTerminar?.();
+        message.success(esVideo ? 'Video eliminado.' : 'Imagen eliminada.');
+    };
+    let usos;
+    try {
+        usos = await usosDeArchivo(carpeta, `${BASE_PUBLICA}${path}`);
+    } catch (err) {
+        console.error('No se pudo revisar dónde se usa:', err?.message ?? err);
+        message.error(esVideo ? 'No se pudo revisar si el video está en uso.' : 'No se pudo revisar si la imagen está en uso.');
+        return;
+    }
+    if (!usos.length) { await eliminar(); return; }
+    Modal.confirm({
+        title: esVideo ? 'Este video está en uso' : 'Esta imagen está en uso',
+        content: `Se usa en ${enLista(usos)}. Si la borras, ${usos.length === 1 ? 'ese lugar se queda' : 'esos lugares se quedan'} sin ${esVideo ? 'video' : 'imagen'}.`,
+        okText: 'Borrar de todos modos',
+        okButtonProps: { danger: true },
+        cancelText: 'Cancelar',
+        onOk: eliminar,
+    });
+};
 
 export const deleteImageFromSupabase = async (path, invitationID, setImages) => {
-    try {
-        // Carpeta temporal del Save the Date gratis: todavía no hay evento
-        // contra el que validar el uso, así que se borra directo.
-        if (String(invitationID).startsWith('temp/')) {
-            const { error } = await supabase.storage.from('user_images').remove([path]);
-            if (error) {
-                message.error('No se pudo borrar la imagen.');
-                return;
-            }
-            message.success('Imagen eliminada correctamente.');
-            storageChanged();
-            getImagesFromSupabase(invitationID, setImages);
+    // Carpeta temporal del Save the Date gratis: todavía no hay evento
+    // contra el que validar el uso, así que se borra directo.
+    if (String(invitationID).startsWith('temp/')) {
+        const { error } = await supabase.storage.from('user_images').remove([path]);
+        if (error) {
+            message.error('No se pudo borrar la imagen.');
             return;
         }
-
-        const longpath = `https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/${path}`;
-
-        /* ─────────────── Pop ─────────────── */
-        // Su carpeta es `flash-<side_event_id>`: no hay invitación detrás, y
-        // buscarla como tal fallaba (no es un uuid) sin borrar nada.
-        if (String(invitationID).startsWith('flash-')) {
-            const { data: pop, error: popError } = await supabase
-                .from('side_events')
-                .select('*')
-                .eq('id', String(invitationID).slice('flash-'.length))
-                .maybeSingle();
-
-            if (popError) {
-                console.error('Error al obtener el Pop:', popError.message);
-                message.error('Ocurrió un error al eliminar la imagen.');
-                return;
-            }
-            if (pop && containsString(pop, longpath)) {
-                message.error('La imagen está siendo usada en el evento. Quítala y guarda antes de eliminarla.');
-                return;
-            }
-
-            const { error } = await supabase.storage.from('user_images').remove([path]);
-            if (error) {
-                console.error('Error eliminando imagen:', error);
-                message.error('Ocurrió un error al eliminar la imagen.');
-                return;
-            }
-            getImagesFromSupabase(invitationID, setImages);
-            message.success('Imagen eliminada correctamente.');
-            return;
-        }
-
-        /* ─────────────── Invitación ─────────────── */
-        const { data: invitation, error: invitationError } = await supabase
-            .from("invitations")
-            .select("data")
-            .eq("id", invitationID)
-            .maybeSingle();
-
-        if (invitationError) {
-            console.error("Error al obtener invitación:", invitationError.message);
-            message.error("Ocurrió un error al eliminar la imagen.");
-            return;
-        }
-
-        const usedInInvitation = invitation?.data
-            ? containsString(invitation.data, longpath)
-            : false;
-
-        /* ─────────────── Side events ─────────────── */
-        const { data: sideEvents, error: sideEventsError } = await supabase
-            .from("side_events")
-            .select("*")
-            .eq("invitation_id", invitationID);
-
-        if (sideEventsError) {
-            console.error("Error al obtener side_events:", sideEventsError.message);
-            message.error("Ocurrió un error al eliminar la imagen.");
-            return;
-        }
-
-        const usedInSideEvents = sideEvents?.some(event =>
-            containsString(event, longpath)
-        );
-
-        /* ─────────────── Validación final ─────────────── */
-        if (usedInInvitation) {
-            message.error("La imagen está siendo usada en la invitación.");
-            return;
-        }
-
-        if (usedInSideEvents) {
-            message.error("La imagen está siendo usada en side events.");
-            return;
-        }
-
-        /* ─────────────── Eliminar imagen ─────────────── */
-        const { error: removeError } = await supabase.storage
-            .from("user_images")
-            .remove([path]);
-
-        if (removeError) {
-            console.error("Error eliminando imagen:", removeError);
-            message.error("Ocurrió un error al eliminar la imagen.");
-            return;
-        }
-
+        message.success('Imagen eliminada correctamente.');
+        storageChanged();
         getImagesFromSupabase(invitationID, setImages);
-        message.success("Imagen eliminada correctamente.");
-
-    } catch (err) {
-        console.error("Error inesperado:", err);
-        message.error("Error inesperado al eliminar la imagen.");
+        return;
     }
+    await borrarArchivo({ path, carpeta: invitationID, tipo: 'imagen', alTerminar: () => getImagesFromSupabase(invitationID, setImages) });
 };
 
 export const getCoversFromSubapase = async (setImages) => {
@@ -429,46 +416,8 @@ export const getVideosFromSupabase = async (invitationID, setVideos) => {
 };
 
 export const deleteVideoFromSupabase = async (path, invitationID, setVideos) => {
-    try {
-        const longpath = `https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/${path}`;
-
-        /* ─── ¿lo está usando el Save the Date? ─── */
-        const { data: std, error: stdError } = await supabase
-            .from("save_the_dates")
-            .select("cover")
-            .eq("invitation_id", invitationID)
-            .maybeSingle();
-
-        if (stdError) {
-            console.error("Error al obtener save the date:", stdError.message);
-            return;
-        }
-
-        if (std?.cover && containsString(std.cover, longpath)) {
-            message.error("El video está siendo usado en tu Save the Date.");
-            return;
-        }
-
-        /* ─── Eliminar ─── */
-        const { error: removeError } = await supabase.storage
-            .from("user_images")
-            .remove([path]);
-
-        if (removeError) {
-            console.error("Error eliminando video:", removeError);
-            message.error("Ocurrió un error al eliminar el video.");
-            return;
-        }
-
-        getVideosFromSupabase(invitationID, setVideos);
-        message.success("Video eliminado correctamente.");
-
-    } catch (err) {
-        console.error("Error inesperado:", err);
-        message.error("Error inesperado al eliminar el video.");
-    }
+    await borrarArchivo({ path, carpeta: invitationID, tipo: 'video', alTerminar: () => getVideosFromSupabase(invitationID, setVideos) });
 };
-
 
 // Logo de una marca de la mesa de regalos (catálogo gift_brands).
 // Mismo bucket que las texturas; los PNG originales vivían en
@@ -591,4 +540,73 @@ export const stickerLigeroDesdeUrl = async (url, carpeta) => {
         console.error(err);
         return url;
     }
+};
+
+/* ─────────────── Logos de patrocinadores (Pop) ─────────────── */
+// Van a la carpeta del Pop (`flash-<id>/sponsors/…`), así cuentan para su
+// espacio de Subidos. Un SVG se rasteriza aquí (canvas, 800 px del lado
+// mayor): nunca se sube el archivo tal cual. Todo se aligera como un sticker
+// (WebP con transparencia). Regresa { url, w, h } con el tamaño natural.
+const LOGO_SVG_PX = 800;
+
+const medidasSvg = (texto) => {
+    try {
+        const svg = new DOMParser().parseFromString(texto, 'image/svg+xml').documentElement;
+        const num = (v) => (v && !String(v).includes('%') ? parseFloat(v) : NaN);
+        const w = num(svg.getAttribute('width'));
+        const h = num(svg.getAttribute('height'));
+        if (w > 0 && h > 0) return { w, h };
+        const vb = (svg.getAttribute('viewBox') ?? '').split(/[\s,]+/).map(Number);
+        if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) return { w: vb[2], h: vb[3] };
+    } catch { /* sin medidas: cuadrado */ }
+    return { w: 1, h: 1 };
+};
+
+const rasterizarSvg = async (file) => {
+    const texto = await file.text();
+    const { w, h } = medidasSvg(texto);
+    const escala = LOGO_SVG_PX / Math.max(w, h);
+    const ancho = Math.max(1, Math.round(w * escala));
+    const alto = Math.max(1, Math.round(h * escala));
+    const url = URL.createObjectURL(new Blob([texto], { type: 'image/svg+xml' }));
+    try {
+        const img = new Image();
+        img.src = url;
+        await img.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = ancho;
+        canvas.height = alto;
+        canvas.getContext('2d').drawImage(img, 0, 0, ancho, alto);
+        const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+        return new File([blob], 'logo.png', { type: 'image/png' });
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+};
+
+const tamanoNatural = async (file) => {
+    try {
+        const bmp = await createImageBitmap(file);
+        const t = { w: bmp.width, h: bmp.height };
+        bmp.close?.();
+        return t;
+    } catch {
+        return { w: 0, h: 0 };
+    }
+};
+
+export const subirLogoPatrocinador = async (file, carpeta) => {
+    const esSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
+    const imagen = esSvg ? await rasterizarSvg(file) : file;
+    const ligero = await aligerarSticker(imagen);
+    if (!(await ensureQuota(carpeta, ligero.size))) return null;
+    const { w, h } = await tamanoNatural(ligero);
+    const base = (file.name.replace(/\.[^.]+$/, '') || 'logo').replace(/[^a-z0-9_-]+/gi, '-').slice(0, 40);
+    const filePath = `${carpeta}/sponsors/${Date.now()}-${base}.${ligero.name.split('.').pop()}`;
+    const { error } = await supabase.storage
+        .from('user_images')
+        .upload(filePath, ligero, { upsert: true, contentType: ligero.type });
+    if (error) throw error;
+    storageChanged();
+    return { url: supabase.storage.from('user_images').getPublicUrl(filePath).data.publicUrl, w, h };
 };

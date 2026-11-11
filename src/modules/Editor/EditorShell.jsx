@@ -538,7 +538,9 @@ export const EditorShell = ({
 
             {/* ── Barra contextual (arriba de la pieza) ── */}
             {bar && !live && !withColumn && (
-                <div className={ws.elementBar} style={{ left: center }} data-tour="bar">
+                // --barra-max: el ancho libre entre el panel y Capas (una barra
+                // ancha, como la de Patrocinadores, se acomoda en dos renglones).
+                <div className={ws.elementBar} style={{ left: center, '--barra-max': `${Math.max(280, vp.w - padL - padR - 24)}px` }} data-tour="bar">
                     {bar}
                 </div>
             )}

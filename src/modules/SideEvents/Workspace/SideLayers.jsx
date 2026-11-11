@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { arrayMove } from '@dnd-kit/sortable'
-import { CalendarDays, ClipboardList, CloudSun, Image as ImageIcon, Info, Layers, ListOrdered, Map as MapIcon, MapPin, MessageCircle, Music, StickyNote, Type, Users } from 'lucide-react'
+import { CalendarDays, ClipboardList, CloudSun, Handshake, Image as ImageIcon, Info, Layers, ListOrdered, Map as MapIcon, MapPin, MessageCircle, Music, StickyNote, Type, Users } from 'lucide-react'
 import { conModificador, alternar } from '../stickersPopData'
 import { MiniaturaElemento } from '../../Editor/Elemento'
 import { etiquetaElemento } from '../../Editor/elementoInfo'
 import { LayersPanel } from '../../Editor/LayersPanel'
 import { formPublicado } from '../Formularios/modelo'
+import { patrocinadoresDe } from '../patrocinadores'
 import { activasPrimero, agruparTarjetas, parcheOcultarPortada, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos } from '../tarjetasSide'
 
 /*
@@ -36,6 +37,7 @@ const TARJETAS = {
     map: { label: 'lp_map', Icon: MapIcon, section: 'map' },
     notes: { label: 'lp_notes', Icon: StickyNote, section: 'extras' },
     weather: { label: 'lp_weather', Icon: CloudSun, section: 'weather' },
+    sponsors: { label: 'lp_sponsors', Icon: Handshake, section: 'sponsors' },
 }
 
 // Grupos de tarjetas, como las etiquetas de la página (agruparTarjetas).
@@ -43,6 +45,7 @@ const GRUPOS = {
     info: { label: 'layers_group_info', Icon: Info },
     lugar: { label: 'layers_group_lugar', Icon: MapPin },
     gente: { label: 'layers_group_gente', Icon: Users },
+    marcas: { label: 'layers_group_marcas', Icon: Handshake },
 }
 
 export const SideLayers = ({ stickers, selected, onSelect, onChange, section, onZone, conCancion, esPop, body, setBody }) => {
@@ -169,6 +172,24 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
     // "+ Agregar" en lugar del ojo: lo que todavía no tiene contenido.
     const agregar = (onClick) => ({ label: t('side_events.layers_add'), onClick })
 
+    // Patrocinadores (Pop): activos con el acomodo Portada, su capa va en
+    // PORTADA; con Tarjeta o Banda, o inactivos (ocultos o sin logos, como
+    // en la pieza: apagados al fondo), en PÁGINA (grupo Patrocinadores). Sin
+    // logos, "+ Agregar" abre su panel; con ellos, el ojo → sponsors.enabled.
+    const patro = patrocinadoresDe(body)
+    const patroEnPortada = esPop && patro.layout === 'portada' && patro.enabled && patro.items.length > 0
+    const filaPatro = () => ({
+        id: 'sponsors',
+        label: t('build_editor.lp_sponsors'),
+        icon: <Handshake size={13} />,
+        selected: section === 'sponsors',
+        hidden: !patro.enabled || !patro.items.length,
+        onSelect: () => onZone('sponsors'),
+        ...(patro.items.length
+            ? { onToggleHidden: () => setBody(parcheOcultarTarjeta(body, 'sponsors', patro.enabled)) }
+            : { action: agregar(() => onZone('sponsors')) }),
+    })
+
     // PORTADA: canción, título, fecha y lugar, los elementos y el fondo.
     const portada = {
         id: 'portada',
@@ -180,6 +201,7 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
                     ocultable('title', 'lp_title', <Type size={13} />),
                     ocultable('date', 'lp_date', <CalendarDays size={13} />),
                     ocultable('place', 'lp_place', <MapPin size={13} />),
+                    patroEnPortada && filaPatro(),
                 ].filter(Boolean),
             },
             elementos,
@@ -221,7 +243,7 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
     // su ojo esté prendido. Su ojo, en vez de prender, abre su edición.
     const inactiva = (key) => ocultaDe(key) || !tieneDatos(body, key)
     // Activas arriba (en su orden), inactivas al final, como en la pieza.
-    const grupos = agruparTarjetas(activasPrimero(todas.filter((c) => c.key !== 'registration').map((c) => c.key), (k) => !inactiva(k)))
+    const grupos = agruparTarjetas(activasPrimero(todas.filter((c) => c.key !== 'registration' && !(c.key === 'sponsors' && patroEnPortada)).map((c) => c.key), (k) => !inactiva(k)))
     // Sin datos: "+ Agregar" abre su edición (y la prende si estaba oculta);
     // con datos, el ojo la oculta o la muestra.
     const finDeFila = (key) => (tieneDatos(body, key)
@@ -291,6 +313,7 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
                 id: `${g.id}-tarjetas`,
                 rows: g.keys.map((key) => {
                     const d = TARJETAS[key]
+                    if (key === 'sponsors') return filaPatro()
                     return {
                         id: key,
                         label: t(`build_editor.${d.label}`),

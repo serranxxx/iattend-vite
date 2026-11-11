@@ -76,6 +76,15 @@ const formalesDe = (tema) => {
     return lista
 }
 
+// Color base de las iniciales: el que el organizador eligió con el slider
+// del panel Interacción (body.attendeesColor) o, sin él, el del tema. Igual
+// que events (datosAsistentes.ts, colorAvatares).
+const HEX = /^#[0-9a-f]{6}$/i
+export const colorAvatares = (body) => (HEX.test(body?.attendeesColor ?? '') ? body.attendeesColor : body?.color)
+// Matiz (0–360) de un color y el color del slider para un matiz.
+export const matizDe = (hex) => (HEX.test(hex ?? '') ? Math.round(aHsl(hex).h) : 0)
+export const colorDeMatiz = (h) => aHex(((Math.round(h) % 360) + 360) % 360, 0.55, 0.42)
+
 // `modo`: 'emoji' (por omisión) o 'initials' (body.attendeesStyle). `tema`:
 // color del tema del Pop (body.color), para el modo iniciales.
 export const fondoAsistente = (a, modo = 'emoji', tema) => {

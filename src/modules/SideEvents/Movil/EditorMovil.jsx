@@ -8,6 +8,7 @@ import { mediaDePortada, soloVideos } from '../fotosPortada'
 import { SideCanvas } from '../SideCanvas'
 import { DesignPanel, ItineraryPanel } from '../Workspace/SidePanels'
 import { InteractionPanel } from '../Workspace/InteractionMenu'
+import { PatrocinadoresPanel } from '../Workspace/PatrocinadoresPanel'
 import { useMensajesChat } from '../Workspace/useMensajesChat'
 import { FormularioPanel } from '../Formularios/FormularioPanel'
 import { fechasDelEvento } from '../../../helpers/assets/eventDateTime'
@@ -46,7 +47,7 @@ import s from './EditorMovil.module.css'
 // parte del alto de la pantalla ocupa: Diseño, la mitad (la pieza se achica
 // arriba); Elementos, Fotos y Subidos, todo (tocar uno lo agrega a la pieza
 // como elemento, elegido, y el drawer se cierra).
-const PANELES = { design: 0.5, elements: 1, photos: 1, uploads: 1 }
+const PANELES = { design: 0.5, elements: 1, photos: 1, uploads: 1, sponsors: 1 }
 // Imagen del link y Pase digital: los mismos paneles de escritorio en un
 // modal (tarjeta centrada con velo). "Elegir foto" cambia el contenido del
 // modal por Subidos en modo elegir y, al elegir, regresa.
@@ -242,6 +243,7 @@ export const EditorMovil = ({
     const enDibujo = dibujando && !saliendoDibujo
     const setBody = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
     const updateForm = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)
+    const updateSponsors = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, sponsors: fn(prev.body?.sponsors ?? {}) } }), opts)
     const chatMensajes = useMensajesChat(current?.id, esPop && Boolean(current?.body?.showAttendees) && Boolean(current?.body?.chat?.enabled))
     const dias = [...new Set(fechasDelEvento(current?.body ?? {}).map((f) => String(f).slice(0, 10)))]
 
@@ -348,6 +350,7 @@ export const EditorMovil = ({
         : drawer === 'elements' ? <ElementsPanel invitation={invitacionElementos} onElegir={elegirElemento} />
             // Una foto de Ideas entra más grande que un PNG (como en escritorio).
             : drawer === 'photos' ? <PhotosPanel selectedSection="cover" onUse={(url) => elegirElemento({ ...stickerItem(url), w: 60 })} banner={t(esPop ? 'side_events.ws_photos_banner_pop' : 'side_events.ws_photos_banner')} />
+                : drawer === 'sponsors' ? <PatrocinadoresPanel body={body} actualizar={updateSponsors} carpeta={carpeta} abierto />
                 : drawer === 'uploads' ? (
                     <UploadsPanel
                         invitationID={carpeta}
@@ -466,6 +469,9 @@ export const EditorMovil = ({
                                 // Formulario → su panel en un modal.
                                 if (zona === 'color') { onSelect?.(null); abrirPanel('design'); return }
                                 if (esPop && ZONA_MODAL[zona]) { onStickerSel?.([]); onSelect?.(null); abrirModal(ZONA_MODAL[zona]); return }
+                                // Patrocinadores: su panel en el drawer (sin ícono en el footer,
+                                // como Itinerario); al cerrarlo queda su barra.
+                                if (esPop && zona === 'sponsors') { onStickerSel?.([]); onSelect?.(zona); abrirPanel('sponsors'); return }
                                 if (zona !== 'stickers') onStickerSel?.([])
                                 onSelect?.(zona)
                             }}

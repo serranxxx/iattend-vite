@@ -1,4 +1,4 @@
-import { ClipboardList, CloudUpload, Images, Link2, ListOrdered, Palette, PenLine, Shapes, Ticket, Users } from 'lucide-react'
+import { ClipboardList, CloudUpload, Handshake, Images, Link2, ListOrdered, Palette, PenLine, Shapes, Ticket, Users } from 'lucide-react'
 
 /*
   Herramientas del editor de un side event / Pop: el riel de escritorio
@@ -19,6 +19,9 @@ export const HERRAMIENTAS = [
     { id: 'link', icon: Link2, pop: true },
     // Pase digital: simulador del pase de Apple Wallet (Editor/WalletPanel).
     { id: 'wallet', icon: Ticket },
+    // Patrocinadores (PatrocinadoresPanel): sin ícono en el riel, como
+    // Itinerario; su panel se abre al elegir su capa o su tarjeta en la pieza.
+    { id: 'sponsors', icon: Handshake, pop: true, hidden: true },
     // Itinerario (ItineraryPanel): sin ícono en el riel; se abre al elegir
     // Itinerario en Capas o en la pieza (como Asistentes y Formulario).
     { id: 'itinerary', icon: ListOrdered, pop: true, hidden: true },

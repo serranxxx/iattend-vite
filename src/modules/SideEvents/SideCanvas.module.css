@@ -1372,3 +1372,133 @@
 .card[data-completa] .capaFija {
     height: var(--alto-pantalla);
 }
+
+/* ── Patrocinadores de un Pop (Patrocinadores/Patrocinadores.jsx) ──
+   Tarjeta por niveles: el vidrio de las demás tarjetas, con su relleno y
+   radio (handoff §3.3). La banda no lleva vidrio (§3.4). */
+.block.sponsorsBlock {
+    padding: 22px;
+    border-radius: 32px;
+}
+
+.sponsorsBanda {
+    border-radius: 0;
+}
+
+/* Muestra de la tarjeta apagada (oculta o sin logos): su estado inicial,
+   como la miniatura "Tarjeta por niveles" del panel: quien presenta, un
+   renglón de logos y una línea de aliados. */
+.sponsorsMuestra {
+    gap: 16px;
+    padding: 30px 22px;
+}
+
+.sponsorsMuestra span {
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.sponsorsMuestra span:nth-child(1) {
+    width: 132px;
+    height: 30px;
+    border-radius: 8px;
+}
+
+.sponsorsMuestra span:nth-child(2) {
+    width: 200px;
+    height: 14px;
+    border-radius: 3px;
+    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.85) 0 40px, transparent 40px 54px);
+}
+
+.sponsorsMuestra span:nth-child(3) {
+    width: 168px;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Título en su bloque, que ocupa el alto libre arriba de la fecha y se
+   acomoda en la cuadrícula 3 × 3 (body.titlePosition → --titulo-x / -y /
+   -alinear, tarjetasSide.js). Arriba deja lugar al disco de la canción y al
+   aviso del formulario. = .bloque_titulo del remoto. */
+.bloqueTitulo {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: var(--titulo-y, flex-end);
+    align-items: var(--titulo-x, center);
+    padding-top: 56px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.bloqueTitulo > * {
+    pointer-events: auto;
+}
+
+.bloqueTitulo .titleInput {
+    text-align: var(--titulo-alinear, center);
+}
+
+.bloqueTitulo .titleZone {
+    position: relative;
+    z-index: 1;
+}
+
+/* Arrastrando el título: sigue al puntero, sin transición. */
+.titleZone[data-arrastrando] {
+    cursor: grabbing;
+    opacity: 0.85;
+    user-select: none;
+}
+
+.picked.titleZone:not([data-arrastrando]) {
+    cursor: grab;
+}
+
+/* Cuadrícula 3 × 3 con el título elegido (como la portada de la invitación):
+   celdas punteadas; la actual con borde lila y, arrastrando, la de destino
+   resaltada. Tocar una celda lleva ahí el título. */
+.cuadriculaTitulo {
+    position: absolute;
+    inset: 56px 0 0;
+    z-index: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    pointer-events: none;
+    animation: cuadriculaEntra 0.2s ease both;
+}
+
+@keyframes cuadriculaEntra {
+    from { opacity: 0; }
+}
+
+.celdaTitulo {
+    pointer-events: auto;
+    border: 1px dashed rgba(255, 255, 255, 0.45);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.celdaTitulo:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.celdaTitulo[data-actual] {
+    border: 1.5px solid #C9B6E4;
+}
+
+.celdaTitulo[data-destino] {
+    border: 1.5px solid #FFFFFF;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cuadriculaTitulo { animation: none; }
+}
