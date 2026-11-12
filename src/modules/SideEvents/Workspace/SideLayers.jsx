@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { arrayMove } from '@dnd-kit/sortable'
-import { CalendarDays, ClipboardList, CloudSun, Handshake, Image as ImageIcon, Info, Layers, ListOrdered, Map as MapIcon, MapPin, MessageCircle, Music, StickyNote, Type, Users } from 'lucide-react'
+import { CalendarDays, ClipboardList, CloudSun, Handshake, Image as ImageIcon, Info, Layers, ListOrdered, Map as MapIcon, MapPin, MessageCircle, Music, StickyNote, Type, Users, Video } from 'lucide-react'
 import { conModificador, alternar } from '../stickersPopData'
 import { MiniaturaElemento } from '../../Editor/Elemento'
 import { etiquetaElemento } from '../../Editor/elementoInfo'
 import { LayersPanel } from '../../Editor/LayersPanel'
 import { formPublicado } from '../Formularios/modelo'
+import { esOnline } from '../acceso'
 import { patrocinadoresDe } from '../patrocinadores'
 import { activasPrimero, agruparTarjetas, parcheOcultarPortada, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos } from '../tarjetasSide'
 
@@ -298,11 +299,13 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
                 }],
             }
         }
+        // En línea, Lugar es Acceso (acceso.js).
+        const online = g.id === 'lugar' && esOnline(body)
         return {
             id: g.id,
             header: {
-                label: t(`side_events.${G.label}`),
-                icon: <G.Icon size={16} strokeWidth={2} />,
+                label: online ? t('side_events.layers_group_acceso') : t(`side_events.${G.label}`),
+                icon: online ? <Video size={16} strokeWidth={2} /> : <G.Icon size={16} strokeWidth={2} />,
                 selected: false,
                 sortable: true,
                 defaultOpen: true,
@@ -316,8 +319,8 @@ export const SideLayers = ({ stickers, selected, onSelect, onChange, section, on
                     if (key === 'sponsors') return filaPatro()
                     return {
                         id: key,
-                        label: t(`build_editor.${d.label}`),
-                        icon: <d.Icon size={13} />,
+                        label: online && key === 'map' ? t('side_events.layers_acceso') : t(`build_editor.${d.label}`),
+                        icon: online && key === 'map' ? <Video size={13} /> : <d.Icon size={13} />,
                         selected: section === d.section,
                         hidden: inactiva(key),
                         onSelect: () => onZone(d.section),

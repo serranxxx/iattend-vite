@@ -16,6 +16,7 @@
 import { reglasDefault } from './Formularios/modelo'
 import { itinerarioPorDia } from '../../helpers/assets/eventDateTime'
 import { patrocinadoresDe } from './patrocinadores'
+import { esOnline } from './acceso'
 
 // Formulario sigue en la lista (su ojo lo prende y apaga) pero no se ordena:
 // no va en el scroll de la página.
@@ -38,7 +39,8 @@ const ocultaDe = (body, key) => {
 export const tarjetasDe = (body, esPop) => {
     const guardadas = (Array.isArray(body?.cards) ? body.cards : []).map((c) => c.key).filter((k) => ORDEN_TARJETAS.includes(k))
     const orden = [...new Set([...guardadas, ...ORDEN_TARJETAS])]
-    return orden.filter((k) => aplica(k, esPop)).map((key) => ({ key, hidden: ocultaDe(body, key) }))
+    // En línea (acceso.js): Lugar se vuelve Acceso y el clima no aplica.
+    return orden.filter((k) => aplica(k, esPop) && !(k === 'weather' && esOnline(body))).map((key) => ({ key, hidden: ocultaDe(body, key) }))
 }
 
 // Grupos de la página (handoff "Pop Layout" 3a): cada uno con su etiqueta
@@ -90,7 +92,7 @@ const DIRECCION = ['street', 'number', 'neighborhood', 'zipcode', 'city', 'state
 export const direccionCompleta = (address) => DIRECCION.every((k) => !!address?.[k])
 export const tieneDatos = (body, key) => {
     if (key === 'itinerary') return itinerarioPorDia(body).length > 0
-    if (key === 'map') return direccionCompleta(body?.address)
+    if (key === 'map') return esOnline(body) ? Boolean(body?.online?.platform) : direccionCompleta(body?.address)
     if (key === 'weather') return Boolean(body?.address?.city)
     if (key === 'notes') return Boolean(String(body?.extras ?? '').trim())
     if (key === 'sponsors') return patrocinadoresDe(body).items.length > 0

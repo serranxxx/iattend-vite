@@ -22,8 +22,7 @@ import { TbLocationFilled } from 'react-icons/tb';
 import { GoChevronDown } from 'react-icons/go';
 import { BsArrowReturnRight } from 'react-icons/bs';
 import { LuSettings2 } from 'react-icons/lu';
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+import { exportarInvitados } from './exportarInvitados';
 import { Grid } from "antd";
 import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
@@ -725,35 +724,22 @@ export default function GuestsPage() {
         }
     }
 
-    const exportFlatGuestsToExcel = (rows, fileName = "invitados.xlsx") => {
-        // Mapa para resolver nombre de padre rápido
-        const guestsMap = new Map(rows.map(g => [g.id, g.name]));
-
-        const excelRows = rows.map(r => ({
-            Nombre: r.name ?? "",
-            Contacto: r.phone_number ?? "",
-            Estado: r.state ?? "",
-            Etiqueta: r.tag ?? "",
-            Mesa: r.table
-                ? (tables?.find(t => t.id === r.table)?.name ?? r.table)
-                : "-",
-            Prioridad: r.tier ?? "",
-            "Es acompañante de": r.companion_id
-                ? (guestsMap.get(Number(r.companion_id)) ?? "")
-                : "",
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(excelRows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Invitados");
-
-        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-        const blob = new Blob([excelBuffer], {
-            type:
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-        });
-
-        saveAs(blob, fileName);
+    // Excel con formato (exportarInvitados.js): mesas con número y nombre,
+    // acompañantes debajo de su titular y una hoja de Mesas. `todos` resuelve
+    // "Acompaña a" aunque el titular esté en otro estado.
+    const exportFlatGuestsToExcel = (rows, fileName = "invitados.xlsx", lista = "Invitados") => {
+        exportarInvitados({
+            filas: rows,
+            todos: rowData ?? rows,
+            mesas: tables ?? [],
+            owners: owners ?? [],
+            evento: name ?? '',
+            lista,
+            archivo: fileName,
+        }).catch((err) => {
+            console.error(err)
+            message.error(t('guests.download_error'))
+        })
     };
 
 
@@ -2540,7 +2526,7 @@ export default function GuestsPage() {
                                 </span>
 
                                 <Button
-                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx")}
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "creado"), "Por-invitar.xlsx", "Por invitar")}
                                     style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                     icon={<Download size={14} />} className="primarybutton">
                                 </Button>
@@ -2553,7 +2539,7 @@ export default function GuestsPage() {
                                 </span>
 
                                 <Button
-                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx")}
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "esperando"), "Pendientes.xlsx", "Esperando respuesta")}
                                     style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                     icon={<Download size={14} />} className="primarybutton">
                                 </Button>
@@ -2566,7 +2552,7 @@ export default function GuestsPage() {
                                 </span>
 
                                 <Button
-                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx")}
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "confirmado" || r.state === "asistente"), "Confirmados.xlsx", "Confirmados")}
                                     style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                     icon={<Download size={14} />} className="primarybutton">
                                 </Button>
@@ -2579,7 +2565,7 @@ export default function GuestsPage() {
                                 </span>
 
                                 <Button
-                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx")}
+                                    onClick={() => exportFlatGuestsToExcel(rowData.filter(r => r.state === "rechazado"), "Cancelados.xlsx", "No asistirán")}
                                     style={{ borderRadius: '99px', transition: 'all 0.55s ease' }}
                                     icon={<Download size={14} />} className="primarybutton">
                                 </Button>

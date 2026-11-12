@@ -34,6 +34,8 @@ import { WalletPanelPop } from './WalletPanelPop'
 import { PaletaDibujo } from './PaletaDibujo'
 import { LinkPanel } from './LinkPanel'
 import { PatrocinadoresPanel } from './PatrocinadoresPanel'
+import { AccesoPanel } from '../Acceso/AccesoPanel'
+import { normalizarAcceso, publicoDeAcceso } from '../acceso'
 import { patrocinadoresDe } from '../patrocinadores'
 
 // Área de trabajo del editor de side events / Pops en escritorio,
@@ -97,6 +99,12 @@ export const SideWorkspace = ({
     // modera el panel Interacción y los enseñan la pieza y "Ver en vivo".
     const chatMensajes = useMensajesChat(current?.id, esPop && Boolean(body.showAttendees) && Boolean(body.chat?.enabled))
     const setBody = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
+    // Pop en línea: lo privado va en la columna acceso; body.online guarda
+    // solo lo público (plataforma, solo confirmados, cuánto material).
+    const updateAcceso = (fn, opts) => onChange((prev) => {
+        const acceso = normalizarAcceso(fn(normalizarAcceso(prev.acceso)))
+        return { ...prev, acceso, body: { ...prev.body, online: publicoDeAcceso(acceso) } }
+    }, opts)
     const updateSponsors = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, sponsors: fn(prev.body?.sponsors ?? {}) } }), opts)
     const updateForm = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)
     const stickers = useMemo(() => (Array.isArray(body.stickers) ? body.stickers : []), [body.stickers])
@@ -148,6 +156,8 @@ export const SideWorkspace = ({
         if (s === 'registration' && esPop) openTool('registration')
         if (s === 'itinerary' && esPop) openTool('itinerary')
         if (s === 'sponsors' && esPop) openTool('sponsors')
+        // Pop: el lugar (o el acceso en línea) y el clima, en el panel Ubicación.
+        if ((s === 'map' || s === 'place' || s === 'weather') && esPop) openTool('acceso')
         if (s !== 'stickers') setStickerSel([])
         setSection(s)
     }
@@ -382,6 +392,7 @@ export const SideWorkspace = ({
             : id === 'itinerary' ? <ItineraryPanel {...panelProps} dias={dias} />
             : id === 'draw' ? <DrawPanel current={current} pincel={pincel} setPincel={setPincel} onOtroColor={() => pickColor('draw')} />
             : id === 'interaction' ? <InteractionPanel body={body} setBody={setBody} eventoId={current?.id} chatMensajes={chatMensajes} />
+            : id === 'acceso' ? <AccesoPanel body={body} setBody={setBody} acceso={current?.acceso} actualizarAcceso={updateAcceso} popId={current?.id} />
             : id === 'sponsors' ? <PatrocinadoresPanel body={body} actualizar={updateSponsors} carpeta={carpeta} abierto={toolOpen && activeTool === 'sponsors' && !live} />
             : id === 'registration' ? <FormularioPanel body={body} updateForm={updateForm} eventoId={current?.id} />
             // Elegir foto: abre Subidos y, al elegir, regresa al panel.

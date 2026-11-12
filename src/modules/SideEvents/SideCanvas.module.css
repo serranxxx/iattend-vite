@@ -1502,3 +1502,6 @@
 @media (prefers-reduced-motion: reduce) {
     .cuadriculaTitulo { animation: none; }
 }
+
+/* Pop en línea: "En línea · Zoom" en la portada (acceso.js). */
+.lineaEnLinea { display: inline-flex; align-items: center; gap: 6px; }

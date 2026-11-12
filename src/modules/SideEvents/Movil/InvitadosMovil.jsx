@@ -21,7 +21,7 @@ const CHIP = { confirmado: 'chip_confirmados', esperando: 'chip_esperando', crea
 
 const inicial = (nombre) => String(nombre ?? '').trim().charAt(0).toUpperCase() || '?'
 
-export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onEditar, onDescargar, onRefrescar, refrescando = false, accion = null }) => {
+export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onImportar, onImportarEvento, onEditar, onDescargar, onRefrescar, refrescando = false, accion = null }) => {
     const { t } = useTranslation()
     const [busqueda, setBusqueda] = useState('')
     const [filtro, setFiltro] = useState('todos')
@@ -53,6 +53,8 @@ export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onE
     const etiqueta = (estado) => t(`guests.state_${estado}`, { defaultValue: estado ?? '' })
     const menu = {
         items: [
+            ...(onImportar ? [{ key: 'importar', label: t('guests_import.mobile_import'), onClick: onImportar }] : []),
+            ...(onImportarEvento ? [{ key: 'importar-evento', label: t('guests_import.mobile_import_event'), onClick: onImportarEvento }] : []),
             { key: 'descargar', label: t('side_events.mobile_guests_download'), onClick: onDescargar },
             { key: 'recargar', label: t(refrescando ? 'side_events.mobile_guests_refreshing' : 'guests.refresh'), onClick: onRefrescar, disabled: refrescando },
         ],

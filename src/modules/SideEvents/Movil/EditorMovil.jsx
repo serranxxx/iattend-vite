@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { AccesoPanel } from '../Acceso/AccesoPanel'
+import { normalizarAcceso, publicoDeAcceso } from '../acceso'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Check, Eye, Lock, LockOpen, Palette, Redo2, Share, Trash2, Undo2, Users, X } from 'lucide-react'
 import { EstadoGuardado } from '../EstadoGuardado'
@@ -47,7 +49,7 @@ import s from './EditorMovil.module.css'
 // parte del alto de la pantalla ocupa: Diseño, la mitad (la pieza se achica
 // arriba); Elementos, Fotos y Subidos, todo (tocar uno lo agrega a la pieza
 // como elemento, elegido, y el drawer se cierra).
-const PANELES = { design: 0.5, elements: 1, photos: 1, uploads: 1, sponsors: 1 }
+const PANELES = { design: 0.5, elements: 1, photos: 1, uploads: 1, sponsors: 1, acceso: 1 }
 // Imagen del link y Pase digital: los mismos paneles de escritorio en un
 // modal (tarjeta centrada con velo). "Elegir foto" cambia el contenido del
 // modal por Subidos en modo elegir y, al elegir, regresa.
@@ -244,6 +246,12 @@ export const EditorMovil = ({
     const setBody = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
     const updateForm = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, form: fn(prev.body?.form ?? null) } }), opts)
     const updateSponsors = (fn, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, sponsors: fn(prev.body?.sponsors ?? {}) } }), opts)
+    // Pop en línea: lo privado en la columna acceso, lo público en body.online.
+    const updateAcceso = (fn, opts) => onChange((prev) => {
+        const acceso = normalizarAcceso(fn(normalizarAcceso(prev.acceso)))
+        return { ...prev, acceso, body: { ...prev.body, online: publicoDeAcceso(acceso) } }
+    }, opts)
+    const setBodyAcceso = (patch, opts) => onChange((prev) => ({ ...prev, body: { ...prev.body, ...patch } }), opts)
     const chatMensajes = useMensajesChat(current?.id, esPop && Boolean(current?.body?.showAttendees) && Boolean(current?.body?.chat?.enabled))
     const dias = [...new Set(fechasDelEvento(current?.body ?? {}).map((f) => String(f).slice(0, 10)))]
 
@@ -351,6 +359,7 @@ export const EditorMovil = ({
             // Una foto de Ideas entra más grande que un PNG (como en escritorio).
             : drawer === 'photos' ? <PhotosPanel selectedSection="cover" onUse={(url) => elegirElemento({ ...stickerItem(url), w: 60 })} banner={t(esPop ? 'side_events.ws_photos_banner_pop' : 'side_events.ws_photos_banner')} />
                 : drawer === 'sponsors' ? <PatrocinadoresPanel body={body} actualizar={updateSponsors} carpeta={carpeta} abierto />
+                : drawer === 'acceso' ? <AccesoPanel body={body} setBody={setBodyAcceso} acceso={current?.acceso} actualizarAcceso={updateAcceso} popId={current?.id} />
                 : drawer === 'uploads' ? (
                     <UploadsPanel
                         invitationID={carpeta}
@@ -472,6 +481,8 @@ export const EditorMovil = ({
                                 // Patrocinadores: su panel en el drawer (sin ícono en el footer,
                                 // como Itinerario); al cerrarlo queda su barra.
                                 if (esPop && zona === 'sponsors') { onStickerSel?.([]); onSelect?.(zona); abrirPanel('sponsors'); return }
+                                // En línea, el lugar abre el panel Acceso.
+                                if (esPop && (zona === 'map' || zona === 'place' || zona === 'weather')) { onStickerSel?.([]); onSelect?.(zona); abrirPanel('acceso'); return }
                                 if (zona !== 'stickers') onStickerSel?.([])
                                 onSelect?.(zona)
                             }}

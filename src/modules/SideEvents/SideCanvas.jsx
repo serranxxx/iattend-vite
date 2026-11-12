@@ -1,5 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ArrowUpRight, CircleCheck, ClipboardList, CircleX, CloudSun, Eye, GripVertical, ImagePlus, MapPin, Music2, Plus } from 'lucide-react'
+import { esOnline, textosPlataforma } from './acceso'
+import { TarjetaAcceso } from './Acceso/TarjetaAcceso'
+import { ArrowUpRight, CircleCheck, ClipboardList, CircleX, CloudSun, Eye, GripVertical, ImagePlus, MapPin, Music2, Plus, Video } from 'lucide-react'
 import { ItinerarioWidget } from './ItinerarioWidget'
 import { useTranslation } from 'react-i18next'
 import { colorDeVelo, darker, sombraDeTexto } from '../../helpers/assets/functions'
@@ -1448,7 +1450,9 @@ export const SideCanvas = ({
 
                             {/* Lugar */}
                             <div className={cls('place', styles.col)} data-zone='place' onClick={pick('place')} style={{ textShadow: sombraDeTexto(body.details_shadow), ...(portadaOculta(body, 'place') ? { display: 'none' } : {}) }}>
-                                {placeLabel
+                                {esOnline(body)
+                                    ? <span className={styles.lineaEnLinea}><Video size={14} />{textosPlataforma(body.online?.platform).portada}</span>
+                                    : placeLabel
                                     ? <>
                                         <span>{placeLabel}</span>
                                         {regionLabel && <span>{regionLabel}</span>}
@@ -1601,10 +1605,10 @@ export const SideCanvas = ({
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <GripVertical size={13} className={styles.grupoAsa} />
-                                        {t(`side_events.canvas_group_${id}`)}
+                                        {t(`side_events.canvas_group_${id === 'lugar' && esOnline(body) ? 'acceso' : id}`)}
                                     </span>
                                 ) : (
-                                    <span className={styles.grupoEtiqueta}>{t(`side_events.canvas_group_${id}`)}</span>
+                                    <span className={styles.grupoEtiqueta}>{t(`side_events.canvas_group_${id === 'lugar' && esOnline(body) ? 'acceso' : id}`)}</span>
                                 )}
                                 {delGrupo.map((key) => {
                                     // Patrocinadores (Pop): tarjeta por niveles o banda en movimiento.
@@ -1651,6 +1655,17 @@ export const SideCanvas = ({
                                         )
                                     }
                                     // Lugar: mapa y, debajo, la fila del clima (cada uno su capa).
+                                    // En línea: el widget Acceso en lugar del mapa (acceso.js).
+                                    if (key === 'map' && esOnline(body)) {
+                                        if (!lista(key)) {
+                                            return apagada(key, zonaDe('map'), <div className={`${styles.block} ${styles.lugarBlock}`}><TarjetaAcceso body={body} muestra /></div>, conMapa ? null : t('side_events.canvas_add_access'))
+                                        }
+                                        return (
+                                            <div key={key} data-tarjeta={key} className={cls(zonaDe('map'), `${styles.block} ${styles.lugarBlock}`)} data-zone={zonaDe('map')} onClick={pick(zonaDe('map'))}>
+                                                <TarjetaAcceso body={body} acceso={current?.acceso} />
+                                            </div>
+                                        )
+                                    }
                                     if (key === 'map') {
                                         if (!lista(key)) {
                                             return apagada(key, zonaDe('map'), <div className={`${styles.block} ${styles.lugarBlock}`}>{tarjetaLugar(!conMapa, false)}</div>, conMapa ? null : t('side_events.canvas_add_place'))

@@ -114,9 +114,11 @@ export const useBarraContextual = ({
         : section === 'extras' ? <TextBar target="pop_notes" ts={notesTs} onPickColor={() => pickColor('text')} colorOpen={Boolean(colorPop) && colorField === 'text'} />
         : section === 'date' ? <DateBar body={body} setBody={setBody} esPop={esPop} />
         // Cómo llegar sale de la dirección: abre la misma barra que Lugar.
-        : section === 'place' || section === 'map' ? <PlaceBar body={body} setBody={setBody} setAddress={setAddress} />
+        // Un Pop en línea no tiene barra de lugar: se edita en el panel Acceso.
+        // Pop: lugar, dirección y clima se editan en el panel Ubicación (Acceso/AccesoPanel).
+        : section === 'place' || section === 'map' ? (esPop ? null : <PlaceBar body={body} setBody={setBody} setAddress={setAddress} />)
         // Clima: cuándo se muestra (automático, siempre, si va a llover, oculto).
-        : section === 'weather' ? <WeatherBar body={body} setBody={setBody} />
+        : section === 'weather' ? (esPop ? null : <WeatherBar body={body} setBody={setBody} />)
         : section === 'background' && ajustandoFoto && fotoElegida ? <AjusteFotoBar body={body} setBody={setBody} src={fotoElegida} onListo={() => setAjustandoFoto(false)} />
         : section === 'background' ? <BackgroundBar current={current} setBody={setBody} onChange={onChange} esPop={esPop} pickMedia={pickMedia} fotoSel={fotoElegida} onFotoSel={setFotoSel} onAjustar={(src) => { setFotoSel(src); setAjustandoFoto(true) }} />
         // Patrocinadores (Pop): velocidad y etiqueta, con logos y en Portada o Banda.

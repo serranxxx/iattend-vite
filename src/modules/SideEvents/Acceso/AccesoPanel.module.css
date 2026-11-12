@@ -1,0 +1,90 @@
+/* Panel Ubicación / Acceso del editor (handoff "Pop · Evento en línea"). */
+.panel {
+    --tx: #1F1E24; --tx2: #6E6E78; --borde: #D6D6DC; --accion: #2D6CDF;
+    display: flex; flex-direction: column; gap: 16px; color: var(--tx); font-size: 13px;
+}
+.modo { display: flex; padding: 3px; border-radius: 99px; background: #F1F1F4; }
+.modoOpcion {
+    flex: 1; height: 34px; border: 0; border-radius: 99px; background: none;
+    color: var(--tx2); font: inherit; font-weight: 600; cursor: pointer; transition: background .15s, color .15s;
+}
+.modoOpcion[data-on] { background: #fff; color: var(--tx); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.campoTextos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.etiqueta { font-size: 12px; font-weight: 600; color: var(--tx2); }
+.etiquetaFuerte { font-size: 13px; font-weight: 600; }
+.titulo { font-size: 14px; font-weight: 700; }
+.ayuda { font-size: 12px; line-height: 1.4; color: var(--tx2); }
+.ayuda[data-error] { color: #D32F2F; }
+
+.enlace {
+    display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 8px 0 14px;
+    border: 1px solid var(--borde); border-radius: 12px; background: #fff;
+}
+.enlace:focus-within { border-color: var(--accion); box-shadow: 0 0 0 3px rgba(45, 108, 223, .12); }
+.enlace[data-error] { border-color: #D32F2F; }
+.enlace input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 14px; color: var(--tx); }
+.badge {
+    display: inline-flex; align-items: center; gap: 5px; flex: none; height: 24px; padding: 0 8px; border-radius: 99px;
+    background: #E6F0FF; color: #1D5FD1; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.input:global(.ant-input) { height: 40px; border-radius: 12px; border-color: var(--borde); }
+.select { width: 100%; }
+.select :global(.ant-select-selector) { min-height: 40px; border-radius: 12px !important; }
+
+.material {
+    display: flex; flex-direction: column; gap: 8px; padding: 14px 0 0;
+    border-top: 1px solid #ECECF0; border-radius: 0; transition: background .15s;
+}
+.material[data-arrastrando] { background: #F3F7FF; outline: 2px dashed var(--accion); outline-offset: 4px; border-radius: 12px; }
+.lista { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fila {
+    display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 8px 6px 4px;
+    border-radius: 12px; background: #F6F6F8;
+}
+.fila[data-dragging] { position: relative; z-index: 2; box-shadow: 0 8px 20px rgba(0, 0, 0, .14); background: #fff; }
+.subiendo { padding-left: 10px; }
+.agarre { display: grid; place-items: center; flex: none; width: 20px; height: 32px; color: #A6A6B0; cursor: grab; touch-action: none; }
+.filaIcono {
+    display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 10px;
+    background: #fff; color: var(--tx); font-size: 10px; font-weight: 800;
+}
+.filaTextos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.filaTitulo { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.filaSub { font-size: 11px; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mas {
+    display: grid; place-items: center; flex: none; width: 30px; height: 30px; border: 0; border-radius: 99px;
+    background: none; color: var(--tx2); cursor: pointer;
+}
+.mas:hover { background: #ECECF0; color: var(--tx); }
+.botones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.punteado {
+    display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px;
+    border: 1px dashed var(--borde); border-radius: 12px; background: #fff;
+    color: var(--accion); font: inherit; font-weight: 600; cursor: pointer;
+}
+.punteado:hover { border-color: var(--accion); background: #F3F7FF; }
+.popover { display: flex; flex-direction: column; gap: 8px; width: 260px; }
+.agregar {
+    height: 36px; border: 0; border-radius: 99px; background: var(--accion); color: #fff;
+    font: inherit; font-weight: 600; cursor: pointer;
+}
+.agregar:disabled { opacity: .45; cursor: default; }
+.interruptor {
+    display: flex; align-items: center; gap: 12px; justify-content: space-between;
+    padding-top: 14px; border-top: 1px solid #ECECF0; cursor: pointer;
+}
+.gira { animation: gira 1s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+
+/* Presencial: búsqueda de dirección (input plano de AddressAutocomplete). */
+.panel .buscar {
+    width: 100%; height: 40px !important; padding: 0 12px; box-sizing: border-box;
+    border: 1px solid var(--borde); border-radius: 12px; background: #fff;
+    font: inherit; font-size: 14px !important; color: var(--tx); outline: 0;
+}
+.panel .buscar:focus { border-color: var(--accion); box-shadow: 0 0 0 3px rgba(45, 108, 223, .12); }
+.bloque { padding-top: 14px; border-top: 1px solid #ECECF0; }
+.bloque > div { width: auto; padding: 0; }

@@ -1,0 +1,46 @@
+/* Hoja del importador: debajo de la barra del editor (z 1200) y debajo de los
+   popups de antd (1050+), para que sus Select y Modal.confirm queden encima. */
+.fondo {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 998;
+    background: rgba(20, 20, 24, .32);
+    opacity: 0; transition: opacity .45s ease;
+}
+.fondo[data-visible] { opacity: 1; }
+
+.hoja {
+    position: fixed; bottom: 28px; left: 50%; z-index: 999;
+    width: min(1240px, calc(100% - 48px));
+    display: flex; flex-direction: column; overflow: hidden;
+    background: #fff; border-radius: 0 0 20px 20px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .22);
+    transform-origin: 50% 0;
+    transform: translateX(-50%) translateY(-104%);
+    transition: transform var(--cierra) cubic-bezier(.2, .8, .2, 1);
+}
+.hoja[data-visible] {
+    transform: translateX(-50%) translateY(0);
+    transition-duration: var(--abre);
+}
+
+.aviso {
+    position: fixed; left: 50%; bottom: 32px; z-index: 1300;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px 10px 10px; border-radius: 99px;
+    background: #29262D; color: #fff; font: 500 13px Poppins, sans-serif; white-space: nowrap;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+    animation: avisoEntra .5s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.avisoMarca { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 99px; background: #6D3CFA; }
+
+@keyframes avisoEntra { from { opacity: 0; transform: translateX(-50%) translateY(90px); } to { opacity: 1; transform: translateX(-50%); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .hoja, .hoja[data-visible] { transition: opacity .15s ease; transform: translateX(-50%); opacity: 0; }
+    .hoja[data-visible] { opacity: 1; }
+    .aviso { animation: none; transform: translateX(-50%); }
+}
+
+@media (max-width: 720px) {
+    .hoja { top: 0 !important; bottom: 0; width: 100%; border-radius: 0; overflow: auto; }
+    .fondo { top: 0 !important; }
+}

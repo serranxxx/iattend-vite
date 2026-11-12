@@ -2,10 +2,11 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DatePicker, Input, Popover, Segmented, Slider, Switch, Tooltip } from 'antd'
 import dayjs from 'dayjs'
-import { Blend, Clapperboard, CloudOff, CloudSun, Film, GalleryHorizontal, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X, Maximize2, Minimize2, Move, Play, Droplets, Layers, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react'
+import { Blend, Clapperboard, CloudOff, CloudSun, Film, GalleryHorizontal, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X, Maximize2, Minimize2, Move, Play, Droplets, Layers, RotateCcw, ZoomIn, ZoomOut, Video } from 'lucide-react'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatEventDateTime } from '../../../helpers/assets/eventDateTime'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import { AddressAutocomplete } from '../AddressAutocomplete'
+import { CAMPOS_DIRECCION as ADDRESS_FIELDS } from '../acceso'
 import bar from '../../Invitation/Build/PageSections/ElementBar.module.css'
 import own from './SideWorkspace.module.css'
 import { MODOS_CLIMA, modoClima, parcheModoClima } from '../tarjetasSide'
@@ -25,15 +26,6 @@ export const DEFAULT_SOMBRA_TITULO = 25
 export const DEFAULT_SOMBRA_DETALLES = 5
 const VELO_INICIAL = 35
 
-const ADDRESS_FIELDS = [
-    ['street', 'address_street'],
-    ['number', 'address_number'],
-    ['neighborhood', 'address_neighborhood'],
-    ['zipcode', 'address_zipcode'],
-    ['city', 'address_city'],
-    ['state', 'address_state'],
-    ['country', 'address_country'],
-]
 
 // El DatePicker solo refleja fechas en hora de pared: los eventos legados
 // guardan un instante UTC real (ver helpers/assets/eventDateTime.js).
@@ -417,7 +409,7 @@ export const BackgroundBar = ({ current, setBody, onChange, esPop, pickMedia, fo
 // invitados eligen emoji o color al confirmar (iattend-events, SelectorAvatar).
 // Cuándo se muestra el clima (tarjetasSide.js, modoClima): automático (unos
 // días antes, cuando ya hay pronóstico), siempre, solo si va a llover u oculto.
-const OpcionesClima = ({ body, setBody, sinCiudad }) => {
+export const OpcionesClima = ({ body, setBody, sinCiudad }) => {
     const { t } = useTranslation()
     const modo = modoClima(body)
     return (

@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { esOnline } from './acceso'
 import { TablaInvitados } from './TablaInvitados'
 import { Badge, Button, Checkbox, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Slider, Spin, Switch, Tooltip } from 'antd'
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -46,6 +47,7 @@ import { CustomLink } from '../../components/CustomLink/CustomLink'
 import { FooterApp } from '../Footer/FooterApp'
 import { useTranslation } from 'react-i18next'
 import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
+import { HojaImportar } from '../GuestManagement/Importar/HojaImportar'
 import { CreditsComponent } from '../../components/Payment/Credits/Credits'
 import BottomSheet from '../../components/BottomSheet/BottomSheet'
 import SideCanvas from './SideCanvas'
@@ -304,6 +306,25 @@ export const SideEvents = () => {
     const hasPendingInfo = !esPop && (!invName || !invLabel || !invPhone || !invOwners?.length)
     const navigate = useNavigate()
     const { subscribe } = useDashboardRealtime()
+    // Importar desde Excel: modal dentro del editor (`{ archivo }` = abierto).
+    const [importando, setImportando] = useState(null)
+    // Pop: los otros eventos del organizador con invitados (para "De otro
+    // evento"). Con ninguno no se ofrece la opción.
+    const [otrosEventos, setOtrosEventos] = useState(null)
+    const [menuAgregar, setMenuAgregar] = useState(false)
+    useEffect(() => {
+        if (!esPop || !popId) return undefined
+        let vivo = true
+        ;(async () => {
+            try {
+                const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/guests/import/eventos`, { side_events_id: popId }, { headers: await supabaseAuthHeaders() })
+                if (vivo) setOtrosEventos(data?.eventos ?? [])
+            } catch {
+                if (vivo) setOtrosEventos([])
+            }
+        })()
+        return () => { vivo = false }
+    }, [esPop, popId])
     const [drawerState, setDrawerState] = useState({
         currentGuest: null,
         onEditGuest: false,
@@ -1421,21 +1442,32 @@ export const SideEvents = () => {
                 key={0}
                 trigger={['click']}
                 placement='bottomRight'
+                open={menuAgregar}
+                onOpenChange={setMenuAgregar}
                 popupRender={() => (
                     <GuestAddTiles
                         plan={plan}
                         // locked={plan !== 'pro'}
-                        onIndividual={() => setDrawerState({
+                        onIndividual={() => { setMenuAgregar(false); setDrawerState({
                             currentGuest: null,
                             onEditGuest: false,
                             companions: [],
                             visible: true
-                        })}
-                        onFile={(file) => esPop
-                            ? message.info(t('side_events.pop_import_soon'))
-                            : navigate(`/dashboard/guests/import?id=${id}&side_events_id=${current?.id}`, { state: { file } })}
-                        // Copiar la lista de la boda: un Pop no tiene boda.
-                        topExtra={esPop ? null : (
+                        }) }}
+                        onFile={(file) => { setMenuAgregar(false); setImportando({ archivo: file }) }}
+                        // Copiar la lista de la boda: un Pop no tiene boda; en
+                        // su lugar, traer invitados de otro evento suyo.
+                        topExtra={esPop ? (otrosEventos?.length ? (
+                            <button type="button" className="guest-add-tile guest-add-tile--individual" onClick={() => { setMenuAgregar(false); setImportando({ modo: 'evento' }) }}>
+                                <span className="guest-add-tile-icon">
+                                    <Copy size={14} />
+                                </span>
+                                <span className="guest-add-tile-text">
+                                    <span className="guest-add-tile-title">{t('guests_import.tile_event_title')}</span>
+                                    <span className="guest-add-tile-sub">{t('guests_import.tile_event_sub')}</span>
+                                </span>
+                            </button>
+                        ) : null) : (
                             <Dropdown
                                 key={1}
                                 trigger={['click']}
@@ -2123,7 +2155,9 @@ export const SideEvents = () => {
             : { url: current.url_image, linkFirma: undefined }
         const body = {
             ...current.body,
-            timezone: getTimezoneForState(current.body?.address?.state),
+            // En línea no hay dirección de la cual sacar la zona: la elige el
+            // organizador en el panel Acceso (body.zonaOnline).
+            timezone: esOnline(current.body) && current.body?.zonaOnline ? current.body.zonaOnline : getTimezoneForState(current.body?.address?.state),
             ...(link.linkFirma !== undefined ? { linkFirma: link.linkFirma } : {}),
         };
         const urlImage = link.url ?? (current.url_image === null ? current.body.image : current.url_image)
@@ -2145,6 +2179,9 @@ export const SideEvents = () => {
                 name: current.name,
                 url_image: urlImage,
                 body: bodyAGuardar,
+                // Lo privado del modo en línea (columna aparte; solo si ya existe:
+                // sin la migración 2026-11-12b el select no la trae).
+                ...('acceso' in current ? { acceso: current.acceso ?? null } : {}),
             })
             .eq('id', current.id);
 
@@ -4519,6 +4556,17 @@ export const SideEvents = () => {
     /* ── Piezas que viven fuera del layout y se usan en las dos vistas ── */
     const globals = (
         <>
+                <HojaImportar
+                    abierta={!!importando}
+                    archivo={importando?.archivo ?? null}
+                    modo={importando?.modo ?? 'archivo'}
+                    eventos={otrosEventos}
+                    invitationId={esPop ? null : id}
+                    sideEventId={current?.id}
+                    esPop={esPop}
+                    onCerrar={() => setImportando(null)}
+                    onImportado={() => { setImportando(null); refrescarTabla() }}
+                />
                 <GuestsCRUD rowData={rawData} invitationID={esPop ? null : id} setDrawerState={setDrawerState} refreshPage={getGuests} drawerState={drawerState} isSideEvent={true} sideID={current?.id} oscuro={esPop && isMobile && !EDITOR_MOVIL_NUEVO} />
 
                 {/* Isla de progreso del envío masivo (estilo dynamic island) */}
@@ -4659,6 +4707,8 @@ export const SideEvents = () => {
                             invitados={rawData ?? []}
                             creditos={esPop ? <CreditController id={popId} pop variante="envios" placement="bottomRight" /> : null}
                             onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
+                            onImportar={() => setImportando({ archivo: null })}
+                            onImportarEvento={otrosEventos?.length ? () => setImportando({ modo: 'evento' }) : null}
                             onEditar={openGuestDrawer}
                             // Por invitar (los que agregó el organizador): la misma acción de Pasos.
                             accion={(g) => (g.state === 'creado' ? renderCreatedAction(g, { corto: true }) : null)}
@@ -4961,7 +5011,7 @@ export const SideEvents = () => {
             <div className={`${ed.pageContainer} ${wso.page}`}>
 
                 {/* Barra mínima: volver, evento, pestañas y acciones */}
-                <div className={`${ed.topBar} ${wso.topBar}`}>
+                <div className={`${ed.topBar} ${wso.topBar}`} data-editor-topbar>
                     <div className={ed.topLeft}>
                         <button className={ed.backBtn} onClick={handleBack} aria-label={t('side_events.back')}>
                             <ArrowLeft size={17} />
