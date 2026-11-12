@@ -29,14 +29,15 @@
     display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border-radius: 99px;
     background: #fff; color: var(--blur-color--dark, #003b8a); font-size: 15px; font-weight: 700;
 }
-.datos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.datos[data-uno] { grid-template-columns: 1fr; }
+.datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.datos[data-uno] { grid-template-columns: minmax(0, 1fr); }
 .dato {
-    display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 18px;
+    display: flex; align-items: center; gap: 8px; min-width: 0; padding: 10px 14px; border-radius: 18px;
     background: var(--bloque-suave, rgba(255, 255, 255, .18));
 }
-.datoEtiqueta { font-size: 11px; opacity: .85; }
+.datoEtiqueta { font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .datoValor { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dato > svg { flex: none; }
 .zona { font-size: 12px; opacity: .85; }
 .material {
     display: flex; flex-direction: column; margin: 0 -12px -12px; padding-top: 10px;

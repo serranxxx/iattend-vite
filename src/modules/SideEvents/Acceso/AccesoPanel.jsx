@@ -82,10 +82,20 @@ export const AccesoPanel = ({ body, setBody, acceso: crudo, actualizarAcceso, po
     const cambiarMaterial = (fn) => actualizarAcceso((prev) => ({ ...prev, material: fn(prev.material) }))
 
     // El código de Meet sale del enlace; el ID de Zoom también si no lo escriben.
+    // Al cambiar de plataforma (Meet → Zoom…) se limpian el ID y el código de
+    // la anterior (si no, el código de Meet se quedaba como código de Zoom).
+    // Mientras se escribe el URL (sin plataforma todavía) no se toca nada.
     const cambiarUrl = (url) => {
+        const antes = detectarPlataforma(acceso.url)
         const det = detectarPlataforma(url)
-        const extra = det.platform === 'meet' ? { passcode: det.meetCode || '' }
-            : det.platform === 'zoom' && !acceso.meetingId ? { meetingId: idDeZoom(url) || '' } : {}
+        const otra = Boolean(antes.platform && det.platform && antes.platform !== det.platform)
+        const extra = otra ? { meetingId: '', passcode: '' } : {}
+        if (det.platform === 'meet') extra.passcode = det.meetCode || ''
+        if (det.platform === 'zoom') {
+            const idNuevo = idDeZoom(url) || ''
+            // El ID sigue al enlace si estaba vacío o era el del enlace anterior.
+            if (otra || !acceso.meetingId || acceso.meetingId === idDeZoom(acceso.url)) extra.meetingId = idNuevo
+        }
         cambiar({ url, ...extra }, { coalesce: 'acceso-url' })
     }
 
