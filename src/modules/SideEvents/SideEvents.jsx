@@ -2147,6 +2147,28 @@ export const SideEvents = () => {
     // `conImagen: false` (autoguardado): no rehace la imagen del link (se arma
     // con html2canvas y se sube); se queda la que había y su firma.
     // `silencioso`: sin el mensaje "Guardado" (lo dice el indicador).
+    // Acceso privado de un Pop en línea (migración 2026-11-12c): tabla
+    // side_event_acceso con RLS de quien gestiona el Pop. Mientras la tabla
+    // no exista, la columna side_events.acceso de respaldo.
+    const sinTabla = (error) => ['42P01', 'PGRST205', 'PGRST106'].includes(error?.code) || /side_event_acceso/.test(error?.message ?? '')
+    const leerAcceso = async (id) => {
+        const { data, error } = await supabase.from('side_event_acceso').select('data').eq('side_event_id', id).maybeSingle()
+        if (!error) return data?.data ?? null
+        if (sinTabla(error)) return undefined
+        console.error('No se pudo leer el acceso del Pop', error)
+        return undefined
+    }
+    const guardarAcceso = async (id, acceso) => {
+        const { error } = await supabase.from('side_event_acceso').upsert({ side_event_id: id, data: acceso ?? {}, updated_at: new Date().toISOString() })
+        if (!error) return true
+        if (sinTabla(error)) {
+            const { error: e2 } = await supabase.from('side_events').update({ acceso: acceso ?? null }).eq('id', id)
+            if (!e2) return true
+        }
+        console.error('No se pudo guardar el acceso del Pop', error)
+        return false
+    }
+
     const saveSideEvent = async ({ conImagen = true, silencioso = false } = {}) => {
         if (!current?.id) return false;
 
@@ -2179,9 +2201,6 @@ export const SideEvents = () => {
                 name: current.name,
                 url_image: urlImage,
                 body: bodyAGuardar,
-                // Lo privado del modo en línea (columna aparte; solo si ya existe:
-                // sin la migración 2026-11-12b el select no la trae).
-                ...('acceso' in current ? { acceso: current.acceso ?? null } : {}),
             })
             .eq('id', current.id);
 
@@ -2191,7 +2210,15 @@ export const SideEvents = () => {
             return false;
         }
 
-        baseRef.current = { id: current.id, body: copia(bodyAGuardar) }
+        // Lo privado del modo en línea (tabla side_event_acceso): solo si
+        // cambió en esta pestaña. Si no, un editor abierto desde antes pisaba
+        // lo que se guardó en otro lado.
+        if (esPop && estable(current.acceso ?? null) !== estable(baseRef.current?.acceso ?? null)) {
+            const ok = await guardarAcceso(current.id, current.acceso ?? null)
+            if (!ok) { message.error(t('side_events.save_error')); return false }
+        }
+
+        baseRef.current = { id: current.id, body: copia(bodyAGuardar), acceso: copia(current.acceso ?? null) }
         // La tarjeta del listado también refleja el cambio sin recargar
         setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, name: current.name, body: bodyAGuardar, url_image: urlImage } : se))
         // Ya guardada la nueva imagen del link, fuera las anteriores (sin esperar).
@@ -2862,7 +2889,18 @@ export const SideEvents = () => {
 
     const openSideEvent = (item) => {
         currentRef.current = item
-        baseRef.current = { id: item?.id, body: copia(item?.body ?? {}) }
+        baseRef.current = { id: item?.id, body: copia(item?.body ?? {}), acceso: copia(item?.acceso ?? null) }
+        // Pop: lo privado del modo en línea vive en side_event_acceso (no en
+        // side_events: la consulta pública devuelve la fila). Se trae aparte,
+        // sin historial ni "cambios sin guardar".
+        if (item?.id && !item.invitation_id) {
+            leerAcceso(item.id).then((acceso) => {
+                if (acceso === undefined) return
+                if (baseRef.current?.id === item.id) baseRef.current = { ...baseRef.current, acceso: copia(acceso) }
+                setCurrent((prev) => (prev?.id === item.id ? { ...prev, acceso } : prev))
+                if (currentRef.current?.id === item.id) currentRef.current = { ...currentRef.current, acceso }
+            })
+        }
         setCurrent(item)
         setGuestsOpen(false)
         setSection(null)
