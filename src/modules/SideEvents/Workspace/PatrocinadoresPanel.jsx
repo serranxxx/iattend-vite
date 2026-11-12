@@ -6,7 +6,7 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities'
 import { CloudUpload, Ellipsis, GripVertical, LoaderCircle, Plus, Trash2, X } from 'lucide-react'
 import { subirLogoPatrocinador } from '../../../helpers/services/uploadImage'
-import { ACOMODOS, enOrden, normalizarPatrocinadores, nuevoIdCategoria, porCategoria, TAMANOS_CAT } from '../patrocinadores'
+import { ACOMODOS, enOrden, normalizarPatrocinadores, nuevoIdCategoria, porCategoria, repartoBanda, TAMANOS_CAT } from '../patrocinadores'
 import styles from './PatrocinadoresPanel.module.css'
 
 /*
@@ -76,7 +76,8 @@ const Segmentado = ({ opciones, valor, onCambiar, label }) => (
 )
 
 // Una categoría: encabezado (agarradera, nombre, conteo, ⋯) y sus marcas.
-const Categoria = ({ cat, items, indice, encima, borrable, enfocar, menuAbierto, onMenu, onCambiar, onQuitar, onBorrar }) => {
+// `enBanda` ('fija' | 'cinta'): cómo va en la Banda (solo si el acomodo es Banda).
+const Categoria = ({ cat, items, indice, encima, borrable, enfocar, menuAbierto, onMenu, onCambiar, onQuitar, onBorrar, enBanda = null }) => {
     const { t } = useTranslation()
     const { attributes, listeners, setNodeRef: setSortRef, transform, transition, isDragging } = useSortable({ id: `${CAT}${cat.id}` })
     const { setNodeRef: setDropRef } = useDroppable({ id: `${ZONA}${cat.id}` })
@@ -137,6 +138,20 @@ const Categoria = ({ cat, items, indice, encima, borrable, enfocar, menuAbierto,
                                 ]}
                             />
                         </div>
+                        {enBanda && (
+                            <div className={styles.menuGrupo}>
+                                <span className={styles.menuTitulo}>{t('side_events.sponsors_band_place')}</span>
+                                <Segmentado
+                                    label={t('side_events.sponsors_band_place')}
+                                    valor={enBanda}
+                                    onCambiar={(banda) => onCambiar({ banda })}
+                                    opciones={[
+                                        { v: 'fija', label: t('side_events.sponsors_band_fixed'), title: t('side_events.sponsors_band_fixed_title') },
+                                        { v: 'cinta', label: t('side_events.sponsors_band_moving'), title: t('side_events.sponsors_band_moving_title') },
+                                    ]}
+                                />
+                            </div>
+                        )}
                         {borrable && (
                             <button type="button" className={styles.borrar} onClick={() => { onMenu(false); onBorrar() }}>
                                 <Trash2 size={15} /> {t('side_events.sponsors_cat_delete')}
@@ -232,6 +247,8 @@ export const PatrocinadoresPanel = ({ body, actualizar, carpeta, abierto = true 
         setEnfocar(id)
         cambiar((p) => ({ ...p, cats: [{ id, name: '', size: 'l', color: false }, ...p.cats] }))
     }
+    // Cómo reparte la Banda las categorías hoy (las mismas reglas que la página).
+    const reparto = repartoBanda(porCategoria(s))
     const cambiarCategoria = (catId) => (patch, opts) => cambiar((p) => ({ ...p, cats: p.cats.map((c) => (c.id === catId ? { ...c, ...patch } : c)) }), opts)
     // Borrar: sus marcas pasan a la última que quede (y, si era la de
     // omisión, esa última toma su lugar). Con una sola no se puede.
@@ -385,6 +402,7 @@ export const PatrocinadoresPanel = ({ body, actualizar, carpeta, abierto = true 
                                     onCambiar={cambiarCategoria(cat.id)}
                                     onQuitar={quitarMarca}
                                     onBorrar={() => borrarCategoria(cat.id)}
+                                    enBanda={s.layout === 'banda' ? (reparto.fijas.some((g) => g.cat.id === cat.id) ? 'fija' : 'cinta') : null}
                                 />
                             ))}
                         </SortableContext>

@@ -53,11 +53,20 @@ const CAT_INICIAL = 'patrocinadores'
 
 // body.sponsors completo y normalizado (con sus valores por omisión): es lo
 // que se pinta y lo que el panel vuelve a guardar.
+// Banda: qué categorías van fijas arriba y cuáles corren en la cinta. Cada
+// categoría puede elegirlo (`banda: 'fija' | 'cinta'`); sin elegir, la
+// primera va fija si hay varias y las demás corren (con una sola, corre).
+export const enBanda = (cat, indice, total) => cat?.banda ?? (total > 1 && indice === 0 ? 'fija' : 'cinta')
+export const repartoBanda = (grupos) => ({
+    fijas: grupos.filter((g, i) => enBanda(g.cat, i, grupos.length) === 'fija'),
+    enCinta: grupos.filter((g, i) => enBanda(g.cat, i, grupos.length) === 'cinta'),
+})
+
 export const normalizarPatrocinadores = (raw) => {
     const s = raw ?? {}
     const items = Array.isArray(s.items) ? s.items.filter((it) => it?.url) : []
     let cats = Array.isArray(s.cats)
-        ? s.cats.filter((c) => c?.id).map((c) => ({ id: c.id, name: c.name ?? '', size: TAMANOS_CAT.includes(c.size) ? c.size : 'm', color: Boolean(c.color) }))
+        ? s.cats.filter((c) => c?.id).map((c) => ({ id: c.id, name: c.name ?? '', size: TAMANOS_CAT.includes(c.size) ? c.size : 'm', color: Boolean(c.color), banda: ['fija', 'cinta'].includes(c.banda) ? c.banda : null }))
         : []
     let defaultCat = s.defaultCat
     if (!cats.length) {

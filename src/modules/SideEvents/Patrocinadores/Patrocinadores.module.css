@@ -135,6 +135,13 @@
     font-family: Poppins, sans-serif;
 }
 
+.bandaFijaGrupo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+
 .bandaPrincipal {
     display: flex;
     flex-direction: column;

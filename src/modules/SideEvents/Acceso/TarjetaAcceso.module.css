@@ -9,7 +9,7 @@
 }
 .textos { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .titulo { font-size: 17px; font-weight: 700; line-height: 1.2;
-    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .subtitulo { font-size: 13px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cuando { font-size: 12px; opacity: .85; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .unirme {
@@ -62,3 +62,10 @@
 .candadoIcono { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 99px; background: rgba(255, 255, 255, .2); }
 .candadoTitulo { font-size: 14px; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .punto { animation: none; } }
+
+/* Cabecera: el botón / chip siempre a la derecha. Un título de varias
+   palabras ("Reunión de Zoom") usa hasta dos renglones; uno de una sola
+   palabra ("Transmisión", un dominio) va en un renglón y, si no cabe, se
+   corta con "…". El subtítulo se recorta con "…". */
+.cabecera > .textos { flex: 1 1 auto; min-width: 0; }
+.titulo[data-una] { display: block; white-space: nowrap; text-overflow: ellipsis; }

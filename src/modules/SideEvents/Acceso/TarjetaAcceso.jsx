@@ -51,7 +51,7 @@ export const TarjetaAcceso = ({ body, acceso: crudo, bloqueada = false, muestra 
             <div className={s.cabecera}>
                 <span className={s.mosaico}><LogoPlataforma platform={platform} /></span>
                 <span className={s.textos}>
-                    <span className={s.titulo}>{txt.titulo}</span>
+                    <span className={s.titulo} data-una={!/\s/.test(txt.titulo) || undefined}>{txt.titulo}</span>
                     <span className={s.subtitulo}>{subtitulo}</span>
                     {cuandoReunion && !bloqueada && <span className={s.cuando}>{cuandoReunion}</span>}
                 </span>

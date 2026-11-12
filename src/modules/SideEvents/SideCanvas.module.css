@@ -359,7 +359,11 @@
    la pantalla hacia abajo, translúcido (55%), como el remoto: los botones
    quedan sobre la imagen. */
 .fundidoFijo {
-    background-image: linear-gradient(to bottom, transparent 70%, color-mix(in srgb, var(--fondo-pagina) 70%, transparent) 88%, var(--fondo-pagina));
+    /* Sube con el scroll de la pieza (--portada-avance), como el remoto. */
+    background-image: linear-gradient(to bottom,
+        transparent calc(70% - 60% * var(--portada-avance, 0)),
+        color-mix(in srgb, var(--fondo-pagina) 70%, transparent) calc(88% - 43% * var(--portada-avance, 0)),
+        var(--fondo-pagina) calc(100% - 25% * var(--portada-avance, 0)));
 }
 
 .tinteFijo {

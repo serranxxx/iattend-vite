@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { acomodar, ANCHO_FILA, CINTA, etiquetaCategoria, GAP, logosDe, MEDIDA_PORTADA, patrocinadoresDe, porCategoria } from '../patrocinadores'
+import { acomodar, ANCHO_FILA, CINTA, etiquetaCategoria, GAP, logosDe, MEDIDA_PORTADA, patrocinadoresDe, porCategoria, repartoBanda } from '../patrocinadores'
 import { estiloDe, luminancia, variablesDeEstilo } from '../estilosBloque'
 import { Cinta } from './Cinta'
 import { Logo } from './Logo'
@@ -13,9 +13,10 @@ import styles from './Patrocinadores.module.css'
   · PortadaPatrocinadores: etiqueta + cinta con todas las marcas, del mismo
     tamaño, en el orden de sus categorías (cada una con su color).
   · TarjetaPatrocinadores: tarjeta de vidrio con un bloque por categoría.
-  · BandaPatrocinadores: la primera categoría fija arriba y las demás en una
-    banda de orilla a orilla que corre sola, avanza con el scroll y se
-    arrastra. Con una sola categoría, solo la banda.
+  · BandaPatrocinadores: las categorías "fijas" arriba (cada una con su
+    nombre) y las demás en una banda de orilla a orilla que corre sola,
+    avanza con el scroll y se arrastra. Cada categoría lo elige en el panel
+    (`banda`); sin elegir, la primera fija si hay varias (repartoBanda).
   Reglas de tamaños y filas: patrocinadores.js.
 */
 
@@ -64,27 +65,29 @@ export const TarjetaPatrocinadores = ({ body }) => {
 export const BandaPatrocinadores = ({ body, scroller, className = '', ...raiz }) => {
     const { t } = useTranslation()
     const s = patrocinadoresDe(body)
-    const grupos = porCategoria(s)
-    const [primera, ...resto] = grupos
-    const enCinta = grupos.length > 1 ? resto : grupos
+    const { fijas, enCinta } = repartoBanda(porCategoria(s))
     const marcas = enCinta.reduce((n, g) => n + g.items.length, 0)
     const etiquetaCinta = enCinta.map((g) => etiquetaCategoria(g.cat)).filter(Boolean).join(' · ')
     return (
         <div className={`${styles.banda} ${className}`} {...raiz}>
-            {grupos.length > 1 && (
-                <>
-                    {etiquetaCategoria(primera.cat) && <span className={styles.nivelTitulo}>{etiquetaCategoria(primera.cat)}</span>}
+            {fijas.map(({ cat, items }, i) => (
+                <div key={cat.id} className={styles.bandaFijaGrupo} data-primera={i === 0 || undefined}>
+                    {etiquetaCategoria(cat) && <span className={styles.nivelTitulo}>{etiquetaCategoria(cat)}</span>}
                     <div className={styles.bandaPrincipal}>
-                        <Filas logos={logosDe(primera.items, primera.cat)} ancho={ANCHO_FILA.bandaFija} gap={GAP.bandaFija} />
+                        <Filas logos={logosDe(items, cat)} ancho={ANCHO_FILA.bandaFija} gap={GAP.bandaFija} />
                     </div>
-                    {/* Sobre la cinta, los nombres de sus categorías (las que tengan). */}
-                    {etiquetaCinta && <span className={`${styles.nivelTitulo} ${styles.bandaSegunda}`}>{etiquetaCinta}</span>}
+                </div>
+            ))}
+            {enCinta.length > 0 && (
+                <>
+                    {/* Sobre la cinta, los nombres de sus categorías si hay fijas arriba. */}
+                    {fijas.length > 0 && etiquetaCinta && <span className={`${styles.nivelTitulo} ${styles.bandaSegunda}`}>{etiquetaCinta}</span>}
+                    <div className={styles.bandaCinta}>
+                        <Cinta logos={logosCinta(enCinta)} gap={GAP.cinta} sp={CINTA.banda.sp} k={CINTA.banda.k} speed={s.speed} puntos arrastrable scroller={scroller} />
+                    </div>
+                    {fijas.length > 0 && <span className={styles.bandaPie}>{t('side_events.sponsors_band_foot', { count: marcas })}</span>}
                 </>
             )}
-            <div className={styles.bandaCinta}>
-                <Cinta logos={logosCinta(enCinta)} gap={GAP.cinta} sp={CINTA.banda.sp} k={CINTA.banda.k} speed={s.speed} puntos arrastrable scroller={scroller} />
-            </div>
-            {grupos.length > 1 && <span className={styles.bandaPie}>{t('side_events.sponsors_band_foot', { count: marcas })}</span>}
         </div>
     )
 }
