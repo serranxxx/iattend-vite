@@ -31,7 +31,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useDashboardRealtime } from '../../context/DashboardRealtimeContext'
 import { useLia } from '../../context/LiaContext'
 import { StorageImages } from '../../components/ImagesStorage/StorageImages'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronDown, ChevronRight, ChevronUp, CircleHelp, Copy, Download, Film, Route, Table, GalleryHorizontal, ImagePlus, Info, Loader2, Music, Music2, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Sparkles, Sticker, StickyNote, Trash2, Type, Users, X, ClipboardList, RefreshCw } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronDown, ChevronRight, ChevronUp, CircleHelp, Copy, Download, Film, Route, Table, GalleryHorizontal, ImagePlus, Info, Loader2, Music, Music2, Link2, ListOrdered, Lock, LockOpen, MapPin, Palette, Plus, Search, Send, Sparkles, Sticker, StickyNote, Trash2, Type, Users, X, ClipboardList, RefreshCw, Maximize2, Minimize2 } from 'lucide-react'
 import { ItinerarioPop } from './ItinerarioPop'
 import { StickersPop } from './StickersPop'
 import { CancionPop } from './CancionPop'
@@ -76,6 +76,10 @@ import { codigoSide, urlSide } from '../../helpers/invitation/sideEventLink'
 import { puedeGestionarPop } from '../../helpers/invitation/popEvents'
 import { EstadoGuardado } from './EstadoGuardado'
 import { CompartirPop } from './CompartirPop'
+import { PopoverAcceso } from './PopoverAcceso'
+import { BotonBuzonPop, BotonBuzonPopMovil } from './BuzonPop'
+import { useBuzonPop } from './useBuzonPop'
+import sInv from './Movil/InvitadosMovil.module.css'
 import { ajusteDe, fotosDePortada, MAX_FOTOS_CARRUSEL, parcheFotos, soloVideos } from './fotosPortada'
 import { uploadImagesSupabase } from '../../helpers/services/uploadImage'
 
@@ -273,6 +277,15 @@ export const SideEvents = () => {
     const [stageGap, setStageGap] = useState(0)
     const [sendMounted, setSendMounted] = useState(false)
     const [sendIn, setSendIn] = useState(false)
+    // Invitados a pantalla completa (escritorio): la columna toma todo el
+    // ancho y se oculta la pieza. Se recuerda.
+    const [invitadosCompleto, setInvitadosCompleto] = useState(() => {
+        try { return localStorage.getItem('iattend_invitados_completo') === '1' } catch { return false }
+    })
+    const cambiarInvitadosCompleto = () => setInvitadosCompleto((v) => {
+        try { localStorage.setItem('iattend_invitados_completo', v ? '0' : '1') } catch { /* sin almacenamiento */ }
+        return !v
+    })
     // Tour del editor: se abre solo la primera vez que se entra a un side
     // event y se puede relanzar desde el "?" de la barra o de la escalera.
     const [tourOpen, setTourOpen] = useState(false)
@@ -306,6 +319,8 @@ export const SideEvents = () => {
     const hasPendingInfo = !esPop && (!invName || !invLabel || !invPhone || !invOwners?.length)
     const navigate = useNavigate()
     const { subscribe } = useDashboardRealtime()
+    // Buzón de WhatsApp del Pop: las respuestas de sus invitados (BuzonPop.jsx).
+    const buzonPop = useBuzonPop(esPop ? popId : null)
     // Importar desde Excel: modal dentro del editor (`{ archivo }` = abierto).
     const [importando, setImportando] = useState(null)
     // Pop: los otros eventos del organizador con invitados (para "De otro
@@ -2589,33 +2604,53 @@ export const SideEvents = () => {
     // quién puede abrir la invitación, no es parte del diseño.
     const esPublico = current?.type === 'open'
     const [cambiandoAcceso, setCambiandoAcceso] = useState(false)
-    const alternarAcceso = async () => {
-        if (!current?.id || cambiandoAcceso) return
-        const nuevo = esPublico ? 'closed' : 'open'
+    const alternarAcceso = async (forzado) => {
+        if (!current?.id || cambiandoAcceso) return false
+        const nuevo = forzado ?? (esPublico ? 'closed' : 'open')
         setCambiandoAcceso(true)
         const { error } = await supabase.from('side_events').update({ type: nuevo }).eq('id', current.id)
         setCambiandoAcceso(false)
         if (error) {
             console.error('Error cambiando el acceso:', error)
             message.error(t('side_events.access_error'))
-            return
+            return false
         }
         setCurrent((prev) => ({ ...prev, type: nuevo }))
         message.success(t(nuevo === 'open' ? 'side_events.access_now_public' : 'side_events.access_now_private'))
+        return true
     }
-    const botonAcceso = (className, conTexto) => esPop && (
-        <Tooltip title={t(esPublico ? 'side_events.access_public_hint' : 'side_events.access_private_hint')}>
-            <button
-                className={className}
-                onClick={alternarAcceso}
-                disabled={cambiandoAcceso}
-                aria-pressed={esPublico}
-                aria-label={t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}
-            >
-                {esPublico ? <LockOpen size={16} /> : <Lock size={16} />}
-                {conTexto && <span className={wso.pillText}>{t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}</span>}
-            </button>
-        </Tooltip>
+    // Pop público: recuadro del candado con "Permitir acompañantes" y "Hacer
+    // privada" (PopoverAcceso.jsx). body.allowCompanions: sin valor = sí.
+    const [accesoAbierto, setAccesoAbierto] = useState(false)
+    const envolverAcceso = (boton, placement) => (
+        <PopoverAcceso
+            esPublico={esPublico}
+            cambiando={cambiandoAcceso}
+            permitir={current?.body?.allowCompanions !== false}
+            onPermitir={(v) => setBody({ allowCompanions: v ? undefined : false })}
+            onPublica={() => alternarAcceso('open')}
+            onPrivada={() => alternarAcceso('closed')}
+            abierto={accesoAbierto}
+            onAbierto={setAccesoAbierto}
+            placement={placement}
+        >
+            {boton}
+        </PopoverAcceso>
+    )
+    const botonAcceso = (className, conTexto) => esPop && envolverAcceso(
+        <span>
+            <Tooltip title={accesoAbierto ? null : t(esPublico ? 'side_events.access_public_hint' : 'side_events.access_private_hint')}>
+                <button
+                    className={className}
+                    disabled={cambiandoAcceso}
+                    aria-pressed={esPublico}
+                    aria-label={t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}
+                >
+                    {esPublico ? <LockOpen size={16} /> : <Lock size={16} />}
+                    {conTexto && <span className={wso.pillText}>{t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}</span>}
+                </button>
+            </Tooltip>
+        </span>
     )
 
     const updateURLimage = async (e) => {
@@ -4045,6 +4080,19 @@ export const SideEvents = () => {
                 <span className="gx-compact-head-hint">{t('side_events.guests_hint')}</span>
             </div>
             <div className="gx-compact-head-actions">
+                <div className="gx-view-toggle gx-view-toggle--iconos">
+                    <Tooltip title={t(invitadosCompleto ? 'side_events.guests_fullscreen_exit' : 'side_events.guests_fullscreen')}>
+                        <button
+                            type="button"
+                            aria-pressed={invitadosCompleto}
+                            aria-label={t(invitadosCompleto ? 'side_events.guests_fullscreen_exit' : 'side_events.guests_fullscreen')}
+                            data-active={invitadosCompleto || undefined}
+                            onClick={cambiarInvitadosCompleto}
+                        >
+                            {invitadosCompleto ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                        </button>
+                    </Tooltip>
+                </div>
                 {renderSelectorVista(true)}
                 {esPop && (
                     <>
@@ -4732,6 +4780,7 @@ export const SideEvents = () => {
                     onTab={(v) => { setActiveTab(v); setSection(null) }}
                     esPublico={esPublico}
                     onAcceso={alternarAcceso}
+                    envolverAcceso={(b) => envolverAcceso(b, 'bottomRight')}
                     cambiandoAcceso={cambiandoAcceso}
                     // Compartir: modal con la portada, su QR y Copiar link (como
                     // el popover de escritorio).
@@ -4744,6 +4793,7 @@ export const SideEvents = () => {
                         <InvitadosMovil
                             invitados={rawData ?? []}
                             creditos={esPop ? <CreditController id={popId} pop variante="envios" placement="bottomRight" /> : null}
+                            buzon={esPop ? <BotonBuzonPopMovil popId={popId} buzon={buzonPop} className={sInv.mas} /> : null}
                             onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                             onImportar={() => setImportando({ archivo: null })}
                             onImportarEvento={otrosEventos?.length ? () => setImportando({ modo: 'evento' }) : null}
@@ -5105,6 +5155,7 @@ export const SideEvents = () => {
                         {/* Pop: su estilo de editor (Pop · Business · Craft), el mismo
                             de la sección Pops; se cambia aquí sin salir. */}
                         {esPop && <PopsTemaSwitch tema={temaPops} onCambiar={cambiarTemaPops} enLinea temas={temasEditor} />}
+                        {esPop && <BotonBuzonPop popId={popId} buzon={buzonPop} className={`${ed.livePill} ${ed.buzonBtn}`} />}
                         {/* "Ver en vivo" vive en el dock del área de trabajo. */}
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 
@@ -5153,6 +5204,7 @@ export const SideEvents = () => {
                     sendOpen={sendOpen}
                     sendContent={(sendMounted || tourOpen) ? sendContent : null}
                     sendIn={sendIn}
+                    sendCompleta={invitadosCompleto}
                     tourOpen={tourOpen}
                     onUndo={onUndo}
                     onRedo={onRedo}

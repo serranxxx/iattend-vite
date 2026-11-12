@@ -86,7 +86,7 @@ export const EditorMovil = ({
     // Carpeta del evento en Storage (los PNG que se agregan van ahí).
     carpeta,
     // Header
-    onBack, onUndo, onRedo, canUndo, canRedo, tab, onTab, esPublico, onAcceso, cambiandoAcceso, estadoGuardado, onReintentar,
+    onBack, onUndo, onRedo, canUndo, canRedo, tab, onTab, esPublico, onAcceso, envolverAcceso, cambiandoAcceso, estadoGuardado, onReintentar,
     // Compartir: el mismo contenido del popover de escritorio (portada + QR +
     // Copiar link) en un modal; con información pendiente, `onCompartirBloqueado`.
     urlPublica, compartirBloqueado, onCompartirBloqueado,
@@ -420,12 +420,14 @@ export const EditorMovil = ({
                         <Users size={17} strokeWidth={2} />
                     </button>
                 </div>
-                {esPop && (
+                {/* Pop: el candado abre el recuadro de acceso (PopoverAcceso, con
+                    "Permitir acompañantes") si viene `envolverAcceso`. */}
+                {esPop && (envolverAcceso ?? ((b) => b))(
                     <button
                         type="button"
                         className={s.icono}
                         data-publico={esPublico || undefined}
-                        onClick={onAcceso}
+                        onClick={envolverAcceso ? undefined : onAcceso}
                         disabled={cambiandoAcceso}
                         aria-pressed={esPublico}
                         aria-label={t(esPublico ? 'side_events.access_public' : 'side_events.access_private')}

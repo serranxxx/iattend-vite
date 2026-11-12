@@ -124,6 +124,13 @@
     flex: 1;
 }
 
+/* Buzón de WhatsApp del Pop: el mismo botón, redondo y solo con ícono. */
+.livePill.buzonBtn {
+    aspect-ratio: 1;
+    padding: 0;
+    justify-content: center;
+}
+
 /* Switch "ver en vivo" con indicador */
 .livePill {
     display: inline-flex;
@@ -2079,4 +2086,64 @@
     background: var(--ed-amarillo) !important;
     transform: rotate(-1.5deg);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+:global(html[data-pops-editor]) .livePill.buzonBtn {
+    padding: 0;
+}
+
+/* Recuadro del candado de un Pop público (PopoverAcceso.jsx). */
+.accesoPop {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 4px 2px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.accesoPopCabeza {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.accesoPopIcono {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    background: #E6F4EA;
+    color: #1E7B34;
+}
+
+.accesoPopTitulo {
+    font-size: 14px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.accesoPopEtiqueta {
+    font-size: 13px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.accesoPopNota {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #787878;
+}
+
+.accesoPopFila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    background: #F5F3F2;
+    cursor: pointer;
 }

@@ -7,7 +7,10 @@ import { OpenChat } from './OpenChat/OpenChat';
 import { supabase } from '../../../lib/supabase';
 import { phoneFormatter } from './phone';
 
-export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(), invitationsById = new Map(), isAdmin, onMarkRead, className = '', style, onClose }) => {
+// `sideEventId` (Pop): marcar como leído y contestar van por el backend
+// (/api/whats/conversaciones/leidos y /freetext con sideEventId), porque los
+// mensajes de un Pop no cuelgan de una invitación.
+export const WhatsappMessages = ({ id, sideEventId, error = false, onReintentar, conversations, guestsByPhone = new Map(), invitationsById = new Map(), isAdmin, onMarkRead, className = '', style, onClose }) => {
 
     const { t } = useTranslation()
     const [openMessage, setOpenMessage] = useState(null)
@@ -25,6 +28,7 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
     const markConversationAsRead = async (phone) => {
         if (isAdmin) return
         if (onMarkRead) onMarkRead(phone);
+        if (sideEventId) return; // el Pop lo marca en onMarkRead (backend)
         await supabase
             .from('whatsapp_incoming_messages')
             .update({ read: true })
@@ -97,7 +101,13 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
             </div>
             <div
                 className={`mesages_cont scroll-invitation${openMessage !== null ? ' mesages_cont_open' : ''}`}>
-                {conversations.length === 0 && (
+                {error && conversations.length === 0 && (
+                    <div style={{ margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 24, textAlign: 'center' }}>
+                        <span style={{ color: '#787878' }}>{t('guests.whatsapp_inbox_error')}</span>
+                        {onReintentar && <Button onClick={onReintentar}>{t('guests.whatsapp_inbox_retry')}</Button>}
+                    </div>
+                )}
+                {!error && conversations.length === 0 && (
                     <Empty description={t('guests.whatsapp_inbox_empty')} style={{ margin: 'auto', alignSelf: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }} />
                 )}
                 {
@@ -115,7 +125,7 @@ export const WhatsappMessages = ({ id, conversations, guestsByPhone = new Map(),
                                 {
                                     openMessage === convId ?
 
-                                        <OpenChat name={guestName(conversation.phone, conversation.messages[0].contact_name)} phoneFormatter={phoneFormatter} conversation={conversation} setOpenMessage={setOpenMessage} invitation_id={id ?? conversation.invitation_id} />
+                                        <OpenChat name={guestName(conversation.phone, conversation.messages[0].contact_name)} phoneFormatter={phoneFormatter} conversation={conversation} setOpenMessage={setOpenMessage} invitation_id={sideEventId ? null : (id ?? conversation.invitation_id)} sideEventId={sideEventId} />
 
                                         :
                                         <div onClick={() => openConversation(conversation.phone, convId)} className='messages_main_row' style={{ justifyContent: 'space-between', padding: '16px', width: '100%' }}>

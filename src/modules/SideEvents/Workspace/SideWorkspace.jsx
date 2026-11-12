@@ -62,7 +62,7 @@ export const SideWorkspace = ({
     asistentesReales = null,
     section, setSection, stickerSel, setStickerSel,
     live, setLive, device, setDevice,
-    sendOpen, sendContent, sendIn, tourOpen,
+    sendOpen, sendContent, sendIn, tourOpen, sendCompleta = false,
     onUndo, onRedo, canUndo, canRedo, onReplayTour,
     onPaste, toolRequest, stageMorphState,
 }) => {
@@ -491,7 +491,7 @@ export const SideWorkspace = ({
             // Al volver a Diseño la columna se queda unos 300 ms (`saliendo`)
             // para desvanecerse mientras el editor ya se reacomoda.
             column={sendOpen
-                ? { node: sendContent, in: sendIn || tourOpen, noAnim: tourOpen }
+                ? { node: sendContent, in: sendIn || tourOpen, noAnim: tourOpen, completa: sendCompleta }
                 : sendContent ? { node: sendContent, in: false, saliendo: true } : null}
             onUndo={onUndo}
             onRedo={onRedo}

@@ -88,7 +88,7 @@ const MessageContent = ({ msj, onImageClick }) => {
     }
 };
 
-export const OpenChat = ({ name, conversation, setOpenMessage, invitation_id, phoneFormatter }) => {
+export const OpenChat = ({ name, conversation, setOpenMessage, invitation_id, sideEventId, phoneFormatter }) => {
 
     const { messages, phone } = conversation
 
@@ -114,7 +114,7 @@ export const OpenChat = ({ name, conversation, setOpenMessage, invitation_id, ph
         try {
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/whats/freetext`,
-                { to, text: reply, invitation_id: invitation_id },
+                sideEventId ? { to, text: reply, sideEventId } : { to, text: reply, invitation_id: invitation_id },
                 { headers: await supabaseAuthHeaders() }
             );
             if (!response.data.ok) {

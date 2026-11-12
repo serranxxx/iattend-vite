@@ -21,7 +21,8 @@ const CHIP = { confirmado: 'chip_confirmados', esperando: 'chip_esperando', crea
 
 const inicial = (nombre) => String(nombre ?? '').trim().charAt(0).toUpperCase() || '?'
 
-export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onImportar, onImportarEvento, onEditar, onDescargar, onRefrescar, refrescando = false, accion = null }) => {
+// `buzon`: botón del buzón de WhatsApp del Pop (BotonBuzonPopMovil), junto a los créditos.
+export const InvitadosMovil = ({ invitados = [], creditos = null, buzon = null, onAgregar, onImportar, onImportarEvento, onEditar, onDescargar, onRefrescar, refrescando = false, accion = null }) => {
     const { t } = useTranslation()
     const [busqueda, setBusqueda] = useState('')
     const [filtro, setFiltro] = useState('todos')
@@ -68,6 +69,7 @@ export const InvitadosMovil = ({ invitados = [], creditos = null, onAgregar, onI
                     <span className={s.cuenta}>{cuentas.todos}</span>
                 </span>
                 <span className={s.acciones}>
+                    {buzon}
                     {creditos}
                     <Dropdown menu={menu} trigger={['click']} placement="bottomRight">
                         <button type="button" className={s.mas} aria-label={t('side_events.mobile_guests_more')}>

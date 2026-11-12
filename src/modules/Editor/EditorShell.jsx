@@ -29,7 +29,8 @@ import eb from '../Invitation/Build/PageSections/ElementBar.module.css'
     panel de herramienta abierto en pantallas < 1100 px se esconde.
   - Dock: deshacer · rehacer · Editar | Ver en vivo · dispositivos · zoom · tour.
   - `column`: columna a la derecha que reemplaza riel y dock (Envío de los
-    side events): la pieza se va al iPhone, a la izquierda.
+    side events): la pieza se va al iPhone, a la izquierda. Con
+    `column.completa` la columna toma todo el ancho y la pieza se desvanece.
   - Teclado de pantalla (iPad): el escenario sube lo justo para que el texto
     que se escribe quede arriba del teclado (REMOTE_TEXT_FOCUS).
 */
@@ -177,7 +178,8 @@ export const EditorShell = ({
     // Envío: el iPhone (con su leyenda, ~34 px) a la izquierda y la columna
     // con todo el ancho que sobra.
     const columnScale = clamp(Math.min((vp.h - 40) / (DEVICE_SIZES.ios.h + 34), (vp.w - 40 - COLUMN_MIN - 64) / DEVICE_SIZES.ios.w), ZOOM_MIN, 1)
-    const columnWidth = Math.max(COLUMN_MIN, vp.w - 40 - DEVICE_SIZES.ios.w * columnScale - 48)
+    const columnaCompleta = withColumn && Boolean(column.completa)
+    const columnWidth = columnaCompleta ? vp.w - 32 : Math.max(COLUMN_MIN, vp.w - 40 - DEVICE_SIZES.ios.w * columnScale - 48)
 
     // El panel de herramienta flota encima del tablero; la pieza y el dock se
     // recorren al centro del espacio que queda. En pantallas angostas (iPad
@@ -489,7 +491,7 @@ export const EditorShell = ({
                 {/* --canvas-zoom: lo que no deba achicarse con el zoom (manijas,
                     columnas) usa su inverso. */}
                 {!inmersivo && (
-                    <div ref={refCanvasScale} className={ws.canvasScale} style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, '--canvas-zoom': zoom, ...(gestoVivo ? { transition: 'none' } : {}) }}>
+                    <div ref={refCanvasScale} className={ws.canvasScale} style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, '--canvas-zoom': zoom, ...(gestoVivo ? { transition: 'none' } : {}), ...(columnaCompleta ? { opacity: 0, pointerEvents: 'none' } : {}) }} aria-hidden={columnaCompleta || undefined}>
                         {live || withColumn
                             ? <DevicePreview device={liveDevice} landscape={landscape} rotated={rotated}>{liveContent}</DevicePreview>
                             : canvas}
