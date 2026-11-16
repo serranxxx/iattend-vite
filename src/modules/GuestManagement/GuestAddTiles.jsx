@@ -2,7 +2,9 @@ import React, { useRef, useState } from 'react'
 import { UserPlus, UploadCloud, Sparkles } from 'lucide-react'
 import './guest-add-tiles.css'
 
-export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan }) => {
+// `sinExcel`: sin la importación con Lia (un Pop no la tiene; es de los
+// planes PRO y de los side events de una invitación PRO).
+export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan, sinExcel = false }) => {
     const [isDragOver, setIsDragOver] = useState(false)
     const fileInputRef = useRef(null)
 
@@ -34,7 +36,7 @@ export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan }) => {
                 </span>
             </button>
 
-            <button
+            {!sinExcel && <button
                 type="button"
                 disabled={plan !== 'pro' ? true : false}
                 style={{ overflow: 'hidden' }}
@@ -75,7 +77,7 @@ export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan }) => {
                     onChange={handleFileInputChange}
                 />
                 {plan !== 'pro' && <span className="guest-add-tile-lock-overlay" />}
-            </button>
+            </button>}
         </div>
     )
 }

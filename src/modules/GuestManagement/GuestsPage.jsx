@@ -28,7 +28,8 @@ import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CircleHelp, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, Search, Send, Sparkles, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
+import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CircleHelp, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, RefreshCw, Route, Search, Send, Sparkles, Table, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
+import { TablaInvitados } from '../SideEvents/TablaInvitados';
 import { GuestsOverview } from './GuestsOverview/GuestsOverview';
 import { GuestsTour, GUESTS_TOUR_STORAGE_KEY } from './GuestsTour';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
@@ -121,6 +122,12 @@ export default function GuestsPage() {
     // muestre "envío manual" (el fallback de handleMessageStatus) por error.
     const [pendingApiSends, setPendingApiSends] = useState(() => new Set())
     const [searchUser, setSearchUser] = useState(null)
+    // Vista de invitados: por pasos (la de siempre) o compacta (una tabla con
+    // todos, TablaInvitados, la misma de los Pops). Se recuerda en este
+    // navegador. Celular, tour y Recordatorios siempre van por pasos.
+    const [vistaInvitados, setVistaInvitados] = useState(() => (localStorage.getItem('iattend_vista_invitados') === 'compacta' ? 'compacta' : 'pasos'))
+    const cambiarVistaInvitados = (v) => { setVistaInvitados(v); localStorage.setItem('iattend_vista_invitados', v); if (v === 'compacta') setSendMode(false) }
+    const [refrescando, setRefrescando] = useState(false)
     const [localTags, setLocalTags] = useState([])
     const [filterTag, setFilterTag] = useState(null)
     const [filterTable, setFilterTable] = useState(null)
@@ -2462,6 +2469,151 @@ export default function GuestsPage() {
         rechazado: countGuestRows(callededData),
     }
 
+    // ── Vista compacta ───────────────────────────────────────────────────
+    // Selector Pasos · Compacta (solo íconos, como en los Pops).
+    const renderSelectorVista = () => (
+        <div className="gx-view-toggle gx-view-toggle--iconos" role="radiogroup" aria-label={t('guests.view_label')}>
+            {[
+                { key: 'pasos', icon: <Route size={14} />, label: t('guests.view_steps') },
+                { key: 'compacta', icon: <Table size={14} />, label: t('guests.view_compact') },
+            ].map((v) => (
+                <Tooltip key={v.key} title={v.label}>
+                    <button
+                        type="button"
+                        role="radio"
+                        aria-checked={vistaInvitados === v.key}
+                        aria-label={v.label}
+                        data-active={vistaInvitados === v.key || undefined}
+                        onClick={() => cambiarVistaInvitados(v.key)}
+                    >
+                        {v.icon}<span>{v.label}</span>
+                    </button>
+                </Tooltip>
+            ))}
+        </div>
+    )
+
+    const vistaCompacta = vistaInvitados === 'compacta' && !isMobile && !tourOpen && activeKey !== 'recordatorios'
+
+    // Solo aplica el buscador (como en los Pops): el estado, la mesa y lo demás
+    // se ordenan con su columna.
+    const invitadosCompacta = (rowData ?? []).filter((g) => {
+        const q = searchUser?.toLowerCase() || ''
+        return !q || (g.name?.toLowerCase() || '').includes(q) || (g.phone_number?.toString() || '').includes(searchUser)
+    })
+
+    const mesaDe = (g) => {
+        const m = tables?.find((tb) => tb.id === g.table)
+        return m ? `${t('guests.table_prefix')} ${m.number}` : null
+    }
+
+    const refrescarTabla = async () => {
+        if (refrescando) return
+        setRefrescando(true)
+        try {
+            await Promise.all([getGuests(), getTables(), getMessagesUpdates()])
+        } finally {
+            setRefrescando(false)
+        }
+    }
+
+    const renderAgregarInvitado = () => (
+        <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            popupRender={() => (
+                <GuestAddTiles
+                    plan={plan}
+                    onIndividual={() => setDrawerState({
+                        currentGuest: null,
+                        onEditGuest: false,
+                        companions: [],
+                        visible: true,
+                    })}
+                    onFile={(file) => navigate(`/dashboard/guests/import?id=${id}`, { state: { file } })}
+                />
+            )}
+        >
+            <button type="button" className="gx-tool gx-tool--primary">
+                <Plus size={15} />
+                <span>{t('guests.btn_new_guest')}</span>
+            </button>
+        </Dropdown>
+    )
+
+    const renderVistaCompacta = () => (
+        <div key="compacta" className="gx gx--compacta gx--compacta-boda gx-vista-entra">
+            <div className="gx-compact-head">
+                <div className="gx-compact-head-text">
+                    <span className="gx-compact-head-title">{t('side_events.guests_title')} <span className="gx-compact-head-count">{rowData?.length ?? 0}</span></span>
+                    <span className="gx-compact-head-hint">{t('guests.compact_head_hint')}</span>
+                </div>
+                <div className="gx-compact-head-actions">
+                    {renderSelectorVista()}
+                    {renderAgregarInvitado()}
+                </div>
+            </div>
+            <div className="gx-compact-bar">
+                <div className="gx-toolbar">
+                    <div className="gx-search">
+                        <Search size={16} />
+                        <input
+                            value={searchUser ?? ''}
+                            onChange={(e) => setSearchUser(e.target.value)}
+                            placeholder={t('guests.search_placeholder')}
+                        />
+                        {searchUser && (
+                            <button type="button" className="gx-search-clear" onClick={() => setSearchUser(null)}>
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+                    <Tooltip title={t('guests.compact_download')}>
+                        <button
+                            type="button"
+                            className="gx-tool gx-tool--icon"
+                            aria-label={t('guests.compact_download')}
+                            disabled={invitadosCompacta.length === 0}
+                            onClick={() => exportFlatGuestsToExcel(invitadosCompacta, 'Invitados.xlsx', t('side_events.guests_title'))}
+                        >
+                            <Download size={15} />
+                        </button>
+                    </Tooltip>
+                    <Tooltip title={t('guests.refresh')}>
+                        <button
+                            type="button"
+                            className="gx-tool gx-tool--icon gx-tool--refresh"
+                            aria-label={t('guests.refresh')}
+                            data-cargando={refrescando || undefined}
+                            disabled={refrescando}
+                            onClick={refrescarTabla}
+                        >
+                            <RefreshCw size={15} />
+                        </button>
+                    </Tooltip>
+                    <Tooltip title={t('guests.more_tools')}>
+                        <Dropdown trigger={['click']} placement="bottomRight" popupRender={renderGlobalTools}>
+                            <button type="button" className="gx-tool gx-tool--icon">
+                                <MoreHorizontal size={16} />
+                            </button>
+                        </Dropdown>
+                    </Tooltip>
+                </div>
+            </div>
+            <TablaInvitados
+                invitados={invitadosCompacta}
+                todos={rowData}
+                dispatchMap={dispatchMap}
+                mesa={mesaDe}
+                onCopyLink={(g) => handleShare(magicLinkFor(g))}
+                onOpen={openGuestDrawer}
+                // Por invitar: la misma acción de la vista Pasos (enviar por
+                // WhatsApp, marcar como enviada).
+                accion={(g) => (g.state === 'creado' ? renderCreatedAction(g) : null)}
+            />
+        </div>
+    )
+
     const renderStepBar = () => (
         <div className="gx gx-steps" role="tablist" data-tour="steps">
             {STEP_DEFS.map((d) => (
@@ -2486,6 +2638,9 @@ export default function GuestsPage() {
                     </span>
                 </button>
             ))}
+            {!isMobile && (
+                <div className="gx-steps-vista">{renderSelectorVista()}</div>
+            )}
             {tourAvailable && (
                 <Tooltip title={t('guests_tour.replay')}>
                     <button
@@ -3183,8 +3338,14 @@ export default function GuestsPage() {
 
 
 
+                        {vistaCompacta ? (
+                            <Spin spinning={isLoading} wrapperClassName="gx-compacta-spin">
+                                {renderVistaCompacta()}
+                            </Spin>
+                        ) : (
                         <Tabs
-                            className='guests-main-tabs guests-main-tabs--steps'
+                            key="pasos"
+                            className='guests-main-tabs guests-main-tabs--steps gx-vista-entra'
                             style={{ width: '100%', }}
                             type="card"
                             activeKey={activeKey}
@@ -3200,6 +3361,7 @@ export default function GuestsPage() {
                                 </div>
                             )}
                         />
+                        )}
 
                     </div>
 

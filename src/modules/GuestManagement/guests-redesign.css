@@ -1837,3 +1837,43 @@
 .gx-compact-bar .gx-tool--icon {
     flex: none;
 }
+
+/* ── Vista compacta en /dashboard/guests (GuestsPage.jsx) ──
+   La página hace scroll completa: la tabla toma el alto que queda en la
+   pantalla y hace scroll adentro, con el encabezado fijo. */
+.gx-steps-vista {
+    flex: 0 0 auto;
+    align-self: center;
+    display: flex;
+    margin-left: auto;
+    padding-left: 8px;
+}
+
+.gx-steps-vista .gx-view-toggle {
+    height: 36px;
+    padding: 3px;
+    box-sizing: border-box;
+    align-items: center;
+}
+
+.gx-steps-vista .gx-view-toggle--iconos button {
+    width: 34px;
+    height: 30px;
+}
+
+.gx-compacta-spin {
+    width: 100%;
+}
+
+.gx.gx--compacta-boda {
+    width: 100%;
+    height: calc(100dvh - 190px);
+    min-height: 480px;
+    gap: 6px;
+}
+
+.gx-compact-head-count {
+    margin-left: 4px;
+    color: var(--gx-muted);
+    font-weight: 600;
+}

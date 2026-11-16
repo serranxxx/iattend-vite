@@ -70,10 +70,17 @@ export const leerHoja = (libro, nombre) => {
     }
 }
 
-// Hojas con algo adentro (para preguntar cuál usar si hay varias).
-export const hojasConDatos = (libro) => libro.SheetNames
-    .map((nombre) => ({ nombre, filas: leerHoja(libro, nombre).filas.length }))
-    .filter((h) => h.filas > 0)
+// Hojas con algo adentro (para preguntar cuál usar si hay varias). En la
+// plantilla de I attend (public/plantillas, scripts/plantilla-invitados.mjs:
+// hojas Invitados · Ejemplo · Instrucciones) solo cuenta Invitados.
+const HOJAS_DE_PLANTILLA = new Set(['ejemplo', 'instrucciones'])
+export const hojasConDatos = (libro) => {
+    const esPlantilla = libro.SheetNames.some((n) => normalizar(n) === 'invitados')
+    return libro.SheetNames
+        .filter((nombre) => !(esPlantilla && HOJAS_DE_PLANTILLA.has(normalizar(nombre))))
+        .map((nombre) => ({ nombre, filas: leerHoja(libro, nombre).filas.length }))
+        .filter((h) => h.filas > 0)
+}
 
 // ── Lo que ve la IA ────────────────────────────────────────────────────
 
@@ -216,27 +223,6 @@ export const problemasDe = (f, { existentes, dupArchivo }) => {
     if (dupArchivo.has(f.key)) p.push('duplicado_archivo')
     if (f.companion_raw && f.companion_key == null) p.push('sin_titular')
     return p
-}
-
-// ── Plantilla ──────────────────────────────────────────────────────────
-
-export const descargarPlantilla = ({ conEtiqueta = true, conLado = false, owners = [] } = {}) => {
-    const enc = ['Nombre', 'Teléfono', 'Acompaña a', ...(conEtiqueta ? ['Etiqueta'] : []), 'Categoría', 'Prioridad', ...(conLado ? ['Lado'] : []), 'Notas']
-    const lado = owners[0] ?? ''
-    const fila = (nombre, tel, acompana, etiqueta, cat, prio, notas) => [
-        nombre, tel, acompana, ...(conEtiqueta ? [etiqueta] : []), cat, prio, ...(conLado ? [lado] : []), notas,
-    ]
-    const datos = [
-        enc,
-        fila('Ana López', '+52 55 1234 5678', '', 'Familia', 'Mujer', 'A', 'Vegetariana'),
-        fila('Luis Pérez', '+52 55 8765 4321', 'Ana López', 'Familia', 'Hombre', 'A', ''),
-        fila('Sofía Ruiz', '+52 33 1111 2222', '', 'Amigos', 'Mujer', 'B', ''),
-    ]
-    const hoja = XLSX.utils.aoa_to_sheet(datos)
-    hoja['!cols'] = enc.map((h) => ({ wch: Math.max(14, h.length + 4) }))
-    const libro = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(libro, hoja, 'Invitados')
-    XLSX.writeFile(libro, 'Plantilla de invitados - I attend.xlsx')
 }
 
 // ── Para el backend ────────────────────────────────────────────────────

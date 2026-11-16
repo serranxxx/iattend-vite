@@ -99,6 +99,23 @@
 .pegar { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .pegar textarea { border-radius: 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 .pegarAcciones { display: flex; justify-content: flex-end; gap: 8px; }
+/* Plantilla de I attend: tarjeta debajo de la zona de arrastre. */
+.plantilla {
+    display: flex; align-items: center; gap: 12px; width: 100%; max-width: 560px; box-sizing: border-box;
+    padding: 12px 14px; border: 1px solid var(--lia-borde); border-radius: 16px; background: var(--lia-claro);
+}
+.plantillaIcono {
+    display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 12px;
+    background: #fff; color: var(--lia);
+}
+.plantillaTexto { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; text-align: left; }
+.plantillaTexto b { color: var(--texto); font-size: 13px; }
+.plantillaTexto span { color: var(--suave); font-size: 12px; line-height: 1.4; }
+.plantilla .botonClaro { display: inline-flex; align-items: center; gap: 6px; flex: none; text-decoration: none; line-height: 30px; }
+@media (max-width: 560px) {
+    .plantilla { flex-wrap: wrap; }
+    .plantilla .botonClaro { width: 100%; justify-content: center; }
+}
 .nota { margin: 0; max-width: 520px; color: var(--suave); font-size: 12px; text-align: center; }
 .error {
     display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 14px; border-radius: 12px;

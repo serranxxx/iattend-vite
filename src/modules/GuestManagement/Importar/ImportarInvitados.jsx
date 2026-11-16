@@ -9,12 +9,13 @@ import { PHONE_CODE_OPTIONS, buildPhoneNumberSafe } from '../../../helpers/asset
 import {
     FORMATOS, MAX_FILAS, MULTIPLES, LADA_POR_OMISION,
     leerArchivo, leerTexto, leerHoja, hojasConDatos, resumenParaIA, aplicarMapeo,
-    resolverAcompanantes, indiceExistentes, problemasDe, descargarPlantilla, paraConfirmar,
+    resolverAcompanantes, indiceExistentes, problemasDe, paraConfirmar,
     mapeoLocal, normalizar, ladaSugerida, nombreSugerido, esNombreGenerico, paresRepetidos, unirCopia, separarTelefono,
 } from './leerLista'
 import s from './ImportarInvitados.module.css'
 
 const API = import.meta.env.VITE_API_URL
+const PLANTILLA = '/plantillas/plantilla-invitados-iattend.xlsx'
 const POR_PAGINA = 100
 const TIPOS = ['female', 'male', 'child', 'undefined']
 const TIERS = ['A', 'B', 'C', 'D']
@@ -752,9 +753,21 @@ export const ImportarInvitados = ({ invitationId, sideEventId, esPop = false, ar
                     ) : (
                         <div className={s.alternativas}>
                             <button type="button" className={s.enlace} onClick={() => setPegando(true)}><ClipboardPaste size={15} />{tt('paste_title')}</button>
-                            <button type="button" className={s.enlace} onClick={() => descargarPlantilla({ conEtiqueta, conLado, owners: contexto.owners })}><Download size={15} />{tt('template')}</button>
                         </div>
                     )}
+                    {/* Plantilla de I attend (public/plantillas, se genera con
+                        scripts/plantilla-invitados.mjs). Lia lee cualquier
+                        formato; con la plantilla acierta más. */}
+                    <div className={s.plantilla}>
+                        <span className={s.plantillaIcono}><FileSpreadsheet size={18} /></span>
+                        <span className={s.plantillaTexto}>
+                            <b>{tt('template_title')}</b>
+                            <span>{tt('template_text')}</span>
+                        </span>
+                        <a className={s.botonClaro} href={PLANTILLA} download="Plantilla de invitados - I attend.xlsx">
+                            <Download size={14} />{tt('template')}
+                        </a>
+                    </div>
                     {eventos?.length > 0 && (
                         <button type="button" className={s.enlace} onClick={() => { setError(null); setPaso('eventos') }}><CalendarHeart size={15} />{tt('from_event_link')}</button>
                     )}

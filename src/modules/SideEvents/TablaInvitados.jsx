@@ -22,6 +22,9 @@ import s from './TablaInvitados.module.css'
   `accion(g)` (opcional): lo que va antes de copiar link / abrir en la
   columna de acciones; SideEvents pasa la de "Por invitar" (Enviar
   invitación en un Pop, marcar a mano), la misma de la vista Pasos.
+
+  `mesa(g)` (opcional, invitados de la boda en GuestsPage): agrega la columna
+  Mesa con lo que devuelva (null = sin mesa).
 */
 
 const ESTADOS = {
@@ -40,7 +43,7 @@ const fechaCorta = (iso) => {
     return d.isValid() ? d.format('DD MMM · HH:mm') : null
 }
 
-export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink, onOpen, formulario = null, accion = null }) => {
+export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink, onOpen, formulario = null, accion = null, mesa = null }) => {
     const { t } = useTranslation()
     const [orden, setOrden] = useState(null) // { key, dir: 1 | -1 }
 
@@ -69,6 +72,7 @@ export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink,
         { key: 'telefono', titulo: t('guests.compact_col_phone'), ancho: 138, valor: (g) => g.phone_number ?? '' },
         { key: 'codigo', titulo: t('guests.compact_col_code'), ancho: 92, valor: (g) => g.password ?? '' },
         { key: 'grupo', titulo: t('guests.compact_col_group'), ancho: 150, valor: (g) => (g.companion_id != null ? nombrePorId.get(String(g.companion_id)) ?? '' : g.name ?? '').toLowerCase() },
+        ...(mesa ? [{ key: 'mesa', titulo: t('guests.compact_col_table'), ancho: 110, valor: (g) => mesa(g) ?? '' }] : []),
         { key: 'etiqueta', titulo: t('guests.compact_col_tag'), ancho: 110, valor: (g) => g.tag ?? '' },
         { key: 'prioridad', titulo: t('guests.compact_col_tier'), ancho: 64, valor: (g) => g.tier ?? 'Z' },
         { key: 'envio', titulo: t('guests.compact_col_delivery'), ancho: 128, valor: (g) => envio(g)?.label ?? '' },
@@ -202,6 +206,7 @@ export const TablaInvitados = ({ invitados, todos, dispatchMap = {}, onCopyLink,
                                                 ? <span className={s.grupoTitular}>{t('guests.compact_companions', { count: nAcomp })}</span>
                                                 : <span className={s.vacio}>—</span>}
                                     </td>
+                                    {mesa && <td>{mesa(g) ? <span className={s.chip}>{mesa(g)}</span> : <span className={s.vacio}>—</span>}</td>}
                                     <td>{g.tag ? <span className={s.chip}>{g.tag}</span> : <span className={s.vacio}>—</span>}</td>
                                     <td className={s.centro}>{g.tier || <span className={s.vacio}>—</span>}</td>
                                     <td>{e ? <span className={s.envio} data-tono={e.tono}>{e.label}</span> : <span className={s.vacio}>—</span>}</td>

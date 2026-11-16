@@ -1462,7 +1462,9 @@ export const SideEvents = () => {
                 popupRender={() => (
                     <GuestAddTiles
                         plan={plan}
-                        // locked={plan !== 'pro'}
+                        // Importar con Lia: solo en side events de una
+                        // invitación PRO; un Pop no lo tiene.
+                        sinExcel={esPop}
                         onIndividual={() => { setMenuAgregar(false); setDrawerState({
                             currentGuest: null,
                             onEditGuest: false,
@@ -4795,7 +4797,7 @@ export const SideEvents = () => {
                             creditos={esPop ? <CreditController id={popId} pop variante="envios" placement="bottomRight" /> : null}
                             buzon={esPop ? <BotonBuzonPopMovil popId={popId} buzon={buzonPop} className={sInv.mas} /> : null}
                             onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
-                            onImportar={() => setImportando({ archivo: null })}
+                            onImportar={!esPop && plan === 'pro' ? () => setImportando({ archivo: null }) : null}
                             onImportarEvento={otrosEventos?.length ? () => setImportando({ modo: 'evento' }) : null}
                             onEditar={openGuestDrawer}
                             // Por invitar (los que agregó el organizador): la misma acción de Pasos.
