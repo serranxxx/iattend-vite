@@ -96,6 +96,7 @@ export const AuthModal = ({ open, onClose, onSuccess, context = 'save', redirect
             centered
             closeIcon={false}
             width={420}
+            className='am-modal-root'
             styles={{ content: { background: 'var(--dark-blue-500, #0C171B)', padding: 0, borderRadius: 36 }, body: { padding: 0 } }}
         >
             {contextHolder}

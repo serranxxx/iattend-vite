@@ -52,6 +52,15 @@ export default function ReactHost({
   // (p. ej. después de mover un módulo en la lista de orden). `n` cambia en
   // cada pedido para que se repita.
   scrollRequest = null,
+  // Herramienta Dibujar (EditorWorkspace): "pincel" | "seleccion" | null
+  // (html[data-dibujo] en la pieza) y `completa` = alto de una pantalla (px)
+  // para pintar la invitación a todo su largo. `onAltura(px)` recibe el alto
+  // de la pieza (REMOTE_HEIGHT) y `onDibujo(cambio)` cada trazo guardado
+  // (REMOTE_DIBUJO: { cambios: { sección: lista }, tipo, id, section }).
+  dibujo = null,
+  completa = null,
+  onAltura,
+  onDibujo,
 }) {
   const iframeRef = useRef(null);
   const lastSentHashRef = useRef("");
@@ -61,6 +70,10 @@ export default function ReactHost({
   const isFirstScrollRef = useRef(true);
 
   const onReadyRef = useRef(onReady);
+  const onAlturaRef = useRef(onAltura);
+  useEffect(() => { onAlturaRef.current = onAltura; }, [onAltura]);
+  const onDibujoRef = useRef(onDibujo);
+  useEffect(() => { onDibujoRef.current = onDibujo; }, [onDibujo]);
   const onSelectSectionRef = useRef(onSelectSection);
   const onFieldChangeRef = useRef(onFieldChange);
   const onFieldToolRef = useRef(onFieldTool);
@@ -94,7 +107,7 @@ export default function ReactHost({
     if (!win) return;
 
     // hash simple para evitar re-envíos idénticos
-    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan });
+    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, dibujo, completa });
     if (hash === lastSentHashRef.current && reason !== "ready") return;
     lastSentHashRef.current = hash;
 
@@ -112,6 +125,8 @@ export default function ReactHost({
           editMovil,
           vistaConfirmada,
           plan,
+          dibujo,
+          completa,
           sentAt: Date.now(),
           reason,
         },
@@ -186,6 +201,12 @@ export default function ReactHost({
       if (ev.data?.type === "REMOTE_PASTE_IMAGE" && ev.data?.payload?.file) {
         window.dispatchEvent(new CustomEvent("iattend-layer-paste", { detail: ev.data.payload }));
       }
+      if (ev.data?.type === "REMOTE_HEIGHT" && ev.data?.payload?.height) {
+        onAlturaRef.current?.(ev.data.payload.height);
+      }
+      if (ev.data?.type === "REMOTE_DIBUJO" && ev.data?.payload?.cambios) {
+        onDibujoRef.current?.(ev.data.payload);
+      }
       if (ev.data?.type === "REMOTE_FIELD_CHANGE" && ev.data?.payload?.path) {
         onFieldChangeRef.current?.(ev.data.payload.path, ev.data.payload.value ?? "");
       }
@@ -197,7 +218,7 @@ export default function ReactHost({
   // 2) Re-enviar cada que cambie `config`, `textureOverride` o el idioma activo
   useEffect(() => {
     postProps("config-change");
-  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, targetOrigin]);
+  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, dibujo, completa, targetOrigin]);
 
   // 2·) Elementos sueltos arrastrados desde los paneles del editor
   // (layerItems.js): el punto llega en px de la ventana y la pieza lo quiere
@@ -226,6 +247,17 @@ export default function ReactHost({
       else post("HOST_LAYER_HOVER", null);
     };
     const onAdd = (e) => post("HOST_LAYER_ADD", e.detail);
+    // Dibujar: el trazo terminado ({ pts en px de la ventana, pincel }) va a la
+    // pieza en px de su documento (EditCanvas → capa de trazo).
+    const onTrazo = (e) => {
+      const iframe = iframeRef.current;
+      if (!iframe || !e.detail?.pts?.length) return;
+      const r = iframe.getBoundingClientRect();
+      const scale = r.width / (iframe.clientWidth || r.width);
+      const pts = e.detail.pts.map(([x, y]) => [(x - r.left) / scale, (y - r.top) / scale]);
+      post("HOST_DIBUJO_TRAZO", { pts, pincel: e.detail.pincel });
+    };
+    window.addEventListener("iattend-host-dibujo", onTrazo);
     // Capas: elegir un elemento suelto desde el panel ({ section, id }).
     const onPick = (e) => post("HOST_LAYER_SELECT", e.detail);
     window.addEventListener("iattend-host-layer-select", onPick);
@@ -237,6 +269,7 @@ export default function ReactHost({
       window.removeEventListener("iattend-layer-drop", onDrop);
       window.removeEventListener("iattend-layer-add", onAdd);
       window.removeEventListener("iattend-host-layer-select", onPick);
+      window.removeEventListener("iattend-host-dibujo", onTrazo);
     };
   }, [editMode, targetOrigin]);
 

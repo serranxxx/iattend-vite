@@ -39,7 +39,7 @@ const inicialesDePop = (nombre = '') => {
     return numero ? numero.slice(-3) : '·'
 }
 
-export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema }) => {
+export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie }) => {
     const { t, i18n } = useTranslation()
     const hoy = dayjs().startOf('day')
 
@@ -207,6 +207,7 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
                 </div>
                 {aviso}
                 {lista}
+                {pie}
             </section>
         </div>
     )

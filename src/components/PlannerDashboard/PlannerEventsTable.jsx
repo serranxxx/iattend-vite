@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'lucide-react'
 import { toFirstString } from '../../helpers/invitation/newInvitation'
+import { fuenteDePortada } from '../../helpers/invitation/portadaInvitacion'
 import { fmtLong, fmtShort, initialsOf } from './plannerFormat'
 import styles from './PlannerDashboard.module.css'
 
@@ -9,7 +10,7 @@ const pct = (n, total) => `${total ? (n / total) * 100 : 0}%`
 const SEVERITY = { critical: styles.sevCritical, warning: styles.sevWarning }
 
 const Avatar = ({ s }) => {
-    const photo = toFirstString(s.invitation?.data?.cover?.image?.prod) || s.invitation?.url_image
+    const photo = toFirstString(fuenteDePortada(s.invitation?.data)) || s.invitation?.url_image
     return (
         <span className={styles.avatar}>
             {photo ? <img src={photo} alt='' loading='lazy' /> : initialsOf(s)}

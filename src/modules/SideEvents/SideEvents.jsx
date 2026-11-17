@@ -324,7 +324,7 @@ export const SideEvents = () => {
     // Importar desde Excel: modal dentro del editor (`{ archivo }` = abierto).
     const [importando, setImportando] = useState(null)
     // Pop: los otros eventos del organizador con invitados (para "De otro
-    // evento"). Con ninguno no se ofrece la opción.
+    // evento"). Con ninguno la opción sigue y la hoja dice que no hay.
     const [otrosEventos, setOtrosEventos] = useState(null)
     const [menuAgregar, setMenuAgregar] = useState(false)
     useEffect(() => {
@@ -1474,17 +1474,19 @@ export const SideEvents = () => {
                         onFile={(file) => { setMenuAgregar(false); setImportando({ archivo: file }) }}
                         // Copiar la lista de la boda: un Pop no tiene boda; en
                         // su lugar, traer invitados de otro evento suyo.
-                        topExtra={esPop ? (otrosEventos?.length ? (
+                        // Siempre en un Pop: sin otros eventos, la hoja se
+                        // abre con su aviso de vacío.
+                        topExtra={esPop ? (
                             <button type="button" className="guest-add-tile guest-add-tile--individual" onClick={() => { setMenuAgregar(false); setImportando({ modo: 'evento' }) }}>
                                 <span className="guest-add-tile-icon">
-                                    <Copy size={14} />
+                                    <Copy size={18} />
                                 </span>
                                 <span className="guest-add-tile-text">
                                     <span className="guest-add-tile-title">{t('guests_import.tile_event_title')}</span>
                                     <span className="guest-add-tile-sub">{t('guests_import.tile_event_sub')}</span>
                                 </span>
                             </button>
-                        ) : null) : (
+                        ) : (
                             <Dropdown
                                 key={1}
                                 trigger={['click']}
@@ -1547,7 +1549,7 @@ export const SideEvents = () => {
                             >
                                 <button type="button" onClick={getMainGuests} className="guest-add-tile guest-add-tile--individual">
                                     <span className="guest-add-tile-icon">
-                                        <Copy size={14} />
+                                        <Copy size={18} />
                                     </span>
                                     <span className="guest-add-tile-text">
                                         <span className="guest-add-tile-title">{t('side_events.btn_copy_list')}</span>
@@ -4798,7 +4800,7 @@ export const SideEvents = () => {
                             buzon={esPop ? <BotonBuzonPopMovil popId={popId} buzon={buzonPop} className={sInv.mas} /> : null}
                             onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
                             onImportar={!esPop && plan === 'pro' ? () => setImportando({ archivo: null }) : null}
-                            onImportarEvento={otrosEventos?.length ? () => setImportando({ modo: 'evento' }) : null}
+                            onImportarEvento={esPop ? () => setImportando({ modo: 'evento' }) : null}
                             onEditar={openGuestDrawer}
                             // Por invitar (los que agregó el organizador): la misma acción de Pasos.
                             accion={(g) => (g.state === 'creado' ? renderCreatedAction(g, { corto: true }) : null)}

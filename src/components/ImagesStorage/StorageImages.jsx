@@ -194,7 +194,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
             <input ref={fileInputRef} type='file' accept={isVideoPicker ? 'video/*' : 'image/*'} style={{ display: 'none' }} onChange={handleFileChange} />
             <Button
                 style={{ marginBottom: '12px' }}
-                icon={<LuUpload />}
+                icon={<LuUpload size={16} />}
                 className='primarybutton'
                 onClick={() => handleUploadClick(fileInputRef)}
             >
@@ -268,7 +268,7 @@ export const StorageImages = ({ type, isNull, placement, absolute, invitationID,
                                 <input ref={mobileFileInputRef} type='file' accept={isVideoPicker ? 'video/*' : 'image/*'} style={{ display: 'none' }} onChange={handleFileChange} />
                                 <Button
                                     size='small'
-                                    icon={<LuUpload />}
+                                    icon={<LuUpload size={16} />}
                                     className='primarybutton--active'
                                     style={{ borderRadius: '99px' }}
                                     onClick={() => handleUploadClick(mobileFileInputRef)}

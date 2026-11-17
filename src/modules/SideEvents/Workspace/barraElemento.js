@@ -24,6 +24,15 @@ export const barraElemento = ({ stickers, stickerSel, setStickers, setStickerSel
             cambiarGrupo((x) => ({ rot: x.id === actual.id ? v : Math.min(180, Math.max(-180, (x.rot ?? 0) + delta)) }), o)
         },
         hidden: grupo.every((x) => x.hidden),
+        // Anclado a la página (pin): no crece con el zoom de la portada; sube
+        // con el scroll como la fecha, encima de las tarjetas. Los dibujos no.
+        ...(grupo.some((x) => x.kind !== 'dibujo') ? {
+            fijo: grupo.filter((x) => x.kind !== 'dibujo').every((x) => x.fijo),
+            onToggleFijo: () => {
+                const fijo = grupo.filter((x) => x.kind !== 'dibujo').every((x) => x.fijo)
+                cambiarGrupo((x) => (x.kind === 'dibujo' ? {} : { fijo: !fijo || undefined }))
+            },
+        } : {}),
         onToggleHidden: () => { const oculto = grupo.every((x) => x.hidden); cambiarGrupo(() => ({ hidden: !oculto || undefined })) },
         canDuplicate: !noCabe,
         onDuplicate: () => { const { lista, nuevos } = duplicarStickers(stickers, stickerSel); setStickers(lista); setStickerSel(nuevos) },

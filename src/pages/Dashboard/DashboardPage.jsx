@@ -20,7 +20,7 @@ import { useBentoFit } from './useBentoFit'
 import { TablesSketch } from './TablesSketch'
 import { TablesPage } from '../../modules/GuestManagement/Tables/TablesPage'
 import { PortadaMiniatura } from './PortadaMiniatura';
-import { portadaDeInvitacion } from '../../helpers/invitation/portadaInvitacion';
+import { fuenteDePortada, portadaDeInvitacion } from '../../helpers/invitation/portadaInvitacion';
 
 // Foto fija de la tarjeta del Save the Date (bento y versión móvil).
 const STD_CARD_IMG = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/f282bb98-6d9c-446d-8ef6-1dacff261732/1788881927563-savethed.jpg'
@@ -303,7 +303,8 @@ export const DashboardPage = () => {
     };
 
     // Portada (foto o, si solo hay videos, un cuadro del video): PortadaMiniatura.
-    const coverSrc = invitation?.cover?.image?.prod;
+    // Invitación en PDF: su primera página (fuenteDePortada).
+    const coverSrc = fuenteDePortada(invitation);
     const portada = portadaDeInvitacion(coverSrc);
     const coverImg = portada.foto ?? portada.video;
     const coverTitle = invitation?.cover?.title?.text?.value ?? '';

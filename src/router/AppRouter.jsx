@@ -32,6 +32,7 @@ import { FontLabPage } from '../pages/Admin/FontLabPage'
 import { GiftBrandLabPage } from '../pages/Admin/GiftBrandLabPage'
 import { FeaturesPage } from '../pages/FeatruesPage'
 import { LegalPage } from '../pages/Extras/Legal/LegalPage'
+import { FuncionesPage } from '../pages/Funciones/FuncionesPage'
 import { LinkTree } from '../pages/Extras/LinkTree/LinkTree'
 import { Success } from '../pages/Success/Success'
 import { DashboardPage } from '../pages/Dashboard/DashboardPage'
@@ -81,6 +82,9 @@ export const AppRouter = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/linktree" element={<LinkTree />} />
       <Route path="/legal" element={<LegalPage />} />
+      {/* Documentación de funciones para clientes (docs/funciones) */}
+      <Route path="/funciones" element={<FuncionesPage />} />
+      <Route path="/funciones/:tema" element={<FuncionesPage />} />
       <Route path="/luma" element={<Lia />} />
       <Route path="/preview" element={<PreviewMoodPage />} />
       {/* Solo el wizard: lo usa Admin → Onboarding en un iframe de celular */}

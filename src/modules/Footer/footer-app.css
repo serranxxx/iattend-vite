@@ -1,134 +1,103 @@
+/* Pie de la app, el mismo en todas las pantallas: una línea delgada con
+   © + Legal a la izquierda y Cómo funciona · Ayuda | contacto a la derecha.
+   Sin fondo propio: toma el de la página. */
 .fa-main-cont {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     width: 100%;
-    position: relative;
-    isolation: isolate;
-    background: #F5F3F2
-}
-
-.fa-main-cont::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0);
-    mix-blend-mode: multiply;
-    pointer-events: none;
-    z-index: 0;
+    max-width: 1288px;
+    margin: 0 auto;
+    padding: 48px 24px 32px;
+    box-sizing: border-box;
 }
 
 .fa-footer-cont {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    flex-direction: column;
-    width: 100%;
-    max-width: 1320px;
-    padding: 36px 0;
-    gap: 18px;
-}
-
-.fa-footer-main-col {
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    flex-direction: column;
-    align-self: stretch;
-    gap: 18px;
-    padding: 0 24px;
-}
-
-.fa-footer-logo {
-    max-width: 130px;
-}
-
-.fa-footer-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 16px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+    padding-top: 28px;
+    border-top: 1px solid #E6E8EC;
+    font-size: 15px;
+    line-height: 1.4;
 }
 
-.fa-links-col {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    width: 100%;
-}
-
-.fa-footer-link {
-    font-family: 'Luxora Grotesk', var(--font-family), sans-serif;
-    color: #0c171b !important;
-    font-weight: 200;
-    line-height: 110%;
+.fa-lado {
     display: flex;
     align-items: center;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+}
+
+.fa-copy {
+    color: #9AA0A9;
+}
+
+.fa-link {
+    color: #4B5563 !important;
     text-decoration: none;
+    transition: color 0.15s ease;
 }
 
-.fa-footer-link:hover { opacity: 0.7; }
+.fa-link-suave {
+    color: #9AA0A9 !important;
+}
 
-.fa-links {
+.fa-link:hover {
+    color: #1c3249 !important;
+}
+
+.fa-divisor {
+    width: 1px;
+    height: 26px;
+    background: #E6E8EC;
+}
+
+.fa-iconos {
     display: flex;
-    align-items: flex-start;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 18px;
+    align-items: center;
+    gap: 10px;
 }
 
-.fa-link-cont {
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    flex-direction: column;
-    gap: 4px;
-    padding: 0 24px;
-    font-family: 'Luxora Grotesk', var(--font-family), sans-serif;
-    color: #0c171b;
+.fa-icono {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid #E6E8EC;
+    background: #FFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #4B5563 !important;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.fa-link-heading {
-    font-weight: 900;
-    font-size: 14px;
-    color: #0c171b;
-    margin-bottom: 6px;
+.fa-icono:hover {
+    color: #1c3249 !important;
+    border-color: #D1BEDD;
+    background: #F7F4F9;
 }
 
-.fa-link-cont a {
-    font-family: 'Luxora Grotesk', var(--font-family), sans-serif;
-    color: #0c171b;
-    font-weight: 200;
-    text-decoration: none;
-    font-size: 14px;
-    line-height: 1.8;
-}
-
-.fa-link-cont a:hover { opacity: 0.7; }
-
-@media (min-width: 768px) {
-    .fa-footer-main-col {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: 44px;
+/* Celular: arriba Cómo funciona, Ayuda y contacto; abajo © y Legal. */
+@media (max-width: 767px) {
+    .fa-footer-cont {
+        flex-direction: column-reverse;
+        align-items: flex-start;
     }
 
-    .fa-footer-logo { max-width: 120px; }
+    .fa-divisor {
+        display: none;
+    }
 
-    .fa-links-col {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 24px;
-        width: auto;
-        /* Lugar para el círculo de Lia (fijo abajo a la derecha): sin esto
-           tapaba el último enlace al llegar al final de la página. */
+    .fa-icono {
+        width: 42px;
+        height: 42px;
+    }
+}
+
+/* El círculo de Lia va fijo abajo a la derecha: en pantallas medianas tapaba
+   el último botón al llegar al final de la página. */
+@media (min-width: 768px) and (max-width: 1440px) {
+    .fa-footer-cont > .fa-lado:last-child {
         padding-right: 72px;
     }
-
-    .fa-links { flex-direction: row; }
 }

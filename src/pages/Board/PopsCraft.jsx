@@ -28,7 +28,7 @@ const Cinta = ({ ancho = 90, x = 50, giro = -3, color }) => (
     <span aria-hidden className={styles.cinta} style={{ width: ancho, left: `${x}%`, marginLeft: -ancho / 2, transform: `rotate(${giro}deg)`, ...(color ? { '--cinta': color } : {}) }} />
 )
 
-export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema }) => {
+export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie }) => {
     const { t, i18n } = useTranslation()
     const hoy = dayjs().startOf('day')
     const [pestana, setPestana] = useState('activos')
@@ -152,6 +152,15 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
         </div>
     )
 
+    // El pie de la app (lo manda PlannerLayout) pegado al corcho con dos cintas.
+    const pieConCinta = pie && (
+        <div className={styles.pieHoja}>
+            <Cinta x={20} giro={-4} />
+            <Cinta x={80} giro={3} />
+            {pie}
+        </div>
+    )
+
     if (movil) {
         const lista = pestana === 'pasados' ? pasados : activos
         return (
@@ -182,6 +191,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
                     {sinPops ? primero : lista.length > 0
                         ? lista.map((f, i) => tira(f, i, pestana === 'pasados'))
                         : <p className={styles.vacioPapel}>{t('pops_section.empty')}</p>}
+                    {pieConCinta}
                 </section>
             </div>
         )
@@ -230,6 +240,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
                         )}
                     </div>
                 )}
+                {pieConCinta}
             </section>
         </div>
     )

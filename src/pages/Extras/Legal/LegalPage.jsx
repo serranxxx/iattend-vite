@@ -22,7 +22,7 @@ export const LegalPage = () => {
 
                 <h3>Responsable del Tratamiento de los Datos Personales</h3>
                 <h4>
-                    <b>LUIS ALBERTO SERRANO GARCÍA</b>, titular de la plataforma digital <b>I attend</b>, disponible en <b>www.I attend.mx</b> e <b>I attend.events</b> (en lo sucesivo, "I attend"), con domicilio en Chihuahua, Chihuahua, C.P. 31130, en cumplimiento con la <b>Ley Federal de Protección de Datos Personales en Posesión de los Particulares</b> (en adelante la "Ley") y su Reglamento, se presenta como responsable del tratamiento de los datos personales que usted proporciona a través de nuestra plataforma.
+                    <b>LUIS ALBERTO SERRANO GARCÍA</b>, titular de la plataforma digital <b>I attend</b>, disponible en <b>www.iattend.mx</b>, <b>iattend.site</b> e <b>iattend.events</b> (en lo sucesivo, "I attend"), con domicilio en Chihuahua, Chihuahua, C.P. 31130, en cumplimiento con la <b>Ley Federal de Protección de Datos Personales en Posesión de los Particulares</b> (en adelante la "Ley") y su Reglamento, se presenta como responsable del tratamiento de los datos personales que usted proporciona a través de nuestra plataforma.
                 </h4>
 
                 <h3>¿Qué es I attend?</h3>
@@ -38,7 +38,6 @@ export const LegalPage = () => {
                     <li>Proveer acceso a las funciones de la plataforma: creación de invitaciones digitales, gestión de invitados, distribución de lugares, pases digitales con QR, y sub-eventos.</li>
                     <li>Gestionar las confirmaciones de asistencia (RSVP) de sus invitados.</li>
                     <li>Enviar notificaciones y actualizaciones relacionadas con su evento y los servicios adquiridos.</li>
-                    <li>Emitir comprobantes de pago o facturas cuando sean solicitados.</li>
                     <li>Atender solicitudes de soporte técnico y aclaraciones sobre su cuenta o pedido.</li>
                     <li>Agendar reuniones de seguimiento o asesoría relacionadas con su evento.</li>
                 </ul>
@@ -47,7 +46,7 @@ export const LegalPage = () => {
                     <li>Enviarle información sobre nuevas funcionalidades, planes o promociones de I attend.</li>
                     <li>Realizar encuestas de satisfacción para mejorar nuestros servicios.</li>
                 </ul>
-                <h4>Si usted no desea que sus datos sean utilizados para las finalidades secundarias, puede indicarlo enviando un correo a <b>contacto.I attend@gmail.com</b>. La negativa no afectará la prestación del servicio contratado.</h4>
+                <h4>Si usted no desea que sus datos sean utilizados para las finalidades secundarias, puede indicarlo enviando un correo a <b>contacto.iattend@gmail.com</b>. La negativa no afectará la prestación del servicio contratado.</h4>
 
                 <h3>2. ¿QUÉ DATOS PERSONALES UTILIZAREMOS PARA ESTOS FINES?</h3>
                 <h4>Para llevar a cabo las finalidades descritas, recabaremos los siguientes datos personales:</h4>
@@ -57,7 +56,6 @@ export const LegalPage = () => {
                     <li>Correo electrónico.</li>
                     <li>Número de teléfono celular.</li>
                     <li>Contraseña (almacenada de forma cifrada).</li>
-                    <li>Datos de facturación: RFC, razón social o nombre fiscal, dirección fiscal (cuando se requiera comprobante fiscal).</li>
                     <li>Información de transacciones: monto pagado, fecha y referencia del pago.</li>
                 </ul>
                 <h4><b>Relacionados con el evento y los invitados:</b></h4>
@@ -65,6 +63,8 @@ export const LegalPage = () => {
                     <li>Nombre del evento, fecha, lugar y detalles logísticos del mismo.</li>
                     <li>Nombre, teléfono y/o correo electrónico de los invitados (proporcionados por el organizador).</li>
                     <li>Confirmaciones de asistencia y preferencias de los invitados.</li>
+                    <li>De forma opcional, menú, notas y necesidades especiales de los invitados (por ejemplo, alergias o requerimientos de movilidad).</li>
+                    <li>Fotos que los invitados suben al Photo Wall del evento, que se eliminan automáticamente 30 días después de subirse.</li>
                     <li>Distribución de asientos o mesas.</li>
                     <li>Información de sub-eventos y sus respectivos asistentes.</li>
                 </ul>
@@ -74,15 +74,18 @@ export const LegalPage = () => {
                     <li>Registro de actividad dentro de la plataforma (páginas visitadas, acciones realizadas).</li>
                     <li>Información recopilada a través de cookies y tecnologías similares (ver sección 7).</li>
                 </ul>
-                <h4>I attend <b>no recaba datos personales sensibles</b> (datos de salud, biométricos, ideología política, creencias religiosas, etc.).</h4>
+                <h4><b>Datos personales sensibles:</b> el organizador puede registrar, de forma opcional, necesidades especiales de sus invitados (por ejemplo, alergias o requerimientos de movilidad), que pueden considerarse datos de salud. Estos datos se usan únicamente para organizar el evento y no se comparten con terceros distintos de los proveedores tecnológicos señalados en la sección 3. El organizador es responsable de contar con el consentimiento de sus invitados antes de registrarlos. I attend no recaba datos biométricos, de ideología política ni de creencias religiosas.</h4>
 
                 <h3>3. TRANSFERENCIA DE INFORMACIÓN PERSONAL CON TERCEROS</h3>
                 <h4>Nos comprometemos a no transferir su información personal a terceros sin su consentimiento, salvo en los casos previstos en el Artículo 37 de la Ley. Para el funcionamiento técnico de la plataforma, sus datos podrán ser procesados por los siguientes proveedores tecnológicos bajo acuerdos de confidencialidad:</h4>
                 <ul>
                     <li><b>Supabase Inc.</b> — Proveedor de base de datos, autenticación y almacenamiento en la nube donde se alojan los datos de la plataforma.</li>
                     <li><b>Stripe Inc.</b> — Procesador de pagos. Los datos de tarjetas bancarias son manejados directamente por Stripe y no son almacenados por I attend.</li>
-                    <li><b>OpenAI LLC</b> — Proveedor de inteligencia artificial utilizado para funcionalidades de asistencia dentro de la plataforma.</li>
-                    <li><b>Proveedores de servicios de correo electrónico y mensajería</b> — Utilizados para el envío de notificaciones y confirmaciones a invitados.</li>
+                    <li><b>OpenAI LLC, Anthropic PBC y Google LLC</b> — Proveedores de inteligencia artificial utilizados por Lia, la asistente de la plataforma, y para interpretar las listas de invitados que se importan. Para responder, Lia puede consultar la información del evento y de sus invitados.</li>
+                    <li><b>Meta Platforms, Inc. (WhatsApp Business)</b> — Envío de invitaciones y recordatorios por WhatsApp y recepción de las respuestas de los invitados.</li>
+                    <li><b>DeepL SE</b> — Traducción automática del contenido de la invitación a otros idiomas.</li>
+                    <li><b>Apple Inc.</b> — Pases digitales de Apple Wallet y sus notificaciones.</li>
+                    <li><b>Proveedores de servicios de correo electrónico</b> — Utilizados para el envío de notificaciones, accesos y confirmaciones.</li>
                 </ul>
                 <h4>Asimismo, sus datos podrán ser compartidos con autoridades competentes cuando así lo exija la ley mexicana o un mandato judicial.</h4>
                 <h4>Si usted no manifiesta su oposición a dichas transferencias, se entenderá que otorga su consentimiento conforme a lo establecido en la Ley.</h4>
@@ -95,7 +98,7 @@ export const LegalPage = () => {
                     <li><b>Cancelar</b> sus datos cuando no sean necesarios para las finalidades del servicio o haya concluido la relación contractual.</li>
                     <li><b>Oponerse</b> al tratamiento de sus datos para finalidades específicas.</li>
                 </ul>
-                <h4>Para ejercer cualquiera de estos derechos ARCO, envíe su solicitud al correo electrónico: <b>contacto.I attend@gmail.com</b> con el asunto "Solicitud ARCO". La solicitud deberá incluir:</h4>
+                <h4>Para ejercer cualquiera de estos derechos ARCO, envíe su solicitud al correo electrónico: <b>contacto.iattend@gmail.com</b> con el asunto "Solicitud ARCO". La solicitud deberá incluir:</h4>
                 <ul>
                     <li>Su nombre completo y correo electrónico registrado en I attend.</li>
                     <li>Una descripción clara y precisa de los datos sobre los que desea ejercer su derecho.</li>
@@ -107,13 +110,12 @@ export const LegalPage = () => {
                 <h3>5. ¿CÓMO PUEDE LIMITAR EL USO O DIVULGACIÓN DE SU INFORMACIÓN PERSONAL?</h3>
                 <h4>Para limitar el uso o divulgación de su información personal puede:</h4>
                 <ul>
-                    <li>Enviar un correo a <b>contacto.I attend@gmail.com</b> indicando de manera específica su solicitud.</li>
-                    <li>Configurar las preferencias de notificaciones desde su cuenta dentro de la plataforma.</li>
+                    <li>Enviar un correo a <b>contacto.iattend@gmail.com</b> indicando de manera específica su solicitud.</li>
                     <li>Solicitar la eliminación de su cuenta, lo que implicará la eliminación de sus datos personales, salvo aquellos que deban conservarse por obligaciones legales o fiscales.</li>
                 </ul>
 
                 <h3>6. RETENCIÓN Y ELIMINACIÓN DE DATOS</h3>
-                <h4>Sus datos personales serán conservados durante el tiempo que su cuenta permanezca activa y mientras exista una relación contractual vigente con I attend. Una vez concluida dicha relación, los datos serán eliminados o anonimizados en un plazo no mayor a <b>90 días naturales</b>, salvo que exista una obligación legal que requiera su conservación por un período mayor (por ejemplo, datos de facturación conforme a la legislación fiscal mexicana).</h4>
+                <h4>Sus datos personales serán conservados durante el tiempo que su cuenta permanezca activa y mientras exista una relación contractual vigente con I attend. Una vez concluida dicha relación, los datos serán eliminados o anonimizados en un plazo no mayor a <b>90 días naturales</b>, salvo que exista una obligación legal que requiera su conservación por un período mayor (por ejemplo, registros de pagos conforme a la legislación fiscal mexicana).</h4>
 
                 <h3>7. USO DE COOKIES Y TECNOLOGÍAS DE RASTREO</h3>
                 <h4>I attend utiliza cookies y tecnologías similares para:</h4>
@@ -130,13 +132,13 @@ export const LegalPage = () => {
                 <h3>9. ¿CÓMO PUEDE CONOCER LOS CAMBIOS EN ESTE AVISO DE PRIVACIDAD?</h3>
                 <h4>Este aviso de privacidad puede ser modificado para cumplir con cambios en la legislación, en nuestras prácticas internas o en nuestro modelo de negocio. Le notificaremos sobre cualquier modificación relevante a través de:</h4>
                 <ul>
-                    <li>Nuestro sitio web: <b>www.I attend.mx</b></li>
+                    <li>Nuestro sitio web: <b>www.iattend.mx</b></li>
                     <li>Un aviso dentro de la plataforma al iniciar sesión.</li>
                     <li>Correo electrónico a la dirección registrada en su cuenta.</li>
                 </ul>
                 <h4>Le recomendamos revisar periódicamente este aviso para mantenerse informado sobre cómo protegemos su información.</h4>
 
-                <h4><b>Última actualización:</b> 18 de mayo de 2026.</h4>
+                <h4><b>Última actualización:</b> 16 de noviembre de 2026.</h4>
             </div>
         </div>
     )

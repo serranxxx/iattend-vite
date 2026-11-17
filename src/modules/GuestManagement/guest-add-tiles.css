@@ -1,38 +1,40 @@
+/* Menú de Agregar invitados (GuestAddTiles.jsx). */
 .guest-add-tiles {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-width: 260px;
-    padding: 4px;
-    background-color: #FFF;
-    padding: 8px;
+    gap: 2px;
+    width: 364px;
+    max-width: calc(100vw - 24px);
+    padding: 10px;
     box-sizing: border-box;
-    border-radius: 16px;
-    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
+    background-color: #FFF;
+    border-radius: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+    font-family: 'Poppins', sans-serif;
 }
 
+/* Filas: De otro evento, Individual (y las que pasan con `topExtra`). */
 .guest-add-tile {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     width: 100%;
-    border-radius: 12px;
     padding: 10px 12px;
-    background: #FFFFFF;
-    border: 1px solid var(--borders, #EBEBEB);
+    border: none;
+    border-radius: 14px;
+    background: transparent;
     cursor: pointer;
     text-align: left;
-    transition: border-color .15s ease, background-color .15s ease;
+    transition: background-color .15s ease;
 }
 
 .guest-add-tile--individual:hover {
-    border-color: #D9D9D9;
-    background: #FAFAFA;
+    background: #F7F6F4;
 }
 
 .guest-add-tile-icon {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
     border-radius: 99px;
     background: var(--gray-bg, #F1F1F1);
@@ -45,52 +47,172 @@
 .guest-add-tile-text {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
+    min-width: 0;
 }
 
 .guest-add-tile-title {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-color, #29262D);
 }
 
 .guest-add-tile-sub {
-    font-size: 11px;
+    font-size: 12px;
+    line-height: 1.35;
     color: var(--gray-color, #787878);
 }
 
-.guest-add-tile--excel {
+/* ── Desde Excel: plantilla (1) y subir (2) ── */
+.guest-add-excel {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 12px;
+    border: 1px solid #DCD0F7;
+    border-radius: 16px;
+}
+
+.guest-add-excel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 2px 4px;
+}
+
+.guest-add-excel-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-color, #29262D);
+}
+
+.guest-add-excel-lia {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6D3CFA;
+}
+
+.guest-add-paso {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 14px 10px 12px;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    font-family: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.guest-add-paso-num {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.guest-add-paso-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
+.guest-add-paso-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.guest-add-paso-sub {
+    font-size: 11.5px;
+    line-height: 1.35;
+}
+
+.guest-add-paso-icono {
+    flex-shrink: 0;
+}
+
+/* 1 · Plantilla: gris, opcional. */
+.guest-add-paso--plantilla {
+    background: #F4F3F1;
+    color: var(--text-color, #29262D);
+}
+
+.guest-add-paso--plantilla:hover {
+    background: #ECEAE6;
+    color: var(--text-color, #29262D);
+}
+
+.guest-add-paso--plantilla .guest-add-paso-num {
+    border: 1.5px solid #CFCCC7;
+    color: var(--gray-color, #787878);
+}
+
+.guest-add-paso--plantilla .guest-add-paso-sub {
+    color: var(--gray-color, #787878);
+}
+
+.guest-add-paso--plantilla .guest-add-paso-icono {
+    color: #6D3CFA;
+}
+
+/* 2 · Subir: lila punteado, "suelta aquí". */
+.guest-add-paso--subir {
     border: 1.5px dashed #C9B8F5;
-    background: #EFEAFF;
-    padding: 14px 12px;
-    /* min-height: 100px; */
+    background: #F1EBFF;
+    color: #4B22C4;
 }
 
-.guest-add-tile--excel:hover {
+.guest-add-paso--subir:hover {
     border-color: #6D3CFA;
-    background: #E4DBFF;
+    background: #E9E0FF;
 }
 
-.guest-add-tile--excel.is-dragover {
+.guest-add-paso--subir.is-dragover {
     border-style: solid;
     border-color: #6D3CFA;
     background: #E4DBFF;
     box-shadow: inset 0 0 0 3px rgba(109, 60, 250, 0.12);
 }
 
-.guest-add-tile--excel .guest-add-tile-icon--excel {
-    background: #FFFFFF;
-    color: #6D3CFA;
-    box-shadow: 0 0 0 1px rgba(109, 60, 250, 0.15);
+.guest-add-paso--subir .guest-add-paso-num {
+    background: #6D3CFA;
+    color: #fff;
 }
 
-.guest-add-tile--excel .guest-add-tile-title {
-    color: #4B22C4;
-}
-
-.guest-add-tile--excel .guest-add-tile-sub {
+.guest-add-paso--subir .guest-add-paso-sub {
     color: #6B5A9E;
+}
+
+.guest-add-paso--subir .guest-add-paso-icono {
+    color: #6D3CFA;
+}
+
+/* Sin PRO: el bloque se ve apagado y no responde (badge PRO de .pro_badge). */
+.guest-add-excel[data-bloqueado] .guest-add-paso {
+    cursor: not-allowed;
+}
+
+.guest-add-excel.pro_badge::after {
+    top: 12px;
+    right: 12px;
+    font-size: 10px;
 }
 
 .guest-add-tile-lock-overlay {
@@ -98,20 +220,6 @@
     inset: 0;
     background: #FFFFFF;
     opacity: 0.5;
-    border-radius: 12px;
+    border-radius: 16px;
     cursor: not-allowed;
-}
-
-.guest-add-tile-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 18px;
-    height: 18px;
-    border-radius: 99px;
-    background: #6D3CFA;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }

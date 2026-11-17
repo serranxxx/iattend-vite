@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Popover, Select, Switch } from 'antd'
-import { AlignJustify, Ban, Blend, CopyPlus, Eye, EyeOff, FlipHorizontal2, FlipVertical2, Group, Lock, RotateCw, Scaling, SquareRoundCorner, Trash2, Ungroup } from 'lucide-react'
+import { AlignJustify, Ban, Blend, CopyPlus, Eye, EyeOff, FlipHorizontal2, FlipVertical2, Group, Lock, Pin, PinOff, RotateCw, Scaling, SquareRoundCorner, Trash2, Ungroup } from 'lucide-react'
 import { useFonts } from '../../../../context/FontsContext'
 import { fonts as fallbackFonts } from '../../../../helpers/assets/fonts'
 import { LiveSlider } from './barControls'
@@ -30,6 +30,7 @@ const STROKE_STYLES = [
 // giro, ocultar, duplicar y quitar (con varios elegidos, `group.count`, solo
 // van esos y la transparencia):
 //   { count, onScale(w, o), onRotate(rot, o), hidden, onToggleHidden,
+//     fijo, onToggleFijo (Pop: pin = anclado a la página, sube con el scroll sin zoom),
 //     canDuplicate, onDuplicate, onRemove }
 // `pieceWidth`: ancho de la pieza en px (vectores: grosor fijo sin brincos).
 // Grosor del trazo + transparencia en una sola hoja (como la del pincel,
@@ -253,6 +254,18 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                         </>
                     )}
                     <span className={styles.divider} />
+                    {group.onToggleFijo && (
+                        <button
+                            type="button"
+                            className={styles.iconBtn}
+                            data-on={group.fijo || undefined}
+                            aria-pressed={!!group.fijo}
+                            title={t(group.fijo ? 'side_events.stickers_unpin' : 'side_events.stickers_pin')}
+                            onClick={group.onToggleFijo}
+                        >
+                            {group.fijo ? <PinOff size={18} /> : <Pin size={18} />}
+                        </button>
+                    )}
                     <button type="button" className={styles.iconBtn} data-on={group.hidden || undefined} title={t(group.hidden ? 'side_events.stickers_show' : 'side_events.stickers_hide')} onClick={group.onToggleHidden}>
                         {group.hidden ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>

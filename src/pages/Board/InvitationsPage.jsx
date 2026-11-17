@@ -18,6 +18,7 @@ import { PlannerEventDrawer } from '../PlannerEvent/PlannerEventDrawer';
 import { PlannerSendDrawer } from '../PlannerEvent/PlannerSendDrawer';
 import { POP_PUBLIC_URL, fetchPopEvents, popComoInvitacion } from '../../helpers/invitation/popEvents';
 import { esRolPlanner } from '../../helpers/roles';
+import { fuenteDePortada } from '../../helpers/invitation/portadaInvitacion';
 
 const baseProd = "https://www.iattend.events"
 
@@ -145,9 +146,9 @@ export const InvitationsPage = () => {
             className="invitation-container"
         >
             {/* Full-bleed background image */}
-            {toFirstString(invitation?.data?.cover?.image?.prod) && (
+            {toFirstString(fuenteDePortada(invitation?.data)) && (
                 <img
-                    src={toFirstString(invitation.data.cover.image.prod)}
+                    src={toFirstString(fuenteDePortada(invitation.data))}
                     alt=""
                     style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                 />

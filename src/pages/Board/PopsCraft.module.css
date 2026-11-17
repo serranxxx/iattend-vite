@@ -362,6 +362,16 @@
 }
 
 /* Hoja de papel con la lista */
+/* Pie de la app sobre el corcho: hoja de papel con dos cintas. */
+.pieHoja {
+    position: relative;
+    margin-top: 24px;
+}
+
+.pieHoja .cinta {
+    z-index: 1;
+}
+
 .hoja {
     position: relative;
     display: flex;

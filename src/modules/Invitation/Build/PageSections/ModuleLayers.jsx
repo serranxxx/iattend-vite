@@ -88,6 +88,12 @@ export const ModuleLayers = ({
                 hidden: Boolean(it.hidden),
                 onSelect: () => {
                     textEvent(null)
+                    // Un trazo (Dibujar) no se edita fuera de Dibujar: abre la
+                    // herramienta con la pluma de selección y ese trazo elegido.
+                    if (it.kind === 'dibujo') {
+                        window.dispatchEvent(new CustomEvent('iattend-abrir-dibujo', { detail: { section, id: it.id } }))
+                        return
+                    }
                     onSelect(section)
                     window.dispatchEvent(new CustomEvent('iattend-host-layer-select', { detail: { section, id: it.id } }))
                 },

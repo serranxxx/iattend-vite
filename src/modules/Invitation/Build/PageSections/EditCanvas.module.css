@@ -233,3 +233,29 @@
     height: 17px;
 }
 
+
+/* ── Dibujar ──
+   La capa que toma el puntero encima de la pieza (iframe) mientras hay un
+   pincel; el trazo en curso se pinta en ella. */
+.capaDibujo {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.capaDibujo[data-borrador] {
+    cursor: cell;
+}
+
+.trazoEnCurso {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* A todo su largo (Dibujar): sin redondeo abajo ni sombra de teléfono. */
+.card[data-dibujo] {
+    transition: none;
+}

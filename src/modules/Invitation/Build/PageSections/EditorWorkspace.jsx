@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
-import { CloudUpload, Images, Palette, Shapes, Ticket, WandSparkles } from 'lucide-react'
+import { CloudUpload, FileText, Images, Palette, PenLine, Shapes, Ticket, WandSparkles } from 'lucide-react'
 import ReactHost from '../../../../components/Host/ReactHost'
 import { EditCanvas } from './EditCanvas'
 import { EditorShell } from '../../../Editor/EditorShell'
@@ -15,6 +15,11 @@ import { UploadsPanel } from './UploadsPanel'
 import { ElementsPanel } from './LayerPanels'
 import { AiTextPanel } from './AiTextPanel'
 import { WalletPanelInvitacion } from './WalletPanelInvitacion'
+import { PdfToolPanel } from '../../Pdf/PdfToolPanel'
+import { PdfBar } from '../../Pdf/PdfBar'
+import { esPdf, SECCION_PDF } from '../../Pdf/pdfInvitacion'
+import { PaletaDibujo } from '../../../SideEvents/Workspace/PaletaDibujo'
+import { DibujoBar } from '../../../SideEvents/Workspace/SideBars'
 import { invitationPalette } from './colorUtils'
 import { ElementBar } from './ElementBar'
 import { TextBar } from './TextBar'
@@ -52,9 +57,15 @@ const TOOLS = [
     { id: 'design', icon: Palette, Panel: DesignPanel },
     { id: 'elements', icon: Shapes, Panel: ElementsPanel },
     { id: 'photos', icon: Images, Panel: PhotosPanel },
+    // Dibujar a mano sobre la pieza, igual que en un Pop (solo escritorio):
+    // abre el modo dibujo a pantalla completa; cada trazo es un elemento
+    // "Dibujo" de la sección donde empieza (decorations.<sección>).
+    { id: 'draw', icon: PenLine, Panel: null },
     { id: 'uploads', icon: CloudUpload, Panel: UploadsPanel },
     // Simulador del pase de Apple Wallet de los invitados (foto, título, lugar principal).
     { id: 'wallet', icon: Ticket, Panel: WalletPanelInvitacion },
+    // Invitación en PDF: cambia el editor por EditorPdf (BuildPage). docs/invitacion-pdf.md
+    { id: 'pdf', icon: FileText, Panel: PdfToolPanel },
     { id: 'ai', icon: WandSparkles, Panel: AiTextPanel, hidden: true, parent: 'elements' },
 ]
 
@@ -193,10 +204,116 @@ export const EditorWorkspace = ({
     const [toolModule, setToolModule] = useState(null)
     const [pieceModule, setPieceModule] = useState(null)
     const moduleTarget = toolModule ?? pieceModule
+    // Invitación en PDF: la pieza es el PDF y su única capa es "PDF"; elegirla
+    // enseña su barra (PdfBar). El riel sigue igual. Ver docs/invitacion-pdf.md.
+    const enPdf = esPdf(invitation)
+    const [pdfElegido, setPdfElegido] = useState(false)
+    // Al cambiar a PDF (Mi PDF) queda elegido, con su barra a la vista.
+    useEffect(() => { setPdfElegido(enPdf) }, [enPdf])
+    const seccionPieza = enPdf ? (pdfElegido ? SECCION_PDF : null) : selectedSection
     const selectFromPiece = (type, field) => {
+        setPdfElegido(type === SECCION_PDF)
         setPieceModule(BLOCKS.has(type) ? type : null)
         onSelectSection?.(type, field)
     }
+
+    /* ── Dibujar (la misma herramienta de un Pop, SideWorkspace) ──
+       El pincel se recuerda en la sesión del editor. Siempre a pantalla
+       completa (EditorShell `inmersivo`): la pieza a todo su largo, la paleta a
+       la derecha (PaletaDibujo) y la barra arriba (DibujoBar). Los trazos los
+       ancla la pieza a su sección (EditCanvas `dibujo` → REMOTE_DIBUJO).
+       `trazos`: lo dibujado (o borrado) en esta sesión, para "Borrar todo". */
+    const [pincel, setPincel] = useState({ brush: 'pluma', color: '#FFFFFF', size: 8, opacity: 100 })
+    const [trazos, setTrazos] = useState([])
+    const modoDibujo = !movil && !live && toolOpen && activeTool === 'draw'
+    const [pincelActivo, setPincelActivo] = useState(true)
+    const [seleccionando, setSeleccionando] = useState(false)
+    // Elegido en Capas (un trazo): abre Dibujar con la pluma de selección.
+    const selAlEntrar = useRef(null)
+    // { section, id } del trazo que llega elegido (va con las propiedades de
+    // la pieza: al entrar, la pieza se vuelve a cargar en el tablero inmersivo).
+    const [selDibujo, setSelDibujo] = useState(null)
+    useEffect(() => {
+        if (!modoDibujo) {
+            // Al salir, ningún trazo queda elegido.
+            setSelDibujo(null)
+            if (selectedLayer) { setSelectedLayer(null); onCanvasBlur?.() }
+            return
+        }
+        setPincelActivo(true)
+        setSeleccionando(Boolean(selAlEntrar.current))
+        setSelDibujo(selAlEntrar.current)
+        selAlEntrar.current = null
+        setPieceModule(null)
+        setTextField(null)
+        setPdfElegido(false)
+    }, [modoDibujo])
+    useEffect(() => {
+        const abrir = (e) => {
+            if (movil || live) return
+            selAlEntrar.current = e.detail ?? null
+            setActiveTool('draw')
+            setToolOpen(true)
+        }
+        window.addEventListener('iattend-abrir-dibujo', abrir)
+        return () => window.removeEventListener('iattend-abrir-dibujo', abrir)
+    }, [movil, live])
+    const tomarPincel = () => { setPincelActivo(true); setSeleccionando(false) }
+    // Un trazo guardado por la pieza: sus secciones cambiadas, un paso de deshacer.
+    const onDibujo = ({ cambios, tipo, id, section }) => {
+        setInvitation((prev) => ({ ...prev, decorations: { ...(prev.decorations ?? {}), ...cambios } }))
+        setSaved(false)
+        setTrazos((x) => [...x, { tipo, id, section }])
+    }
+    const deshacerTrazo = () => { onUndo?.(); setTrazos((x) => x.slice(0, -1)) }
+    const borrarTodo = () => {
+        const mios = trazos.filter((x) => x.id && x.section)
+        if (mios.length) {
+            setInvitation((prev) => {
+                const decor = { ...(prev.decorations ?? {}) }
+                for (const { id, section } of mios) decor[section] = (decor[section] ?? []).filter((it) => it.id !== id)
+                return { ...prev, decorations: decor }
+            })
+            setSaved(false)
+        }
+        setTrazos([])
+    }
+    // Atajos del modo dibujo: P pluma, E borrador, V selección, Esc = Listo
+    // (con un trazo elegido, lo suelta). ⌘/Ctrl Z ya deshace en todo el editor.
+    useEffect(() => {
+        if (!modoDibujo) return
+        const onKey = (e) => {
+            const el = e.target
+            if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) setTrazos((x) => x.slice(0, -1))
+            else if (e.metaKey || e.ctrlKey || e.altKey) return
+            else if (e.key.toLowerCase() === 'p') { setPincel((x) => ({ ...x, brush: 'pluma' })); tomarPincel() }
+            else if (e.key.toLowerCase() === 'e') { setPincel((x) => ({ ...x, brush: 'borrador' })); tomarPincel() }
+            else if (e.key.toLowerCase() === 'v') { setSeleccionando(true); setPincelActivo(true) }
+            else if (e.key === 'Escape') {
+                if (selectedLayer) onCanvasBlur?.()
+                else setToolOpen(false)
+            }
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [modoDibujo, selectedLayer])
+    // Trazo elegido con la pluma de selección: la paleta enseña Eliminar.
+    const trazoElegido = modoDibujo && seleccionando && selectedItem?.kind === 'dibujo' ? selectedLayer : null
+    const eliminarTrazo = trazoElegido ? () => {
+        setInvitation((prev) => ({
+            ...prev,
+            decorations: { ...(prev.decorations ?? {}), [trazoElegido.section]: (prev.decorations?.[trazoElegido.section] ?? []).filter((it) => it.id !== trazoElegido.id) },
+        }))
+        setSaved(false)
+        setSelectedLayer(null)
+    } : undefined
+    const dibujoPieza = modoDibujo ? {
+        pincel: pincelActivo && !seleccionando ? pincel : null,
+        completa: true,
+        sel: selDibujo,
+        onDibujo,
+    } : null
     const moduleLabel = moduleTarget === 'family' ? 'people' : moduleTarget
     const moduleBg = moduleTarget ? invitation?.[moduleLabel]?.dynamic_background : null
     const quoteImageOn = moduleTarget === 'quote' && Boolean(invitation?.quote?.image?.active)
@@ -243,7 +360,21 @@ export const EditorWorkspace = ({
 
     // A qué se le pone color en el panel "Color": el texto (si su barra está
     // abierta y se pidió ahí), el fondo del bloque o el elemento elegido.
-    const colorTarget = fieldBar === 'dress_colors' && colorField === 'dress' && dressIndex != null && dressColors[dressIndex]
+    const colorTarget = modoDibujo && colorField === 'draw'
+        ? {
+            // Color del pincel: selector estilo iOS con opacidad, hacia el
+            // centro (la paleta está a la derecha), como en un Pop.
+            ios: true,
+            value: pincel.color,
+            allowNone: false,
+            onPick: (c) => setPincel((x) => ({ ...x, color: c })),
+            opacity: pincel.opacity,
+            onOpacity: (v) => setPincel((x) => ({ ...x, opacity: v })),
+            opacidadMin: 10,
+            placement: 'left',
+            anclarA: '[data-paleta-dibujo]',
+        }
+        : fieldBar === 'dress_colors' && colorField === 'dress' && dressIndex != null && dressColors[dressIndex]
         ? {
             label: t('build_editor.dress_color'),
             value: dressColors[dressIndex],
@@ -374,10 +505,17 @@ export const EditorWorkspace = ({
 
     // Barra contextual de lo elegido (una a la vez). Prioridad: elemento >
     // texto > campo (momento, paleta, fecha…) > separador > fondo del bloque.
+    // Un trazo (Dibujar) solo se edita dentro de Dibujar: fuera, sin su barra.
+    const elementoConBarra = selectedItem && !(selectedItem.kind === 'dibujo' && !modoDibujo) ? selectedItem : null
+    // En PDF: un elemento elegido lleva su barra (ElementBar); si no, la del PDF.
+    // (y la canción, que se elige con el chip de la pieza, lleva la suya).
+    const barraPdf = enPdf && !elementoConBarra && fieldBar !== 'song'
     const bar = live ? null
-        : selectedItem ? (
+        : modoDibujo ? <DibujoBar trazos={trazos.length} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} />
+        : barraPdf ? (pdfElegido ? <PdfBar invitation={invitation} invitationID={invitationID} setInvitation={setInvitation} setSaved={setSaved} /> : null)
+        : elementoConBarra ? (
         <ElementBar
-            item={selectedItem}
+            item={elementoConBarra}
             accent={invitation?.generals?.colors?.accent ?? '#29262D'}
             onPatch={patchItem}
             onPickColor={pickColor}
@@ -516,10 +654,10 @@ export const EditorWorkspace = ({
     if (movil) {
         return (
             <EditorMovilShell
-                tools={TOOLS.map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`) }))}
+                tools={TOOLS.filter((x) => x.id !== 'draw').map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`) }))}
                 // Diseño a media pantalla (la pieza se ve arriba); Elementos,
                 // Fotos, Subidos y Lia a pantalla completa; el pase en modal.
-                modos={{ design: 0.5, elements: 1, photos: 1, uploads: 1, ai: 1, wallet: 'modal' }}
+                modos={{ design: 0.5, elements: 1, photos: 1, uploads: 1, ai: 1, wallet: 'modal', pdf: 'modal' }}
                 activeTool={activeTool}
                 toolOpen={toolOpen}
                 onPickTool={pickTool}
@@ -531,7 +669,7 @@ export const EditorWorkspace = ({
                         movil
                         invitation={invitation}
                         invitationID={invitationID}
-                        selectedSection={selectedSection}
+                        selectedSection={seccionPieza}
                         onSelectSection={selectFromPiece}
                         onFieldChange={onFieldChange}
                         scrollToSection={positionY}
@@ -570,7 +708,7 @@ export const EditorWorkspace = ({
                 canRedo={canRedo}
                 headerDerecha={headerDerecha}
                 estado={estado}
-                onBlur={() => { setPieceModule(null); setTextField(null); onCanvasBlur?.() }}
+                onBlur={() => { setPieceModule(null); setTextField(null); setPdfElegido(false); onCanvasBlur?.() }}
             />
         )
     }
@@ -591,12 +729,12 @@ export const EditorWorkspace = ({
             onLeaveEdit={onCanvasBlur}
             // Tocar el tablero fuera de la pieza suelta lo elegido dentro:
             // módulos, textos y elementos sueltos.
-            onBlur={() => { setPieceModule(null); setTextField(null); onCanvasBlur?.() }}
+            onBlur={() => { setPieceModule(null); setTextField(null); setPdfElegido(false); onCanvasBlur?.() }}
             canvas={(
                 <EditCanvas
                     invitation={invitation}
                     invitationID={invitationID}
-                    selectedSection={selectedSection}
+                    selectedSection={seccionPieza}
                     onSelectSection={selectFromPiece}
                     onFieldChange={onFieldChange}
                     scrollToSection={positionY}
@@ -620,6 +758,7 @@ export const EditorWorkspace = ({
                     onIconTool={openIconPanel}
                     activeText={textField?.path ?? null}
                     selectedLayer={selectedLayer}
+                    dibujo={dibujoPieza}
                 />
             )}
             liveContent={<ReactHost config={invitation} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} vistaConfirmada={vistaConfirmada} plan={plan} />}
@@ -635,6 +774,25 @@ export const EditorWorkspace = ({
             canRedo={canRedo}
             onReplayTour={onReplayTour}
             mediaSider={mediaSider}
+            inmersivo={modoDibujo}
+            inmersivoGestos={{ sinHerramienta: !pincelActivo, onTapFuera: () => setPincelActivo(false) }}
+            lateral={modoDibujo ? (
+                <PaletaDibujo
+                    pincel={pincel}
+                    setPincel={setPincel}
+                    activo={pincelActivo}
+                    onActivar={tomarPincel}
+                    seleccionando={pincelActivo && seleccionando}
+                    onSeleccionar={() => { setSeleccionando(true); setPincelActivo(true) }}
+                    onEliminar={eliminarTrazo}
+                    temaColor={invitation?.generals?.colors?.accent}
+                    onDeshacer={deshacerTrazo}
+                    puedeDeshacer={Boolean(canUndo)}
+                    onRehacer={() => { onRedo?.(); setTrazos((x) => [...x, { tipo: 'rehacer' }]) }}
+                    puedeRehacer={Boolean(canRedo)}
+                    onOtroColor={() => pickColor('draw')}
+                />
+            ) : null}
         >
             {/* ── Popover de color (lo abren los botones de color de las barras) ── */}
             {!live && <ColorPopover colorPop={colorPop} closeColor={closeColor} target={colorTarget} palette={invitationPalette(invitation)} />}

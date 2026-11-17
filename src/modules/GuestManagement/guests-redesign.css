@@ -1867,8 +1867,10 @@
 
 .gx.gx--compacta-boda {
     width: 100%;
-    height: calc(100dvh - 190px);
-    min-height: 480px;
+    /* Del encabezado de la página (75 px + 32 px de aire + 10 px) al borde de
+       abajo de la pantalla, con 16 px de margen. */
+    height: calc(100dvh - 133px);
+    min-height: 420px;
     gap: 6px;
 }
 
@@ -1876,4 +1878,33 @@
     margin-left: 4px;
     color: var(--gx-muted);
     font-weight: 600;
+}
+
+/* Recordatorios dentro de la vista compacta: sin escalera, con regreso. */
+.gx.gx-recordatorios-compacta {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gx-volver-tabla {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px 0 10px;
+    border: 1px solid var(--gx-border);
+    border-radius: 99px;
+    background: var(--gx-card, #fff);
+    color: var(--gx-ink);
+    font-family: 'Work Sans', 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.gx-volver-tabla:hover {
+    background: #F1EFEC;
 }

@@ -18,6 +18,7 @@ import { usePopsTransicion } from './usePopsTransicion'
 import { TEMAS_POPS, usePopsTema } from './usePopsTema'
 import { useTextures } from '../../context/TexturesContext'
 import { PopsOnboarding } from '../../components/PopsOnboarding/PopsOnboarding'
+import { FooterApp } from '../../modules/Footer/FooterApp'
 
 
 /**
@@ -151,6 +152,10 @@ export const PlannerLayout = ({
         return Object.fromEntries(conNumeros.map(inv => [inv.id, buildStats(inv, datosEventos, hoy)]))
     }, [datosEventos, conNumerosKey])
     const enDashboard = view === 'data'
+
+    // Pie: el de la app, al fondo del contenido (no en Pops, que tiene su propia estética).
+    const pie = <FooterApp className={styles.pieLegal} />
+
     // Pastilla de la barra inferior (celular): el botón activo siempre a la
     // vista (al montar sin animación; al cambiar de sección, deslizándose).
     const pastillaRef = useRef(null)
@@ -174,6 +179,8 @@ export const PlannerLayout = ({
     const business = temaPops === 'business'
     const modoBiz = modoPops && business
     const modoCraft = modoPops && temaPops === 'craft'
+    // El mismo pie dentro de Pops, al final de su lista (en Craft, sobre una hoja de papel).
+    const piePops = <FooterApp className={`${styles.piePops} ${temaPops === 'craft' ? styles.piePopsCraft : ''}`} />
     // El estilo de Pops en <html> mientras se está en la sección: lo leen los
     // paneles que se abren desde ahí (Comprar evento, Nuevo Pop), que antd
     // manda a <body>.
@@ -301,6 +308,7 @@ export const PlannerLayout = ({
         ? (enDashboard ? null : <PlannerSkeleton variante={!activa || activa.key === 'test' ? 'explora' : 'lista'} />)
         : enDashboard ? dashboard : modoPops ? (
         <PopsSection
+            pie={piePops}
             greeting={greeting}
             items={activa.items}
             gratisPop={gratisPop}
@@ -400,6 +408,7 @@ export const PlannerLayout = ({
                             : (
                                 <PopsSection
                                     movil
+                                    pie={piePops}
                                     greeting={greeting}
                                     items={activa.items}
                                     gratisPop={gratisPop}
@@ -435,6 +444,8 @@ export const PlannerLayout = ({
                         <div className={styles.contenidoMovil}>{contenido}</div>
 
                         {enDashboard && <PlannerFeedback variante='fila' />}
+
+                        {pie}
                     </main>
                 )}
 
@@ -611,6 +622,8 @@ export const PlannerLayout = ({
                 </div>}
 
                 {contenido}
+
+                {!modoPops && pie}
             </main>
         </div>
     )

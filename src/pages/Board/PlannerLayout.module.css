@@ -8,6 +8,41 @@
     min-height: 100vh;
 }
 
+/* Pie de /invitations (FooterApp): al fondo de la columna cuando el contenido
+   es corto; sin el ancho ni el relleno propios, porque .main ya los tiene. */
+.main > .pieLegal {
+    margin-top: auto;
+    max-width: none;
+    padding: 48px 0 0;
+}
+
+/* Pie dentro de Pops: va al final de la lista de cada estilo, que ya tiene su
+   relleno; doble clase para ganarle a .fa-main-cont. */
+:global(.fa-main-cont).piePops {
+    max-width: none;
+    margin: 0;
+    padding: 24px 0 0;
+}
+
+/* En /invitations no está el círculo de Lia: sin el hueco que le deja el pie. */
+.pieLegal :global(.fa-footer-cont > .fa-lado:last-child),
+.piePops :global(.fa-footer-cont > .fa-lado:last-child) {
+    padding-right: 0;
+}
+
+/* Craft: sobre el corcho el gris no se lee; el pie va en una hoja de papel
+   (las cintas y el espacio de arriba los pone PopsCraft). */
+:global(.fa-main-cont).piePopsCraft {
+    padding-top: 0;
+}
+
+:global(.fa-main-cont).piePopsCraft :global(.fa-footer-cont) {
+    padding: 20px 22px;
+    border-top: none;
+    background: var(--craft-papel);
+    box-shadow: var(--craft-sombra-papel);
+}
+
 /* ── Barra lateral ── */
 
 .sidebar {

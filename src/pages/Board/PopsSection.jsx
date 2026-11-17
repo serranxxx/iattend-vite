@@ -113,7 +113,7 @@ export const PopsSection = (props) => {
     return <PopsPop {...props} switchTema={switchTema} />
 }
 
-const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema }) => {
+const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie }) => {
     const { t, i18n } = useTranslation()
     const hoy = dayjs().startOf('day')
 
@@ -288,6 +288,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                             {pasados.map(f => filaMovil(f, true))}
                         </div>
                     )}
+                    {pie}
                 </section>
             </div>
         )
@@ -368,6 +369,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                         </div>
                     )}
                 </div>
+                {pie}
             </section>
         </div>
     )

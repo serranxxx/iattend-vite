@@ -272,6 +272,17 @@
     box-sizing: border-box;
 }
 
+/* Elementos anclados a la página (pin, `fijo`): la primera pantalla del
+   contenido que hace scroll; suben con él, sin zoom, encima de .infoCont. */
+.capaAnclados {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
 /* ── Columna de info (.info_cont del remoto) ── */
 .infoCont {
     position: relative;

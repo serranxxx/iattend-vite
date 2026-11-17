@@ -778,6 +778,16 @@ export const ImportarInvitados = ({ invitationId, sideEventId, esPop = false, ar
             {paso === 'eventos' && (
                 <div className={`${s.cuerpo} ${s.cuerpoEventos}`}>
                     {error && <p className={s.error}><AlertTriangle size={16} />{error}</p>}
+                    {/* Sin otros eventos con invitados (o aún buscándolos):
+                        la hoja se abre igual, con su aviso. */}
+                    {!eventos?.length && (
+                        <div className={s.sinEventos}>
+                            <span className={s.sinEventosIcono}><CalendarHeart size={22} /></span>
+                            <b>{tt(eventos == null ? 'events_loading' : 'events_empty_title')}</b>
+                            {eventos != null && <span>{tt('events_empty_text')}</span>}
+                            {eventos != null && <button type="button" className={s.botonClaro} onClick={onCerrar}>{tt('close')}</button>}
+                        </div>
+                    )}
                     <div className={s.eventos}>
                         {(eventos ?? []).map((ev, i) => (
                             <button key={`${ev.tipo}-${ev.id}`} type="button" className={s.evento} style={{ '--d': `${Math.min(i, 12) * 40}ms` }} onClick={() => usarEvento(ev)}>

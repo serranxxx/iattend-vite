@@ -1,4 +1,5 @@
 import { indicePrincipal, tieneDireccion } from '../BuildSections/lugarPrincipal'
+import { fuenteDePortada } from '../../../../helpers/invitation/portadaInvitacion'
 
 /*
   Datos del pase de Apple Wallet de una invitación para el simulador del
@@ -15,7 +16,8 @@ import { indicePrincipal, tieneDireccion } from '../BuildSections/lugarPrincipal
 const MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
 
 export const portadaDe = (invitation) => {
-    const src = invitation?.cover?.image?.prod
+    // Invitación en PDF: su primera página.
+    const src = fuenteDePortada(invitation)
     if (typeof src === 'string') return src.trim() || null
     if (Array.isArray(src)) return src.find((s) => typeof s === 'string' && s.trim()) ?? null
     return null

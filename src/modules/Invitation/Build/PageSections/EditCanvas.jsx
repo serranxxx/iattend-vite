@@ -11,6 +11,9 @@ import { createPortal } from 'react-dom'
 import { ModuleOrder } from './ModuleOrder'
 import { ModuleLayers } from './ModuleLayers'
 import { CancionPop } from '../../../SideEvents/CancionPop'
+import { PdfLayers } from '../../Pdf/PdfLayers'
+import { TrazoSvg } from '../../../Editor/Dibujo'
+import { esPdf, SECCION_PDF } from '../../Pdf/pdfInvitacion'
 import styles from './EditCanvas.module.css'
 
 // Los popovers sobre la pieza se cierran al tocar fuera, pero no al usar lo
@@ -32,6 +35,9 @@ const useOutsideClose = (open, onClose) => {
 // contenedor del Popover: el CSS-in-JS de antd se inyecta después que el CSS
 // de la app y le ganaba al fondo blanco.
 const CARD_WIDTH = 390
+// Alto de una pantalla de la pieza (.card): la portada lo sigue midiendo
+// cuando la pieza va a todo su largo (Dibujar).
+const ALTO_PANTALLA = 780
 // Anchos reales de los popovers (contenido + padding + borde).
 const TITLE_POPOVER_WIDTH = 302
 const MEDIA_POPOVER_WIDTH = 342
@@ -127,6 +133,13 @@ export const EditCanvas = ({
     // ({ path }) y el elemento suelto ({ section, id }).
     activeText,
     selectedLayer,
+    // Herramienta Dibujar (EditorWorkspace): { pincel (o null si no se está
+    // dibujando: pluma de selección / sin pluma), modo ('pincel' | 'seleccion'),
+    // completa (la pieza a todo su largo), onDibujo }. Con pincel, una capa
+    // encima de la pieza toma el puntero y pinta el trazo en curso; al soltar
+    // lo manda a la pieza (ReactHost → HOST_DIBUJO_TRAZO), que lo ancla a su
+    // sección y lo regresa (REMOTE_DIBUJO → onDibujo).
+    dibujo = null,
 }) => {
     const { t } = useTranslation()
     // El chip "Color del tema" muestra el color secundario de la paleta.
@@ -271,7 +284,7 @@ export const EditCanvas = ({
     const [chipPop, setChipPop] = useState(null)
     useOutsideClose(Boolean(chipPop), () => setChipPop(null))
     // Los chips solo están en la portada: al irse de ella se cierra su popover.
-    useEffect(() => { if (selectedSection !== 'cover') setChipPop(null) }, [selectedSection])
+    useEffect(() => { if (selectedSection !== (esPdf(invitation) ? SECCION_PDF : 'cover')) setChipPop(null) }, [selectedSection])
     // El ancla se calcula al abrir: si la ventana cambia de tamaño con un
     // popover abierto, se cierra en vez de quedar mal colocado.
     useEffect(() => {
@@ -348,15 +361,93 @@ export const EditCanvas = ({
         setChipPop({ kind, left: fitLeft(left - 8, width), top: (c.top - r.top) / scale, width: c.width / scale, height: c.height / scale })
     }
     const song = invitation?.cover?.song ?? null
+    // Invitación en PDF: la canción (la misma cover.song) se elige desde el
+    // PDF; el chip siempre está a la vista (no hay portada).
+    const enPdf = esPdf(invitation)
+    const seccionCancion = enPdf ? SECCION_PDF : 'cover'
     const setSong = (value) => {
         setInvitation((prev) => ({ ...prev, cover: { ...prev.cover, song: value } }))
         setSaved(false)
     }
 
+    /* ── Dibujar ── */
+    // Alto de la pieza a todo su largo (REMOTE_HEIGHT) mientras se dibuja.
+    const [alturaPieza, setAlturaPieza] = useState(null)
+    const completa = Boolean(dibujo?.completa)
+    useEffect(() => { if (!completa) setAlturaPieza(null) }, [completa])
+    // Trazo que entra elegido a Dibujar (desde Capas): se elige en cuanto la
+    // pieza ya se pintó a todo su largo (avisa su alto).
+    const selId = dibujo?.sel ? `${dibujo.sel.section}:${dibujo.sel.id}` : null
+    useEffect(() => {
+        if (!selId || !alturaPieza || dibujo?.pincel) return undefined
+        const [section, id] = selId.split(':')
+        const t = setTimeout(() => window.dispatchEvent(new CustomEvent('iattend-host-layer-select', { detail: { section, id, scroll: true } })), 150)
+        return () => clearTimeout(t)
+    }, [selId, Boolean(alturaPieza)])
+    const capaRef = useRef(null)
+    const trazoRef = useRef(null)
+    const [trazo, setTrazo] = useState(null) // { pts en px de la pieza, w, h }
+    const pincel = dibujo?.pincel ?? null
+    const aLocal = (pts) => {
+        const el = capaRef.current
+        if (!el) return null
+        const r = el.getBoundingClientRect()
+        const s = r.width / (el.offsetWidth || r.width)
+        return { pts: pts.map(([x, y]) => [(x - r.left) / s, (y - r.top) / s]), w: el.offsetWidth, h: el.offsetHeight }
+    }
+    const empezarTrazo = (e) => {
+        if (!pincel || e.button !== 0) return
+        e.preventDefault()
+        e.stopPropagation()
+        try { e.currentTarget.setPointerCapture?.(e.pointerId) } catch { /* puntero ya suelto */ }
+        trazoRef.current = [[e.clientX, e.clientY]]
+        setTrazo(aLocal(trazoRef.current))
+    }
+    const moverTrazo = (e) => {
+        const pts = trazoRef.current
+        if (!pts) return
+        const u = pts[pts.length - 1]
+        if (Math.hypot(e.clientX - u[0], e.clientY - u[1]) < 0.8) return
+        trazoRef.current = [...pts, [e.clientX, e.clientY]]
+        setTrazo(aLocal(trazoRef.current))
+    }
+    const terminarTrazo = () => {
+        const pts = trazoRef.current
+        trazoRef.current = null
+        if (!pts || !pincel) { setTrazo(null); return }
+        window.dispatchEvent(new CustomEvent('iattend-host-dibujo', { detail: { pts, pincel } }))
+    }
+    // El trazo en curso se queda pintado hasta que la pieza regresa el
+    // guardado (cambian los elementos) para que no parpadee; con un tope.
+    useEffect(() => {
+        if (!trazo || trazoRef.current) return undefined
+        const t = setTimeout(() => setTrazo(null), 700)
+        return () => clearTimeout(t)
+    }, [trazo])
+    useEffect(() => { if (!trazoRef.current) setTrazo(null) }, [invitation?.decorations])
+    // Dos dedos (zoom / mover el tablero, LienzoInmersivo): el trazo se descarta.
+    useEffect(() => {
+        const cancelar = () => { trazoRef.current = null; setTrazo(null) }
+        window.addEventListener('iattend-dibujo-cancelar', cancelar)
+        return () => window.removeEventListener('iattend-dibujo-cancelar', cancelar)
+    }, [])
+
     return (
         <div className={styles.wrap}>
             {/* En la portada no hay orden que tocar: la columna no aparece. */}
-            {layersTarget && createPortal(
+            {/* Invitación en PDF: la capa "PDF" con sus elementos sueltos. */}
+            {layersTarget && esPdf(invitation) && createPortal(
+                <PdfLayers
+                    invitation={invitation}
+                    selected={selectedSection === SECCION_PDF}
+                    onSelect={() => onSelectSection(SECCION_PDF)}
+                    selectedLayer={selectedLayer}
+                    setInvitation={setInvitation}
+                    setSaved={setSaved}
+                />,
+                layersTarget,
+            )}
+            {layersTarget && !esPdf(invitation) && createPortal(
                 <ModuleLayers
                     invitation={invitation}
                     selectedSection={selectedSection}
@@ -398,9 +489,16 @@ export const EditCanvas = ({
                     <DressImages large module={tool.field === 'gallery_images' ? 'gallery' : 'dresscode'} invitation={invitation} setInvitation={setInvitation} setSaved={setSaved} invitationID={invitationID} />
                 </div>
             )}
-            <div ref={cardRef} className={styles.card} data-tour="preview" data-movil={movil || undefined}>
-                {/* Canción y color del tema son de la portada: solo con ella a la vista. */}
-                {selectedSection === 'cover' && (
+            <div
+                ref={cardRef}
+                className={styles.card}
+                data-tour="preview"
+                data-movil={movil || undefined}
+                data-dibujo={dibujo ? (pincel ? 'pincel' : 'seleccion') : undefined}
+                style={completa && alturaPieza ? { height: alturaPieza } : undefined}
+            >
+                {/* Canción y color del tema son de la portada: solo con ella a la vista (en PDF, la canción siempre). */}
+                {!dibujo && (enPdf || selectedSection === 'cover') && (
                 <div className={styles.chips}>
                     <button
                         ref={songChipRef}
@@ -408,9 +506,9 @@ export const EditCanvas = ({
                         className={styles.chip}
                         data-canvas-popover-trigger
                         onClick={() => {
-                            onSelectSection('cover')
+                            onSelectSection(seccionCancion)
                             // Escritorio: la canción va en su barra arriba de la pieza.
-                            if (onFieldBar) setTool((prev) => (prev?.field === 'song' ? null : { field: 'song', section: 'cover', rect: { x: 0, y: 0, w: 0, h: 0 }, side: 'left', left: 0 }))
+                            if (onFieldBar) setTool((prev) => (prev?.field === 'song' ? null : { field: 'song', section: seccionCancion, rect: { x: 0, y: 0, w: 0, h: 0 }, side: 'left', left: 0 }))
                             else toggleChip('song', songChipRef, SONG_POPOVER_WIDTH)
                         }}
                     >
@@ -520,8 +618,36 @@ export const EditCanvas = ({
                         }}
                         onPiecePointerDown={onPiecePointerDown}
                         scrollRequest={scrollRequest}
+                        dibujo={dibujo ? (pincel ? 'pincel' : 'seleccion') : null}
+                        completa={completa ? ALTO_PANTALLA : null}
+                        onAltura={completa ? setAlturaPieza : undefined}
+                        onDibujo={dibujo?.onDibujo}
                     />
                 </div>
+                {/* Dibujar con un pincel: esta capa toma el puntero (la pieza es un
+                    iframe) y pinta el trazo en curso con el mismo SVG del Pop. */}
+                {pincel && (
+                    <div
+                        ref={capaRef}
+                        className={styles.capaDibujo}
+                        data-borrador={pincel.brush === 'borrador' || undefined}
+                        onPointerDown={empezarTrazo}
+                        onPointerMove={moverTrazo}
+                        onPointerUp={terminarTrazo}
+                        onPointerCancel={() => { trazoRef.current = null; setTrazo(null) }}
+                    >
+                        {trazo && (
+                            <span className={styles.trazoEnCurso} style={{ opacity: pincel.brush === 'borrador' ? 1 : pincel.opacity / 100 }}>
+                                <TrazoSvg
+                                    s={{ brush: pincel.brush, color: pincel.color, size: pincel.size, points: trazo.pts }}
+                                    vbW={trazo.w}
+                                    vbH={trazo.h}
+                                    preview
+                                />
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             <span className={styles.caption} data-leyenda>{t('build_editor.canvas_caption')}</span>

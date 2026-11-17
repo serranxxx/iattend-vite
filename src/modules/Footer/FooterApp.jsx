@@ -1,65 +1,44 @@
 import React from 'react'
+import { Instagram, Mail, MessageCircle } from 'lucide-react'
 import './footer-app.css'
-import { FaHeadset, FaInstagram, FaRegEnvelope, FaRegPaperPlane, FaWhatsapp } from 'react-icons/fa'
-import { advisorWhatsappUrl } from '../../helpers/contact'
+import { enlacesFooter } from './enlacesFooter'
 
-export const FooterApp = ({ shared_user }) => {
+const ICONOS = { whatsapp: MessageCircle, mail: Mail, instagram: Instagram }
 
-    const links = shared_user?.active
-        ? [
-            { href: advisorWhatsappUrl(),                                      icon: <FaHeadset />,        label: 'Ayuda' },
-            { href: `https://wa.me/${shared_user.whatsapp}`,                   icon: <FaWhatsapp />,       label: 'Contacto', hide: !shared_user.whatsapp },
-            { href: `https://www.instagram.com/${shared_user.instagram}`,      icon: <FaInstagram />,      label: `${shared_user.instagram}`, hide: !shared_user.instagram },
-            { href: `mailto:${shared_user.email}`,                             icon: <FaRegEnvelope />,    label: shared_user.email, hide: !shared_user.email },
-            { href: '/legal',                                                   icon: <FaRegPaperPlane />,  label: 'Legal' },
-        ]
-        : [
-            { href: advisorWhatsappUrl(),                                      icon: <FaHeadset />,        label: 'Ayuda' },
-            { href: advisorWhatsappUrl(),                                      icon: <FaWhatsapp />,       label: 'Contacto' },
-            { href: 'https://www.instagram.com/iattend.mx',                   icon: <FaInstagram />,      label: 'iattend.mx' },
-            { href: 'mailto:contacto.iattend@gmail.com',                      icon: <FaRegEnvelope />,    label: 'Mail' },
-            { href: '/legal',                                                   icon: <FaRegPaperPlane />,  label: 'Legal' },
-        ]
+const externo = (href) => (href.startsWith('/') ? {} : { target: '_blank', rel: 'noreferrer' })
+
+// Pie de la app, el mismo en todas las pantallas: a la izquierda © y Legal; a la
+// derecha Cómo funciona, Ayuda y los botones redondos de contacto. `className`
+// deja ajustar el espacio desde la página que lo usa (PlannerLayout lo empuja
+// al fondo de su columna).
+export const FooterApp = ({ shared_user, className = '' }) => {
+    const { legal, textos, contacto } = enlacesFooter(shared_user)
 
     return (
-        <div className="fa-main-cont">
+        <footer className={`fa-main-cont ${className}`}>
             <div className="fa-footer-cont">
-
-                <div className="fa-footer-main-col">
-                    <a href="/invitations" className="fa-footer-row">
-                        <img className="fa-footer-logo" src="/images/logo_blue.png" alt="I attend" />
-                    </a>
-
-                    <div className="fa-links-col">
-                        {links.filter(l => !l.hide).map((l, i) => (
-                            <a key={i} href={l.href} rel="noreferrer" target="_blank" className="fa-footer-link">
-                                {l.icon} {l.label}
-                            </a>
-                        ))}
-                    </div>
+                <div className="fa-lado">
+                    <span className="fa-copy">© {new Date().getFullYear()} I attend</span>
+                    <a href={legal.href} className="fa-link fa-link-suave">{legal.label}</a>
                 </div>
 
-                {/* <div className="fa-links">
-                    <div className="fa-link-cont">
-                        <span className="fa-link-heading">Servicios</span>
-                        <a href="/about/invitacion-digital">Invitación Paperless</a>
-                        <a href="/about/guest-management">Gestión de invitados</a>
-                        <a href="/about/mapa-de-mesas">Organización por mesas</a>
-                        <a href="/about/pases-digitales">Pases digitales</a>
-                        <a href="/about/privacidad">Eventos privados</a>
-                        <a href="/about/envios-whatsapp">Envíos automáticos</a>
+                <div className="fa-lado">
+                    {textos.map(l => (
+                        <a key={l.label} href={l.href} className="fa-link" {...externo(l.href)}>{l.label}</a>
+                    ))}
+                    {contacto.length > 0 && <span className="fa-divisor" aria-hidden />}
+                    <div className="fa-iconos">
+                        {contacto.map(c => {
+                            const Icono = ICONOS[c.key]
+                            return (
+                                <a key={c.key} href={c.href} className="fa-icono" aria-label={c.label} title={c.label} {...externo(c.href)}>
+                                    <Icono size={18} strokeWidth={1.75} />
+                                </a>
+                            )
+                        })}
                     </div>
-
-                    <div className="fa-link-cont">
-                        <span className="fa-link-heading">Extras</span>
-                        <a href="/about/cliente-ideal">I attend para ti</a>
-                        <a href="/about/como-funciona">Cómo usar I attend</a>
-                        <a href="/about/opiniones">Reviews</a>
-                        <a href="/about/faqs">FAQs</a>
-                    </div>
-                </div> */}
-
+                </div>
             </div>
-        </div>
+        </footer>
     )
 }

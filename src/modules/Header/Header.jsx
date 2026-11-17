@@ -22,6 +22,7 @@ import { PassesPill } from "./PassesPill";
 import { SupportTicketModal } from "./SupportTicketModal";
 import { advisorWhatsappUrl } from "../../helpers/contact";
 import { MobileActionsFab } from "./MobileActionsFab";
+import { fuenteDePortada } from "../../helpers/invitation/portadaInvitacion";
 
 const baseProd = "https://www.iattend.events"
 
@@ -292,7 +293,8 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
         } else {
             setInvitation(data.data)
             setName(data.name)
-            setUrlImage(data.url_image)
+            // Invitación en PDF: la imagen del link es su primera página.
+            setUrlImage(data.data?.formato === 'pdf' ? fuenteDePortada(data.data) : data.url_image)
             setInvOwners(data.owners ?? [])
             setInvLabel(data.label ?? null)
             setInvPhone(data.phone_number ?? null)
@@ -783,7 +785,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             <div className="hd-url" data-icon={tier === 'sm' || undefined}>
                                 <CustomLink
                                     isSmall={tier === 'sm'}
-                                    backuImage={invitation?.cover?.image?.prod}
+                                    backuImage={fuenteDePortada(invitation)}
                                     isHeader={true}
                                     maxHeight={30}
                                     urlImage={urlImage}

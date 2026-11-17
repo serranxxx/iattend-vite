@@ -38,7 +38,6 @@ import { AuthModal } from '../../pages/PreviewMood/AuthModal'
 import '../../pages/PreviewMood/preview-mood.css'
 import { GuestAddTiles } from '../GuestManagement/GuestAddTiles'
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD'
-import { handleCheckout, PRICE_IDS } from '../../components/Payment/functions'
 import styles from './SaveTheDatePage.module.css'
 import '../GuestManagement/guests-redesign.css'
 
@@ -2063,13 +2062,8 @@ export const SaveTheDatePage = ({ demo = false }) => {
                             <div className={styles.proCta}>
                                 <span className={styles.proCtaTitle}>{t('savethedate.send_pro_title')}</span>
                                 <span className={styles.proCtaText}>{t('savethedate.send_pro_text')}</span>
-                                <Button
-                                    type='primary'
-                                    style={{ borderRadius: '12px', fontWeight: 600 }}
-                                    onClick={() => handleCheckout(id, PRICE_IDS.UPGRADE_TO_PRO)}
-                                >
-                                    {t('savethedate.send_pro_cta')}
-                                </Button>
+                                {/* Sin botón de compra: cobraba "Cámbiate a PRO" ($1,100) a cualquier
+                                    plan, incluidos Free y Paperless. */}
                             </div>
                         </>
                     }

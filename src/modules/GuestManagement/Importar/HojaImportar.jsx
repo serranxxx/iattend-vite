@@ -15,7 +15,10 @@ const AVISO_MS = 3200
 // aviso abajo al centro: "✦ Lia importó N invitados".
 // `modo='evento'` abre directo en la lista de eventos del organizador
 // (`eventos`, de POST /api/guests/import/eventos).
-export const HojaImportar = ({ abierta, archivo = null, modo = 'archivo', eventos = null, invitationId, sideEventId, esPop = false, onCerrar, onImportado }) => {
+// `barra`: la barra de la que sale (en /dashboard/guests, el header del
+// dashboard) y `z`: el z-index del fondo (la hoja va uno arriba); tiene que
+// quedar debajo de esa barra.
+export const HojaImportar = ({ abierta, archivo = null, modo = 'archivo', eventos = null, invitationId, sideEventId, esPop = false, onCerrar, onImportado, barra = '[data-editor-topbar]', z = 998 }) => {
     const { t } = useTranslation()
     const [montada, setMontada] = useState(false)
     const [visible, setVisible] = useState(false)
@@ -24,8 +27,8 @@ export const HojaImportar = ({ abierta, archivo = null, modo = 'archivo', evento
 
     useLayoutEffect(() => {
         if (!abierta) return
-        const barra = document.querySelector('[data-editor-topbar]')
-        setArriba(barra ? Math.round(barra.getBoundingClientRect().bottom) : 76)
+        const el = document.querySelector(barra)
+        setArriba(el ? Math.round(el.getBoundingClientRect().bottom) : 76)
         setMontada(true)
         const id = requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)))
         return () => cancelAnimationFrame(id)
@@ -49,10 +52,10 @@ export const HojaImportar = ({ abierta, archivo = null, modo = 'archivo', evento
         <>
             {montada && (
                 <>
-                    <div className={s.fondo} style={{ top: arriba }} data-visible={visible || undefined} aria-hidden />
+                    <div className={s.fondo} style={{ top: arriba, zIndex: z }} data-visible={visible || undefined} aria-hidden />
                     <div
                         className={s.hoja}
-                        style={{ top: arriba, '--abre': `${ABRE_MS}ms`, '--cierra': `${CIERRA_MS}ms` }}
+                        style={{ top: arriba, zIndex: z + 1, '--abre': `${ABRE_MS}ms`, '--cierra': `${CIERRA_MS}ms` }}
                         data-visible={visible || undefined}
                         role="dialog"
                         aria-modal="true"

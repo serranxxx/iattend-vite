@@ -1,0 +1,36 @@
+.estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 8px;
+    font-size: 13.5px;
+    color: #29262D;
+}
+
+.nombre {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+}
+
+.paginas {
+    color: #787878;
+}
+
+.gira {
+    animation: gira 0.9s linear infinite;
+}
+
+@keyframes gira {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gira {
+        animation: none;
+    }
+}

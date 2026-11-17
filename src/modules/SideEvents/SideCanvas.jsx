@@ -1021,6 +1021,10 @@ export const SideCanvas = ({
     // Los trazos solo se eligen y mueven con la pluma de selección de
     // Dibujar (`seleccionDibujos`); fuera de ahí el puntero los atraviesa.
     const dibujoFijo = (s) => s.kind === 'dibujo' && !seleccionDibujos
+    // Anclado a la página (pin de la barra del elemento): sube con el scroll
+    // como la fecha, sin el zoom de la portada, y va encima de las tarjetas.
+    // Los dibujos no se anclan.
+    const esFijo = (s) => Boolean(s.fijo) && s.kind !== 'dibujo'
 
     // Los elementos de la portada en un recuadro (lienzo de los PNG o foto).
     const pintarStickers = (lista) => lista.map(s => (esImagen(s)
@@ -1246,7 +1250,7 @@ export const SideCanvas = ({
                     {stickers.length > 0 && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAtras}`} style={marco}>
                             <div ref={lienzoRef} className={styles.lienzo} style={lienzo}>
-                                {pintarStickers(stickers.filter((x) => !enFoto(x) && !enTarjeta(x) && !conFotoSrc(x)))}
+                                {pintarStickers(stickers.filter((x) => !esFijo(x) && !enFoto(x) && !enTarjeta(x) && !conFotoSrc(x)))}
                             </div>
                             {/* Dibujos anclados a la foto: en su recuadro (cover de la foto). */}
                             {marcoFoto && (
@@ -1290,6 +1294,7 @@ export const SideCanvas = ({
                 {/* Encima de todo, también fijas: guías, zona de botones y la
                     agarradera de los PNG seleccionados. */}
                 <div className={`${styles.portadaFija} ${styles.portadaFijaArriba}`}>
+
                     {/* Guías del centro mientras se arrastra un PNG */}
                     {guias && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.guias}`} style={marco}>
@@ -1300,7 +1305,7 @@ export const SideCanvas = ({
                     {!readOnly && !pincel && seleccion.length > 0 && (
                         <div aria-hidden className={`${styles.stickersCapa} ${styles.stickersAgarre}`} style={marco}>
                             <div className={styles.lienzo} style={lienzo}>
-                                {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && !enFoto(x) && !enTarjeta(x) && !conFotoSrc(x)))}
+                                {pintarAgarres(stickers.filter((x) => seleccion.includes(x.id) && !esFijo(x) && !enFoto(x) && !enTarjeta(x) && !conFotoSrc(x)))}
                             </div>
                             {marcoFoto && (
                                 <div className={styles.lienzo} style={marcoFoto}>
@@ -1360,6 +1365,20 @@ export const SideCanvas = ({
                         </div>
                     )}
                 </div>
+
+                {/* Elementos anclados a la página (`fijo`, pin de la barra del
+                    elemento): en la primera pantalla del contenido que hace
+                    scroll, así suben con él como la fecha y el lugar, sin el
+                    zoom de la portada; encima del texto y las tarjetas, con su
+                    agarradera. Igual que la página del invitado (.capa_anclados). */}
+                {stickers.some(esFijo) && zona && (
+                    <div aria-hidden className={styles.capaAnclados} style={{ height: zona.alto }}>
+                        <div className={styles.lienzo} style={lienzo}>
+                            {pintarStickers(stickers.filter(esFijo))}
+                            {!readOnly && !pincel && pintarAgarres(stickers.filter((x) => esFijo(x) && seleccion.includes(x.id)))}
+                        </div>
+                    </div>
+                )}
 
                 <div
                     ref={infoRef}

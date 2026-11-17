@@ -27,13 +27,15 @@ import { Grid } from "antd";
 import { TablesPage } from './Tables/TablesPage';
 import { HeaderDashboard } from '../Header/Header';
 import { CreditsComponent } from '../../components/Payment/Credits/Credits';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AArrowUp, ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CircleHelp, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, RefreshCw, Route, Search, Send, Sparkles, Table, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { AArrowUp, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, ArrowUpRight, BellRing, Check, CheckCheck, ChevronRight, CircleHelp, CirclePlus, CircleUserRound, Clock, Copy, Download, Info, Link2, LockKeyhole, LockKeyholeOpen, MailWarning, MessageCircle, MoreHorizontal, Pin, Plus, PlusCircle, QrCode, RefreshCw, Route, Search, Send, Sparkles, Table, Tag, TextAlignJustify, Tickets, X } from 'lucide-react';
 import { TablaInvitados } from '../SideEvents/TablaInvitados';
 import { GuestsOverview } from './GuestsOverview/GuestsOverview';
 import { GuestsTour, GUESTS_TOUR_STORAGE_KEY } from './GuestsTour';
 import { GuestsCRUD } from '../../components/Create/GuestsCRUD';
 import { GuestAddTiles } from './GuestAddTiles';
+import { HojaImportar } from './Importar/HojaImportar';
+import { cambiosParaSentar, guardarAsientos } from './Tables/asientos';
 import { RemindersPanel } from './Reminders/RemindersPanel';
 import { useTranslation } from 'react-i18next';
 import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
@@ -113,7 +115,6 @@ export default function GuestsPage() {
     const [activeKey, setActiveKey] = useState('seguimiento');
     const [invitation, setInvitation] = useState(null)
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const [name, setName] = useState(null)
     const id = searchParams.get("id");
     const [messagesDispatch, setMessagesDispatch] = useState([])
@@ -128,6 +129,24 @@ export default function GuestsPage() {
     const [vistaInvitados, setVistaInvitados] = useState(() => (localStorage.getItem('iattend_vista_invitados') === 'compacta' ? 'compacta' : 'pasos'))
     const cambiarVistaInvitados = (v) => { setVistaInvitados(v); localStorage.setItem('iattend_vista_invitados', v); if (v === 'compacta') setSendMode(false) }
     const [refrescando, setRefrescando] = useState(false)
+    // Importar (Excel con Lia o De otro evento): la misma hoja de los Pops,
+    // que baja del header (`{ archivo }` o `{ modo: 'evento' }` = abierta).
+    // Los otros eventos del organizador se piden la primera vez que se abre.
+    const [importando, setImportando] = useState(null)
+    const [otrosEventos, setOtrosEventos] = useState(null)
+    useEffect(() => {
+        if (!importando || otrosEventos !== null || !id) return undefined
+        let vivo = true
+        ;(async () => {
+            try {
+                const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/guests/import/eventos`, { invitation_id: id }, { headers: await supabaseAuthHeaders() })
+                if (vivo) setOtrosEventos(data?.eventos ?? [])
+            } catch {
+                if (vivo) setOtrosEventos([])
+            }
+        })()
+        return () => { vivo = false }
+    }, [importando, otrosEventos, id])
     const [localTags, setLocalTags] = useState([])
     const [filterTag, setFilterTag] = useState(null)
     const [filterTable, setFilterTable] = useState(null)
@@ -1218,21 +1237,10 @@ export default function GuestsPage() {
     const addGuestToTable = async (table, guest) => {
 
         try {
-            const { error } = await supabase
-                .from("guests")
-                .update({
-                    table: table.id,
-                    last_action_by: 'admin',
-                    last_update_date: new Date(), // si tienes este campo en guests
-                })
-                .eq("id", guest.id)
-                .select()
-                .maybeSingle();
+            // En un asiento libre de esa mesa (Tables/asientos.js).
+            const { ok } = await guardarAsientos(supabase, cambiosParaSentar(table, [guest], rowData ?? []));
 
-            if (error) {
-                console.error("Error transfiriendo guest:", error.message);
-                return null;
-            }
+            if (!ok) return null;
 
             // console.log("Guest transferido ✅", data);
             getTables()
@@ -2493,7 +2501,50 @@ export default function GuestsPage() {
         </div>
     )
 
-    const vistaCompacta = vistaInvitados === 'compacta' && !isMobile && !tourOpen && activeKey !== 'recordatorios'
+    const vistaCompacta = vistaInvitados === 'compacta' && !isMobile && !tourOpen
+
+    // Recordatorios: el mismo panel en las dos vistas. En Compacta va sin la
+    // escalera de pasos, con su regreso a la tabla (onBack → 'seguimiento',
+    // que en Compacta es la tabla).
+    const renderRemindersPanel = () => (
+        <RemindersPanel
+            invitationId={id}
+            rowData={rowData}
+            dispatchMap={dispatchMap}
+            tables={tables}
+            tags={localTags}
+            owners={owners}
+            invitation={invitation}
+            name={name}
+            rsvpDeadline={rsvpDeadline}
+            eventDate={eventDate}
+            urlImage={url_image}
+            onSaveRsvpDeadline={onSaveRsvpDeadline}
+            rsvpDisabledDate={rsvpDisabledDate}
+            plan={plan}
+            credits={credits}
+            preset={remindersPreset}
+            onSend={onSendReminders}
+            activeBatch={activeBatch}
+            onNeedCredits={() => setBuyCreditsOpen(true)}
+            onBack={() => setActiveKey('seguimiento')}
+        />
+    )
+
+    const renderRecordatoriosCompacta = () => (
+        <div key="recordatorios" className="gx gx-recordatorios-compacta gx-vista-entra">
+            <div className="gx-compact-head">
+                <button type="button" className="gx-volver-tabla" onClick={() => setActiveKey('seguimiento')}>
+                    <ArrowLeft size={15} />
+                    <span>{t('guests.compact_back_to_table')}</span>
+                </button>
+                <div className="gx-compact-head-actions">
+                    {renderSelectorVista()}
+                </div>
+            </div>
+            {renderRemindersPanel()}
+        </div>
+    )
 
     // Solo aplica el buscador (como en los Pops): el estado, la mesa y lo demás
     // se ordenan con su columna.
@@ -2517,6 +2568,25 @@ export default function GuestsPage() {
         }
     }
 
+    // "De otro evento": trae invitados de otra boda, side event o Pop del
+    // organizador (la página de importación abre en su lista; sin ninguno,
+    // con su aviso de vacío).
+    const renderTileOtroEvento = () => (
+        <button
+            type="button"
+            className="guest-add-tile guest-add-tile--individual"
+            onClick={() => setImportando({ modo: 'evento' })}
+        >
+            <span className="guest-add-tile-icon">
+                <Copy size={18} />
+            </span>
+            <span className="guest-add-tile-text">
+                <span className="guest-add-tile-title">{t('guests_import.tile_event_title')}</span>
+                <span className="guest-add-tile-sub">{t('guests_import.tile_event_sub')}</span>
+            </span>
+        </button>
+    )
+
     const renderAgregarInvitado = () => (
         <Dropdown
             trigger={['click']}
@@ -2530,7 +2600,8 @@ export default function GuestsPage() {
                         companions: [],
                         visible: true,
                     })}
-                    onFile={(file) => navigate(`/dashboard/guests/import?id=${id}`, { state: { file } })}
+                    onFile={(file) => setImportando({ archivo: file })}
+                    topExtra={renderTileOtroEvento()}
                 />
             )}
         >
@@ -3098,7 +3169,8 @@ export default function GuestsPage() {
                                     companions: [],
                                     visible: true,
                                 })}
-                                onFile={(file) => navigate(`/dashboard/guests/import?id=${id}`, { state: { file } })}
+                                onFile={(file) => setImportando({ archivo: file })}
+                                topExtra={renderTileOtroEvento()}
                             />
                         )}
                     >
@@ -3227,30 +3299,7 @@ export default function GuestsPage() {
         {
             label: screens.xs ? <BellRing size={14} /> : t('reminders.tab'),
             key: "recordatorios",
-            children: (
-                <RemindersPanel
-                    invitationId={id}
-                    rowData={rowData}
-                    dispatchMap={dispatchMap}
-                    tables={tables}
-                    tags={localTags}
-                    owners={owners}
-                    invitation={invitation}
-                    name={name}
-                    rsvpDeadline={rsvpDeadline}
-                    eventDate={eventDate}
-                    urlImage={url_image}
-                    onSaveRsvpDeadline={onSaveRsvpDeadline}
-                    rsvpDisabledDate={rsvpDisabledDate}
-                    plan={plan}
-                    credits={credits}
-                    preset={remindersPreset}
-                    onSend={onSendReminders}
-                    activeBatch={activeBatch}
-                    onNeedCredits={() => setBuyCreditsOpen(true)}
-                    onBack={() => setActiveKey('seguimiento')}
-                />
-            ),
+            children: renderRemindersPanel(),
         },
     // OJO: react-hooks/exhaustive-deps está desactivado en este repo, así que
     // nadie avisa si falta una dependencia. Un estado que se lea dentro de los
@@ -3339,9 +3388,11 @@ export default function GuestsPage() {
 
 
                         {vistaCompacta ? (
-                            <Spin spinning={isLoading} wrapperClassName="gx-compacta-spin">
-                                {renderVistaCompacta()}
-                            </Spin>
+                            activeKey === 'recordatorios' ? renderRecordatoriosCompacta() : (
+                                <Spin spinning={isLoading} wrapperClassName="gx-compacta-spin">
+                                    {renderVistaCompacta()}
+                                </Spin>
+                            )
                         ) : (
                         <Tabs
                             key="pasos"
@@ -3430,6 +3481,18 @@ export default function GuestsPage() {
             </Drawer>
 
             <GuestsCRUD rowData={rowData} invitationID={id} setDrawerState={setDrawerState} refreshPage={refreshPage} drawerState={drawerState} />
+
+            <HojaImportar
+                abierta={!!importando}
+                archivo={importando?.archivo ?? null}
+                modo={importando?.modo ?? 'archivo'}
+                eventos={otrosEventos}
+                invitationId={id}
+                barra=".header-dashboard-main-container"
+                z={996}
+                onCerrar={() => setImportando(null)}
+                onImportado={() => { setImportando(null); refreshPage() }}
+            />
 
             {/* Tour del rediseño: recorre Seguimiento, Por invitar, Esperando
                 respuesta y Confirmados cambiando el tab activo por paso. */}

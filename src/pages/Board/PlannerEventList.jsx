@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { CalendarHeart, ChevronDown, Plus, Zap } from 'lucide-react'
 import { toFirstString } from '../../helpers/invitation/newInvitation'
+import { fuenteDePortada } from '../../helpers/invitation/portadaInvitacion'
 import { fmtLong } from '../../components/PlannerDashboard/plannerFormat'
 import styles from './PlannerEventList.module.css'
 import layout from './PlannerLayout.module.css'
@@ -103,7 +104,7 @@ export const PlannerEventList = ({ items, statsPorId, renderInvitationCard, onAb
                     {verHistorial && (
                         <div className={styles.pasados}>
                             {historial.map(inv => {
-                                const foto = toFirstString(inv.data?.cover?.image?.prod)
+                                const foto = toFirstString(fuenteDePortada(inv.data))
                                 const a = asistencia(inv)
                                 const pct = a && a.total ? Math.round((a.parte / a.total) * 100) : null
                                 return (

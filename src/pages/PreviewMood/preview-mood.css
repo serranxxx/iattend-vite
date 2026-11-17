@@ -1105,7 +1105,11 @@
 
 /* ── Publish modal ────────────────────────────────────────── */
 
-.ant-modal-container {
+/* Solo los modales de esta pantalla (onboarding y acceso) van sin padding.
+   Suelta, la regla le quitaba el padding a todos los modales de la app
+   (Modal.confirm incluidos) en cuanto se cargaba esta hoja. */
+.ob-wizard-modal .ant-modal-container,
+.am-modal-root .ant-modal-container {
     padding: 0 !important;
 }
 
