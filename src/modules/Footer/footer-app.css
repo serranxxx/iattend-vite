@@ -77,20 +77,57 @@
     background: #F7F4F9;
 }
 
-/* Celular: arriba Cómo funciona, Ayuda y contacto; abajo © y Legal. */
+/* Celular: su propio acomodo (.fa-movil): arriba el logo y los botones de
+   contacto (grises, sin borde), en medio Cómo funciona · Ayuda · Legal y
+   abajo el ©. La línea de escritorio se oculta. */
+.fa-movil {
+    display: none;
+}
+
 @media (max-width: 767px) {
     .fa-footer-cont {
-        flex-direction: column-reverse;
-        align-items: flex-start;
-    }
-
-    .fa-divisor {
         display: none;
     }
 
-    .fa-icono {
-        width: 42px;
-        height: 42px;
+    .fa-movil {
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+        padding-top: 8px;
+        font-size: 15px;
+        line-height: 1.4;
+    }
+
+    .fa-movil-arriba {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .fa-logo {
+        height: 38px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    .fa-movil .fa-iconos {
+        gap: 6px;
+    }
+
+    .fa-movil .fa-icono {
+        width: 44px;
+        height: 44px;
+        border: none;
+        background: #F1F1F2;
+        color: #111111 !important;
+    }
+
+    .fa-movil-enlaces {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 26px;
     }
 }
 

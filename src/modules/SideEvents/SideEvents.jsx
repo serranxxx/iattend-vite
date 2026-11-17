@@ -74,6 +74,7 @@ import { EditorMovil } from './Movil/EditorMovil'
 import { InvitadosMovil } from './Movil/InvitadosMovil'
 import { codigoSide, urlSide } from '../../helpers/invitation/sideEventLink'
 import { puedeGestionarPop } from '../../helpers/invitation/popEvents'
+import { rutaInvitaciones } from '../../helpers/invitation/espacios'
 import { EstadoGuardado } from './EstadoGuardado'
 import { CompartirPop } from './CompartirPop'
 import { PopoverAcceso } from './PopoverAcceso'
@@ -1982,7 +1983,7 @@ export const SideEvents = () => {
         // La RLS ya no lo deja leer ni guardar; esto es para no dejar un editor vacío.
         if (esPop && !(await puedeGestionarPop(data?.[0]))) {
             message.warning(t('side_events.pop_no_access'))
-            navigate('/invitations', { replace: true })
+            navigate(rutaInvitaciones('pops'), { replace: true })
             return
         }
 
@@ -3052,8 +3053,9 @@ export const SideEvents = () => {
 
     const closeToList = () => {
         // Un Pop no tiene listado: regresa a la página de invitaciones.
-        // Regresa a la sección de donde vino (PlannerLayout la recuerda en la pestaña).
-        if (esPop) return navigate('/invitations')
+        // Regresa al espacio Pops, a la sección de donde vino (PlannerLayout
+        // la recuerda en la pestaña).
+        if (esPop) return navigate(rutaInvitaciones('pops', { conSeccion: true }))
         startMorph('out', current)
         setMorphedIn(false)
         closeEditor()

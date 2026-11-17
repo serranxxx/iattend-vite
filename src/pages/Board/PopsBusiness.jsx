@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Plus } from 'lucide-react'
-import { useConfirmados } from './popsDatos'
+import { portadaDePop, useConfirmados } from './popsDatos'
 import { PopsHero } from './PopsHero'
 import styles from './PopsBusiness.module.css'
 
@@ -39,7 +39,7 @@ const inicialesDePop = (nombre = '') => {
     return numero ? numero.slice(-3) : '·'
 }
 
-export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie }) => {
+export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie, sinHero = false, sinLista = false, debajo, titulo: tituloPropio, vacioLista, conCorreo = false }) => {
     const { t, i18n } = useTranslation()
     const hoy = dayjs().startOf('day')
 
@@ -48,7 +48,7 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
         const fecha = item.event_date ? dayjs(item.event_date) : null
         const dias = fecha ? fecha.startOf('day').diff(hoy, 'day') : null
         const nombre = item.name || pop?.name || t('pops_section.untitled')
-        return { item, popId: pop?.id, fecha, dias, nombre, iniciales: inicialesDePop(nombre) }
+        return { item, popId: pop?.id, fecha, dias, nombre, iniciales: inicialesDePop(nombre), portada: portadaDePop(pop), correo: item.user_email || pop?.user_email || null }
     })
     const activos = filas
         .filter(f => f.dias === null || f.dias >= 0)
@@ -85,9 +85,10 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
         if (movil) {
             return (
                 <button key={f.item.id} type='button' className={`${styles.mFila} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
-                    <span className={styles.mIcono} style={{ background: icono.fondo, color: icono.tinta }}>{f.iniciales}</span>
+                    <span className={styles.mIcono} style={{ background: icono.fondo, color: icono.tinta }}>{f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.iniciales}</span>
                     <span className={styles.filaTexto}>
                         <span className={styles.mNombre}>{f.nombre}</span>
+                        {conCorreo && <span className={styles.correo}>{f.correo || t('invitations.pending_send_badge')}</span>}
                         <span className={styles.mSub}>
                             {f.fecha ? fechaCorta(f.fecha) : t('pops_section.no_date')}
                             {pasado ? ` · ${t('pops_section.status_past')}` : c?.total ? ` · ${c.si}/${c.total}` : ''}
@@ -101,7 +102,7 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
         }
         return (
             <button key={f.item.id} type='button' className={`${styles.fila} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
-                <span className={styles.icono} style={{ background: icono.fondo, color: icono.tinta }}>{f.iniciales}</span>
+                <span className={styles.icono} style={{ background: icono.fondo, color: icono.tinta }}>{f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.iniciales}</span>
                 <span className={styles.filaTexto}>
                     <span className={styles.nombre}>{f.nombre}</span>
                     <span className={styles.estado}>
@@ -109,6 +110,7 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
                         {estadoDe(f, pasado)}
                     </span>
                 </span>
+                {conCorreo && <span className={`${styles.correo} ${styles.correoCelda}`}>{f.correo || t('invitations.pending_send_badge')}</span>}
                 <span className={styles.fecha}>{f.fecha ? fechaCorta(f.fecha) : t('pops_section.no_date')}</span>
                 <span>
                     {!pasado && f.dias !== null && (
@@ -162,11 +164,11 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
 
     const lista = (
         <>
-            {sinPops ? primero : (
+            {sinPops ? (sinHero ? <p className={styles.vacio}>{vacioLista}</p> : primero) : (
                 <div className={styles.filas}>
                     {!movil && (
                         <div className={styles.columnas} aria-hidden>
-                            <span /><span>{t('pops_section.biz_col_event')}</span><span>{t('pops_section.biz_col_date')}</span><span>{t('pops_section.biz_col_left')}</span><span />
+                            <span /><span>{t('pops_section.biz_col_event')}</span>{conCorreo && <span>{t('pops_section.col_client')}</span>}<span>{t('pops_section.biz_col_date')}</span><span>{t('pops_section.biz_col_left')}</span><span />
                         </div>
                     )}
                     <div className={styles.cuerpo}>
@@ -185,19 +187,20 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
         </>
     )
 
-    const titulo = sinPops ? t('pops_section.empty_title') : t('pops_section.active_title')
+    const titulo = tituloPropio ?? (sinPops ? t('pops_section.empty_title') : t('pops_section.active_title'))
 
     return (
-        <div className={`${styles.seccion} ${movil ? styles.movil : ''}`}>
-            {switchTema}
+        <div className={`${styles.seccion} ${movil ? styles.movil : ''} ${sinHero ? styles.soloLista : ''} ${sinLista ? styles.inicioSolo : ''} ${conCorreo ? styles.conCorreo : ''}`}>
+            {!sinHero && switchTema}
             {/* El hero común de los tres estilos (PopsHero, handoff §11), también en el celular. */}
-            <PopsHero tema='business' movil={movil} greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />
+            {!sinHero && <PopsHero tema='business' movil={movil} greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />}
 
-            <section className={styles.panel}>
+            {sinLista && debajo}
+            {sinLista ? pie && <div className={styles.pieSolo}>{pie}</div> : <section className={styles.panel}>
                 <div className={styles.cabeza}>
                     <div className={styles.titulos}>
                         <h2 className={styles.titulo}>{titulo.split(' ')[0]} <span className={styles.azul}>{titulo.split(' ').slice(1).join(' ')}</span></h2>
-                        <span className={styles.sub}>{sinPops ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
+                        <span className={styles.sub}>{sinPops && !sinHero ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
                     </div>
                     {onComprarPop && !(movil && sinPops) && (
                         <button type='button' className={movil ? styles.mComprar : styles.botonAzul} onClick={onComprarPop}>
@@ -208,7 +211,7 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
                 {aviso}
                 {lista}
                 {pie}
-            </section>
+            </section>}
         </div>
     )
 }

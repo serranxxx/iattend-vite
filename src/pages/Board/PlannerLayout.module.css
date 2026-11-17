@@ -4,7 +4,7 @@
 
 .layout {
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-columns: 272px minmax(0, 1fr);
     min-height: 100vh;
 }
 
@@ -36,7 +36,8 @@
     padding-top: 0;
 }
 
-:global(.fa-main-cont).piePopsCraft :global(.fa-footer-cont) {
+:global(.fa-main-cont).piePopsCraft :global(.fa-footer-cont),
+:global(.fa-main-cont).piePopsCraft :global(.fa-movil) {
     padding: 20px 22px;
     border-top: none;
     background: var(--craft-papel);
@@ -52,11 +53,12 @@
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    padding: 32px 22px 22px;
+    gap: 20px;
+    padding: 24px 20px;
     box-sizing: border-box;
-    background: #F7F6F4;
-    border-right: 1px solid #EFEDEA;
+    background: #F5F3F2;
+    border-right: 1px solid #E7E3E0;
+    transition: background 0.4s ease, border-color 0.4s ease;
     overflow-y: auto;
     scrollbar-width: none;
 }
@@ -1726,4 +1728,172 @@
 .menuBiz:global(.ant-dropdown-menu-submenu-popup) :global(.ant-dropdown-menu),
 .menuCraft:global(.ant-dropdown-menu-submenu-popup) :global(.ant-dropdown-menu) {
     min-width: 160px;
+}
+
+
+/* ══ Switch de espacios Weddings / Pops (handoff "Switch de espacios", 4a) ══
+   El logo es el selector (EspacioSelector); cada espacio tiene su menú
+   Inicio · Clientes · Eventos. Weddings: pill navy + salvia y el activo en
+   blanco; Pops: la barra sigue el estilo elegido (Pop · Business · Craft). */
+
+.sidebar:not(.sidebarPop) .comprar {
+    min-height: 54px;
+    padding: 0 20px 0 8px;
+    border-radius: 99px;
+    background: #1C2A44;
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.sidebar:not(.sidebarPop) .comprarIcono {
+    width: 38px;
+    height: 38px;
+    background: #A9C47F;
+    color: #1C2A44;
+}
+
+.navTitulo {
+    padding: 0 14px 6px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #8A8582;
+}
+
+.navItem {
+    border-radius: 14px;
+}
+
+.sidebar:not(.sidebarPop) .navItem {
+    color: #3D4656;
+    font-weight: 500;
+}
+
+.sidebar:not(.sidebarPop) .navItemActivo {
+    color: #1C2A44;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(28, 42, 68, 0.08);
+}
+
+.sidebar:not(.sidebarPop) .navItem small {
+    min-width: 24px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Pops: el activo toma la pastilla de cada estilo (.navPops.navItemActivo:
+   Pop = negra con contador rosa, Business = azul con lima, Craft = pestaña
+   amarilla), igual que el botón "Pops" de antes. */
+
+.sidebarPop:not(.sidebarBiz):not(.sidebarCraft) .navPops.navItemActivo {
+    color: #FFF;
+    font-weight: 700;
+}
+
+/* Tarjeta del usuario en Weddings: borde, avatar cuadrado y su rol. */
+.sidebar:not(.sidebarPop) .usuario {
+    padding: 10px;
+    border: 1px solid #E7E3E0;
+    border-radius: 16px;
+}
+
+.sidebar:not(.sidebarPop) .avatar {
+    border-radius: 12px;
+    background: #A9C47F;
+    color: #1C2A44;
+}
+
+.sidebar:not(.sidebarPop) .usuarioSub {
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8A8582;
+}
+
+/* Celular: header con el selector también dentro de Pops. */
+.barraMovilPop {
+    margin: 0;
+    padding: calc(14px + env(safe-area-inset-top)) 18px 10px;
+    background: #FFF;
+}
+
+/* ── Pops en celular (handoff "Inicio de Pops" · mobile) ──
+   Header: selector · Tu estilo compacto · avatar del color de cada estilo,
+   sobre el fondo de la página. Barra inferior: blanca (Pop, Business) o de
+   papel (Craft), con la pestaña activa del estilo. */
+.barraMovilDerecha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.movilPop .barraMovilPop {
+    background: transparent;
+}
+
+.movilPop .mainMovilPop {
+    background-color: #FFFFFF;
+    background-image: radial-gradient(#DEDBD8 1.2px, transparent 1.2px);
+    background-size: 18px 18px;
+}
+
+.movilBiz .mainMovilPop {
+    background: #F3F4F8;
+}
+
+.movilCraft .mainMovilPop {
+    background: transparent;
+}
+
+.movilPop .barraMovilPop .avatar {
+    width: 44px;
+    height: 44px;
+    background: #FF5FA8;
+    color: #111111;
+}
+
+.movilBiz .barraMovilPop .avatar {
+    border-radius: 12px;
+    background: #2440FF;
+    color: #FFFFFF;
+}
+
+.movilCraft .barraMovilPop .avatar {
+    border-radius: 3px;
+    background: #F2D21B;
+    color: #1D1D1B;
+}
+
+.movilBiz .pastilla {
+    border-radius: 18px;
+    background: #FFFFFF;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.movilBiz .pestana {
+    border-radius: 14px;
+    color: #8A8582;
+}
+
+.movilBiz .pestana[data-activa] {
+    background: #2440FF;
+    color: #FFFFFF;
+    box-shadow: 0 8px 18px rgba(36, 64, 255, 0.25);
+}
+
+.movilBiz .crear {
+    border-radius: 18px;
+    background: #CDF22B;
+    color: #0B1F3A;
+}
+
+/* Cliente sin tipo conocido mientras cargan sus eventos (ver PlannerLayout). */
+.decidiendo {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 48px clamp(18px, 6vw, 72px);
+    box-sizing: border-box;
 }

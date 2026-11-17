@@ -109,6 +109,18 @@ export const PopsOnboarding = ({ open, onClose, onCrear }) => {
         v.play().catch(() => setEnPausa(true))
     }
 
+    // WebM que el navegador no decodifica (MEDIA_ERR_DECODE en algunos Chrome):
+    // al MP4, desde donde iba.
+    const alFallar = () => {
+        const v = video.current
+        if (!v || v.currentSrc.endsWith('.mp4')) return
+        const desde = v.currentTime
+        v.src = VIDEO_MP4
+        v.load()
+        v.currentTime = desde
+        if (arrancado.current) v.play().catch(() => setEnPausa(true))
+    }
+
     const repetir = () => {
         if (video.current) video.current.currentTime = 0
         setTerminado(false)
@@ -147,6 +159,7 @@ export const PopsOnboarding = ({ open, onClose, onCrear }) => {
                         preload='auto'
                         poster={POSTER}
                         onEnded={() => setTerminado(true)}
+                        onError={alFallar}
                         onTimeUpdate={(e) => {
                             const v = e.currentTarget
                             if (!terminado && v.duration && v.currentTime >= v.duration - CIERRE_SEG) setTerminado(true)

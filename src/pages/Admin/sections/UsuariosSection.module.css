@@ -522,3 +522,27 @@
     background: var(--ac-tint);
     color: var(--ac-muted);
 }
+
+/* Tipo de cliente (Usuarios › Clientes): Wedding, Pops o Sin evento. */
+.tipoWedding {
+    background: var(--ac-green-soft);
+    color: var(--ac-green-ink);
+}
+
+.tipoPops {
+    background: var(--ac-violet-soft);
+    color: var(--ac-violet-ink);
+}
+
+.tipoNinguno {
+    background: var(--ac-tint);
+    color: var(--ac-muted);
+}
+
+.segmentoCuenta {
+    margin-left: 6px;
+    font-size: 0.85em;
+    font-weight: 500;
+    opacity: 0.55;
+    font-variant-numeric: tabular-nums;
+}

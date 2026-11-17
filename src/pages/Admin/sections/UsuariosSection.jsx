@@ -8,7 +8,8 @@ import { FaApple } from 'react-icons/fa'
 import { fetchBeneficiosPlanners, fetchProveedores, updateBeneficiosPlanner, updateUsuario } from '../usuariosAdminApi'
 import { esRolPlanner } from '../../../helpers/roles'
 import { esEventoActivo } from '../adminConstants'
-import { AccionTopbar, EnTopbarAccion } from '../AdminTopbar'
+import { traerTodo } from '../analiticaDatos'
+import { AccionTopbar, EnTopbarAccion, EnTopbarFiltros, Segmentado } from '../AdminTopbar'
 import { NuevoPlanner } from './NuevoPlanner'
 import styles from './UsuariosSection.module.css'
 
@@ -189,8 +190,8 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
 // Columnas de cada pantalla de Usuarios (una por rol, ver AdminLayout).
 const COLUMNAS = {
     clientes: {
-        grid: 'minmax(160px, 1.2fr) minmax(180px, 1.6fr) 80px 110px 120px 110px 80px 190px',
-        titulos: ['Nombre', 'Email', 'Eventos', 'Plan', 'Pops gratis', 'Acceso', 'Alta', ''],
+        grid: 'minmax(150px, 1.2fr) minmax(180px, 1.6fr) 96px 64px 90px 104px 100px 64px 190px',
+        titulos: ['Nombre', 'Email', 'Tipo', 'Eventos', 'Plan', 'Pops gratis', 'Acceso', 'Alta', ''],
     },
     planners: {
         grid: 'minmax(160px, 1.3fr) minmax(180px, 1.5fr) 120px 120px 110px 90px 110px 190px',
@@ -207,6 +208,21 @@ const COLUMNAS = {
 }
 COLUMNAS.mkt = COLUMNAS.admin
 
+// Clientes por lo que compran: Wedding (al menos una invitación real, aunque
+// también tenga Pops), Pops (solo Pops) o Sin evento (cuenta sin nada todavía).
+// El alta gratis (`/api/invitation/create-free`) le crea a toda cuenta nueva
+// una invitación plan 'free' con el ejemplo "Andrés & Julie" — también a los
+// clientes de Pops —, así que la fila sola no dice nada: cuenta como boda si
+// es de pago (PRO, Lite, Paperless…) o si ya la empezaron a editar (`started`).
+const esInvitacionReal = (inv) => inv.started === true || Boolean(inv.plan && String(inv.plan).toLowerCase() !== 'free')
+
+const TIPOS_CLIENTE = {
+    wedding: { label: 'Wedding', clase: 'tipoWedding' },
+    pops: { label: 'Pops', clase: 'tipoPops' },
+    ninguno: { label: 'Sin evento', clase: 'tipoNinguno' },
+}
+const FILTROS_CLIENTE = [{ value: 'todos', label: 'Todos' }, ...Object.entries(TIPOS_CLIENTE).map(([value, { label }]) => ({ value, label }))]
+
 const CLASE_PLAN = { pro: 'planPro', lite: 'planLite', paperless: 'planPaperless' }
 const NOMBRE_PLAN = { pro: 'PRO', lite: 'Lite', paperless: 'Paperless', free: 'Free' }
 
@@ -221,7 +237,12 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
     const [editando, setEditando] = useState(null)
     const [proveedores, setProveedores] = useState({})
     const [beneficios, setBeneficios] = useState({ beneficios: {}, usados: {}, listos: false })
+    const [tipo, setTipo] = useState('todos')
+    // Solo para Clientes: dueño de cada side event, para separar Wedding de
+    // Pops. Consulta ligera (sin body ni invitados), aparte de la de Eventos.
+    const [sides, setSides] = useState(null)
     const esPlanners = rol === 'planners'
+    const esClientes = rol === 'clientes'
 
     const cargarBeneficios = () => fetchBeneficiosPlanners()
         .then(({ data }) => setBeneficios({ beneficios: data.beneficios ?? {}, usados: data.usados ?? {}, listos: true }))
@@ -234,6 +255,9 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
         // Administración también tiene beneficios (mismas funciones que un
         // planner); los clientes, Pops gratis.
         if (esPlanners || rol === 'admin' || rol === 'clientes') cargarBeneficios()
+        if (rol === 'clientes') traerTodo('side_events', 'id,user_id,invitation_id')
+            .then(setSides)
+            .catch(error => console.error('No se pudieron cargar los Pops de los clientes:', error.message))
     }, [rol])
 
     // Eventos de cada cuenta: como dueño (user_id) y, en planners, también los
@@ -252,6 +276,26 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
         return mapa
     }, [invitations, esPlanners])
 
+    // Pops de cada cuenta (side events sin invitación, por su dueño). `null`
+    // mientras no cargan los side events.
+    const popsPorUsuario = useMemo(() => {
+        if (!esClientes || !sides) return null
+        const mapa = new Map()
+        sides.forEach(s => {
+            if (s.invitation_id || !s.user_id) return
+            mapa.set(s.user_id, (mapa.get(s.user_id) ?? 0) + 1)
+        })
+        return mapa
+    }, [sides, esClientes])
+
+    // Con invitación ya es Wedding aunque los Pops no hayan cargado; sin ella,
+    // hasta que carguen las dos listas no se sabe (null).
+    const tipoDe = (perfil) => {
+        if (eventosPorUsuario.get(perfil.user_id)?.some(esInvitacionReal)) return 'wedding'
+        if (!invitations || !popsPorUsuario) return null
+        return popsPorUsuario.get(perfil.user_id) ? 'pops' : 'ninguno'
+    }
+
     const copiar = async (texto) => {
         try {
             await navigator.clipboard.writeText(texto)
@@ -262,13 +306,31 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
     }
 
     // Los más nuevos primero (profiles.created_at); sin fecha, al final.
-    const visibles = useMemo(() => {
+    const buscados = useMemo(() => {
         const texto = query.trim().toLowerCase()
         return [...(profiles ?? [])]
             .sort((a, b) => (b.created_at ? Date.parse(b.created_at) : 0) - (a.created_at ? Date.parse(a.created_at) : 0))
             .filter(p => !texto || [p.full_name, p.user_email, p.user_id]
                 .some(campo => String(campo ?? '').toLowerCase().includes(texto)))
     }, [profiles, query])
+
+    // Conteo de cada tipo sobre lo que deja el buscador (null = Pops sin cargar).
+    const conteoPorTipo = useMemo(() => {
+        if (!esClientes) return {}
+        const conteo = { todos: buscados.length, wedding: 0, pops: 0, ninguno: 0 }
+        buscados.forEach(p => { const t = tipoDe(p); if (t) conteo[t] += 1 })
+        if (!profiles) conteo.todos = null
+        if (!invitations) conteo.wedding = null
+        if (!invitations || !popsPorUsuario) conteo.pops = conteo.ninguno = null
+        return conteo
+    }, [profiles, buscados, invitations, eventosPorUsuario, popsPorUsuario, esClientes])
+
+    // Mientras falte lo que decide el filtro elegido, "Cargando…".
+    const esperandoTipo = esClientes && tipo !== 'todos' && (!invitations || (tipo !== 'wedding' && !popsPorUsuario))
+    const visibles = useMemo(
+        () => (!esClientes || tipo === 'todos' ? buscados : buscados.filter(p => tipoDe(p) === tipo)),
+        [buscados, tipo, esClientes, invitations, eventosPorUsuario, popsPorUsuario],
+    )
 
     const botonEvento = (perfil) => (
         <button type='button' className={styles.action} onClick={() => onOpenNewInvitation(perfil)}>
@@ -338,6 +400,12 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
         return <span className={`${styles.plan} ${styles[clase]}`}>{NOMBRE_PLAN[clave] ?? ultimo.plan}</span>
     }
 
+    const badgeTipo = (perfil) => {
+        const t = TIPOS_CLIENTE[tipoDe(perfil)]
+        if (!t) return <span className={`${styles.plan} ${styles.planNinguno}`}>…</span>
+        return <span className={`${styles.plan} ${styles[t.clase]}`}>{t.label}</span>
+    }
+
     const celdas = (perfil) => {
         const eventos = eventosPorUsuario.get(perfil.user_id) ?? []
         const nombre = <span className={`${styles.cell} ${styles.name}`}>{perfil.full_name || 'Sin nombre'}</span>
@@ -345,17 +413,34 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
         const acceso = <span className={styles.cell}><Acceso lista={proveedores[perfil.user_id]} /></span>
         const id = <span className={styles.cell}>{idCopiable(perfil)}</span>
 
-        if (rol === 'clientes') return [
-            nombre, correo,
-            <span key='ev' className={styles.cell}>{eventos.length}</span>,
-            <span key='plan' className={styles.cell}>{celdaPlan(eventos)}</span>,
-            <span key='pop' className={styles.cell}>
-                {celdaBeneficio(beneficios.usados[perfil.user_id]?.pop_gratis ?? 0, beneficios.beneficios[perfil.user_id]?.free_flash_events ?? 0)}
-            </span>,
-            acceso,
-            <span key='alta' className={`${styles.cell} ${styles.celdaTenue}`}>{fechaCorta(perfil.created_at)}</span>,
-            <span key='acc' className={`${styles.cell} ${styles.acciones}`}>{botonEditar(perfil)}{botonEvento(perfil)}</span>,
-        ]
+        if (rol === 'clientes') {
+            const pops = popsPorUsuario?.get(perfil.user_id) ?? 0
+            // Eventos y Plan solo con invitaciones reales; la vacía del alta
+            // gratis se menciona en el tooltip.
+            const reales = eventos.filter(esInvitacionReal)
+            const vacias = eventos.length - reales.length
+            const detalle = [
+                `${reales.length} ${reales.length === 1 ? 'invitación' : 'invitaciones'}`,
+                `${popsPorUsuario ? pops : '…'} ${pops === 1 ? 'Pop' : 'Pops'}`,
+                vacias > 0 && `${vacias} ${vacias === 1 ? 'invitación gratis sin empezar' : 'invitaciones gratis sin empezar'}`,
+            ].filter(Boolean).join(' · ')
+            return [
+                nombre, correo,
+                <span key='tipo' className={styles.cell}>{badgeTipo(perfil)}</span>,
+                <span key='ev' className={styles.cell}>
+                    <Tooltip title={detalle}>
+                        <span>{reales.length + pops}</span>
+                    </Tooltip>
+                </span>,
+                <span key='plan' className={styles.cell}>{celdaPlan(reales)}</span>,
+                <span key='pop' className={styles.cell}>
+                    {celdaBeneficio(beneficios.usados[perfil.user_id]?.pop_gratis ?? 0, beneficios.beneficios[perfil.user_id]?.free_flash_events ?? 0)}
+                </span>,
+                acceso,
+                <span key='alta' className={`${styles.cell} ${styles.celdaTenue}`}>{fechaCorta(perfil.created_at)}</span>,
+                <span key='acc' className={`${styles.cell} ${styles.acciones}`}>{botonEditar(perfil)}{botonEvento(perfil)}</span>,
+            ]
+        }
         if (rol === 'planners') {
             const b = beneficios.beneficios[perfil.user_id]
             const u = beneficios.usados[perfil.user_id] ?? {}
@@ -409,11 +494,29 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
                 </EnTopbarAccion>
             )}
 
+            {esClientes && (
+                <EnTopbarFiltros>
+                    <Segmentado
+                        ariaLabel='Tipo de cliente'
+                        valor={tipo}
+                        onCambio={setTipo}
+                        opciones={FILTROS_CLIENTE.map(o => ({
+                            ...o,
+                            label: <>{o.label}{conteoPorTipo[o.value] != null && <span className={styles.segmentoCuenta}>{conteoPorTipo[o.value]}</span>}</>,
+                        }))}
+                    />
+                </EnTopbarFiltros>
+            )}
+
             <div className={styles.card}>
-                {profiles === null || profiles === undefined ? (
+                {profiles === null || profiles === undefined || esperandoTipo ? (
                     <div className={styles.empty}>Cargando…</div>
                 ) : visibles.length === 0 ? (
-                    <div className={styles.empty}>{query.trim() ? 'No hay usuarios que coincidan.' : 'Todavía no hay cuentas con este rol.'}</div>
+                    <div className={styles.empty}>
+                        {query.trim() ? 'No hay usuarios que coincidan.'
+                            : esClientes && tipo !== 'todos' ? `No hay clientes ${tipo === 'ninguno' ? 'sin evento' : `de ${TIPOS_CLIENTE[tipo].label}`}.`
+                                : 'Todavía no hay cuentas con este rol.'}
+                    </div>
                 ) : (
                     <>
                         <div className={styles.scroller}>
@@ -443,6 +546,7 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
                                 <div className={styles.mobileRow} key={perfil.user_id}>
                                     <div className={styles.mobileTop}>
                                         <span className={styles.mobileName}>{perfil.full_name || 'Sin nombre'}</span>
+                                        {esClientes && badgeTipo(perfil)}
                                     </div>
                                     <div className={styles.mobileEmail}>{perfil.user_email}</div>
                                     <Acceso lista={proveedores[perfil.user_id]} />

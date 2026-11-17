@@ -1,0 +1,1104 @@
+/* Inicio de Pops (handoff "Inicio de Pops", 1c · carrusel · 3 estilos).
+   Cada estilo pone sus tokens (--pi-*) sobre .inicio[data-tema]; las piezas
+   solo leen tokens. Craft agrega papel, cintas y Patrick Hand en MAYÚSCULAS. */
+
+.inicio {
+    /* Pop (por omisión) */
+    --pi-fondo: #FFFFFF;
+    --pi-fondo-img: radial-gradient(#DEDBD8 1.2px, transparent 1.2px);
+    --pi-fondo-tam: 18px 18px;
+    --pi-tinta-pagina: #111111;
+    --pi-divisor: #E7E3E0;
+    --pi-tinta: #111111;
+    --pi-sub: #5A5552;
+    --pi-tarjeta: #FFFFFF;
+    --pi-borde: 1px solid #EEEBE8;
+    --pi-radio: 22px;
+    --pi-sombra: none;
+    --pi-sombra-chip: none;
+    --pi-pill: 99px;
+    --pi-punto-r: 50%;
+    --pi-gratis: #FFE14D;
+    --pi-acento: #C8F560;
+    --pi-letra: 'Poppins', sans-serif;
+    --pi-letra-w: 800;
+    --pi-mayus: none;
+    --pi-saludo: 22px;
+    --pi-saludo-track: -0.03em;
+
+    --pi-hero: #0E0E10;
+    --pi-hero-img: none;
+    --pi-hero-tam: auto;
+    --pi-hero-r: 32px;
+    --pi-hero-sombra: none;
+    --pi-hero-tinta: #FFFFFF;
+    --pi-hero-sub: #BDB9B6;
+    --pi-lamina-pad: 44px 48px 72px;
+    --pi-ctrl-l: 48px;
+    --pi-ctrl-r: 40px;
+
+    --pi-hl: #FF5FA8;
+    --pi-hl-tinta: #111111;
+    --pi-hl2: #C8F560;
+    --pi-hl-r: 0px;
+    --pi-etiqueta: #FF5FA8;
+    --pi-etiqueta-tinta: #111111;
+    --pi-etiqueta-giro: 0deg;
+    --pi-etiqueta-tam: 13px;
+
+    --pi-boton: #C8F560;
+    --pi-boton-tinta: #111111;
+    --pi-boton-r: 99px;
+    --pi-boton-w: 800;
+    --pi-boton-tam: 16px;
+    --pi-boton-sombra: none;
+    --pi-boton2: transparent;
+    --pi-boton2-tinta: #FFFFFF;
+    --pi-boton2-borde: 1.5px solid rgba(255, 255, 255, 0.35);
+
+    --pi-punto-on: #C8F560;
+    --pi-punto-off: rgba(255, 255, 255, 0.4);
+    --pi-barra-r: 99px;
+    --pi-flecha-r: 50%;
+    --pi-flecha-borde: 1.5px solid rgba(255, 255, 255, 0.35);
+    --pi-flecha-fondo: transparent;
+    --pi-flecha-tinta: #FFFFFF;
+
+    --pi-tel-r: 30px;
+    --pi-tel-marco: #000000;
+    --pi-tel-pad: 7px;
+    --pi-tel-in-r: 24px;
+    --pi-tel-tag: #C8F560;
+
+    --pi-paso-num: #111111;
+    --pi-icono-fondo: #C8F560;
+    --pi-icono-r: 12px;
+    --pi-icono-tam: 18px;
+    --pi-tip-fondo: #FFFFFF;
+    --pi-video: #0E0E10;
+    --pi-play: #C8F560;
+    --pi-play-r: 50%;
+    --pi-video-giro: 0deg;
+
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 28px 40px 56px;
+    box-sizing: border-box;
+    background-color: var(--pi-fondo);
+    background-image: var(--pi-fondo-img);
+    background-size: var(--pi-fondo-tam);
+    font-family: 'Poppins', sans-serif;
+    color: var(--pi-tinta-pagina);
+    transition: background-color 0.4s ease;
+}
+
+.inicio[data-tema='business'] {
+    --pi-fondo: #F3F4F8;
+    --pi-fondo-img: none;
+    --pi-fondo-tam: auto;
+    --pi-tinta-pagina: #0B1F3A;
+    --pi-divisor: #DCE0EA;
+    --pi-tinta: #0B1F3A;
+    --pi-sub: #56627A;
+    --pi-borde: 1px solid #E3E6F0;
+    --pi-radio: 18px;
+    --pi-sombra: 0 8px 24px rgba(11, 31, 58, 0.06);
+    --pi-pill: 12px;
+    --pi-punto-r: 10px;
+    --pi-gratis: #CDF22B;
+    --pi-acento: #CDF22B;
+
+    --pi-hero: #2440FF;
+    --pi-hero-img: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(160deg, #3555FF, #1A30E0);
+    --pi-hero-tam: 56px 56px, 56px 56px, 100% 100%;
+    --pi-hero-r: 24px;
+    --pi-hero-sombra: 0 24px 50px rgba(36, 64, 255, 0.25);
+    --pi-hero-sub: #DCE2FF;
+
+    --pi-hl: #CDF22B;
+    --pi-hl-tinta: #0B1F3A;
+    --pi-hl2: #CDF22B;
+    --pi-hl-r: 8px;
+    --pi-etiqueta: #CDF22B;
+    --pi-etiqueta-tinta: #0B1F3A;
+
+    --pi-boton: #CDF22B;
+    --pi-boton-tinta: #0B1F3A;
+    --pi-boton-r: 14px;
+    --pi-boton2-borde: 1.5px solid rgba(255, 255, 255, 0.8);
+
+    --pi-punto-on: #CDF22B;
+    --pi-flecha-r: 12px;
+    --pi-flecha-borde: 1.5px solid rgba(255, 255, 255, 0.6);
+    --pi-flecha-fondo: rgba(255, 255, 255, 0.08);
+
+    --pi-tel-tag: #CDF22B;
+    --pi-paso-num: #2440FF;
+    --pi-icono-fondo: #EEF1FF;
+    --pi-icono-r: 10px;
+    --pi-video: #0B1F3A;
+    --pi-play: #CDF22B;
+    --pi-play-r: 12px;
+}
+
+/* Craft: el tapete lo pinta el layout (layoutCraft); aquí, transparente. */
+.inicio[data-tema='craft'] {
+    --pi-fondo: transparent;
+    --pi-fondo-img: none;
+    --pi-fondo-tam: auto;
+    --pi-tinta-pagina: #F3F2EE;
+    --pi-divisor: rgba(255, 255, 255, 0.3);
+    --pi-tinta: #1D1D1B;
+    --pi-sub: #5A5A55;
+    --pi-tarjeta: #F3F2EE;
+    --pi-borde: none;
+    --pi-radio: 2px;
+    --pi-sombra: 0 2px 0 rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.22);
+    --pi-sombra-chip: 0 2px 0 rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.22);
+    --pi-pill: 2px;
+    --pi-punto-r: 2px;
+    --pi-gratis: #FFE97A;
+    --pi-acento: #F2D21B;
+    --pi-letra: 'Patrick Hand', cursive;
+    --pi-letra-w: 400;
+    --pi-mayus: uppercase;
+    --pi-saludo: 26px;
+    --pi-saludo-track: 0.03em;
+
+    --pi-hero: transparent;
+    --pi-hero-r: 0px;
+    --pi-hero-tinta: #F3F2EE;
+    --pi-hero-sub: #F3F2EE;
+    --pi-lamina-pad: 44px 0 72px;
+    --pi-ctrl-l: 0px;
+    --pi-ctrl-r: 0px;
+
+    --pi-hl: #F2D21B;
+    --pi-hl-tinta: #1D1D1B;
+    --pi-hl2: #F2D21B;
+    --pi-etiqueta: #F3F2EE;
+    --pi-etiqueta-tinta: #1D1D1B;
+    --pi-etiqueta-giro: -2deg;
+    --pi-etiqueta-tam: 17px;
+
+    --pi-boton: #F2D21B;
+    --pi-boton-tinta: #1D1D1B;
+    --pi-boton-r: 2px;
+    --pi-boton-w: 400;
+    --pi-boton-tam: 21px;
+    --pi-boton-sombra: 0 4px 0 rgba(0, 0, 0, 0.2);
+    --pi-boton2: #F3F2EE;
+    --pi-boton2-tinta: #1D1D1B;
+    --pi-boton2-borde: none;
+
+    --pi-punto-on: #F2D21B;
+    --pi-barra-r: 2px;
+    --pi-flecha-r: 2px;
+    --pi-flecha-borde: none;
+    --pi-flecha-fondo: #F3F2EE;
+    --pi-flecha-tinta: #1D1D1B;
+
+    --pi-tel-r: 3px;
+    --pi-tel-marco: #FFFFFF;
+    --pi-tel-pad: 10px 10px 34px;
+    --pi-tel-in-r: 1px;
+    --pi-tel-tag: #F2D21B;
+
+    --pi-paso-num: #1E6B60;
+    --pi-icono-fondo: transparent;
+    --pi-icono-r: 2px;
+    --pi-icono-tam: 26px;
+    --pi-tip-fondo: #FFE97A;
+    --pi-video: #1D1D1B;
+    --pi-play: #F2D21B;
+    --pi-play-r: 2px;
+    --pi-video-giro: 1deg;
+}
+
+/* Cinta adhesiva (Craft). */
+.cinta {
+    position: absolute;
+    width: 76px;
+    height: 22px;
+    background: rgba(238, 232, 212, 0.85);
+    transform: rotate(var(--giro, -3deg));
+    pointer-events: none;
+}
+
+.cintaArriba {
+    left: 50%;
+    top: -11px;
+    margin-left: -38px;
+}
+
+/* ── 1 · Barra superior ── */
+
+.barra {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+}
+
+.saludo {
+    flex: none;
+    white-space: nowrap;
+    font-family: var(--pi-letra);
+    font-size: var(--pi-saludo);
+    font-weight: 800;
+    letter-spacing: var(--pi-saludo-track);
+    text-transform: var(--pi-mayus);
+}
+
+.divisor {
+    flex: none;
+    width: 1px;
+    height: 28px;
+    background: var(--pi-divisor);
+}
+
+.accesos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+    overflow: hidden;
+}
+
+.chip {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 14px 0 6px;
+    border: var(--pi-borde);
+    border-radius: var(--pi-pill);
+    background: var(--pi-tarjeta);
+    box-shadow: var(--pi-sombra-chip);
+    color: var(--pi-tinta);
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.chip:hover {
+    transform: translateY(-1px);
+}
+
+.chipPunto {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--pi-punto-r);
+    font-size: 15px;
+}
+
+.chipNombre {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chipCuando {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6E6965;
+}
+
+.verTodos {
+    flex: none;
+    height: 44px;
+    padding: 0 14px;
+    border: none;
+    background: none;
+    color: var(--pi-tinta-pagina);
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.gratis {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: var(--pi-pill);
+    background: var(--pi-gratis);
+    box-shadow: var(--pi-sombra-chip);
+    color: #111;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* ── 2 · Carrusel ── */
+
+.carrusel {
+    position: relative;
+    height: 500px;
+    overflow: hidden;
+    border-radius: var(--pi-hero-r);
+    background-color: var(--pi-hero);
+    background-image: var(--pi-hero-img);
+    background-size: var(--pi-hero-tam);
+    box-shadow: var(--pi-hero-sombra);
+    color: var(--pi-hero-tinta);
+}
+
+.inicio[data-tema='craft'] .carrusel {
+    overflow: visible;
+}
+
+.lamina {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 24px;
+    align-items: center;
+    padding: var(--pi-lamina-pad);
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.laminaTemporada {
+    grid-template-columns: minmax(0, 1fr) 460px;
+}
+
+.lamina[data-estado='antes'],
+.lamina[data-estado='despues'] {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.lamina[data-estado='antes'] {
+    transform: translateX(-40px);
+}
+
+.lamina[data-estado='despues'] {
+    transform: translateX(40px);
+}
+
+.laminaTexto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 0;
+}
+
+.laminaTemporada .laminaTexto {
+    gap: 14px;
+}
+
+/* El handoff pide 170 px de alto, pero con el titular en dos líneas (columna
+   de ~550 px) la lámina no cabía en sus 500 px y los botones tocaban los
+   puntos del carrusel: 140 px y el wordmark sigue completo. */
+.logo {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    margin-left: -10px;
+}
+
+.inicio[data-tema='craft'] .logo {
+    filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.16)) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.25));
+}
+
+.tituloMarca {
+    margin: 0;
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1.1;
+}
+
+.resalte {
+    position: relative;
+    padding: 0 8px;
+    border-radius: var(--pi-hl-r);
+    background: var(--pi-hl);
+    color: var(--pi-hl-tinta);
+    white-space: nowrap;
+}
+
+.cintaResalte {
+    left: auto;
+    right: -18px;
+    top: -14px;
+    width: 64px;
+    height: 20px;
+}
+
+.lede {
+    margin: 0;
+    max-width: 520px;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--pi-hero-sub);
+}
+
+.ledeTemporada {
+    max-width: 440px;
+}
+
+.etiqueta {
+    display: flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: var(--pi-pill);
+    background: var(--pi-etiqueta);
+    color: var(--pi-etiqueta-tinta);
+    box-shadow: var(--pi-sombra-chip);
+    transform: rotate(var(--pi-etiqueta-giro));
+    font-family: var(--pi-letra);
+    font-size: var(--pi-etiqueta-tam);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.tituloTemporada {
+    margin: 0;
+    font-size: 58px;
+    font-weight: 900;
+    letter-spacing: -0.055em;
+    line-height: 1.05;
+}
+
+.resalte2 {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 2px 12px 6px;
+    border-radius: var(--pi-hl-r);
+    background: var(--pi-hl2);
+    color: #111;
+    line-height: 1.12;
+    white-space: nowrap;
+}
+
+.botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+.boton,
+.boton2 {
+    display: flex;
+    align-items: center;
+    height: 52px;
+    padding: 0 24px;
+    border-radius: var(--pi-boton-r);
+    box-shadow: var(--pi-boton-sombra);
+    font-family: var(--pi-letra);
+    font-size: var(--pi-boton-tam);
+    font-weight: var(--pi-boton-w);
+    text-transform: var(--pi-mayus);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.boton {
+    border: none;
+    background: var(--pi-boton);
+    color: var(--pi-boton-tinta);
+}
+
+.boton2 {
+    padding: 0 22px;
+    border: var(--pi-boton2-borde);
+    background: var(--pi-boton2);
+    color: var(--pi-boton2-tinta);
+}
+
+.boton:hover,
+.boton2:hover {
+    transform: translateY(-2px);
+}
+
+.collage {
+    position: relative;
+    height: 380px;
+}
+
+.sticker {
+    position: absolute;
+    pointer-events: none;
+    transform: rotate(var(--r));
+    animation: flota var(--dur) ease-in-out var(--delay) infinite;
+}
+
+@keyframes flota {
+    0%, 100% { transform: translateY(0) rotate(var(--r)); }
+    50% { transform: translateY(-10px) rotate(calc(var(--r) + 6deg)); }
+}
+
+.plantilla {
+    position: absolute;
+    width: 170px;
+    height: 320px;
+    box-sizing: border-box;
+    padding: var(--pi-tel-pad);
+    border-radius: var(--pi-tel-r);
+    background: var(--pi-tel-marco);
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+    transform: rotate(var(--rot));
+}
+
+.plantillaPantalla {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 16px 14px;
+    overflow: hidden;
+    border-radius: var(--pi-tel-in-r);
+}
+
+.plantillaImagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    margin: -16px -14px;
+}
+
+.plantillaTag {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: var(--pi-pill);
+    background: var(--pi-tel-tag);
+    color: #111;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.plantillaEmoji {
+    font-size: 48px;
+    text-align: center;
+}
+
+.plantillaNombre {
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+}
+
+.controles {
+    position: absolute;
+    left: var(--pi-ctrl-l);
+    right: var(--pi-ctrl-r);
+    bottom: 24px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.puntos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.punto {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: none;
+    border-radius: var(--pi-barra-r);
+    background: var(--pi-punto-off);
+    cursor: pointer;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.punto[data-activo] {
+    width: 32px;
+    background: var(--pi-punto-on);
+}
+
+.flechas {
+    display: flex;
+    gap: 10px;
+}
+
+.flecha {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: var(--pi-flecha-borde);
+    border-radius: var(--pi-flecha-r);
+    background: var(--pi-flecha-fondo);
+    color: var(--pi-flecha-tinta);
+    cursor: pointer;
+}
+
+/* ── 3 y 4 · Así de rápido / Tips rápidos ── */
+
+.bloque {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.bloqueTitulo {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--pi-tinta-pagina);
+}
+
+.pasos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) 1.15fr;
+    gap: 14px;
+}
+
+.paso,
+.tip {
+    position: relative;
+    border: var(--pi-borde);
+    border-radius: var(--pi-radio);
+    background: var(--pi-tarjeta);
+    box-shadow: var(--pi-sombra);
+    color: var(--pi-tinta);
+    transform: rotate(var(--giro, 0deg));
+}
+
+.paso {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+}
+
+.pasoNumero {
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+    color: var(--pi-paso-num);
+}
+
+.pasoTitulo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.pasoTexto,
+.tipTexto {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--pi-sub);
+}
+
+.videoTarjeta {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px;
+    border: none;
+    border-radius: var(--pi-radio);
+    background: var(--pi-video);
+    box-shadow: var(--pi-sombra);
+    color: #FFFFFF;
+    font-family: 'Poppins', sans-serif;
+    text-align: left;
+    transform: rotate(var(--pi-video-giro));
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.videoTarjeta:hover {
+    transform: rotate(var(--pi-video-giro)) translateY(-2px);
+}
+
+.play {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--pi-play-r);
+    background: var(--pi-play);
+    color: #111;
+}
+
+.videoTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.videoTitulo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.videoSub {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tips {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    background: var(--pi-tip-fondo);
+}
+
+.tipIcono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--pi-icono-r);
+    background: var(--pi-icono-fondo);
+    font-size: var(--pi-icono-tam);
+}
+
+.tipTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.tipTitulo {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.tipTexto {
+    line-height: 1.45;
+}
+
+/* El pie de la app al final, en su lugar. */
+.inicio > :global(.fa-main-cont) {
+    margin-top: auto;
+    padding: 24px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sticker {
+        animation: none;
+    }
+
+    .lamina {
+        transition: opacity 0.2s ease;
+        transform: none !important;
+    }
+}
+
+/* Acceso rápido con la foto de portada del Pop (si no, su emoji). */
+.chipPunto:has(.chipPortada) {
+    position: relative;
+    overflow: hidden;
+}
+
+.chipPortada {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ══ Celular (handoff "Inicio de Pops" · mobile, 390 × 844) ══
+   Sin barra superior (el header lo pone PlannerLayout); todo en una columna
+   con espacio abajo para la barra flotante. */
+
+.inicio {
+    --pi-m-hero-r: 28px;
+    --pi-m-lamina-pad: 22px 22px 56px;
+    --pi-m-boton-tam: 15px;
+    --pi-m-etiqueta-tam: 12px;
+    --pi-m-tel-r: 18px;
+    --pi-m-tel-pad: 4px;
+    --pi-m-saludo: 24px;
+}
+
+.inicio[data-tema='business'] {
+    --pi-m-hero-r: 22px;
+}
+
+.inicio[data-tema='craft'] {
+    --pi-m-hero-r: 0px;
+    --pi-m-lamina-pad: 22px 4px 56px;
+    --pi-m-boton-tam: 19px;
+    --pi-m-etiqueta-tam: 15px;
+    --pi-m-tel-r: 3px;
+    --pi-m-tel-pad: 7px 7px 24px;
+    --pi-m-saludo: 26px;
+}
+
+.movil {
+    gap: 0;
+    min-height: 0;
+    padding: 0 0 calc(124px + env(safe-area-inset-bottom));
+}
+
+.movil .saludo {
+    padding: 18px 20px 12px;
+    font-size: var(--pi-m-saludo);
+    white-space: normal;
+}
+
+.movil .accesos {
+    flex: none;
+    padding: 4px 20px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.movil .accesos::-webkit-scrollbar {
+    display: none;
+}
+
+.movil .carrusel {
+    margin: 12px 16px 0;
+    height: 600px;
+    border-radius: var(--pi-m-hero-r);
+    touch-action: pan-y;
+}
+
+.movil .lamina {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: var(--pi-m-lamina-pad);
+}
+
+.movil .collage {
+    flex: none;
+    height: 170px;
+}
+
+.movil .logo {
+    height: 104px;
+    margin-left: -6px;
+}
+
+.movil .tituloMarca {
+    font-size: 28px;
+    line-height: 1.15;
+}
+
+.movil .resalte {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 0 8px 2px;
+}
+
+.movil .cintaResalte {
+    right: -14px;
+    top: -10px;
+    width: 48px;
+    height: 16px;
+}
+
+.movil .lede {
+    max-width: none;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.movil .botones {
+    flex-wrap: nowrap;
+    gap: 10px;
+}
+
+.movil .boton,
+.movil .boton2 {
+    flex: 1;
+    justify-content: center;
+    height: 50px;
+    padding: 0 12px;
+    font-size: var(--pi-m-boton-tam);
+}
+
+.movil .abanico {
+    position: relative;
+    flex: none;
+    height: 214px;
+    margin-top: 6px;
+}
+
+.movil .abanicoStickers {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.movil .plantilla {
+    width: 98px;
+    height: 178px;
+    padding: var(--pi-m-tel-pad);
+    border-radius: var(--pi-m-tel-r);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+}
+
+.movil .plantillaPantalla {
+    padding: 10px 9px;
+}
+
+.movil .plantillaTag {
+    height: 18px;
+    padding: 0 7px;
+    font-size: 9px;
+}
+
+.movil .plantillaEmoji {
+    font-size: 30px;
+}
+
+.movil .plantillaNombre {
+    font-size: 11px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.movil .etiqueta {
+    align-self: flex-start;
+    height: 28px;
+    padding: 0 10px;
+    font-size: var(--pi-m-etiqueta-tam);
+}
+
+.movil .tituloTemporada {
+    font-size: 34px;
+}
+
+.movil .resalte2 {
+    margin-top: 8px;
+    padding: 2px 10px 5px;
+}
+
+/* Solo puntos, centrados; sin flechas. */
+.movil .controles {
+    left: 0;
+    right: 0;
+    bottom: 20px;
+    justify-content: center;
+}
+
+.movil .puntos {
+    gap: 7px;
+}
+
+.movil .punto {
+    width: 7px;
+    height: 7px;
+}
+
+.movil .punto[data-activo] {
+    width: 26px;
+}
+
+.movil .bloque {
+    gap: 14px;
+    padding: 32px 16px 0;
+}
+
+.movil .bloqueTitulo {
+    margin: 0 4px;
+    font-size: 24px;
+}
+
+.movil .pasos {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.movil .paso {
+    gap: 6px;
+    padding: 16px;
+}
+
+.movil .pasoNumero {
+    font-size: 32px;
+}
+
+.movil .pasoTitulo {
+    font-size: 16px;
+}
+
+.movil .pasoTexto,
+.movil .tipTexto {
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.movil .videoTarjeta {
+    gap: 10px;
+    min-height: 150px;
+    padding: 16px;
+}
+
+.movil .play {
+    width: 46px;
+    height: 46px;
+}
+
+.movil .videoTitulo {
+    font-size: 16px;
+}
+
+.movil .videoSub {
+    font-size: 12px;
+}
+
+.movil .tips {
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.movil .tip {
+    gap: 12px;
+    padding: 16px;
+}
+
+.movil .tipTitulo {
+    font-size: 15px;
+}
+
+.movil > :global(.fa-main-cont) {
+    margin-top: 0;
+    padding: 32px 16px 0;
+}

@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { SmilePlus } from 'lucide-react'
 import { emojiDePop } from '../../helpers/invitation/popEvents'
-import { horaDePop, useConfirmados } from './popsDatos'
+import { horaDePop, useConfirmados, portadaDePop } from './popsDatos'
 import { PopsHero } from './PopsHero'
 import styles from './PopsCraft.module.css'
 
@@ -28,7 +28,7 @@ const Cinta = ({ ancho = 90, x = 50, giro = -3, color }) => (
     <span aria-hidden className={styles.cinta} style={{ width: ancho, left: `${x}%`, marginLeft: -ancho / 2, transform: `rotate(${giro}deg)`, ...(color ? { '--cinta': color } : {}) }} />
 )
 
-export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie }) => {
+export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie, sinHero = false, sinLista = false, debajo, titulo: tituloPropio, vacioLista, conCorreo = false }) => {
     const { t, i18n } = useTranslation()
     const hoy = dayjs().startOf('day')
     const [pestana, setPestana] = useState('activos')
@@ -37,7 +37,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
         const pop = item._pop
         const fecha = item.event_date ? dayjs(item.event_date) : null
         const dias = fecha ? fecha.startOf('day').diff(hoy, 'day') : null
-        return { item, popId: pop?.id, fecha, dias, hora: horaDePop(pop), emoji: emojiDePop(pop), nombre: item.name || pop?.name || t('pops_section.untitled') }
+        return { item, popId: pop?.id, fecha, dias, hora: horaDePop(pop), emoji: emojiDePop(pop), portada: portadaDePop(pop), correo: item.user_email || pop?.user_email || null, nombre: item.name || pop?.name || t('pops_section.untitled') }
     })
     const activos = filas
         .filter(f => f.dias === null || f.dias >= 0)
@@ -68,7 +68,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
         return (
             <button key={f.item.id} type='button' className={`${styles.fila} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
                 <span className={styles.cuadro} style={{ background: color }}>
-                    {f.emoji || <SmilePlus size={22} aria-label={t('pops_section.no_emoji')} />}
+                    {f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.emoji || <SmilePlus size={22} aria-label={t('pops_section.no_emoji')} />}
                 </span>
                 <span className={styles.filaTexto}>
                     <span className={styles.nombre}>{f.nombre}</span>
@@ -77,6 +77,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
                         {estado(f, pasado)}
                     </span>
                 </span>
+                {conCorreo && <span className={`${styles.correo} ${styles.correoCelda}`}>{f.correo || t('invitations.pending_send_badge')}</span>}
                 <span className={styles.fecha}>{f.fecha ? fechaCorta(f.fecha) : t('pops_section.no_date')}</span>
                 <span>
                     {!pasado && f.dias !== null && (
@@ -103,10 +104,11 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
             >
                 <Cinta ancho={56} x={i % 2 ? 72 : 28} giro={i % 2 ? -5 : 4} color={`color-mix(in srgb, ${color} 80%, transparent)`} />
                 <span className={styles.tiraCuadro} style={{ background: color }} aria-hidden>
-                    {f.emoji || <SmilePlus size={18} />}
+                    {f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.emoji || <SmilePlus size={18} />}
                 </span>
                 <span className={styles.tiraTexto}>
                     <span className={styles.tiraNombre}>{f.nombre}</span>
+                    {conCorreo && <span className={styles.correo}>{f.correo || t('invitations.pending_send_badge')}</span>}
                     <span className={styles.tiraFecha}>
                         {f.fecha ? fechaCorta(f.fecha) : t('pops_section.no_date')}
                         {f.hora ? ` · ${f.hora}` : ''}
@@ -161,13 +163,19 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
         </div>
     )
 
+    // Lista sola (espacio Pops › Clientes / Eventos): su título y, sin Pops, solo el texto.
+    const titulo = tituloPropio ?? (sinPops ? t('pops_section.empty_title') : t('pops_section.active_title'))
+    const vacioPropio = sinHero && <p className={styles.vacioPapel}>{vacioLista}</p>
+
     if (movil) {
         const lista = pestana === 'pasados' ? pasados : activos
         return (
-            <div className={`${styles.seccion} ${styles.movil}`}>
-                {switchTema}
-                <PopsHero tema='craft' movil greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />
+            <div className={`${styles.seccion} ${styles.movil} ${sinHero ? styles.soloLista : ''} ${sinLista ? styles.inicioSolo : ''}`}>
+                {!sinHero && switchTema}
+                {!sinHero && <PopsHero tema='craft' movil greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />}
 
+                {sinLista && debajo}
+                {sinLista ? pieConCinta && <div className={styles.pieSolo}>{pieConCinta}</div> : <>
                 {!sinPops && (
                     <div className={styles.pestanas} role='tablist'>
                         <button type='button' role='tab' aria-selected={pestana === 'activos'} className={styles.pestana} data-on={pestana === 'activos' || undefined} onClick={() => setPestana('activos')}>
@@ -188,30 +196,32 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
 
                 <section className={styles.mCorcho}>
                     {sticky}
-                    {sinPops ? primero : lista.length > 0
+                    {sinPops ? (vacioPropio || primero) : lista.length > 0
                         ? lista.map((f, i) => tira(f, i, pestana === 'pasados'))
                         : <p className={styles.vacioPapel}>{t('pops_section.empty')}</p>}
                     {pieConCinta}
                 </section>
+                </>}
             </div>
         )
     }
 
     return (
-        <div className={`${styles.seccion} ${styles.conHero}`}>
-            {switchTema}
+        <div className={`${styles.seccion} ${styles.conHero} ${sinHero ? styles.soloLista : ''} ${sinLista ? styles.inicioSolo : ''} ${conCorreo ? styles.conCorreo : ''}`}>
+            {!sinHero && switchTema}
             {/* El hero común de los tres estilos (PopsHero, handoff §11). */}
-            <PopsHero tema='craft' greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />
+            {!sinHero && <PopsHero tema='craft' greeting={greeting} puedeCrear={puedeCrear} onCrear={onCrear} onConoce={onConoce} />}
 
-            <section className={styles.corcho}>
+            {sinLista && debajo}
+            {sinLista ? pieConCinta && <div className={styles.pieSolo}>{pieConCinta}</div> : <section className={styles.corcho}>
                 <div className={styles.cabeza}>
                     <div className={styles.etiquetaPapel}>
                         <Cinta ancho={80} x={40} giro={-3} />
                         <span className={styles.titulo}>
-                            {(sinPops ? t('pops_section.empty_title') : t('pops_section.active_title')).split(' ')[0]}{' '}
-                            <span className={styles.resalte}>{(sinPops ? t('pops_section.empty_title') : t('pops_section.active_title')).split(' ').slice(1).join(' ')}</span>
+                            {titulo.split(' ')[0]}{' '}
+                            <span className={styles.resalte}>{titulo.split(' ').slice(1).join(' ')}</span>
                         </span>
-                        <span className={styles.sub}>{sinPops ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
+                        <span className={styles.sub}>{sinPops && !sinHero ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
                     </div>
                     {onComprarPop && (
                         <button type='button' className={styles.comprar} onClick={onComprarPop}>
@@ -222,12 +232,12 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
 
                 {sticky}
 
-                {sinPops ? primero : (
+                {sinPops ? (vacioPropio || primero) : (
                     <div className={styles.hoja}>
                         <Cinta x={22} giro={-4} />
                         <Cinta x={78} giro={4} />
                         <div className={styles.columnas} aria-hidden>
-                            <span /><span>{t('pops_section.biz_col_event')}</span><span>{t('pops_section.biz_col_date')}</span><span>{t('pops_section.biz_col_left')}</span><span />
+                            <span /><span>{t('pops_section.biz_col_event')}</span>{conCorreo && <span>{t('pops_section.col_client')}</span>}<span>{t('pops_section.biz_col_date')}</span><span>{t('pops_section.biz_col_left')}</span><span />
                         </div>
                         {activos.length > 0
                             ? activos.map((f, i) => fila(f, i))
@@ -241,7 +251,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
                     </div>
                 )}
                 {pieConCinta}
-            </section>
+            </section>}
         </div>
     )
 }

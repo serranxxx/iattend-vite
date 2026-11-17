@@ -15,6 +15,10 @@ import './popsTema.css'
  * clip-path; el anillo es su propio grupo (`pops-anillo`) encima. Sin View
  * Transitions o con reducir movimiento, el cambio es instantáneo. Mientras
  * corre, otro clic no hace nada.
+ *
+ * forzar: un estilo que llega de fuera (el `?tema=` de un link compartido,
+ * PlannerLayout): si es válido gana al guardado desde el primer render y se
+ * guarda, como si se hubiera elegido.
  */
 
 export const TEMAS_POPS = ['pop', 'business', 'craft']
@@ -41,10 +45,22 @@ export const leerTemaPops = (temas = TEMAS_POPS, { clave = CLAVE, porOmision = '
 
 const COLOR_ANILLO = { business: '#CDF22B', pop: '#FF5FA8', craft: '#F2D21B', iattend: '#16323D' }
 
-export const usePopsTema = ({ temas = TEMAS_POPS, clave: claveTema = CLAVE, porOmision = 'pop' } = {}) => {
+export const usePopsTema = ({ temas = TEMAS_POPS, clave: claveTema = CLAVE, porOmision = 'pop', forzar = null } = {}) => {
     const leer = (validos) => leerTemaPops(validos, { clave: claveTema, porOmision })
-    const [tema, setTema] = useState(() => leer(temas))
+    const forzado = temas.includes(forzar) ? forzar : null
+    const guardar = (valor) => { try { localStorage.setItem(claveTema, valor) } catch { /* sin almacenamiento */ } }
     const ocupado = useRef(false)
+    const [tema, setTema] = useState(() => {
+        if (forzado) guardar(forzado)
+        return forzado ?? leer(temas)
+    })
+    // Otro link con otro estilo en la misma pestaña: lo toma sin transición.
+    useEffect(() => {
+        if (!forzado || forzado === tema || ocupado.current) return
+        guardar(forzado)
+        setTema(forzado)
+        queueMicrotask(() => window.dispatchEvent(new Event(EVENTO)))
+    }, [forzado])
 
     // Siempre el mismo estilo en todas las pantallas abiertas (sección Pops y
     // editor, en esta pestaña o en otra): al cambiarlo en una, las demás lo

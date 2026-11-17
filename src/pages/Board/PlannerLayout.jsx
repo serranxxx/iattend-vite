@@ -3,22 +3,24 @@ import dayjs from 'dayjs'
 import { Drawer, Dropdown, Grid, Popover } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { CalendarHeart, Check, ChevronRight, ChevronsUpDown, ChevronUp, Compass, Gift, Info, LayoutDashboard, LayoutGrid, LogOut, Palette, Plus, Shield, Sparkles, Users, X, Zap } from 'lucide-react'
+import { CalendarHeart, Check, ChevronRight, ChevronsUpDown, ChevronUp, Gift, House, Info, LayoutDashboard, LayoutGrid, LogOut, Palette, Plus, Shield, Sparkles, Users, X, Zap } from 'lucide-react'
 import { PlannerExplore } from './PlannerExplore'
 import { PlannerFeedback } from './PlannerFeedback'
 import { PlannerEventList } from './PlannerEventList'
 import { buildStats, fetchPlannerData } from '../../components/PlannerDashboard/plannerData'
-import logoBlue from '/images/logo_blue.png'
-import logoNegro from '/images/logo_negro.png'
 import styles from './PlannerLayout.module.css'
 import { PlannerSkeleton } from './PlannerSkeleton'
-import { PopsLogo } from '../../components/PopsLogo/PopsLogo'
 import { PopsSection } from './PopsSection'
+import { PopsInicio } from './PopsInicio'
+import { PopsTemaSwitch } from './PopsTemaSwitch'
 import { usePopsTransicion } from './usePopsTransicion'
 import { TEMAS_POPS, usePopsTema } from './usePopsTema'
 import { useTextures } from '../../context/TexturesContext'
 import { PopsOnboarding } from '../../components/PopsOnboarding/PopsOnboarding'
+import { PopsVideo } from '../../components/PopsOnboarding/PopsVideo'
 import { FooterApp } from '../../modules/Footer/FooterApp'
+import { EspacioSelector } from './EspacioSelector'
+import { ESPACIO_GUARDADO, claveSeccion } from '../../helpers/invitation/espacios'
 
 
 /**
@@ -51,19 +53,42 @@ import { FooterApp } from '../../modules/Footer/FooterApp'
  * pop (blanca, pastillas) y el contenido es PopsSection; entrar y salir van
  * con la transición circular desde el botón Pops (usePopsTransicion).
  *
+ * Espacios (handoff "Switch de espacios", 4a · Logo desplegable): la app se
+ * separa en Weddings y Pops, cada uno con su menú Inicio · Clientes · Eventos
+ * (nada se mezcla: Clientes de Weddings = solo bodas, de Pops = solo Pops). El
+ * logo de la barra (o del header en celular) es el selector (EspacioSelector).
+ * Weddings: Inicio = Explora I attend; Pops: Inicio = PopsSection con todos
+ * sus Pops, y Clientes / Eventos son la lista de siempre con la estética pop.
+ * Una cuenta de cliente solo con Pops (sin una boda real) entra directo a Pops
+ * y sin selector; sin Pops ni Pops gratis, solo Weddings.
+ *
  * `esCliente`: el mismo layout para una cuenta de cliente (InvitationsPage lo
  * usa para todos): sin Clientes, Dashboard, Administrador, "¿Te falta algo?"
  * ni invitación de ejemplo; Explora es solo el carrusel (con su slide de
  * regalo, `onRegalar`) y Eventos son todas sus invitaciones.
  */
-// Sección elegida de /invitations: va en la URL (?seccion=clients|own|pops;
-// Explora I attend = sin parámetro) para que recargar la deje donde estaba, y
-// en sessionStorage para que al volver con un `/invitations` pelón (salir de
-// un Pop o de un evento) regrese a la última. Una pestaña nueva entra a Explora.
+// Espacio y sección van en la URL (?espacio=pops, Weddings = sin parámetro;
+// ?seccion=clients|own, Inicio = sin parámetro) para compartir el link directo
+// y que recargar deje todo donde estaba. Los dos se recuerdan en la pestaña
+// (sessionStorage; la sección, por espacio): un `/invitations` pelón (salir de
+// un Pop o de un evento) regresa al último espacio y a su última sección.
+// `?espacio=pops` sin sección = Inicio de Pops. `?seccion=pops` (links de
+// antes) se vuelve `?espacio=pops`. Una pestaña nueva entra a Inicio de Weddings.
+const ESPACIO_PARAM = 'espacio'
 const SECCION_PARAM = 'seccion'
-const SECCION_GUARDADA = 'iattend_seccion_invitaciones'
-const leerGuardada = () => { try { return sessionStorage.getItem(SECCION_GUARDADA) } catch { return null } }
-const guardarSeccion = (key) => { try { sessionStorage.setItem(SECCION_GUARDADA, key) } catch { /* sin storage */ } }
+// En Pops el estilo también va en la URL (?tema=pop|business|craft): un link
+// compartido abre con ese estilo (y se queda guardado, usePopsTema `forzar`).
+const TEMA_PARAM = 'tema'
+const leer = (clave) => { try { return sessionStorage.getItem(clave) } catch { return null } }
+const guardar = (clave, valor) => { try { sessionStorage.setItem(clave, valor) } catch { /* sin storage */ } }
+const leerLocal = (clave) => { try { return localStorage.getItem(clave) } catch { return null } }
+const guardarLocal = (clave, valor) => { try { localStorage.setItem(clave, valor) } catch { /* sin storage */ } }
+
+// Boda "real" de un cliente: de pago o ya empezada. El alta gratis
+// (/api/invitation/create-free) le crea a toda cuenta nueva una invitación
+// plan free vacía, también a quien solo compró un Pop: esa no lo hace de Weddings.
+const esBodaReal = (inv) => inv.started === true || Boolean(inv.plan && String(inv.plan).toLowerCase() !== 'free')
+const fechaDe = (inv) => (inv.event_date ? String(inv.event_date).slice(0, 10) : null)
 
 export const PlannerLayout = ({
     esCliente = false,
@@ -71,7 +96,7 @@ export const PlannerLayout = ({
     view, onViewChange, dashboard, setFilterSlot, loading,
     onComprar, onComprarPop, onGratis, onGratisPop, onEventoPersonal, onRegalar, onTour, onLogout, onAbrir, onCompartir,
 }) => {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const celular = Grid.useBreakpoint().md === false
@@ -94,30 +119,70 @@ export const PlannerLayout = ({
             .filter(inv => !esDeCliente(inv) && inv.is_test && !inv._pop)
             .sort((a, b) => Number(esCopiaDePlantilla(b)) - Number(esCopiaDePlantilla(a)))
         : []
-    // Clientes manda: todo lo de un cliente (invitación o Pop) va ahí. Los
-    // Pops propios van en Pops y Eventos queda con sus invitaciones propias.
-    const secciones = [
-        { key: 'test', title: t('invitations.section_test'), items: esAdmin ? pruebasAdmin.slice(0, 1) : lista.filter(inv => !inv._pop && esEjemplo(inv)) },
-        { key: 'clients', title: t('invitations.planner_tab_clients'), items: lista.filter(esDeCliente) },
-        { key: 'own', title: t('invitations.planner_tab_own'), items: lista.filter(inv => !inv._pop && !esDeCliente(inv) && !esEjemplo(inv)) },
-        { key: 'pops', title: t('invitations.planner_tab_pops'), items: lista.filter(inv => inv._pop && !esDeCliente(inv)) },
-    ].filter(s => !esCliente || s.key !== 'clients')
+    const gratis = beneficios?.free_events ?? 0
+    const gratisPop = beneficios?.free_flash_events ?? 0
+    const descuento = beneficios?.discount_pct ?? 0
 
-    // De la URL o, sin parámetro, la última de esta pestaña; si no existe
-    // (p. ej. Clientes en una cuenta de cliente), Explora I attend.
-    const enUrl = searchParams.get(SECCION_PARAM)
-    const elegida = enUrl ?? leerGuardada()
-    const activa = secciones.find(s => s.key === elegida) ?? secciones.find(s => s.key === 'test')
+    const pops = lista.filter(inv => inv._pop)
+    const bodas = lista.filter(inv => !inv._pop)
 
-    // Sin parámetro pero con una guardada: que la URL la diga (recargar, compartir).
+    // Tipo de cuenta (la misma clasificación de Admin › Usuarios › Clientes):
+    // planner y admin ven los dos espacios. Un cliente con Pops y sin una boda
+    // real es de Pops: entra a Pops y sin selector; sin Pops ni Pops gratis
+    // para crearlos, de Weddings; con los dos, ve el selector y arranca en
+    // Weddings (salvo que el link diga `?espacio=pops`).
+    const soloPops = esCliente && pops.length > 0 && !bodas.some(esBodaReal)
+    const soloWeddings = esCliente && pops.length === 0 && gratisPop === 0
+    const tipoCuenta = soloPops ? 'pops' : soloWeddings ? 'weddings' : 'ambos'
+    // Se recuerda por cuenta (localStorage) para que, mientras cargan sus
+    // eventos, un cliente de Pops no vea primero Weddings y luego salte.
+    const claveTipo = esCliente && user?.uid ? `iattend_tipo_cuenta_${user.uid}` : null
+    const tipoGuardado = claveTipo ? leerLocal(claveTipo) : null
+    const tipoVigente = loading ? tipoGuardado : (esCliente ? tipoCuenta : null)
+    const forzado = tipoVigente === 'pops' || tipoVigente === 'weddings' ? tipoVigente : null
+    const puedeCambiar = !esCliente || tipoVigente === 'ambos'
     useEffect(() => {
-        if (enUrl || !activa || activa.key === 'test') return
-        setSearchParams(prev => { prev.set(SECCION_PARAM, activa.key); return prev }, { replace: true })
-    }, [enUrl, activa?.key])
+        if (!loading && claveTipo) guardarLocal(claveTipo, tipoCuenta)
+    }, [loading, claveTipo, tipoCuenta])
 
-    // Cambia la sección (y sale del dashboard) en un solo cambio de URL.
+    const espacioUrl = searchParams.get(ESPACIO_PARAM)
+    const seccionUrl = searchParams.get(SECCION_PARAM)
+    const popsViejo = seccionUrl === 'pops'
+    const espacio = forzado
+        ?? (popsViejo || espacioUrl === 'pops' ? 'pops'
+            : espacioUrl === 'weddings' ? 'weddings'
+                : leer(ESPACIO_GUARDADO) === 'pops' ? 'pops' : 'weddings')
+    const enPops = espacio === 'pops'
+
+    // Cada espacio con el mismo menú. Pops › Inicio lleva todos sus Pops;
+    // Clientes y Eventos se reparten igual que en Weddings.
+    const secciones = (enPops ? [
+        { key: 'test', title: t('invitations.space_home'), items: pops },
+        { key: 'clients', title: t('invitations.planner_tab_clients'), items: pops.filter(esDeCliente) },
+        { key: 'own', title: t('invitations.space_my_pops'), items: pops.filter(inv => !esDeCliente(inv)) },
+    ] : [
+        { key: 'test', title: t('invitations.space_home'), items: esAdmin ? pruebasAdmin.slice(0, 1) : bodas.filter(esEjemplo) },
+        { key: 'clients', title: t('invitations.planner_tab_clients'), items: bodas.filter(esDeCliente) },
+        { key: 'own', title: t('invitations.planner_tab_own'), items: bodas.filter(inv => !esDeCliente(inv) && !esEjemplo(inv)) },
+    ]).filter(s => !esCliente || s.key !== 'clients')
+
+    // De la URL; con `?espacio=` y sin sección, Inicio (link directo); pelón,
+    // la última de ese espacio en esta pestaña. Si no existe (p. ej. Clientes
+    // en una cuenta de cliente), Inicio.
+    const enUrl = popsViejo ? null : seccionUrl
+    const elegida = enUrl ?? (espacioUrl || popsViejo ? null : leer(claveSeccion(espacio)))
+    const activa = secciones.find(s => s.key === elegida) ?? secciones[0]
+
+
+    useEffect(() => {
+        guardar(ESPACIO_GUARDADO, espacio)
+        guardar(claveSeccion(espacio), activa.key)
+    }, [espacio, activa.key])
+
+    // Cambia la sección (y sale del dashboard) en un solo cambio de URL. Se
+    // guarda antes: sin `?seccion=` (Inicio) se lee la guardada.
     const setElegida = (key) => {
-        guardarSeccion(key)
+        guardar(claveSeccion(espacio), key)
         setSearchParams(prev => {
             if (key === 'test') prev.delete(SECCION_PARAM)
             else prev.set(SECCION_PARAM, key)
@@ -125,18 +190,39 @@ export const PlannerLayout = ({
             return prev
         }, { replace: true })
     }
-    const [hoverPops, setHoverPops] = useState(false)
+
+    // Resumen de cada espacio para el selector ("3 bodas · próxima 14 feb",
+    // "6 Pops activos · próximo en 4 días").
+    const resumenEspacios = useMemo(() => {
+        const hoy = dayjs().startOf('day')
+        const enIngles = i18n.language?.startsWith('en')
+        const corta = (f) => new Date(`${f}T00:00:00`).toLocaleDateString(enIngles ? 'en-US' : 'es-MX', { day: 'numeric', month: 'short' }).replace('.', '')
+        const proxima = (items) => items.map(fechaDe).filter(f => f && !dayjs(f).isBefore(hoy)).sort()[0] ?? null
+
+        const deBodas = bodas.filter(inv => (esCliente ? esBodaReal(inv) : !esEjemplo(inv)))
+        const boda = proxima(deBodas)
+        const activos = pops.filter(inv => !fechaDe(inv) || !dayjs(fechaDe(inv)).isBefore(hoy))
+        const pop = proxima(activos)
+        const dias = pop ? dayjs(pop).diff(hoy, 'day') : null
+        return {
+            weddings: [
+                t('invitations.space_weddings_count', { count: deBodas.length }),
+                boda && t('invitations.space_weddings_next', { date: corta(boda) }),
+            ].filter(Boolean).join(' · '),
+            pops: [
+                t('invitations.space_pops_count', { count: activos.length }),
+                dias === 0 ? t('invitations.space_pops_next_today') : dias !== null && t('invitations.space_pops_next', { count: dias }),
+            ].filter(Boolean).join(' · '),
+        }
+    }, [lista, esCliente, i18n.language])
     // "Conoce los Pops": modal con el video de onboarding (PopsOnboarding).
     const [conocePops, setConocePops] = useState(false)
     const popsRef = useRef(null)
 
-    // Números de las tarjetas de Mis clientes y Mis eventos (mismo cálculo
-    // que el dashboard). Sin números para los Pops: con stats la tarjeta
-    // pinta el lector de pases, que solo sabe abrir invitaciones.
-    const conNumeros = secciones
-        .filter(s => s.key === 'clients' || s.key === 'own')
-        .flatMap(s => s.items)
-        .filter(i => !i._pop)
+    // Números de las tarjetas de Clientes y Eventos de Weddings (mismo
+    // cálculo que el dashboard). Sin números para los Pops: con stats la
+    // tarjeta pinta el lector de pases, que solo sabe abrir invitaciones.
+    const conNumeros = bodas.filter(inv => esDeCliente(inv) || !esEjemplo(inv))
     const conNumerosKey = conNumeros.map(i => i.id).join(',')
     const [datosEventos, setDatosEventos] = useState(null)
     useEffect(() => {
@@ -151,7 +237,8 @@ export const PlannerLayout = ({
         const hoy = dayjs().startOf('day')
         return Object.fromEntries(conNumeros.map(inv => [inv.id, buildStats(inv, datosEventos, hoy)]))
     }, [datosEventos, conNumerosKey])
-    const enDashboard = view === 'data'
+    // El dashboard es de Weddings (números de invitaciones).
+    const enDashboard = view === 'data' && !enPops
 
     // Pie: el de la app, al fondo del contenido (no en Pops, que tiene su propia estética).
     const pie = <FooterApp className={styles.pieLegal} />
@@ -159,7 +246,7 @@ export const PlannerLayout = ({
     // Pastilla de la barra inferior (celular): el botón activo siempre a la
     // vista (al montar sin animación; al cambiar de sección, deslizándose).
     const pastillaRef = useRef(null)
-    const pestanaVisible = enDashboard ? 'data' : activa?.key
+    const pestanaVisible = `${espacio}:${enDashboard ? 'data' : activa.key}`
     const pastillaMontada = useRef(false)
     useEffect(() => {
         const fila = pastillaRef.current
@@ -171,11 +258,11 @@ export const PlannerLayout = ({
         })
         pastillaMontada.current = true
     }, [celular, pestanaVisible])
-    // Sección Pops con su estética propia (escritorio y celular).
-    const modoPops = !enDashboard && activa?.key === 'pops'
+    // Espacio Pops con su estética propia (escritorio y celular).
+    const modoPops = enPops
     // Estilo de Pops (Pop | Business, handoff "Cambia tu estilo"): cambia la
     // sección, la barra lateral / inferior y el velo de entrada.
-    const { tema: temaPops, cambiar: cambiarTemaPops } = usePopsTema()
+    const { tema: temaPops, cambiar: cambiarTemaPops } = usePopsTema({ forzar: enPops ? searchParams.get(TEMA_PARAM) : null })
     const business = temaPops === 'business'
     const modoBiz = modoPops && business
     const modoCraft = modoPops && temaPops === 'craft'
@@ -190,6 +277,25 @@ export const PlannerLayout = ({
         raiz.setAttribute('data-pops-tema', temaPops)
         return () => raiz.removeAttribute('data-pops-tema')
     }, [modoPops, temaPops])
+    // Que la URL diga siempre el espacio, la sección y, en Pops, el estilo
+    // (recargar, compartir el link con ese estilo).
+    const temaUrl = searchParams.get(TEMA_PARAM)
+    useEffect(() => {
+        const quiereEspacio = enPops ? 'pops' : null
+        const quiereSeccion = activa.key === 'test' ? null : activa.key
+        const quiereTema = enPops ? temaPops : null
+        if (espacioUrl === quiereEspacio && seccionUrl === quiereSeccion && temaUrl === quiereTema) return
+        setSearchParams(prev => {
+            if (quiereEspacio) prev.set(ESPACIO_PARAM, quiereEspacio)
+            else prev.delete(ESPACIO_PARAM)
+            if (quiereSeccion) prev.set(SECCION_PARAM, quiereSeccion)
+            else prev.delete(SECCION_PARAM)
+            if (quiereTema) prev.set(TEMA_PARAM, quiereTema)
+            else prev.delete(TEMA_PARAM)
+            return prev
+        }, { replace: true })
+    }, [enPops, activa.key, espacioUrl, seccionUrl, temaPops, temaUrl])
+
     // Craft usa la textura "Papel" del Laboratorio de texturas (tabla
     // textures); si cambia allá, cambia aquí. Sin ella, la de index.css.
     const { textures } = useTextures()
@@ -202,19 +308,48 @@ export const PlannerLayout = ({
     useEffect(() => {
         if (modoPops) window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     }, [modoPops])
-    // Entrar o salir de Pops lleva la transición (origen: el botón Pops de la
-    // barra lateral o de la barra inferior); entre las demás, directo.
+    // Entrar o salir de Pops lleva la transición (origen: el selector del
+    // logo); entre las secciones de un mismo espacio, directo.
     const navegar = (haciaPops, accion) => (haciaPops !== modoPops ? transicion(haciaPops, accion) : accion())
-
-    const gratis = beneficios?.free_events ?? 0
-    const gratisPop = beneficios?.free_flash_events ?? 0
-    const descuento = beneficios?.discount_pct ?? 0
 
     // Crear un Pop: con uno gratis, directo a ese flujo; si no, la compra.
     const crearPop = gratisPop > 0 ? onGratisPop : onComprar
+    // Un cliente solo crea Pops con los gratis que le asignaron.
+    const puedeCrearPop = !esCliente || gratisPop > 0
+    const comprarPop = onComprarPop ?? crearPop
 
     // setElegida también quita ?view=data: salir del dashboard va en el mismo cambio.
-    const abrirSeccion = (key) => navegar(key === 'pops', () => setElegida(key))
+    const abrirSeccion = (key) => navegar(enPops, () => setElegida(key))
+
+    // Otro espacio: a la última sección que se vio en él (o Inicio).
+    const cambiarEspacio = (nuevo) => navegar(nuevo === 'pops', () => {
+        guardar(ESPACIO_GUARDADO, nuevo)
+        const seccion = leer(claveSeccion(nuevo))
+        setSearchParams(prev => {
+            if (nuevo === 'pops') prev.set(ESPACIO_PARAM, 'pops')
+            else prev.delete(ESPACIO_PARAM)
+            if (seccion && seccion !== 'test') prev.set(SECCION_PARAM, seccion)
+            else prev.delete(SECCION_PARAM)
+            prev.delete('view')
+            return prev
+        }, { replace: true })
+    })
+
+    const rolTexto = t(esAdmin ? 'invitations.role_admin'
+        : !esCliente ? 'invitations.role_planner'
+            : soloPops ? 'invitations.role_client_pops' : 'invitations.role_client')
+
+    const selector = (movil) => (
+        <EspacioSelector
+            movil={movil}
+            espacio={espacio}
+            puedeCambiar={puedeCambiar}
+            resumen={resumenEspacios}
+            onElegir={cambiarEspacio}
+            botonRef={popsRef}
+            tema={enPops ? temaPops : undefined}
+        />
+    )
 
     // La flecha del bloque del usuario gira mientras su menú está abierto.
     const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false)
@@ -260,12 +395,13 @@ export const PlannerLayout = ({
     // explica qué es: casi nadie lo sabe todavía. En celular van en la hoja
     // del "+".
     const usarGratis = (fn) => () => { setHojaAlta(false); fn?.() }
-    // En la sección Pops el Pop gratis va en el aviso amarillo de la lista.
-    const popGratisEnBarra = gratisPop > 0 && !modoPops
-    const regalos = (gratis > 0 || popGratisEnBarra) && (
+    // Cada espacio con sus gratis: los eventos en Weddings y los Pops en Pops.
+    const gratisEnBarra = gratis > 0 && !enPops
+    const popGratisEnBarra = gratisPop > 0 && enPops
+    const regalos = (gratisEnBarra || popGratisEnBarra) && (
         <div className={styles.regalos}>
             <span className={styles.regalosTitulo}><Gift size={13} /> {t('planner_free.title')}</span>
-            {gratis > 0 && (
+            {gratisEnBarra && (
                 <button type='button' className={styles.regalo} onClick={usarGratis(onGratis)}>
                     <span className={styles.regaloIcono}><Gift size={15} /></span>
                     <span className={styles.regaloTexto}>{t('planner_free.regular')}</span>
@@ -302,17 +438,17 @@ export const PlannerLayout = ({
         </div>
     )
 
-    // Mientras cargan las invitaciones: esqueleto de la vista que va a salir
-    // (antes, la página se quedaba en blanco).
-    const contenido = loading
-        ? (enDashboard ? null : <PlannerSkeleton variante={!activa || activa.key === 'test' ? 'explora' : 'lista'} />)
-        : enDashboard ? dashboard : modoPops ? (
+    // Pops › Inicio: solo el encabezado de la sección (banda y collage, sin la
+    // lista: sinLista); Clientes / Eventos, la lista sin el hero (sinHero).
+    const popsSeccion = (movil, lista = false) => (
         <PopsSection
+            movil={movil}
             pie={piePops}
             greeting={greeting}
             items={activa.items}
-            gratisPop={gratisPop}
-            puedeCrear={!esCliente || gratisPop > 0}
+            // Los Pops gratis van en la barra lateral (el aviso era de la lista).
+            gratisPop={0}
+            puedeCrear={puedeCrearPop}
             onCrear={crearPop}
             onComprarPop={esCliente ? undefined : onComprarPop}
             onGratisPop={onGratisPop}
@@ -320,59 +456,82 @@ export const PlannerLayout = ({
             onAbrir={onAbrir}
             tema={temaPops}
             onCambiarTema={cambiarTemaPops}
+            sinHero={lista}
+            sinLista={!lista}
+            // Debajo del encabezado de Inicio, el video de "Conoce los Pops".
+            debajo={lista ? undefined : <PopsVideo movil={movil} tema={temaPops} onCrear={puedeCrearPop ? crearPop : undefined} />}
+            titulo={lista ? t(activa.key === 'clients' ? 'invitations.space_pops_clients_title' : 'invitations.space_pops_own_title') : undefined}
+            vacioLista={lista ? t(activa.key === 'clients' ? 'invitations.space_pops_clients_empty' : 'invitations.space_pops_own_empty') : undefined}
+            // En Clientes, el correo del cliente al que le llegó cada Pop.
+            conCorreo={lista && activa.key === 'clients'}
         />
-    ) : activa?.key === 'test' ? (
-        <PlannerExplore
-            ejemplo={esCliente ? undefined : activa.items[0]}
-            onRegalar={esCliente ? onRegalar : undefined}
-            completo={esCliente}
-            renderInvitationCard={renderInvitationCard}
-            onVer={() => onAbrir(activa.items[0])}
-            onCompartir={() => onCompartir(activa.items[0])}
-        />
-    ) : activa?.items.length > 0 ? (
-        <PlannerEventList
-            key={activa.key}
-            items={activa.items}
-            statsPorId={statsPorId}
-            renderInvitationCard={renderInvitationCard}
-            onAbrir={onAbrir}
-            vacioProximos={activa.key === 'own'
-                ? { texto: t('planner_list.no_upcoming_own'), cta: t('invitations.planner_own_empty_cta'), onCta: onEventoPersonal }
-                : activa.key === 'pops'
-                    ? { texto: t('planner_list.no_upcoming_pops'), ...(!esCliente || gratisPop > 0 ? { cta: t('invitations.planner_pops_empty_cta'), onCta: crearPop } : {}) }
-                    : { texto: t('planner_list.no_upcoming_clients'), cta: t('invitations.planner_buy_title'), onCta: onComprar }}
-        />
-    ) : activa?.key === 'pops' ? (
-        <div className={styles.vacio}>
-            <Zap size={28} />
-            <strong>{t('invitations.planner_pops_empty_title')}</strong>
-            <span>{t(esCliente ? 'invitations.planner_pops_empty_text_client' : 'invitations.planner_pops_empty_text')}</span>
-            {(!esCliente || gratisPop > 0) && (
-                <button type='button' className={styles.vacioBoton} onClick={crearPop}>
-                    <Plus size={16} /> {t('invitations.planner_pops_empty_cta')}
-                </button>
-            )}
-        </div>
-    ) : activa?.key === 'own' ? (
-        <div className={styles.vacio}>
-            <CalendarHeart size={28} />
-            <strong>{t(esCliente ? 'invitations.empty_title' : 'invitations.planner_own_empty_title')}</strong>
-            <span>{t(esCliente ? 'invitations.empty_text' : 'invitations.planner_own_empty_text')}</span>
-            <button type='button' className={styles.vacioBoton} onClick={esCliente ? onComprar : onEventoPersonal}>
-                <Plus size={16} /> {t(esCliente ? 'invitations.empty_cta' : 'invitations.planner_own_empty_cta')}
-            </button>
-        </div>
-    ) : (
-        <div className={styles.vacio}>
-            <CalendarHeart size={28} />
-            <strong>{t('invitations.planner_clients_empty_title')}</strong>
-            <span>{t('invitations.planner_clients_empty_text')}</span>
-            <button type='button' className={styles.vacioBoton} onClick={onComprar}>
-                <Plus size={16} /> {t('invitations.planner_buy_title')}
-            </button>
-        </div>
     )
+
+    // Pops › Inicio (handoff "Inicio de Pops", 1c, escritorio y celular): su
+    // próximo Pop y Tu estilo, carrusel, "Así de rápido." y "Tips rápidos.".
+    // En el celular, Tu estilo va compacto en el header (no en PopsInicio).
+    const popsInicio = (movil) => (
+        <PopsInicio
+            movil={movil}
+            tema={temaPops}
+            greeting={greeting}
+            pops={activa.items}
+            gratisPop={gratisPop}
+            puedeCrear={puedeCrearPop}
+            onCrear={crearPop}
+            onConoce={() => setConocePops(true)}
+            onAbrir={onAbrir}
+            onVerTodos={() => abrirSeccion('own')}
+            pie={piePops}
+            switchTema={movil ? null : <PopsTemaSwitch enBarra tema={temaPops} onCambiar={(nuevo, el) => cambiarTemaPops(nuevo, el, { movil: false })} />}
+        />
+    )
+
+    // Mientras cargan las invitaciones: esqueleto de la vista que va a salir
+    // (antes, la página se quedaba en blanco).
+    const contenido = loading
+        ? (enDashboard ? null : <PlannerSkeleton variante={activa.key === 'test' && !enPops ? 'explora' : 'lista'} />)
+        : enDashboard ? dashboard
+            : enPops ? (activa.key === 'test' ? popsInicio(false) : popsSeccion(false, true))
+                : activa.key === 'test' ? (
+                    <PlannerExplore
+                        ejemplo={esCliente ? undefined : activa.items[0]}
+                        onRegalar={esCliente ? onRegalar : undefined}
+                        completo={esCliente}
+                        renderInvitationCard={renderInvitationCard}
+                        onVer={() => onAbrir(activa.items[0])}
+                        onCompartir={() => onCompartir(activa.items[0])}
+                    />
+                ) : activa.items.length > 0 ? (
+                    <PlannerEventList
+                        key={activa.key}
+                        items={activa.items}
+                        statsPorId={statsPorId}
+                        renderInvitationCard={renderInvitationCard}
+                        onAbrir={onAbrir}
+                        vacioProximos={activa.key === 'own'
+                            ? { texto: t('planner_list.no_upcoming_own'), cta: t('invitations.planner_own_empty_cta'), onCta: onEventoPersonal }
+                            : { texto: t('planner_list.no_upcoming_clients'), cta: t('invitations.planner_buy_title'), onCta: onComprar }}
+                    />
+                ) : activa.key === 'own' ? (
+                    <div className={styles.vacio}>
+                        <CalendarHeart size={28} />
+                        <strong>{t(esCliente ? 'invitations.empty_title' : 'invitations.planner_own_empty_title')}</strong>
+                        <span>{t(esCliente ? 'invitations.empty_text' : 'invitations.planner_own_empty_text')}</span>
+                        <button type='button' className={styles.vacioBoton} onClick={esCliente ? onComprar : onEventoPersonal}>
+                            <Plus size={16} /> {t(esCliente ? 'invitations.empty_cta' : 'invitations.planner_own_empty_cta')}
+                        </button>
+                    </div>
+                ) : (
+                    <div className={styles.vacio}>
+                        <CalendarHeart size={28} />
+                        <strong>{t('invitations.planner_clients_empty_title')}</strong>
+                        <span>{t('invitations.planner_clients_empty_text')}</span>
+                        <button type='button' className={styles.vacioBoton} onClick={onComprar}>
+                            <Plus size={16} /> {t('invitations.planner_buy_title')}
+                        </button>
+                    </div>
+                )
 
     const iniciales = (user?.name || '?').trim().charAt(0).toUpperCase()
 
@@ -380,22 +539,59 @@ export const PlannerLayout = ({
         <PopsOnboarding open={conocePops} onClose={() => setConocePops(false)} onCrear={!esCliente || gratisPop > 0 ? crearPop : undefined} />
     )
 
+    const botonComprar = enPops ? (
+        puedeCrearPop && (
+            <button type='button' className={styles.comprar} onClick={comprarPop}>
+                <span className={styles.comprarIcono}><Plus size={16} strokeWidth={2.5} /></span>
+                <span>{t('invitations.space_buy_pop')}</span>
+                {descuento > 0 && <span className={styles.descuento}>−{descuento}%</span>}
+            </button>
+        )
+    ) : (
+        <button type='button' className={styles.comprar} onClick={onComprar}>
+            <span className={styles.comprarIcono}><Plus size={16} strokeWidth={2.5} /></span>
+            <span>{t('invitations.planner_buy_title')}</span>
+            {descuento > 0 && <span className={styles.descuento}>−{descuento}%</span>}
+        </button>
+    )
+
+    // Cliente que todavía no se sabe si es de Pops o de Weddings (primera vez
+    // en este navegador, sin el tipo guardado): mientras cargan sus eventos,
+    // un esqueleto sin barra ni espacio, para no enseñar Weddings y luego
+    // saltar a Pops.
+    if (esCliente && loading && !tipoGuardado) {
+        return (
+            <div className={styles.decidiendo}>
+                <PlannerSkeleton variante='lista' />
+            </div>
+        )
+    }
+
     if (celular) {
         // Barra inferior flotante (handoff "Pops mobile"): una pastilla con
-        // las secciones y el botón crear aparte. Con 5 secciones (Dashboard)
-        // la pastilla se recorre de lado; los botones no se aplastan.
+        // las secciones del espacio y el botón crear aparte. Con Dashboard
+        // (Weddings de un planner) son 4. El espacio se cambia desde el logo
+        // del header (hoja inferior).
         const pestanas = [
-            { key: 'test', label: t('invitations.planner_tab_explore'), icon: Compass },
+            { key: 'test', label: t('invitations.space_home'), icon: House },
             { key: 'clients', label: t('invitations.planner_tab_clients'), icon: Users },
-            { key: 'own', label: t('invitations.planner_tab_own'), icon: CalendarHeart },
-            { key: 'pops', label: t('invitations.planner_tab_pops'), icon: Zap },
-            { key: 'data', label: t('planner.segment_data'), icon: LayoutGrid },
+            { key: 'own', label: t(enPops ? 'invitations.space_my_pops' : 'invitations.planner_tab_own'), icon: enPops ? Zap : CalendarHeart },
+            ...(!enPops ? [{ key: 'data', label: t('planner.segment_data'), icon: LayoutGrid }] : []),
         ].filter(p => !esCliente || (p.key !== 'clients' && p.key !== 'data'))
-        const pestanaActiva = enDashboard ? 'data' : activa?.key
+        const pestanaActiva = enDashboard ? 'data' : activa.key
         const conScroll = pestanas.length > 4
-        // Con eventos regulares gratis, el "+" abre la hoja con ellos; si no,
-        // directo a "Comprar evento" (que ya enseña los Pops gratis).
-        const crear = () => (gratis > 0 || (esCliente && gratisPop > 0) ? setHojaAlta(true) : onComprar())
+        // Weddings: con eventos regulares gratis, el "+" abre la hoja con
+        // ellos; si no, directo a "Comprar evento". Pops: crear un Pop.
+        const crear = enPops
+            ? comprarPop
+            : () => (gratis > 0 ? setHojaAlta(true) : onComprar())
+        const mostrarCrear = !enPops || puedeCrearPop
+
+        const avatarMenu = (
+            <Dropdown menu={menuUsuario} trigger={['click']} placement='bottomRight'>
+                <button type='button' className={styles.avatar} aria-label={user?.name}>{iniciales}</button>
+            </Dropdown>
+        )
 
         return (
             <div className={`${styles.movil} ${modoPops ? styles.movilPop : ''} ${modoBiz ? styles.movilBiz : ''} ${modoCraft ? styles.movilCraft : ''}`} style={varsCraft}>
@@ -403,39 +599,29 @@ export const PlannerLayout = ({
                 {modalConocePops}
                 {modoPops ? (
                     <main className={styles.mainMovilPop}>
+                        <header className={`${styles.barraMovil} ${styles.barraMovilPop}`}>
+                            {selector(true)}
+                            {/* Tu estilo compacto (ícono + ▾) junto al avatar. */}
+                            <div className={styles.barraMovilDerecha}>
+                                <PopsTemaSwitch enLinea tema={temaPops} onCambiar={(nuevo, el) => cambiarTemaPops(nuevo, el, { movil: true })} />
+                                {avatarMenu}
+                            </div>
+                        </header>
                         {loading
                             ? <PlannerSkeleton variante='lista' />
-                            : (
-                                <PopsSection
-                                    movil
-                                    pie={piePops}
-                                    greeting={greeting}
-                                    items={activa.items}
-                                    gratisPop={gratisPop}
-                                    puedeCrear={!esCliente || gratisPop > 0}
-                                    onCrear={crearPop}
-                                    onComprarPop={esCliente ? undefined : onComprarPop}
-                                    onGratisPop={onGratisPop}
-                                    onConoce={() => setConocePops(true)}
-                                    onAbrir={onAbrir}
-                                    tema={temaPops}
-                                    onCambiarTema={cambiarTemaPops}
-                                />
-                            )}
+                            : activa.key === 'test' ? popsInicio(true) : popsSeccion(true, true)}
                     </main>
                 ) : (
                     <main className={`${styles.main} ${styles.mainMovil}`}>
                         <header className={styles.barraMovil}>
                             {enDashboard
                                 ? <h1 className={styles.tituloMovilDashboard}>{t('planner.segment_data')}</h1>
-                                : <img src={logoBlue} alt='I attend' className={styles.logoMovil} />}
-                            <Dropdown menu={menuUsuario} trigger={['click']} placement='bottomRight'>
-                                <button type='button' className={styles.avatar} aria-label={user?.name}>{iniciales}</button>
-                            </Dropdown>
+                                : selector(true)}
+                            {avatarMenu}
                         </header>
 
                         {!enDashboard && <h1 className={styles.titulo}>{greeting}</h1>}
-                        {!enDashboard && activa?.key === 'test' && (
+                        {!enDashboard && activa.key === 'test' && (
                             <button type='button' className={`${styles.conoce} ${styles.conoceMovil}`} onClick={onTour}>
                                 <Sparkles size={15} /> {t('invitations.planner_menu_tour')}
                             </button>
@@ -450,7 +636,7 @@ export const PlannerLayout = ({
                 )}
 
                 <div className={styles.barraInferior}>
-                    <nav className={styles.pastilla} aria-label={t('invitations.planner_nav_label')}>
+                    <nav className={styles.pastilla} aria-label={t(enPops ? 'invitations.space_pops' : 'invitations.space_weddings')}>
                         <div ref={pastillaRef} className={`${styles.pastillaFila} ${conScroll ? styles.pastillaScroll : ''}`}>
                             {pestanas.map(p => {
                                 const Icono = p.icon
@@ -458,12 +644,11 @@ export const PlannerLayout = ({
                                 return (
                                     <button
                                         key={p.key}
-                                        ref={p.key === 'pops' ? popsRef : undefined}
                                         type='button'
                                         data-activa={activaP || undefined}
-                                        className={`${styles.pestana} ${p.key === 'pops' ? styles.pestanaPops : ''}`}
+                                        className={styles.pestana}
                                         aria-current={activaP ? 'page' : undefined}
-                                        onClick={() => (p.key === 'data' ? navegar(false, () => onViewChange('data')) : abrirSeccion(p.key))}
+                                        onClick={() => (p.key === 'data' ? onViewChange('data') : abrirSeccion(p.key))}
                                     >
                                         <Icono size={19} strokeWidth={activaP ? 2.3 : 1.8} />
                                         <span>{p.label}</span>
@@ -472,9 +657,11 @@ export const PlannerLayout = ({
                             })}
                         </div>
                     </nav>
-                    <button type='button' className={styles.crear} aria-label={t('invitations.planner_new_title')} onClick={crear}>
-                        <Plus size={30} strokeWidth={2.2} />
-                    </button>
+                    {mostrarCrear && (
+                        <button type='button' className={styles.crear} aria-label={t(enPops ? 'invitations.space_buy_pop' : 'invitations.planner_new_title')} onClick={crear}>
+                            <Plus size={30} strokeWidth={2.2} />
+                        </button>
+                    )}
                 </div>
 
                 <Drawer
@@ -510,53 +697,44 @@ export const PlannerLayout = ({
             {veloPops}
             {modalConocePops}
             <aside className={`${styles.sidebar} ${modoPops ? styles.sidebarPop : ''} ${modoBiz ? styles.sidebarBiz : ''} ${modoCraft ? styles.sidebarCraft : ''}`}>
-                <img src={modoPops ? logoNegro : logoBlue} alt='I attend' className={styles.logo} />
+                {selector(false)}
 
-                <div className={styles.acciones}>
-                    <button type='button' className={styles.comprar} onClick={onComprar}>
-                        <span className={styles.comprarIcono}><Plus size={16} strokeWidth={2.5} /></span>
-                        <span>{t('invitations.planner_buy_title')}</span>
-                        {descuento > 0 && <span className={styles.descuento}>−{descuento}%</span>}
-                    </button>
-                    {regalos}
-                </div>
+                {(botonComprar || regalos) && (
+                    <div className={styles.acciones}>
+                        {botonComprar}
+                        {regalos}
+                    </div>
+                )}
 
-                <nav className={styles.nav} aria-label={t('invitations.planner_nav_label')}>
-                    <span className={styles.navTitulo}>{t('invitations.planner_nav_label')}</span>
-                    {secciones.map(s => (
-                        <button
-                            key={s.key}
-                            ref={s.key === 'pops' ? popsRef : undefined}
-                            type='button'
-                            className={`${styles.navItem} ${s.key === 'pops' ? styles.navPops : ''} ${!enDashboard && activa?.key === s.key ? styles.navItemActivo : ''}`}
-                            aria-current={!enDashboard && activa?.key === s.key ? 'page' : undefined}
-                            onClick={() => abrirSeccion(s.key)}
-                            // Dentro de Pops el botón ya es el activo: sin animación al pasar el mouse.
-                            onMouseEnter={s.key === 'pops' && !modoPops ? () => setHoverPops(true) : undefined}
-                            onMouseLeave={s.key === 'pops' ? () => setHoverPops(false) : undefined}
-                        >
-                            {s.key === 'pops' && modoCraft
-                                // Estilo Craft: "Pops" en Poppins 900 sobre la pestaña amarilla.
-                                ? <span className={styles.navPopsCraft}>Pops</span>
-                                : s.key === 'pops' && modoBiz
-                                // Estilo Business: "Pops" en negritas + la etiqueta BUSINESS.
-                                ? <span className={styles.navPopsBiz}>Pops<span className={styles.navBizTag}>{t('pops_section.biz_tag_short')}</span></span>
-                                : s.key === 'pops' && (hoverPops || modoPops)
-                                // En reposo "Pops" se ve como las demás; con el hover (o
-                                // dentro de Pops) es el wordmark animado (handoff "Pops Logo").
-                                ? <PopsLogo size={20} activo={hoverPops && !modoPops} />
-                                : <span>{s.title}</span>}
-                            {/* Sin Pops todavía: sin contador (el estado inicial lo dice). */}
-                            {!(esCliente && s.key === 'test') && !(s.key === 'pops' && s.items.length === 0) && <small className={s.key === 'pops' ? styles.navPopsCuenta : undefined}>{s.items.length}</small>}
-                        </button>
-                    ))}
+                <nav className={styles.nav} aria-label={t(enPops ? 'invitations.space_pops' : 'invitations.space_weddings')}>
+                    <span className={styles.navTitulo}>{t(enPops ? 'invitations.space_pops' : 'invitations.space_weddings_eyebrow')}</span>
+                    {secciones.map(s => {
+                        const activo = !enDashboard && activa.key === s.key
+                        // En Pops el activo toma la pastilla de cada estilo (.navPops).
+                        const popActivo = activo && enPops
+                        return (
+                            <button
+                                key={s.key}
+                                type='button'
+                                className={`${styles.navItem} ${activo ? styles.navItemActivo : ''} ${popActivo ? styles.navPops : ''}`}
+                                aria-current={activo ? 'page' : undefined}
+                                onClick={() => abrirSeccion(s.key)}
+                            >
+                                <span>{s.title}</span>
+                                {/* Inicio sin contador; en Pops, tampoco sin Pops. */}
+                                {s.key !== 'test' && !(enPops && s.items.length === 0) && (
+                                    <small className={popActivo ? styles.navPopsCuenta : undefined}>{s.items.length}</small>
+                                )}
+                            </button>
+                        )
+                    })}
 
-                    {!esCliente && (
+                    {!esCliente && !enPops && (
                         <button
                             type='button'
                             className={`${styles.navItem} ${styles.navDashboard} ${enDashboard ? styles.navItemActivo : ''}`}
                             aria-current={enDashboard ? 'page' : undefined}
-                            onClick={() => navegar(false, () => onViewChange('data'))}
+                            onClick={() => onViewChange('data')}
                         >
                             <span className={styles.navConIcono}><LayoutDashboard size={16} /> {t('planner.segment_data')}</span>
                         </button>
@@ -567,7 +745,7 @@ export const PlannerLayout = ({
                     )}
 
                     {esAdmin && (
-                        <button type='button' className={styles.navItem} onClick={() => navigate('/admin')}>
+                        <button type='button' className={`${styles.navItem} ${enPops ? styles.navDashboard : ''}`} onClick={() => navigate('/admin')}>
                             <span className={styles.navConIcono}><Shield size={16} /> {t('invitations.planner_menu_admin')}</span>
                         </button>
                     )}
@@ -591,15 +769,8 @@ export const PlannerLayout = ({
                             <span className={styles.avatar}>{iniciales}</span>
                             <span className={styles.usuarioTextos}>
                                 <span className={styles.usuarioNombre}>{user?.name?.split(' ')[0]}</span>
-                                {/* Pops: bloque del usuario de cada estilo (Pop · Business · Craft):
-                                    "Mi cuenta" o, en Business, su rol; y la flecha del menú. */}
-                                {modoPops && (
-                                    <span className={styles.usuarioSub}>
-                                        {modoBiz
-                                            ? t(user?.role === 'Administration' ? 'invitations.planner_menu_admin' : esCliente ? 'invitations.role_client' : 'invitations.role_planner')
-                                            : t('invitations.my_account')}
-                                    </span>
-                                )}
+                                {/* Su rol (handoff "Switch de espacios": ADMINISTRADOR, CLIENTE POPS…). */}
+                                <span className={styles.usuarioSub}>{rolTexto}</span>
                             </span>
                             {modoPops && (modoBiz
                                 ? <ChevronsUpDown size={18} className={styles.usuarioFlecha} aria-hidden />

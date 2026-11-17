@@ -4,6 +4,7 @@ import { ArrowRight, SmilePlus } from 'lucide-react'
 import { PopsLogo } from '../../components/PopsLogo/PopsLogo'
 import { PopSticker } from '../../components/PopSticker/PopSticker'
 import { colorDePop, emojiDePop } from '../../helpers/invitation/popEvents'
+import { portadaDePop } from './popsDatos'
 import { PopsBusiness } from './PopsBusiness'
 import { PopsCraft } from './PopsCraft'
 import { PopsTemaSwitch } from './PopsTemaSwitch'
@@ -20,6 +21,15 @@ import styles from './PopsSection.module.css'
  * tema / onCambiarTema: estilo de la sección ('pop' | 'business' | 'craft',
  * handoff "Cambia tu estilo"); 'business' la pinta PopsBusiness y 'craft'
  * PopsCraft. El selector de estilo va arriba a la derecha en los tres.
+ *
+ * sinHero (espacio Pops › Clientes / Eventos, handoff "Switch de espacios"):
+ * solo la lista de Pops con el mismo formato, sin hero ni selector de estilo;
+ * `titulo` reemplaza "Pops activos." y `vacioLista` el estado "Tu primer Pop".
+ * sinLista (espacio Pops › Inicio): al revés, solo el hero (y el pie), sin la
+ * lista: los Pops están en Clientes y Eventos. `debajo`: lo que va bajo el
+ * encabezado en ese caso (el video de Conoce los Pops). `conCorreo` (Clientes):
+ * cada fila dice el correo del cliente al que le llegó (o "Por enviar"): en
+ * escritorio en su propia columna, en el celular bajo el nombre.
  */
 
 // Collage 300 × 320 (ST11 del prototipo).
@@ -113,7 +123,7 @@ export const PopsSection = (props) => {
     return <PopsPop {...props} switchTema={switchTema} />
 }
 
-const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie }) => {
+const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie, sinHero = false, sinLista = false, debajo, titulo, vacioLista, conCorreo = false }) => {
     const { t, i18n } = useTranslation()
     const hoy = dayjs().startOf('day')
 
@@ -122,7 +132,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
         const fecha = item.event_date ? dayjs(item.event_date) : null
         const dias = fecha ? fecha.startOf('day').diff(hoy, 'day') : null
         const color = colorDeFila(colorDePop(pop), i)
-        return { item, fecha, dias, color, emoji: emojiDePop(pop), nombre: item.name || pop?.name || t('pops_section.untitled') }
+        return { item, fecha, dias, color, emoji: emojiDePop(pop), portada: portadaDePop(pop), correo: item.user_email || pop?.user_email || null, nombre: item.name || pop?.name || t('pops_section.untitled') }
     })
     const activos = filas
         .filter(f => f.dias === null || f.dias >= 0)
@@ -138,10 +148,10 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
 
     const chip = (dias) => (dias === 0 ? t('pops_section.today') : dias === 1 ? t('pops_section.tomorrow') : t('pops_section.in_days', { count: dias }))
 
-    const fila = ({ item, fecha, dias, color, emoji, nombre }, pasado = false) => (
+    const fila = ({ item, fecha, dias, color, emoji, portada, correo, nombre }, pasado = false) => (
         <button key={item.id} type='button' className={`${styles.fila} ${pasado ? styles.filaPasada : ''}`} onClick={() => onAbrir(item)}>
             <span className={styles.mini} style={{ background: color.fondo, color: color.tinta }}>
-                {emoji
+                {portada ? <img src={portada} alt='' loading='lazy' className={styles.miniPortada} /> : emoji
                     ? <span className={styles.miniEmoji}>{emoji}</span>
                     // Lugar del emoji: todavía no se elige (ver emojiDePop).
                     : <SmilePlus size={22} className={styles.miniVacio} aria-label={t('pops_section.no_emoji')} />}
@@ -153,6 +163,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                     {pasado ? t('pops_section.status_past') : t('pops_section.status_active')}
                 </span>
             </span>
+            {conCorreo && <span className={`${styles.correo} ${styles.correoCelda}`}>{correo || t('invitations.pending_send_badge')}</span>}
             <span className={styles.fecha}>{fecha ? fechaCorta(fecha) : t('pops_section.no_date')}</span>
             <span>
                 {!pasado && dias !== null && (
@@ -163,8 +174,11 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
         </button>
     )
 
-    // Sin ningún Pop: "Tus Pops." + la tarjeta "Tu primer Pop te está esperando".
+    // Sin ningún Pop: "Tus Pops." + la tarjeta "Tu primer Pop te está esperando"
+    // (en una lista sola, solo su texto de vacío).
     const sinPops = items.length === 0
+    const tituloLista = titulo ?? t(sinPops ? 'pops_section.empty_title' : 'pops_section.active_title')
+    const subLista = sinPops && !sinHero ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })
     const primerPop = (
         <div className={`${styles.primero} ${movil ? styles.primeroMovil : ''}`}>
             <div className={styles.primeroStickers} aria-hidden>
@@ -198,15 +212,16 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
     )
 
     if (movil) {
-        const filaMovil = ({ item, fecha, dias, color, emoji, nombre }, pasado = false) => (
+        const filaMovil = ({ item, fecha, dias, color, emoji, portada, correo, nombre }, pasado = false) => (
             <button key={item.id} type='button' className={`${styles.mFila} ${pasado ? styles.filaPasada : ''}`} onClick={() => onAbrir(item)}>
                 <span className={`${styles.mini} ${styles.mMini}`} style={{ background: color.fondo, color: color.tinta }}>
-                    {emoji
+                    {portada ? <img src={portada} alt='' loading='lazy' className={styles.miniPortada} /> : emoji
                         ? <span className={styles.miniEmoji}>{emoji}</span>
                         : <SmilePlus size={20} className={styles.miniVacio} aria-label={t('pops_section.no_emoji')} />}
                 </span>
                 <span className={styles.filaTexto}>
                     <span className={styles.mNombre}>{nombre}</span>
+                    {conCorreo && <span className={styles.correo}>{correo || t('invitations.pending_send_badge')}</span>}
                     <span className={styles.mEstado}>
                         <span className={`${styles.punto} ${styles.mPunto} ${pasado ? styles.puntoPasado : ''}`} />
                         {pasado ? t('pops_section.status_past') : t('pops_section.status_active')}
@@ -222,9 +237,9 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
         )
 
         return (
-            <div className={`${styles.seccion} ${styles.mSeccion}`}>
-                {switchTema}
-                <section className={styles.mHero}>
+            <div className={`${styles.seccion} ${styles.mSeccion} ${sinHero ? styles.soloLista : ''} ${sinLista ? styles.inicioSolo : ''}`}>
+                {!sinHero && switchTema}
+                {!sinHero && <section className={styles.mHero}>
                     <div className={styles.mCollage}>
                         {STICKERS_MOVIL.map((s, i) => (
                             <StickerFlotante key={s.kind + i} {...s} indice={i} entrada={0.35} style={s.pos} />
@@ -248,13 +263,14 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                         <polygon points='0,26 60,12 130,30 210,8 280,24 340,10 390,20 390,40 0,40' />
                         <polyline points='0,26 60,12 130,30 210,8 280,24 340,10 390,20' />
                     </svg>
-                </section>
+                </section>}
 
-                <section className={styles.mLista}>
+                {sinLista && debajo}
+                {sinLista ? pie && <div className={styles.mPieSolo}>{pie}</div> : <section className={styles.mLista}>
                     <div className={styles.mCabeza}>
                         <div className={styles.listaTitulos} style={{ gap: 2 }}>
-                            <span className={styles.mTitulo}><span className={styles.resaltaLima}>{t(sinPops ? 'pops_section.empty_title' : 'pops_section.active_title')}</span></span>
-                            <span className={styles.mSub}>{sinPops ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
+                            <span className={styles.mTitulo}><span className={styles.resaltaLima}>{tituloLista}</span></span>
+                            <span className={styles.mSub}>{subLista}</span>
                         </div>
                         {onComprarPop && !sinPops && (
                             <button type='button' className={styles.mComprar} onClick={onComprarPop}>
@@ -274,7 +290,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                         </button>
                     )}
 
-                    {sinPops ? primerPop : (
+                    {sinPops ? (sinHero ? <p className={styles.vacio}>{vacioLista}</p> : primerPop) : (
                         <div className={styles.mFilas}>
                             {activos.length > 0
                                 ? activos.map(f => filaMovil(f))
@@ -289,15 +305,15 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                         </div>
                     )}
                     {pie}
-                </section>
+                </section>}
             </div>
         )
     }
 
     return (
-        <div className={styles.seccion}>
-            {switchTema}
-            <section className={styles.hero}>
+        <div className={`${styles.seccion} ${sinHero ? styles.soloLista : ''} ${sinLista ? styles.inicioSolo : ''} ${conCorreo ? styles.conCorreo : ''}`}>
+            {!sinHero && switchTema}
+            {!sinHero && <section className={styles.hero}>
                 <div className={styles.heroFila}>
                     <div className={styles.heroTexto}>
                         <span className={styles.saludo}>{greeting} 👋</span>
@@ -325,13 +341,14 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                     <polygon points='0,52 140,30 260,58 420,18 560,44 700,10 830,48 980,22 1100,50 1200,32 1200,0 0,0' />
                     <polyline points='0,52 140,30 260,58 420,18 560,44 700,10 830,48 980,22 1100,50 1200,32' />
                 </svg>
-            </section>
+            </section>}
 
-            <section className={styles.lista}>
+            {sinLista && debajo}
+            {sinLista ? pie && <div className={styles.pieSolo}>{pie}</div> : <section className={styles.lista}>
                 <div className={styles.listaCabeza}>
                     <div className={styles.listaTitulos}>
-                        <h2 className={styles.listaTitulo}><span className={styles.resaltaLima}>{t(sinPops ? 'pops_section.empty_title' : 'pops_section.active_title')}</span></h2>
-                        <span className={styles.listaSub}>{sinPops ? t('pops_section.empty_sub') : t('pops_section.active_count', { count: activos.length })}</span>
+                        <h2 className={styles.listaTitulo}><span className={styles.resaltaLima}>{tituloLista}</span></h2>
+                        <span className={styles.listaSub}>{subLista}</span>
                     </div>
                     {onComprarPop && (
                         <button type='button' className={styles.comprarPop} onClick={onComprarPop}>
@@ -354,7 +371,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                         </div>
                     )}
 
-                    {sinPops ? primerPop : (
+                    {sinPops ? (sinHero ? <p className={styles.vacio}>{vacioLista}</p> : primerPop) : (
                         <div className={styles.filas}>
                             {activos.length > 0
                                 ? activos.map(f => fila(f))
@@ -370,7 +387,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
                     )}
                 </div>
                 {pie}
-            </section>
+            </section>}
         </div>
     )
 }

@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { appContext } from '../../context'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { recordarEspacioDeUrl, rutaInvitaciones } from '../../helpers/invitation/espacios'
 import { Eye, EyeOff, Languages } from 'lucide-react'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
@@ -114,6 +115,8 @@ export const Login = () => {
 
     const [searchParams, setSearchParams] = useSearchParams()
     const onCreateAccount = searchParams.get('mode') === 'register'
+    // `/login?espacio=pops` (correos de acceso de un Pop): entra a ese espacio.
+    const [espacio] = useState(() => recordarEspacioDeUrl(window.location.search))
 
     const setOnCreateAccount = (val) => {
         setSearchParams(val ? { mode: 'register' } : {})
@@ -151,7 +154,7 @@ export const Login = () => {
             }
 
             login(user)
-            navigate("/invitations")
+            navigate(rutaInvitaciones(espacio))
 
         } catch (err) {
             console.error("Error inesperado:", err);
@@ -163,14 +166,14 @@ export const Login = () => {
     const handleGoogleLogin = () => {
         supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: `${window.location.origin}/invitations` },
+            options: { redirectTo: `${window.location.origin}${rutaInvitaciones(espacio)}` },
         })
     }
 
     const handleAppleLogin = () => {
         supabase.auth.signInWithOAuth({
             provider: 'apple',
-            options: { redirectTo: `${window.location.origin}/invitations` },
+            options: { redirectTo: `${window.location.origin}${rutaInvitaciones(espacio)}` },
         })
     }
 
@@ -408,7 +411,7 @@ export const Login = () => {
 
             // Con sesión no hay nada que hacer aquí (pasa al volver de Google o
             // Apple): antes se pintaba vacío y el usuario se quedaba atorado.
-            : <Navigate to='/invitations' replace />
+            : <Navigate to={rutaInvitaciones(espacio)} replace />
 
     )
 }

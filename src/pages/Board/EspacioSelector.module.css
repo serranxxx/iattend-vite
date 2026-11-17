@@ -1,0 +1,329 @@
+/* Switch de espacios Weddings / Pops (handoff "Switch de espacios", 4a):
+   el logo de la barra como botón y su menú "Cambiar de espacio". */
+
+/* ── Botón del logo ── */
+
+.boton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 84px;
+    padding: 0 16px 0 14px;
+    box-sizing: border-box;
+    border: 1.5px solid #E7E3E0;
+    border-radius: 18px;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.boton[data-espacio='pops'] {
+    border-color: var(--pops-linea, #EEEBE8);
+}
+
+.boton:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.boton[data-abierto],
+.boton[data-abierto]:hover {
+    border-color: #111;
+}
+
+.boton:focus-visible {
+    outline: 2px solid #111;
+    outline-offset: 2px;
+}
+
+/* Cuenta de un solo espacio: solo el logo. */
+.botonFijo {
+    border-color: transparent !important;
+    cursor: default;
+}
+
+.botonFijo:hover {
+    background: transparent;
+}
+
+.chevron {
+    flex-shrink: 0;
+    color: #6E6965;
+    transition: transform 0.2s ease;
+}
+
+.boton[data-abierto] .chevron {
+    transform: rotate(180deg);
+}
+
+/* Header del celular: compacto, sin eyebrow y sin recuadro (handoff
+   "Inicio de Pops" · mobile: el logo + ⌄ a secas). */
+.botonMovil {
+    width: auto;
+    min-height: 48px;
+    padding: 0 6px 0 0;
+    gap: 6px;
+    border-color: transparent;
+    border-radius: 14px;
+}
+
+.botonMovil:hover {
+    background: transparent;
+}
+
+.logoWeddings {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.logoImg {
+    height: 44px;
+    width: auto;
+    align-self: flex-start;
+    object-fit: contain;
+}
+
+.botonMovil .logoImg {
+    height: 32px;
+}
+
+.eyebrow {
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8A8582;
+}
+
+.logoPops {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    width: max-content;
+    min-width: 0;
+    padding-bottom: 16px;
+    line-height: 1.1;
+    --pops-color: #111;
+}
+
+.botonMovil .logoPops {
+    padding-bottom: 0;
+}
+
+/* El wordmark como en el cierre del video: Poppins 900, letras juntas. */
+.logoPops .popsWordmark {
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+/* "by I attend" abajo a la derecha del wordmark, medido del cierre del
+   video: "by" empieza a ≈70 % del ancho, justo después del palo de la p, y
+   su base coincide con el final de la p (~0.27em bajo la línea de "Pops",
+   que cae a 41.5 px con 46 px de fuente); el logo de I attend arranca
+   ~0.05em bajo esa línea y su lema queda debajo. */
+.popsBy {
+    position: absolute;
+    left: 70%;
+    top: 41px;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.by {
+    margin-top: 4px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0;
+    color: #111;
+}
+
+.popsByLogo {
+    height: 18px;
+    margin-top: 3px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* El botón con el estilo de Pops elegido (como el resto de la barra). */
+.boton[data-espacio='pops'][data-tema='business'] {
+    border-color: var(--biz-linea);
+    border-radius: 14px;
+}
+
+.boton[data-espacio='pops'][data-tema='craft'] {
+    border: 1.5px dashed var(--craft-linea);
+    border-radius: 4px;
+    background: var(--craft-papel);
+}
+
+.boton[data-espacio='pops'][data-tema='craft']:hover {
+    background: var(--craft-papel);
+    border-color: var(--craft-gris-3);
+}
+
+.boton[data-espacio='pops'][data-tema='business'][data-abierto],
+.boton[data-espacio='pops'][data-tema='craft'][data-abierto] {
+    border-color: var(--biz-navy);
+}
+
+/* ── Menú "Cambiar de espacio" ── */
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 332px;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #EEEBE8;
+    border-radius: 20px;
+    background: #FFF;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* En la hoja inferior del celular: a lo ancho, sin tarjeta. */
+.menuHoja {
+    width: 100%;
+    padding: 4px 12px calc(16px + env(safe-area-inset-bottom));
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.asa {
+    display: block;
+    width: 40px;
+    height: 5px;
+    margin: 10px auto 6px;
+    border-radius: 99px;
+    background: #E4E1DC;
+}
+
+.menuTitulo {
+    padding: 8px 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8A8582;
+}
+
+.fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 14px;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.fila:hover,
+.filaActiva {
+    background: #F5F3F2;
+}
+
+.fila:focus-visible {
+    outline: 2px solid #111;
+    outline-offset: -2px;
+}
+
+.icono {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #1C2A44;
+    color: #FFF;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 19px;
+}
+
+.iconoImg {
+    display: block;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.fila[data-espacio='pops'] .icono {
+    background: var(--pops-azul, #2F5BFF);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+}
+
+.filaTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.nombre {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #111;
+}
+
+.fila[data-espacio='pops'] .nombre {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+.resumen {
+    font-size: 12px;
+    color: #6E6965;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.check {
+    flex-shrink: 0;
+    color: #1C2A44;
+}
+
+.fila[data-espacio='pops'] .check {
+    color: var(--pops-azul, #2F5BFF);
+}
+
+/* En el celular, sin recuadro aunque sea Pops o tenga estilo (estas reglas
+   les ganan a las de borde por espacio / estilo de arriba). */
+.boton.botonMovil[data-espacio],
+.boton.botonMovil[data-espacio][data-tema] {
+    border-color: transparent;
+    background: transparent;
+}
+
+/* Craft en el celular: el header va sobre el tapete verde; el wordmark y la
+   flecha en papel para que se lean. */
+.botonMovil[data-tema='craft'] .logoPops {
+    --pops-color: #F3F2EE;
+}
+
+.botonMovil[data-tema='craft'] .chevron {
+    color: #F3F2EE;
+}

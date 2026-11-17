@@ -70,7 +70,9 @@ const Mini = ({ tema }) => (
 // `enLinea`: dentro de una barra (editor de Pops) en vez de flotar en la
 // esquina de la sección; botón compacto como en celular y panel hacia abajo.
 // `temas`: las opciones (el editor de Pops suma 'iattend', el original, primero).
-export const PopsTemaSwitch = ({ tema, onCambiar, movil = false, enLinea = false, temas = TEMAS_POPS }) => {
+// `enBarra`: el botón completo, pero en el flujo de una barra (Inicio de Pops,
+// handoff "Inicio de Pops") en vez de flotar en la esquina.
+export const PopsTemaSwitch = ({ tema, onCambiar, movil = false, enLinea = false, enBarra = false, temas = TEMAS_POPS }) => {
     const { t } = useTranslation()
     const [abierto, setAbierto] = useState(false)
     const raiz = useRef(null)
@@ -117,7 +119,7 @@ export const PopsTemaSwitch = ({ tema, onCambiar, movil = false, enLinea = false
     }
 
     return (
-        <div ref={raiz} className={`${styles.selector} ${movil || enLinea ? styles.movil : ''} ${enLinea ? styles.enLinea : ''}`}>
+        <div ref={raiz} className={`${styles.selector} ${movil || enLinea ? styles.movil : ''} ${enLinea ? styles.enLinea : ''} ${enBarra ? styles.enBarra : ''}`}>
             <button
                 ref={boton}
                 type='button'

@@ -654,3 +654,12 @@
     border-radius: 99px;
     background: #16323D;
 }
+
+/* ── En la barra superior del Inicio de Pops: tamaño completo, en el flujo. ── */
+.selector.enBarra {
+    position: relative;
+    top: auto;
+    right: auto;
+    flex: none;
+    z-index: 6;
+}

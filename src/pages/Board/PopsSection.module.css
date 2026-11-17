@@ -944,3 +944,68 @@
         animation: none;
     }
 }
+
+/* Lista sola (espacio Pops › Clientes / Eventos): sin hero, la lista arriba. */
+.soloLista .lista {
+    padding-top: 56px;
+}
+
+.soloLista .mLista {
+    padding-top: 20px;
+}
+
+/* Inicio de Pops sin la lista (sinLista): solo el pie bajo el hero. */
+.pieSolo {
+    padding: 24px 56px 32px;
+}
+
+.mPieSolo {
+    padding: 20px 20px calc(120px + env(safe-area-inset-bottom));
+}
+
+/* Inicio sin lista: encabezado, el video de Conoce los Pops y el pie. El
+   encabezado y el video llenan al menos la pantalla (como la barra lateral,
+   que mide 100vh) y el pie queda debajo, fuera de la vista hasta hacer
+   scroll; --alto-pie ≈ lo que mide el pie (FooterApp con su relleno). */
+.inicioSolo {
+    --alto-pie: 140px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    align-items: start;
+    min-height: calc(100vh + var(--alto-pie));
+    min-height: calc(100dvh + var(--alto-pie));
+}
+
+/* Miniatura con la foto de portada del Pop (si no tiene, el emoji). */
+.miniPortada {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Clientes: el correo del cliente al que le llegó el Pop, bajo el nombre. */
+.correo {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--pops-texto-suave, #6E6965);
+}
+
+/* Clientes en escritorio: el correo en su propia columna (Cliente), entre
+   Evento y Fecha. */
+.conCorreo .fila {
+    grid-template-columns: 56px minmax(0, 1fr) minmax(0, 240px) 110px 120px 28px;
+}
+
+.correoCelda {
+    font-size: 14px;
+}
