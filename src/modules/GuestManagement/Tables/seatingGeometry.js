@@ -20,13 +20,27 @@ export const getTableFootprint = (shape) => {
     return { width: 200, height: 200 }
 }
 
+// Giro total de una mesa en grados: `vertical` (90° de la rectangular) más
+// `rotation` (giro libre, tables.rotation).
+export const anguloDe = ({ vertical = false, rotation = 0 } = {}) => (vertical ? 90 : 0) + (Number(rotation) || 0)
+
+// Caja (sin escalar) que ocupa un footprint de width × height girado `angulo`
+// grados alrededor de su centro. Una mesa redonda girada ocupa lo mismo.
+export const cajaGirada = (width, height, angulo = 0, { redonda = false } = {}) => {
+    if (redonda) return { width, height }
+    const r = (angulo * Math.PI) / 180
+    const c = Math.abs(Math.cos(r))
+    const s = Math.abs(Math.sin(r))
+    return { width: width * c + height * s, height: width * s + height * c }
+}
+
 // `x`/`y` guardados son la esquina del footprint SIN rotar (contrato histórico
-// con la BD). Para una rectangular vertical, la caja que de verdad ocupa está
-// girada alrededor del centro, así que los límites del canvas se corren.
-export const clampToCanvas = (x, y, shape, vertical = false) => {
+// con la BD). Para una mesa girada (vertical o con `rotation`), la caja que de
+// verdad ocupa está girada alrededor del centro, así que los límites del
+// canvas se corren.
+export const clampToCanvas = (x, y, shape, vertical = false, rotation = 0) => {
     const { width, height } = getTableFootprint(shape)
-    const bw = vertical ? height : width
-    const bh = vertical ? width : height
+    const { width: bw, height: bh } = cajaGirada(width, height, anguloDe({ vertical, rotation }), { redonda: shape === 'round' })
     const ox = (width - bw) / 2
     const oy = (height - bh) / 2
     return {
@@ -37,12 +51,13 @@ export const clampToCanvas = (x, y, shape, vertical = false) => {
 
 /**
  * Caja que la mesa ocupa en pantalla: el footprint reducido por RENDER_SCALE
- * alrededor de su centro. Una mesa rectangular vertical rota 90°, así que su
- * ancho y alto se intercambian.
+ * alrededor de su centro. Una mesa girada (vertical = 90°, más `rotation`)
+ * ocupa la caja de su footprint girado.
  */
-export const getVisualRect = ({ x, y, width, height, vertical = false }) => {
-    const w = (vertical ? height : width) * RENDER_SCALE
-    const h = (vertical ? width : height) * RENDER_SCALE
+export const getVisualRect = ({ x, y, width, height, vertical = false, rotation = 0, shape = null }) => {
+    const caja = cajaGirada(width, height, anguloDe({ vertical, rotation }), { redonda: shape === 'round' })
+    const w = caja.width * RENDER_SCALE
+    const h = caja.height * RENDER_SCALE
     const cx = x + width / 2
     const cy = y + height / 2
     return { left: cx - w / 2, top: cy - h / 2, right: cx + w / 2, bottom: cy + h / 2 }
@@ -56,6 +71,8 @@ export const rectOfTable = (table, overrides = {}) => {
         width,
         height,
         vertical: overrides.vertical ?? table.vertical,
+        rotation: overrides.rotation ?? table.rotation,
+        shape: overrides.shape ?? table.shape,
     })
 }
 
@@ -92,7 +109,7 @@ export const findFreeSpot = (table, obstacles, margin = SAFE_ZONE) => {
 
     for (let y = 0; y <= CANVAS_HEIGHT - height; y += STEP) {
         for (let x = 0; x <= CANVAS_WIDTH - width; x += STEP) {
-            const rect = getVisualRect({ x, y, width, height, vertical: table.vertical })
+            const rect = getVisualRect({ x, y, width, height, vertical: table.vertical, rotation: table.rotation, shape: table.shape })
             if (fitsWithoutOverlap(rect, obstacles, margin)) return { x, y }
         }
     }
@@ -117,7 +134,7 @@ export const relaxOverlaps = (items, fixedRects = [], { margin = SAFE_ZONE, pass
     }))
 
     const rectOf = (m) => getVisualRect({
-        x: m.x, y: m.y, width: m.size.width, height: m.size.height, vertical: m.vertical ?? m.item.vertical,
+        x: m.x, y: m.y, width: m.size.width, height: m.size.height, vertical: m.vertical ?? m.item.vertical, rotation: m.item.rotation, shape: m.item.shape,
     })
 
     for (let pass = 0; pass < passes; pass++) {
@@ -147,7 +164,7 @@ export const relaxOverlaps = (items, fixedRects = [], { margin = SAFE_ZONE, pass
                 if (Math.abs(pushX) <= Math.abs(pushY)) a.x += pushX
                 else a.y += pushY
 
-                const clamped = clampToCanvas(a.x, a.y, a.item.shape)
+                const clamped = clampToCanvas(a.x, a.y, a.item.shape, a.item.vertical, a.item.rotation)
                 a.x = clamped.x
                 a.y = clamped.y
                 moved = true

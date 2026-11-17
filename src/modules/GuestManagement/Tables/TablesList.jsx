@@ -3,6 +3,7 @@ import { Button, Dropdown, Input, Tooltip, message } from 'antd'
 import { ChevronDown, ChevronUp, Lock, MoreHorizontal, Plus, Unlock } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { TransferPicker } from './TransferPicker'
+import { cambiosParaQuitar, cambiosParaSentar, guardarAsientos } from './asientos'
 import styles from './TablesList.module.css'
 
 const SHAPE_LABELS = {
@@ -95,15 +96,17 @@ export const TablesList = ({
 
     /* ── Mutaciones ────────────────────────────────────────────────────── */
 
+    // Cada uno a un asiento libre de la mesa (asientos.js); sin mesa, sin asiento.
     const assignGuests = async (guestIds, tableId) => {
         if (!guestIds.length) return
-        const { error } = await supabase
-            .from('guests')
-            .update({ table: tableId, last_action_by: 'admin' })
-            .in('id', guestIds)
+        const mesa = tables.find(t => t.id === tableId)
+        const quienes = guests.filter(g => guestIds.includes(g.id))
+        const cambios = mesa
+            ? cambiosParaSentar(mesa, quienes, guests)
+            : cambiosParaQuitar(quienes, guests, tables)
+        const { ok } = await guardarAsientos(supabase, cambios)
 
-        if (error) {
-            console.error('Error asignando mesa:', error.message)
+        if (!ok) {
             message.error('No se pudo actualizar la mesa')
             return
         }

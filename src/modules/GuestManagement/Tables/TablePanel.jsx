@@ -1,34 +1,53 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Dropdown, Switch, Tooltip } from 'antd'
-import { Minus, MoreHorizontal, MoveHorizontal, MoveVertical, Plus, X } from 'lucide-react'
+import { flushSync } from 'react-dom'
+import { Dropdown, Modal, Tooltip } from 'antd'
+import { ArrowRightLeft, Lock, RotateCcw, RotateCw, X } from 'lucide-react'
 import { TransferPicker } from './TransferPicker'
+import { asientosDeMesa } from './asientos'
+import { anguloDe } from './seatingGeometry'
+import { GAP_PANEL, MESA_PANEL, anguloVisible, inicialesDe, posicionesSillas } from './sillas'
 import styles from './TablePanel.module.css'
 
 const SHAPES = [
-    { key: 'round', label: 'Redonda', glyph: styles.glyphRound },
-    { key: 'square', label: 'Cuadrada', glyph: styles.glyphSquare },
-    { key: 'rectangle', label: 'Rectangular', glyph: styles.glyphRect },
+    { key: 'round', label: 'Redonda' },
+    { key: 'square', label: 'Cuadrada' },
+    { key: 'rectangle', label: 'Rectangular' },
 ]
 
+// Lo que el mapa sabe dibujar sin encimar sillas.
 const MAX_SEATS = { round: 12, square: 16, rectangle: 18 }
 
+const VISTA_KEY = 'iattend_panel_mesa_vista'
+
 /**
- * Panel de edición de mesa (§5.4). Se abre al hacer clic en una mesa del mapa
- * o desde la lista, y concentra todo lo que se puede hacer con una mesa:
- * renombrar, cambiar forma y sillas, bloquear, y mover o sacar invitados.
+ * Panel de mesa (handoff "Panel de mesa", opción 3a). Se abre al tocar una
+ * mesa del mapa o desde la lista. Encabezado con el nombre (se edita ahí
+ * mismo), la vista vertical / horizontal y Bloquear; una vista previa de la
+ * mesa con sus sillas (forma, sillas ± y giro flotando encima) y la lista
+ * de sillas, con los lugares vacíos siempre visibles. Se arrastra a un
+ * invitado de una silla a otra, en la lista o en la vista previa (si la
+ * silla está ocupada, intercambian). El pie: Agregar invitado, Mover todos,
+ * Vaciar y Eliminar.
  */
 export const TablePanel = ({
     table,
     onDragStart,
     guests = [],
     tables = [],
+    isMobile = false,
     onClose,
     onRename,
     onChangeShape,
-    onToggleVertical,
+    // (table, gradosTotales, { commit }): el giro que se ve (0…345).
+    onRotate,
     onChangeSize,
+    // "−": quita la última silla vacía (TablesPage.removeEmptySeat).
+    onRemoveSeat,
     onToggleLock,
     onAssignGuest,
+    // Cambiar de asiento dentro de la mesa (si está ocupado, intercambian).
+    onMoveSeat,
+    // (table, asiento?): abre el selector de invitados.
     onRequestAddGuests,
     onRemoveGuest,
     onMoveAll,
@@ -36,43 +55,42 @@ export const TablePanel = ({
     onDelete,
 }) => {
     const [nameDraft, setNameDraft] = useState(table.name ?? '')
-    const [guestMenuId, setGuestMenuId] = useState(null)
-    const [movingGuestId, setMovingGuestId] = useState(null)
+    const [vista, setVista] = useState(() => (localStorage.getItem(VISTA_KEY) === 'v' ? 'v' : 'h'))
     const [moveAllOpen, setMoveAllOpen] = useState(false)
+    const [moverId, setMoverId] = useState(null)
+    // Arrastre compartido por la lista y la vista previa: índice de silla.
+    const [arrastre, setArrastre] = useState(null)
+    const [sobre, setSobre] = useState(null)
+    const [resaltada, setResaltada] = useState(null)
 
     useEffect(() => { setNameDraft(table.name ?? '') }, [table.id, table.name])
 
     const realTables = useMemo(() => tables.filter(t => t.shape !== 'dance'), [tables])
-    const occupants = useMemo(
-        () => guests.filter(g => g.table === table.id),
-        [guests, table.id]
-    )
+    const { lugares, sobran } = useMemo(() => asientosDeMesa(table, guests), [table, guests])
     const unseated = useMemo(() => guests.filter(g => !g.table), [guests])
 
     const size = table.size ?? 0
-    const taken = occupants.length
-    const free = Math.max(size - taken, 0)
+    const ocupados = lugares.filter(Boolean).length + sobran.length
+    const libres = Math.max(size - ocupados, 0)
     const maxSeats = MAX_SEATS[table.shape] ?? 12
+    const puedeQuitar = size > 1 && lugares.includes(null)
+    const puedeAgregar = size < maxSeats
+    const angulo = anguloVisible(anguloDe(table))
+    const forma = SHAPES.find(s => s.key === table.shape) ?? SHAPES[0]
+    const mesa = MESA_PANEL[table.shape] ?? MESA_PANEL.round
+    const posiciones = useMemo(
+        () => posicionesSillas(table.shape, size, { w: mesa.w, h: mesa.h, gap: GAP_PANEL }),
+        [table.shape, size, mesa.w, mesa.h]
+    )
+    const vertical = isMobile || vista === 'v'
 
-    // El piso del stepper es la ocupación actual: reducir por debajo dejaría
-    // gente fuera en silencio, y eso nunca debe pasar sin decirlo.
-    const canDecrease = size > taken
-    const canIncrease = size < maxSeats
+    const numeroRepetido = realTables.filter(t => String(t.number) === String(table.number)).length > 1
 
-    const numberIsRepeated = realTables
-        .filter(t => String(t.number) === String(table.number)).length > 1
-
-    const groupSizeOf = (guest) => {
-        const leaderId = guest.companion_id ?? (guest.has_companion ? guest.id : null)
-        if (leaderId == null) return 0
-        return guests.filter(
-            g => g.id === leaderId || String(g.companion_id) === String(leaderId)
-        ).length
-    }
-
-    const leaderNameOf = (guest) => {
-        if (guest.companion_id == null) return null
-        return guests.find(g => String(g.id) === String(guest.companion_id))?.name ?? null
+    const metaDe = (guest) => {
+        const titular = guest.companion_id != null
+            ? guests.find(g => String(g.id) === String(guest.companion_id))?.name
+            : null
+        return [guest.tag, guest.side, titular ? `acompaña a ${titular}` : null].filter(Boolean).join(' · ') || '—'
     }
 
     const commitName = () => {
@@ -80,18 +98,132 @@ export const TablePanel = ({
         if (next !== (table.name ?? '')) onRename?.(table, next || null)
     }
 
+    // Vertical ↔ horizontal con View Transitions (si el navegador puede y no
+    // se pidió reducir movimiento). Se recuerda en este navegador.
+    const cambiarVista = (v) => {
+        if (v === vista) return
+        localStorage.setItem(VISTA_KEY, v)
+        const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        if (!document.startViewTransition || reducir) { setVista(v); return }
+        const raiz = document.documentElement
+        raiz.setAttribute('data-panel-mesa-transicion', '')
+        const t = document.startViewTransition(() => { flushSync(() => setVista(v)) })
+        t.finished.finally(() => raiz.removeAttribute('data-panel-mesa-transicion'))
+    }
+
+    // ── Arrastrar y soltar (lista y vista previa comparten el índice) ──
+    const terminar = () => { setArrastre(null); setSobre(null) }
+    const dnd = (i) => ({
+        draggable: Boolean(lugares[i]) && Boolean(onMoveSeat),
+        onDragStart: (e) => {
+            e.dataTransfer.effectAllowed = 'move'
+            e.dataTransfer.setData('text/plain', String(i))
+            setTimeout(() => { setArrastre(i); setResaltada(null) }, 0)
+        },
+        onDragOver: (e) => {
+            if (arrastre == null) return
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'move'
+            if (sobre !== i) setSobre(i)
+        },
+        onDrop: (e) => {
+            e.preventDefault()
+            const desde = arrastre
+            terminar()
+            if (desde == null || desde === i || !lugares[desde]) return
+            onMoveSeat?.(lugares[desde], table, i + 1)
+            setResaltada(i)
+        },
+        onDragEnd: terminar,
+        onMouseEnter: () => { if (arrastre == null) setResaltada(i) },
+        onMouseLeave: () => setResaltada((v) => (v === i ? null : v)),
+    })
+
+    const vaciar = () => {
+        if (!ocupados) return
+        Modal.confirm({
+            title: `¿Vaciar la mesa #${table.number}?`,
+            content: `${ocupados} ${ocupados === 1 ? 'invitado queda' : 'invitados quedan'} sin mesa.`,
+            okText: 'Vaciar',
+            cancelText: 'Cancelar',
+            okButtonProps: { danger: true },
+            zIndex: 10050,
+            onOk: () => onEmpty?.(table),
+        })
+    }
+
+    const moverAOtraMesa = (guest) => (
+        <TransferPicker
+            tables={realTables}
+            guests={guests}
+            originTableId={table.id}
+            affinityTag={guest.tag}
+            title={`Mover a ${guest.name}`}
+            subtitle={[`Sale de la Mesa #${table.number}`, guest.tag, guest.side].filter(Boolean).join(' · ')}
+            onClose={() => setMoverId(null)}
+            onPick={(target) => { setMoverId(null); onAssignGuest?.(guest, target) }}
+        />
+    )
+
+    const filaInvitado = (guest, i) => {
+        const props = i == null ? {} : dnd(i)
+        const encima = i != null && sobre === i && arrastre !== i
+        return (
+            <div
+                key={guest.id}
+                {...props}
+                className={styles.fila}
+                data-ocupada
+                data-sobre={encima || undefined}
+                data-resaltada={(i != null && resaltada === i && arrastre == null) || undefined}
+                data-origen={(i != null && arrastre === i) || undefined}
+            >
+                <Agarre visible={i != null} />
+                <span className={styles.numero} data-ocupada title={i == null ? 'Sin silla: la mesa está llena' : undefined}>
+                    {i == null ? '—' : i + 1}
+                </span>
+                <div className={styles.persona}>
+                    <span className={styles.nombre}>{guest.name}</span>
+                    <span className={styles.meta}>{metaDe(guest)}</span>
+                </div>
+                <Dropdown
+                    trigger={['click']}
+                    placement='bottomRight'
+                    open={moverId === guest.id}
+                    onOpenChange={(abierto) => setMoverId(abierto ? guest.id : null)}
+                    popupRender={() => moverAOtraMesa(guest)}
+                >
+                    <Tooltip title='Mover a otra mesa'>
+                        <button type='button' className={styles.iconoFila} draggable={false}>
+                            <ArrowRightLeft size={14} />
+                        </button>
+                    </Tooltip>
+                </Dropdown>
+                <Tooltip title='Quitar de la mesa'>
+                    <button type='button' className={styles.iconoFila} draggable={false} onClick={() => onRemoveGuest?.(guest)}>
+                        <X size={15} />
+                    </button>
+                </Tooltip>
+            </div>
+        )
+    }
+
     return (
-        <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.grabber} />
-
-            {/* El encabezado es la zona de arrastre: el resto del panel tiene
-                controles y arrastrar desde ahí pelearía con ellos. */}
+        <div
+            className={styles.panel}
+            data-vista={vertical ? 'v' : 'h'}
+            data-movil={isMobile || undefined}
+            onClick={(e) => e.stopPropagation()}
+        >
+            {/* Encabezado: la zona de arrastre del panel en escritorio. */}
             <div className={styles.header} onMouseDown={onDragStart}>
-                <span className={`${styles.numberBadge} ${styles.dragHandle}`}>{table.number}</span>
-
-                <div className={styles.nameField}>
+                <div className={styles.titulo}>
+                    <span className={styles.subtitulo} data-error={numeroRepetido || undefined}>
+                        Mesa #{table.number} · {forma.label} · {ocupados}/{size}
+                        {numeroRepetido ? ' · número repetido' : ''}
+                    </span>
                     <input
-                        className={styles.nameInput}
+                        className={styles.nombreMesa}
                         value={nameDraft}
                         placeholder='Sin nombre'
                         onMouseDown={(e) => e.stopPropagation()}
@@ -99,233 +231,221 @@ export const TablePanel = ({
                         onBlur={commitName}
                         onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
                     />
-                    <span className={styles.nameHint}>editar</span>
                 </div>
 
-                <button
-                    type='button'
-                    className={styles.closeBtn}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={onClose}
-                >
-                    <X size={15} />
-                </button>
-            </div>
-
-            <span className={`${styles.subhead} ${numberIsRepeated ? styles.subheadError : ''}`}>
-                {numberIsRepeated
-                    ? `Mesa #${table.number} · hay otra mesa con este número`
-                    : `Mesa #${table.number} · el número no se puede repetir en el evento`}
-            </span>
-
-            <div className={styles.controls}>
-                <div className={styles.controlGroup}>
-                    <span className={styles.controlLabel}>Forma</span>
-                    <div className={styles.shapeRow}>
-                        {SHAPES.map(({ key, label, glyph }) => (
-                            <Tooltip key={key} title={label}>
+                {!isMobile && (
+                    <div className={styles.segmentado} onMouseDown={(e) => e.stopPropagation()}>
+                        {[
+                            { key: 'v', label: 'Vista vertical', path: 'M3 12h18' },
+                            { key: 'h', label: 'Vista horizontal', path: 'M12 3v18' },
+                        ].map(v => (
+                            <Tooltip key={v.key} title={v.label}>
                                 <button
                                     type='button'
-                                    className={`${styles.shapeBtn} ${table.shape === key ? styles.shapeBtnActive : ''}`}
-                                    onClick={() => onChangeShape?.(table, key)}
+                                    className={styles.segmento}
+                                    data-activo={vista === v.key || undefined}
+                                    aria-pressed={vista === v.key}
+                                    aria-label={v.label}
+                                    onClick={() => cambiarVista(v.key)}
                                 >
-                                    <span className={`${styles.shapeGlyph} ${glyph}`} />
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                                        <rect x='3' y='3' width='18' height='18' rx='2' />
+                                        <path d={v.path} />
+                                    </svg>
                                 </button>
                             </Tooltip>
                         ))}
-
-                        {/* Solo la rectangular tiene orientación: en cuadrada y
-                            redonda girar 90° no cambia nada. */}
-                        {table.shape === 'rectangle' && (
-                            <Tooltip title={table.vertical ? 'Ponerla horizontal' : 'Ponerla vertical'}>
-                                <button
-                                    type='button'
-                                    className={`${styles.shapeBtn} ${table.vertical ? styles.shapeBtnActive : ''}`}
-                                    onClick={() => onToggleVertical?.(table)}
-                                >
-                                    {table.vertical ? <MoveVertical size={14} /> : <MoveHorizontal size={14} />}
-                                </button>
-                            </Tooltip>
-                        )}
                     </div>
-                </div>
-
-                <div className={styles.controlGroup}>
-                    <span className={styles.controlLabel}>Sillas</span>
-                    <div className={styles.stepper}>
-                        <Tooltip title={canDecrease ? '' : `Saca invitados de la mesa antes de bajar de ${taken}`}>
-                            <button
-                                type='button'
-                                className={styles.stepperBtn}
-                                aria-disabled={!canDecrease}
-                                onClick={() => { if (canDecrease) onChangeSize?.(table, size - 1) }}
-                            >
-                                <Minus size={14} />
-                            </button>
-                        </Tooltip>
-                        <span className={styles.stepperValue}>{size}</span>
-                        <Tooltip title={canIncrease ? '' : `El máximo para esta forma es ${maxSeats}`}>
-                            <button
-                                type='button'
-                                className={styles.stepperBtn}
-                                aria-disabled={!canIncrease}
-                                onClick={() => { if (canIncrease) onChangeSize?.(table, size + 1) }}
-                            >
-                                <Plus size={14} />
-                            </button>
-                        </Tooltip>
-                    </div>
-                </div>
-
-                <div className={styles.controlGroup}>
-                    <span className={styles.controlLabel}>Bloquear</span>
-                    <Switch
-                        size='small'
-                        checked={!!table.locked}
-                        onChange={() => onToggleLock?.(table)}
-                    />
-                </div>
-            </div>
-
-            <div className={styles.guestsHead}>
-                <span className={styles.guestsCount}>Invitados · {taken} de {size}</span>
-                <span className={styles.guestsFree}>
-                    {free === 0 ? 'mesa completa' : `${free} ${free === 1 ? 'lugar libre' : 'lugares libres'}`}
-                </span>
-            </div>
-
-            <div className={`${styles.guestList} scroll-invitation`}>
-                {occupants.length === 0 && (
-                    <span className={styles.emptyGuests}>Nadie sentado en esta mesa todavía.</span>
                 )}
 
-                {occupants.map((guest) => {
-                    const isLeader = guest.companion_id == null && guest.has_companion
-                    const groupSize = groupSizeOf(guest)
-                    const leaderName = leaderNameOf(guest)
+                <button
+                    type='button'
+                    className={styles.bloquear}
+                    data-bloqueada={table.locked || undefined}
+                    title={table.locked ? 'Desbloquear mesa' : 'Bloquear mesa'}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={() => onToggleLock?.(table)}
+                >
+                    <Lock size={14} />
+                    {table.locked ? 'Bloqueada' : 'Bloquear'}
+                </button>
 
-                    return (
-                        <div key={guest.id} className={styles.guestRow}>
-                            <div className={styles.guestInfo}>
-                                <span className={styles.guestName}>{guest.name}</span>
-                                {isLeader && groupSize > 1 && (
-                                    <span className={styles.groupBadge}>grupo de {groupSize}</span>
-                                )}
-                                <span className={styles.guestMeta}>
-                                    {[guest.tag, guest.side, leaderName ? `acompaña a ${leaderName}` : null]
-                                        .filter(Boolean).join(' · ') || '—'}
-                                </span>
-                            </div>
-
-                            <Dropdown
-                                trigger={['click']}
-                                placement='bottomRight'
-                                open={guestMenuId === guest.id}
-                                onOpenChange={(open) => {
-                                    setGuestMenuId(open ? guest.id : null)
-                                    if (!open) setMovingGuestId(null)
-                                }}
-                                popupRender={() => (
-                                    movingGuestId === guest.id ? (
-                                        <TransferPicker
-                                            tables={realTables}
-                                            guests={guests}
-                                            originTableId={table.id}
-                                            affinityTag={guest.tag}
-                                            title={`Mover a ${guest.name}`}
-                                            subtitle={[
-                                                `Sale de la Mesa #${table.number}`,
-                                                guest.tag,
-                                                guest.side,
-                                            ].filter(Boolean).join(' · ')}
-                                            onClose={() => { setGuestMenuId(null); setMovingGuestId(null) }}
-                                            onPick={(target) => {
-                                                setGuestMenuId(null)
-                                                setMovingGuestId(null)
-                                                onAssignGuest?.(guest, target)
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className={styles.guestMenu} onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                type='button'
-                                                className={styles.guestMenuItem}
-                                                onClick={() => setMovingGuestId(guest.id)}
-                                            >
-                                                Mover a otra mesa…
-                                            </button>
-                                            <button
-                                                type='button'
-                                                className={`${styles.guestMenuItem} ${styles.guestMenuDanger}`}
-                                                onClick={() => { setGuestMenuId(null); onRemoveGuest?.(guest) }}
-                                            >
-                                                Quitar de la mesa
-                                            </button>
-                                        </div>
-                                    )
-                                )}
-                            >
-                                <button type='button' className={styles.rowMenuBtn}>
-                                    <MoreHorizontal size={15} />
-                                </button>
-                            </Dropdown>
-                        </div>
-                    )
-                })}
+                <button
+                    type='button'
+                    className={styles.cerrar}
+                    aria-label='Cerrar'
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={onClose}
+                >
+                    <X size={16} />
+                </button>
             </div>
 
-            {/* El selector no es un dropdown: se ancla a la esquina inferior
-                derecha del mapa, para que siempre aparezca en el mismo sitio
-                en vez de voltearse cuando no cabe bajo el botón. */}
-            <button
-                type='button'
-                className={styles.addGuestBtn}
-                aria-disabled={unseated.length === 0}
-                onClick={() => { if (unseated.length) onRequestAddGuests?.(table) }}
-            >
-                {unseated.length === 0
-                    ? 'No quedan invitados sin mesa'
-                    : '+ Agregar invitado a esta mesa'}
-            </button>
+            <div className={styles.cuerpo}>
+                {/* Vista previa: la mesa con sus sillas, girada; los textos
+                    llevan el giro inverso para leerse derechos. */}
+                <div className={styles.diagrama}>
+                    <div className={styles.grupoMesa} style={{ transform: `rotate(${angulo}deg)` }}>
+                        <div
+                            className={styles.mesa}
+                            style={{ left: -mesa.w / 2, top: -mesa.h / 2, width: mesa.w, height: mesa.h, borderRadius: mesa.radio }}
+                        >
+                            <span style={{ transform: `rotate(${-angulo}deg)` }}>{table.number}</span>
+                        </div>
+                        {posiciones.map(([x, y], i) => {
+                            const g = lugares[i]
+                            const encima = sobre === i && arrastre !== i
+                            return (
+                                <div
+                                    key={i}
+                                    {...dnd(i)}
+                                    className={styles.silla}
+                                    style={{ left: x - 14, top: y - 14 }}
+                                    title={g ? `Silla ${i + 1} · ${g.name}` : `Silla ${i + 1} · libre`}
+                                    data-ocupada={g ? true : undefined}
+                                    data-sobre={encima || undefined}
+                                    data-resaltada={(resaltada === i) || undefined}
+                                    data-origen={arrastre === i || undefined}
+                                >
+                                    <span style={{ transform: `rotate(${-angulo}deg)` }}>{g ? inicialesDe(g.name) : i + 1}</span>
+                                </div>
+                            )
+                        })}
+                    </div>
 
-            <div className={styles.footer}>
+                    {/* Sillas − / + */}
+                    <div className={`${styles.flotante} ${styles.flotanteSillas}`}>
+                        <Tooltip title={puedeQuitar ? 'Quitar la última silla vacía' : 'No hay sillas vacías que quitar'}>
+                            <button
+                                type='button'
+                                className={styles.botonRedondo}
+                                aria-disabled={!puedeQuitar}
+                                onClick={() => { if (puedeQuitar) onRemoveSeat?.(table) }}
+                            >
+                                −
+                            </button>
+                        </Tooltip>
+                        <span className={styles.flotanteTexto}>{size} {size === 1 ? 'silla' : 'sillas'}</span>
+                        <Tooltip title={puedeAgregar ? '' : `El máximo para esta forma es ${maxSeats}`}>
+                            <button
+                                type='button'
+                                className={styles.botonRedondo}
+                                aria-disabled={!puedeAgregar}
+                                onClick={() => { if (puedeAgregar) onChangeSize?.(table, size + 1) }}
+                            >
+                                +
+                            </button>
+                        </Tooltip>
+                    </div>
+
+                    {/* Forma */}
+                    <div className={`${styles.flotante} ${styles.flotanteForma}`}>
+                        {SHAPES.map(s => (
+                            <Tooltip key={s.key} title={s.label}>
+                                <button
+                                    type='button'
+                                    className={styles.botonForma}
+                                    data-activo={table.shape === s.key || undefined}
+                                    aria-pressed={table.shape === s.key}
+                                    aria-label={s.label}
+                                    onClick={() => onChangeShape?.(table, s.key)}
+                                >
+                                    <span className={styles.miniatura} data-forma={s.key} />
+                                </button>
+                            </Tooltip>
+                        ))}
+                    </div>
+
+                    {/* Giro */}
+                    <div className={`${styles.flotante} ${styles.flotanteGiro}`}>
+                        <Tooltip title='Girar 15° a la izquierda'>
+                            <button type='button' className={styles.botonRedondo} onClick={() => onRotate?.(table, angulo - 15, { commit: true })}>
+                                <RotateCcw size={14} />
+                            </button>
+                        </Tooltip>
+                        <span className={styles.flotanteGrados}>{angulo}°</span>
+                        <Tooltip title='Girar 15° a la derecha'>
+                            <button type='button' className={styles.botonRedondo} onClick={() => onRotate?.(table, angulo + 15, { commit: true })}>
+                                <RotateCw size={14} />
+                            </button>
+                        </Tooltip>
+                    </div>
+                </div>
+
+                {/* Una fila por silla, en orden; las vacías siempre se ven. */}
+                <div className={`${styles.lista} scroll-invitation`}>
+                    {lugares.map((guest, i) => {
+                        if (guest) return filaInvitado(guest, i)
+                        const encima = sobre === i && arrastre !== i
+                        return (
+                            <div
+                                key={`libre-${i}`}
+                                {...dnd(i)}
+                                className={styles.fila}
+                                data-sobre={encima || undefined}
+                                data-resaltada={(resaltada === i && arrastre == null) || undefined}
+                            >
+                                <Agarre visible={false} />
+                                <span className={styles.numero}>{i + 1}</span>
+                                <span className={styles.libre}>{encima ? 'Soltar aquí' : 'Libre'}</span>
+                                <button
+                                    type='button'
+                                    className={styles.asignar}
+                                    aria-disabled={unseated.length === 0}
+                                    title={unseated.length === 0 ? 'No quedan invitados sin mesa' : undefined}
+                                    onClick={() => { if (unseated.length) onRequestAddGuests?.(table, i + 1) }}
+                                >
+                                    Asignar
+                                </button>
+                            </div>
+                        )
+                    })}
+                    {sobran.map((guest) => filaInvitado(guest, null))}
+                    {size === 0 && <span className={styles.vacia}>Esta mesa no tiene sillas.</span>}
+                </div>
+            </div>
+
+            <div className={styles.pie}>
+                {libres > 0 && (
+                    <button
+                        type='button'
+                        className={styles.agregar}
+                        aria-disabled={unseated.length === 0}
+                        title={unseated.length === 0 ? 'No quedan invitados sin mesa' : undefined}
+                        onClick={() => { if (unseated.length) onRequestAddGuests?.(table) }}
+                    >
+                        <span className={styles.agregarMas}>+</span>Agregar invitado
+                    </button>
+                )}
                 <Dropdown
                     trigger={['click']}
                     placement='topLeft'
                     open={moveAllOpen}
-                    onOpenChange={(open) => setMoveAllOpen(open && taken > 0)}
+                    onOpenChange={(abierto) => setMoveAllOpen(abierto && ocupados > 0)}
                     popupRender={() => (
                         <TransferPicker
                             tables={realTables}
                             guests={guests}
                             originTableId={table.id}
-                            seatsNeeded={taken}
+                            seatsNeeded={ocupados}
                             onPick={(target) => { setMoveAllOpen(false); onMoveAll?.(table, target) }}
                         />
                     )}
                 >
-                    <button type='button' className={styles.footerBtn} aria-disabled={taken === 0}>
-                        Mover todos
-                    </button>
+                    <button type='button' className={styles.botonTexto} aria-disabled={!ocupados}>Mover todos</button>
                 </Dropdown>
-
-                <button
-                    type='button'
-                    className={styles.footerBtn}
-                    aria-disabled={taken === 0}
-                    onClick={() => { if (taken) onEmpty?.(table) }}
-                >
-                    Vaciar
-                </button>
-
-                <button
-                    type='button'
-                    className={`${styles.footerBtn} ${styles.footerDanger}`}
-                    onClick={() => onDelete?.(table.id)}
-                >
-                    Eliminar mesa
-                </button>
+                <button type='button' className={styles.botonTexto} aria-disabled={!ocupados} onClick={vaciar}>Vaciar</button>
+                <button type='button' className={`${styles.botonTexto} ${styles.eliminar}`} onClick={() => onDelete?.(table.id)}>Eliminar</button>
             </div>
         </div>
     )
 }
+
+// Agarre de 6 puntos (10 × 16); invisible en las filas libres.
+const Agarre = ({ visible }) => (
+    <svg width='10' height='16' viewBox='0 0 10 16' className={styles.agarre} data-visible={visible || undefined} aria-hidden>
+        <circle cx='2.5' cy='3' r='1.4' /><circle cx='7.5' cy='3' r='1.4' />
+        <circle cx='2.5' cy='8' r='1.4' /><circle cx='7.5' cy='8' r='1.4' />
+        <circle cx='2.5' cy='13' r='1.4' /><circle cx='7.5' cy='13' r='1.4' />
+    </svg>
+)

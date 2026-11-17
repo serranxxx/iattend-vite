@@ -68,6 +68,9 @@
 .table-list-container {
     width: 450px;
     flex-shrink: 0;
+    /* Estirada con sus márgenes: con el height: 100% de arriba medía todo el
+       alto MÁS el margen y se salía 16 px de la pantalla (cortaba el pie). */
+    height: auto;
     align-self: stretch;
     padding: 20px 0;
     margin: 16px 30px 30px 0;

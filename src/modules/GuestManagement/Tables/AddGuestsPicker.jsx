@@ -14,7 +14,10 @@ const normalize = (value) =>
  * muestra cómo se va llenando la mesa mientras seleccionas. La mesa se puede
  * sobrepasar: se avisa, pero no se bloquea.
  */
-export const AddGuestsPicker = ({ table, occupants = [], candidates = [], onAdd, onClose }) => {
+// `seat`: asiento elegido en el panel de la mesa (el primero que se agregue va ahí).
+// `embebido`: ocupa el panel de invitados de la derecha (GuestPanel `sentarEn`)
+// en vez de flotar: encabezado como el de la lista y lista a todo el alto.
+export const AddGuestsPicker = ({ table, occupants = [], candidates = [], seat = null, embebido = false, onAdd, onClose }) => {
     const [search, setSearch] = useState('')
     const [tagFilter, setTagFilter] = useState(null)
     const [picked, setPicked] = useState(() => new Set())
@@ -109,9 +112,26 @@ export const AddGuestsPicker = ({ table, occupants = [], candidates = [], onAdd,
     )
 
     return (
-        <div className={styles.picker} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.picker} ${embebido ? styles.embebido : ''}`} onClick={(e) => e.stopPropagation()}>
+            {embebido ? (
+                <div className={styles.cabeza}>
+                    <div className={styles.cabezaTexto}>
+                        <span className={styles.cabezaTitulo}>
+                            Sentar en la Mesa #{table.number}{table.name ? ` · ${table.name}` : ''}
+                        </span>
+                        <span className={`${styles.cabezaSub} ${over > 0 ? styles.fillCountOver : ''}`}>
+                            {seat ? `Desde el asiento ${seat} · ` : ''}{total} de {size}{incoming > 0 ? ` · +${incoming}` : ''}
+                        </span>
+                    </div>
+                    {onClose && (
+                        <button type='button' className={styles.cabezaCerrar} onClick={onClose} aria-label='Volver a la lista'>
+                            <X size={15} />
+                        </button>
+                    )}
+                </div>
+            ) : (
             <div className={styles.fillHead}>
-                <span className={styles.fillTitle}>Mesa #{table.number}</span>
+                <span className={styles.fillTitle}>Mesa #{table.number}{seat ? ` · asiento ${seat}` : ''}</span>
                 <span className={styles.fillRight}>
                     <span className={`${styles.fillCount} ${over > 0 ? styles.fillCountOver : ''}`}>
                         {total} de {size}{incoming > 0 ? ` · +${incoming}` : ''}
@@ -123,6 +143,7 @@ export const AddGuestsPicker = ({ table, occupants = [], candidates = [], onAdd,
                     )}
                 </span>
             </div>
+            )}
 
             <div className={styles.strip}>
                 {seats.map((kind, i) => (
@@ -213,7 +234,9 @@ export const AddGuestsPicker = ({ table, occupants = [], candidates = [], onAdd,
                         onAdd?.(chosen)
                     }}
                 >
-                    {incoming === 0 ? 'Selecciona invitados' : `Añadir ${incoming}`}
+                    {incoming === 0
+                        ? 'Selecciona invitados'
+                        : embebido ? `Sentar ${incoming} en la Mesa #${table.number}` : `Añadir ${incoming}`}
                 </button>
                 {incoming > 0 && (
                     <button

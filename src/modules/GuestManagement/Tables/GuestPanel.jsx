@@ -3,6 +3,7 @@ import { Dropdown, Input } from 'antd'
 import { SlidersHorizontal } from 'lucide-react'
 import { formatDate } from '../../../helpers/assets/functions'
 import { TransferPicker } from './TransferPicker'
+import { AddGuestsPicker } from './AddGuestsPicker'
 import styles from './GuestPanel.module.css'
 
 // Tonos pastel para distinguir grupos de acompañantes de un vistazo.
@@ -22,7 +23,13 @@ const normalize = (value) =>
  * las filas de abajo y tenía muy poco contraste, y los filtros vivían
  * escondidos detrás de un icono.
  */
-export const GuestPanel = ({ guests = [], tables = [], onAssign }) => {
+// `sentarEn` ({ table, seat }): mientras se agrega gente a una mesa desde su
+// panel, esta lista se vuelve el selector (AddGuestsPicker embebido): la tira
+// de la mesa, buscador, sugerencias y "Añadir N". `onSentar(elegidos, mesa)`
+// y `onCerrarSentar` (vuelve a la lista).
+// `onArrastrar(guest | null)`: un invitado sin mesa se arrastra a una silla
+// del mapa (TablesPage lo recibe en DynamicTable).
+export const GuestPanel = ({ guests = [], tables = [], onAssign, sentarEn = null, onSentar, onCerrarSentar, onArrastrar }) => {
     const [search, setSearch] = useState('')
     const [colorGroups, setColorGroups] = useState(true)
     const [onlyUnseated, setOnlyUnseated] = useState(false)
@@ -165,8 +172,22 @@ export const GuestPanel = ({ guests = [], tables = [], onAssign }) => {
         return (
             <div
                 key={guest.id}
-                className={styles.row}
+                className={`${styles.row} ${!guest.table && onArrastrar ? styles.rowArrastrable : ''}`}
                 style={color ? { backgroundColor: `${color}40` } : undefined}
+                draggable={!guest.table && Boolean(onArrastrar)}
+                onDragStart={!guest.table && onArrastrar ? (e) => {
+                    e.dataTransfer.effectAllowed = 'move'
+                    e.dataTransfer.setData('text/plain', String(guest.id))
+                    // Fantasma: una pastilla con el nombre en vez de la fila completa.
+                    const fantasma = document.createElement('div')
+                    fantasma.className = styles.fantasma
+                    fantasma.textContent = guest.name
+                    document.body.appendChild(fantasma)
+                    e.dataTransfer.setDragImage(fantasma, 16, 16)
+                    setTimeout(() => fantasma.remove(), 0)
+                    onArrastrar(guest)
+                } : undefined}
+                onDragEnd={!guest.table && onArrastrar ? () => onArrastrar(null) : undefined}
             >
                 {color && <span className={styles.groupBar} style={{ backgroundColor: color }} />}
 
@@ -247,8 +268,25 @@ export const GuestPanel = ({ guests = [], tables = [], onAssign }) => {
         )
     }
 
+    if (sentarEn?.table) {
+        const mesa = sentarEn.table
+        return (
+            <div key={`sentar-${mesa.id}`} className={`${styles.panel} ${styles.panelSentar}`}>
+                <AddGuestsPicker
+                    embebido
+                    table={mesa}
+                    seat={sentarEn.seat}
+                    occupants={guests.filter(g => g.table === mesa.id)}
+                    candidates={guests.filter(g => !g.table)}
+                    onClose={onCerrarSentar}
+                    onAdd={(chosen) => onSentar?.(chosen, mesa)}
+                />
+            </div>
+        )
+    }
+
     return (
-        <div className={styles.panel}>
+        <div key='lista' className={`${styles.panel} ${styles.panelLista}`}>
             <div className={styles.header}>
                 <div className={styles.headerText}>
                     <span className={styles.title}>Invitados confirmados</span>

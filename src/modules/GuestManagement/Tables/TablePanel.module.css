@@ -1,467 +1,683 @@
-/* Panel de edición de mesa (§5.4). Popover en escritorio, hoja inferior en
-   móvil. Toda mesa es editable desde aquí, se abra desde el mapa o la lista. */
+/* Panel de mesa (handoff "Panel de mesa", opción 3a). Colores y medidas del
+   handoff; los lilas son los de la marca. */
 
 .panel {
+    --pm-texto: #1F1F1F;
+    --pm-texto-2: #6B6B6B;
+    --pm-libre: #9A9692;
+    --pm-agarre: #B5B1AC;
+    --pm-neutro: #F4F3F1;
+    --pm-neutro-hover: #ECEAE7;
+    --pm-separador: #EFEDEA;
+    --pm-area: #F7F5F3;
+    --pm-borde: #E8E6E3;
+    --pm-punteado: #CFCBC6;
+    --pm-lila-tinte: #F1EAF4;
+    --pm-lila-ocupado: #E6D6EC;
+    --pm-lila: #D9C3E3;
+    --pm-lila-hover: #CFB4DB;
+    --pm-lila-medio: #B48BC4;
+    --pm-lila-acento: #7A4E8C;
+    --pm-lila-oscuro: #5E3670;
+    --pm-peligro: #C93A2E;
+    --pm-peligro-fondo: #FCEDEB;
+
     display: flex;
     flex-direction: column;
-    width: 390px;
-    max-width: 92vw;
-    padding: 16px;
-    box-sizing: border-box;
+    width: 760px;
+    max-width: calc(100vw - 32px);
+    overflow: hidden;
     border-radius: 24px;
-    background-color: var(--ft-color);
-    box-shadow: 0px 0px 32px rgba(0, 0, 0, 0.18);
+    background: #FFFFFF;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    font-family: Inter, 'Work Sans', sans-serif;
+    color: var(--pm-texto);
+    view-transition-name: mesa-panel;
+    /* Cabe bajo el encabezado del acomodo (~136 px) + su lugar (36) + aire:
+       en vertical la lista se encoge. */
+    max-height: calc(100vh - 196px);
+    max-height: calc(100dvh - 196px);
 }
 
-/* ── Encabezado ────────────────────────────────────────────────────────── */
+.panel[data-vista='v'] {
+    width: 400px;
+}
+
+/* ── 1. Encabezado ── */
 
 .header {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 16px 16px 0 20px;
     cursor: grab;
-    user-select: none;
+    view-transition-name: mesa-header;
 }
 
 .header:active {
     cursor: grabbing;
 }
 
-.dragHandle {
-    cursor: grab;
-}
-
-.numberBadge {
+.titulo {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;
-    height: 30px;
-    padding: 0 8px;
-    box-sizing: border-box;
-    border-radius: 99px;
-    background-color: var(--brand-color-500);
-    color: var(--text-color);
-    font-family: var(--font-family);
-    font-size: 13px;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.nameField {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
     flex: 1;
     min-width: 0;
-    padding: 6px 12px;
-    border: 1px solid var(--brand-color-500);
-    border-radius: 12px;
 }
 
-.nameInput {
+.subtitulo {
+    font-size: 12px;
+    color: var(--pm-texto-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.subtitulo[data-error] {
+    color: var(--pm-peligro);
+}
+
+.nombreMesa {
+    min-width: 0;
+    padding: 0;
     border: none;
     outline: none;
     background: transparent;
+    font-family: Poppins, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--pm-texto);
+    cursor: text;
+}
+
+.nombreMesa::placeholder {
+    color: var(--pm-libre);
+}
+
+.segmentado {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--pm-neutro);
+    cursor: default;
+}
+
+.segmento {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--pm-libre);
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.segmento[data-activo] {
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color: var(--pm-lila-oscuro);
+}
+
+.bloquear {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--pm-neutro);
+    color: var(--pm-texto);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.bloquear[data-bloqueada] {
+    background: var(--pm-lila-oscuro);
+    color: #FFFFFF;
+}
+
+.cerrar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--pm-neutro);
+    color: var(--pm-texto);
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+.cerrar:hover {
+    background: var(--pm-neutro-hover);
+}
+
+/* ── 2. Cuerpo ── */
+
+.cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px 16px 0;
+}
+
+.panel[data-vista='v'] .cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* 2a. Vista previa */
+.diagrama {
+    position: relative;
+    height: 340px;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--pm-area);
+    view-transition-name: mesa-diagram;
+}
+
+.panel[data-vista='v'] .diagrama {
+    height: 220px;
+}
+
+.grupoMesa {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    transition: transform .25s;
+}
+
+.mesa {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 1.5px solid var(--pm-lila);
+    background: #FFFFFF;
+    font-family: Poppins, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--pm-lila-acento);
+    transition: all .25s;
+}
+
+.silla {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    border: 1.5px dashed var(--pm-punteado);
+    border-radius: 50%;
+    background: #FFFFFF;
+    color: var(--pm-libre);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: default;
+    user-select: none;
+    transition: left .25s, top .25s, background-color .15s, box-shadow .15s;
+}
+
+.silla[data-ocupada] {
+    border: none;
+    background: var(--pm-lila-ocupado);
+    color: var(--pm-lila-oscuro);
+    cursor: grab;
+}
+
+.silla[data-sobre] {
+    border: none;
+    background: var(--pm-lila);
+}
+
+.silla[data-sobre],
+.silla[data-resaltada] {
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--pm-lila-acento);
+}
+
+.silla[data-origen] {
+    opacity: .35;
+}
+
+/* Controles flotantes */
+.flotante {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.flotanteSillas {
+    left: 8px;
+    top: 8px;
+}
+
+.flotanteForma {
+    left: 8px;
+    bottom: 8px;
+}
+
+.flotanteGiro {
+    right: 8px;
+    bottom: 8px;
+}
+
+.flotanteTexto {
+    padding: 0 2px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.flotanteGrados {
+    width: 32px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.botonRedondo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--pm-texto);
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+.botonRedondo:hover {
+    background: var(--pm-neutro);
+}
+
+.botonRedondo[aria-disabled='true'] {
+    color: var(--pm-punteado);
+    cursor: default;
+}
+
+.botonRedondo[aria-disabled='true']:hover {
+    background: transparent;
+}
+
+.botonForma {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.botonForma[data-activo] {
+    background: var(--pm-lila-ocupado);
+}
+
+.miniatura {
+    display: block;
+    background: var(--pm-punteado);
+}
+
+.botonForma[data-activo] .miniatura {
+    background: var(--pm-lila-medio);
+}
+
+.miniatura[data-forma='round'] {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+
+.miniatura[data-forma='square'] {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+.miniatura[data-forma='rectangle'] {
+    width: 19px;
+    height: 10px;
+    border-radius: 4px;
+}
+
+/* 2b. Lista de sillas */
+.lista {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    height: 340px;
+    overflow-y: auto;
+    border: 1px solid var(--pm-borde);
+    border-radius: 16px;
+    view-transition-name: mesa-list;
+}
+
+.panel[data-vista='v'] .lista {
+    height: auto;
+    max-height: 400px;
+    min-height: 120px;
+}
+
+.fila {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    min-height: 40px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    border-top: 1px solid var(--pm-separador);
+    background: transparent;
+    cursor: default;
+    transition: background-color .15s;
+}
+
+.fila:first-child {
+    border-top: none;
+}
+
+.fila[data-ocupada] {
+    cursor: grab;
+}
+
+.fila:hover,
+.fila[data-resaltada] {
+    background: var(--pm-area);
+}
+
+.fila[data-sobre] {
+    background: var(--pm-lila-tinte);
+    box-shadow: inset 0 0 0 1.5px var(--pm-lila-medio);
+}
+
+.fila[data-origen] {
+    opacity: .35;
+}
+
+.agarre {
+    flex-shrink: 0;
+    fill: transparent;
+}
+
+.agarre[data-visible] {
+    fill: var(--pm-agarre);
+}
+
+.numero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    border: 1.5px dashed var(--pm-punteado);
+    border-radius: 50%;
+    background: #FFFFFF;
+    color: var(--pm-libre);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.numero[data-ocupada] {
+    border: none;
+    background: var(--pm-lila-ocupado);
+    color: var(--pm-lila-oscuro);
+}
+
+.persona {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-width: 0;
-    font-family: var(--font-family);
+    pointer-events: none;
+}
+
+.nombre {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-color);
 }
 
-.nameHint {
-    font-family: var(--font-family);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--brand-color-800);
+.meta {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    color: var(--pm-texto-2);
+}
+
+.iconoFila {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-}
-
-.closeBtn {
     width: 30px;
     height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0;
     border: none;
-    cursor: pointer;
-    border-radius: 99px;
-    background-color: var(--sc-color);
-    color: var(--gray-color);
-    flex-shrink: 0;
-}
-
-.closeBtn:hover {
-    background-color: var(--gray-bg);
-    color: var(--text-color);
-}
-
-.subhead {
-    font-family: var(--font-family);
-    font-size: 11px;
-    color: var(--gray-color);
-    padding: 8px 2px 0;
-}
-
-.subheadError {
-    color: var(--red-color);
-    font-weight: 500;
-}
-
-/* ── Controles: forma / sillas / bloquear ──────────────────────────────── */
-
-.controls {
-    display: flex;
-    align-items: flex-end;
-    gap: 18px;
-    padding: 14px 2px;
-}
-
-.controlGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.controlLabel {
-    font-family: var(--font-family);
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    color: var(--gray-color);
-}
-
-.shapeRow {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.shapeBtn {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--borders);
-    cursor: pointer;
-    border-radius: 10px;
-    background-color: var(--ft-color);
-    transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.shapeBtn:hover {
-    border-color: var(--brand-color-500);
-}
-
-.shapeBtnActive {
-    border-color: var(--brand-color-500);
-    background-color: var(--brand-color-100);
-}
-
-.shapeGlyph {
-    background-color: var(--brand-color-300);
-}
-
-.glyphRound { width: 15px; height: 15px; border-radius: 50%; }
-.glyphSquare { width: 15px; height: 15px; border-radius: 4px; }
-.glyphRect { width: 21px; height: 12px; border-radius: 4px; }
-
-.stepper {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 2px;
-    border: 1px solid var(--borders);
-    border-radius: 99px;
-}
-
-.stepperBtn {
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    cursor: pointer;
-    border-radius: 99px;
-    background-color: transparent;
-    color: var(--text-color);
-    transition: background-color 0.15s ease;
-}
-
-.stepperBtn:hover {
-    background-color: var(--sc-color);
-}
-
-/* aria-disabled y no disabled: un <button disabled> no emite eventos de mouse
-   y el Tooltip con el motivo del bloqueo nunca se vería. */
-.stepperBtn[aria-disabled='true'] {
-    color: var(--gray-color-40);
-    cursor: not-allowed;
-}
-
-.stepperBtn[aria-disabled='true']:hover {
-    background-color: transparent;
-}
-
-.stepperValue {
-    min-width: 26px;
-    text-align: center;
-    font-family: var(--font-family);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-/* ── Invitados ─────────────────────────────────────────────────────────── */
-
-.guestsHead {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 4px 2px 8px;
-    border-top: 1px solid var(--borders);
-    padding-top: 12px;
-}
-
-.guestsCount {
-    font-family: var(--font-family);
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    color: var(--gray-color);
-}
-
-.guestsFree {
-    font-family: var(--font-family);
-    font-size: 11px;
-    color: var(--gray-color);
-}
-
-.guestList {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--borders);
-    border-radius: 14px;
-    overflow: hidden;
-    max-height: 210px;
-    overflow-y: auto;
-}
-
-.guestRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--borders);
-    transition: background-color 0.15s ease;
-}
-
-.guestRow:last-child {
-    border-bottom: none;
-}
-
-.guestRow:hover {
-    background-color: var(--brand-color-100);
-}
-
-.guestInfo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    flex-wrap: wrap;
-}
-
-.guestName {
-    font-family: var(--font-family);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-color);
-}
-
-.guestMeta {
-    font-family: var(--font-family);
-    font-size: 11px;
-    color: var(--gray-color);
-}
-
-.groupBadge {
-    padding: 1px 8px;
-    border-radius: 99px;
-    background-color: var(--brand-color-100);
-    color: var(--brand-color-800);
-    font-family: var(--font-family);
-    font-size: 10px;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.rowMenuBtn {
-    border: none;
-    cursor: pointer;
-    background: transparent;
-    color: var(--gray-color);
-    padding: 2px 4px;
     border-radius: 8px;
-    flex-shrink: 0;
-}
-
-.rowMenuBtn:hover {
-    background-color: var(--ft-color);
-    color: var(--text-color);
-}
-
-.emptyGuests {
-    padding: 18px 10px;
-    text-align: center;
-    font-family: var(--font-family);
-    font-size: 12px;
-    color: var(--gray-color);
-}
-
-.addGuestBtn {
-    width: 100%;
-    margin-top: 10px;
-    padding: 10px;
-    border: none;
+    background: transparent;
+    color: var(--pm-libre);
     cursor: pointer;
-    border-radius: 12px;
-    background-color: var(--brand-color-300);
-    color: var(--text-color);
-    font-family: var(--font-family);
-    font-size: 13px;
-    font-weight: 500;
-    transition: filter 0.15s ease;
+    transition: background-color .15s ease, color .15s ease;
 }
 
-.addGuestBtn:hover {
-    filter: brightness(0.96);
+.iconoFila:hover {
+    background: var(--pm-separador);
+    color: var(--pm-texto);
 }
 
-.addGuestBtn[aria-disabled='true'] {
-    background-color: var(--gray-bg);
-    color: var(--gray-color);
+.libre {
+    flex: 1;
+    font-size: 14px;
+    color: var(--pm-libre);
+    pointer-events: none;
+}
+
+.asignar {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--pm-lila-acento);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+.asignar:hover {
+    background: var(--pm-lila-tinte);
+}
+
+.asignar[aria-disabled='true'] {
+    color: var(--pm-libre);
     cursor: not-allowed;
-    filter: none;
 }
 
-/* ── Pie ───────────────────────────────────────────────────────────────── */
+.asignar[aria-disabled='true']:hover {
+    background: transparent;
+}
 
-.footer {
+.vacia {
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--pm-libre);
+}
+
+/* ── 3. Pie ── */
+
+.pie {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px solid var(--borders);
+    gap: 4px;
+    padding: 12px 16px 14px;
+    view-transition-name: mesa-footer;
 }
 
-.footerBtn {
-    flex: 1;
+.agregar {
+    flex-shrink: 0;
     white-space: nowrap;
-    padding: 8px 6px;
-    border: 1px solid var(--borders);
-    cursor: pointer;
-    border-radius: 10px;
-    background-color: var(--ft-color);
-    color: var(--text-color);
-    font-family: var(--font-family);
-    font-size: 12px;
-    font-weight: 500;
-    transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.footerBtn:hover {
-    border-color: var(--brand-color-500);
-}
-
-.footerBtn[aria-disabled='true'] {
-    color: var(--gray-color-40);
-    cursor: not-allowed;
-    border-color: var(--borders);
-}
-
-.footerDanger {
-    color: var(--red-color);
-    border-color: transparent;
-}
-
-.footerDanger:hover {
-    border-color: var(--red-color);
-    color: var(--red-color);
-}
-
-/* ── Menú por invitado ─────────────────────────────────────────────────── */
-
-.guestMenu {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 6px;
-    border-radius: 16px;
-    background-color: var(--ft-color);
-    box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.14);
-    min-width: 190px;
-}
-
-.guestMenuItem {
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
     border: none;
-    cursor: pointer;
-    text-align: left;
-    padding: 8px 12px;
-    border-radius: 10px;
-    background-color: transparent;
-    color: var(--text-color);
-    font-family: var(--font-family);
+    border-radius: 999px;
+    background: var(--pm-lila);
+    color: var(--pm-texto);
+    font-family: Poppins, sans-serif;
     font-size: 13px;
-    transition: background-color 0.15s ease;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease;
 }
 
-.guestMenuItem:hover {
-    background-color: var(--sc-color);
+.agregar:hover {
+    background: var(--pm-lila-hover);
 }
 
-.guestMenuDanger {
-    color: var(--red-color);
+.agregar[aria-disabled='true'] {
+    opacity: .5;
+    cursor: not-allowed;
 }
 
-/* En móvil el panel es una hoja inferior con agarradera. */
+/* En 400 px los cuatro botones van justos: menos aire para que quepan. */
+.panel[data-vista='v'] .pie {
+    gap: 0;
+    padding-right: 10px;
+}
+
+.panel[data-vista='v'] .agregar {
+    padding: 0 12px;
+    margin-right: 2px;
+}
+
+.panel[data-vista='v'] .botonTexto {
+    padding: 6px 8px;
+}
+
+.agregarMas {
+    font-size: 16px;
+}
+
+.botonTexto {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--pm-texto-2);
+    font-family: Inter, 'Work Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.botonTexto:hover {
+    background: var(--pm-neutro);
+    color: var(--pm-texto);
+}
+
+.botonTexto[aria-disabled='true'] {
+    opacity: .45;
+    cursor: default;
+}
+
+.botonTexto[aria-disabled='true']:hover {
+    background: transparent;
+    color: var(--pm-texto-2);
+}
+
+.eliminar {
+    margin-left: auto;
+    color: var(--pm-peligro);
+}
+
+.eliminar:hover {
+    background: var(--pm-peligro-fondo);
+    color: var(--pm-peligro);
+}
+
+/* ── Cambio de vista (View Transitions, solo mientras dura) ── */
+
+:global(html[data-panel-mesa-transicion])::view-transition-group(*) {
+    animation-duration: .45s;
+    animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+}
+
+:global(html[data-panel-mesa-transicion])::view-transition-old(*),
+:global(html[data-panel-mesa-transicion])::view-transition-new(*) {
+    height: 100%;
+    object-fit: none;
+    object-position: left top;
+}
+
+:global(html[data-panel-mesa-transicion])::view-transition-old(mesa-diagram),
+:global(html[data-panel-mesa-transicion])::view-transition-new(mesa-diagram) {
+    object-position: center;
+}
+
+:global(html[data-panel-mesa-transicion])::view-transition-old(root),
+:global(html[data-panel-mesa-transicion])::view-transition-new(root) {
+    animation: none;
+}
+
+/* ── Celular: hoja inferior, siempre vertical ── */
+
 @media (max-width: 750px) {
-    .panel {
+    .panel,
+    .panel[data-vista='v'] {
         width: 100%;
         max-width: none;
-        /* Anclada abajo: sin tope, una mesa de 18 lugares desborda por arriba
-           de la pantalla y el nombre queda fuera de alcance. */
-        max-height: 85vh;
+        max-height: 88vh;
+        max-height: 88dvh;
         overflow-y: auto;
-        overscroll-behavior: contain;
         border-radius: 24px 24px 0 0;
-        padding-top: 8px;
     }
 
-    .grabber {
-        width: 44px;
-        height: 4px;
-        margin: 0 auto 12px;
-        border-radius: 99px;
-        background-color: var(--borders);
-    }
-}
-
-.grabber {
-    display: none;
-}
-
-@media (max-width: 750px) {
-    .grabber {
-        display: block;
+    .header {
+        cursor: default;
     }
 }

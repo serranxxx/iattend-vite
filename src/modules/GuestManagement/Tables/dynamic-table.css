@@ -100,6 +100,29 @@
     color: var(--text-color);
 }
 
+.chair-iniciales {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--brand-color-800, var(--text-color));
+}
+
+/* Arrastrando un invitado sin mesa desde la lista: las sillas libres lo
+   reciben y se marcan; la mesa bajo el cursor se resalta. */
+.chair-destino {
+    border: 1.5px dashed var(--brand-color-500, #B48BC4) !important;
+}
+
+.chair-encima {
+    background-color: var(--brand-color-300, #D9C3E3) !important;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #7A4E8C;
+    transform: translate(-50%, -50%) scale(1.15);
+}
+
+.recibe-encima .container {
+    box-shadow: 0 0 0 3px #B48BC4, 0px 0px 24px rgba(0, 0, 0, 0.10);
+}
+
 .available {
     background-color: transparent;
     border: 1px solid var(--borders);

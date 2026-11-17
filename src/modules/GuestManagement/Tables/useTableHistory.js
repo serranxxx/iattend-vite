@@ -4,7 +4,7 @@ import { supabase } from '../../../lib/supabase'
 // Solo se versiona la geometría: mover mesas es lo reversible. Cambiar quién
 // se sienta dónde no entra aquí, porque deshacerlo a ciegas confundiría más
 // de lo que ayuda.
-const TRACKED = ['x', 'y', 'shape', 'vertical', 'size']
+const TRACKED = ['x', 'y', 'shape', 'vertical', 'rotation', 'size']
 
 const snapshotOf = (tables = []) =>
     tables.map(t => {
@@ -53,7 +53,7 @@ export const useTableHistory = ({ onApplied }) => {
         // Un UPDATE por mesa: son pocas y no hay RPC de escritura en lote.
         const results = await Promise.all(snap.map(row =>
             supabase.from('tables')
-                .update({ x: row.x, y: row.y, shape: row.shape, vertical: row.vertical, size: row.size })
+                .update({ x: row.x, y: row.y, shape: row.shape, vertical: row.vertical, size: row.size, ...(row.rotation != null ? { rotation: row.rotation } : {}) })
                 .eq('id', row.id)
         ))
         const failed = results.find(r => r.error)

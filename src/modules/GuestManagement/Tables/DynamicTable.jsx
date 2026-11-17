@@ -3,7 +3,20 @@ import './dynamic-table.css'
 import { Button } from 'antd'
 import { Lock } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-import { clampToCanvas, getTableFootprint } from './seatingGeometry'
+import { anguloDe, cajaGirada, clampToCanvas, getTableFootprint } from './seatingGeometry'
+import { MESA_MAPA, inicialesDe, posicionesSillas } from './sillas'
+
+// La silla libre (data-silla-libre) más cercana a un punto de la pantalla.
+const sillaMasCercana = (contenedor, x, y) => {
+    let mejor = null
+    let distancia = Infinity
+    contenedor.querySelectorAll('[data-silla-libre]').forEach((el) => {
+        const r = el.getBoundingClientRect()
+        const d = Math.hypot(r.left + r.width / 2 - x, r.top + r.height / 2 - y)
+        if (d < distancia) { distancia = d; mejor = Number(el.dataset.sillaLibre) }
+    })
+    return mejor
+}
 
 export const DynamicTable = ({
     onSelectedTable,
@@ -14,8 +27,18 @@ export const DynamicTable = ({
     onEditPosition,
     setOnViewTable,
     occupiedChairs,
+    // Quién está en cada asiento (índice 0 = asiento 1; asientos.js). Sin él,
+    // se pintan ocupadas las primeras `occupiedChairs`.
+    asientos = null,
+    // Mientras se arrastra un invitado sin mesa desde la lista de la derecha:
+    // las sillas libres lo reciben (y la mesa, en la primera libre).
+    // `onSoltarInvitado(table, asiento | null)`.
+    recibeInvitado = false,
+    onSoltarInvitado,
     onGrab,
     vertical = false,
+    // Giro libre en grados (tables.rotation), sumado a `vertical`.
+    rotation = 0,
     shape = 'rectangle', // 'round' | 'square' | 'rectangle' | 'dance'
     zoomLevel = 1,
     onDelete,
@@ -36,6 +59,9 @@ export const DynamicTable = ({
     const [dragPos, setDragPos] = useState(null)
     const [isDragging, setIsDragging] = useState(false)
     const [showDanceMenu, setShowDanceMenu] = useState(false)
+    // Silla (o 'mesa') bajo el invitado que se arrastra.
+    const [destino, setDestino] = useState(null)
+    useEffect(() => { if (!recibeInvitado) setDestino(null) }, [recibeInvitado])
 
     const positionRef = useRef({ x: table.x, y: table.y })
     const lastMouseRef = useRef({ x: 0, y: 0 })
@@ -50,187 +76,21 @@ export const DynamicTable = ({
     const mapPosition = dragPos ?? { x: table.x, y: table.y }
     useEffect(() => { positionRef.current = mapPosition })
 
+    // Sillas alrededor de la mesa: la misma geometría que la vista previa del
+    // panel (sillas.js), así la silla N es la misma en los dos.
     useEffect(() => {
-        const containerWidth =
-            shape === 'rectangle' ? 400 : 200
-
-        const containerHeight =
-            shape === 'rectangle' ? 200 : 200
-
-        const centerX = containerWidth / 2
-        const centerY = containerHeight / 2
-
-        const buildRoundChairs = () => {
-            const tableSize = 72
-            const radius = (containerWidth / 1.7) - (tableSize / 2) - 8
-
-            return Array.from({ length: table.size }, (_, i) => {
-                const angle = (i * (360 / table.size)) * (Math.PI / 180)
-
-                return {
-                    id: i + 1,
-                    x: centerX + radius * Math.cos(angle),
-                    y: centerY + radius * Math.sin(angle),
-                    occupied: i < occupiedChairs,
-                }
-            })
-        }
-
-        const buildSquareChairs = () => {
-            const chairs = []
-            const total = table.size
-
-            const distribution = new Array(4).fill(Math.floor(total / 4))
-            for (let i = 0; i < total % 4; i++) {
-                distribution[i]++
-            }
-
-            const padding = 24
-            let chairIndex = 0
-
-            const [topCount, rightCount, bottomCount, leftCount] = distribution
-
-            for (let i = 0; i < topCount; i++) {
-                const step = (containerWidth - padding * 2) / (topCount + 1)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: padding + step * (i + 1),
-                    y: padding,
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            for (let i = 0; i < rightCount; i++) {
-                const step = (containerHeight - padding * 2) / (rightCount + 1)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: containerWidth - padding,
-                    y: padding + step * (i + 1),
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            for (let i = 0; i < bottomCount; i++) {
-                const step = (containerWidth - padding * 2) / (bottomCount + 1)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: padding + step * (i + 1),
-                    y: containerHeight - padding,
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            for (let i = 0; i < leftCount; i++) {
-                const step = (containerHeight - padding * 2) / (leftCount + 1)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: padding,
-                    y: padding + step * (i + 1),
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            return chairs
-        }
-
-        const buildRectangleChairs = () => {
-            const chairs = []
-            const total = table.size
-
-            const horizontalWeight = 2
-            const verticalWeight = 1
-            const totalWeight = (horizontalWeight * 2) + (verticalWeight * 2)
-
-            let topCount = Math.floor((total * horizontalWeight) / totalWeight)
-            let bottomCount = Math.floor((total * horizontalWeight) / totalWeight)
-            let leftCount = Math.floor((total * verticalWeight) / totalWeight)
-            let rightCount = Math.floor((total * verticalWeight) / totalWeight)
-
-            let assigned = topCount + bottomCount + leftCount + rightCount
-            let remaining = total - assigned
-
-            const order = ['top', 'bottom', 'left', 'right']
-            let idx = 0
-
-            while (remaining > 0) {
-                const side = order[idx % order.length]
-
-                if (side === 'top') topCount++
-                if (side === 'bottom') bottomCount++
-                if (side === 'left') leftCount++
-                if (side === 'right') rightCount++
-
-                remaining--
-                idx++
-            }
-
-            const rectWidth = 264
-            const rectHeight = 96
-
-            const leftX = centerX - rectWidth / 1.7
-            const rightX = centerX + rectWidth / 1.7
-            const topY = centerY - rectHeight / 1.7
-            const bottomY = centerY + rectHeight / 1.7
-
-            const offset = 16
-            let chairIndex = 0
-
-            for (let i = 0; i < topCount; i++) {
-                const step = rectWidth / (topCount + 1)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: leftX + step * (i + 1.5),
-                    y: topY - offset,
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            for (let i = 0; i < rightCount; i++) {
-                const step = rectHeight / (rightCount + 0.5)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: rightX + offset,
-                    y: topY + step * (i + 1),
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            for (let i = 0; i < bottomCount; i++) {
-                const step = rectWidth / (bottomCount + 1)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: leftX + step * (i + 1.5),
-                    y: bottomY + offset,
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            for (let i = 0; i < leftCount; i++) {
-                const step = rectHeight / (leftCount + 0.5)
-                chairs.push({
-                    id: chairIndex + 1,
-                    x: leftX - offset,
-                    y: topY + step * (i + 1),
-                    occupied: chairIndex < occupiedChairs,
-                })
-                chairIndex++
-            }
-
-            return chairs
-        }
-
-        if (shape === 'dance') setChairs([])
-        else if (shape === 'square') setChairs(buildSquareChairs())
-        else if (shape === 'rectangle') setChairs(buildRectangleChairs())
-        else setChairs(buildRoundChairs())
-    }, [table, occupiedChairs, shape])
+        if (shape === 'dance') { setChairs([]); return }
+        const containerWidth = shape === 'rectangle' ? 400 : 200
+        const containerHeight = 200
+        const ocupada = (i) => (asientos ? Boolean(asientos[i]) : i < occupiedChairs)
+        const medidas = MESA_MAPA[shape] ?? MESA_MAPA.round
+        setChairs(posicionesSillas(shape, table.size ?? 0, medidas).map(([dx, dy], i) => ({
+            id: i + 1,
+            x: containerWidth / 2 + dx,
+            y: containerHeight / 2 + dy,
+            occupied: ocupada(i),
+        })))
+    }, [table, occupiedChairs, shape, asientos])
 
     const startDrag = (event) => {
         if (onGrab) return // cuando onGrab está activo, el evento sube al canvas para hacer pan
@@ -286,7 +146,7 @@ export const DynamicTable = ({
                     onGroupDragMove?.({ x: totalX, y: totalY })
                 } else {
                     const origin = dragOriginRef.current
-                    setDragPos(clampToCanvas(origin.x + totalX, origin.y + totalY, shape, vertical))
+                    setDragPos(clampToCanvas(origin.x + totalX, origin.y + totalY, shape, vertical, rotation))
                 }
             }
 
@@ -332,7 +192,7 @@ export const DynamicTable = ({
             document.removeEventListener('touchmove', onMove)
             document.removeEventListener('touchend', onStop)
         }
-    }, [isDragging, zoomLevel, table.id, shape, vertical, onDragCommit, isMultiSelected, onGroupDragMove, onGroupDragEnd])
+    }, [isDragging, zoomLevel, table.id, shape, vertical, rotation, onDragCommit, isMultiSelected, onGroupDragMove, onGroupDragEnd])
 
     const selectTable = () => {
         setSelectedTable(table)
@@ -440,8 +300,12 @@ export const DynamicTable = ({
     // La rotación se aplica solo a la mesa, no al contenedor: si el rótulo
     // vive dentro de lo rotado, en una rectangular vertical acaba a la
     // izquierda en vez de debajo.
-    const visualHeight = (vertical ? footprint.width : footprint.height) * 0.7
-    const captionTop = (vertical ? footprint.width : footprint.height) / 2 + visualHeight / 2 + 10
+    // Giro total (vertical + rotation) y la caja que ocupa la mesa girada.
+    const angulo = anguloDe({ vertical, rotation })
+    const girada = cajaGirada(footprint.width, footprint.height, angulo, { redonda: shape === 'round' })
+    const contraGiro = angulo ? `rotate(${-angulo}deg)` : ''
+    const visualHeight = girada.height * 0.7
+    const captionTop = girada.height / 2 + visualHeight / 2 + 10
 
     const groupDx = isMultiSelected && groupOffset ? groupOffset.x : 0
     const groupDy = isMultiSelected && groupOffset ? groupOffset.y : 0
@@ -451,8 +315,8 @@ export const DynamicTable = ({
     // lados intercambiados y desplazada para conservar ese centro; sin esto,
     // una vertical arrastraba una caja horizontal de 400px que generaba huecos
     // sin sentido al alinear y al chocar.
-    const boundW = vertical ? footprint.height : footprint.width
-    const boundH = vertical ? footprint.width : footprint.height
+    const boundW = girada.width
+    const boundH = girada.height
     const boundOffsetX = (footprint.width - boundW) / 2
     const boundOffsetY = (footprint.height - boundH) / 2
 
@@ -475,7 +339,23 @@ export const DynamicTable = ({
                         ? 'none'
                         : 'top 0.3s ease, left 0.3s ease',
                 }}
-                className={`dynamic-container ${isMultiSelected ? 'multi-selected' : ''}`}
+                className={`dynamic-container ${isMultiSelected ? 'multi-selected' : ''} ${recibeInvitado ? 'recibe-invitado' : ''} ${destino != null ? 'recibe-encima' : ''}`}
+                // Arrastrando un invitado sobre la mesa: se marca la silla libre
+                // MÁS CERCANA al cursor y ahí cae al soltar. Las sillas en el
+                // mapa miden ~14 px con zoom: atinarle exacto no debe hacer falta.
+                onDragOver={recibeInvitado ? (e) => {
+                    e.preventDefault()
+                    e.dataTransfer.dropEffect = 'move'
+                    const cerca = sillaMasCercana(e.currentTarget, e.clientX, e.clientY)
+                    if (cerca !== destino) setDestino(cerca)
+                } : undefined}
+                onDragLeave={recibeInvitado ? (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDestino(null) } : undefined}
+                onDrop={recibeInvitado ? (e) => {
+                    e.preventDefault()
+                    const silla = sillaMasCercana(e.currentTarget, e.clientX, e.clientY) ?? destino
+                    setDestino(null)
+                    onSoltarInvitado?.(table, typeof silla === 'number' ? silla : null)
+                } : undefined}
             >
                 <div
                     className='table-rotor'
@@ -484,7 +364,7 @@ export const DynamicTable = ({
                         height: `${footprint.height}px`,
                         marginLeft: `${-footprint.width / 2}px`,
                         marginTop: `${-footprint.height / 2}px`,
-                        transform: `scale(0.7) ${vertical ? 'rotate(90deg)' : ''}`,
+                        transform: `scale(0.7) ${angulo ? `rotate(${angulo}deg)` : ''}`,
                     }}
                 >
                 <div
@@ -513,14 +393,16 @@ export const DynamicTable = ({
                         }}
                     >
                         <span
-                            style={{ transform: `${vertical ? 'rotate(-90deg)' : ''}` }}
+                            style={{ transform: contraGiro }}
                         >#{table.number}</span>
                     </div>
 
                     {chairs.map((chair) => (
                         <div
                             key={chair.id}
-                            className={`chair ${chair.occupied ? 'occupied' : 'available'} ${onMoving ? 'moving-table' : ''}`}
+                            className={`chair ${chair.occupied ? 'occupied' : 'available'} ${onMoving ? 'moving-table' : ''} ${recibeInvitado && !chair.occupied ? 'chair-destino' : ''} ${destino === chair.id ? 'chair-encima' : ''}`}
+                            data-silla-libre={recibeInvitado && !chair.occupied ? chair.id : undefined}
+                            title={asientos?.[chair.id - 1] ? `Asiento ${chair.id} · ${asientos[chair.id - 1].name}` : `Asiento ${chair.id} · libre`}
                             style={{
                                 left: `${chair.x}px`,
                                 top: `${chair.y}px`,
@@ -528,14 +410,20 @@ export const DynamicTable = ({
                                 border: isRepeated ? '2px solid #ff4d4f' : isSelected ? '2px solid var(--brand-color-500)' : undefined,
                             }}
                         >
-                            <span style={{ transform: `${vertical ? 'rotate(-90deg)' : ''}` }}>{chair.id}</span>
+                            {/* Ocupada: las iniciales de quien está ahí; libre: su número. */}
+                            <span
+                                className={asientos?.[chair.id - 1] ? 'chair-iniciales' : undefined}
+                                style={{ transform: contraGiro }}
+                            >
+                                {asientos?.[chair.id - 1] ? inicialesDe(asientos[chair.id - 1].name) : chair.id}
+                            </span>
                         </div>
                     ))}
 
                     {/* El candado va sobre el contenedor, no bajo la mesa, para
                         que se lea igual con la mesa rotada. */}
                     {table.locked && (
-                        <div className='table-lock-badge' style={{ transform: vertical ? 'rotate(-90deg)' : undefined }}>
+                        <div className='table-lock-badge' style={{ transform: contraGiro || undefined }}>
                             <Lock size={13} />
                         </div>
                     )}

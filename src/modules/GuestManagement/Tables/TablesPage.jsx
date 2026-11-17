@@ -17,6 +17,8 @@ import {
     rectOfElement,
     rectOfTable,
 } from './seatingGeometry'
+import { asientosDeMesa, cambiosParaAjustar, cambiosParaMoverAsiento, cambiosParaQuitar, cambiosParaSentar, guardarAsientos } from './asientos'
+import { anguloGuardado } from './sillas'
 import { AutoLayoutModal } from './AutoLayoutModal'
 import { AddGuestsPicker } from './AddGuestsPicker'
 import { Onboarding } from './Onboarding'
@@ -135,6 +137,11 @@ export const TablesPage = ({ invitationID, onClose }) => {
     const [layoutElements, setLayoutElements] = useState([])
     const [autoLayoutOpen, setAutoLayoutOpen] = useState(false)
     const [addGuestsFor, setAddGuestsFor] = useState(null)
+    // Asiento elegido en el panel de la mesa ("Sentar aquí"): el primero que se
+    // agregue va ahí.
+    const [addGuestsSeat, setAddGuestsSeat] = useState(null)
+    // Invitado sin mesa que se arrastra desde la lista de la derecha a una silla.
+    const [arrastrandoInvitado, setArrastrandoInvitado] = useState(null)
     // "Empezar en blanco" descarta el onboarding sin crear nada.
     const [onboardingSkipped, setOnboardingSkipped] = useState(false)
     const [pendingCenter, setPendingCenter] = useState(null)
@@ -438,14 +445,11 @@ export const TablesPage = ({ invitationID, onClose }) => {
                 const guestIds = ocuppiedChairs.map(c => c.id ?? c);
                 // ^ por si te llega [{id:1},{id:2}] o [1,2]
 
-                const { error: guestsError } = await supabase
-                    .from("guests")
-                    .update({ table: data.id, last_action_by: 'admin' })  // o table_id si así se llama tu columna
-                    .in("id", guestIds);
+                // Cada uno en su asiento, en el orden en que se eligieron.
+                const { ok: guestsOk } = await guardarAsientos(supabase, guestIds.map((id, i) => ({ id, table: data.id, seat: i + 1 })))
 
-                if (guestsError) {
-                    console.error("Error al actualizar guests:", guestsError.message);
-                    // aquí decides si regresas null o solo avisas
+                if (!guestsOk) {
+                    message.error('La mesa se creó, pero no se pudo sentar a los invitados')
                 } else {
                     // console.log("Guests actualizados con la mesa:", data.id);
 
@@ -825,7 +829,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
 
         const moving = (tables_ ?? []).filter(t => selectedIds.has(t.id))
         const updates = moving.map(t => {
-            const p = clampToCanvas(t.x + offset.x, t.y + offset.y, t.shape, t.vertical)
+            const p = clampToCanvas(t.x + offset.x, t.y + offset.y, t.shape, t.vertical, t.rotation)
             return { id: t.id, x: Math.round(p.x), y: Math.round(p.y) }
         })
 
@@ -867,8 +871,8 @@ export const TablesPage = ({ invitationID, onClose }) => {
         const aligned = moving.map(t => {
             const delta = target - edgeOf(t)
             const p = horizontal
-                ? clampToCanvas(t.x + delta, t.y, t.shape, t.vertical)
-                : clampToCanvas(t.x, t.y + delta, t.shape, t.vertical)
+                ? clampToCanvas(t.x + delta, t.y, t.shape, t.vertical, t.rotation)
+                : clampToCanvas(t.x, t.y + delta, t.shape, t.vertical, t.rotation)
             return { ...t, x: p.x, y: p.y }
         })
 
@@ -967,14 +971,61 @@ export const TablesPage = ({ invitationID, onClose }) => {
 
     const renameTable = (table, name) => patchTable(table.id, { name })
 
+    // Giro de la mesa: `grados` es el ángulo total que se ve (el panel lo da
+    // de 15 en 15, 0…345). Se guarda todo en tables.rotation (−180…180) y
+    // `vertical` pasa a false (antes eran 90° aparte). Sin `commit` solo se ve;
+    // con él se guarda. Un giro = un paso de deshacer. No revisa choques: como
+    // el arrastre, el usuario manda.
+    const girandoRef = useRef(false)
+    const rotateTable = async (table, grados, { commit = false } = {}) => {
+        const rotation = anguloGuardado(grados)
+        if (!girandoRef.current) {
+            girandoRef.current = true
+            history.record(tables_ ?? [])
+        }
+        setTables_(prev => prev?.map(t => (t.id === table.id ? { ...t, rotation, vertical: false } : t)))
+        setSelectedTable(prev => (prev && prev.id === table.id ? { ...prev, rotation, vertical: false } : prev))
+        if (!commit) return
+        girandoRef.current = false
+        const ok = await patchTable(table.id, { rotation, vertical: false })
+        if (!ok) getTables()
+    }
+
+    // "−" del panel: quita la última silla vacía (nunca a alguien sentado); los
+    // que estaban después se recorren un asiento.
+    const removeEmptySeat = async (table) => {
+        const { lugares } = asientosDeMesa(table, confirmedGuests_ ?? [])
+        const vacia = lugares.lastIndexOf(null)
+        if (vacia === -1 || (table.size ?? 0) <= 1) return
+        const recorridos = lugares
+            .map((g, i) => (g && (i > vacia || Number(g.seat) !== i + 1) ? { id: g.id, table: table.id, seat: i > vacia ? i : i + 1 } : null))
+            .filter(Boolean)
+        const size = (table.size ?? 0) - 1
+        if (recorridos.length) {
+            const { ok } = await guardarAsientos(supabase, recorridos)
+            if (!ok) { message.error('No se pudo quitar la silla'); return }
+        }
+        const ok = await patchTable(table.id, { size })
+        if (!ok) return
+        setSelectedTable(prev => prev && { ...prev, size })
+        getGuests()
+    }
+
     const toggleTableLock = async (table) => {
         const ok = await patchTable(table.id, { locked: !table.locked })
         if (ok) setSelectedTable(prev => prev && { ...prev, locked: !table.locked })
     }
 
+    // Al bajar sillas, quien esté en un asiento que desaparece pasa a uno libre.
     const changeTableSize = async (table, size) => {
         const ok = await patchTable(table.id, { size })
-        if (ok) setSelectedTable(prev => prev && { ...prev, size })
+        if (!ok) return
+        setSelectedTable(prev => prev && { ...prev, size })
+        const ajustes = size < (table.size ?? 0) ? cambiosParaAjustar(table, size, confirmedGuests_ ?? []) : []
+        if (ajustes.length) {
+            await guardarAsientos(supabase, ajustes)
+            getGuests()
+        }
     }
 
     // Cambiar de forma puede agrandar el footprint (redonda 200 → rectangular
@@ -1019,6 +1070,13 @@ export const TablesPage = ({ invitationID, onClose }) => {
         if (!ok) return
 
         setSelectedTable(prev => prev && { ...prev, shape, size, x, y, vertical })
+        if (size < (table.size ?? 0)) {
+            const ajustes = cambiosParaAjustar(table, size, confirmedGuests_ ?? [])
+            if (ajustes.length) {
+                await guardarAsientos(supabase, ajustes)
+                getGuests()
+            }
+        }
         if (moved) message.info(`La mesa #${table.number} se movió: en su lugar anterior no cabía.`)
     }
 
@@ -1053,13 +1111,9 @@ export const TablesPage = ({ invitationID, onClose }) => {
     }
 
     const removeGuestFromTable = async (guest) => {
-        const { error } = await supabase
-            .from('guests')
-            .update({ table: null, last_action_by: 'admin' })
-            .eq('id', guest.id)
+        const { ok } = await guardarAsientos(supabase, cambiosParaQuitar([guest], confirmedGuests_ ?? [], tables_ ?? []))
 
-        if (error) {
-            console.error('Error quitando de la mesa:', error.message)
+        if (!ok) {
             message.error('No se pudo quitar de la mesa')
             return
         }
@@ -1067,21 +1121,19 @@ export const TablesPage = ({ invitationID, onClose }) => {
         getGuests()
     }
 
+    // Todos a la otra mesa, en el orden de sus asientos y en los libres de allá.
     const moveAllGuests = async (table, target) => {
-        const ids = (confirmedGuests_ ?? []).filter(g => g.table === table.id).map(g => g.id)
-        if (!ids.length) return
+        const { lugares } = asientosDeMesa(table, confirmedGuests_ ?? [])
+        const quienes = lugares.filter(Boolean)
+        if (!quienes.length) return
 
-        const { error } = await supabase
-            .from('guests')
-            .update({ table: target.id, last_action_by: 'admin' })
-            .in('id', ids)
+        const { ok } = await guardarAsientos(supabase, cambiosParaSentar(target, quienes, confirmedGuests_ ?? []))
 
-        if (error) {
-            console.error('Error moviendo invitados:', error.message)
+        if (!ok) {
             message.error('No se pudo mover a los invitados')
             return
         }
-        message.success(`${ids.length} invitados se movieron a la mesa #${target.number}`)
+        message.success(`${quienes.length} invitados se movieron a la mesa #${target.number}`)
         getGuests()
     }
 
@@ -1089,13 +1141,9 @@ export const TablesPage = ({ invitationID, onClose }) => {
         const ids = (confirmedGuests_ ?? []).filter(g => g.table === table.id).map(g => g.id)
         if (!ids.length) return
 
-        const { error } = await supabase
-            .from('guests')
-            .update({ table: null, last_action_by: 'admin' })
-            .in('id', ids)
+        const { ok } = await guardarAsientos(supabase, ids.map(id => ({ id, table: null })))
 
-        if (error) {
-            console.error('Error vaciando la mesa:', error.message)
+        if (!ok) {
             message.error('No se pudo vaciar la mesa')
             return
         }
@@ -1103,22 +1151,15 @@ export const TablesPage = ({ invitationID, onClose }) => {
         getGuests()
     }
 
-    // Sentar a varios invitados de una vez en la misma mesa.
-    const assignGuestsToTable = async (guests, table) => {
+    // Sentar a varios invitados de una vez en la misma mesa, cada uno en un
+    // asiento libre (el primero en `asiento` si se eligió uno).
+    const assignGuestsToTable = async (guests, table, asiento = null) => {
         const ids = (guests ?? []).map(g => g.id)
         if (!ids.length) return
 
-        const { error } = await supabase
-            .from('guests')
-            .update({
-                table: table.id,
-                last_update_date: new Date().toISOString(),
-                last_action_by: 'admin',
-            })
-            .in('id', ids)
+        const { ok } = await guardarAsientos(supabase, cambiosParaSentar(table, guests, confirmedGuests_ ?? [], { preferido: asiento }))
 
-        if (error) {
-            console.error('Error asignando mesa:', error.message)
+        if (!ok) {
             message.error('No se pudieron asignar los invitados')
             return
         }
@@ -1134,45 +1175,60 @@ export const TablesPage = ({ invitationID, onClose }) => {
 
     // Asignación desde el panel de invitados: sirve tanto para sentar a alguien
     // sin mesa como para moverlo de una mesa a otra.
-    const assignGuestToTable = async (guest, table) => {
-        const { error } = await supabase
-            .from('guests')
-            .update({
-                table: table.id,
-                last_update_date: new Date().toISOString(),
-                last_action_by: 'admin',
-            })
-            .eq('id', guest.id)
+    const assignGuestToTable = async (guest, table, asiento = null) => {
+        const cambios = cambiosParaSentar(table, [guest], confirmedGuests_ ?? [], { preferido: asiento })
+        const { ok, sinAsientos } = await guardarAsientos(supabase, cambios)
 
-        if (error) {
-            console.error('Error asignando mesa:', error.message)
+        if (!ok) {
             message.error('No se pudo asignar la mesa')
             return
         }
 
-        message.success(`${guest.name} quedó en la mesa #${table.number}`)
+        const seat = cambios[0]?.seat
+        message.success(seat && !sinAsientos
+            ? `${guest.name} quedó en la mesa #${table.number}, asiento ${seat}`
+            : `${guest.name} quedó en la mesa #${table.number}`)
         getTables()
+        getGuests()
+    }
+
+    // Soltar a un invitado sin mesa (arrastrado desde la lista) en una silla
+    // del mapa; sobre la mesa, en su primera silla libre.
+    const soltarInvitado = (table, asiento) => {
+        const guest = arrastrandoInvitado
+        setArrastrandoInvitado(null)
+        if (!guest || guest.table) return
+        const { lugares } = asientosDeMesa(table, confirmedGuests_ ?? [])
+        if (!lugares.includes(null)) {
+            message.warning(`La mesa #${table.number} está llena`)
+            return
+        }
+        assignGuestToTable(guest, table, asiento)
+    }
+
+    // Cambiar a un invitado de asiento dentro de su mesa (si el asiento está
+    // ocupado, intercambian lugares).
+    const moveGuestSeat = async (guest, table, seat) => {
+        const cambios = cambiosParaMoverAsiento(table, guest, seat, confirmedGuests_ ?? [])
+        if (!cambios.length) return
+        // Se ve al instante; si falla, se recarga lo guardado.
+        setconfirmedGuests_(prev => (prev ?? []).map(g => {
+            const c = cambios.find(x => x.id === g.id)
+            return c ? { ...g, seat: c.seat } : g
+        }))
+        const { ok, sinAsientos } = await guardarAsientos(supabase, cambios)
+        if (!ok || sinAsientos) {
+            message.error(sinAsientos ? 'Falta activar los asientos en la base de datos' : 'No se pudo cambiar el asiento')
+        }
         getGuests()
     }
 
     const transferGuest = async (table, guest) => {
 
         try {
-            const {  error } = await supabase
-                .from("guests")
-                .update({
-                    table: table.id,
-                    last_update_date: new Date().toISOString(),
-                    last_action_by: 'admin',
-                })
-                .eq("id", guest.id)
-                .select()
-                .maybeSingle();
+            const { ok } = await guardarAsientos(supabase, cambiosParaSentar(table, [guest], confirmedGuests_ ?? []))
 
-            if (error) {
-                console.error("Error transfiriendo guest:", error.message);
-                return null;
-            }
+            if (!ok) return null;
 
             // console.log("Guest transferido ✅", data);
             getTables()
@@ -1498,6 +1554,9 @@ export const TablesPage = ({ invitationID, onClose }) => {
         })
         setPendingCenter(null)
     }, [pendingCenter, showOnboarding, leftView])
+
+    // Asientos de cada mesa (asientos.js): quién está en cada uno, para el mapa.
+    const asientosPorMesa = useMemo(() => new Map((tables_ ?? []).map(t => [t.id, asientosDeMesa(t, confirmedGuests_ ?? [])])), [tables_, confirmedGuests_])
 
     // Alimenta la franja de avance. La pista de baile no es una mesa: no
     // aporta capacidad y no cuenta para "N mesas".
@@ -1860,7 +1919,8 @@ export const TablesPage = ({ invitationID, onClose }) => {
                                         <DynamicTable
                                             shape={table?.shape}
                                             vertical={table?.vertical}
-                                            key={index} table={table} occupiedChairs={confirmedGuests_?.filter(g => g.table === table.id).length}
+                                            rotation={table?.rotation ?? 0}
+                                            key={index} table={table} occupiedChairs={confirmedGuests_?.filter(g => g.table === table.id).length} asientos={asientosPorMesa.get(table.id)?.lugares ?? null}
                                             onEditPosition={onEditPosition} setSelectedTable={setSelectedTable}
                                             setOnSelectedTable={setOnSelectedTable} onSelectedTable={onSelectedTable} setOnViewTable={setOnViewTable}
                                             tables={tables_} onMoving={onMoving} onGrab={onGrab} zoomLevel={zoomLevel} onDelete={deleteTableAndAdjust}
@@ -1873,6 +1933,8 @@ export const TablesPage = ({ invitationID, onClose }) => {
                                             onGroupDragMove={groupDragMove}
                                             onGroupDragEnd={groupDragEnd}
                                             onToggleSelect={toggleSelect}
+                                            recibeInvitado={Boolean(arrastrandoInvitado) && table?.shape !== 'dance'}
+                                            onSoltarInvitado={soltarInvitado}
                                             isRepeated={tables_.filter(t => Number(t.number) === Number(table.number)).length > 1} />
                                     ))
                                 }
@@ -2049,7 +2111,9 @@ export const TablesPage = ({ invitationID, onClose }) => {
                         onApply={applyAutoLayout}
                     />
 
-                    {addGuestsFor != null && (() => {
+                    {/* Celular: selector flotante. En escritorio, la lista de
+                        invitados de la derecha se vuelve el selector (sentarEn). */}
+                    {addGuestsFor != null && isMobile && (() => {
                         const target = (tables_ ?? []).find(t => t.id === addGuestsFor)
                         if (!target) return null
                         const seated = (confirmedGuests_ ?? []).filter(g => g.table === target.id)
@@ -2060,10 +2124,12 @@ export const TablesPage = ({ invitationID, onClose }) => {
                                     table={target}
                                     occupants={seated}
                                     candidates={free}
-                                    onClose={() => setAddGuestsFor(null)}
+                                    seat={addGuestsSeat}
+                                    onClose={() => { setAddGuestsFor(null); setAddGuestsSeat(null) }}
                                     onAdd={(chosen) => {
                                         setAddGuestsFor(null)
-                                        assignGuestsToTable(chosen, target)
+                                        setAddGuestsSeat(null)
+                                        assignGuestsToTable(chosen, target, addGuestsSeat)
                                     }}
                                 />
                             </div>
@@ -2085,6 +2151,7 @@ export const TablesPage = ({ invitationID, onClose }) => {
                             >
                                 <TablePanel
                                     table={selectedTable}
+                                    isMobile={isMobile}
                                     onDragStart={(e) => {
                                         if (isMobile) return
                                         lastModalMouseRef.current = { x: e.clientX, y: e.clientY }
@@ -2096,10 +2163,18 @@ export const TablesPage = ({ invitationID, onClose }) => {
                                     onRename={renameTable}
                                     onChangeShape={changeTableShape}
                                     onToggleVertical={toggleTableVertical}
+                                    onRotate={rotateTable}
+                                    onRemoveSeat={removeEmptySeat}
                                     onChangeSize={changeTableSize}
                                     onToggleLock={toggleTableLock}
                                     onAssignGuest={assignGuestToTable}
-                                    onRequestAddGuests={(t) => setAddGuestsFor(t.id)}
+                                    onMoveSeat={moveGuestSeat}
+                                    onRequestAddGuests={(t, asiento) => {
+                                        setAddGuestsFor(t.id)
+                                        setAddGuestsSeat(asiento ?? null)
+                                        // En escritorio la lista de invitados se vuelve el selector.
+                                        if (!isMobile) setOnGuestList(true)
+                                    }}
                                     onRemoveGuest={removeGuestFromTable}
                                     onMoveAll={moveAllGuests}
                                     onEmpty={emptyTable}
@@ -2157,6 +2232,19 @@ export const TablesPage = ({ invitationID, onClose }) => {
                             guests={confirmedGuests_ ?? []}
                             tables={tables_ ?? []}
                             onAssign={assignGuestToTable}
+                            // "Agregar invitado" / "Asignar" del panel de mesa: la
+                            // lista se vuelve el selector de esa mesa (y asiento).
+                            sentarEn={!isMobile && addGuestsFor != null ? {
+                                table: (tables_ ?? []).find(t => t.id === addGuestsFor) ?? null,
+                                seat: addGuestsSeat,
+                            } : null}
+                            onSentar={(chosen, target) => {
+                                setAddGuestsFor(null)
+                                setAddGuestsSeat(null)
+                                assignGuestsToTable(chosen, target, addGuestsSeat)
+                            }}
+                            onCerrarSentar={() => { setAddGuestsFor(null); setAddGuestsSeat(null) }}
+                            onArrastrar={setArrastrandoInvitado}
                         />
                     )}
                 </div>
