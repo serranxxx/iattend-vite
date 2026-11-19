@@ -20,6 +20,8 @@ const TIPOS = ['feature', 'data', 'improve']
  * abre el formulario). En celular el formulario es una hoja inferior.
  * variante 'pop': la tarjeta con la estética de la sección Pops (sin ícono,
  * título en Poppins, botón contorno y un destello verde en la esquina).
+ * variante 'azul': Collage azul de Pops (gris claro, botón pill con borde
+ * navy y una estrella lima de 4 puntas en la esquina; sin el texto).
  * variante 'craft': sticky note amarilla con cinta (estilo Craft de Pops).
  */
 export const PlannerFeedback = ({ variante = 'tarjeta' }) => {
@@ -39,16 +41,18 @@ export const PlannerFeedback = ({ variante = 'tarjeta' }) => {
                     <span className={styles.filaCta}>{t('planner_feedback.row_cta')} <ArrowRight size={15} /></span>
                 </button>
             ) : (
-                <div className={`${styles.tarjeta} ${variante === 'pop' ? styles.tarjetaPop : ''} ${variante === 'craft' ? styles.tarjetaCraft : ''}`}>
-                    {variante === 'pop'
-                        ? <span className={styles.destello}><PopSticker kind='spark' color='var(--pops-menta)' size={40} /></span>
-                        : variante === 'craft'
-                            ? <span className={styles.cinta} aria-hidden />
-                            : <span className={styles.icono}><Sparkle size={14} fill='currentColor' /></span>}
+                <div className={`${styles.tarjeta} ${variante === 'pop' || variante === 'azul' ? styles.tarjetaPop : ''} ${variante === 'azul' ? styles.tarjetaAzul : ''} ${variante === 'craft' ? styles.tarjetaCraft : ''}`}>
+                    {variante === 'azul'
+                        ? <span className={styles.estrellaAzul} aria-hidden />
+                        : variante === 'pop'
+                            ? <span className={styles.destello}><PopSticker kind='spark' color='var(--pops-menta)' size={40} /></span>
+                            : variante === 'craft'
+                                ? <span className={styles.cinta} aria-hidden />
+                                : <span className={styles.icono}><Sparkle size={14} fill='currentColor' /></span>}
                     <strong className={styles.titulo}>{t('planner_feedback.card_title')}</strong>
                     <p className={styles.texto}>{t('planner_feedback.card_text')}</p>
                     <button type='button' className={styles.enlace} onClick={() => setAbierto(true)}>
-                        {t('planner_feedback.card_cta')} {variante === 'pop' || variante === 'craft' ? '→' : <ArrowRight size={15} />}
+                        {t('planner_feedback.card_cta')} {variante === 'pop' || variante === 'craft' || variante === 'azul' ? '→' : <ArrowRight size={15} />}
                     </button>
                 </div>
             )}

@@ -21,7 +21,17 @@ import './popsTema.css'
  * guarda, como si se hubiera elegido.
  */
 
+// Los que se eligen en el selector (el editor de Pops también los usa).
 export const TEMAS_POPS = ['pop', 'business', 'craft']
+
+// Handoff "App Pops — Collage azul · lima": la sección Pops va con el estilo
+// 'azul' para todos y el selector de estilo se oculta (Pop, Business y Craft
+// siguen en el código). Con null regresa el selector y el estilo guardado.
+export const TEMA_POPS_FIJO = 'azul'
+
+// 'azul' es Business con el tablero azul solo como acento: lo que no tiene un
+// diseño propio en azul (barra, menús, paneles de compra, velo) usa Business.
+export const temaBasePops = (tema) => (tema === 'azul' ? 'business' : tema)
 // Solo en el editor de Pops: 'iattend' = el editor original de I attend (sin
 // data-pops-editor, ningún tema encima). En la sección Pops no existe.
 export const TEMA_IATTEND = 'iattend'
@@ -43,7 +53,7 @@ export const leerTemaPops = (temas = TEMAS_POPS, { clave = CLAVE, porOmision = '
     }
 }
 
-const COLOR_ANILLO = { business: '#CDF22B', pop: '#FF5FA8', craft: '#F2D21B', iattend: '#16323D' }
+const COLOR_ANILLO = { azul: '#CDF22B', business: '#CDF22B', pop: '#FF5FA8', craft: '#F2D21B', iattend: '#16323D' }
 
 export const usePopsTema = ({ temas = TEMAS_POPS, clave: claveTema = CLAVE, porOmision = 'pop', forzar = null } = {}) => {
     const leer = (validos) => leerTemaPops(validos, { clave: claveTema, porOmision })

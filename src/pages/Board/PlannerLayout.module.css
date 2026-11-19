@@ -1897,3 +1897,56 @@
     padding: 48px clamp(18px, 6vw, 72px);
     box-sizing: border-box;
 }
+
+/* ── Pops · Collage azul (handoff "App Pops"): Business con acentos ──
+   Pill navy en el activo, "Comprar Pop" como pill de 54 px y avatar azul
+   tablero. Se suma a .sidebarBiz / .movilBiz. */
+.sidebarAzul .comprar {
+    min-height: 54px;
+    padding: 0 18px 0 8px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.sidebarAzul .comprarIcono {
+    width: 38px;
+    height: 38px;
+}
+
+.sidebarAzul .navItem:not(.navPops) {
+    border-radius: 99px;
+}
+
+.sidebarAzul .navPops.navItemActivo,
+.sidebarAzul .navPops.navItemActivo:hover {
+    height: 48px;
+    border-radius: 99px;
+    background: #0B1F3A;
+}
+
+.sidebarAzul .avatar {
+    background: #2457A4;
+}
+
+.movilAzul .barraMovilPop .avatar {
+    background: #2457A4;
+    box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 4.5px #CDF22B;
+}
+
+/* Collage azul en el celular: barra en pastilla con el activo navy y el
+   "+" lima redondo (handoff 4b). */
+.movilAzul .pastilla,
+.movilAzul .pestana {
+    border-radius: 99px;
+}
+
+.movilAzul .pestana[data-activa] {
+    background: #0B1F3A;
+    box-shadow: none;
+}
+
+.movilAzul .crear {
+    border-radius: 50%;
+}

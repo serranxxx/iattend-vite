@@ -84,6 +84,10 @@ import sInv from './Movil/InvitadosMovil.module.css'
 import { ajusteDe, fotosDePortada, MAX_FOTOS_CARRUSEL, parcheFotos, soloVideos } from './fotosPortada'
 import { uploadImagesSupabase } from '../../helpers/services/uploadImage'
 
+// Selector de estilo del editor de Pops (I attend · Pop · Business · Craft)
+// en la barra de arriba: oculto por ahora; con true regresa.
+const SELECTOR_ESTILO_EDITOR = false
+
 
 const { Option } = Select;
 
@@ -5160,7 +5164,7 @@ export const SideEvents = () => {
                         <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} />
                         {/* Pop: su estilo de editor (Pop · Business · Craft), el mismo
                             de la sección Pops; se cambia aquí sin salir. */}
-                        {esPop && <PopsTemaSwitch tema={temaPops} onCambiar={cambiarTemaPops} enLinea temas={temasEditor} />}
+                        {esPop && SELECTOR_ESTILO_EDITOR && <PopsTemaSwitch tema={temaPops} onCambiar={cambiarTemaPops} enLinea temas={temasEditor} />}
                         {esPop && <BotonBuzonPop popId={popId} buzon={buzonPop} className={`${ed.livePill} ${ed.buzonBtn}`} />}
                         {/* "Ver en vivo" vive en el dock del área de trabajo. */}
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}

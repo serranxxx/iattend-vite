@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Plus } from 'lucide-react'
-import { portadaDePop, useConfirmados } from './popsDatos'
+import { inicialesDePop, portadaDePop, useConfirmados } from './popsDatos'
 import { PopsHero } from './PopsHero'
 import styles from './PopsBusiness.module.css'
 
@@ -25,19 +25,6 @@ const CHIPS = [
     { fondo: 'var(--biz-linea)', tinta: 'var(--biz-navy)' },
 ]
 
-/**
- * Iniciales del Pop: la primera letra de las dos primeras palabras; con una
- * sola palabra y un número, la letra y los dos últimos dígitos
- * ("Kick-off Comercial 2027" → KC, "Navidad 2026" → N26).
- */
-const inicialesDePop = (nombre = '') => {
-    const palabras = nombre.split(/\s+/).filter(Boolean)
-    const letras = palabras.filter(p => /\p{L}/u.test(p)).map(p => p.match(/\p{L}/u)[0].toUpperCase())
-    const numero = palabras.find(p => /^\d+$/.test(p))
-    if (letras.length >= 2) return letras.slice(0, 2).join('')
-    if (letras.length === 1) return letras[0] + (numero ? numero.slice(-2) : '')
-    return numero ? numero.slice(-3) : '·'
-}
 
 export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, onCrear, onComprarPop, onGratisPop, onConoce, onAbrir, switchTema, pie, sinHero = false, sinLista = false, debajo, titulo: tituloPropio, vacioLista, conCorreo = false }) => {
     const { t, i18n } = useTranslation()

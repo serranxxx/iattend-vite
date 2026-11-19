@@ -13,8 +13,9 @@ import { PlannerSkeleton } from './PlannerSkeleton'
 import { PopsSection } from './PopsSection'
 import { PopsInicio } from './PopsInicio'
 import { PopsTemaSwitch } from './PopsTemaSwitch'
+import { PopsInicioAzul } from './PopsInicioAzul'
 import { usePopsTransicion } from './usePopsTransicion'
-import { TEMAS_POPS, usePopsTema } from './usePopsTema'
+import { TEMAS_POPS, TEMA_POPS_FIJO, temaBasePops, usePopsTema } from './usePopsTema'
 import { useTextures } from '../../context/TexturesContext'
 import { PopsOnboarding } from '../../components/PopsOnboarding/PopsOnboarding'
 import { PopsVideo } from '../../components/PopsOnboarding/PopsVideo'
@@ -262,9 +263,14 @@ export const PlannerLayout = ({
     const modoPops = enPops
     // Estilo de Pops (Pop | Business, handoff "Cambia tu estilo"): cambia la
     // sección, la barra lateral / inferior y el velo de entrada.
-    const { tema: temaPops, cambiar: cambiarTemaPops } = usePopsTema({ forzar: enPops ? searchParams.get(TEMA_PARAM) : null })
-    const business = temaPops === 'business'
+    // Con TEMA_POPS_FIJO (Collage azul) no hay selector ni ?tema= en la URL.
+    const { tema: temaElegido, cambiar: cambiarTemaPops } = usePopsTema({ forzar: enPops && !TEMA_POPS_FIJO ? searchParams.get(TEMA_PARAM) : null })
+    const temaPops = TEMA_POPS_FIJO ?? temaElegido
+    const temaBase = temaBasePops(temaPops)
+    const conSelectorTema = !TEMA_POPS_FIJO
+    const business = temaBase === 'business'
     const modoBiz = modoPops && business
+    const modoAzul = modoPops && temaPops === 'azul'
     const modoCraft = modoPops && temaPops === 'craft'
     // El mismo pie dentro de Pops, al final de su lista (en Craft, sobre una hoja de papel).
     const piePops = <FooterApp className={`${styles.piePops} ${temaPops === 'craft' ? styles.piePopsCraft : ''}`} />
@@ -274,16 +280,16 @@ export const PlannerLayout = ({
     useEffect(() => {
         if (!modoPops) return undefined
         const raiz = document.documentElement
-        raiz.setAttribute('data-pops-tema', temaPops)
+        raiz.setAttribute('data-pops-tema', temaBase)
         return () => raiz.removeAttribute('data-pops-tema')
-    }, [modoPops, temaPops])
+    }, [modoPops, temaBase])
     // Que la URL diga siempre el espacio, la sección y, en Pops, el estilo
     // (recargar, compartir el link con ese estilo).
     const temaUrl = searchParams.get(TEMA_PARAM)
     useEffect(() => {
         const quiereEspacio = enPops ? 'pops' : null
         const quiereSeccion = activa.key === 'test' ? null : activa.key
-        const quiereTema = enPops ? temaPops : null
+        const quiereTema = enPops && conSelectorTema ? temaPops : null
         if (espacioUrl === quiereEspacio && seccionUrl === quiereSeccion && temaUrl === quiereTema) return
         setSearchParams(prev => {
             if (quiereEspacio) prev.set(ESPACIO_PARAM, quiereEspacio)
@@ -301,7 +307,7 @@ export const PlannerLayout = ({
     const { textures } = useTextures()
     const texturaPapel = textures.find(tx => tx.name?.trim().toLowerCase() === 'papel')?.image
     const varsCraft = modoCraft && texturaPapel ? { '--craft-textura-papel': `url("${texturaPapel}")` } : undefined
-    const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef, { tema: temaPops })
+    const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef, { tema: temaBase })
     // Al entrar a Pops (de otra sección, del dashboard o al volver de otra
     // página) se empieza siempre desde arriba. Con la transición, el salto
     // ocurre mientras el velo negro tapa la pantalla.
@@ -347,7 +353,7 @@ export const PlannerLayout = ({
             resumen={resumenEspacios}
             onElegir={cambiarEspacio}
             botonRef={popsRef}
-            tema={enPops ? temaPops : undefined}
+            tema={enPops ? temaBase : undefined}
         />
     )
 
@@ -364,7 +370,7 @@ export const PlannerLayout = ({
                 label: <span className={styles.menuFila}>{t('invitations.menu_free_pops')}<span className={styles.menuCuenta}>{gratisPop}</span></span>,
                 icon: <Gift size={14} />,
             }] : []),
-            ...(modoPops ? [{
+            ...(modoPops && conSelectorTema ? [{
                 key: 'estilo',
                 label: <span className={styles.menuFila}>{t('pops_section.theme_title_short')}<span className={styles.menuEstilo}>{t(`pops_section.theme_${temaPops}`)}</span></span>,
                 icon: <Palette size={14} />,
@@ -455,11 +461,11 @@ export const PlannerLayout = ({
             onConoce={() => setConocePops(true)}
             onAbrir={onAbrir}
             tema={temaPops}
-            onCambiarTema={cambiarTemaPops}
+            onCambiarTema={conSelectorTema ? cambiarTemaPops : undefined}
             sinHero={lista}
             sinLista={!lista}
             // Debajo del encabezado de Inicio, el video de "Conoce los Pops".
-            debajo={lista ? undefined : <PopsVideo movil={movil} tema={temaPops} onCrear={puedeCrearPop ? crearPop : undefined} />}
+            debajo={lista ? undefined : <PopsVideo movil={movil} tema={temaBase} onCrear={puedeCrearPop ? crearPop : undefined} />}
             titulo={lista ? t(activa.key === 'clients' ? 'invitations.space_pops_clients_title' : 'invitations.space_pops_own_title') : undefined}
             vacioLista={lista ? t(activa.key === 'clients' ? 'invitations.space_pops_clients_empty' : 'invitations.space_pops_own_empty') : undefined}
             // En Clientes, el correo del cliente al que le llegó cada Pop.
@@ -470,7 +476,23 @@ export const PlannerLayout = ({
     // Pops › Inicio (handoff "Inicio de Pops", 1c, escritorio y celular): su
     // próximo Pop y Tu estilo, carrusel, "Así de rápido." y "Tips rápidos.".
     // En el celular, Tu estilo va compacto en el header (no en PopsInicio).
-    const popsInicio = (movil) => (
+    const popsInicio = (movil) => (temaPops === 'azul' ? (
+        // Collage azul · lima (handoff "App Pops", 4a / 4b).
+        <PopsInicioAzul
+            movil={movil}
+            greeting={greeting}
+            pops={activa.items}
+            gratisPop={gratisPop}
+            puedeCrear={puedeCrearPop}
+            onCrear={crearPop}
+            onConoce={() => setConocePops(true)}
+            // "Ver precios →" abre la compra (con su precio); un cliente no compra.
+            onVerPrecios={esCliente ? undefined : comprarPop}
+            onAbrir={onAbrir}
+            onVerTodos={() => abrirSeccion('own')}
+            pie={piePops}
+        />
+    ) : (
         <PopsInicio
             movil={movil}
             tema={temaPops}
@@ -483,9 +505,9 @@ export const PlannerLayout = ({
             onAbrir={onAbrir}
             onVerTodos={() => abrirSeccion('own')}
             pie={piePops}
-            switchTema={movil ? null : <PopsTemaSwitch enBarra tema={temaPops} onCambiar={(nuevo, el) => cambiarTemaPops(nuevo, el, { movil: false })} />}
+            switchTema={movil || !conSelectorTema ? null : <PopsTemaSwitch enBarra tema={temaPops} onCambiar={(nuevo, el) => cambiarTemaPops(nuevo, el, { movil: false })} />}
         />
-    )
+    ))
 
     // Mientras cargan las invitaciones: esqueleto de la vista que va a salir
     // (antes, la página se quedaba en blanco).
@@ -594,7 +616,7 @@ export const PlannerLayout = ({
         )
 
         return (
-            <div className={`${styles.movil} ${modoPops ? styles.movilPop : ''} ${modoBiz ? styles.movilBiz : ''} ${modoCraft ? styles.movilCraft : ''}`} style={varsCraft}>
+            <div className={`${styles.movil} ${modoPops ? styles.movilPop : ''} ${modoBiz ? styles.movilBiz : ''} ${modoCraft ? styles.movilCraft : ''} ${modoAzul ? styles.movilAzul : ''}`} style={varsCraft}>
                 {veloPops}
                 {modalConocePops}
                 {modoPops ? (
@@ -603,7 +625,7 @@ export const PlannerLayout = ({
                             {selector(true)}
                             {/* Tu estilo compacto (ícono + ▾) junto al avatar. */}
                             <div className={styles.barraMovilDerecha}>
-                                <PopsTemaSwitch enLinea tema={temaPops} onCambiar={(nuevo, el) => cambiarTemaPops(nuevo, el, { movil: true })} />
+                                {conSelectorTema && <PopsTemaSwitch enLinea tema={temaPops} onCambiar={(nuevo, el) => cambiarTemaPops(nuevo, el, { movil: true })} />}
                                 {avatarMenu}
                             </div>
                         </header>
@@ -696,7 +718,7 @@ export const PlannerLayout = ({
         <div className={`${styles.layout} ${modoPops ? styles.layoutPop : ''} ${modoCraft ? styles.layoutCraft : ''}`} style={varsCraft}>
             {veloPops}
             {modalConocePops}
-            <aside className={`${styles.sidebar} ${modoPops ? styles.sidebarPop : ''} ${modoBiz ? styles.sidebarBiz : ''} ${modoCraft ? styles.sidebarCraft : ''}`}>
+            <aside className={`${styles.sidebar} ${modoPops ? styles.sidebarPop : ''} ${modoBiz ? styles.sidebarBiz : ''} ${modoCraft ? styles.sidebarCraft : ''} ${modoAzul ? styles.sidebarAzul : ''}`}>
                 {selector(false)}
 
                 {(botonComprar || regalos) && (
@@ -754,7 +776,7 @@ export const PlannerLayout = ({
                 <div className={styles.pie}>
                     {!esCliente && (
                         <div className={styles.sugerencias}>
-                            <PlannerFeedback variante={modoCraft ? 'craft' : modoPops && !modoBiz ? 'pop' : 'tarjeta'} />
+                            <PlannerFeedback variante={modoCraft ? 'craft' : modoAzul ? 'azul' : modoPops && !modoBiz ? 'pop' : 'tarjeta'} />
                         </div>
                     )}
                     <Dropdown

@@ -5,6 +5,7 @@ import { PopsLogo } from '../../components/PopsLogo/PopsLogo'
 import { PopSticker } from '../../components/PopSticker/PopSticker'
 import { colorDePop, emojiDePop } from '../../helpers/invitation/popEvents'
 import { portadaDePop } from './popsDatos'
+import { PopsAzul } from './PopsAzul'
 import { PopsBusiness } from './PopsBusiness'
 import { PopsCraft } from './PopsCraft'
 import { PopsTemaSwitch } from './PopsTemaSwitch'
@@ -118,6 +119,13 @@ export const PopsSection = (props) => {
     const switchTema = onCambiarTema && (
         <PopsTemaSwitch tema={tema} movil={movil} onCambiar={(nuevo, el) => onCambiarTema(nuevo, el, { movil })} />
     )
+    // Collage azul (handoff "App Pops", 6a / 6b): la lista de escritorio tiene
+    // su diseño; el resto (celular, hero) es Business, su base.
+    if (tema === 'azul') {
+        return !movil && props.sinHero
+            ? <PopsAzul {...props} />
+            : <PopsBusiness {...props} switchTema={switchTema} />
+    }
     if (tema === 'business') return <PopsBusiness {...props} switchTema={switchTema} />
     if (tema === 'craft') return <PopsCraft {...props} switchTema={switchTema} />
     return <PopsPop {...props} switchTema={switchTema} />

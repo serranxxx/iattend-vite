@@ -6,7 +6,7 @@ import { createElement, useId } from 'react'
   el acabado de cada estilo:
     - pop: halftone neón (trama de puntos negros con máscara diagonal)
     - business: gloss (brillo radial blanco + sombra)
-    - craft: papel (borde blanco de 16 px + sombra)
+    - craft y azul (Collage azul): papel (borde blanco de 16 px + sombra)
   Calcado de la función `sticker()` del prototipo, para que se vean igual.
 */
 
@@ -52,10 +52,11 @@ const EXTRA = {
 const COLORES_STICKER = {
     pop: { burst: '#FF2BD6', bubble: '#3FE0F0', eyes: '#F5F51E', spark: '#2BF5B0', heart: '#FF5A1F', note: '#FF2BD6' },
     business: { burst: '#14213D', bubble: '#F2F4FF', eyes: '#2BD67B', spark: '#CDF22B', heart: '#2BD67B', note: '#A9BCFF' },
+    azul: { burst: '#CDF22B', bubble: '#FFFFFF', eyes: '#FFB3C9', spark: '#CDF22B', heart: '#FF5FA8', note: '#0B1F3A' },
     craft: { burst: '#F4A6A0', bubble: '#F1D9B5', eyes: '#F5D21E', spark: '#FFFFFF', heart: '#E8513A', note: '#1D1D1B' },
 }
 
-const ACABADO = { pop: 'halftone', business: 'gloss', craft: 'paper' }
+const ACABADO = { pop: 'halftone', business: 'gloss', craft: 'paper', azul: 'paper' }
 
 const SOMBRA = {
     halftone: 'none',

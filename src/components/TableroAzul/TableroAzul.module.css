@@ -1,0 +1,174 @@
+/* Tablero de corte azul (estilo "Collage azul · lima" de Pops). */
+
+.tablero {
+    --tab-mayor: 96px;
+    --tab-menor: 24px;
+    position: relative;
+    background-color: #2457A4;
+    background-image:
+        linear-gradient(rgba(232, 240, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(rgba(232, 240, 255, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.09) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.24) 90%);
+    background-size:
+        var(--tab-mayor) var(--tab-mayor),
+        var(--tab-mayor) var(--tab-mayor),
+        var(--tab-menor) var(--tab-menor),
+        var(--tab-menor) var(--tab-menor),
+        100% 100%;
+    color: #FFFFFF;
+}
+
+.movil {
+    --tab-mayor: 72px;
+    --tab-menor: 18px;
+}
+
+/* Regla: marcas de 1 px cada 8 px y largas cada 40 px. */
+.reglaIzq,
+.reglaArriba,
+.lineas {
+    position: absolute;
+    pointer-events: none;
+}
+
+.reglaIzq {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background-image:
+        linear-gradient(rgba(232, 240, 255, 0.5) 1px, transparent 1px),
+        linear-gradient(rgba(232, 240, 255, 0.65) 1px, transparent 1px);
+    background-size: 5px 8px, 10px 40px;
+    background-repeat: repeat-y;
+}
+
+.reglaArriba {
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 10px;
+    background-image:
+        linear-gradient(90deg, rgba(232, 240, 255, 0.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.65) 1px, transparent 1px);
+    background-size: 8px 5px, 40px 10px;
+    background-repeat: repeat-x;
+}
+
+.lineas {
+    inset: 0;
+}
+
+.lineas svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.lineas svg * {
+    vector-effect: non-scaling-stroke;
+}
+
+/* Papel: brillo diagonal + fibra + la sombra de papel del handoff. */
+.papel {
+    background-image:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.05) 80%, rgba(0, 0, 0, 0.14) 100%),
+        repeating-linear-gradient(97deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 5px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -1.5px 0 rgba(0, 0, 0, 0.14),
+        0 1px 1.5px rgba(0, 0, 0, 0.3),
+        0 8px 16px rgba(0, 0, 0, 0.3),
+        0 20px 34px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Botones cuadrados del tablero: lima con sombra 3D y papel claro. */
+.botonLima,
+.botonPapel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 52px;
+    padding: 0 24px;
+    border: none;
+    border-radius: 2px;
+    color: #0B1F3A;
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #9DBB12, 0 10px 18px rgba(0, 0, 0, 0.28);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.botonLima {
+    background-color: #CDF22B;
+}
+
+.botonPapel {
+    padding: 0 22px;
+    background-color: #F3F2EE;
+    box-shadow: 0 4px 0 #C9C6BC, 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.botonLima:hover {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #9DBB12, 0 6px 12px rgba(0, 0, 0, 0.26);
+}
+
+.botonPapel:hover {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #C9C6BC, 0 6px 12px rgba(0, 0, 0, 0.26);
+}
+
+.botonLima:focus-visible,
+.botonPapel:focus-visible {
+    outline: 3px solid #FFFFFF;
+    outline-offset: 3px;
+}
+
+/* Stickers de papel (SVG del handoff) y recortes. */
+.sticker {
+    position: absolute;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35)) drop-shadow(0 8px 10px rgba(0, 0, 0, 0.3));
+}
+
+/* Estrellas: de 5 puntas lima, de 5 puntas de papel rayado y de 4 puntas. */
+.estrella,
+.estrellaRayas,
+.estrella4 {
+    position: absolute;
+    pointer-events: none;
+}
+
+.estrella,
+.estrellaRayas {
+    clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.estrella,
+.estrella4 {
+    background: #CDF22B;
+}
+
+.estrellaRayas {
+    background: #EDEBE4 repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 1px, transparent 1px 4px);
+}
+
+.estrella4 {
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .botonLima,
+    .botonPapel {
+        transition: none;
+    }
+}

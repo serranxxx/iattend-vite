@@ -26,7 +26,8 @@ export const useConfirmados = (ids) => {
             .in('side_events_id', ids)
             .then(({ data, error }) => {
                 if (!vivo || error || !data) return
-                const cuenta = {}
+                // Los Pops sin invitados también llevan su cuenta (0 de 0).
+                const cuenta = Object.fromEntries(ids.map(id => [id, { total: 0, si: 0 }]))
                 for (const g of data) {
                     const c = (cuenta[g.side_events_id] ??= { total: 0, si: 0 })
                     c.total += 1
@@ -43,4 +44,18 @@ export const useConfirmados = (ids) => {
 export const horaDePop = (pop) => {
     const h = String(pop?.body?.hour ?? '')
     return /\d{2}:\d{2}/.test(h.slice(11, 16)) ? h.slice(11, 16) : null
+}
+
+/**
+ * Iniciales del Pop: la primera letra de las dos primeras palabras; con una
+ * sola palabra y un número, la letra y los dos últimos dígitos
+ * ("Kick-off Comercial 2027" → KC, "Navidad 2026" → N26).
+ */
+export const inicialesDePop = (nombre = '') => {
+    const palabras = nombre.split(/\s+/).filter(Boolean)
+    const letras = palabras.filter(p => /\p{L}/u.test(p)).map(p => p.match(/\p{L}/u)[0].toUpperCase())
+    const numero = palabras.find(p => /^\d+$/.test(p))
+    if (letras.length >= 2) return letras.slice(0, 2).join('')
+    if (letras.length === 1) return letras[0] + (numero ? numero.slice(-2) : '')
+    return numero ? numero.slice(-3) : '·'
 }
