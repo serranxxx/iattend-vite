@@ -1395,7 +1395,7 @@ export const SideCanvas = ({
                             acomoda en una cuadrícula 3 × 3 (body.titlePosition,
                             tarjetasSide.js). Elegido, enseña la cuadrícula: se
                             arrastra a una celda o se toca la celda. La fecha y el
-                            lugar se quedan abajo, como siempre. */}
+                            lugar van con él (.grupoTitulo). */}
                         <div ref={bloqueTituloRef} className={styles.bloqueTitulo} style={variablesPosicionTitulo(body)}>
                         {conCuadriculaTitulo && (
                             <div className={styles.cuadriculaTitulo} aria-hidden data-cuadricula-titulo data-arrastrando={arrastreTitulo || undefined}>
@@ -1415,6 +1415,13 @@ export const SideCanvas = ({
                                 }))}
                             </div>
                         )}
+                        {/* Título + fecha + lugar: se mueven juntos por la
+                            cuadrícula (arrastrar el título lleva a los tres). */}
+                        <div
+                            className={styles.grupoTitulo}
+                            data-arrastrando={arrastreTitulo || undefined}
+                            style={arrastreTitulo ? { transform: `translate(${arrastreTitulo.dx}px, ${arrastreTitulo.dy}px)` } : undefined}
+                        >
                         {/* Título. Vacío no ocupa lugar (como en la página del
                             invitado, donde no se pinta): el texto de ejemplo flota
                             encima de la fecha para poder tocarlo y escribir. */}
@@ -1424,7 +1431,7 @@ export const SideCanvas = ({
                             data-arrastrando={arrastreTitulo || undefined}
                             onClick={pick('title')}
                             onPointerDown={empezarArrastreTitulo}
-                            style={portadaOculta(body, 'title') ? { display: 'none' } : arrastreTitulo ? { transform: `translate(${arrastreTitulo.dx}px, ${arrastreTitulo.dy}px)` } : undefined}
+                            style={portadaOculta(body, 'title') ? { display: 'none' } : undefined}
                         >
                             <div
                                 ref={titleRef}
@@ -1454,32 +1461,33 @@ export const SideCanvas = ({
                                 {initialTitle}
                             </div>
                         </div>
+                            {/* Fecha y lugar van en un solo bloque, sin separación,
+                                igual que la columna .col de la página del invitado. */}
+                            <div className={styles.detalles}>
+                                {/* Fecha */}
+                                <div className={cls('date', styles.col)} data-zone='date' onClick={pick('date')} style={{ textShadow: sombraDeTexto(body.details_shadow), ...(portadaOculta(body, 'date') ? { display: 'none' } : {}) }}>
+                                    {dateLabels.length
+                                        ? dateLabels.map(label => <span key={label}>{label}</span>)
+                                        : <span className={styles.colMuted}>{t('side_events.datetime_label')}</span>
+                                    }
+                                </div>
+
+                                {/* Lugar */}
+                                <div className={cls('place', styles.col)} data-zone='place' onClick={pick('place')} style={{ textShadow: sombraDeTexto(body.details_shadow), ...(portadaOculta(body, 'place') ? { display: 'none' } : {}) }}>
+                                    {esOnline(body)
+                                        ? <span className={styles.lineaEnLinea}><Video size={14} />{textosPlataforma(body.online?.platform).portada}</span>
+                                        : placeLabel
+                                        ? <>
+                                            <span>{placeLabel}</span>
+                                            {regionLabel && <span>{regionLabel}</span>}
+                                        </>
+                                        : <span className={styles.colMuted}>{t('side_events.place_name_label')}</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
                         </div>
 
-                        {/* Fecha y lugar van en un solo bloque, sin separación,
-                            igual que la columna .col de la página del invitado. */}
-                        <div className={styles.detalles}>
-                            {/* Fecha */}
-                            <div className={cls('date', styles.col)} data-zone='date' onClick={pick('date')} style={{ textShadow: sombraDeTexto(body.details_shadow), ...(portadaOculta(body, 'date') ? { display: 'none' } : {}) }}>
-                                {dateLabels.length
-                                    ? dateLabels.map(label => <span key={label}>{label}</span>)
-                                    : <span className={styles.colMuted}>{t('side_events.datetime_label')}</span>
-                                }
-                            </div>
-
-                            {/* Lugar */}
-                            <div className={cls('place', styles.col)} data-zone='place' onClick={pick('place')} style={{ textShadow: sombraDeTexto(body.details_shadow), ...(portadaOculta(body, 'place') ? { display: 'none' } : {}) }}>
-                                {esOnline(body)
-                                    ? <span className={styles.lineaEnLinea}><Video size={14} />{textosPlataforma(body.online?.platform).portada}</span>
-                                    : placeLabel
-                                    ? <>
-                                        <span>{placeLabel}</span>
-                                        {regionLabel && <span>{regionLabel}</span>}
-                                    </>
-                                    : <span className={styles.colMuted}>{t('side_events.place_name_label')}</span>
-                                }
-                            </div>
-                        </div>
                         {/* Patrocinadores en la portada (Pop, body.sponsors): la cinta
                             entre el lugar y los botones, como la página. */}
                         {conAsistentes && patrocinadoresDe(body).layout === 'portada' && hayPatrocinadores(body) && (

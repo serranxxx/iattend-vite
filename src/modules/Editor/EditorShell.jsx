@@ -425,7 +425,7 @@ export const EditorShell = ({
                                     <button
                                         type="button"
                                         className={ws.railButton}
-                                        data-on={railOn(item) || undefined}
+                                        data-on={railOn(item) || item.destacado || undefined}
                                         data-tour={`tool-${item.id}`}
                                         aria-label={item.aviso ? `${item.title}. ${item.aviso}` : item.title}
                                         onClick={() => onPickTool(item.id)}

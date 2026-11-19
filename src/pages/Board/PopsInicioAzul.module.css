@@ -1007,86 +1007,87 @@
 }
 
 /* ── Escritorio angosto: según el ancho del banner (container query) ──
+   Solo escritorio: el celular tiene su propio acomodo (.movil).
    El collage y las polaroids se achican hacia la derecha y la columna de
    texto gana espacio; por debajo de 700 px el banner queda solo con texto. */
 @container banner (max-width: 1000px) {
-    .lamina:not(.laminaTemporada) {
+    .inicio:not(.movil) .lamina:not(.laminaTemporada) {
         grid-template-columns: minmax(0, 1fr) 300px;
     }
 
-    .laminaTemporada {
+    .inicio:not(.movil) .laminaTemporada {
         grid-template-columns: minmax(0, 1fr) 330px;
     }
 
-    .collageMarca {
+    .inicio:not(.movil) .collageMarca {
         transform: scale(0.72);
         transform-origin: right center;
     }
 
-    .polaroids {
+    .inicio:not(.movil) .polaroids {
         transform: translateY(36px) scale(0.72);
         transform-origin: right center;
     }
 
-    .titulo {
+    .inicio:not(.movil) .titulo {
         font-size: 38px;
     }
 
-    .tituloTemporada {
+    .inicio:not(.movil) .tituloTemporada {
         font-size: 40px;
     }
 }
 
 @container banner (max-width: 820px) {
-    .lamina:not(.laminaTemporada),
-    .laminaTemporada {
+    .inicio:not(.movil) .lamina:not(.laminaTemporada),
+    .inicio:not(.movil) .laminaTemporada {
         grid-template-columns: minmax(0, 1fr) 220px;
         padding: 24px 36px 76px;
     }
 
-    .collageMarca {
+    .inicio:not(.movil) .collageMarca {
         transform: scale(0.56);
     }
 
-    .polaroids {
+    .inicio:not(.movil) .polaroids {
         transform: translateY(36px) scale(0.5);
     }
 
-    .titulo {
+    .inicio:not(.movil) .titulo {
         font-size: 32px;
     }
 
-    .tituloTemporada {
+    .inicio:not(.movil) .tituloTemporada {
         font-size: 34px;
     }
 
-    .lede {
+    .inicio:not(.movil) .lede {
         font-size: 16px;
     }
 
-    .controles {
+    .inicio:not(.movil) .controles {
         left: 36px;
         right: 28px;
     }
 }
 
 @container banner (max-width: 700px) {
-    .lamina:not(.laminaTemporada),
-    .laminaTemporada {
+    .inicio:not(.movil) .lamina:not(.laminaTemporada),
+    .inicio:not(.movil) .laminaTemporada {
         grid-template-columns: minmax(0, 1fr);
         padding: 24px 32px 76px;
     }
 
-    .collageMarca,
-    .polaroids {
+    .inicio:not(.movil) .collageMarca,
+    .inicio:not(.movil) .polaroids {
         display: none;
     }
 
-    .logo {
+    .inicio:not(.movil) .logo {
         height: 120px;
     }
 
-    .controles {
+    .inicio:not(.movil) .controles {
         left: 32px;
         right: 24px;
     }

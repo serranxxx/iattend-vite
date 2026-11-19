@@ -103,3 +103,12 @@
     font-weight: 600;
     color: #29262D;
 }
+
+/* Botón con link (invitación en PDF) en Capas: una píldora de su color. */
+.miniBoton {
+    display: block;
+    width: 22px;
+    height: 10px;
+    border-radius: 99px;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+}

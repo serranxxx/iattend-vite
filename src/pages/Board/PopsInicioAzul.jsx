@@ -342,7 +342,9 @@ export const PopsInicioAzul = ({ movil = false, greeting, pops = [], gratisPop =
                     </h3>
                     <button type='button' className={styles.videoBoton} aria-expanded={video} onClick={() => setVideo(v => !v)}>
                         <span className={styles.play} aria-hidden>▶</span>
-                        {video ? t('pops_inicio.video_close') : t('pops_inicio.video_title')}
+                        {movil
+                            ? t(video ? 'pops_azul.video_close_short' : 'pops_azul.video_short')
+                            : t(video ? 'pops_inicio.video_close' : 'pops_inicio.video_title')}
                     </button>
                 </div>
                 <div className={styles.pasos}>

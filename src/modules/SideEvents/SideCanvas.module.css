@@ -1463,10 +1463,30 @@
     z-index: 1;
 }
 
-/* Arrastrando el título: sigue al puntero, sin transición. */
+/* Título + fecha + lugar: un solo grupo que se acomoda en la cuadrícula;
+   la fecha y el lugar se alinean como el título. */
+.grupoTitulo {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: var(--titulo-x, center);
+    width: 100%;
+}
+
+.bloqueTitulo .col {
+    align-items: var(--titulo-x, center);
+    text-align: var(--titulo-alinear, center);
+}
+
+/* Arrastrando el título: el grupo sigue al puntero, sin transición. */
+.grupoTitulo[data-arrastrando] {
+    opacity: 0.85;
+    user-select: none;
+}
+
 .titleZone[data-arrastrando] {
     cursor: grabbing;
-    opacity: 0.85;
     user-select: none;
 }
 

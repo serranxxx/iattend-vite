@@ -691,8 +691,12 @@
    el crear en lima. */
 .barraInferior {
     position: fixed;
-    left: 14px;
-    right: 14px;
+    left: 0;
+    right: 0;
+    /* En pantallas anchas (tableta) no se estira: centrada, a lo más 440 px. */
+    width: calc(100% - 28px);
+    max-width: 440px;
+    margin: 0 auto;
     bottom: calc(14px + env(safe-area-inset-bottom));
     z-index: 20;
     display: flex;
@@ -1900,7 +1904,13 @@
 
 /* ── Pops · Collage azul (handoff "App Pops"): Business con acentos ──
    Pill navy en el activo, "Comprar Pop" como pill de 54 px y avatar azul
-   tablero. Se suma a .sidebarBiz / .movilBiz. */
+   tablero. Se suma a .sidebarBiz / .movilBiz. El azul de Business pasa a
+   ser el del tablero (bordes al pasar el mouse, etc.). */
+.sidebarAzul,
+.movilAzul {
+    --biz-azul: #2457A4;
+}
+
 .sidebarAzul .comprar {
     min-height: 54px;
     padding: 0 18px 0 8px;
@@ -1931,6 +1941,7 @@
 }
 
 .movilAzul .barraMovilPop .avatar {
+    border-radius: 50%;
     background: #2457A4;
     box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 4.5px #CDF22B;
 }

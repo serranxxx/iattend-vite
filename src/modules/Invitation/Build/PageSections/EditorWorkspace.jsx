@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
-import { CloudUpload, FileText, Images, Palette, PenLine, Shapes, Ticket, WandSparkles } from 'lucide-react'
+import { CloudUpload, FileText, Images, MousePointerClick, Palette, PenLine, Shapes, Ticket, WandSparkles } from 'lucide-react'
 import ReactHost from '../../../../components/Host/ReactHost'
 import { EditCanvas } from './EditCanvas'
 import { EditorShell } from '../../../Editor/EditorShell'
@@ -16,6 +16,7 @@ import { ElementsPanel } from './LayerPanels'
 import { AiTextPanel } from './AiTextPanel'
 import { WalletPanelInvitacion } from './WalletPanelInvitacion'
 import { PdfToolPanel } from '../../Pdf/PdfToolPanel'
+import { BotonesPanel } from '../../Pdf/BotonesPanel'
 import { PdfBar } from '../../Pdf/PdfBar'
 import { esPdf, SECCION_PDF } from '../../Pdf/pdfInvitacion'
 import { PaletaDibujo } from '../../../SideEvents/Workspace/PaletaDibujo'
@@ -66,6 +67,10 @@ const TOOLS = [
     { id: 'wallet', icon: Ticket, Panel: WalletPanelInvitacion },
     // Invitación en PDF: cambia el editor por EditorPdf (BuildPage). docs/invitacion-pdf.md
     { id: 'pdf', icon: FileText, Panel: PdfToolPanel },
+    // Solo con la invitación en PDF: botones con link encima del PDF, como
+    // stickers (decorations.pdf, kind 'boton'). Pdf/BotonesPanel.jsx.
+    // `destacado`: en el riel siempre se ve como activo, para que se note.
+    { id: 'buttons', icon: MousePointerClick, Panel: BotonesPanel, soloPdf: true, destacado: true },
     { id: 'ai', icon: WandSparkles, Panel: AiTextPanel, hidden: true, parent: 'elements' },
 ]
 
@@ -210,6 +215,9 @@ export const EditorWorkspace = ({
     const [pdfElegido, setPdfElegido] = useState(false)
     // Al cambiar a PDF (Mi PDF) queda elegido, con su barra a la vista.
     useEffect(() => { setPdfElegido(enPdf) }, [enPdf])
+    // Herramientas del riel: Botones solo con la invitación en PDF.
+    const herramientas = TOOLS.filter((x) => !x.soloPdf || enPdf)
+    useEffect(() => { if (!enPdf && activeTool === 'buttons') setActiveTool('elements') }, [enPdf, activeTool])
     const seccionPieza = enPdf ? (pdfElegido ? SECCION_PDF : null) : selectedSection
     const selectFromPiece = (type, field) => {
         setPdfElegido(type === SECCION_PDF)
@@ -436,14 +444,22 @@ export const EditorWorkspace = ({
         ? { label: t('build_editor.tb_text_color'), value: ts.font?.color, allowNone: false, onPick: (c, o) => ts.setFont({ color: c }, o) }
         : selectedItem
             ? (() => {
-                const field = colorField === 'stroke' && selectedItem.kind === 'shape' ? 'stroke' : 'color'
+                // Botón (PDF): fondo, texto y borde, cada uno con su color.
+                const boton = selectedItem.kind === 'boton'
+                const field = colorField === 'stroke' && (selectedItem.kind === 'shape' || boton) ? 'stroke'
+                    : colorField === 'bg' && boton ? 'bg' : 'color'
                 return {
-                    label: t(field === 'stroke' ? 'build_editor.eb_stroke_color' : selectedItem.kind === 'shape' ? 'build_editor.eb_fill' : 'build_menu.color'),
+                    label: t(field === 'stroke' ? (boton ? 'build_editor.btn_border_color' : 'build_editor.eb_stroke_color')
+                        : field === 'bg' ? 'build_editor.btn_bg_color'
+                        : boton ? 'build_editor.btn_text_color'
+                        : selectedItem.kind === 'shape' ? 'build_editor.eb_fill' : 'build_menu.color'),
                     value: selectedItem[field],
-                    allowNone: field === 'color' && selectedItem.kind === 'shape',
+                    allowNone: (field === 'color' && selectedItem.kind === 'shape') || (boton && field === 'stroke'),
                     onPick: (c, o) => patchItem(field === 'stroke'
-                        ? { stroke: c, strokeWidth: (selectedItem.strokeWidth ?? 0) > 0 ? selectedItem.strokeWidth : 2 }
-                        : { color: c }, o),
+                        ? (boton && (!c || c === 'transparent')
+                            ? { stroke: null, strokeWidth: 0 }
+                            : { stroke: c, strokeWidth: (selectedItem.strokeWidth ?? 0) > 0 ? selectedItem.strokeWidth : 2 })
+                        : { [field]: c }, o),
                 }
             })()
             : null
@@ -654,10 +670,10 @@ export const EditorWorkspace = ({
     if (movil) {
         return (
             <EditorMovilShell
-                tools={TOOLS.filter((x) => x.id !== 'draw').map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`) }))}
+                tools={herramientas.filter((x) => x.id !== 'draw').map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`) }))}
                 // Diseño a media pantalla (la pieza se ve arriba); Elementos,
                 // Fotos, Subidos y Lia a pantalla completa; el pase en modal.
-                modos={{ design: 0.5, elements: 1, photos: 1, uploads: 1, ai: 1, wallet: 'modal', pdf: 'modal' }}
+                modos={{ design: 0.5, elements: 1, photos: 1, uploads: 1, ai: 1, wallet: 'modal', pdf: 'modal', buttons: 0.5 }}
                 activeTool={activeTool}
                 toolOpen={toolOpen}
                 onPickTool={pickTool}
@@ -715,7 +731,7 @@ export const EditorWorkspace = ({
 
     return (
         <EditorShell
-            tools={TOOLS.map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`), hint: t(`build_editor.tool_${x.id}_hint`) }))}
+            tools={herramientas.map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`), hint: t(`build_editor.tool_${x.id}_hint`) }))}
             activeTool={activeTool}
             toolOpen={toolOpen}
             onPickTool={pickTool}

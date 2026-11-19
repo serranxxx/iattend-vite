@@ -120,9 +120,9 @@ export const PopsSection = (props) => {
         <PopsTemaSwitch tema={tema} movil={movil} onCambiar={(nuevo, el) => onCambiarTema(nuevo, el, { movil })} />
     )
     // Collage azul (handoff "App Pops", 6a / 6b): la lista de escritorio tiene
-    // su diseño; el resto (celular, hero) es Business, su base.
+    // su diseño (escritorio y celular); el hero es Business, su base.
     if (tema === 'azul') {
-        return !movil && props.sinHero
+        return props.sinHero
             ? <PopsAzul {...props} />
             : <PopsBusiness {...props} switchTema={switchTema} />
     }

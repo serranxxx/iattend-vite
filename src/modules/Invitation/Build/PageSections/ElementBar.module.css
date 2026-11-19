@@ -890,3 +890,104 @@
     border-radius: 0;
     background: #F3F2EE;
 }
+
+/* ── Botón con link (invitación en PDF) ── */
+.botonEtiqueta {
+    max-width: 120px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.botonFalta {
+    flex: none;
+    color: #E07A10;
+}
+
+/* Color del texto: una "A" del color sobre el fondo del botón. */
+.swatchTexto {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.15);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.botonForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 280px;
+}
+
+.botonCampo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.botonAyuda {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #8A8582;
+}
+
+.botonAyuda[data-aviso] {
+    color: #B4590A;
+}
+
+.botonProbar {
+    align-self: flex-start;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #16323d;
+    text-decoration: underline;
+}
+
+.botonEstilos {
+    display: grid;
+    grid-template-columns: repeat(5, 64px);
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.botonEstilo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 4px 8px;
+    border: 1.5px solid transparent;
+    border-radius: 14px;
+    background: #F6F5F3;
+    font: inherit;
+    font-size: 11px;
+    color: #4A4549;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.botonEstilo:hover {
+    border-color: #D9D6D0;
+}
+
+.botonEstilo[data-on] {
+    border-color: #29262D;
+    background: #FFFFFF;
+}
+
+.botonMuestra {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 22px;
+    box-sizing: border-box;
+    font-size: 10px;
+    font-weight: 700;
+}

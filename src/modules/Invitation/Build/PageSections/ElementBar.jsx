@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Popover, Select, Switch } from 'antd'
-import { AlignJustify, Ban, Blend, CopyPlus, Eye, EyeOff, FlipHorizontal2, FlipVertical2, Group, Lock, Pin, PinOff, RotateCw, Scaling, SquareRoundCorner, Trash2, Ungroup } from 'lucide-react'
+import { Input, Popover, Select, Switch } from 'antd'
+import { AlignJustify, Ban, Blend, CircleAlert, Link2, RectangleHorizontal, CopyPlus, Eye, EyeOff, FlipHorizontal2, FlipVertical2, Group, Lock, Pin, PinOff, RotateCw, Scaling, SquareRoundCorner, Trash2, Ungroup } from 'lucide-react'
 import { useFonts } from '../../../../context/FontsContext'
 import { fonts as fallbackFonts } from '../../../../helpers/assets/fonts'
 import { LiveSlider } from './barControls'
@@ -9,6 +9,7 @@ import { grosorVisible, parcheCandado, parcheGrosor, useVector } from '../../../
 import styles from './ElementBar.module.css'
 import pincel from '../../../SideEvents/Workspace/AjustesPincel.module.css'
 import { BarraOpacidad, Garabato } from '../../../SideEvents/Workspace/AjustesPincel'
+import { ESTILOS_BOTON, GROSORES_BORDE, estiloBoton, estiloMuestra, linkDeBoton } from '../../Pdf/botonesPdf'
 
 // Barra de propiedades del elemento suelto elegido en la pieza (arriba del
 // teléfono, como en Canva): color, borde, esquinas, voltear y transparencia;
@@ -65,6 +66,47 @@ const TrazoYOpacidad = ({ grosores, grosor, onGrosor, color, opacity, onOpacity,
     )
 }
 
+// Botón (invitación en PDF): su texto y su link. Se escriben aquí y se
+// guardan al salir del campo o con Enter (un solo paso de deshacer).
+const TextoYLink = ({ item, onPatch, t }) => {
+    const [texto, setTexto] = useState(item.text ?? '')
+    const [url, setUrl] = useState(item.url ?? '')
+    useEffect(() => { setTexto(item.text ?? ''); setUrl(item.url ?? '') }, [item.id])
+    const guardar = () => {
+        const cambios = {}
+        if (texto !== (item.text ?? '')) cambios.text = texto
+        if (url.trim() !== (item.url ?? '')) cambios.url = url.trim()
+        if (Object.keys(cambios).length) onPatch(cambios)
+    }
+    const link = linkDeBoton(url)
+    return (
+        <div className={styles.botonForm}>
+            <label className={styles.botonCampo}>
+                <span className={styles.popLabel}>{t('build_editor.btn_text')}</span>
+                <Input value={texto} maxLength={40} placeholder={t('build_editor.btn_default_text')} onChange={(e) => setTexto(e.target.value)} onBlur={guardar} onPressEnter={guardar} />
+            </label>
+            <label className={styles.botonCampo}>
+                <span className={styles.popLabel}>{t('build_editor.btn_link')}</span>
+                <Input
+                    value={url}
+                    placeholder="https://…"
+                    prefix={<Link2 size={14} />}
+                    status={url.trim() && !link ? 'warning' : undefined}
+                    onChange={(e) => setUrl(e.target.value)}
+                    onBlur={guardar}
+                    onPressEnter={guardar}
+                />
+                <span className={styles.botonAyuda} data-aviso={(url.trim() && !link) || undefined}>
+                    {url.trim() && !link ? t('build_editor.btn_link_invalid') : t('build_editor.btn_link_hint')}
+                </span>
+            </label>
+            {link && /^https?:/i.test(link) && (
+                <a className={styles.botonProbar} href={link} target="_blank" rel="noopener noreferrer">{t('build_editor.btn_try')}</a>
+            )}
+        </div>
+    )
+}
+
 export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, group = null, pieceWidth = 390 }) => {
     const { t } = useTranslation()
     const { fonts: activeFonts } = useFonts()
@@ -75,6 +117,7 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
     const multi = (group?.count ?? 1) > 1
     const isShape = item.kind === 'shape' && !multi
     const isVector = item.kind === 'icon' && item.vector && !multi
+    const isBoton = item.kind === 'boton' && !multi
     const vector = useVector(isVector ? item.src : null)
     const sw = item.strokeWidth ?? 0
     const fill = item.color === 'transparent' ? null : item.color || accent
@@ -96,7 +139,68 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
     return (
         <div className={styles.bar} data-edit-keep data-text-bar>
             {multi && <span className={styles.barCount}>{t('side_events.stickers_selected', { n: group.count })}</span>}
-            {item.kind && item.kind !== 'sticker' && !multi && (
+            {/* Botón con link (PDF): texto y link, fondo, texto, borde y estilo. */}
+            {isBoton && (
+                <>
+                    {pop('link', <TextoYLink item={item} onPatch={onPatch} t={t} />, (
+                        <button type="button" className={styles.textBtn} data-on={open === 'link' || undefined} title={t('build_editor.btn_link')}>
+                            <Link2 size={17} />
+                            <span className={styles.botonEtiqueta}>{item.text?.trim() || t('build_editor.lp_el_boton')}</span>
+                            {!linkDeBoton(item.url) && <CircleAlert size={14} className={styles.botonFalta} aria-label={t('build_editor.btn_no_link')} />}
+                        </button>
+                    ))}
+                    <span className={styles.divider} />
+                    <button type="button" className={styles.swatchBtn} data-on={colorOpen === 'bg' || undefined} title={t('build_editor.btn_bg_color')} onClick={() => onPickColor('bg')}>
+                        <span className={styles.swatch} style={{ background: item.bg || accent }} />
+                    </button>
+                    <button type="button" className={styles.swatchBtn} data-on={colorOpen === 'color' || undefined} title={t('build_editor.btn_text_color')} onClick={() => onPickColor('color')}>
+                        <span className={styles.swatchTexto} style={{ color: item.color || '#FFFFFF', background: item.bg || accent }}>A</span>
+                    </button>
+                    <button type="button" className={styles.swatchBtn} data-on={colorOpen === 'stroke' || undefined} title={t('build_editor.btn_border_color')} onClick={() => onPickColor('stroke')}>
+                        <span className={styles.ring} style={{ borderColor: (item.strokeWidth ?? 0) > 0 ? item.stroke || accent : '#D9D6D0' }} />
+                    </button>
+                    {pop('btnstyle', (
+                        <>
+                            <span className={styles.popLabel}>{t('build_editor.btn_style')}</span>
+                            <div className={styles.botonEstilos}>
+                                {ESTILOS_BOTON.map((estilo) => (
+                                    <button
+                                        key={estilo}
+                                        type="button"
+                                        className={styles.botonEstilo}
+                                        data-on={estiloBoton(item) === estilo || undefined}
+                                        onClick={() => onPatch({ variant: estilo })}
+                                    >
+                                        <span className={styles.botonMuestra} style={estiloMuestra({ ...item, variant: estilo })}>Aa</span>
+                                        <span>{t(`build_editor.btn_style_${estilo}`)}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            <span className={styles.popLabel}>{t('build_editor.btn_border')}</span>
+                            <div className={styles.styleRow}>
+                                {GROSORES_BORDE.map((g) => (
+                                    <button
+                                        key={g}
+                                        type="button"
+                                        className={styles.styleBtn}
+                                        data-on={(item.strokeWidth ?? 0) === g || undefined}
+                                        aria-label={g ? `${g} px` : t('build_editor.btn_no_border')}
+                                        onClick={() => onPatch(g ? { strokeWidth: g, stroke: item.stroke || '#FFFFFF' } : { strokeWidth: 0 })}
+                                    >
+                                        {g ? <span className={styles.styleSample} style={{ borderTopWidth: g, borderTopStyle: 'solid' }} /> : <Ban size={18} />}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    ), (
+                        <button type="button" className={styles.iconBtn} data-on={open === 'btnstyle' || undefined} title={t('build_editor.btn_style')}>
+                            <RectangleHorizontal size={18} />
+                        </button>
+                    ))}
+                </>
+            )}
+
+            {item.kind && item.kind !== 'sticker' && !isBoton && !multi && (
                 <button
                     type="button"
                     className={styles.swatchBtn}
@@ -205,8 +309,8 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
 
             {item.kind && item.kind !== 'sticker' && !multi && <span className={styles.divider} />}
 
-            {/* Voltear: los dos espejos directo en la barra (sin menú). */}
-            {!multi && (
+            {/* Voltear: los dos espejos directo en la barra (sin menú). Un botón no se voltea. */}
+            {!multi && !isBoton && (
                 <>
                     <button type="button" className={styles.iconBtn} data-on={item.flipX || undefined} aria-pressed={Boolean(item.flipX)} title={t('build_editor.eb_flip_h')} aria-label={t('build_editor.eb_flip_h')} onClick={() => onPatch({ flipX: !item.flipX })}>
                         <FlipHorizontal2 size={18} />

@@ -176,6 +176,40 @@
     border-color: var(--biz-navy);
 }
 
+/* Collage azul: borde lila suave, "Pops" + "by I attend" a mano en gris. */
+.boton[data-espacio='pops'][data-tema='azul'] {
+    border-color: #E6E2F2;
+    border-radius: 24px;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 20px;
+}
+
+.boton[data-espacio='pops'][data-tema='azul'][data-abierto] {
+    border-color: #0B1F3A;
+}
+
+.logoPopsAzul {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    white-space: nowrap;
+    --pops-color: #111;
+}
+
+.logoPopsAzul .popsWordmark {
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+.byAzul {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 21px;
+    line-height: 1;
+    color: #6E6965;
+}
+
 /* ── Menú "Cambiar de espacio" ── */
 
 .menu {
@@ -326,4 +360,46 @@
 
 .botonMovil[data-tema='craft'] .chevron {
     color: #F3F2EE;
+}
+
+/* Collage azul en el celular: píldora blanca y la flecha en un círculo gris. */
+.boton.botonMovil[data-espacio='pops'][data-tema='azul'] {
+    min-height: 54px;
+    padding: 0 10px 0 20px;
+    gap: 10px;
+    border: 1.5px solid #E6E2F2;
+    border-radius: 99px;
+    background: #FFFFFF;
+}
+
+.botonMovil[data-tema='azul'] .byAzul {
+    font-size: 17px;
+}
+
+.botonMovil[data-tema='azul'] .chevron {
+    box-sizing: content-box;
+    padding: 6px;
+    border-radius: 50%;
+    background: #EEEDF2;
+}
+
+/* Weddings en el celular: la misma píldora que Pops (solo si se puede
+   cambiar de espacio; con un solo espacio queda el logo a secas). */
+.boton.botonMovil[data-espacio='weddings']:not(.botonFijo) {
+    min-height: 54px;
+    padding: 0 10px 0 20px;
+    gap: 10px;
+    border: 1.5px solid rgba(231, 227, 224, 0.7);
+    border-radius: 99px;
+    /* Translúcida: deja ver los puntos del fondo. */
+    background: rgba(255, 255, 255, 0.55);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+.botonMovil[data-espacio='weddings']:not(.botonFijo) .chevron {
+    box-sizing: content-box;
+    padding: 6px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
 }

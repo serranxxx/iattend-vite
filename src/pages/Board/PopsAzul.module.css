@@ -168,7 +168,7 @@
     border-radius: 99px;
     background: #FFFFFF;
     color: #0B1F3A;
-    font-family: inherit;
+    font-family: 'Poppins', sans-serif;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -471,4 +471,185 @@
         height: 30px;
         font-size: 18px;
     }
+}
+
+/* ── Celular (handoff 4b): banda alta con la etiqueta, el conteo a mano y
+   "Comprar" lima; filas en tres renglones (nombre + fecha, correo, estado +
+   faltan). Va después de los @container para ganarles. ── */
+
+.estadoTexto {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.movil {
+    gap: 20px;
+    min-height: 0;
+    padding: 4px 12px 120px;
+}
+
+.movil .contenedor {
+    border-radius: 22px;
+}
+
+.movil .bandaBorde,
+.movil .tablero {
+    height: 132px;
+}
+
+.movil .etiqueta {
+    left: 18px;
+    top: 26px;
+    padding: 2px 14px 6px;
+    font-size: 32px;
+}
+
+.movil .banda .stickerOjos,
+.movil .banda .stickerCorazon {
+    display: block;
+    left: auto;
+    right: 64px;
+    top: 22px;
+    width: 30px;
+}
+
+.movil .estrellaA {
+    display: none;
+}
+
+.movil .estrellaB {
+    display: block;
+    right: 14px;
+    top: 16px;
+    width: 22px;
+    height: 22px;
+}
+
+.movil .estrellaC {
+    display: none;
+}
+
+.mConteo {
+    position: absolute;
+    left: 24px;
+    top: 86px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    line-height: 1;
+    color: #FFFFFF;
+}
+
+.movil .banda .comprar {
+    right: 14px;
+    top: 70px;
+    height: 40px;
+    padding: 0 14px 0 6px;
+    font-size: 14px;
+}
+
+.movil .banda .comprar .mas {
+    width: 26px;
+    height: 26px;
+    font-size: 17px;
+}
+
+.movil .cuerpo {
+    margin-top: -14px;
+    padding: 30px 12px 8px;
+}
+
+.movil .filtros {
+    justify-content: flex-start;
+    padding-bottom: 6px;
+}
+
+.movil .filtro {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
+}
+
+.filaMovil {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px 2px;
+    border: none;
+    border-top: 1px solid #E3E6F0;
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.filaMovil:first-of-type {
+    border-top: none;
+}
+
+.filaMovil:focus-visible {
+    outline: 2px solid #2457A4;
+    outline-offset: -2px;
+}
+
+.movil .mini {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    font-size: 13px;
+}
+
+.mTextos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.mLinea {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.movil .nombre {
+    font-size: 15px;
+}
+
+.movil .fecha {
+    flex: none;
+    font-size: 13px;
+    color: #56627A;
+}
+
+.movil .correo {
+    display: block;
+    font-size: 13px;
+}
+
+.movil .estado {
+    min-width: 0;
+    gap: 6px;
+    font-size: 12.5px;
+}
+
+.movil .faltan {
+    flex: none;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.movil .pasadosTitulo {
+    margin: 20px 2px 4px;
+}
+
+.movil .vacio {
+    padding: 18px 2px;
+    font-size: 14px;
 }

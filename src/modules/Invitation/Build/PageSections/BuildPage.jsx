@@ -764,7 +764,7 @@ export const BuildPage = () => {
                     p_invitation_id: id,
                     p_data: savedInvitation,
                 })
-                if (error) { console.error('Error actualizando:', error); return }
+                if (error) { console.error('Error actualizando:', error); messageApi.error(t('buttons_menu.msg_save_error')); return }
                 messageApi.success(t('buttons_menu.msg_saved'))
                 // Los pases de Apple Wallet que ya tienen los invitados se
                 // actualizan (foto, título, direcciones, horario). Sin esperar.
@@ -775,6 +775,8 @@ export const BuildPage = () => {
             await syncTranslationsToNewSource(savedInvitation)
         } catch (error) {
             console.error('Error guardando:', error.response?.data || error.message)
+            // Sin esto el botón no decía nada: el error solo salía en la consola.
+            messageApi.error(t('buttons_menu.msg_save_error'))
             throw error
         }
     }

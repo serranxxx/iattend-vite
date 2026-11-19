@@ -29,9 +29,12 @@ const enUnCuadro = (fn) => {
 }
 
 // `tema`: estilo de Pops. Business = velo azul y onda lima; Craft = velo
-// verde (el tapete) y onda amarilla; Pop = negro y rosa.
+// verde (el tapete) y onda amarilla; azul = el tablero y onda lima;
+// Pop = negro y rosa.
 const COLORES = {
     business: { '--velo': 'var(--biz-azul)', '--onda': 'var(--biz-lima)', '--onda-salida': 'var(--biz-navy)' },
+    // Collage azul · lima: el azul del tablero, no el eléctrico de Business.
+    azul: { '--velo': '#2457A4', '--onda': '#CDF22B', '--onda-salida': '#163B74' },
     craft: { '--velo': 'var(--craft-verde)', '--onda': 'var(--craft-amarillo)', '--onda-salida': 'var(--craft-verde)' },
 }
 

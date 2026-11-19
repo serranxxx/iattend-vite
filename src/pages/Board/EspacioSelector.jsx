@@ -15,7 +15,7 @@ import styles from './EspacioSelector.module.css'
  * espacio: 'weddings' | 'pops'. resumen: { weddings, pops } (subtítulos).
  * puedeCambiar = false (cuenta de un solo espacio): solo el logo, sin borde
  * ni flecha. botonRef: origen de la transición circular al entrar/salir de Pops.
- * tema: estilo de Pops ('pop' | 'business' | 'craft') para el borde del botón.
+ * tema: estilo de Pops ('pop' | 'business' | 'craft' | 'azul') para el borde del botón.
  */
 const ESPACIOS = ['weddings', 'pops']
 
@@ -23,7 +23,8 @@ const ESPACIOS = ['weddings', 'pops']
 // sobre el color del espacio (el ícono del handoff).
 const IMAGEN = {
     weddings: '/images/espacio-weddings.jpg',
-    pops: '/images/espacio-pops.png',
+    // Pops con el estilo Collage azul · lima.
+    pops: '/images/espacio-pops-azul.jpg',
 }
 
 const IconoEspacio = ({ espacio }) => {
@@ -32,8 +33,17 @@ const IconoEspacio = ({ espacio }) => {
     return <img src={IMAGEN[espacio]} alt='' className={styles.iconoImg} onError={() => setFalla(true)} />
 }
 
-const LogoEspacio = ({ espacio, movil }) => {
+const LogoEspacio = ({ espacio, movil, tema }) => {
     const { t } = useTranslation()
+    // Collage azul: "Pops" y, a su lado, "by I attend" escrito a mano.
+    if (espacio === 'pops' && tema === 'azul') {
+        return (
+            <span className={styles.logoPopsAzul}>
+                <PopsLogo size={movil ? 30 : 40} className={styles.popsWordmark} />
+                <span className={styles.byAzul}>{t('invitations.space_by_iattend')}</span>
+            </span>
+        )
+    }
     if (espacio === 'pops') {
         return (
             // Lockup "Pops by I attend" (el cierre del video de onboarding):
@@ -94,7 +104,7 @@ export const EspacioSelector = ({ espacio, puedeCambiar, resumen, onElegir, boto
     if (!puedeCambiar) {
         return (
             <div ref={botonRef} className={`${styles.boton} ${styles.botonFijo} ${movil ? styles.botonMovil : ''}`} data-espacio={espacio} data-tema={tema}>
-                <LogoEspacio espacio={espacio} movil={movil} />
+                <LogoEspacio espacio={espacio} movil={movil} tema={tema} />
             </div>
         )
     }
@@ -117,7 +127,7 @@ export const EspacioSelector = ({ espacio, puedeCambiar, resumen, onElegir, boto
             aria-label={t('invitations.space_switch_title')}
             onClick={movil ? () => setAbierto(true) : undefined}
         >
-            <LogoEspacio espacio={espacio} movil={movil} />
+            <LogoEspacio espacio={espacio} movil={movil} tema={tema} />
             <ChevronDown size={16} className={styles.chevron} aria-hidden />
         </button>
     )

@@ -307,7 +307,7 @@ export const PlannerLayout = ({
     const { textures } = useTextures()
     const texturaPapel = textures.find(tx => tx.name?.trim().toLowerCase() === 'papel')?.image
     const varsCraft = modoCraft && texturaPapel ? { '--craft-textura-papel': `url("${texturaPapel}")` } : undefined
-    const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef, { tema: temaBase })
+    const { ir: transicion, overlay: veloPops } = usePopsTransicion(popsRef, { tema: temaPops === 'azul' ? 'azul' : temaBase })
     // Al entrar a Pops (de otra sección, del dashboard o al volver de otra
     // página) se empieza siempre desde arriba. Con la transición, el salto
     // ocurre mientras el velo negro tapa la pantalla.
@@ -353,7 +353,7 @@ export const PlannerLayout = ({
             resumen={resumenEspacios}
             onElegir={cambiarEspacio}
             botonRef={popsRef}
-            tema={enPops ? temaBase : undefined}
+            tema={enPops ? (temaPops === 'azul' ? 'azul' : temaBase) : undefined}
         />
     )
 

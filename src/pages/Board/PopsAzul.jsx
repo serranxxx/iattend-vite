@@ -20,6 +20,8 @@ import styles from './PopsAzul.module.css'
  *     Activos / Borradores. Borrador = un Pop sin invitados todavía.
  * "Faltan": azul con ≤ 9 días, lima con ≤ 14, gris después. Los pasados van
  * aparte al 55 %. Mismas props que PopsSection (solo la lista).
+ * `movil` (handoff 4b): banda con la etiqueta, "N Pops activos" a mano y
+ * "Comprar" lima; cada fila es nombre + fecha, correo y estado + "faltan".
  */
 
 // Sin color de tema (o uno casi blanco), las miniaturas se turnan estos.
@@ -47,7 +49,7 @@ const chipFaltan = (dias) => (dias <= 9
 
 const FILTROS = ['todos', 'activos', 'borradores']
 
-export const PopsAzul = ({ items, onComprarPop, onAbrir, pie, titulo, vacioLista, conCorreo = false }) => {
+export const PopsAzul = ({ movil = false, items, onComprarPop, onAbrir, pie, titulo, vacioLista, conCorreo = false }) => {
     const { t, i18n } = useTranslation()
     const [filtro, setFiltro] = useState('todos')
     const hoy = dayjs().startOf('day')
@@ -109,7 +111,39 @@ export const PopsAzul = ({ items, onComprarPop, onAbrir, pie, titulo, vacioLista
         return { texto: t('pops_section.status_active'), apagado: false }
     }
 
+    const chip = (f, pasado) => (!pasado && f.dias !== null
+        ? <span className={styles.faltan} style={chipFaltan(f.dias)}>{faltan(f.dias)}</span>
+        : <span className={styles.sinDato}>—</span>)
+
+    // Celular: en el estado va también el conteo (Mis Pops no tiene columna).
+    const filaMovil = (f, pasado) => {
+        const estado = estadoDe(f, pasado)
+        const confirmadosTexto = !conCorreo && !esBorrador(f) ? conteo(f, pasado) : null
+        return (
+            <button key={f.item.id} type='button' className={`${styles.filaMovil} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
+                <span className={styles.mini} style={{ background: f.color.fondo, color: f.color.tinta }}>
+                    {f.portada ? <img src={f.portada} alt='' loading='lazy' /> : f.iniciales}
+                </span>
+                <span className={styles.mTextos}>
+                    <span className={styles.mLinea}>
+                        <span className={styles.nombre}>{f.nombre}</span>
+                        <span className={styles.fecha}>{f.fecha ? fechaCorta(f.fecha) : t('pops_section.no_date')}</span>
+                    </span>
+                    {conCorreo && <span className={styles.correo}>{f.correo || t('invitations.pending_send_badge')}</span>}
+                    <span className={styles.mLinea}>
+                        <span className={styles.estado}>
+                            <span className={styles.punto} data-apagado={estado.apagado || undefined} />
+                            <span className={styles.estadoTexto}>{confirmadosTexto ? `${estado.texto} · ${confirmadosTexto}` : estado.texto}</span>
+                        </span>
+                        {chip(f, pasado)}
+                    </span>
+                </span>
+            </button>
+        )
+    }
+
     const fila = (f, pasado = false) => {
+        if (movil) return filaMovil(f, pasado)
         const estado = estadoDe(f, pasado)
         const confirmadosTexto = conteo(f, pasado)
         return (
@@ -131,11 +165,7 @@ export const PopsAzul = ({ items, onComprarPop, onAbrir, pie, titulo, vacioLista
                 {!conCorreo && (
                     <span className={styles.confirmados}>{confirmadosTexto ?? (esBorrador(f) && !pasado ? t('pops_azul.status_draft') : '—')}</span>
                 )}
-                <span>
-                    {!pasado && f.dias !== null
-                        ? <span className={styles.faltan} style={chipFaltan(f.dias)}>{faltan(f.dias)}</span>
-                        : <span className={styles.sinDato}>—</span>}
-                </span>
+                <span>{chip(f, pasado)}</span>
                 <span className={styles.flecha}><ArrowRight size={20} /></span>
             </button>
         )
@@ -145,7 +175,7 @@ export const PopsAzul = ({ items, onComprarPop, onAbrir, pie, titulo, vacioLista
     const tituloBanda = conCorreo ? t('pops_azul.title_clients') : (titulo ?? t('invitations.space_pops_own_title'))
 
     return (
-        <div className={`${styles.seccion} ${conCorreo ? styles.clientes : styles.mis}`}>
+        <div className={`${styles.seccion} ${conCorreo ? styles.clientes : styles.mis} ${movil ? styles.movil : ''}`}>
             <div className={styles.contenedor}>
                 <div className={styles.banda}>
                     <span aria-hidden className={styles.bandaBorde} />
@@ -157,9 +187,12 @@ export const PopsAzul = ({ items, onComprarPop, onAbrir, pie, titulo, vacioLista
                         <span aria-hidden className={`${tab.estrella4} ${styles.estrellaA}`} />
                         <span aria-hidden className={`${tab.estrellaRayas} ${styles.estrellaB}`} />
                         <span aria-hidden className={`${tab.estrella} ${styles.estrellaC}`} />
+                        {movil && !sinPops && (
+                            <span className={styles.mConteo}>{t('invitations.space_pops_count', { count: activos.length })}</span>
+                        )}
                         {onComprarPop && (
                             <button type='button' className={`${tab.botonLima} ${tab.papel} ${styles.comprar}`} onClick={onComprarPop}>
-                                <span className={styles.mas} aria-hidden>+</span>{t('pops_section.buy')}
+                                <span className={styles.mas} aria-hidden>+</span>{t(movil ? 'pops_section.buy_short' : 'pops_section.buy')}
                             </button>
                         )}
                     </TableroAzul>
@@ -185,14 +218,14 @@ export const PopsAzul = ({ items, onComprarPop, onAbrir, pie, titulo, vacioLista
 
                     {sinPops ? <p className={styles.vacio}>{vacioLista}</p> : (
                         <>
-                            <div className={`${styles.fila} ${styles.columnas}`} aria-hidden>
+                            {!movil && <div className={`${styles.fila} ${styles.columnas}`} aria-hidden>
                                 <span className={styles.colEvento}>{t('pops_section.biz_col_event')}</span>
                                 {conCorreo && <span>{t('pops_section.col_client')}</span>}
                                 <span>{t('pops_section.biz_col_date')}</span>
                                 {!conCorreo && <span>{t('pops_azul.col_confirmed')}</span>}
                                 <span>{t('pops_section.biz_col_left')}</span>
                                 <span />
-                            </div>
+                            </div>}
                             {visibles.length > 0
                                 ? visibles.map(f => fila(f))
                                 : <p className={styles.vacio}>{activos.length ? t('pops_azul.filter_empty') : t('pops_section.empty')}</p>}
