@@ -107,7 +107,10 @@ const TextoYLink = ({ item, onPatch, t }) => {
     )
 }
 
-export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, group = null, pieceWidth = 390 }) => {
+// `soloAcciones` (texto suelto de un Pop): solo las acciones del grupo (giro,
+// agrupar, anclar, ocultar, duplicar, quitar), para ir al final de la barra
+// de texto (TextBar `extra`), que ya trae tamaño, color y transparencia.
+export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, group = null, pieceWidth = 390, soloAcciones = false, popExterno = null, openExterno = null }) => {
     const { t } = useTranslation()
     const { fonts: activeFonts } = useFonts()
     const fontOptions = activeFonts.length ? activeFonts : fallbackFonts
@@ -135,6 +138,70 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
             {trigger}
         </Popover>
     )
+
+    // Popovers de la barra que la contiene (TextBar) cuando va embebida.
+    const popUsado = popExterno ?? pop
+    const abierto = popExterno ? openExterno : open
+    const acciones = group && (
+                <>
+                    {!soloAcciones && popUsado('size', (
+                        <LiveSlider label={t('side_events.stickers_size')} value={Math.round(item.w)} min={5} max={200} format={(v) => `${v}%`} onChange={group.onScale} />
+                    ), (
+                        <button type="button" className={styles.iconBtn} data-on={abierto === 'size' || undefined} title={t('side_events.stickers_size')}>
+                            <Scaling size={18} />
+                        </button>
+                    ))}
+                    {popUsado('rot', (
+                        <LiveSlider label={t('side_events.stickers_rotation')} value={Math.round(item.rot ?? 0)} min={-180} max={180} format={(v) => `${v}°`} onChange={group.onRotate} />
+                    ), (
+                        <button type="button" className={styles.iconBtn} data-on={abierto === 'rot' || undefined} title={t('side_events.stickers_rotation')}>
+                            <RotateCw size={18} />
+                        </button>
+                    ))}
+                    {/* Grupos de capas (Pop): con varios elegidos, Agrupar; con un
+                        grupo elegido, Desagrupar. */}
+                    {(group.onAgrupar || group.onDesagrupar) && (
+                        <>
+                            <span className={styles.divider} />
+                            <button type="button" className={styles.textBtn} title={group.onDesagrupar ? '⇧⌘G' : '⌘G'} onClick={group.onDesagrupar ?? group.onAgrupar}>
+                                {group.onDesagrupar ? <Ungroup size={17} /> : <Group size={17} />}
+                                {t(group.onDesagrupar ? 'side_events.layers_ungroup' : 'side_events.layers_group')}
+                            </button>
+                        </>
+                    )}
+                    <span className={styles.divider} />
+                    {group.onToggleFijo && (
+                        <button
+                            type="button"
+                            className={styles.iconBtn}
+                            data-on={group.fijo || undefined}
+                            aria-pressed={!!group.fijo}
+                            title={t(group.fijo ? 'side_events.stickers_unpin' : 'side_events.stickers_pin')}
+                            onClick={group.onToggleFijo}
+                        >
+                            {group.fijo ? <PinOff size={18} /> : <Pin size={18} />}
+                        </button>
+                    )}
+                    <button type="button" className={styles.iconBtn} data-on={group.hidden || undefined} title={t(group.hidden ? 'side_events.stickers_show' : 'side_events.stickers_hide')} onClick={group.onToggleHidden}>
+                        {group.hidden ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                    <button
+                        type="button"
+                        className={styles.iconBtn}
+                        title={t('side_events.stickers_duplicate')}
+                        aria-disabled={!group.canDuplicate || undefined}
+                        data-off={!group.canDuplicate || undefined}
+                        onClick={() => group.canDuplicate && group.onDuplicate()}
+                    >
+                        <CopyPlus size={18} />
+                    </button>
+                    <button type="button" className={styles.iconBtn} title={t('side_events.stickers_remove')} onClick={group.onRemove}>
+                        <Trash2 size={18} />
+                    </button>
+                </>
+            )
+
+    if (soloAcciones) return acciones
 
     return (
         <div className={styles.bar} data-edit-keep data-text-bar>
@@ -330,64 +397,7 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                 </button>
             ))}
 
-            {group && (
-                <>
-                    {pop('size', (
-                        <LiveSlider label={t('side_events.stickers_size')} value={Math.round(item.w)} min={5} max={200} format={(v) => `${v}%`} onChange={group.onScale} />
-                    ), (
-                        <button type="button" className={styles.iconBtn} data-on={open === 'size' || undefined} title={t('side_events.stickers_size')}>
-                            <Scaling size={18} />
-                        </button>
-                    ))}
-                    {pop('rot', (
-                        <LiveSlider label={t('side_events.stickers_rotation')} value={Math.round(item.rot ?? 0)} min={-180} max={180} format={(v) => `${v}°`} onChange={group.onRotate} />
-                    ), (
-                        <button type="button" className={styles.iconBtn} data-on={open === 'rot' || undefined} title={t('side_events.stickers_rotation')}>
-                            <RotateCw size={18} />
-                        </button>
-                    ))}
-                    {/* Grupos de capas (Pop): con varios elegidos, Agrupar; con un
-                        grupo elegido, Desagrupar. */}
-                    {(group.onAgrupar || group.onDesagrupar) && (
-                        <>
-                            <span className={styles.divider} />
-                            <button type="button" className={styles.textBtn} title={group.onDesagrupar ? '⇧⌘G' : '⌘G'} onClick={group.onDesagrupar ?? group.onAgrupar}>
-                                {group.onDesagrupar ? <Ungroup size={17} /> : <Group size={17} />}
-                                {t(group.onDesagrupar ? 'side_events.layers_ungroup' : 'side_events.layers_group')}
-                            </button>
-                        </>
-                    )}
-                    <span className={styles.divider} />
-                    {group.onToggleFijo && (
-                        <button
-                            type="button"
-                            className={styles.iconBtn}
-                            data-on={group.fijo || undefined}
-                            aria-pressed={!!group.fijo}
-                            title={t(group.fijo ? 'side_events.stickers_unpin' : 'side_events.stickers_pin')}
-                            onClick={group.onToggleFijo}
-                        >
-                            {group.fijo ? <PinOff size={18} /> : <Pin size={18} />}
-                        </button>
-                    )}
-                    <button type="button" className={styles.iconBtn} data-on={group.hidden || undefined} title={t(group.hidden ? 'side_events.stickers_show' : 'side_events.stickers_hide')} onClick={group.onToggleHidden}>
-                        {group.hidden ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                    <button
-                        type="button"
-                        className={styles.iconBtn}
-                        title={t('side_events.stickers_duplicate')}
-                        aria-disabled={!group.canDuplicate || undefined}
-                        data-off={!group.canDuplicate || undefined}
-                        onClick={() => group.canDuplicate && group.onDuplicate()}
-                    >
-                        <CopyPlus size={18} />
-                    </button>
-                    <button type="button" className={styles.iconBtn} title={t('side_events.stickers_remove')} onClick={group.onRemove}>
-                        <Trash2 size={18} />
-                    </button>
-                </>
-            )}
+            {acciones}
         </div>
     )
 }

@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next'
-import { Segmented } from 'antd'
+import { Popover, Segmented } from 'antd'
+import { Plus } from 'lucide-react'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import { SelectorColor } from '../SelectorColor'
 import { ColoresIOS } from '../../Editor/ColoresIOS'
 import { ItinerarioPop } from '../ItinerarioPop'
 import { COLOR_INICIAL, COLORES_EFECTO, TIPOS_EFECTO } from '../efectosData'
-import { ESTILOS_BLOQUE, MINI_ESTILO, estiloDe } from '../estilosBloque'
+import { COLORES_STICKER, ESTILOS_BLOQUE, MINI_ESTILO, STICKER_AMARILLO, acentoSticker, estiloDe } from '../estilosBloque'
 import { PINCEL, PINCELES } from '../../Editor/dibujoData'
 import { AjustesPincel } from './AjustesPincel'
 import base from '../../Invitation/Build/PageSections/ToolPanels.module.css'
@@ -87,6 +88,54 @@ export const DesignPanel = ({ current, setBody, esPop, movil = false }) => {
                             </button>
                         ))}
                     </div>
+                    {/* Sticker: el color con el que combina (body.stickerColor):
+                        uno de la paleta, el del tema o uno propio. */}
+                    {estiloDe(body) === 'sticker' && (
+                        <div className={own.stickerColores}>
+                            <span className={base.groupLabel}>{t('side_events.sticker_color')}</span>
+                            <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.sticker_color_hint')}</span>
+                            <div className={own.swatchRow}>
+                                {COLORES_STICKER.map((c) => {
+                                    const on = !body.stickerColor ? c === STICKER_AMARILLO : body.stickerColor.toLowerCase() === c.toLowerCase()
+                                    return (
+                                        <button key={c} type="button" className={own.swatch} data-on={on || undefined} style={{ background: c }} aria-label={c} onClick={() => setBody({ stickerColor: c === STICKER_AMARILLO ? null : c })} />
+                                    )
+                                })}
+                                <button
+                                    type="button"
+                                    className={`${own.swatch} ${own.swatchTema}`}
+                                    data-on={body.stickerColor === 'tema' || undefined}
+                                    style={{ background: color }}
+                                    title={t('side_events.sticker_color_theme')}
+                                    aria-label={t('side_events.sticker_color_theme')}
+                                    onClick={() => setBody({ stickerColor: 'tema' })}
+                                >
+                                    <span>{t('side_events.sticker_color_theme_short')}</span>
+                                </button>
+                                <Popover
+                                    trigger="click"
+                                    placement="right"
+                                    arrow={false}
+                                    content={(
+                                        <div data-text-bar style={{ width: 280 }}>
+                                            <ColoresIOS value={acentoSticker(body)} onChange={(hex, o) => setBody({ stickerColor: hex }, o)} conGuardados={false} />
+                                        </div>
+                                    )}
+                                >
+                                    <button
+                                        type="button"
+                                        className={`${own.swatch} ${own.swatchPropio}`}
+                                        data-on={(body.stickerColor && body.stickerColor !== 'tema' && !COLORES_STICKER.some((c) => c.toLowerCase() === body.stickerColor.toLowerCase())) || undefined}
+                                        style={body.stickerColor && body.stickerColor !== 'tema' && !COLORES_STICKER.some((c) => c.toLowerCase() === body.stickerColor.toLowerCase()) ? { background: body.stickerColor } : undefined}
+                                        title={t('side_events.sticker_color_custom')}
+                                        aria-label={t('side_events.sticker_color_custom')}
+                                    >
+                                        <Plus size={14} />
+                                    </button>
+                                </Popover>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

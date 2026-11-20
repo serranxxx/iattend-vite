@@ -7,6 +7,7 @@ import { Separador } from '../../components/Invitation/Logos'
 import { iconsItinerary } from '../../helpers/services/menuIcons'
 import { estiloVector, trazoDeIcono, useVector } from './vector'
 import { Dibujo } from './Dibujo'
+import { estiloTexto } from './textoElemento'
 import styles from './Elemento.module.css'
 
 /*
@@ -25,9 +26,6 @@ import styles from './Elemento.module.css'
 const ICONS = {
     Heart, Sparkles, Star, Flower, Flower2, Leaf, Gem, Moon, Sun, Wine, Music, Camera, Church, Infinity: InfinityIcon, Bird, Cake,
 }
-
-// Tamaño de letra = ancho del texto × factor (en cqw).
-const TEXT_FACTOR = { title: 0.16, subtitle: 0.1, body: 0.06 }
 
 const LINE_BORDER = {
     solid: '1.5px solid',
@@ -151,14 +149,9 @@ export const PopElemento = ({ s, titleFont, bodyFont = 'Poppins', color: forced,
         return <span className={styles.line} style={{ borderTop: `${LINE_BORDER[s.variant ?? 'solid'] ?? LINE_BORDER.solid} ${color}` }} />
     }
 
-    // Texto
-    const variant = s.variant ?? 'body'
-    const textStyle = {
-        color,
-        fontFamily: s.font || (variant === 'title' ? titleFont : bodyFont),
-        fontWeight: variant === 'title' ? 600 : variant === 'subtitle' ? 500 : 400,
-        fontSize: `${s.w * (TEXT_FACTOR[variant] ?? 0.06)}cqw`,
-    }
+    // Texto: su tamaño propio (o el que da su ancho) y lo de la barra de
+    // texto (textoElemento.js).
+    const textStyle = estiloTexto(s, { titleFont, bodyFont, color })
     if (editable) {
         return (
             <span

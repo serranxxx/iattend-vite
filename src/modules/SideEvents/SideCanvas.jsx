@@ -8,6 +8,7 @@ import { colorDeVelo, darker, sombraDeTexto } from '../../helpers/assets/functio
 import { lineasDeFechas } from '../../helpers/assets/eventDateTime'
 import styles from './SideCanvas.module.css'
 import { alternar, conModificador, esImagen, lienzoCover, miembrosDe, nuevoIdElemento, PIEZA_ALTO, PIEZA_ANCHO } from './stickersPopData'
+import { fijarTamTexto } from '../Editor/textoElemento'
 import { PopElemento } from '../Editor/Elemento'
 import { TrazoSvg } from '../Editor/Dibujo'
 import { PINCEL, simplificar } from '../Editor/dibujoData'
@@ -16,7 +17,7 @@ import { AsistentesMuestra } from './AsistentesMuestra'
 import { colorAvatares } from './datosAsistentes'
 import { BandaPatrocinadores, PortadaPatrocinadores, TarjetaPatrocinadores } from './Patrocinadores/Patrocinadores'
 import { hayPatrocinadores, patrocinadoresDe } from './patrocinadores'
-import { estiloDe, tintaDeNotas, variablesDeEstilo } from './estilosBloque'
+import { estiloDe, tintaDeNotas, variablesDeEstilo, acentoSticker } from './estilosBloque'
 import { formPublicado } from './Formularios/modelo'
 import { activasPrimero, agruparTarjetas, estiloNotas, modoClima, parcheOcultarTarjeta, parcheOrdenTarjetas, portadaOculta, tarjetasDe, tieneDatos, variablesPosicionTitulo, posicionTitulo, POSICIONES_X, POSICIONES_Y } from './tarjetasSide'
 import { ajusteDe, AJUSTE_ZOOM_MAX, CAMBIO_CARRUSEL_MS, cubrir, desenfoqueDe, estiloAjuste, esVideo, mediaDePortada, parcheAjuste, variablesDesenfoque } from './fotosPortada'
@@ -904,7 +905,14 @@ export const SideCanvas = ({
         const cx = r.left + r.width / 2
         const cy = r.top + r.height / 2
         const grupo = seleccion.includes(s.id) ? seleccion : [s.id]
-        const base = Object.fromEntries(stickers.filter(o => grupo.includes(o.id)).map(o => [o.id, { w: o.w, rot: o.rot ?? 0 }]))
+        const base = Object.fromEntries(stickers.filter(o => grupo.includes(o.id)).map(o => [o.id, { w: o.w, rot: o.rot ?? 0, size: o.kind === 'text' ? o.size : undefined, texto: o }]))
+        // Estirar un texto (agarraderas de los lados): solo cambia el ancho de
+        // su caja, en % del lienzo, a lo largo de su eje (va girado); la letra
+        // se queda (fijarTamTexto). El centro no se mueve: crece a los dos lados.
+        const lienzo = caja.parentElement?.getBoundingClientRect()
+        const ancho = lienzo?.width || 1
+        const rad = ((s.rot ?? 0) * Math.PI) / 180
+        const signo = modo === 'estirar-w' ? -1 : 1
         const d0 = Math.hypot(e.clientX - cx, e.clientY - cy) || 1
         const a0 = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI
         const girar = (v) => ((((v + 180) % 360) + 360) % 360) - 180
@@ -917,8 +925,21 @@ export const SideCanvas = ({
             let cambio
             if (modo === 'escalar') {
                 // Proporción entre la distancia al centro ahora y al empezar.
+                // Un texto con tamaño propio escala su letra con la caja.
                 const factor = Math.hypot(ev.clientX - cx, ev.clientY - cy) / d0
-                cambio = (o) => ({ w: Math.min(200, Math.max(5, Math.round(base[o.id].w * factor * 100) / 100)) })
+                cambio = (o) => {
+                    const w = Math.min(200, Math.max(5, Math.round(base[o.id].w * factor * 100) / 100))
+                    const f = w / (base[o.id].w || 1)
+                    return { w, ...(typeof base[o.id].size === 'number' ? { size: Math.round(base[o.id].size * f * 10) / 10 } : {}) }
+                }
+            } else if (modo === 'estirar-e' || modo === 'estirar-w') {
+                const dx = ev.clientX - e.clientX
+                const dy = ev.clientY - e.clientY
+                const aLoLargo = (dx * Math.cos(rad) + dy * Math.sin(rad)) * signo
+                cambio = (o) => (o.id !== s.id ? {} : {
+                    ...fijarTamTexto(base[o.id].texto),
+                    w: Math.min(200, Math.max(8, Math.round((base[o.id].w + (2 * aLoLargo / ancho) * 100) * 100) / 100)),
+                })
             } else {
                 const delta = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI - a0
                 cambio = (o) => ({ rot: Math.round(pegar(girar(base[o.id].rot + delta)) * 10) / 10 })
@@ -1078,6 +1099,10 @@ export const SideCanvas = ({
                                                 {['nw', 'ne', 'sw', 'se'].map(c => (
                                                     <span key={c} className={styles.manija} data-c={c} onPointerDown={transformarSticker(s, 'escalar')} />
                                                 ))}
+                                                {/* Texto: los lados estiran la caja sin cambiar la letra. */}
+                                                {s.kind === 'text' && seleccion.length === 1 && ['e', 'w'].map(c => (
+                                                    <span key={c} className={styles.manijaLado} data-c={c} onPointerDown={transformarSticker(s, `estirar-${c}`)} />
+                                                ))}
                                                 <span className={styles.manijaGiro} onPointerDown={transformarSticker(s, 'girar')} />
                                             </>
                                         )}
@@ -1101,7 +1126,7 @@ export const SideCanvas = ({
             ref={cardRef}
             className={`${styles.card} ${barMode ? styles.cardIphone : ''} ${fullBleed ? styles.cardFull : ''} ${storyMode ? styles.cardStory : ''} ${readOnly ? styles.cardReadOnly : ''} ${body.video ? styles.cardVideo : ''}`}
             // Estilo de bloques (Pop): sus variables y data-estilo (solo si no es vidrio).
-            style={{ '--blur-color': themeColor, '--blur-color--dark': tint, ...(completa ? { '--alto-pantalla': `${completa}px` } : {}), ...variablesDeEstilo(estiloDe(body), body.color) }}
+            style={{ '--blur-color': themeColor, '--blur-color--dark': tint, ...(completa ? { '--alto-pantalla': `${completa}px` } : {}), ...variablesDeEstilo(estiloDe(body), body.color, acentoSticker(body)) }}
             data-estilo={estiloDe(body) === 'vidrio' ? undefined : estiloDe(body)}
             data-side-card
             data-solo-dibujo={soloDibujo || undefined}

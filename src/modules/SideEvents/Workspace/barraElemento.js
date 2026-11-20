@@ -1,3 +1,4 @@
+import { escalarTexto } from '../../Editor/textoElemento'
 import { agrupar, contarElementos, contarImagenes, desagrupar, duplicarStickers, grupoDeSeleccion, MAX_ELEMENTOS, MAX_STICKERS, quitarStickers } from '../stickersPopData'
 
 /*
@@ -17,7 +18,11 @@ export const barraElemento = ({ stickers, stickerSel, setStickers, setStickerSel
         count: grupo.length,
         onScale: (v, o) => {
             const factor = v / (actual.w || 1)
-            cambiarGrupo((x) => ({ w: x.id === actual.id ? v : Math.min(200, Math.max(5, redondear(x.w * factor))) }), o)
+            // Un texto con tamaño propio escala su letra con la caja (textoElemento.js).
+            cambiarGrupo((x) => {
+                const w = x.id === actual.id ? v : Math.min(200, Math.max(5, redondear(x.w * factor)))
+                return { w, ...(x.kind === 'text' ? escalarTexto(x, w / (x.w || 1)) : {}) }
+            }, o)
         },
         onRotate: (v, o) => {
             const delta = v - (actual.rot ?? 0)

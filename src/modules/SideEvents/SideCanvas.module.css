@@ -1037,6 +1037,28 @@
 .manija[data-c="sw"] { bottom: calc(var(--m) * -0.85); left: calc(var(--m) * -0.85); cursor: nesw-resize; }
 .manija[data-c="se"] { bottom: calc(var(--m) * -0.85); right: calc(var(--m) * -0.85); cursor: nwse-resize; }
 
+/* Texto: agarraderas de los lados (píldora vertical) para estirar la caja
+   sin cambiar la letra. */
+.manijaLado {
+    --m: calc(12px / var(--canvas-zoom, 1));
+    position: absolute;
+    top: 50%;
+    width: calc(var(--m) * 0.6);
+    height: calc(var(--m) * 1.7);
+    margin-top: calc(var(--m) * -0.85);
+    border-radius: 99px;
+    background: #FFFFFF;
+    border: calc(1.5px / var(--canvas-zoom, 1)) solid #6D3CFA;
+    box-sizing: border-box;
+    box-shadow: 0 1px 4px rgba(12, 23, 27, 0.3);
+    touch-action: none;
+    cursor: ew-resize;
+    z-index: 1;
+}
+
+.manijaLado[data-c="e"] { right: calc(var(--m) * -0.55); }
+.manijaLado[data-c="w"] { left: calc(var(--m) * -0.55); }
+
 .manijaGiro {
     top: calc(var(--m) * -2.8);
     left: 50%;

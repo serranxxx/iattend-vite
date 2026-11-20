@@ -10,6 +10,7 @@ import { AjusteFotoBar, BackgroundBar, DateBar, DEFAULT_SOMBRA_TITULO, PlaceBar,
 import { barraElemento } from './barraElemento'
 import { PatrocinadoresBar } from './PatrocinadoresBar'
 import { tieneBarraPatrocinadores } from '../patrocinadores'
+import { pesoTexto, tamTexto } from '../../Editor/textoElemento'
 
 /*
   Barra contextual de la pieza de un side event / Pop: la que sale según lo
@@ -83,6 +84,39 @@ export const useBarraContextual = ({
         showColor: true,
     }
 
+    // Texto suelto (elemento `kind: 'text'`, uno solo elegido): la misma barra
+    // de texto que el título, sobre el elemento (textoElemento.js), y al final
+    // las acciones del elemento (giro, anclar, ocultar, duplicar, quitar).
+    const texto = actual?.kind === 'text' && grupo.length === 1 ? actual : null
+    const textoTs = texto && {
+        font: {
+            typeFace: texto.font ?? title.font ?? 'Poppins',
+            size: Math.round(tamTexto(texto)),
+            weight: pesoTexto(texto),
+            lineHeight: texto.line_height ?? 1.2,
+            opacity: texto.opacity ?? 1,
+            color: texto.color || '#FFFFFF',
+            italic: texto.italic,
+            underline: texto.underline,
+            strike: texto.strike,
+            transform: texto.transform,
+            letterSpacing: texto.letterSpacing,
+        },
+        setFont: (patch, o) => {
+            const { typeFace, lineHeight, ...rest } = patch
+            cambiarGrupo(() => ({ ...rest, ...(typeFace !== undefined ? { font: typeFace } : {}), ...(lineHeight !== undefined ? { line_height: lineHeight } : {}) }), o)
+        },
+        align: texto.align ?? 'center',
+        setAlign: (v) => cambiarGrupo(() => ({ align: v })),
+        minSize: 8,
+        maxSize: 120,
+        showSize: true,
+        showColor: true,
+    }
+    const accionesTexto = (pop, open) => (
+        <ElementBar item={actual} accent="#FFFFFF" onPatch={(patch, o) => cambiarGrupo(() => patch, o)} onPickColor={pickColor} colorOpen={null} group={elementGroup} pieceWidth={pieceWidth} soloAcciones popExterno={pop} openExterno={open} />
+    )
+
     const titleShadow = (pop, open) => pop('shadow', (
         <LiveSlider label={t('side_events.text_shadow')} value={title.shadow ?? DEFAULT_SOMBRA_TITULO} min={0} max={100} format={(v) => `${v}%`} onChange={(v, o) => setTitle({ shadow: v }, o)} />
     ), (
@@ -108,7 +142,9 @@ export const useBarraContextual = ({
         }
     })() : null
 
-    const bar = section === 'stickers' && actual
+    const bar = section === 'stickers' && texto
+        ? <TextBar target="pop_text" ts={textoTs} onPickColor={() => pickColor('color')} colorOpen={Boolean(colorPop) && colorField === 'color'} extra={accionesTexto} />
+        : section === 'stickers' && actual
         ? <ElementBar item={actual} accent="#FFFFFF" onPatch={(patch, o) => cambiarGrupo(() => patch, o)} onPickColor={pickColor} colorOpen={colorPop ? colorField : null} group={elementGroup} pieceWidth={pieceWidth} />
         : section === 'title' ? <TextBar target="pop_title" ts={titleTs} onPickColor={() => pickColor('text')} colorOpen={Boolean(colorPop) && colorField === 'text'} extra={titleShadow} />
         : section === 'extras' ? <TextBar target="pop_notes" ts={notesTs} onPickColor={() => pickColor('text')} colorOpen={Boolean(colorPop) && colorField === 'text'} />
