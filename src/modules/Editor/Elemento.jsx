@@ -181,7 +181,9 @@ export const MiniaturaElemento = ({ s }) => (
         : s.kind === 'text'
             ? <span className={styles.miniTexto}>Aa</span>
             : s.kind === 'boton'
-                ? <span className={styles.miniBoton} style={{ background: s.bg || '#29262D', color: s.color || '#FFFFFF' }} />
+                ? <span className={styles.miniBoton} style={s.variant === 'transparente'
+                    ? { background: 'rgba(139, 120, 230, 0.12)', border: '1.5px dashed rgba(139, 120, 230, 0.9)' }
+                    : { background: s.bg || '#29262D', color: s.color || '#FFFFFF' }} />
             : s.kind === 'dibujo'
                 ? <span className={styles.mini}><PopElemento s={{ ...s, w: 100 }} /></span>
                 : <span className={styles.mini}><PopElemento s={{ ...s, w: 100 }} color="#29262D" /></span>

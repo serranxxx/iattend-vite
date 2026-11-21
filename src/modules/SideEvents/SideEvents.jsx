@@ -20,6 +20,9 @@ import { CreditController } from '../../components/Payment/CreditController/Cred
 import { EmojiPop } from './EmojiPop'
 import { emojiSugerido } from '../../helpers/invitation/popEmojis'
 import { copia, estable, mezclarBody } from './mezclarBody'
+import { usePresenciaPop } from './Presencia/usePresenciaPop'
+import { CursoresPop } from './Presencia/CursoresPop'
+import { AvataresPresencia } from './Presencia/AvataresPresencia'
 import SideEventHost from '../../components/Host/SideEventHost'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatAbsoluteDateEs, formatEventDateTime, getTimezoneForState } from '../../helpers/assets/eventDateTime'
 import { fonts as fallbackFonts } from '../../helpers/assets/fonts'
@@ -105,6 +108,9 @@ const TOUR_SIDE_ACTIVO = false
 // guardar), y cuánto debe estar quieta la portada para rehacer la imagen del
 // link. ⌘S / Ctrl+S guarda en ese momento.
 const AUTOGUARDADO_MS = 5000
+// Con alguien más en el editor (presencia) se guarda antes, para que vea los
+// cambios casi enseguida y haya menos choques en el mismo campo.
+const AUTOGUARDADO_ACOMPANADO_MS = 1500
 const AUTOGUARDADO_MAX_MS = 30000
 const IMAGEN_LINK_MS = 20000
 
@@ -2212,17 +2218,24 @@ export const SideEvents = () => {
         // desde que este editor lo leyó, se mezcla por campo en vez de pisarlo.
         let bodyAGuardar = body
         let traidos = []
-        const { data: enBase, error: errorLeer } = await supabase.from('side_events').select('body').eq('id', current.id).single()
+        let nombre = current.name
+        let nombreTraido = false
+        const { data: enBase, error: errorLeer } = await supabase.from('side_events').select('body, name').eq('id', current.id).single()
         if (!errorLeer && enBase && baseRef.current?.id === current.id) {
             const mezcla = mezclarBody(baseRef.current.body, body, enBase.body)
             bodyAGuardar = mezcla.body
             traidos = mezcla.traidos
+            // El nombre (columna aparte) con la misma regla.
+            if (current.name === baseRef.current.name && enBase.name !== baseRef.current.name) {
+                nombre = enBase.name
+                nombreTraido = true
+            }
         }
 
         const { error } = await supabase
             .from('side_events')
             .update({
-                name: current.name,
+                name: nombre,
                 url_image: urlImage,
                 body: bodyAGuardar,
             })
@@ -2242,9 +2255,9 @@ export const SideEvents = () => {
             if (!ok) { message.error(t('side_events.save_error')); return false }
         }
 
-        baseRef.current = { id: current.id, body: copia(bodyAGuardar), acceso: copia(current.acceso ?? null) }
+        baseRef.current = { id: current.id, body: copia(bodyAGuardar), acceso: copia(current.acceso ?? null), name: nombre, url_image: urlImage }
         // La tarjeta del listado también refleja el cambio sin recargar
-        setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, name: current.name, body: bodyAGuardar, url_image: urlImage } : se))
+        setsideEvent((prev) => prev?.map((se) => se.id === current.id ? { ...se, name: nombre, body: bodyAGuardar, url_image: urlImage } : se))
         // Ya guardada la nueva imagen del link, fuera las anteriores (sin esperar).
         // La anterior solo si era la automática (había firma) y cambió.
         const anteriorAutomatica = current.body?.linkFirma && current.url_image !== urlImage ? current.url_image : null
@@ -2259,7 +2272,7 @@ export const SideEvents = () => {
                 if (bodyAGuardar[k] === undefined) delete nuevo[k]
                 else nuevo[k] = bodyAGuardar[k]
             }
-            return { ...prev, url_image: urlImage, body: nuevo }
+            return { ...prev, url_image: urlImage, body: nuevo, ...(nombreTraido && prev.name === current.name ? { name: nombre } : {}) }
         })
         if (traidos.length) console.info('[SideEvents] Se conservaron cambios hechos en otro lado:', traidos.join(', '))
         if (!silencioso) message.success(t('side_events.saved'))
@@ -2933,7 +2946,7 @@ export const SideEvents = () => {
 
     const openSideEvent = (item) => {
         currentRef.current = item
-        baseRef.current = { id: item?.id, body: copia(item?.body ?? {}), acceso: copia(item?.acceso ?? null) }
+        baseRef.current = { id: item?.id, body: copia(item?.body ?? {}), acceso: copia(item?.acceso ?? null), name: item?.name, url_image: item?.url_image }
         // Pop: lo privado del modo en línea vive en side_event_acceso (no en
         // side_events: la consulta pública devuelve la fila). Se trae aparte,
         // sin historial ni "cambios sin guardar".
@@ -3131,16 +3144,84 @@ export const SideEvents = () => {
             setDirty(false)
             setEstadoGuardado('guardado')
         }
+        // Los demás editores abiertos (presencia) traen lo que se guardó.
+        avisarGuardadoRef.current?.()
         return true
     }
+
+    // ── Cambios guardados en otro editor (otra persona u otra pestaña) ──
+    // Llegan por el aviso `guardado` del canal de presencia y por Realtime de
+    // side_events. Se lee el body de la base y, campo por campo de primer
+    // nivel: lo que cambió allá y aquí no se tocó se aplica en pantalla (sin
+    // historial ni "cambios sin guardar"); lo que también cambió aquí se
+    // queda como está y gana al guardar (mezclarBody). La base pasa a ser lo
+    // leído. El historial de deshacer también recibe lo traído, para que
+    // deshacer solo regrese lo de este editor.
+    const avisarGuardadoRef = useRef(null)
+    const trayendoRef = useRef(null)
+    const traerRemoto = () => {
+        clearTimeout(trayendoRef.current)
+        trayendoRef.current = setTimeout(async () => {
+            const cur = currentRef.current
+            if (!cur?.id || baseRef.current?.id !== cur.id) return
+            if (guardandoRef.current) { traerRemoto(); return }
+            const { data, error } = await supabase.from('side_events').select('name, body, url_image').eq('id', cur.id).single()
+            if (error || !data) return
+            const ahora = currentRef.current
+            const base = baseRef.current
+            if (ahora?.id !== cur.id || base?.id !== cur.id) return
+            if (guardandoRef.current) { traerRemoto(); return }
+            const suyo = data.body ?? {}
+            const bb = base.body ?? {}
+            const cambiados = [...new Set([...Object.keys(bb), ...Object.keys(suyo)])].filter((k) => estable(suyo[k]) !== estable(bb[k]))
+            const nombreAjeno = data.name !== base.name
+            const imagenAjena = data.url_image !== base.url_image
+            if (!cambiados.length && !nombreAjeno && !imagenAjena) return
+            const traer = cambiados.filter((k) => estable(ahora.body?.[k]) === estable(bb[k]))
+            const traerNombre = nombreAjeno && ahora.name === base.name
+            const traerImagen = imagenAjena && ahora.url_image === base.url_image
+            baseRef.current = { ...base, body: copia(suyo), name: data.name, url_image: data.url_image }
+            if (!traer.length && !traerNombre && !traerImagen) return
+            const aplicar = (entrada) => {
+                if (!entrada) return entrada
+                const body = { ...(entrada.body ?? {}) }
+                for (const k of traer) {
+                    if (suyo[k] === undefined) delete body[k]
+                    else body[k] = copia(suyo[k])
+                }
+                return { ...entrada, body, ...(traerNombre ? { name: data.name } : {}), ...(traerImagen ? { url_image: data.url_image } : {}) }
+            }
+            const nuevo = aplicar(ahora)
+            currentRef.current = nuevo
+            setCurrent(nuevo)
+            setUndoStack((st) => st.map(aplicar))
+            setRedoStack((st) => st.map(aplicar))
+            if (traer.includes('stickers')) {
+                const ids = new Set((suyo.stickers ?? []).map((x) => x.id))
+                setStickerSel((sel) => (sel.every((id) => ids.has(id)) ? sel : sel.filter((id) => ids.has(id))))
+            }
+        }, 150)
+    }
+    // Realtime de side_events (DashboardRealtimeContext): por si el cambio no
+    // vino de un editor con presencia (el celular viejo, el backend…).
+    const currentIdActual = current?.id
+    useEffect(() => {
+        if (!currentIdActual) return undefined
+        const u = subscribe('side_events', (payload) => {
+            const row = payload.new || payload.old
+            if (row && String(row.id) === String(currentIdActual)) traerRemoto()
+        })
+        return () => { u(); clearTimeout(trayendoRef.current) }
+    }, [currentIdActual])
     const handleSave = () => guardarAhora({ conImagen: true })
 
     const sinGuardarDesdeRef = useRef(null)
+    const hayOtrosRef = useRef(false)
     useEffect(() => {
         if (!current?.id || !dirty) { sinGuardarDesdeRef.current = null; return undefined }
         setEstadoGuardado('pendiente')
         sinGuardarDesdeRef.current ??= Date.now()
-        const espera = Math.min(AUTOGUARDADO_MS, Math.max(0, sinGuardarDesdeRef.current + AUTOGUARDADO_MAX_MS - Date.now()))
+        const espera = Math.min(hayOtrosRef.current ? AUTOGUARDADO_ACOMPANADO_MS : AUTOGUARDADO_MS, Math.max(0, sinGuardarDesdeRef.current + AUTOGUARDADO_MAX_MS - Date.now()))
         const timer = setTimeout(() => { sinGuardarDesdeRef.current = null; guardarAhora() }, espera)
         return () => clearTimeout(timer)
     }, [current, dirty])
@@ -3342,6 +3423,15 @@ export const SideEvents = () => {
     /* ── Atajos de escritura sobre `current` ── */
     // PNG seleccionados de un Pop (ids): los comparten la pieza (arrastrar) y el panel.
     const [stickerSel, setStickerSel] = useState([])
+    // Presencia (como Figma): quién más tiene abierto este Pop, sus cursores
+    // sobre la pieza y lo que tiene elegido (Presencia/usePresenciaPop.js).
+    const presencia = usePresenciaPop(esPop && current?.id ? current.id : null, {
+        movil: isMobile,
+        seleccion: { zona: section ?? null, stickers: stickerSel },
+        onGuardadoAjeno: traerRemoto,
+    })
+    avisarGuardadoRef.current = presencia.avisarGuardado
+    hayOtrosRef.current = presencia.otros.length > 0
     // Imagen o video de fondo de un Pop; null = lo que diga el evento.
     const [modoFondoElegido, setModoFondoElegido] = useState(null)
     const setBody = (patch) => updateCurrent((prev) => ({ ...prev, body: { ...prev.body, ...patch } }))
@@ -3818,7 +3908,8 @@ export const SideEvents = () => {
         <>
             {blockHead(<Sparkles size={16} />, t('side_events.panel_effects'), t('side_events.panel_effects_hint'))}
             <div className={ed.efectoGrid}>
-                {[null, ...TIPOS_EFECTO].map((tipo) => (
+                {/* Mis PNG solo en el panel Diseño nuevo (SidePanels). */}
+                {[null, ...TIPOS_EFECTO.filter((x) => x !== 'imagenes')].map((tipo) => (
                     <button
                         key={tipo ?? 'none'}
                         type='button'
@@ -4771,6 +4862,7 @@ export const SideEvents = () => {
         return (
             <>
                 <EditorMovil
+                    presencia={esPop ? presencia.personas : null}
                     current={current}
                     onChange={updateCurrent}
                     carpeta={esPop ? `flash-${popId}` : id}
@@ -5159,6 +5251,9 @@ export const SideEvents = () => {
                     />
 
                     <div className={ed.actionsBar}>
+                        {/* Presencia: quién más tiene abierto el Pop (y sus cursores sobre la pieza). */}
+                        {esPop && <AvataresPresencia personas={presencia.personas} />}
+                        {esPop && presencia.otros.length > 0 && <CursoresPop otros={presencia.otros} cursores={presencia.cursores} />}
                         {/* Autoguardado: su estado a la izquierda de Público /
                             Compartir (solo se ve mientras guarda y un momento después). */}
                         <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} />

@@ -9,7 +9,7 @@ import { grosorVisible, parcheCandado, parcheGrosor, useVector } from '../../../
 import styles from './ElementBar.module.css'
 import pincel from '../../../SideEvents/Workspace/AjustesPincel.module.css'
 import { BarraOpacidad, Garabato } from '../../../SideEvents/Workspace/AjustesPincel'
-import { ESTILOS_BOTON, GROSORES_BORDE, estiloBoton, estiloMuestra, linkDeBoton } from '../../Pdf/botonesPdf'
+import { AR_TRANSPARENTE, ESTILOS_BOTON, GROSORES_BORDE, esTransparente, estiloBoton, estiloMuestra, linkDeBoton } from '../../Pdf/botonesPdf'
 
 // Barra de propiedades del elemento suelto elegido en la pieza (arriba del
 // teléfono, como en Canva): color, borde, esquinas, voltear y transparencia;
@@ -82,7 +82,8 @@ const TextoYLink = ({ item, onPatch, t }) => {
     return (
         <div className={styles.botonForm}>
             <label className={styles.botonCampo}>
-                <span className={styles.popLabel}>{t('build_editor.btn_text')}</span>
+                {/* Transparente: el texto no se ve, solo lo lee el lector de pantalla y Capas. */}
+                <span className={styles.popLabel}>{t(esTransparente(item) ? 'build_editor.btn_text_hidden' : 'build_editor.btn_text')}</span>
                 <Input value={texto} maxLength={40} placeholder={t('build_editor.btn_default_text')} onChange={(e) => setTexto(e.target.value)} onBlur={guardar} onPressEnter={guardar} />
             </label>
             <label className={styles.botonCampo}>
@@ -212,11 +213,13 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                     {pop('link', <TextoYLink item={item} onPatch={onPatch} t={t} />, (
                         <button type="button" className={styles.textBtn} data-on={open === 'link' || undefined} title={t('build_editor.btn_link')}>
                             <Link2 size={17} />
-                            <span className={styles.botonEtiqueta}>{item.text?.trim() || t('build_editor.lp_el_boton')}</span>
+                            <span className={styles.botonEtiqueta}>{item.text?.trim() || t(esTransparente(item) ? 'build_editor.btn_style_transparente' : 'build_editor.lp_el_boton')}</span>
                             {!linkDeBoton(item.url) && <CircleAlert size={14} className={styles.botonFalta} aria-label={t('build_editor.btn_no_link')} />}
                         </button>
                     ))}
                     <span className={styles.divider} />
+                    {/* Transparente: sin colores ni borde (no se ve). */}
+                    {!esTransparente(item) && (<>
                     <button type="button" className={styles.swatchBtn} data-on={colorOpen === 'bg' || undefined} title={t('build_editor.btn_bg_color')} onClick={() => onPickColor('bg')}>
                         <span className={styles.swatch} style={{ background: item.bg || accent }} />
                     </button>
@@ -226,6 +229,7 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                     <button type="button" className={styles.swatchBtn} data-on={colorOpen === 'stroke' || undefined} title={t('build_editor.btn_border_color')} onClick={() => onPickColor('stroke')}>
                         <span className={styles.ring} style={{ borderColor: (item.strokeWidth ?? 0) > 0 ? item.stroke || accent : '#D9D6D0' }} />
                     </button>
+                    </>)}
                     {pop('btnstyle', (
                         <>
                             <span className={styles.popLabel}>{t('build_editor.btn_style')}</span>
@@ -236,15 +240,18 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                                         type="button"
                                         className={styles.botonEstilo}
                                         data-on={estiloBoton(item) === estilo || undefined}
-                                        onClick={() => onPatch({ variant: estilo })}
+                                        // A transparente: alto libre (ar). De transparente a otro: el alto vuelve a ser el del texto.
+                                        onClick={() => onPatch(estilo === 'transparente'
+                                            ? { variant: estilo, ar: item.ar ?? AR_TRANSPARENTE }
+                                            : { variant: estilo })}
                                     >
                                         <span className={styles.botonMuestra} style={estiloMuestra({ ...item, variant: estilo })}>Aa</span>
                                         <span>{t(`build_editor.btn_style_${estilo}`)}</span>
                                     </button>
                                 ))}
                             </div>
-                            <span className={styles.popLabel}>{t('build_editor.btn_border')}</span>
-                            <div className={styles.styleRow}>
+                            {!esTransparente(item) && <span className={styles.popLabel}>{t('build_editor.btn_border')}</span>}
+                            {!esTransparente(item) && <div className={styles.styleRow}>
                                 {GROSORES_BORDE.map((g) => (
                                     <button
                                         key={g}
@@ -257,7 +264,7 @@ export const ElementBar = ({ item, accent, onPatch, onPickColor, colorOpen, grou
                                         {g ? <span className={styles.styleSample} style={{ borderTopWidth: g, borderTopStyle: 'solid' }} /> : <Ban size={18} />}
                                     </button>
                                 ))}
-                            </div>
+                            </div>}
                         </>
                     ), (
                         <button type="button" className={styles.iconBtn} data-on={open === 'btnstyle' || undefined} title={t('build_editor.btn_style')}>

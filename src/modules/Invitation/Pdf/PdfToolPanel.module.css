@@ -344,3 +344,27 @@
         animation: none;
     }
 }
+
+/* "Mejorar la calidad de tu PDF" (conversión vieja de 1440 px). */
+.mejorar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid rgba(139, 120, 230, 0.45);
+    border-radius: 16px;
+    background: rgba(139, 120, 230, 0.08);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mejorar:hover:not(:disabled) {
+    background: rgba(139, 120, 230, 0.14);
+}
+
+.mejorar:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}

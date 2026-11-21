@@ -182,3 +182,67 @@
     color: #B4590A;
     font-weight: 600;
 }
+
+/* "Activar los links de tu PDF": los links que ya trae el PDF → zonas
+   transparentes. */
+.linksPdf {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px dashed rgba(139, 120, 230, 0.7);
+    border-radius: 16px;
+    background: rgba(139, 120, 230, 0.08);
+    color: #29262D;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.linksPdf:hover:not(:disabled) {
+    background: rgba(139, 120, 230, 0.14);
+}
+
+.linksPdf:disabled {
+    cursor: progress;
+}
+
+.linksPdfIcono {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 99px;
+    background: #FFFFFF;
+    color: #8B78E6;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.linksPdfTexto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+    color: #6B6672;
+}
+
+.linksPdfTexto strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: #29262D;
+}
+
+.gira {
+    animation: giraLinks 0.9s linear infinite;
+}
+
+@keyframes giraLinks {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gira { animation: none; }
+}

@@ -1,13 +1,16 @@
 import { useMemo } from 'react'
 import styles from './EfectosCapa.module.css'
-import { cantidadDeEfecto, COLOR_INICIAL, TIPOS_EFECTO } from './efectosData'
+import { cantidadDeEfecto, COLOR_INICIAL, esColorPropio, TAMANO_IMAGEN_INICIAL, TAMANO_IMAGEN_MAX, TIPOS_EFECTO } from './efectosData'
 
 /*
   Efectos animados de un Pop (panel Efectos): partículas encima de la
   portada y los PNG, debajo del texto y los botones. Solo CSS (transform y
   opacity): ligero en el teléfono, y nada se mueve con "reducir movimiento".
-  `body.effect`: { type: 'sparkles'|'confetti'|'bubbles'|'snow'|'petals',
-  intensity: 1–100, color: 'theme'|'white'|'gold'|'multi' }.
+  `body.effect`: { type: 'sparkles'|'confetti'|'bubbles'|'snow'|'petals'|'imagenes',
+  intensity: 1–100, color: 'theme'|'white'|'gold'|'multi'|'#RRGGBB' }.
+  'imagenes' (Mis PNG) usa los PNG / stickers del organizador: además
+  `images: [url]`, `motion: 'caer'|'subir'|'latir'` y `size: 20–200`; sin
+  color (cada partícula es su imagen, repartidas con la misma semilla).
   Contraparte en iattend-events (components/SideEvent/Efectos.tsx): mismas
   partículas con la misma semilla, para que se vean igual.
 */
@@ -25,6 +28,7 @@ const azar = (semilla) => () => {
 }
 
 const colorDe = (modo, tema, r) => {
+    if (esColorPropio(modo)) return modo
     if (modo === 'white') return '#FFFFFF'
     if (modo === 'gold') return DORADOS[Math.floor(r() * DORADOS.length)]
     if (modo === 'multi') return MULTI[Math.floor(r() * MULTI.length)]
@@ -40,16 +44,26 @@ const PARAMS = {
     petals: { tam: [10, 18], dur: [8, 14] },
 }
 
+// Mis PNG: duración según cómo se mueven; tamaño 16–32 px con `size` 50.
+const DUR_IMAGEN = { caer: [8, 14], subir: [7, 13], latir: [2.2, 4.2] }
+const tamImagen = (size = TAMANO_IMAGEN_INICIAL) => {
+    const k = Math.min(TAMANO_IMAGEN_MAX, Math.max(1, size)) / 50
+    return [16 * k, 32 * k]
+}
+
 
 export const EfectosCapa = ({ effect, colorTema }) => {
     const tipo = effect?.type
     const intensidad = effect?.intensity ?? 50
     const modo = effect?.color ?? COLOR_INICIAL[tipo] ?? 'theme'
+    const imagenes = tipo === 'imagenes' && Array.isArray(effect?.images) ? effect.images.filter(Boolean) : []
+    const mov = effect?.motion ?? 'caer'
+    const firmaImagenes = imagenes.join('|')
 
     const particulas = useMemo(() => {
-        if (!PARAMS[tipo]) return []
+        if (tipo === 'imagenes' ? !imagenes.length : !PARAMS[tipo]) return []
         const r = azar(TIPOS_EFECTO.indexOf(tipo) * 7919 + 13)
-        const { tam, dur } = PARAMS[tipo]
+        const { tam, dur } = tipo === 'imagenes' ? { tam: tamImagen(effect?.size), dur: DUR_IMAGEN[mov] ?? DUR_IMAGEN.caer } : PARAMS[tipo]
         return Array.from({ length: cantidadDeEfecto(intensidad) }, () => {
             const d = dur[0] + r() * (dur[1] - dur[0])
             return {
@@ -61,25 +75,27 @@ export const EfectosCapa = ({ effect, colorTema }) => {
                 delay: -r() * d,
                 vaiven: (r() - 0.5) * 60,
                 giro: (r() - 0.5) * 720,
-                color: colorDe(modo, colorTema, r),
+                ...(tipo === 'imagenes'
+                    ? { imagen: imagenes[Math.floor(r() * imagenes.length)] }
+                    : { color: colorDe(modo, colorTema, r) }),
             }
         })
-    }, [tipo, intensidad, modo, colorTema])
+    }, [tipo, intensidad, modo, colorTema, firmaImagenes, mov, effect?.size])
 
     if (!particulas.length) return null
 
     return (
-        <div aria-hidden className={`${styles.capa} ${styles[tipo]}`}>
+        <div aria-hidden className={`${styles.capa} ${styles[tipo]}`} data-mov={tipo === 'imagenes' ? mov : undefined}>
             {particulas.map((p, i) => (
                 <span
                     key={i}
                     className={styles.particula}
                     style={{
                         left: `${p.x}%`,
-                        top: tipo === 'sparkles' ? `${p.y}%` : undefined,
+                        top: tipo === 'sparkles' || (tipo === 'imagenes' && mov === 'latir') ? `${p.y}%` : undefined,
                         width: p.tam,
                         height: tipo === 'confetti' ? p.tam * 0.45 : tipo === 'petals' ? p.tam * 0.7 : p.tam,
-                        '--color': p.color,
+                        ...(p.imagen ? { backgroundImage: `url("${p.imagen}")` } : { '--color': p.color }),
                         '--dur': `${p.dur}s`,
                         '--delay': `${p.delay}s`,
                         '--vaiven': `${p.vaiven}px`,

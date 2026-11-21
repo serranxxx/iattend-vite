@@ -18,7 +18,8 @@ import { Modal, message } from 'antd'
 import { ArrowLeftRight, Check, FileUp, Loader2, Sparkles, Trash2 } from 'lucide-react'
 import { MB, getStorageQuota } from '../../../helpers/services/storageQuota'
 import { esPdf } from './pdfInvitacion'
-import { useSubirPdf, usarFichaPdf } from './useSubirPdf'
+import { agregarZonasDeLinks, avisoLinks, useSubirPdf, usarFichaPdf } from './useSubirPdf'
+import { completarLinks, esConversionVieja } from './convertirPdf'
 import { confirmarVolverADiseno } from './volverADiseno'
 import { borrarPdf, carpetaDePdf, enUsoPublicado, listarPdfs } from './pdfsSubidos'
 import { MAX_MB, MAX_PAGINAS } from './convertirPdf'
@@ -27,7 +28,7 @@ import styles from './PdfToolPanel.module.css'
 const mb = (bytes) => (bytes / MB).toFixed(1)
 
 export const PdfToolPanel = ({ invitation, invitationID, setInvitation, setSaved, activeLang, onOpenTool }) => {
-    const { cargar, elegir, input, progreso, textoProgreso } = useSubirPdf({ invitationID, setInvitation, setSaved })
+    const { cargar, elegir, mejorar, input, progreso, textoProgreso } = useSubirPdf({ invitationID, setInvitation, setSaved })
     const enPdf = esPdf(invitation)
     const carpetaActual = enPdf ? carpetaDePdf(invitation?.pdf) : null
 
@@ -47,9 +48,24 @@ export const PdfToolPanel = ({ invitation, invitationID, setInvitation, setSaved
         return () => window.removeEventListener('iattend-storage-changed', cargarLista)
     }, [invitationID])
 
-    const usar = (item) => {
+    // El PDF se pone al instante. Uno de una conversión vieja (solo 1440 px)
+    // se vuelve a convertir en alta resolución en seguida (mejorar). Uno
+    // subido antes de leer links (sin `links`): se leen de su original
+    // después y llegan sus zonas.
+    const usar = async (item) => {
         if (activeLang) { message.info('Cambia al idioma original para usar un PDF.'); return }
         usarFichaPdf(setInvitation, setSaved, item.ficha)
+        if (esConversionVieja(item.ficha)) mejorar(item.ficha)
+        if (Array.isArray(item.ficha.links)) {
+            const aviso = avisoLinks(item.ficha).trim()
+            if (aviso) message.success(aviso)
+            return
+        }
+        const ficha = await completarLinks(item.ficha)
+        setPdfs((prev) => prev?.map((x) => (x.carpeta === item.carpeta ? { ...x, ficha } : x)) ?? prev)
+        agregarZonasDeLinks(setInvitation, setSaved, ficha)
+        const aviso = avisoLinks(ficha).trim()
+        if (aviso) message.success(aviso)
     }
 
     const borrar = async (item, e) => {
@@ -104,6 +120,18 @@ export const PdfToolPanel = ({ invitation, invitationID, setInvitation, setSaved
                     Las invitaciones en PDF son nuevas y todavía las estamos probando. Si algo no se ve bien, avísanos desde el botón de soporte.
                 </p>
             </div>
+
+            {/* PDF del editor de una conversión vieja (1440 px): borroso en
+                pantallas grandes. Se vuelve a preparar desde su original. */}
+            {enPdf && esConversionVieja(invitation?.pdf) && !progreso && (
+                <button type="button" className={styles.mejorar} disabled={bloqueado} onClick={() => mejorar(invitation.pdf)}>
+                    <span className={styles.dropIcon}><Sparkles size={16} /></span>
+                    <span className={styles.dropText}>
+                        <strong>Mejorar la calidad de tu PDF</strong>
+                        <span>Lo preparamos en alta resolución para que se vea nítido en computadora y tableta.</span>
+                    </span>
+                </button>
+            )}
 
             {!enPdf && (
                 <p className={styles.texto}>

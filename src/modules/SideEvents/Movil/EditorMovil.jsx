@@ -4,6 +4,7 @@ import { normalizarAcceso, publicoDeAcceso } from '../acceso'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Check, Eye, Lock, LockOpen, Palette, Redo2, Share, Trash2, Undo2, Users, X } from 'lucide-react'
 import { EstadoGuardado } from '../EstadoGuardado'
+import { AvataresPresencia } from '../Presencia/AvataresPresencia'
 import SideEventHost from '../../../components/Host/SideEventHost'
 import { HERRAMIENTAS } from '../Workspace/herramientas'
 import { mediaDePortada, soloVideos } from '../fotosPortada'
@@ -83,6 +84,8 @@ const MARGEN = { x: 20, arriba: ALTO_HEADER + ALTO_ESTADO + 22, abajo: ALTO_FOOT
 
 export const EditorMovil = ({
     current, onChange, section, onSelect, stickerSel, onStickerSel, esPop, asistentes, stageMorphState,
+    // Presencia: quién más tiene abierto el Pop (usePresenciaPop, en SideEvents).
+    presencia = null,
     // Carpeta del evento en Storage (los PNG que se agregan van ahí).
     carpeta,
     // Header
@@ -412,6 +415,8 @@ export const EditorMovil = ({
                     <Redo2 size={18} strokeWidth={2} />
                 </button>
                 <span className={s.espacio} />
+                {/* Presencia: quién más tiene abierto el Pop (en el celular solo avatares). */}
+                {presencia?.length > 0 && <AvataresPresencia personas={presencia} compacto />}
                 <div className={s.segmento} role="tablist">
                     <button type="button" role="tab" aria-selected={tab !== 'envio'} aria-label={t('side_events.tab_design')} className={s.segBtn} data-on={tab !== 'envio' || undefined} onClick={() => onTab('diseno')}>
                         <Palette size={17} strokeWidth={2} />

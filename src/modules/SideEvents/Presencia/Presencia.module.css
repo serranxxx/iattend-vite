@@ -1,0 +1,123 @@
+/* Presencia en el editor de un Pop (usePresenciaPop): cursores, recuadros de
+   lo elegido y avatares. */
+
+.capa {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    /* Encima de la pieza y los paneles, debajo de la barra de arriba (1200). */
+    z-index: 1150;
+    overflow: hidden;
+}
+
+.cursor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    will-change: transform;
+}
+
+.cursor[data-visible='1'] {
+    opacity: 1;
+}
+
+/* Lo que señala no se ve aquí (otro scroll): en la orilla, tenue. */
+.cursor[data-visible='1'][data-orilla='arriba'],
+.cursor[data-visible='1'][data-orilla='abajo'] {
+    opacity: 0.45;
+}
+
+.flecha {
+    display: block;
+    margin: -1px 0 0 -1px;
+    filter: drop-shadow(0 1px 2px rgba(12, 23, 27, 0.3));
+}
+
+.etiqueta {
+    position: absolute;
+    left: 13px;
+    top: 16px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px 999px 999px 6px;
+    background: var(--color);
+    border: 2px solid #fff;
+    box-sizing: border-box;
+    font-size: 15px;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(12, 23, 27, 0.2);
+}
+
+.seleccion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1.5px solid var(--color);
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.seleccion[data-emoji]:not([data-emoji=''])::after {
+    content: attr(data-emoji);
+    position: absolute;
+    left: -1.5px;
+    bottom: 100%;
+    margin-bottom: 2px;
+    padding: 1px 4px;
+    border-radius: 6px 6px 6px 2px;
+    background: var(--color);
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+/* ── Avatares ── */
+.avatares {
+    display: inline-flex;
+    align-items: center;
+    padding-left: 6px;
+}
+
+.avatar {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    margin-left: -6px;
+    border-radius: 50%;
+    background: var(--color, #8a94a6);
+    color: #fff;
+    border: 2px solid #fff;
+    box-sizing: border-box;
+    font: 700 12.5px/1 'Plus Jakarta Sans', 'Work Sans', sans-serif;
+    /* El emoji, un poco más grande que la letra. */
+    font-size: 15px;
+    box-shadow: 0 1px 3px rgba(12, 23, 27, 0.18);
+    cursor: default;
+    animation: entrar 0.25s ease both;
+}
+
+.mas {
+    background: #eef0f4;
+    color: #1c3249;
+    font-size: 11px;
+}
+
+.avatares[data-compacto] .avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+}
+
+@keyframes entrar {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .avatar { animation: none; }
+    .cursor { transition: none; }
+}

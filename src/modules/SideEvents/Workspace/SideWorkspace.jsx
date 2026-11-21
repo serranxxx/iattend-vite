@@ -375,7 +375,9 @@ export const SideWorkspace = ({
     }
 
     const renderTool = (id) => (
-        id === 'design' ? <DesignPanel {...panelProps} />
+        // Mis PNG (efectos): "Elegir de Subidos" abre Subidos en modo elegir
+        // y al elegir regresa a Diseño.
+        id === 'design' ? <DesignPanel {...panelProps} onPickImage={(agregar) => pickMedia({}, (url) => { agregar(url); setActiveTool('design'); setToolOpen(true) })} />
             // El mismo panel Elementos de la invitación (catálogo de íconos,
             // formas, ilustraciones, textos, líneas y decoraciones); lo que se
             // suelta en la pieza llega por `iattend-layer-drop`.
@@ -424,7 +426,7 @@ export const SideWorkspace = ({
             renderTool={renderTool}
             card={CARD}
             canvas={(
-                <div className={own.canvasWrap} data-morph="stage" data-morphing={stageMorphState} data-tour="canvas">
+                <div className={own.canvasWrap} data-morph="stage" data-morphing={stageMorphState} data-tour="canvas" data-presencia-pieza>
                     <SideCanvas
                         key={current?.id}
                         current={current}

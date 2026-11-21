@@ -1056,6 +1056,7 @@ export const SideCanvas = ({
                                             alt=''
                                             draggable={false}
                                             className={styles.sticker}
+                                            data-elemento={s.id}
                                             style={estiloSticker(s)}
                                             onPointerDown={arrastrarSticker(s)}
                                             onClick={elegirSticker(s)}
@@ -1066,6 +1067,7 @@ export const SideCanvas = ({
                                             key={s.id}
                                             className={`${styles.sticker} ${styles.elemento}`}
                                             data-dibujo={s.kind === 'dibujo' ? s.id : undefined}
+                                            data-elemento={s.id}
                                             style={{ ...estiloSticker(s), ...(editando === s.id ? { visibility: 'hidden' } : {}), ...(dibujoFijo(s) ? { pointerEvents: 'none' } : {}) }}
                                             onPointerDown={dibujoFijo(s) ? undefined : arrastrarSticker(s)}
                                             onClick={dibujoFijo(s) ? undefined : elegirSticker(s)}
@@ -1232,6 +1234,9 @@ export const SideCanvas = ({
             <div
                 ref={scrollRef}
                 className={`${styles.scrollArea} scroll-invitation`}
+                // Presencia (usePresenciaPop): los cursores de los demás se
+                // ubican en el contenido, sumando este scroll.
+                data-scroll-pieza
                 // Pieza completa: la capa de dibujo cubre solo la primera
                 // pantalla; abajo, un trazo que empieza encima de una tarjeta
                 // se ancla a ella (lo demás no se dibuja).

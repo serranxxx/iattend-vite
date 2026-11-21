@@ -989,3 +989,91 @@
 .swatchPropio[style] {
     color: transparent;
 }
+
+/* ── Mis PNG (efectos): las imágenes elegidas y las de la pieza ── */
+.efectoImgs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.efectoImg {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 5px;
+    border-radius: 12px;
+    border: none;
+    box-sizing: border-box;
+    /* Cuadrícula de transparencia, como en Subidos. */
+    background: repeating-conic-gradient(#F1EFEC 0 25%, #FFFFFF 0 50%) 0 0 / 12px 12px;
+    box-shadow: inset 0 0 0 1px rgba(41, 38, 45, 0.12);
+}
+
+/* Absoluta: un PNG alto (o una regla global de img) no estira la casilla. */
+.efectoImg img {
+    position: absolute;
+    inset: 5px;
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    max-width: none;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.efectoImgQuitar {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1.5px solid #FFFFFF;
+    background: #29262D;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+.efectoImgMas {
+    background: #FFFFFF;
+    color: #6E6965;
+    border: 1.5px dashed #C9C4BE;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.efectoImgMas:hover {
+    color: #29262D;
+    border-color: #8A847E;
+}
+
+.efectoImgSugerida {
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.efectoImgSugerida:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.efectoImgAgregar {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid #FFFFFF;
+    background: #16323d;
+    color: #FFFFFF;
+}

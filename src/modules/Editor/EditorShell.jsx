@@ -413,7 +413,7 @@ export const EditorShell = ({
 
     return (
         <MediaSiderContext.Provider value={mediaSider}>
-        <div ref={wsRef} className={`${ws.workspace} ${className ?? ''}`}>
+        <div ref={wsRef} className={`${ws.workspace} ${className ?? ''}`} data-editor-area>
             {/* ── Riel y panel de herramienta ── */}
             {!withColumn && !inmersivo && (
                 <div className={ws.left} data-live={live || undefined} data-entrada={volviendo || undefined} data-edit-keep data-editor-left>

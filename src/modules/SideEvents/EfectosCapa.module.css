@@ -112,6 +112,38 @@
     }
 }
 
+/* ── Mis PNG: las imágenes del organizador (data-mov = cómo se mueven) ── */
+.imagenes .particula {
+    top: 0;
+    background: center / contain no-repeat;
+}
+
+.imagenes[data-mov='caer'] .particula {
+    animation-name: caer;
+}
+
+.imagenes[data-mov='subir'] .particula {
+    animation-name: subir;
+    animation-timing-function: ease-in;
+}
+
+/* Laten en su lugar (como los brillos), sin girar del todo. */
+.imagenes[data-mov='latir'] .particula {
+    animation-name: latir;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes latir {
+    0%, 100% {
+        transform: scale(0.4) rotate(calc(var(--giro) / -24));
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1) rotate(calc(var(--giro) / 24));
+        opacity: 1;
+    }
+}
+
 /* Quien pide menos movimiento: sin animación (los brillos quedan quietos y
    tenues; lo que cae o sube no se muestra). */
 @media (prefers-reduced-motion: reduce) {
@@ -122,11 +154,14 @@
     .snow,
     .confetti,
     .petals,
-    .bubbles {
+    .bubbles,
+    .imagenes[data-mov='caer'],
+    .imagenes[data-mov='subir'] {
         display: none;
     }
 
-    .sparkles .particula {
+    .sparkles .particula,
+    .imagenes[data-mov='latir'] .particula {
         opacity: 0.6;
     }
 }
