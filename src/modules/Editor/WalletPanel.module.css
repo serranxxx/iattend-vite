@@ -183,3 +183,9 @@
     line-height: 1.35;
     color: #787878;
 }
+
+/* Insignia Plus junto a "Ofrecer Apple Wallet" (Pop Free). */
+.insignia {
+    margin-left: 8px;
+    vertical-align: 2px;
+}

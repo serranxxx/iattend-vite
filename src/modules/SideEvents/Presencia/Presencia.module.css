@@ -93,8 +93,11 @@
     border: 2px solid #fff;
     box-sizing: border-box;
     font: 700 12.5px/1 'Plus Jakarta Sans', 'Work Sans', sans-serif;
-    /* El emoji, un poco más grande que la letra. */
-    font-size: 15px;
+    /* El emoji, un poco más grande que la letra. Con line-height 1 el glifo
+       del emoji se cortaba arriba y abajo. */
+    font-size: 16px;
+    line-height: normal;
+    overflow: visible;
     box-shadow: 0 1px 3px rgba(12, 23, 27, 0.18);
     cursor: default;
     animation: entrar 0.25s ease both;

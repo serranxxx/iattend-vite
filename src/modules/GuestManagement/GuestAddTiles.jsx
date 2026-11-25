@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import { UserPlus, Sparkles, Download, Upload } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import './guest-add-tiles.css'
+import { InsigniaPlus } from '../SideEvents/PlanPops/InsigniaPlus'
 
 // Menú de Agregar invitados (boda, side events, Pop, Save the Date): filas
 // (`topExtra` —De otro evento / copiar de la boda—, Individual) y el bloque
@@ -11,7 +12,9 @@ import './guest-add-tiles.css'
 // `sinExcel`: sin el bloque (un Pop no lo tiene).
 const PLANTILLA = '/plantillas/plantilla-invitados-iattend.xlsx'
 
-export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan, sinExcel = false }) => {
+// `bloqueoPlus` (Pop Free): el bloque se ve con la insignia de Pops Plus en
+// lugar del badge PRO de la boda, y tocarlo llama `onBloqueado`.
+export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan, sinExcel = false, bloqueoPlus = false, onBloqueado }) => {
     const { t } = useTranslation()
     const [isDragOver, setIsDragOver] = useState(false)
     const fileInputRef = useRef(null)
@@ -46,9 +49,12 @@ export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan, sinExcel =
             </button>
 
             {!sinExcel && (
-                <div className={`guest-add-excel ${esPro ? '' : 'pro_badge'}`} data-bloqueado={!esPro || undefined}>
+                <div className={`guest-add-excel ${esPro || bloqueoPlus ? '' : 'pro_badge'}`} data-bloqueado={!esPro || undefined}>
                     <div className="guest-add-excel-head">
-                        <span className="guest-add-excel-title">{t('guests_import.tile_excel_title')}</span>
+                        <span className="guest-add-excel-title">
+                            {t('guests_import.tile_excel_title')}
+                            {bloqueoPlus && <InsigniaPlus className="guest-add-tile-insignia" />}
+                        </span>
                         <span className="guest-add-excel-lia"><Sparkles size={14} />{t('guests_import.tile_excel_lia')}</span>
                     </div>
 
@@ -91,7 +97,7 @@ export const GuestAddTiles = ({ onIndividual, onFile, topExtra, plan, sinExcel =
                         style={{ display: 'none' }}
                         onChange={handleFileInputChange}
                     />
-                    {!esPro && <span className="guest-add-tile-lock-overlay" />}
+                    {!esPro && <span className="guest-add-tile-lock-overlay" onClick={onBloqueado} />}
                 </div>
             )}
         </div>

@@ -1,26 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { DatePicker, TimePicker } from 'antd'
+import { DatePicker, TimePicker, message } from 'antd'
 import dayjs from 'dayjs'
-import { ArrowLeft } from 'lucide-react'
-import { formatMXN } from '../../hooks/usePlans'
+import { ArrowLeft, Lock } from 'lucide-react'
 import { StickerFlotante } from '../Board/PopsSection'
-import { checkoutPop, crearPopGratis, fetchBeneficios, fetchPrecioPop } from './plannerEventApi'
+import { crearPopGratis } from './plannerEventApi'
+import { lanzarAnimacionNuevoPop } from './lanzarAnimacionNuevoPop'
+import { enModoPruebaPop } from './modoPruebaPop'
+import { InsigniaPlus } from '../../modules/SideEvents/PlanPops/InsigniaPlus'
+import { irAStripePlus, useCuentaPlus } from '../Board/PopsApp/suscripcionPlus'
+import { PRECIO_PLUS } from '../Board/PopsApp/usePlanPops'
 import styles from './PlannerPopFlow.module.css'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-// Créditos de WhatsApp que trae cada Pop: copia de POP_CREDITS en
-// iattend--backend/helpers/popEvent.js (el precio todavía no los manda).
-const POP_CREDITOS = 30
 // Emoji de la vista previa (el Pop lo elige después en Diseño, body.emoji).
 const EMOJI_PREVIA = '🎉'
 
 const DESTINOS = [
     { key: 'mio', emoji: '🙋', color: 'var(--pops-amarillo)', titulo: 'for_me', texto: 'for_me_text' },
-    { key: 'ahora', emoji: '💼', color: 'var(--pops-rosa)', titulo: 'for_client', texto: 'for_client_text' },
-    { key: 'despues', emoji: '⏳', color: 'var(--pops-cian)', titulo: 'for_later', texto: 'for_later_text' },
+    { key: 'ahora', emoji: '💼', color: 'var(--pops-rosa)', titulo: 'for_client', texto: 'for_client_text', plus: true },
+    { key: 'despues', emoji: '⏳', color: 'var(--pops-cian)', titulo: 'for_later', texto: 'for_later_text', plus: true },
 ]
+// "A mi cliente" y "Enviar después" son de Pops+ (modo planner, handoff
+// "App de Pops"): con una cuenta Free se ven bloqueados con la insignia y,
+// al tocarlos, un aviso con "Pasar a Pops+".
 
 // Collage de la confirmación (220 × 200).
 const FIESTA = [
@@ -34,68 +38,51 @@ const FIESTA = [
 /**
  * Alta de un Pop (side event sin invitación) dentro de PlannerEventDrawer
  * (handoff "Crear Pop"). Pasos: ¿Para quién es? (para mí / a mi cliente /
- * enviar después) → ¿Qué vamos a celebrar? (nombre, fecha, hora) → Pago y
- * una pantalla "¡Pop!" que abre el editor.
- * Si tiene Pops gratis, en el pago elige usar uno ($0, de entrada) o pagarlo
- * (Stripe con su descuento; lo crea el webhook). `modo` ya no separa los
- * flujos: 'gratis' solo dice que llegó desde un botón de gratis.
- * `soloParaMi`: un cliente con Pops gratis (Admin → Usuarios › Clientes): sin
- * "Para quién" y sin pagar (el precio es solo de planners).
+ * enviar después; los dos últimos son de Pops+) → ¿Qué vamos a celebrar?
+ * (nombre, fecha, hora) → "Crear Pop" y la pantalla "¡Pop!" que abre el editor.
+ * Los Pops son ilimitados: sin pago ni Pops gratis (POST /api/planner/pop). El
+ * plan Free limita Pops activos y personas, no cuántos se crean.
+ * `soloParaMi`: una cuenta de cliente: sin "Para quién".
  * Backend: helpers/popEvent.js.
  */
-export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onCreated }) => {
+export const PlannerPopFlow = ({ soloParaMi = false, destinoInicial, onBackToStart, onClose, onCreated }) => {
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
     const cuerpo = useRef(null)
     const inicio = soloParaMi ? 2 : 1
 
     const [paso, setPaso] = useState(inicio)
-    const [destino, setDestino] = useState('mio')
+    const [destino, setDestino] = useState(destinoInicial ?? 'mio')
+    const enPrueba = enModoPruebaPop()
+    const cuentaPlus = useCuentaPlus()
+    // Mientras carga el plan no se bloquea nada (una cuenta Plus no ve el parpadeo).
+    const soloPlus = cuentaPlus === false
+    // Una cuenta Free no puede quedarse en un destino de Pops+ (p. ej. si llegó
+    // con destinoInicial 'ahora').
+    useEffect(() => { if (soloPlus && destino !== 'mio') setDestino('mio') }, [soloPlus])
+    const [avisoPlus, setAvisoPlus] = useState(false)
+    const [yendoPlus, setYendoPlus] = useState(false)
+    const pasarPlus = async () => {
+        setYendoPlus(true)
+        try { await irAStripePlus('checkout') } catch { setYendoPlus(false); setError(t('pops_app.stripe_error')) }
+    }
     const [nombreCliente, setNombreCliente] = useState('')
     const [correoCliente, setCorreoCliente] = useState('')
     const [nombre, setNombre] = useState('')
     const [fecha, setFecha] = useState(null)
     const [hora, setHora] = useState(null)
-    const [precio, setPrecio] = useState(null)
-    const [precioError, setPrecioError] = useState(null)
-    const [gratis, setGratis] = useState(null)
-    const [usarGratis, setUsarGratis] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
     const [creado, setCreado] = useState(null)
-
-    useEffect(() => {
-        fetchBeneficios()
-            .then(({ data }) => setGratis(data.beneficios?.free_flash_events ?? 0))
-            .catch(() => setGratis(0))
-        if (soloParaMi) return
-        fetchPrecioPop()
-            .then(({ data }) => setPrecio(data))
-            .catch((err) => {
-                console.error('No se pudo cargar el precio del Pop:', err.response?.status, err.response?.data || err.message)
-                setPrecioError(err.response?.data?.msg || err.message)
-            })
-    }, [soloParaMi])
 
     useEffect(() => {
         cuerpo.current?.scrollTo({ top: 0 })
         setError('')
     }, [paso])
 
-    const hayGratis = (gratis ?? 0) > 0
-    const gratisElegido = hayGratis && (usarGratis || soloParaMi)
-    const descuento = precio?.discount_pct ?? 0
-    const totalPago = precio ? Math.round(precio.amount * (1 - descuento / 100) * 100) / 100 : null
-    const total = gratisElegido ? 0 : totalPago
-    const creditos = precio?.credits ?? POP_CREDITOS
-
     const destinoCompleto = destino !== 'ahora' || (!!nombreCliente.trim() && EMAIL_RE.test(correoCliente.trim()))
     const datosCompletos = !!nombre.trim() && !!fecha
-    const pagoListo = gratisElegido || (!soloParaMi && totalPago != null)
-    const valido = paso === 1 ? destinoCompleto : paso === 2 ? datosCompletos : paso === 3 ? pagoListo : true
-
-    // Administración puede crear sin costo (el backend no le gasta Pop gratis).
-    const esAdmin = JSON.parse(localStorage.getItem('session') || 'null')?.user?.role === 'Administration'
+    const valido = paso === 1 ? destinoCompleto : paso === 2 ? datosCompletos : true
 
     const payload = () => ({
         destino,
@@ -105,24 +92,38 @@ export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onC
         ...(destino === 'ahora' ? { correo_cliente: correoCliente.trim(), nombre_cliente: nombreCliente.trim() } : {}),
     })
 
-    const enviar = async ({ sinCosto = false } = {}) => {
+    // Los Pops son ilimitados: se crean directo, sin pago ni Pops gratis
+    // (POST /api/planner/pop). "A mi cliente" / "Enviar después" son de Pops+.
+    const enviar = async () => {
         if (submitting) return
         setError('')
         setSubmitting(true)
         try {
-            if (gratisElegido || sinCosto) {
-                // `sin_costo`: el botón de Administración "Crear sin costo" no
-                // gasta un Pop gratis; "Usar un Pop gratis" sí (también a un admin).
-                const { data } = await crearPopGratis({ ...payload(), ...(sinCosto && !gratisElegido ? { sin_costo: true } : {}) })
-                setCreado(data)
-                setPaso(4)
-            } else {
-                const { data } = await checkoutPop({ ...payload(), origin: window.location.origin })
-                window.location.href = data.url
+            const { data } = await crearPopGratis({ ...payload(), ...(enPrueba ? { prueba: true } : {}) })
+            if (data?.prueba) {
+                // Nada se guardó: la animación se queda en esta pantalla.
+                onClose()
+                lanzarAnimacionNuevoPop({
+                    alAbrir: () => {},
+                })
+                setTimeout(() => message.info(t(data.correo_prueba ? 'pop_flow.test_done_mail' : 'pop_flow.test_done')), 1600)
                 return
             }
+            // Animación del handoff "Animaciones de Nuevo Pop" (fiesta de
+            // stickers) y el editor se abre en un círculo desde el centro. Sin id (raro), la
+            // pantalla "¡Pop!" de siempre.
+            if (data?.side_event_id) {
+                onCreated?.()
+                onClose()
+                lanzarAnimacionNuevoPop({
+                    alAbrir: () => navigate(`/dashboard/side?pop=${data.side_event_id}`),
+                })
+                return
+            }
+            setCreado(data)
+            setPaso(4)
         } catch (err) {
-            setError(err.response?.data?.msg || t('planner_event.err_generic'))
+            setError(err.response?.data?.code === 'POPS_PLUS' ? t('pop_flow.plus_only') : (err.response?.data?.msg || t('planner_event.err_generic')))
         }
         setSubmitting(false)
     }
@@ -141,8 +142,8 @@ export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onC
 
     const siguiente = () => {
         if (!valido || submitting) return
-        if (paso < 3) setPaso(paso + 1)
-        else if (paso === 3) enviar()
+        if (paso < 2) setPaso(paso + 1)
+        else if (paso === 2) enviar()
         else abrirEditor()
     }
 
@@ -151,26 +152,20 @@ export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onC
         ? `${fecha.toDate().toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }).replace('.', '')}${hora ? ` · ${hora.format('HH:mm')}` : ''}`
         : t('pop_flow.no_date')
     const nombrePrevio = nombre.trim() || t('pop_flow.your_event')
-    const paraTexto = destino === 'mio'
-        ? t('pop_flow.for_me')
-        : destino === 'ahora'
-            ? t('pop_flow.for_named', { name: nombreCliente.trim() || t('pop_flow.your_client') })
-            : t('pop_flow.for_later')
-
-    const etiquetas = [t('pop_flow.step_for'), t('pop_flow.step_data'), soloParaMi ? t('pop_flow.step_confirm') : t('pop_flow.step_pay')]
-        .slice(inicio - 1)
+    const etiquetas = [t('pop_flow.step_for'), t('pop_flow.step_data')].slice(inicio - 1)
     const totalPasos = etiquetas.length
     const pasoVisible = paso - inicio + 1
 
-    const cta = paso < 3
+    const cta = paso < 2
         ? t('pop_flow.continue')
-        : paso === 3
-            ? (gratisElegido ? t('pop_flow.send_free') : totalPago != null ? t('pop_flow.pay', { amount: formatMXN(totalPago) }) : t('pop_flow.continue'))
+        : paso === 2
+            ? t('pop_flow.create')
             : t('pop_flow.open_editor')
 
     return (
         <div className={styles.panel}>
             <header className={styles.cabeza}>
+                {enPrueba && <span className={styles.modoPrueba}>{t('pop_flow.test_banner')}</span>}
                 <div className={styles.cabezaFila}>
                     <button type='button' className={styles.atras} onClick={atras} aria-label={paso === inicio ? t('planner_event.cancel') : t('planner_event.back')}>
                         <ArrowLeft size={18} />
@@ -196,24 +191,39 @@ export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onC
                 {paso === 1 && (
                     <div className={styles.paso} key='p1'>
                         <h2 className={styles.pregunta}>{t('pop_flow.q_for')}</h2>
-                        {DESTINOS.map(d => (
-                            <button
-                                key={d.key}
-                                type='button'
-                                role='radio'
-                                aria-checked={destino === d.key}
-                                className={styles.opcion}
-                                data-on={destino === d.key || undefined}
-                                onClick={() => setDestino(d.key)}
-                            >
-                                <span className={styles.opcionEmoji} style={{ background: d.color }} aria-hidden>{d.emoji}</span>
-                                <span className={styles.opcionTexto}>
-                                    <strong>{t(`pop_flow.${d.titulo}`)}</strong>
-                                    <span>{t(`pop_flow.${d.texto}`)}</span>
-                                </span>
-                                <span className={styles.radio}><span /></span>
-                            </button>
-                        ))}
+                        {DESTINOS.map(d => {
+                            const bloqueado = d.plus && soloPlus
+                            return (
+                                <button
+                                    key={d.key}
+                                    type='button'
+                                    role='radio'
+                                    aria-checked={destino === d.key}
+                                    aria-disabled={bloqueado || undefined}
+                                    className={styles.opcion}
+                                    data-on={destino === d.key || undefined}
+                                    data-bloqueado={bloqueado || undefined}
+                                    onClick={() => (bloqueado ? setAvisoPlus(true) : setDestino(d.key))}
+                                >
+                                    <span className={styles.opcionEmoji} style={{ background: d.color }} aria-hidden>{d.emoji}</span>
+                                    <span className={styles.opcionTexto}>
+                                        <strong>{t(`pop_flow.${d.titulo}`)}{bloqueado && <InsigniaPlus />}</strong>
+                                        <span>{t(`pop_flow.${d.texto}`)}</span>
+                                    </span>
+                                    {bloqueado
+                                        ? <span className={styles.candado} aria-hidden><Lock size={16} /></span>
+                                        : <span className={styles.radio}><span /></span>}
+                                </button>
+                            )
+                        })}
+                        {soloPlus && avisoPlus && (
+                            <div className={styles.avisoPlus} role='status'>
+                                <span>{t('pop_flow.plus_only')}</span>
+                                <button type='button' onClick={pasarPlus} disabled={yendoPlus}>
+                                    {t(yendoPlus ? 'pops_app.going_stripe' : 'pops_app.go_plus', { price: PRECIO_PLUS })}
+                                </button>
+                            </div>
+                        )}
                         {destino === 'ahora' && (
                             <div className={styles.cliente}>
                                 <label className={styles.campo}>
@@ -288,56 +298,6 @@ export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onC
                     </div>
                 )}
 
-                {paso === 3 && (
-                    <div className={styles.paso} key='p3' style={{ gap: 16 }}>
-                        <h2 className={styles.pregunta}>{t('pop_flow.q_pay')}</h2>
-                        <div className={styles.ticket}>
-                            <div className={styles.ticketArriba}>
-                                <span className={styles.ticketMini} aria-hidden>{EMOJI_PREVIA}</span>
-                                <span className={styles.ticketTexto}>
-                                    <strong>{nombrePrevio}</strong>
-                                    <span>{fechaTexto} · {paraTexto}</span>
-                                </span>
-                            </div>
-                            <div className={styles.ticketCorte} />
-                            <span className={styles.ticketNota}>{t('pop_flow.includes', { count: creditos })}</span>
-                        </div>
-
-                        {hayGratis && !soloParaMi && (
-                            <div className={styles.pagos} role='radiogroup'>
-                                <button type='button' role='radio' aria-checked={usarGratis} className={styles.pago} data-on={usarGratis || undefined} data-gratis onClick={() => setUsarGratis(true)}>
-                                    <span className={styles.pagoEmoji} aria-hidden>🎁</span>
-                                    <span className={styles.pagoTexto}>
-                                        <strong>{t('pop_flow.use_free')}</strong>
-                                        <span>{t('pop_flow.free_left', { count: gratis })}</span>
-                                    </span>
-                                    <span className={styles.pagoMonto}>{formatMXN(0)}</span>
-                                </button>
-                                <button type='button' role='radio' aria-checked={!usarGratis} className={styles.pago} data-on={!usarGratis || undefined} onClick={() => setUsarGratis(false)}>
-                                    <span className={styles.pagoEmoji} aria-hidden>💳</span>
-                                    <span className={styles.pagoTexto}>
-                                        <strong>{t('pop_flow.pay_this')}</strong>
-                                        <span>{t('pop_flow.keep_free')}</span>
-                                    </span>
-                                    <span className={styles.pagoMonto}>{totalPago != null ? formatMXN(totalPago) : '—'}</span>
-                                </button>
-                            </div>
-                        )}
-
-                        {soloParaMi && !hayGratis && gratis != null && <p className={styles.aviso}>{t('pop_flow.none_left')}</p>}
-                        {!gratisElegido && !soloParaMi && precioError && <p className={styles.aviso}>{t('planner_pop.price_error', { msg: precioError })}</p>}
-                        {!gratisElegido && !soloParaMi && !precio && !precioError && <p className={styles.ayuda}>{t('planner_pop.price_loading')}</p>}
-
-                        <div className={styles.total}>
-                            <span>{t('pop_flow.total')}</span>
-                            <span className={styles.totalMonto}>{total != null ? formatMXN(total) : '—'}</span>
-                        </div>
-                        {!gratisElegido && descuento > 0 && precio && (
-                            <span className={styles.descuento}>{t('pop_flow.discount', { pct: descuento, amount: formatMXN(precio.amount) })}</span>
-                        )}
-                    </div>
-                )}
-
                 {paso === 4 && (
                     <div className={styles.listo}>
                         <div className={styles.fiesta}>
@@ -359,11 +319,6 @@ export const PlannerPopFlow = ({ soloParaMi = false, onBackToStart, onClose, onC
                     {submitting ? t('pop_flow.working') : cta}
                     <span className={styles.ctaPunto} aria-hidden>→</span>
                 </button>
-                {paso === 3 && esAdmin && !gratisElegido && (
-                    <button type='button' className={styles.sinCosto} onClick={() => enviar({ sinCosto: true })} disabled={submitting}>
-                        {t('planner_event.admin_free')}
-                    </button>
-                )}
             </footer>
         </div>
     )

@@ -88,3 +88,22 @@
 .panel .buscar:focus { border-color: var(--accion); box-shadow: 0 0 0 3px rgba(45, 108, 223, .12); }
 .bloque { padding-top: 14px; border-top: 1px solid #ECECF0; }
 .bloque > div { width: auto; padding: 0; }
+
+/* Pop Free: subir documentos es de Pops Plus. Insignia junto a Material y
+   el botón apagado por dentro (la insignia nunca se opaca). */
+.insignia {
+    margin-left: 8px;
+    vertical-align: 2px;
+}
+
+.punteado[data-plus] {
+    cursor: not-allowed;
+}
+
+.punteado[data-plus] > * {
+    opacity: 0.45;
+}
+
+.punteado[data-plus] {
+    color: rgba(59, 89, 152, 0.5);
+}

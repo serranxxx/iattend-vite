@@ -91,6 +91,10 @@
 
 .opcion[aria-disabled] {
     cursor: default;
+}
+
+/* Apagado: el contenido, no la caja (la insignia Pops+ nunca se opaca). */
+.opcion[aria-disabled] > :not([role='img']) {
     opacity: .55;
 }
 

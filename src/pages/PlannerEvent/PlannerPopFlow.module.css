@@ -958,3 +958,94 @@
     background: #E4E3DD;
     box-shadow: none;
 }
+
+/* Destinos de Pops+ con una cuenta Free: bloqueados con la insignia. */
+.opcion[data-bloqueado] {
+    cursor: pointer;
+    background: #F7F8FB;
+}
+
+.opcion[data-bloqueado] .opcionEmoji {
+    filter: grayscale(0.6);
+    opacity: 0.55;
+}
+
+.opcion[data-bloqueado] .opcionTexto strong,
+.opcion[data-bloqueado] .opcionTexto > span {
+    opacity: 0.7;
+}
+
+.opcionTexto strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.opcionTexto strong > [role='img'] {
+    opacity: 1;
+}
+
+.candado {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #E3E6F0;
+    color: #56627A;
+}
+
+.avisoPlus {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 18px;
+    background: #0B1F3A;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.45;
+    animation: avisoPlusEntra 0.25s ease-out;
+}
+
+.avisoPlus button {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 46px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.avisoPlus button:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+@keyframes avisoPlusEntra {
+    from { opacity: 0; transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .avisoPlus { animation: none; }
+}
+
+/* Modo prueba (MODO_PRUEBA_POP, solo Administración): no se guarda nada. */
+.modoPrueba {
+    align-self: flex-start;
+    margin-bottom: 8px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: #FFF4CC;
+    color: #7A5A00;
+    font-size: 12px;
+    font-weight: 800;
+}

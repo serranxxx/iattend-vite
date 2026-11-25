@@ -546,3 +546,14 @@
     opacity: 0.55;
     font-variant-numeric: tabular-nums;
 }
+
+/* Plan de Pops en Clientes: Pops+ (navy con el + lima) y prueba gratis. */
+.planPopsPlus {
+    background: #0B1F3A;
+    color: #CDF22B;
+}
+
+.planPopsPrueba {
+    background: #EEF7C9;
+    color: #4A5A0C;
+}

@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorPicker } from 'antd'
+import { Popover } from 'antd'
 import { Ban, Check, ChevronRight, Lightbulb, Search } from 'lucide-react'
 import { useTextures } from '../../../../context/TexturesContext'
 import { colorCollection } from '../../../../helpers/services/colorPalette'
-import { colorFactoryToHex, darker, lighter } from '../../../../helpers/assets/functions'
 import { useAppSetting } from '../../../../hooks/useAppSetting'
+import { ColoresIOS } from '../../../Editor/ColoresIOS'
 import styles from './ToolPanels.module.css'
 
 // Paneles de herramienta del editor de escritorio (EditorWorkspace, etapa 2):
@@ -15,9 +15,85 @@ import styles from './ToolPanels.module.css'
 
 const same = (a, b) => (a ?? '').toLowerCase() === (b ?? '').toLowerCase()
 
-const patchGenerals = (setInvitation, setSaved, patch) => {
-    setInvitation((prev) => ({ ...prev, generals: { ...prev.generals, ...patch(prev.generals) } }))
+// `opts.snapshot = false`: no abre otro paso de deshacer (arrastres del selector).
+const patchGenerals = (setInvitation, setSaved, patch, opts) => {
+    setInvitation((prev) => ({ ...prev, generals: { ...prev.generals, ...patch(prev.generals) } }), opts)
     setSaved(false)
+}
+
+// Cambiar un solo color de la paleta. Textos (`accent`) también es el color de
+// los títulos al aplicar una paleta: si los títulos lo seguían, lo siguen.
+const colorPatch = (key, value) => (g) => {
+    const patch = { colors: { ...g.colors, [key]: value } }
+    if (key === 'accent' && g.fonts?.titles && same(g.fonts.titles.color, g.colors?.accent)) {
+        patch.fonts = { ...g.fonts, titles: { ...g.fonts.titles, color: value } }
+    }
+    return patch
+}
+
+// Los 4 cuadros de la paleta (Fondo · Contrastes · Textos · Acentos). Cada uno
+// abre el selector estilo iOS (ColoresIOS). En escritorio va en un Popover
+// anclado a la fila de cuadros (a la derecha del panel, sin tapar los demás
+// cuadros: tocar otro cambia de color sin cerrarlo; clic fuera —también en
+// la pieza— o Esc lo cierran). En el celular (`movil`, dentro del drawer) va debajo de los cuadros.
+const PaletteSwatches = ({ colors, roles, setInvitation, setSaved, movil }) => {
+    const [open, setOpen] = useState(null)
+    const rowRef = useRef(null)
+    const popRef = useRef(null)
+    const pick = (key) => (hex, o) => patchGenerals(setInvitation, setSaved, colorPatch(key, hex), { snapshot: o?.snapshot !== false })
+
+    useEffect(() => {
+        if (movil || !open) return undefined
+        const fuera = (e) => {
+            if (rowRef.current?.contains(e.target) || popRef.current?.contains(e.target)) return
+            setOpen(null)
+        }
+        const esc = (e) => { if (e.key === 'Escape') setOpen(null) }
+        // Un clic en la pieza (iframe) no llega a este documento: le quita el foco a la ventana.
+        const blur = () => setTimeout(() => { if (document.activeElement?.tagName === 'IFRAME') setOpen(null) }, 0)
+        document.addEventListener('pointerdown', fuera, true)
+        window.addEventListener('keydown', esc)
+        window.addEventListener('blur', blur)
+        return () => {
+            document.removeEventListener('pointerdown', fuera, true)
+            window.removeEventListener('keydown', esc)
+            window.removeEventListener('blur', blur)
+        }
+    }, [movil, open])
+
+    const grid = (
+        <div ref={rowRef} className={styles.swatches}>
+            {roles.map((role) => (
+                <button key={role.key} type="button" className={styles.swatch} data-open={open === role.key || undefined} aria-expanded={open === role.key} onClick={() => setOpen((k) => (k === role.key ? null : role.key))}>
+                    <span className={styles.swatchColor} style={{ background: colors[role.key] }} />
+                    <span className={styles.swatchLabel}>{role.label}</span>
+                </button>
+            ))}
+        </div>
+    )
+
+    if (movil) return (
+        <>
+            {grid}
+            {open && <ColoresIOS value={colors[open]} onChange={pick(open)} className={styles.coloresMovil} cabeza={false} conGuardados={false} />}
+        </>
+    )
+
+    return (
+        <Popover
+            trigger={[]}
+            placement="rightTop"
+            arrow={false}
+            open={Boolean(open)}
+            content={open && (
+                <div ref={popRef} data-text-bar>
+                    <ColoresIOS key={open} value={colors[open]} onChange={pick(open)} />
+                </div>
+            )}
+        >
+            {grid}
+        </Popover>
+    )
 }
 
 // Aplicar una paleta completa: los 4 colores y el color de los títulos (como
@@ -57,40 +133,11 @@ export const PalettePanel = ({ invitation, setInvitation, setSaved }) => {
         return colorCollection.filter((c) => c.name.toLowerCase().includes(q) || c.keywords?.some((k) => k.includes(q)))
     }, [query])
 
-    // Tonos de cada color de la paleta como atajos del selector (igual que
-    // en Ajustes generales).
-    const presets = roles.filter((role) => colors[role.key]).map((role) => ({
-        label: role.label,
-        defaultOpen: true,
-        colors: [
-            ...[0.3, 0.5, 0.7, 0.9].map((n) => darker(colors[role.key], n)),
-            colors[role.key],
-            ...[0.9, 0.7, 0.5, 0.3, 0.1].map((n) => lighter(colors[role.key], n)),
-        ],
-    }))
-
-    const setColor = (key, value) => patchGenerals(setInvitation, setSaved, (g) => ({ colors: { ...g.colors, [key]: value } }))
-
     return (
         <>
             <div className={styles.group}>
                 <span className={styles.groupLabel}>{t('build_editor.palette_current')}</span>
-                <div className={styles.swatches}>
-                    {roles.map((role) => (
-                        <ColorPicker
-                            key={role.key}
-                            disabledAlpha
-                            presets={presets}
-                            value={colors[role.key]}
-                            onChangeComplete={(c) => setColor(role.key, colorFactoryToHex(c))}
-                        >
-                            <button type="button" className={styles.swatch}>
-                                <span className={styles.swatchColor} style={{ background: colors[role.key] }} />
-                                <span className={styles.swatchLabel}>{role.label}</span>
-                            </button>
-                        </ColorPicker>
-                    ))}
-                </div>
+                <PaletteSwatches colors={colors} roles={roles} setInvitation={setInvitation} setSaved={setSaved} />
             </div>
 
             <div className={styles.group}>
@@ -241,7 +288,7 @@ const SUGGESTED = 6
 // Texturas a la vista: 3 filas de 4 ("Ninguna" + 11).
 const PAPERS = 11
 
-export const DesignPanel = ({ invitation, setInvitation, setSaved }) => {
+export const DesignPanel = ({ invitation, setInvitation, setSaved, movil }) => {
     const { t } = useTranslation()
     const { textures, loading } = useTextures()
     const generals = invitation?.generals ?? {}
@@ -272,12 +319,6 @@ export const DesignPanel = ({ invitation, setInvitation, setSaved }) => {
         { key: 'accent', label: t('build_generals.label_texts') },
         { key: 'actions', label: t('build_generals.label_accents') },
     ]
-    const presets = roles.filter((role) => colors[role.key]).map((role) => ({
-        label: role.label,
-        defaultOpen: true,
-        colors: [...[0.3, 0.5, 0.7, 0.9].map((n) => darker(colors[role.key], n)), colors[role.key], ...[0.9, 0.7, 0.5, 0.3, 0.1].map((n) => lighter(colors[role.key], n))],
-    }))
-    const setColor = (key, value) => patchGenerals(setInvitation, setSaved, (g) => ({ colors: { ...g.colors, [key]: value } }))
     const palettes = useMemo(() => {
         const q = query.trim().toLowerCase()
         if (!q) return colorCollection
@@ -332,16 +373,7 @@ export const DesignPanel = ({ invitation, setInvitation, setSaved }) => {
                 <div className={styles.blockHead}>
                     <span className={styles.blockTitle}>{t('build_editor.design_palette')}</span>
                 </div>
-                <div className={styles.swatches}>
-                    {roles.map((role) => (
-                        <ColorPicker key={role.key} disabledAlpha presets={presets} value={colors[role.key]} onChangeComplete={(c) => setColor(role.key, colorFactoryToHex(c))}>
-                            <button type="button" className={styles.swatch}>
-                                <span className={styles.swatchColor} style={{ background: colors[role.key] }} />
-                                <span className={styles.swatchLabel}>{role.label}</span>
-                            </button>
-                        </ColorPicker>
-                    ))}
-                </div>
+                <PaletteSwatches colors={colors} roles={roles} setInvitation={setInvitation} setSaved={setSaved} movil={movil} />
                 {allPalettes && (
                     <label className={styles.search}>
                         <Search size={15} />

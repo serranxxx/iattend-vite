@@ -1,0 +1,1220 @@
+/* App de Pops en escritorio (PopsApp.jsx, handoff "App de Pops"). */
+.app {
+    --pa-navy: #0B1F3A;
+    --pa-azul: #2457A4;
+    --pa-lima: #CDF22B;
+    --pa-lima-sombra: #9DBB12;
+    --pa-rosa: #FF5FA8;
+    --pa-fondo: #F3F4F8;
+    --pa-chip: #F1F2F6;
+    --pa-borde: #E3E6F0;
+    --pa-texto2: #56627A;
+    min-height: 100vh;
+    background: var(--pa-fondo);
+    color: var(--pa-navy);
+    font-family: Poppins, sans-serif;
+}
+
+.app button {
+    font-family: inherit;
+}
+
+/* Barra superior ---------------------------------------------------------- */
+.barra {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 40px;
+    background: #fff;
+    border-bottom: 1px solid var(--pa-borde);
+}
+
+.izquierda,
+.derecha {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.derecha {
+    gap: 14px;
+}
+
+.selector {
+    all: unset;
+    cursor: pointer;
+    height: 56px;
+    box-sizing: border-box;
+    padding: 0 16px 0 20px;
+    border-radius: 99px;
+    border: 1.5px solid var(--pa-borde);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selector:disabled {
+    cursor: default;
+}
+
+.selector:focus-visible,
+.pestana:focus-visible,
+.avatarBoton:focus-visible,
+.makePop:focus-visible {
+    outline: 3px solid rgba(36, 87, 164, 0.35);
+    outline-offset: 2px;
+}
+
+.logo {
+    font-weight: 900;
+    letter-spacing: -0.07em;
+    line-height: 1;
+    color: #1D1D1B;
+}
+
+.logoMas {
+    color: var(--pa-rosa);
+}
+
+.byIattend {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    color: #6A6A64;
+    padding-top: 5px;
+}
+
+.flechita {
+    color: #6E6965;
+    margin-left: 6px;
+}
+
+.espacioItem {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 2px;
+}
+
+.espacioItem small {
+    color: var(--pa-texto2);
+}
+
+.pestanas {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 99px;
+    background: var(--pa-chip);
+}
+
+.pestana {
+    all: unset;
+    cursor: pointer;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--pa-navy);
+    transition: background 0.2s, color 0.2s;
+}
+
+.pestana {
+    position: relative;
+    z-index: 1;
+}
+
+.pestana[data-activa] {
+    color: #fff;
+}
+
+/* Pastilla de la pestaña activa: se desliza con un pequeño rebote
+   (cubic-bezier que se pasa un poco y regresa). */
+.pestanaPastilla {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    border-radius: 99px;
+    background: var(--pa-navy);
+    pointer-events: none;
+}
+
+.pestanaPastilla[data-lista] {
+    transition:
+        transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+        width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pestanaPastilla[data-lista] {
+        transition: opacity 0.2s;
+    }
+}
+
+.cuenta {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.6;
+}
+
+/* Medidor de uso (Free) */
+.uso {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 56px;
+    padding: 0 22px;
+    border-radius: 99px;
+    background: var(--pa-fondo);
+}
+
+.medidor {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.medidorFila {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.medidorFila span {
+    color: var(--pa-texto2);
+}
+
+.pista {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--pa-borde);
+    overflow: hidden;
+}
+
+.pista > span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--pa-azul);
+    transition: width 0.4s;
+}
+
+.pista > span[data-alerta] {
+    background: var(--pa-rosa);
+}
+
+.makePop {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    box-sizing: border-box;
+    padding: 0 22px 0 9px;
+    border-radius: 99px;
+    background: var(--pa-lima);
+    color: var(--pa-navy);
+    font-size: 17px;
+    font-weight: 800;
+    box-shadow: 0 4px 0 var(--pa-lima-sombra), 0 10px 18px rgba(11, 31, 58, 0.18);
+    transition: transform 0.15s;
+}
+
+.makePop:active {
+    transform: translateY(2px);
+}
+
+.makePopMas {
+    transition: transform 0.2s;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--pa-navy);
+    color: var(--pa-lima);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Avatar y su menú */
+.avatarWrap {
+    position: relative;
+}
+
+.avatarBoton {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 10px 2px 2px;
+    border-radius: 99px;
+    border: 1.5px solid var(--pa-borde);
+    transition: border-color 0.2s;
+}
+
+.avatarBoton[data-abierto] {
+    border-color: var(--pa-navy);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 99px;
+    background: var(--pa-azul);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 17px;
+}
+
+.avatarChico {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+    flex: none;
+}
+
+.menu {
+    position: absolute;
+    right: 0;
+    top: 66px;
+    z-index: 60;
+    width: 340px;
+    padding: 12px;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 0 12px rgba(11, 31, 58, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: menuEntra 0.18s ease-out;
+}
+
+@keyframes menuEntra {
+    from { opacity: 0; transform: translateY(-6px); }
+}
+
+.menuCabeza {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 6px 4px;
+}
+
+.menuNombre {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.menuNombre b {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.menuNombre small {
+    font-size: 12px;
+    color: var(--pa-texto2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.planFree {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--pa-chip);
+}
+
+.planFreeCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.planFreeCabeza b {
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.planFreeCabeza span {
+    font-size: 12px;
+    color: var(--pa-texto2);
+}
+
+.ctaLima {
+    all: unset;
+    cursor: pointer;
+    height: 44px;
+    border-radius: 99px;
+    background: var(--pa-lima);
+    color: var(--pa-navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.planPlus {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--pa-navy);
+    color: #fff;
+}
+
+.planPlus .logo {
+    color: #fff;
+}
+
+.planPlus .logoMas {
+    color: var(--pa-lima);
+}
+
+.planPlusCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.activa {
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 99px;
+    background: var(--pa-lima);
+    color: var(--pa-navy);
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+}
+
+.planDatos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.planDatos > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.planDatos small {
+    font-size: 11px;
+    color: #B9C3D3;
+}
+
+.planDatos b {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.planLink {
+    all: unset;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pa-lima);
+}
+
+.cuadros {
+    display: grid;
+    /* Tantas columnas iguales como cuadros haya (Claro / Oscuro puede estar oculto). */
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 8px;
+}
+
+.cuadro {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 68px;
+    border-radius: 16px;
+    background: var(--pa-chip);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pa-navy);
+    transition: background 0.15s;
+}
+
+.cuadro:hover {
+    background: #E7E9F0;
+    color: var(--pa-navy);
+}
+
+.salir {
+    all: unset;
+    cursor: pointer;
+    height: 40px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pa-texto2);
+}
+
+.salir:hover {
+    background: var(--pa-chip);
+}
+
+/* Página ------------------------------------------------------------------- */
+.main {
+    padding: 32px 40px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Banner de límite --------------------------------------------------------- */
+.aviso {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    background: #fff;
+    border: 1.5px solid var(--pa-navy);
+}
+
+.avisoIcono {
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: 50%;
+    background: #FFB3C9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.avisoTextos {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.avisoTextos b {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.avisoTextos span {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--pa-texto2);
+}
+
+.avisoSecundario,
+.avisoPrimario {
+    all: unset;
+    cursor: pointer;
+    flex: none;
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 18px;
+    border-radius: 99px;
+    border: 1.5px solid var(--pa-navy);
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.avisoPrimario {
+    background: var(--pa-navy);
+    color: #fff;
+}
+
+/* Modal de límite ---------------------------------------------------------- */
+.velo {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(11, 31, 58, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    animation: veloEntra 0.2s ease-out;
+}
+
+@keyframes veloEntra {
+    from { opacity: 0; }
+}
+
+.modal {
+    position: relative;
+    width: 520px;
+    max-width: calc(100vw - 32px);
+    padding: 34px 34px 28px;
+    border-radius: 24px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+}
+
+.modalCerrar {
+    all: unset;
+    cursor: pointer;
+    position: absolute;
+    right: 18px;
+    top: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #F1F2F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalBarras {
+    display: flex;
+    gap: 6px;
+}
+
+.modalBarras span {
+    width: 44px;
+    height: 10px;
+    border-radius: 99px;
+    background: #2457A4;
+}
+
+.modalTitulo {
+    margin: 0;
+    max-width: 340px;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.045em;
+    line-height: 1.1;
+    color: #0B1F3A;
+}
+
+.modalTexto {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #56627A;
+}
+
+.modalBeneficios {
+    margin: 0;
+    padding: 16px;
+    list-style: none;
+    border-radius: 16px;
+    background: #F1F2F6;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.modalBeneficios li {
+    display: flex;
+    gap: 8px;
+}
+
+.modalBeneficios li span {
+    font-weight: 900;
+    color: #2457A4;
+}
+
+.modalAcciones {
+    display: flex;
+    gap: 10px;
+}
+
+.modalSecundario,
+.modalPrimario {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-family: Poppins, sans-serif;
+}
+
+.modalSecundario {
+    flex: 1;
+    border-radius: 99px;
+    border: 1.5px solid #0B1F3A;
+    font-weight: 700;
+}
+
+.modalPrimario {
+    flex: 1.3;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-weight: 800;
+    box-shadow: 0 4px 0 #9DBB12;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu,
+    .velo {
+        animation: none;
+    }
+}
+
+/* Celular (handoff §10, 390 px) -------------------------------------------- */
+.app[data-movil] {
+    min-height: 100dvh;
+}
+
+.app[data-movil] .main {
+    padding: 16px 16px calc(120px + env(safe-area-inset-bottom));
+    gap: 20px;
+}
+
+/* Las filas con scroll horizontal no deben colapsar dentro de la columna. */
+.app[data-movil] .main > * {
+    flex: none;
+    min-width: 0;
+}
+
+.barraMovil {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
+    background: #fff;
+    border-bottom: 1px solid var(--pa-borde);
+}
+
+.selectorMovil {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 12px 0 16px;
+    border-radius: 99px;
+    border: 1.5px solid var(--pa-borde);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.selectorMovil:disabled {
+    cursor: default;
+}
+
+.selectorMovil .byIattend {
+    font-size: 14px;
+    padding-top: 3px;
+}
+
+.derechaMovil {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chipPops {
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 99px;
+    background: var(--pa-fondo);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.chipPops > span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2EBE88;
+}
+
+.chipPops[data-alerta] > span {
+    background: #FF4D3D;
+}
+
+.avatarMovil {
+    all: unset;
+    cursor: pointer;
+    width: 44px;
+    height: 44px;
+    border-radius: 99px;
+    background: var(--pa-azul);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    box-shadow: 0 0 0 2px transparent;
+    transition: box-shadow 0.2s;
+}
+
+.avatarMovil[data-abierto] {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--pa-lima);
+}
+
+.selectorMovil:focus-visible,
+.avatarMovil:focus-visible,
+.tabMovil:focus-visible,
+.masMovil:focus-visible {
+    outline: 3px solid rgba(36, 87, 164, 0.35);
+    outline-offset: 2px;
+}
+
+/* Barra inferior: Inicio · Mis Pops · + · Ideas · Cuenta */
+.barraInferior {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    height: calc(92px + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    padding: 8px 20px calc(26px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--pa-borde);
+    display: grid;
+    grid-template-columns: 1fr 1fr 84px 1fr 1fr;
+    align-items: center;
+    font-family: Poppins, sans-serif;
+}
+
+.tabMovil {
+    all: unset;
+    cursor: pointer;
+    height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #8A8582;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tabIcono {
+    width: 44px;
+    height: 28px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.tabMovil[data-activa] {
+    color: var(--pa-navy);
+}
+
+.tabMovil[data-activa] .tabIcono {
+    background: var(--pa-lima);
+}
+
+.masCelda {
+    display: flex;
+    justify-content: center;
+}
+
+.masMovil {
+    all: unset;
+    cursor: pointer;
+    width: 62px;
+    height: 62px;
+    margin-top: -30px;
+    border-radius: 50%;
+    background: var(--pa-lima);
+    color: var(--pa-navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 var(--pa-lima-sombra), 0 10px 18px rgba(11, 31, 58, 0.22);
+    transition: transform 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.masMovil:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--pa-lima-sombra), 0 6px 12px rgba(11, 31, 58, 0.2);
+}
+
+/* Hojas inferiores */
+.veloHoja {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(11, 31, 58, 0.45);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    font-family: Poppins, sans-serif;
+    color: var(--pa-navy, #0B1F3A);
+    animation: veloEntra 0.2s ease-out;
+}
+
+.hoja {
+    --pa-navy: #0B1F3A;
+    --pa-azul: #2457A4;
+    --pa-lima: #CDF22B;
+    --pa-lima-sombra: #9DBB12;
+    --pa-rosa: #FF5FA8;
+    --pa-fondo: #F3F4F8;
+    --pa-chip: #F1F2F6;
+    --pa-borde: #E3E6F0;
+    --pa-texto2: #56627A;
+    max-height: 92dvh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 10px 16px calc(30px + env(safe-area-inset-bottom));
+    border-radius: 28px 28px 0 0;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: hojaSube 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.hoja button {
+    font-family: inherit;
+}
+
+@keyframes hojaSube {
+    from { transform: translateY(100%); }
+}
+
+.asa {
+    all: unset;
+    cursor: pointer;
+    flex: none;
+    align-self: center;
+    width: 44px;
+    height: 5px;
+    margin-bottom: 6px;
+    border-radius: 99px;
+    background: #D5DAE5;
+    /* Toque de 44 px sin agrandar el asa. */
+    box-shadow: 0 0 0 20px transparent;
+}
+
+/* La hoja de Cuenta reusa el contenido del menú de escritorio. */
+.hojaCuenta .menuCabeza {
+    padding: 0;
+}
+
+.hojaCuenta .avatarChico {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+}
+
+.hojaCuenta .cuadro {
+    height: 68px;
+}
+
+.hojaCuenta .salir {
+    height: 44px;
+    justify-content: center;
+}
+
+.planEspacio {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.planEspacio > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.planEspacio small {
+    color: #B9C3D3;
+    font-size: 12px;
+}
+
+.planEspacio .pista {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.planEspacio .pista > span {
+    background: var(--pa-lima);
+}
+
+.planBotones {
+    display: flex;
+    gap: 8px;
+}
+
+.planBotones button {
+    all: unset;
+    cursor: pointer;
+    flex: 1;
+    box-sizing: border-box;
+    height: 44px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.planBotones button:first-child {
+    background: #fff;
+    color: var(--pa-navy);
+}
+
+.planBotones button:last-child {
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+}
+
+/* Límite 3 de 3 como hoja */
+.hojaLimite {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.hojaCuadros {
+    display: flex;
+    gap: 6px;
+}
+
+.hojaCuadros span {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--pa-azul);
+}
+
+.hojaLimite .modalTitulo {
+    font-size: 24px;
+    letter-spacing: -0.04em;
+}
+
+.hojaBeneficios {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.hojaBeneficios li {
+    display: flex;
+    gap: 8px;
+}
+
+.hojaBeneficios li span {
+    color: #2E6B12;
+    font-weight: 800;
+}
+
+.hojaPrimario,
+.hojaSecundario,
+.hojaAhoraNo {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+
+.hojaPrimario {
+    height: 50px;
+    background: var(--pa-lima);
+    color: var(--pa-navy);
+    font-size: 15px;
+}
+
+.hojaSecundario {
+    height: 48px;
+    border: 1.5px solid var(--pa-navy);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.hojaAhoraNo {
+    height: 44px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pa-texto2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hoja,
+    .veloHoja {
+        animation: none;
+    }
+}
+
+/* Banner de límite en el celular: ícono + título, texto y los dos botones abajo. */
+.aviso[data-movil] {
+    display: grid;
+    grid-template-columns: 26px repeat(2, minmax(0, 1fr));
+    gap: 10px 8px;
+    align-items: center;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1.5px solid #FFB3C9;
+}
+
+.aviso[data-movil] .avisoIcono {
+    width: auto;
+    height: auto;
+    background: none;
+    font-size: 22px;
+}
+
+.aviso[data-movil] .avisoTextos {
+    display: contents;
+}
+
+.aviso[data-movil] .avisoTextos b {
+    grid-column: 2 / -1;
+    font-size: 15px;
+    line-height: 1.25;
+}
+
+.aviso[data-movil] .avisoTextos span {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.aviso[data-movil] .avisoSecundario {
+    grid-column: 1 / 3;
+}
+
+.aviso[data-movil] .avisoSecundario,
+.aviso[data-movil] .avisoPrimario {
+    height: 44px;
+    padding: 0 12px;
+    font-size: 13px;
+    justify-content: center;
+}
+
+/* Sin Ideas: Inicio · Mis Pops · + · Cuenta, con el "+" todavía al centro. */
+.barraInferior[data-sin-ideas] {
+    grid-template-columns: 1fr 1fr 84px 2fr;
+}
+
+/* Menú del avatar: acceso a Administración (solo rol Administration). */
+.admin {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 52px;
+    padding: 0 16px;
+    border-radius: 16px;
+    background: var(--pa-chip);
+    color: var(--pa-navy);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    transition: background 0.15s;
+}
+
+.admin:hover {
+    background: #E6E8F0;
+}
+
+.admin:focus-visible {
+    outline: 3px solid rgba(36, 87, 164, 0.35);
+    outline-offset: 2px;
+}
+
+.adminFlecha {
+    margin-left: auto;
+    opacity: 0.5;
+}
+
+/* Pops+ de prueba (la da Admin): píldora en la barra y chip en el celular. */
+.pillPrueba {
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pillPrueba .logo {
+    color: #fff;
+}
+
+
+.chipPrueba {
+    background: #0B1F3A;
+    color: #CDF22B;
+}
+
+/* Make a Pop con su menú abierto: el "+" gira a "×". */
+.makePop[data-abierto] .makePopMas {
+    transform: rotate(45deg);
+}

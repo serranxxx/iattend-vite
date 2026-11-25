@@ -28,6 +28,8 @@ const PLANES_COMPRA = ['pro', 'lite']
  * `onCreated` corre al cerrar tras crear un evento gratis (para recargar).
  * modo 'pop-compra' → directo a comprar un Pop (botón "Comprar Pop" de la
  * sección Pops).
+ * modo 'pop-cliente' → un Pop para un cliente (Clientes de la app de Pops):
+ *   el flujo arranca en "A mi cliente", donde se da de alta con nombre y correo.
  * modo 'pop-gratis' → un Pop gratis (PlannerPopFlow). En
  * 'compra' el primer paso deja elegir Invitación o Pop.
  * El flujo del Pop (handoff "Crear Pop") va en un panel de 480 px con 28 px
@@ -114,7 +116,7 @@ const useArrastreHoja = (onClose) => {
 // botones de gratis ya traen el tipo definido.
 const AltaEvento = ({ modo, soloParaMi, onClose, onCreated, onTipo }) => {
     const { t } = useTranslation()
-    const [tipo, setTipo] = useState(modo === 'pop-gratis' || modo === 'pop-compra' ? 'pop' : modo === 'gratis' ? 'regular' : null)
+    const [tipo, setTipo] = useState(modo === 'pop-gratis' || modo === 'pop-compra' || modo === 'pop-cliente' ? 'pop' : modo === 'gratis' ? 'regular' : null)
     const volverAElegir = modo === 'compra' ? () => setTipo(null) : undefined
     // Pops gratis para el badge de la tarjeta Pop.
     const [popsGratis, setPopsGratis] = useState(0)
@@ -160,7 +162,7 @@ const AltaEvento = ({ modo, soloParaMi, onClose, onCreated, onTipo }) => {
     }
 
     return tipo === 'pop'
-        ? <PlannerPopFlow soloParaMi={soloParaMi} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
+        ? <PlannerPopFlow soloParaMi={soloParaMi} destinoInicial={modo === 'pop-cliente' ? 'ahora' : undefined} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
         : <PlannerEventFlow modo={modo} onBackToStart={volverAElegir} onClose={onClose} onCreated={onCreated} />
 }
 

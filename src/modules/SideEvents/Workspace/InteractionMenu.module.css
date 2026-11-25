@@ -229,7 +229,10 @@
 }
 
 .darkBtn:disabled {
-    opacity: .4;
+    /* Apagado con color, no con opacidad: la insignia Pops+ de adentro
+       nunca se opaca. */
+    background: #A9A6AF;
+    color: rgba(255, 255, 255, 0.85);
     cursor: default;
 }
 
@@ -474,4 +477,11 @@
 .colorSlider:focus-visible {
     outline: 2px solid #9C7FCB;
     outline-offset: 3px;
+}
+
+/* Insignia Plus dentro del botón Fijar (Pop Free). */
+.insigniaEnBoton {
+    margin-left: 6px;
+    /* Sobre el botón oscuro: con orilla para que se distinga. */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
 }

@@ -35,6 +35,8 @@ import eb from '../Invitation/Build/PageSections/ElementBar.module.css'
     que se escribe quede arriba del teclado (REMOTE_TEXT_FOCUS).
 */
 
+// Herramientas cuyo panel vuelve arriba al abrirlas (su vista previa va arriba).
+const ARRIBA_AL_ABRIR = new Set(['wallet', 'link'])
 const ZOOM_MIN = 0.5
 // Hasta dónde acerca el pellizco / ⌘ + rueda en el tablero.
 const ZOOM_GESTO_MAX = 2.5
@@ -136,7 +138,11 @@ export const EditorShell = ({
     className,
     topOffset = 60,
     // Herramientas
-    tools, activeTool, toolOpen, onPickTool, onCloseTool, renderTool,
+    tools, activeTool, toolOpen: toolOpenEditor, onPickTool, onCloseTool, renderTool,
+    // `panelColor` ({ title, hint, icon, content, onClose }): el selector de
+    // color de las barras ocupa el panel lateral mientras está abierto (ver
+    // usePanelColor en ColorPopover.jsx); al cerrarlo vuelve el de antes.
+    panelColor = null,
     // Pieza
     card = { w: 390, h: 780 }, canvas, liveContent,
     live, setLive, device, setDevice, onBlur, onLeaveEdit,
@@ -150,7 +156,7 @@ export const EditorShell = ({
     // Envío (side events)
     column = null,
     mediaSider = null,
-    // Modo inmersivo (dibujo a pantalla completa): sin riel, panel, Capas ni
+    // Modo inmersivo (dibujo a pantalla completa): riel sí, sin panel, Capas ni
     // dock; la pieza centrada y 50 % más grande en un tablero con zoom y
     // arrastre (LienzoInmersivo) y `lateral` a la derecha (la paleta de dibujo).
     inmersivo = false, lateral = null,
@@ -160,6 +166,8 @@ export const EditorShell = ({
     children,
 }) => {
     const { t } = useTranslation()
+    // Cada toque en el riel (también sobre la herramienta ya abierta).
+    const [toque, setToque] = useState(0)
     const wsRef = useRef(null)
     const vp = useSize(wsRef, topOffset)
     const keyboardLift = useKeyboardLift()
@@ -185,6 +193,7 @@ export const EditorShell = ({
     // recorren al centro del espacio que queda. En pantallas angostas (iPad
     // vertical) no caben los dos paneles y la pieza: se esconde Capas, y el
     // lado derecho deja lugar al círculo de Lia.
+    const toolOpen = toolOpenEditor || Boolean(panelColor)
     const panelOpen = toolOpen && !withColumn && !inmersivo
     const showLayers = hasLayers && !live && !withColumn && !inmersivo
     // Capas se puede ocultar (y se recuerda): queda una píldora para abrirla.
@@ -408,14 +417,24 @@ export const EditorShell = ({
         return () => { if (timer) clearTimeout(timer) }
     })
 
-    const tool = tools.find((x) => x.id === activeTool)
-    const railOn = (item) => toolOpen && (activeTool === item.id || tool?.parent === item.id)
+    const tool = panelColor
+        ? { id: '__color', icon: panelColor.icon, title: panelColor.title, hint: panelColor.hint }
+        : tools.find((x) => x.id === activeTool)
+    // Pase digital e Imagen del link empiezan con su vista previa arriba: al
+    // abrirlos (o volver a tocarlos) el panel regresa al inicio.
+    const toolBodyRef = useRef(null)
+    useEffect(() => {
+        if (toolOpen && ARRIBA_AL_ABRIR.has(activeTool)) toolBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [activeTool, toolOpen, toque])
+    const railOn = (item) => !panelColor && toolOpen && (activeTool === item.id || tool?.parent === item.id)
 
     return (
         <MediaSiderContext.Provider value={mediaSider}>
         <div ref={wsRef} className={`${ws.workspace} ${className ?? ''}`} data-editor-area>
-            {/* ── Riel y panel de herramienta ── */}
-            {!withColumn && !inmersivo && (
+            {/* ── Riel y panel de herramienta ──
+                En el modo inmersivo (Dibujar) el riel se queda, para cambiar de
+                herramienta sin salir primero; el panel no se abre. */}
+            {!withColumn && (
                 <div className={ws.left} data-live={live || undefined} data-entrada={volviendo || undefined} data-edit-keep data-editor-left>
                     <div className={ws.rail}>
                         {tools.filter((item) => !item.hidden).map((item) => (
@@ -428,7 +447,7 @@ export const EditorShell = ({
                                         data-on={railOn(item) || item.destacado || undefined}
                                         data-tour={`tool-${item.id}`}
                                         aria-label={item.aviso ? `${item.title}. ${item.aviso}` : item.title}
-                                        onClick={() => onPickTool(item.id)}
+                                        onClick={() => { panelColor?.onClose(); setToque((n) => n + 1); onPickTool(item.id) }}
                                     >
                                         <item.icon size={20} />
                                         {item.aviso && <span className={ws.railAviso} aria-hidden />}
@@ -440,7 +459,7 @@ export const EditorShell = ({
 
                     {/* Siempre montado: abre y cierra deslizando su ancho (0 ↔ 340). */}
                     {tool && (
-                        <div className={ws.toolPanel} data-open={toolOpen || undefined} aria-hidden={!toolOpen}>
+                        <div className={ws.toolPanel} data-open={(toolOpen && !inmersivo) || undefined} aria-hidden={!toolOpen || inmersivo}>
                             <div className={ws.toolInner}>
                                 <div className={ws.toolHead}>
                                     <span className={ws.toolIcon}><tool.icon size={16} /></span>
@@ -449,12 +468,12 @@ export const EditorShell = ({
                                         <span className={ws.toolHint}>{tool.hint}</span>
                                     </div>
                                 </div>
-                                <div className={`${ws.toolBody} scroll-invitation`} data-tool-body>
-                                    {renderTool(tool.id)}
+                                <div ref={toolBodyRef} className={`${ws.toolBody} scroll-invitation`} data-tool-body>
+                                    {panelColor ? panelColor.content : renderTool(tool.id)}
                                 </div>
                             </div>
                             {/* Asa para plegar el panel, en su orilla derecha (como Canva). */}
-                            <button type="button" className={ws.toolHandle} aria-label={t('build_editor.close')} onClick={onCloseTool}>
+                            <button type="button" className={ws.toolHandle} aria-label={t('build_editor.close')} onClick={panelColor ? panelColor.onClose : onCloseTool}>
                                 <ChevronLeft size={16} />
                             </button>
                         </div>
@@ -507,7 +526,7 @@ export const EditorShell = ({
                     zoomInicial={zoom}
                     desde={rectNormal}
                     rectSalida={rectInmersivo}
-                    area={{ left: 40, right: LATERAL_W + 64, top: bar ? 92 : 24, bottom: 96 }}
+                    area={{ left: 96, right: LATERAL_W + 64, top: bar ? 92 : 24, bottom: 96 }}
                     sinHerramienta={Boolean(inmersivoGestos?.sinHerramienta)}
                     onTapFuera={inmersivoGestos?.onTapFuera}
                 />

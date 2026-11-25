@@ -5,6 +5,7 @@ import { ImagePlus, RotateCcw } from 'lucide-react'
 import { PaseWallet } from './PaseWallet'
 import tp from '../Invitation/Build/PageSections/ToolPanels.module.css'
 import s from './WalletPanel.module.css'
+import { InsigniaPlus } from '../SideEvents/PlanPops/InsigniaPlus'
 
 /*
   Panel "Pase digital" de los editores de escritorio (invitación, side events
@@ -28,6 +29,9 @@ export const WalletPanel = ({
     // `fotoNota`: de dónde sale la foto si no se elige una (Pop: la imagen
     // del link). `usarBaseTexto`: el botón para volver a ella.
     fotoNota, usarBaseTexto,
+    // `soloPlus` (Pop Free): Apple Wallet es de Pops Plus. Se ve el pase de
+    // muestra, pero no se puede ofrecer (no se puede "probar").
+    soloPlus = false,
 }) => {
     const { t } = useTranslation()
     const [lado, setLado] = useState('frente')
@@ -37,10 +41,13 @@ export const WalletPanel = ({
             {/* Ofrecer Apple Wallet va hasta arriba: decide todo lo demás. */}
             <div className={s.interruptor}>
                 <span className={s.interruptorTextos}>
-                    <span className={s.interruptorTitulo}>{t('build_editor.wallet_offer')}</span>
-                    <span className={tp.hint} style={{ marginTop: 0 }}>{t(walletActivo ? 'build_editor.wallet_offer_on' : 'build_editor.wallet_offer_off')}</span>
+                    <span className={s.interruptorTitulo}>
+                        {t('build_editor.wallet_offer')}
+                        {soloPlus && <InsigniaPlus className={s.insignia} />}
+                    </span>
+                    <span className={tp.hint} style={{ marginTop: 0 }}>{t(soloPlus ? 'pops_plus.wallet_solo_plus' : walletActivo ? 'build_editor.wallet_offer_on' : 'build_editor.wallet_offer_off')}</span>
                 </span>
-                <Switch checked={walletActivo} onChange={onWalletActivo} />
+                <Switch checked={walletActivo && !soloPlus} disabled={soloPlus} onChange={onWalletActivo} />
             </div>
 
             <p className={tp.hint} style={{ marginTop: 0 }}>{intro ?? t('build_editor.wallet_intro')}</p>

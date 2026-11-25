@@ -39,3 +39,11 @@ export const crearPlanner = async (payload) => {
     const headers = await authHeaders()
     return axios.post(`${API_URL}/api/admin/planners`, payload, { headers })
 }
+
+// Prueba gratis de Pops+ de una cuenta (switch de Usuarios › Clientes):
+// { activar, dias? } → { suscripcion }. 409 YA_PAGA si ya paga Pops+.
+// Ver iattend--backend/helpers/popsSuscripcion.js (activarPrueba / quitarPrueba).
+export const cambiarPruebaPops = async (userId, activar, dias) => {
+    const headers = await authHeaders()
+    return axios.post(`${API_URL}/api/admin/usuarios/${userId}/pops-prueba`, { activar, ...(dias ? { dias } : {}) }, { headers })
+}

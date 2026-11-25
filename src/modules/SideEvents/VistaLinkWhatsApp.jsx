@@ -1,4 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { usePopFree } from './PlanPops/planPopsUI'
+import { MARCA_ANCHO, MARCA_LOGO, MARCA_MARGEN } from './componerPortada'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import { Link } from 'lucide-react'
@@ -26,7 +28,10 @@ export const VistaLinkWhatsApp = ({ current, nota }) => {
     const { t } = useTranslation()
     const body = current?.body ?? {}
     // Imagen propia del link (LinkPanel, `body.linkImage`): esa, tal cual.
-    const enVivo = !body.linkImage && !soloVideos(body) && portadaConDiseno(body)
+    const popFree = usePopFree()
+    // Pop Free: también la foto sola va en vivo, para pintarle encima la marca
+    // de agua (la guardada en url_image ya la trae y no se sabría).
+    const enVivo = !body.linkImage && !soloVideos(body) && (portadaConDiseno(body) || (popFree && Boolean(body.image)))
     const imagen = body.linkImage || (soloVideos(body) ? body.image : current?.url_image) || body.image || null
 
     // La pieza (390 × 700) escalada al ancho de la tarjeta y centrada.
@@ -65,6 +70,16 @@ export const VistaLinkWhatsApp = ({ current, nota }) => {
                                     </div>
                                 )
                                 : imagen && <img src={imagen} alt="" />}
+                            {/* Pop Free: la imagen automática lleva la marca de
+                                agua (componerPortada `marca`); la propia no. */}
+                            {popFree && enVivo && (
+                                <img
+                                    className={styles.marca}
+                                    src={MARCA_LOGO}
+                                    alt=""
+                                    style={{ width: `${MARCA_ANCHO * 100}%`, left: `${MARCA_MARGEN * 100}%`, top: caja ? `${MARCA_MARGEN * caja.w}px` : `${MARCA_MARGEN * 100}%` }}
+                                />
+                            )}
                         </div>
                         <div className={styles.textos}>
                             <span className={styles.titulo}>{current?.name || t('side_events.link_preview_untitled')}</span>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ColorPicker, Segmented, Select, Slider } from 'antd'
+import { ColorPicker, Segmented, Select } from 'antd'
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import { useTranslation } from 'react-i18next'
 import { useFonts } from '../../../../context/FontsContext'
 import { fonts } from '../../../../helpers/assets/fonts'

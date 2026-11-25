@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import './build-menu.css'
-import { Button, Dropdown, Segmented, Slider } from 'antd'
+import { Button, Dropdown, Segmented } from 'antd'
+import { Deslizador as Slider } from '../../modules/Editor/Deslizador'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, CirclePower, EllipsisVertical, Paintbrush, Pencil, PencilRuler, Plus, PowerOff, SeparatorHorizontal, Settings2, SquaresExclude } from 'lucide-react'
 import { Separador } from '../Invitation/Logos'

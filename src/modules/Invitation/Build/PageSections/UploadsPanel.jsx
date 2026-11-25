@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { usePopFree } from '../../../SideEvents/PlanPops/planPopsUI'
+import { InsigniaPlus } from '../../../SideEvents/PlanPops/InsigniaPlus'
 import { useTranslation } from 'react-i18next'
 import { Popover, Segmented, message } from 'antd'
 import axios from 'axios'
@@ -236,7 +238,9 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
             ? popPkg.levels.filter((n) => n > limitMb).map((n) => ({ mb: n, cost: (n - limitMb) * popPkg.mb_cost }))
             : (limitMb < pkg.extra_mb ? [{ mb: pkg.extra_mb, cost: pkg.cost }] : [])
     const opcion = opciones.find((o) => o.mb === elegidoMb) ?? opciones[0]
-    const canUpgrade = opciones.length > 0
+    // Un Pop Free no tiene créditos: no se ofrece ampliar el espacio.
+    const popFree = usePopFree()
+    const canUpgrade = opciones.length > 0 && !(esPopQuota && popFree)
     const sufijo = esPopQuota ? '_pop' : ''
 
     return (
@@ -417,7 +421,15 @@ export const UploadsPanel = ({ invitation, invitationID, mediaRequest, clearMedi
                         </Popover>
                     )}
                 </div>
-                <span className={styles.meterNote}>{t('build_editor.up_storage_note')}</span>
+                {/* El Photo Wall es de la boda: en un Pop no se menciona. */}
+                {!esPopQuota && <span className={styles.meterNote}>{t('build_editor.up_storage_note')}</span>}
+                {/* Pop Free: lo que da Pops Plus en espacio. */}
+                {esPopQuota && popFree && (
+                    <span className={styles.meterNote}>
+                        <InsigniaPlus className={styles.meterInsignia} />
+                        {t('pops_plus.storage_plus')}
+                    </span>
+                )}
             </div>
         </div>
     )

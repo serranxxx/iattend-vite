@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
-import { Input, InputNumber, Select, Tooltip, message } from 'antd'
+import { Input, InputNumber, Select, Switch, Tooltip, message } from 'antd'
 import { Lock, Mail, Pencil } from 'lucide-react'
 import { FcGoogle } from 'react-icons/fc'
 import { FaApple } from 'react-icons/fa'
-import { fetchBeneficiosPlanners, fetchProveedores, updateBeneficiosPlanner, updateUsuario } from '../usuariosAdminApi'
+import { cambiarPruebaPops, fetchBeneficiosPlanners, fetchProveedores, updateBeneficiosPlanner, updateUsuario } from '../usuariosAdminApi'
+import { supabase } from '../../../lib/supabase'
 import { esRolPlanner } from '../../../helpers/roles'
 import { esEventoActivo } from '../adminConstants'
 import { traerTodo } from '../analiticaDatos'
@@ -65,13 +66,12 @@ const OPCIONES_ROL = [
 // celular). El correo se muestra pero no se edita: es el login de la cuenta.
 // Planners: además de nombre y rol, sus beneficios (eventos gratis y % de
 // descuento en toda compra suya). Se guardan después del rol porque el
-// backend decide con el rol ya guardado qué acepta. Clientes: solo Pops
-// gratis (los usan desde su página de invitaciones).
+// backend decide con el rol ya guardado qué acepta. Ya no hay Pops gratis:
+// los Pops son ilimitados para todos.
 const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar, onGuardado, onBeneficiosGuardados }) => {
     const [nombre, setNombre] = useState(perfil.full_name ?? '')
     const [rol, setRol] = useState(ROLES[perfil.role] ? perfil.role : '')
     const [eventosGratis, setEventosGratis] = useState(beneficios?.free_events ?? 0)
-    const [popGratis, setPopGratis] = useState(beneficios?.free_flash_events ?? 0)
     const [descuento, setDescuento] = useState(beneficios?.discount_pct ?? 0)
     const [guardando, setGuardando] = useState(false)
 
@@ -81,15 +81,11 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
     if (rol !== rolOriginal) cambios.role = rol || null
     // Planner o Administración: mismas funciones, mismos beneficios.
     const esPlanner = esRolPlanner(rol)
-    const esCliente = rol === ''
     // Hasta que carguen los beneficios los campos arrancan en 0: guardar ahí
     // los borraría. Sin cargar, no se mandan.
-    const popsSucios = (popGratis ?? 0) !== (beneficios?.free_flash_events ?? 0)
-    const beneficiosSucios = beneficiosListos && (esPlanner
-        ? (eventosGratis ?? 0) !== (beneficios?.free_events ?? 0)
-            || popsSucios
-            || (descuento ?? 0) !== (beneficios?.discount_pct ?? 0)
-        : esCliente && popsSucios)
+    const beneficiosSucios = beneficiosListos && esPlanner && (
+        (eventosGratis ?? 0) !== (beneficios?.free_events ?? 0)
+        || (descuento ?? 0) !== (beneficios?.discount_pct ?? 0))
     const sucio = Object.keys(cambios).length > 0 || beneficiosSucios
 
     const guardar = async () => {
@@ -103,9 +99,7 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
                 actualizado = data.perfil
             }
             if (beneficiosSucios) {
-                const { data } = await updateBeneficiosPlanner(perfil.user_id, esPlanner
-                    ? { free_events: eventosGratis ?? 0, free_flash_events: popGratis ?? 0, discount_pct: descuento ?? 0 }
-                    : { free_flash_events: popGratis ?? 0 })
+                const { data } = await updateBeneficiosPlanner(perfil.user_id, { free_events: eventosGratis ?? 0, discount_pct: descuento ?? 0 })
                 onBeneficiosGuardados?.(data.beneficios)
             }
             onGuardado(actualizado)
@@ -153,28 +147,12 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
                         <InputNumber min={0} max={100} precision={0} value={eventosGratis} onChange={setEventosGratis} />
                     </label>
                     <label className={styles.editorCampo}>
-                        <span>Pop gratis</span>
-                        <InputNumber min={0} max={100} precision={0} value={popGratis} onChange={setPopGratis} />
-                    </label>
-                    <label className={styles.editorCampo}>
                         <span>Descuento</span>
                         <InputNumber min={0} max={90} precision={0} value={descuento} onChange={setDescuento} suffix='%' />
                     </label>
                     <small className={styles.editorBeneficiosNota}>
-                        Los eventos gratis son PRO y los Pops son side events sueltos; los dos le aparecen en su página de invitaciones. El descuento aplica en toda compra suya.
-                        {usados && ` Ya usó ${usados.gratis} gratis, compró ${usados.compra} y creó ${usados.pop ?? 0} Pop.`}
-                    </small>
-                </div>
-            )}
-            {esCliente && (
-                <div className={styles.editorBeneficios}>
-                    <label className={styles.editorCampo}>
-                        <span>Pops gratis</span>
-                        <InputNumber min={0} max={100} precision={0} value={popGratis} onChange={setPopGratis} />
-                    </label>
-                    <small className={styles.editorBeneficiosNota}>
-                        Le aparecen en su página de invitaciones para crear Pops propios sin pagar.
-                        {usados && ` Ya creó ${usados.pop_gratis ?? 0} con Pops gratis.`}
+                        Los eventos gratis son PRO y le aparecen en su página de invitaciones. El descuento aplica en toda compra suya.
+                        {usados && ` Ya usó ${usados.gratis} gratis y compró ${usados.compra}.`}
                     </small>
                 </div>
             )}
@@ -190,12 +168,12 @@ const EditorPerfil = ({ perfil, beneficios, beneficiosListos, usados, onCancelar
 // Columnas de cada pantalla de Usuarios (una por rol, ver AdminLayout).
 const COLUMNAS = {
     clientes: {
-        grid: 'minmax(150px, 1.2fr) minmax(180px, 1.6fr) 96px 64px 90px 104px 100px 64px 190px',
-        titulos: ['Nombre', 'Email', 'Tipo', 'Eventos', 'Plan', 'Pops gratis', 'Acceso', 'Alta', ''],
+        grid: 'minmax(150px, 1.2fr) minmax(180px, 1.6fr) 96px 64px 110px 110px 100px 64px 190px',
+        titulos: ['Nombre', 'Email', 'Tipo', 'Eventos', 'Plan', 'Pops+ prueba', 'Acceso', 'Alta', ''],
     },
     planners: {
-        grid: 'minmax(160px, 1.3fr) minmax(180px, 1.5fr) 120px 120px 110px 90px 110px 190px',
-        titulos: ['Planner', 'Email', 'Eventos', 'PRO gratis', 'Pop gratis', 'Descuento', 'Acceso', ''],
+        grid: 'minmax(160px, 1.3fr) minmax(180px, 1.5fr) 120px 120px 90px 110px 190px',
+        titulos: ['Planner', 'Email', 'Eventos', 'PRO gratis', 'Descuento', 'Acceso', ''],
     },
     admin: {
         grid: 'minmax(160px, 1.3fr) minmax(180px, 1.6fr) 110px minmax(160px, 1.4fr) 60px',
@@ -226,6 +204,21 @@ const FILTROS_CLIENTE = [{ value: 'todos', label: 'Todos' }, ...Object.entries(T
 const CLASE_PLAN = { pro: 'planPro', lite: 'planLite', paperless: 'planPaperless' }
 const NOMBRE_PLAN = { pro: 'PRO', lite: 'Lite', paperless: 'Paperless', free: 'Free' }
 
+// Plan de Pops de una cuenta (fila de pops_suscripciones; sin fila = Free).
+// Prueba = la gratis que da el admin (status 'trialing' sin suscripción de
+// Stripe); ver iattend--backend/helpers/popsSuscripcion.js.
+const VIGENTE_POPS = ['active', 'trialing', 'past_due']
+const DIAS_PRUEBA_POPS = 30
+const planPopsDe = (fila) => {
+    const vigente = fila?.plan === 'plus' && VIGENTE_POPS.includes(fila.status)
+        && (!fila.current_period_end || Date.parse(fila.current_period_end) > Date.now())
+    if (!vigente) return { tipo: 'free' }
+    if (fila.status === 'trialing' && !fila.stripe_subscription_id) {
+        return { tipo: 'prueba', dias: Math.ceil((Date.parse(fila.current_period_end) - Date.now()) / 86400000), vence: fila.current_period_end }
+    }
+    return { tipo: 'plus' }
+}
+
 const fechaCorta = (iso) => (iso ? dayjs(iso).locale('es').format('DD MMM') : '—')
 
 /**
@@ -241,6 +234,9 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
     // Solo para Clientes: dueño de cada side event, para separar Wedding de
     // Pops. Consulta ligera (sin body ni invitados), aparte de la de Eventos.
     const [sides, setSides] = useState(null)
+    // Clientes: plan de Pops de cada cuenta (Admin lee pops_suscripciones por RLS).
+    const [subsPops, setSubsPops] = useState({})
+    const [cambiandoPrueba, setCambiandoPrueba] = useState(null)
     const esPlanners = rol === 'planners'
     const esClientes = rol === 'clientes'
 
@@ -255,6 +251,12 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
         // Administración también tiene beneficios (mismas funciones que un
         // planner); los clientes, Pops gratis.
         if (esPlanners || rol === 'admin' || rol === 'clientes') cargarBeneficios()
+        if (rol === 'clientes') supabase.from('pops_suscripciones')
+            .select('user_id, plan, status, current_period_end, stripe_subscription_id')
+            .then(({ data, error }) => {
+                if (error) return console.error('No se pudo cargar el plan de Pops de los clientes:', error.message)
+                setSubsPops(Object.fromEntries((data ?? []).map(f => [f.user_id, f])))
+            })
         if (rol === 'clientes') traerTodo('side_events', 'id,user_id,invitation_id')
             .then(setSides)
             .catch(error => console.error('No se pudieron cargar los Pops de los clientes:', error.message))
@@ -400,6 +402,48 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
         return <span className={`${styles.plan} ${styles[clase]}`}>{NOMBRE_PLAN[clave] ?? ultimo.plan}</span>
     }
 
+    // Plan en Clientes: con boda, el de su invitación; si no, el de Pops.
+    const celdaPlanPops = (perfil) => {
+        const p = planPopsDe(subsPops[perfil.user_id])
+        if (p.tipo === 'plus') return <span className={`${styles.plan} ${styles.planPopsPlus}`}>Pops+</span>
+        if (p.tipo === 'prueba') return (
+            <Tooltip title={`Prueba gratis · vence el ${dayjs(p.vence).locale('es').format('D [de] MMMM')}`}>
+                <span className={`${styles.plan} ${styles.planPopsPrueba}`}>Prueba · {p.dias} d</span>
+            </Tooltip>
+        )
+        return <span className={`${styles.plan} ${styles.planNinguno}`}>Free</span>
+    }
+
+    const cambiarPrueba = async (perfil, activar) => {
+        setCambiandoPrueba(perfil.user_id)
+        try {
+            const { data } = await cambiarPruebaPops(perfil.user_id, activar, DIAS_PRUEBA_POPS)
+            setSubsPops(prev => ({ ...prev, [perfil.user_id]: data.suscripcion }))
+            message.success(activar
+                ? `${perfil.full_name || perfil.user_email} tiene Pops+ de prueba ${DIAS_PRUEBA_POPS} días`
+                : 'Se quitó la prueba de Pops+')
+        } catch (error) {
+            message.error(error.response?.data?.code === 'YA_PAGA' ? 'Esa cuenta ya paga Pops+' : 'No se pudo cambiar la prueba de Pops+')
+        } finally {
+            setCambiandoPrueba(null)
+        }
+    }
+
+    const celdaPrueba = (perfil) => {
+        const p = planPopsDe(subsPops[perfil.user_id])
+        if (p.tipo === 'plus') return <Tooltip title='Ya paga Pops+'><Switch size='small' checked disabled /></Tooltip>
+        return (
+            <Tooltip title={p.tipo === 'prueba' ? `Quitar la prueba (le quedan ${p.dias} días)` : `Darle Pops+ gratis ${DIAS_PRUEBA_POPS} días`}>
+                <Switch
+                    size='small'
+                    checked={p.tipo === 'prueba'}
+                    loading={cambiandoPrueba === perfil.user_id}
+                    onChange={(activar) => cambiarPrueba(perfil, activar)}
+                />
+            </Tooltip>
+        )
+    }
+
     const badgeTipo = (perfil) => {
         const t = TIPOS_CLIENTE[tipoDe(perfil)]
         if (!t) return <span className={`${styles.plan} ${styles.planNinguno}`}>…</span>
@@ -432,10 +476,8 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
                         <span>{reales.length + pops}</span>
                     </Tooltip>
                 </span>,
-                <span key='plan' className={styles.cell}>{celdaPlan(reales)}</span>,
-                <span key='pop' className={styles.cell}>
-                    {celdaBeneficio(beneficios.usados[perfil.user_id]?.pop_gratis ?? 0, beneficios.beneficios[perfil.user_id]?.free_flash_events ?? 0)}
-                </span>,
+                <span key='plan' className={styles.cell}>{tipoDe(perfil) === 'wedding' ? celdaPlan(reales) : celdaPlanPops(perfil)}</span>,
+                <span key='prueba' className={styles.cell}>{celdaPrueba(perfil)}</span>,
                 acceso,
                 <span key='alta' className={`${styles.cell} ${styles.celdaTenue}`}>{fechaCorta(perfil.created_at)}</span>,
                 <span key='acc' className={`${styles.cell} ${styles.acciones}`}>{botonEditar(perfil)}{botonEvento(perfil)}</span>,
@@ -457,7 +499,6 @@ export const UsuariosSection = ({ rol = 'clientes', profiles, invitations, esPru
                     </span>
                 </span>,
                 <span key='pro' className={styles.cell}>{celdaBeneficio(u.gratis ?? 0, b?.free_events ?? 0)}</span>,
-                <span key='pop' className={styles.cell}>{celdaBeneficio(u.pop_gratis ?? 0, b?.free_flash_events ?? 0)}</span>,
                 <span key='desc' className={styles.cell}>
                     {b?.discount_pct ? `${b.discount_pct}%` : <span className={styles.celdaTenue}>—</span>}
                 </span>,

@@ -1493,3 +1493,22 @@
     from { opacity: 0; transform: translateY(24px) scale(0.96); }
     to { opacity: 1; transform: none; }
 }
+
+/* Pop Free con 2 preguntas: "Agregar pregunta" apagado con la insignia Plus. */
+.agregarPlus {
+    position: relative;
+    cursor: not-allowed !important;
+}
+
+/* Se apaga el ícono, no el botón: la insignia no se opaca. */
+.agregarPlus svg {
+    opacity: 0.45;
+}
+
+.insigniaAgregar {
+    position: absolute;
+    top: -8px;
+    right: -14px;
+    padding: 1px 5px;
+    font-size: 9px;
+}

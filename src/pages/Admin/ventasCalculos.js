@@ -132,6 +132,7 @@ export const calcularKpis = (ventas, cargosPorVenta) => {
         ventasCount: ventas.length,
         proCount: ventas.filter(v => v.plan === 'PRO').length,
         liteCount: ventas.filter(v => v.plan === 'Lite').length,
+        paperlessCount: ventas.filter(v => v.plan === 'Paperless').length,
         popCount: ventas.filter(v => v.plan === 'Flash').length,
         ingresoBruto,
         iva,

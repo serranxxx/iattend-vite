@@ -66,6 +66,14 @@
     aspect-ratio: auto;
 }
 
+/* La portada es vertical: sin tope, la tarjeta medía casi 500 px de alto.
+   Mismo ancho de siempre y como mucho 280 px de alto (se recorta abajo; la
+   marca de agua va arriba). */
+.foto {
+    width: 100%;
+    max-height: 280px;
+}
+
 .foto[data-natural] img {
     height: auto;
     object-fit: contain;
@@ -133,4 +141,13 @@
     font-size: 12px;
     line-height: 1.4;
     color: #787878;
+}
+
+/* Marca de agua de I attend (Pop Free), como la pone componerPortada. */
+.marca {
+    position: absolute;
+    height: auto;
+    opacity: 0.9;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35));
+    pointer-events: none;
 }

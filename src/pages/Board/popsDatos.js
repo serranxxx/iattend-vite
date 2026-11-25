@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { fotosDePortada } from '../../modules/SideEvents/fotosPortada'
+import { mediaDePortada } from '../../modules/SideEvents/fotosPortada'
 
 // Datos compartidos por los estilos Business y Craft de la sección Pops.
 
 /**
- * Foto de portada de un Pop para su miniatura en las listas (la primera foto
- * de la portada; un video no sirve de miniatura). Sin foto, null: la fila
- * enseña el emoji (o las iniciales en Business).
+ * Portada de un Pop para su miniatura en las listas: lo primero de la portada,
+ * foto o video (de un video, MiniaturaPop enseña su primer cuadro). Sin
+ * portada, null: la fila enseña el emoji (o las iniciales en Business).
  */
-export const portadaDePop = (pop) => fotosDePortada(pop?.body)[0] ?? null
+export const portadaDePop = (pop) => mediaDePortada(pop?.body)[0] ?? null
 
 const CONFIRMADO = ['confirmado', 'asistente']
 

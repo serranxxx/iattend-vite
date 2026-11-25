@@ -34,7 +34,7 @@
 
 import { supabase } from '../../../lib/supabase'
 import { ensureQuota, storageChanged } from '../../../helpers/services/storageQuota'
-import { FICHA, carpetaDePdf, leerFicha, urlPublica } from './pdfsSubidos'
+import { carpetaDePdf, fichaDeVersion, leerFicha, urlPublica } from './pdfsSubidos'
 
 export const ANCHO = 1440
 export const ANCHO_HD = 3072
@@ -138,13 +138,9 @@ export const completarLinks = async (ficha) => {
         console.warn('No se leyeron los links del PDF:', e)
         return { ...ficha, links: [] }
     }
-    const completa = { ...ficha, links }
-    // Se guarda en la ficha de Storage (la de "Tus PDF"), no la copia de la invitación.
-    if (guardada?.pages?.length) {
-        subir(`${carpeta}/${FICHA}`, new Blob([JSON.stringify({ ...guardada, links })], { type: 'application/json' }), 'application/json')
-            .catch(() => {})
-    }
-    return completa
+    // No se guarda en Storage: sería sobrescribir la ficha (no se puede, ver
+    // pdfsSubidos). Al volver a convertirlo (conversión 2) ya trae sus links.
+    return { ...ficha, links }
 }
 
 const extension = (blob) => (blob.type === 'image/webp' ? 'webp' : 'jpg')
@@ -154,13 +150,19 @@ const huellaDe = async (buffer) => {
     return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 24)
 }
 
+// Sin `upsert`: cada archivo es nuevo (nombres con la marca del intento).
+// Reemplazar uno existente choca con la RLS de Storage si lo subió otra cuenta.
 const subir = async (path, body, contentType) => {
     const { error } = await supabase.storage
         .from('user_images')
-        .upload(path, body, { upsert: true, contentType, cacheControl: '31536000' })
+        .upload(path, body, { upsert: false, contentType, cacheControl: '31536000' })
     if (error) throw error
     return urlPublica(path)
 }
+
+const quitar = (paths) => (paths.length
+    ? supabase.storage.from('user_images').remove(paths).catch(() => {})
+    : Promise.resolve())
 
 /**
  * Convierte y sube el PDF. `onProgreso({ fase, hecho, total })`.
@@ -178,8 +180,9 @@ export const subirPdf = async ({ file, invitationID, onProgreso }) => {
 
     // ¿Ya se había subido este mismo PDF? Se usa tal cual, salvo que sea de
     // una conversión vieja: entonces se vuelve a convertir en la misma carpeta
-    // (con nombres nuevos `v2-…`: los de antes pueden estar en la invitación
-    // publicada, no se borran; el original ya está, no se vuelve a subir).
+    // (con nombres nuevos `v2-<marca>-…`: los de antes pueden estar en la
+    // invitación publicada, no se borran; el original ya está, no se vuelve a
+    // subir). La marca del intento evita chocar con lo que dejó uno fallido.
     const existente = await leerFicha(carpeta)
     if (existente?.pages?.length && !esConversionVieja(existente)) {
         return completarLinks({ ...existente, fileName: existente.fileName || file.name })
@@ -196,6 +199,7 @@ export const subirPdf = async ({ file, invitationID, onProgreso }) => {
 
         // 1 · Convertir todo (en memoria) para saber cuánto pesa.
         const total = doc.numPages
+        const marca = Date.now().toString(36)
         const tramos = []
         for (let n = 1; n <= total; n++) {
             onProgreso?.({ fase: 'convirtiendo', hecho: n - 1, total })
@@ -236,7 +240,7 @@ export const subirPdf = async ({ file, invitationID, onProgreso }) => {
                 vaciar(hd)
                 vaciar(movil)
 
-                const nombre = `v${CONVERSION}-p${String(n).padStart(2, '0')}-${t}`
+                const nombre = `v${CONVERSION}-${marca}-p${String(n).padStart(2, '0')}-${t}`
                 tramos.push({
                     pagina: n,
                     movil: { blob, w: ANCHO, h: altoMovil, nombre: `${nombre}.${extension(blob)}` },
@@ -256,16 +260,33 @@ export const subirPdf = async ({ file, invitationID, onProgreso }) => {
         // 3 · Subir.
         onProgreso?.({ fase: 'guardando', hecho: total, total })
         const pages = []
-        for (const x of tramos) {
-            const url = await subir(`${carpeta}/${x.movil.nombre}`, x.movil.blob, x.movil.blob.type)
-            const urlHd = await subir(`${carpeta}/${x.hd.nombre}`, x.hd.blob, x.hd.blob.type)
-            pages.push({ url, w: x.movil.w, h: x.movil.h, pagina: x.pagina, hd: { url: urlHd, w: x.hd.w, h: x.hd.h } })
+        // Si algo falla a medio camino, se quita lo que subió este intento.
+        const subidos = []
+        const subirAqui = async (nombre, body, tipo) => {
+            const url = await subir(`${carpeta}/${nombre}`, body, tipo)
+            subidos.push(`${carpeta}/${nombre}`)
+            return url
+        }
+        try {
+            for (const x of tramos) {
+                const url = await subirAqui(x.movil.nombre, x.movil.blob, x.movil.blob.type)
+                const urlHd = await subirAqui(x.hd.nombre, x.hd.blob, x.hd.blob.type)
+                pages.push({ url, w: x.movil.w, h: x.movil.h, pagina: x.pagina, hd: { url: urlHd, w: x.hd.w, h: x.hd.h } })
+            }
+        } catch (e) {
+            await quitar(subidos)
+            throw e
         }
         // El original es de respaldo: si el bucket no acepta PDF, sigue sin él.
+        // Si ya estaba (otro intento lo subió), se usa el que hay.
         let source = conOriginal ? existente.source : null
         if (!source) {
             try { source = await subir(`${carpeta}/original.pdf`, file, 'application/pdf') }
-            catch (e) { console.warn('No se guardó el PDF original:', e.message) }
+            catch (e) {
+                const { data: hay } = await supabase.storage.from('user_images').list(carpeta, { search: 'original.pdf' })
+                if (hay?.some((f) => f.name === 'original.pdf')) source = urlPublica(`${carpeta}/original.pdf`)
+                else console.warn('No se guardó el PDF original:', e.message)
+            }
         }
         const bytes = imagenes + file.size
 
@@ -280,7 +301,16 @@ export const subirPdf = async ({ file, invitationID, onProgreso }) => {
             carpeta,
             bytes,
         }
-        await subir(`${carpeta}/${FICHA}`, new Blob([JSON.stringify(ficha)], { type: 'application/json' }), 'application/json')
+        try {
+            await subir(`${carpeta}/${fichaDeVersion(CONVERSION)}`, new Blob([JSON.stringify(ficha)], { type: 'application/json' }), 'application/json')
+        } catch (e) {
+            // ¿Otro intento ya dejó la ficha de esta versión? Se usa esa.
+            const otra = await leerFicha(carpeta, [fichaDeVersion(CONVERSION)])
+            if (!otra?.pages?.length) { await quitar(subidos); throw e }
+            await quitar(subidos)
+            storageChanged()
+            return completarLinks({ ...otra, fileName: otra.fileName || file.name })
+        }
         storageChanged()
         return ficha
     } finally {

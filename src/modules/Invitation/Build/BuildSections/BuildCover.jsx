@@ -1,4 +1,5 @@
-import { Button, Col, ColorPicker, DatePicker, Dropdown, Grid, Input, Modal, Row, Select, Slider, Tooltip } from 'antd'
+import { Button, Col, ColorPicker, DatePicker, Dropdown, Grid, Input, Modal, Row, Select, Tooltip } from 'antd'
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs';

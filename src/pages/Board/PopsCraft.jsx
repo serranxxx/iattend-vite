@@ -6,6 +6,7 @@ import { emojiDePop } from '../../helpers/invitation/popEvents'
 import { horaDePop, useConfirmados, portadaDePop } from './popsDatos'
 import { PopsHero } from './PopsHero'
 import styles from './PopsCraft.module.css'
+import { MiniaturaPop } from './MiniaturaPop'
 
 /**
  * /invitations › Pops con el estilo Craft (handoff "Cambia tu estilo", 3
@@ -68,7 +69,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
         return (
             <button key={f.item.id} type='button' className={`${styles.fila} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
                 <span className={styles.cuadro} style={{ background: color }}>
-                    {f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.emoji || <SmilePlus size={22} aria-label={t('pops_section.no_emoji')} />}
+                    {f.portada ? <MiniaturaPop src={f.portada} className={styles.portada} /> : f.emoji || <SmilePlus size={22} aria-label={t('pops_section.no_emoji')} />}
                 </span>
                 <span className={styles.filaTexto}>
                     <span className={styles.nombre}>{f.nombre}</span>
@@ -104,7 +105,7 @@ export const PopsCraft = ({ movil = false, greeting, items, gratisPop = 0, puede
             >
                 <Cinta ancho={56} x={i % 2 ? 72 : 28} giro={i % 2 ? -5 : 4} color={`color-mix(in srgb, ${color} 80%, transparent)`} />
                 <span className={styles.tiraCuadro} style={{ background: color }} aria-hidden>
-                    {f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.emoji || <SmilePlus size={18} />}
+                    {f.portada ? <MiniaturaPop src={f.portada} className={styles.portada} /> : f.emoji || <SmilePlus size={18} />}
                 </span>
                 <span className={styles.tiraTexto}>
                     <span className={styles.tiraNombre}>{f.nombre}</span>

@@ -1,0 +1,295 @@
+/* Ideas de la app de Pops (PopsAppIdeas.jsx). */
+.titulo {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.titulo h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    color: #0B1F3A;
+}
+
+.titulo span {
+    font-size: 15px;
+    color: #56627A;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: -12px;
+}
+
+.chip {
+    all: unset;
+    cursor: pointer;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 18px;
+    border-radius: 99px;
+    background: #fff;
+    color: #0B1F3A;
+    border: 1px solid #E3E6F0;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.chip[data-activa] {
+    background: #0B1F3A;
+    border-color: #0B1F3A;
+    color: #fff;
+}
+
+.chip:focus-visible,
+.guardar:focus-visible,
+.usar:focus-visible {
+    outline: 3px solid rgba(36, 87, 164, 0.35);
+    outline-offset: 2px;
+}
+
+.muro {
+    column-count: 5;
+    column-gap: 18px;
+}
+
+@media (max-width: 1280px) {
+    .muro { column-count: 4; }
+}
+
+@media (max-width: 1000px) {
+    .muro { column-count: 3; }
+}
+
+.pin {
+    break-inside: avoid;
+    margin: 0 0 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.foto {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.08));
+}
+
+.emoji {
+    font-size: 64px;
+    line-height: 1;
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.18));
+    transition: transform 0.3s;
+}
+
+.pin:hover .emoji {
+    transform: scale(1.08) rotate(-4deg);
+}
+
+.tag {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.foto[data-oscuro] .tag {
+    background: #fff;
+    color: #0B1F3A;
+}
+
+/* "Guardar" y "Usar esta idea" salen al pasar el mouse (o con el foco). */
+.guardar,
+.usar {
+    all: unset;
+    cursor: pointer;
+    position: absolute;
+    box-sizing: border-box;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.guardar {
+    right: 10px;
+    top: 10px;
+    height: 34px;
+    padding: 0 14px;
+    background: #FF5FA8;
+    color: #fff;
+}
+
+.guardar[data-guardada] {
+    opacity: 1;
+    transform: none;
+    background: #0B1F3A;
+}
+
+.usar {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    height: 40px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-size: 13px;
+}
+
+.pin:hover .guardar,
+.pin:hover .usar,
+.pin:focus-within .guardar,
+.pin:focus-within .usar {
+    opacity: 1;
+    transform: none;
+}
+
+.textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 4px;
+}
+
+.textos b {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #0B1F3A;
+}
+
+.textos small {
+    font-size: 12px;
+    color: #56627A;
+}
+
+@media (hover: none) {
+    .guardar,
+    .usar {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .emoji,
+    .guardar,
+    .usar {
+        transition: none;
+    }
+}
+
+/* Celular (§10) */
+.titulo[data-movil] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.titulo[data-movil] h1 {
+    font-size: 28px;
+}
+
+.titulo[data-movil] span {
+    font-size: 13px;
+}
+
+.chips[data-movil] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: -6px -16px 0;
+    padding: 0 16px;
+}
+
+.chips[data-movil]::-webkit-scrollbar {
+    display: none;
+}
+
+.chips[data-movil] .chip {
+    flex: none;
+    white-space: nowrap;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 13px;
+}
+
+.muro[data-movil] {
+    column-count: 2;
+    column-gap: 10px;
+}
+
+.muro[data-movil] .pin {
+    margin-bottom: 14px;
+    gap: 6px;
+}
+
+.muro[data-movil] .foto {
+    border-radius: 16px;
+}
+
+.muro[data-movil] .emoji {
+    font-size: 44px;
+}
+
+.muro[data-movil] .tag {
+    left: 8px;
+    top: 8px;
+    height: 22px;
+    padding: 0 8px;
+    font-size: 10px;
+}
+
+.muro[data-movil] .textos b {
+    font-size: 13px;
+}
+
+.usarMovil {
+    all: unset;
+    cursor: pointer;
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(11, 31, 58, 0.2);
+}
+
+/* Toque de 44 px alrededor del botón de 36. */
+.usarMovil::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+}

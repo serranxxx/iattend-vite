@@ -256,7 +256,8 @@
     letter-spacing: -0.04em;
 }
 
-.mini img {
+.mini img,
+.mini video {
     position: absolute;
     inset: 0;
     width: 100%;

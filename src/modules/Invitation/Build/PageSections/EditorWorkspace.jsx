@@ -8,6 +8,7 @@ import { EditorShell } from '../../../Editor/EditorShell'
 import { EditorMovilShell } from '../../../Editor/EditorMovilShell'
 import { useColorPopover } from '../../../Editor/useColorPopover'
 import { ColorPopover } from '../../../Editor/ColorPopover'
+import { usePanelColor } from '../../../Editor/usePanelColor'
 import { copiaDeElemento, useElementClipboard } from '../../../Editor/useElementClipboard'
 import { DesignPanel } from './ToolPanels'
 import { PhotosPanel } from './PhotosPanel'
@@ -667,6 +668,9 @@ export const EditorWorkspace = ({
             : null
     }
 
+    // El color de las barras se abre en el panel lateral (el del pincel, flotando).
+    const panelColor = usePanelColor({ colorPop: live || movil ? null : colorPop, closeColor, target: colorTarget, palette: invitationPalette(invitation) })
+
     if (movil) {
         return (
             <EditorMovilShell
@@ -734,6 +738,7 @@ export const EditorWorkspace = ({
             tools={herramientas.map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`), hint: t(`build_editor.tool_${x.id}_hint`) }))}
             activeTool={activeTool}
             toolOpen={toolOpen}
+            panelColor={panelColor}
             onPickTool={pickTool}
             onCloseTool={() => setToolOpen(false)}
             renderTool={renderTool}
@@ -811,7 +816,7 @@ export const EditorWorkspace = ({
             ) : null}
         >
             {/* ── Popover de color (lo abren los botones de color de las barras) ── */}
-            {!live && <ColorPopover colorPop={colorPop} closeColor={closeColor} target={colorTarget} palette={invitationPalette(invitation)} />}
+            {!live && <ColorPopover colorPop={colorPop} closeColor={closeColor} target={colorTarget} />}
         </EditorShell>
     )
 }

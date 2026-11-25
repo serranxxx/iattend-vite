@@ -1,4 +1,5 @@
-import { Button, Col, ColorPicker, Input, Row, Select, Slider, Switch, Tooltip, } from 'antd'
+import { Button, Col, ColorPicker, Input, Row, Select, Switch, Tooltip } from 'antd'
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StorageImages } from '../../../../components/ImagesStorage/StorageImages';

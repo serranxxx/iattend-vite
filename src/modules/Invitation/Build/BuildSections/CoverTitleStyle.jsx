@@ -1,4 +1,5 @@
-import { ColorPicker, Select, Slider, Switch } from 'antd'
+import { ColorPicker, Select, Switch } from 'antd'
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import { useTranslation } from 'react-i18next'
 import { useFonts } from '../../../../context/FontsContext'
 import { fonts } from '../../../../helpers/assets/fonts'

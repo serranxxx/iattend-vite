@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
 import { useTranslation } from 'react-i18next'
 import { Dropdown } from 'antd'
 import { CornerDownRight, MoreHorizontal, Plus, Search, X } from 'lucide-react'
@@ -22,7 +23,7 @@ const CHIP = { confirmado: 'chip_confirmados', esperando: 'chip_esperando', crea
 const inicial = (nombre) => String(nombre ?? '').trim().charAt(0).toUpperCase() || '?'
 
 // `buzon`: botón del buzón de WhatsApp del Pop (BotonBuzonPopMovil), junto a los créditos.
-export const InvitadosMovil = ({ invitados = [], creditos = null, buzon = null, onAgregar, onImportar, onImportarEvento, onEditar, onDescargar, onRefrescar, refrescando = false, accion = null }) => {
+export const InvitadosMovil = ({ invitados = [], creditos = null, buzon = null, onAgregar, onImportar, importarPlus = false, onImportarEvento, importarEventoPlus = false, onEditar, onDescargar, onRefrescar, refrescando = false, accion = null }) => {
     const { t } = useTranslation()
     const [busqueda, setBusqueda] = useState('')
     const [filtro, setFiltro] = useState('todos')
@@ -54,8 +55,8 @@ export const InvitadosMovil = ({ invitados = [], creditos = null, buzon = null, 
     const etiqueta = (estado) => t(`guests.state_${estado}`, { defaultValue: estado ?? '' })
     const menu = {
         items: [
-            ...(onImportar ? [{ key: 'importar', label: t('guests_import.mobile_import'), onClick: onImportar }] : []),
-            ...(onImportarEvento ? [{ key: 'importar-evento', label: t('guests_import.mobile_import_event'), onClick: onImportarEvento }] : []),
+            ...(onImportar ? [{ key: 'importar', label: importarPlus ? <>{t('guests_import.mobile_import')} <InsigniaPlus /></> : t('guests_import.mobile_import'), onClick: onImportar }] : []),
+            ...(onImportarEvento ? [{ key: 'importar-evento', label: importarEventoPlus ? <>{t('guests_import.mobile_import_event')} <InsigniaPlus /></> : t('guests_import.mobile_import_event'), onClick: onImportarEvento }] : []),
             { key: 'descargar', label: t('side_events.mobile_guests_download'), onClick: onDescargar },
             { key: 'recargar', label: t(refrescando ? 'side_events.mobile_guests_refreshing' : 'guests.refresh'), onClick: onRefrescar, disabled: refrescando },
         ],

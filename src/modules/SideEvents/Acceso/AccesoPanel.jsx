@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
+import { useInsigniasPlus, usePopFree } from '../PlanPops/planPopsUI'
 import { useTranslation } from 'react-i18next'
 import { Dropdown, Input, Modal, Popover, Select, Switch, message } from 'antd'
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -72,6 +74,8 @@ export const AccesoPanel = ({ body, setBody, acceso: crudo, actualizarAcceso, po
     const [subiendo, setSubiendo] = useState([])
     const [arrastrando, setArrastrando] = useState(false)
     const inputRef = useRef(null)
+    const popFree = usePopFree()
+    const verInsignias = useInsigniasPlus()
     const reemplazoRef = useRef(null)
     const sensores = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
@@ -102,6 +106,8 @@ export const AccesoPanel = ({ body, setBody, acceso: crudo, actualizarAcceso, po
     const subir = async (archivos, reemplazar = null) => {
         const lista = [...archivos]
         if (!lista.length || !popId) return
+        // Subir documentos es de Pops Plus (no se puede probar: sube el archivo).
+        if (popFree) { message.info(t('pops_plus.material')); return }
         for (const f of lista) {
             const id = reemplazar?.id ?? nuevoId()
             setSubiendo((x) => [...x, id])
@@ -254,7 +260,11 @@ export const AccesoPanel = ({ body, setBody, acceso: crudo, actualizarAcceso, po
                         onDragLeave={() => setArrastrando(false)}
                         onDrop={(e) => { if (!e.dataTransfer?.files?.length) return; e.preventDefault(); setArrastrando(false); subir(e.dataTransfer.files) }}
                     >
-                        <span className={s.titulo}>{t('side_events.acceso_material')}</span>
+                        <span className={s.titulo}>
+                            {t('side_events.acceso_material')}
+                            {verInsignias && <InsigniaPlus className={s.insignia} />}
+                        </span>
+                        <span className={s.ayuda}>{t('pops_plus.material_texto')}</span>
                         {acceso.material.length > 0 && (
                             <DndContext sensors={sensores} collisionDetection={closestCenter} onDragEnd={soltar}>
                                 <SortableContext items={acceso.material.map((m) => m.id)} strategy={verticalListSortingStrategy}>
@@ -292,7 +302,19 @@ export const AccesoPanel = ({ body, setBody, acceso: crudo, actualizarAcceso, po
                             >
                                 <button type="button" className={s.punteado}><Plus size={14} />{t('side_events.acceso_add_link')}</button>
                             </Popover>
-                            <button type="button" className={s.punteado} onClick={() => { reemplazoRef.current = null; inputRef.current?.click() }}><Upload size={14} />{t('side_events.acceso_upload')}</button>
+                            <button
+                                type="button"
+                                className={s.punteado}
+                                aria-disabled={popFree || undefined}
+                                data-plus={popFree || undefined}
+                                onClick={() => {
+                                    if (popFree) { message.info(t('pops_plus.material')); return }
+                                    reemplazoRef.current = null
+                                    inputRef.current?.click()
+                                }}
+                            >
+                                <Upload size={14} />{t('side_events.acceso_upload')}
+                            </button>
                         </div>
                         <span className={s.ayuda}>{t('side_events.acceso_material_hint')}</span>
                         <input

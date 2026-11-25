@@ -1,0 +1,1569 @@
+/* Inicio de la App de Pops (handoff "App de Pops", §3 y §4). */
+
+.saludo {
+    margin: 0;
+    font-family: Poppins, sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #0B1F3A;
+}
+
+/* Papel / collage: brillo diagonal y sombra de papel del handoff. */
+.etiqueta,
+.ctaGrande {
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1));
+}
+
+/* ───────────── Sin Pops (1a2 · tira) ───────────── */
+
+.vacio {
+    position: relative;
+    min-height: 90vh;
+    border-radius: 24px;
+    overflow: hidden;
+    color: #FFFFFF;
+    background-color: #2457A4;
+    background-image:
+        linear-gradient(rgba(232, 240, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(rgba(232, 240, 255, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.09) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.24) 90%);
+    background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px, 100% 100%;
+    box-shadow: 0 24px 50px rgba(11, 31, 58, 0.3);
+    padding: 130px 90px 90px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 480px;
+    gap: 110px;
+    align-items: center;
+    font-family: Poppins, sans-serif;
+}
+
+.st {
+    position: absolute;
+    transform: rotate(var(--rot, 0deg));
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+    user-select: none;
+}
+
+.stArriba {
+    z-index: 3;
+}
+
+.videoEsquina {
+    position: absolute;
+    right: 40px;
+    top: 32px;
+    z-index: 4;
+}
+
+.video {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    height: 48px;
+    padding: 0 18px 0 6px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: Poppins, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    transition: transform 0.15s ease;
+}
+
+.video:hover {
+    transform: translateY(-1px);
+}
+
+.video:focus-visible,
+.ctaGrande:focus-visible,
+.botonLima:focus-visible,
+.botonPapel:focus-visible,
+.ctaPromo:focus-visible,
+.flecha:focus-visible,
+.punto:focus-visible,
+.tarjeta:focus-visible,
+.link:focus-visible {
+    outline: 2px solid #CDF22B;
+    outline-offset: 3px;
+}
+
+.videoPlay {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vacioIzq {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.tagNavy {
+    margin-left: 6px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    padding: 4px 14px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 22px;
+    transform: rotate(-4deg);
+}
+
+.etiqueta {
+    color: #0B1F3A;
+    padding: 8px 22px 14px;
+    font-size: 80px;
+    font-weight: 900;
+    letter-spacing: -0.065em;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+.etiquetaPapel {
+    margin-top: 8px;
+    background-color: #F3F2EE;
+    transform: rotate(-2deg);
+}
+
+.etiquetaLima {
+    margin: -8px 0 0 50px;
+    background-color: #CDF22B;
+    transform: rotate(1.5deg);
+}
+
+.ctaGrande {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    position: relative;
+    margin: 64px 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 76px;
+    padding: 0 36px 0 14px;
+    background-color: #CDF22B;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.08));
+    color: #0B1F3A;
+    font-family: Poppins, sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    transform: rotate(-2deg);
+    box-shadow: 0 6px 0 #9DBB12, 0 14px 24px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ctaGrande:hover {
+    transform: rotate(-2deg) translateY(-2px);
+    box-shadow: 0 8px 0 #9DBB12, 0 18px 28px rgba(0, 0, 0, 0.3);
+}
+
+.ctaGrande:active {
+    transform: rotate(-2deg) translateY(4px);
+    box-shadow: 0 2px 0 #9DBB12, 0 8px 14px rgba(0, 0, 0, 0.3);
+}
+
+.ctaGrandeMas {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #0B1F3A;
+    color: #CDF22B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gratis {
+    position: absolute;
+    right: -30px;
+    top: -30px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #FF5FA8;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: 0;
+    transform: rotate(14deg);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.notaMano {
+    position: absolute;
+    left: 60px;
+    top: calc(100% + 18px);
+    white-space: nowrap;
+    pointer-events: none;
+    color: #FFFFFF;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 26px;
+    font-weight: 400;
+    letter-spacing: 0;
+    transform: rotate(-2deg);
+}
+
+/* Hoja tipo ticket: la sombra va en el wrapper (drop-shadow) y el recorte
+   dentado en el hijo, para que el clip-path no se coma la sombra. */
+.ticketSombra {
+    position: relative;
+    z-index: 2;
+    transform: rotate(1.5deg);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)) drop-shadow(0 6px 6px rgba(0, 0, 0, 0.16)) drop-shadow(0 18px 22px rgba(0, 0, 0, 0.18));
+}
+
+.ticketCinta {
+    position: absolute;
+    left: 90px;
+    top: -15px;
+    z-index: 3;
+    width: 120px;
+    height: 30px;
+    background: linear-gradient(180deg, rgba(255, 253, 240, 0.82), rgba(236, 230, 205, 0.74));
+    clip-path: polygon(0 8%, 4% 0, 8% 10%, 12% 0, 16% 8%, 100% 0, 96% 12%, 100% 24%, 97% 40%, 100% 58%, 96% 76%, 100% 100%, 0 100%, 3% 82%, 0 64%, 4% 46%, 0 28%);
+    transform: rotate(-5deg);
+}
+
+.ticket {
+    position: relative;
+    padding: 44px 36px 60px;
+    background-color: #F8F5EC;
+    background-image:
+        linear-gradient(180deg, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 33.2%, rgba(0, 0, 0, 0.05) 33.3%, rgba(255, 255, 255, 0.55) 33.6%, rgba(0, 0, 0, 0) 34.4%, rgba(0, 0, 0, 0) 66.4%, rgba(0, 0, 0, 0.05) 66.5%, rgba(255, 255, 255, 0.55) 66.8%, rgba(0, 0, 0, 0) 67.6%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0) 6%, rgba(0, 0, 0, 0) 94%, rgba(0, 0, 0, 0.06)),
+        linear-gradient(170deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 38%, rgba(0, 0, 0, 0) 70%, rgba(70, 50, 20, 0.07) 100%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.22 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 100% 100%, 100% 100%, 100% 100%, 160px 160px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), 95% 100%, 90% calc(100% - 14px), 85% 100%, 80% calc(100% - 14px), 75% 100%, 70% calc(100% - 14px), 65% 100%, 60% calc(100% - 14px), 55% 100%, 50% calc(100% - 14px), 45% 100%, 40% calc(100% - 14px), 35% 100%, 30% calc(100% - 14px), 25% 100%, 20% calc(100% - 14px), 15% 100%, 10% calc(100% - 14px), 5% 100%, 0 calc(100% - 14px));
+}
+
+.ticketBordeArriba {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 10px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0));
+}
+
+.ticketBordeAbajo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 70px;
+    background: linear-gradient(0deg, rgba(80, 60, 30, 0.09), rgba(0, 0, 0, 0));
+    pointer-events: none;
+}
+
+.ticketCabeza {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 3px solid #0B1F3A;
+}
+
+.ticketTitulo {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: #0B1F3A;
+}
+
+.ticketMeta {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 22px;
+    color: #22489A;
+}
+
+.pasos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.paso {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 0;
+    border-bottom: 2px dashed rgba(11, 31, 58, 0.18);
+}
+
+.paso:last-child {
+    border-bottom: 0;
+}
+
+.pasoNum {
+    width: 58px;
+    height: 58px;
+    flex: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 34px;
+    line-height: 1;
+    transform: rotate(var(--rot, 0deg));
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+.pasoTexto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pasoTexto b {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    color: #0B1F3A;
+}
+
+.pasoTexto span {
+    font-size: 15px;
+    line-height: 1.4;
+    color: #3A3A36;
+}
+
+/* ───────────── Con Pops: carrusel ───────────── */
+
+.carrusel {
+    height: 90vh;
+    min-height: 600px;
+    max-height: 940px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 24px 50px rgba(11, 31, 58, 0.3);
+    font-family: Poppins, sans-serif;
+}
+
+.lamina {
+    position: absolute;
+    inset: 0;
+    animation: entrarLamina 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes entrarLamina {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Collage de la lámina 0: caja de 1088 × 490 a la derecha, al 112 %. */
+.collage {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 1088px;
+    height: 490px;
+    margin-top: -245px;
+    transform: scale(1.12);
+    transform-origin: 100% 50%;
+    pointer-events: none;
+}
+
+.collageCaja {
+    position: absolute;
+    inset: 0;
+}
+
+.objeto {
+    position: absolute;
+    object-fit: contain;
+    transform: rotate(var(--rot, 0deg));
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35)) drop-shadow(0 8px 10px rgba(0, 0, 0, 0.3));
+}
+
+.stCollage {
+    position: absolute;
+    transform: rotate(var(--rot, 0deg));
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35)) drop-shadow(0 8px 10px rgba(0, 0, 0, 0.3));
+}
+
+.tijeras {
+    position: absolute;
+    right: -30px;
+    top: -40px;
+    transform: rotate(120deg);
+    filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4)) drop-shadow(0 12px 14px rgba(0, 0, 0, 0.35));
+    pointer-events: none;
+}
+
+.hechoPorTi {
+    position: absolute;
+    left: 640px;
+    top: 360px;
+    background-color: #CDF22B;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.05) 80%, rgba(0, 0, 0, 0.14) 100%);
+    color: #0B1F3A;
+    padding: 4px 12px 6px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 19px;
+    transform: rotate(-5deg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 0 rgba(0, 0, 0, 0.14), 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.3), 0 20px 34px -12px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+}
+
+.estrellaLima,
+.estrellaPapel {
+    position: absolute;
+    clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.estrellaLima {
+    left: 900px;
+    top: 20px;
+    width: 18px;
+    height: 18px;
+    background: #CDF22B;
+}
+
+.estrellaPapel {
+    left: 560px;
+    top: 90px;
+    width: 40px;
+    height: 40px;
+    transform: rotate(-10deg);
+    background: #EDEBE4 repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 1px, transparent 1px 4px);
+}
+
+/* Polaroids: marco blanco con cinta. */
+.polaroid {
+    position: absolute;
+    background-color: #FFFFFF;
+    transform: rotate(var(--rot, 0deg));
+}
+
+.polaroid img {
+    display: block;
+    object-fit: cover;
+}
+
+.cinta {
+    position: absolute;
+    left: 50%;
+    top: -11px;
+    width: 76px;
+    height: 22px;
+    margin-left: -38px;
+    background: rgba(238, 232, 212, 0.85);
+    transform: rotate(var(--cinta, 4deg));
+}
+
+.polaroidPie {
+    position: absolute;
+    left: 12px;
+    bottom: 7px;
+    font-family: 'Patrick Hand', cursive;
+    color: #1D1D1B;
+    white-space: nowrap;
+}
+
+.polaroidCollage {
+    padding: 10px 10px 36px;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.05) 80%, rgba(0, 0, 0, 0.14) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 0 rgba(0, 0, 0, 0.14), 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.3), 0 20px 34px -12px rgba(0, 0, 0, 0.25);
+}
+
+.polaroidCollage img {
+    width: var(--foto);
+    height: var(--foto);
+}
+
+.polaroidCollage .polaroidPie {
+    font-size: 19px;
+}
+
+.polaroidPromo1,
+.polaroidPromo2 {
+    padding: 14px 14px 48px;
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+.polaroidPromo1 .polaroidPie,
+.polaroidPromo2 .polaroidPie {
+    font-size: 18px;
+}
+
+.polaroidPromo1 {
+    right: 300px;
+    top: 16%;
+    --rot: -6deg;
+    --cinta: 4deg;
+}
+
+.polaroidPromo1 img {
+    width: 222px;
+    height: 210px;
+}
+
+.polaroidPromo2 {
+    right: 70px;
+    top: 28%;
+    --rot: 7deg;
+    --cinta: -5deg;
+}
+
+.polaroidPromo2 img {
+    width: 208px;
+    height: 196px;
+}
+
+.destelloPromo {
+    position: absolute;
+    right: 560px;
+    bottom: 18%;
+    width: 80px;
+    transform: rotate(-10deg);
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+}
+
+/* Texto de cada lámina, a la izquierda y centrado a lo alto. */
+.texto {
+    position: absolute;
+    left: 64px;
+    top: 50%;
+    transform: translateY(-55%);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.textoPromo {
+    width: 760px;
+    max-width: calc(100% - 128px);
+    gap: 18px;
+}
+
+.logo {
+    height: 160px;
+    display: flex;
+    align-items: center;
+    margin-left: -10px;
+    filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.16)) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.3));
+}
+
+.tituloMarca {
+    margin: 0;
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1.1;
+    color: #FFFFFF;
+}
+
+.resaltado {
+    white-space: nowrap;
+    background: #CDF22B;
+    color: #0B1F3A;
+    padding: 0 8px;
+}
+
+.parrafo {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1.55;
+    max-width: 560px;
+    color: #FFFFFF;
+}
+
+.botones {
+    display: flex;
+    gap: 14px;
+    padding-top: 6px;
+}
+
+.botonLima,
+.botonPapel,
+.ctaPromo {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #0B1F3A;
+    font-family: Poppins, sans-serif;
+    font-weight: 800;
+    transition: transform 0.15s ease;
+}
+
+.botonLima:hover,
+.botonPapel:hover,
+.ctaPromo:hover {
+    transform: translateY(-2px);
+}
+
+.botonLima:active,
+.botonPapel:active,
+.ctaPromo:active {
+    transform: translateY(3px);
+}
+
+.botonLima {
+    height: 56px;
+    padding: 0 26px;
+    background: #CDF22B;
+    font-size: 17px;
+    box-shadow: 0 4px 0 #9DBB12, 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.botonPapel {
+    height: 56px;
+    padding: 0 24px;
+    background: #F3F2EE;
+    font-size: 17px;
+    box-shadow: 0 4px 0 #C9C8C4, 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.tagPromo {
+    height: 28px;
+    padding: 0 12px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    transform: rotate(-2deg);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+}
+
+.tituloPromo {
+    margin: 0;
+    font-size: 68px;
+    font-weight: 900;
+    letter-spacing: -0.055em;
+    line-height: 1.02;
+    color: #FFFFFF;
+}
+
+.ctaPromo {
+    gap: 10px;
+    height: 50px;
+    padding: 0 22px 0 6px;
+    margin-top: 4px;
+    background: #CDF22B;
+    font-size: 15px;
+    box-shadow: 0 4px 0 #9DBB12, 0 10px 18px rgba(0, 0, 0, 0.25);
+}
+
+.ctaPromoIco {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #0B1F3A;
+    color: #CDF22B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Puntos y flechas. */
+.nav {
+    position: absolute;
+    left: 64px;
+    right: 32px;
+    bottom: 28px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.puntos {
+    display: flex;
+    gap: 8px;
+}
+
+.punto {
+    all: unset;
+    cursor: pointer;
+    height: 8px;
+    width: 8px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.4);
+    transition: width 0.25s ease, background-color 0.25s ease;
+}
+
+.punto[data-activo] {
+    width: 32px;
+    background: #CDF22B;
+}
+
+.flechas {
+    display: flex;
+    gap: 10px;
+}
+
+.flecha {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 2px;
+    background: #F3F2EE;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flecha:hover {
+    background: #FFFFFF;
+}
+
+/* ───────────── Tus próximos Pops ───────────── */
+
+.proximos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+}
+
+.proximosCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.proximosCabeza h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #0B1F3A;
+}
+
+.link {
+    all: unset;
+    cursor: pointer;
+    font-family: Poppins, sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #2457A4;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.proximosFila {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.tarjeta {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 20px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+    color: #0B1F3A;
+    font-family: Poppins, sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tarjeta:hover {
+    border-color: #0B1F3A;
+    box-shadow: 0 6px 16px rgba(11, 31, 58, 0.08);
+}
+
+.tarjetaEmoji {
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.tarjetaTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tarjetaTexto b {
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tarjetaTexto small,
+.tarjetaCuenta small {
+    font-size: 12px;
+    color: #56627A;
+}
+
+.tarjetaCuenta {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.tarjetaCuenta b {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.tarjetaCuenta small {
+    font-size: 11px;
+}
+
+.proximosVacio {
+    margin: 0;
+    padding: 18px 20px;
+    border-radius: 20px;
+    background: #FFFFFF;
+    border: 1px dashed #E3E6F0;
+    font-size: 14px;
+    color: #56627A;
+}
+
+/* ───────────── Anchos menores (el diseño es de 1440) ───────────── */
+
+@media (max-width: 1360px) {
+    .vacio {
+        padding: 120px 56px 80px;
+        grid-template-columns: minmax(0, 1fr) 420px;
+        gap: 56px;
+    }
+
+    .etiqueta {
+        font-size: 64px;
+    }
+
+    .collage {
+        transform: scale(0.95);
+    }
+
+    .tituloPromo {
+        font-size: 56px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .vacio {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 64px;
+    }
+
+    .ticketSombra {
+        max-width: 480px;
+    }
+
+    .collage {
+        opacity: 0.35;
+    }
+
+    .polaroidPromo1,
+    .polaroidPromo2,
+    .destelloPromo {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lamina {
+        animation: none;
+    }
+
+    .video,
+    .ctaGrande,
+    .botonLima,
+    .botonPapel,
+    .ctaPromo,
+    .punto,
+    .tarjeta {
+        transition: none;
+    }
+}
+
+/* ───────────── Celular (390 px, handoff §10) ─────────────
+   Va dentro del scroll de PopsApp (columna flex): cada bloque lleva
+   `flex: none` para que las filas con scroll horizontal no colapsen. */
+
+.mPagina {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+}
+
+.mPagina > * {
+    flex: none;
+}
+
+.mSaludo {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.2;
+    color: #0B1F3A;
+}
+
+/* Sin Pops: tablero a sangre (el scroll de PopsApp deja 16 px a los lados). */
+/* Doble clase: le gana a `.movil` de TableroAzul (64 / 16 px del handoff). */
+.mVacio.mVacio,
+.mCarrusel.mCarrusel {
+    --tab-mayor: 64px;
+    --tab-menor: 16px;
+    font-family: Poppins, sans-serif;
+}
+
+.mVacio {
+    margin: 0 -16px;
+    padding: 70px 20px 60px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.mVideo {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    z-index: 4;
+    min-height: 44px;
+    padding: 0 14px 0 6px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Poppins, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mVideo .videoPlay {
+    width: 32px;
+    height: 32px;
+}
+
+.mTagMano {
+    position: relative;
+    z-index: 2;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    padding: 3px 12px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    transform: rotate(-4deg);
+}
+
+.mEtiqueta {
+    position: relative;
+    z-index: 2;
+    max-width: 100%;
+    color: #0B1F3A;
+    padding: 6px 16px 10px;
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: -0.065em;
+    line-height: 1;
+    white-space: nowrap;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1));
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.26);
+}
+
+.mVacio .mEtiqueta.etiquetaPapel {
+    margin-top: 8px;
+}
+
+.mVacio .mEtiqueta.mEtiquetaLima {
+    margin: -6px 0 0 30px;
+}
+
+.mTicketSombra {
+    position: relative;
+    z-index: 2;
+    align-self: stretch;
+    margin-top: 34px;
+    transform: rotate(1deg);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)) drop-shadow(0 10px 14px rgba(0, 0, 0, 0.2));
+}
+
+.mTicketCinta {
+    position: absolute;
+    left: 40px;
+    top: -12px;
+    z-index: 3;
+    width: 90px;
+    height: 24px;
+    background: linear-gradient(180deg, rgba(255, 253, 240, 0.82), rgba(236, 230, 205, 0.74));
+    transform: rotate(-5deg);
+}
+
+.mTicket {
+    padding: 26px 20px 34px;
+    background-color: #F8F5EC;
+    background-image: linear-gradient(170deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 38%, rgba(70, 50, 20, 0.06) 100%);
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 97.5% 100%, 95% calc(100% - 10px), 92.5% 100%, 90% calc(100% - 10px), 87.5% 100%, 85% calc(100% - 10px), 82.5% 100%, 80% calc(100% - 10px), 77.5% 100%, 75% calc(100% - 10px), 72.5% 100%, 70% calc(100% - 10px), 67.5% 100%, 65% calc(100% - 10px), 62.5% 100%, 60% calc(100% - 10px), 57.5% 100%, 55% calc(100% - 10px), 52.5% 100%, 50% calc(100% - 10px), 47.5% 100%, 45% calc(100% - 10px), 42.5% 100%, 40% calc(100% - 10px), 37.5% 100%, 35% calc(100% - 10px), 32.5% 100%, 30% calc(100% - 10px), 27.5% 100%, 25% calc(100% - 10px), 22.5% 100%, 20% calc(100% - 10px), 17.5% 100%, 15% calc(100% - 10px), 12.5% 100%, 10% calc(100% - 10px), 7.5% 100%, 5% calc(100% - 10px), 2.5% 100%, 0% calc(100% - 10px));
+}
+
+.mTicketCabeza {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom: 3px solid #0B1F3A;
+}
+
+.mTicketCabeza .ticketTitulo {
+    font-size: 12px;
+}
+
+.mTicketMeta {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    color: #22489A;
+    white-space: nowrap;
+}
+
+.mPaso {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 2px dashed rgba(11, 31, 58, 0.16);
+}
+
+.mPaso:last-child {
+    border-bottom: 0;
+}
+
+.mPasoNum {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 24px;
+    line-height: 1;
+    transform: rotate(var(--rot, 0deg));
+}
+
+.mPasoTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.mPasoTexto b {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: #0B1F3A;
+}
+
+.mPasoTexto span {
+    font-size: 12px;
+    line-height: 1.35;
+    color: #3A3A36;
+}
+
+.mCtaCaja {
+    position: relative;
+    z-index: 2;
+    margin: 40px 0 0 6px;
+}
+
+.ctaGrande.mCta {
+    margin: 0;
+    gap: 12px;
+    height: 64px;
+    padding: 0 24px 0 10px;
+    font-size: 22px;
+    box-shadow: 0 5px 0 #9DBB12, 0 12px 20px rgba(0, 0, 0, 0.25);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mCtaMas {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #0B1F3A;
+    color: #CDF22B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mGratis {
+    position: absolute;
+    right: -22px;
+    top: -22px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #FF5FA8;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 0;
+    transform: rotate(14deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.mNotaMano {
+    position: relative;
+    z-index: 2;
+    margin: 16px 0 0 50px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 20px;
+    color: #FFFFFF;
+    transform: rotate(-2deg);
+}
+
+/* Con Pops: tarjeta del tablero con la lámina actual. */
+.mCarrusel {
+    border-radius: 24px;
+    overflow: hidden;
+    padding: 26px 20px 20px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    touch-action: pan-y;
+}
+
+.mLamina {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    animation: mLaminaEntra 0.35s ease both;
+}
+
+@keyframes mLaminaEntra {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.mTag {
+    background: #0B1F3A;
+    color: #FFFFFF;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    transform: rotate(-2deg);
+}
+
+.mEtiquetaChica {
+    max-width: calc(100% - 20px);
+    color: #0B1F3A;
+    padding: 4px 12px 8px;
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1.05;
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.26);
+}
+
+.mCarrusel .mEtiquetaChicaPapel {
+    margin-top: 0;
+    transform: rotate(-1.5deg);
+}
+
+.mCarrusel .mEtiquetaChicaLima {
+    margin: -6px 0 0 20px;
+    transform: rotate(1.5deg);
+}
+
+.mTexto {
+    font-size: 14px;
+    line-height: 1.45;
+    max-width: 300px;
+    color: #FFFFFF;
+}
+
+.mPie {
+    position: relative;
+    z-index: 2;
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mCtaLamina {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    min-height: 46px;
+    padding: 0 18px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Poppins, sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 4px 0 #9DBB12;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mCtaLamina:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #9DBB12;
+}
+
+.mPuntos {
+    display: flex;
+    align-items: center;
+}
+
+/* El punto se ve de 8 px, pero el toque es de 44 px de alto. */
+.mPunto {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    height: 44px;
+    padding: 0 3px;
+    display: flex;
+    align-items: center;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mPunto span {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.5);
+    transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.mPunto[data-activo] span {
+    width: 22px;
+    background: #CDF22B;
+}
+
+.mCtaLamina:focus-visible,
+.mPunto:focus-visible,
+.mVideo:focus-visible,
+.mLink:focus-visible,
+.mTarjeta:focus-visible,
+.mPlusBoton:focus-visible {
+    outline: 2px solid #CDF22B;
+    outline-offset: 2px;
+}
+
+/* Tus próximos Pops: fila con scroll horizontal. */
+.mProximos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.mProximosCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mProximosCabeza h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: #0B1F3A;
+}
+
+.mLink {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-family: Poppins, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2457A4;
+    white-space: nowrap;
+}
+
+.mFila {
+    flex: none;
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -16px;
+    padding: 0 16px 6px;
+    scroll-snap-type: x proximity;
+    scroll-padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mFila::-webkit-scrollbar {
+    display: none;
+}
+
+.mTarjeta {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    flex: none;
+    width: 200px;
+    padding: 16px;
+    border-radius: 20px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scroll-snap-align: start;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mTarjeta:active {
+    background: #F7F8FB;
+}
+
+.mTarjetaEmoji {
+    font-size: 30px;
+    line-height: 1;
+}
+
+.mTarjetaNombre {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mTarjetaFecha {
+    font-size: 12px;
+    color: #56627A;
+}
+
+.mTarjetaCuenta {
+    font-size: 13px;
+}
+
+/* Free: tarjeta navy de Pops+. */
+.mPlus {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.mPlusTexto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.mPlusLogo {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+}
+
+.mPlusLogo span {
+    color: #CDF22B;
+}
+
+.mPlusDesc {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #B9C3D3;
+}
+
+.mPlusBoton {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    flex: none;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    font-family: Poppins, sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mLamina {
+        animation: none;
+    }
+
+    .mPunto span {
+        transition: none;
+    }
+}
+
+/* Esqueleto mientras cargan los Pops (EsqueletoInicio). */
+.esqueleto {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.esqBloque {
+    display: block;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #E8ECF5 0%, #F4F6FB 50%, #E8ECF5 100%);
+    background-size: 200% 100%;
+    animation: esqBrillo 1.4s linear infinite;
+}
+
+.esqCarrusel {
+    height: 90vh;
+    min-height: 600px;
+    max-height: 940px;
+    border-radius: 24px;
+}
+
+.esqTitulo {
+    width: 220px;
+    height: 26px;
+    margin-top: 14px;
+}
+
+.esqFila {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.esqTarjeta {
+    height: 150px;
+    border-radius: 20px;
+}
+
+/* Celular: carrusel más bajo y las tarjetas de lado, como ProximosMovil. */
+.esqMovil .esqCarrusel {
+    height: 440px;
+    min-height: 0;
+}
+
+.esqMovil .esqTitulo {
+    width: 170px;
+    height: 22px;
+    margin-top: 6px;
+}
+
+.esqMovil .esqFila {
+    display: flex;
+    overflow: hidden;
+    gap: 12px;
+}
+
+.esqMovil .esqTarjeta {
+    flex: none;
+    width: 62%;
+    height: 132px;
+}
+
+@keyframes esqBrillo {
+    to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .esqBloque { animation: none; }
+}

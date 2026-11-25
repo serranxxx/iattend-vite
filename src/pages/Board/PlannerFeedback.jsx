@@ -23,15 +23,20 @@ const TIPOS = ['feature', 'data', 'improve']
  * variante 'azul': Collage azul de Pops (gris claro, botón pill con borde
  * navy y una estrella lima de 4 puntas en la esquina; sin el texto).
  * variante 'craft': sticky note amarilla con cinta (estilo Craft de Pops).
+ * variante 'oculta': solo el formulario, abierto desde fuera con `abierto` /
+ * `onCerrar` (el botón Ayuda del menú del avatar de la app de Pops).
  */
-export const PlannerFeedback = ({ variante = 'tarjeta' }) => {
+export const PlannerFeedback = ({ variante = 'tarjeta', abierto: abiertoFuera, onCerrar }) => {
     const { t } = useTranslation()
-    const [abierto, setAbierto] = useState(false)
+    const [abiertoPropio, setAbiertoPropio] = useState(false)
+    const controlado = abiertoFuera !== undefined
+    const abierto = controlado ? abiertoFuera : abiertoPropio
+    const setAbierto = (v) => { if (controlado) { if (!v) onCerrar?.() } else setAbiertoPropio(v) }
     const celular = Grid.useBreakpoint().md === false
 
     return (
         <>
-            {variante === 'fila' ? (
+            {variante === 'oculta' ? null : variante === 'fila' ? (
                 <button type='button' className={styles.fila} onClick={() => setAbierto(true)}>
                     <span className={`${styles.icono} ${styles.filaIcono}`}><Sparkle size={16} fill='currentColor' /></span>
                     <span className={styles.filaTexto}>
@@ -77,7 +82,8 @@ export const PlannerFeedback = ({ variante = 'tarjeta' }) => {
                     destroyOnHidden
                     centered
                     width={620}
-                    styles={{ content: { borderRadius: 28, padding: 0 } }}
+                    // antd v6: la caja es `container` (con `content` solo, su padding se sumaba al del formulario).
+                    styles={{ container: { borderRadius: 28, padding: 0 }, content: { borderRadius: 28, padding: 0 } }}
                 >
                     <Formulario onClose={() => setAbierto(false)} />
                 </Modal>

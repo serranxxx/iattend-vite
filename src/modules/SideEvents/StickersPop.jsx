@@ -1,4 +1,5 @@
-import { Button, Slider } from 'antd'
+import { Button } from 'antd'
+import { Deslizador as Slider } from '../Editor/Deslizador'
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'

@@ -89,7 +89,7 @@ export const EditorMovil = ({
     // Carpeta del evento en Storage (los PNG que se agregan van ahí).
     carpeta,
     // Header
-    onBack, onUndo, onRedo, canUndo, canRedo, tab, onTab, esPublico, onAcceso, envolverAcceso, cambiandoAcceso, estadoGuardado, onReintentar,
+    onBack, onUndo, onRedo, canUndo, canRedo, tab, onTab, esPublico, onAcceso, envolverAcceso, cambiandoAcceso, estadoGuardado, onReintentar, funcionesPlus, onQuitarPlus,
     // Compartir: el mismo contenido del popover de escritorio (portada + QR +
     // Copiar link) en un modal; con información pendiente, `onCompartirBloqueado`.
     urlPublica, compartirBloqueado, onCompartirBloqueado,
@@ -446,7 +446,7 @@ export const EditorMovil = ({
             </header>
             )}
             <div className={s.estado} style={{ top: `calc(env(safe-area-inset-top) + ${ALTO_HEADER + 6}px)`, height: ALTO_ESTADO }}>
-                <EstadoGuardado estado={estadoGuardado} onReintentar={onReintentar} />
+                <EstadoGuardado estado={estadoGuardado} onReintentar={onReintentar} funcionesPlus={funcionesPlus} onQuitarPlus={onQuitarPlus} />
             </div>
 
             {tab === 'envio' && (

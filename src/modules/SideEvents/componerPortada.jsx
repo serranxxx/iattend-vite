@@ -152,7 +152,13 @@ export const portadaConDiseno = (body) => (body?.stickers ?? []).some((s) => !s.
  * @param {{ fondo: { tipo: 'imagen'|'video', url: string, ajuste?: object } | null, stickers: object[], color?: string, veil?: number, titleFont?: string }} opciones
  * @returns {Promise<File>} JPG listo para subir
  */
-export const componerPortada = async ({ fondo, stickers: todos, color, veil, titleFont = 'Poppins' }) => {
+// Marca de agua de un Pop Free (ver `marca`): logo, ancho y margen en
+// proporción al ancho de la imagen. VistaLinkWhatsApp la pinta igual.
+export const MARCA_LOGO = '/images/logo_cover.png'
+export const MARCA_ANCHO = 0.24
+export const MARCA_MARGEN = 0.05
+
+export const componerPortada = async ({ fondo, stickers: todos, color, veil, titleFont = 'Poppins', marca = false }) => {
     // Sin los de las tarjetas ni los anclados a otra foto del carrusel.
     const stickers = (todos ?? []).filter((s) => !s.hidden && !s.tarjeta && (!s.fotoSrc || s.fotoSrc === fondo?.url))
     const ancho = PIEZA_ANCHO
@@ -234,6 +240,27 @@ export const componerPortada = async ({ fondo, stickers: todos, color, veil, tit
         ctx.fillStyle = color
         ctx.fillRect(0, 0, ancho, alto)
         ctx.globalAlpha = 1
+    }
+
+    // Pop Free: marca de agua de I attend arriba a la izquierda (el logo
+    // blanco del pase). En Pops Plus no va.
+    if (marca) {
+        const logo = await new Promise((resolve) => {
+            const img = new Image()
+            img.onload = () => resolve(img)
+            img.onerror = () => resolve(null)
+            img.src = MARCA_LOGO
+        })
+        if (logo?.naturalWidth) {
+            const w = ancho * MARCA_ANCHO
+            const h = (w * logo.naturalHeight) / logo.naturalWidth
+            ctx.save()
+            ctx.globalAlpha = 0.9
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)'
+            ctx.shadowBlur = 12
+            ctx.drawImage(logo, ancho * MARCA_MARGEN, ancho * MARCA_MARGEN, w, h)
+            ctx.restore()
+        }
     }
 
     const blob = await new Promise((resolve, reject) => {

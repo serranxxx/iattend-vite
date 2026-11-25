@@ -8,10 +8,14 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, CirclePlus, Copy, GripHorizontal, Rows2, Trash2, X } from 'lucide-react'
+import { message } from 'antd'
 import styles from './FormularioVista.module.css'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
+import { usePopFree } from '../PlanPops/planPopsUI'
+import { LIMITES_FREE } from '../planPops'
 import { VistaPrevia } from './VistaPrevia'
 import {
-    MAX_OPCIONES, TIPO, TIPOS, esSeccion, preguntaNueva, seccionNueva, uid, usaOpciones,
+    MAX_OPCIONES, TIPO, TIPOS, contarPreguntas, esSeccion, preguntaNueva, seccionNueva, uid, usaOpciones,
 } from './modelo'
 
 /*
@@ -252,8 +256,17 @@ export const PreguntasTab = ({ formulario, editar, avisar, fondo, activaPedida }
         return nuevo
     }))
 
+    // Pop Free: hasta LIMITES_FREE.preguntas preguntas (las secciones no
+    // cuentan). La siguiente pregunta (nueva o duplicada) no entra.
+    const popFree = usePopFree()
+    const enTope = popFree && contarPreguntas(items) >= LIMITES_FREE.preguntas
+
     // Agregar después de la tarjeta activa (o al final) y dejarla activa.
     const insertar = (nuevo) => {
+        if (!esSeccion(nuevo) && enTope) {
+            message.info(t('pops_plus.preguntas_tope', { n: LIMITES_FREE.preguntas }))
+            return
+        }
         const i = items.findIndex((it) => it.id === activa)
         const lista = [...items]
         lista.splice(i < 0 ? lista.length : i + 1, 0, nuevo)
@@ -336,8 +349,16 @@ export const PreguntasTab = ({ formulario, editar, avisar, fondo, activaPedida }
                     </div>
 
                     <div className={styles.herramientas}>
-                        <button type="button" onClick={() => insertar(preguntaNueva('short'))} aria-label={t('side_events.frm_add_question')} title={t('side_events.frm_add_question')}>
+                        <button
+                            type="button"
+                            onClick={() => insertar(preguntaNueva('short'))}
+                            aria-label={t('side_events.frm_add_question')}
+                            title={enTope ? t('pops_plus.preguntas_tope', { n: LIMITES_FREE.preguntas }) : t('side_events.frm_add_question')}
+                            aria-disabled={enTope || undefined}
+                            className={enTope ? styles.agregarPlus : undefined}
+                        >
                             <CirclePlus size={20} strokeWidth={1.8} />
+                            {enTope && <InsigniaPlus className={styles.insigniaAgregar} />}
                         </button>
                         <button type="button" onClick={() => insertar(seccionNueva())} aria-label={t('side_events.frm_add_section')} title={t('side_events.frm_add_section')}>
                             <Rows2 size={20} strokeWidth={1.8} />

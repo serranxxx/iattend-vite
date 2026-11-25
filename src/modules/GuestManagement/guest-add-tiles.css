@@ -223,3 +223,21 @@
     border-radius: 16px;
     cursor: not-allowed;
 }
+
+/* Pop Free: "De otro evento" se ve, pero es de Pops Plus (SideEvents.jsx). */
+.guest-add-tile--plus {
+    cursor: not-allowed;
+}
+
+.guest-add-tile--plus .guest-add-tile-icon,
+.guest-add-tile--plus .guest-add-tile-sub {
+    opacity: 0.55;
+}
+
+.guest-add-tile-insignia {
+    position: relative;
+    /* Encima del velo blanco del bloque bloqueado: la insignia nunca se apaga. */
+    z-index: 2;
+    margin-left: 8px;
+    vertical-align: 2px;
+}

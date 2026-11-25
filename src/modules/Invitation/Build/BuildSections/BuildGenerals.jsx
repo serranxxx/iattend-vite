@@ -1,4 +1,5 @@
-import { Button, Col, ColorPicker, Dropdown, Grid, Input, Row, Segmented, Select, Slider, message } from 'antd'
+import { Button, Col, ColorPicker, Dropdown, Grid, Input, Row, Segmented, Select, message } from 'antd'
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Separador } from '../../../../components/Invitation/Logos';

@@ -10,6 +10,7 @@ import { PopsBusiness } from './PopsBusiness'
 import { PopsCraft } from './PopsCraft'
 import { PopsTemaSwitch } from './PopsTemaSwitch'
 import styles from './PopsSection.module.css'
+import { MiniaturaPop } from './MiniaturaPop'
 
 /**
  * /invitations › Pops en escritorio (handoff "Sección Pops"): banda negra con
@@ -159,7 +160,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
     const fila = ({ item, fecha, dias, color, emoji, portada, correo, nombre }, pasado = false) => (
         <button key={item.id} type='button' className={`${styles.fila} ${pasado ? styles.filaPasada : ''}`} onClick={() => onAbrir(item)}>
             <span className={styles.mini} style={{ background: color.fondo, color: color.tinta }}>
-                {portada ? <img src={portada} alt='' loading='lazy' className={styles.miniPortada} /> : emoji
+                {portada ? <MiniaturaPop src={portada} className={styles.miniPortada} /> : emoji
                     ? <span className={styles.miniEmoji}>{emoji}</span>
                     // Lugar del emoji: todavía no se elige (ver emojiDePop).
                     : <SmilePlus size={22} className={styles.miniVacio} aria-label={t('pops_section.no_emoji')} />}
@@ -223,7 +224,7 @@ const PopsPop = ({ movil = false, greeting, items, gratisPop = 0, puedeCrear, on
         const filaMovil = ({ item, fecha, dias, color, emoji, portada, correo, nombre }, pasado = false) => (
             <button key={item.id} type='button' className={`${styles.mFila} ${pasado ? styles.filaPasada : ''}`} onClick={() => onAbrir(item)}>
                 <span className={`${styles.mini} ${styles.mMini}`} style={{ background: color.fondo, color: color.tinta }}>
-                    {portada ? <img src={portada} alt='' loading='lazy' className={styles.miniPortada} /> : emoji
+                    {portada ? <MiniaturaPop src={portada} className={styles.miniPortada} /> : emoji
                         ? <span className={styles.miniEmoji}>{emoji}</span>
                         : <SmilePlus size={20} className={styles.miniVacio} aria-label={t('pops_section.no_emoji')} />}
                 </span>

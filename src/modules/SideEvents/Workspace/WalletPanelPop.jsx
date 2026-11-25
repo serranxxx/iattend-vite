@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { usePopFree } from '../PlanPops/planPopsUI'
 import { WalletPanel } from '../../Editor/WalletPanel'
 import { datosPasePop } from './datosPasePop'
 import { soloVideos } from '../fotosPortada'
@@ -19,6 +20,7 @@ import { PortadaCubierta } from '../PortadaCubierta'
 export const WalletPanelPop = ({ current, setBody, onPickImage }) => {
     const { t } = useTranslation()
     const body = current?.body ?? {}
+    const popFree = usePopFree()
     const wallet = body.wallet ?? {}
     // Sin foto propia ni del link, la del pase es la portada con sus
     // elementos: se pinta en vivo (la guardada se rehace al guardar).
@@ -45,6 +47,7 @@ export const WalletPanelPop = ({ current, setBody, onPickImage }) => {
                 aviso: t('build_editor.wallet_sample_notice'),
             }}
             walletActivo={wallet.enabled !== false}
+            soloPlus={popFree}
             onWalletActivo={(on) => patchWallet({ enabled: on })}
             titulo={wallet.title}
             tituloBase={current?.name}

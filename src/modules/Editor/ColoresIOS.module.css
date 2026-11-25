@@ -5,6 +5,10 @@
     flex-direction: column;
     gap: 16px;
     width: 340px;
+    /* En un contenedor más angosto (los popovers de color de los efectos y
+       del sticker miden 280 px) se ajusta en vez de salirse. */
+    max-width: 100%;
+    min-width: 0;
 }
 
 .cabeza {
@@ -111,15 +115,36 @@
 
 /* Espectro: el matiz de arriba abajo; a la izquierda se aclara, a la
    derecha se oscurece. */
+.espectroCaja {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* La barra del matiz: en esta columna no se estira (flex: 1 la dejaba sin alto). */
+.espectroCaja .barra {
+    flex: none;
+}
+
+/* Cuadro de saturación (a lo ancho) y brillo (a lo alto); el fondo lo pone
+   el componente con el matiz elegido. */
 .espectro {
     position: relative;
     height: 230px;
     border-radius: 14px;
-    background:
-        linear-gradient(to right, #fff 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0) 50%, #000 100%),
-        linear-gradient(to bottom, #f00 0%, #ff0 16.6%, #0f0 33.3%, #0ff 50%, #00f 66.6%, #f0f 83.3%, #f00 100%);
     cursor: crosshair;
     touch-action: none;
+}
+
+/* Curva de contraste 4.5:1 con texto blanco; debajo, punteado. */
+.espectroCurva {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    pointer-events: none;
 }
 
 .espectroPerilla {
@@ -408,4 +433,28 @@
 
 :global(html[data-pops-editor='craft']) .guardado {
     border-radius: 0;
+}
+
+/* "De tu paleta" (paleta / sinColor): atajos arriba de las vistas. */
+.paleta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Sin color: blanco con una diagonal roja. */
+.sinColor {
+    background: linear-gradient(135deg, #fff calc(50% - 1.5px), #D32F2F calc(50% - 1.5px), #D32F2F calc(50% + 1.5px), #fff calc(50% + 1.5px));
+}
+
+/* Cuentagotas al inicio de los colores guardados (panel lateral, sin
+   encabezado): del tamaño de un color guardado. */
+.goteroGuardados {
+    width: 32px;
+    height: 32px;
+}
+
+/* Pestañas con aire: un poco de espacio entre ellas. */
+.segmento {
+    gap: 2px;
 }

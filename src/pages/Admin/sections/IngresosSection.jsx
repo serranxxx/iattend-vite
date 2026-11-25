@@ -11,7 +11,7 @@ import { AdminModal } from '../AdminModal'
 import { MESES, calcularCargosPorVenta, calcularKpis, formatCurrency, netoPromedioPorVenta } from '../ventasCalculos'
 import { AcumuladoChart, BarrasPorMes, ComparativaChart, MESES_CORTOS, ProyeccionChart } from './VentasCharts'
 import { MetaDelMes } from './MetaDelMes'
-import { COLOR_POR_ANIO, COLOR_POR_PLAN, PLANES_DE_VENTA, nombreDePlan } from '../adminCharts'
+import { BORDE_POR_PLAN, COLOR_POR_ANIO, COLOR_POR_PLAN, PLANES_DE_VENTA, nombreDePlan } from '../adminCharts'
 import styles from './VentasSection.module.css'
 import iv from './Ingresos.module.css'
 
@@ -22,7 +22,9 @@ const METODOS_DE_VENTA = [
     { value: 'transferencia', label: 'Transferencia' },
     { value: 'digital', label: 'Pago digital' },
 ]
-const PLANES_DE_INVITACION = [{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }]
+const PLANES_DE_INVITACION = [{ value: 'PRO', label: 'PRO' }, { value: 'Lite', label: 'Lite' }, { value: 'Paperless', label: 'Paperless' }]
+// Plan de la invitación (minúsculas en invitations.plan) → valor de ventas.plan.
+const PLAN_DE_VENTA = { pro: 'PRO', lite: 'Lite', paperless: 'Paperless' }
 const esDigital = (venta) => venta?.metodo_pago === 'digital'
 
 const METODOS_PAGO = [
@@ -564,7 +566,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
         if (selected?.plan === 'Flash') {
             manualForm.setFieldValue('plan', 'Flash')
         } else if (selected?.plan) {
-            manualForm.setFieldValue('plan', selected.plan.toUpperCase() === 'PRO' ? 'PRO' : 'Lite')
+            manualForm.setFieldValue('plan', PLAN_DE_VENTA[String(selected.plan).toLowerCase()] ?? 'Lite')
         }
     }
 
@@ -771,7 +773,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                         <span className={`${styles.cell} ${styles.evento}`}>{venta.evento}</span>
                                         <span className={`${styles.cell} ${styles.vendedor}`}>{venta.vendedor || '—'}</span>
                                         <span className={styles.cell}>
-                                            <span className={`${styles.plan} ${venta.plan !== 'PRO' ? styles.planLite : ''}`}>
+                                            <span className={`${styles.plan} ${venta.plan === 'Paperless' ? styles.planPaperless : venta.plan !== 'PRO' ? styles.planLite : ''}`}>
                                                 {nombreDePlan(venta.plan)}
                                             </span>
                                         </span>
@@ -857,7 +859,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                         <span className={iv.kpiLabel}>Ventas del mes</span>
                         <div className={iv.kpiLinea}>
                             <span className={iv.kpiValor}>{kpis.ventasCount}</span>
-                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite{kpis.popCount ? ` · ${kpis.popCount} Pop` : ''} · {kpisAnuales.ventasCount} en {year}</span>
+                            <span className={iv.kpiNota}>{kpis.proCount} PRO · {kpis.liteCount} Lite{kpis.paperlessCount ? ` · ${kpis.paperlessCount} Paperless` : ''}{kpis.popCount ? ` · ${kpis.popCount} Pop` : ''} · {kpisAnuales.ventasCount} en {year}</span>
                         </div>
                     </div>
                     <div className={iv.kpi}>
@@ -1008,7 +1010,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                             <div className={iv.ventaTexto}>
                                                 <div className={iv.ventaNombre}>
                                                     <b>{venta.evento}</b>
-                                                    <span className={venta.plan !== 'PRO' ? iv.planLite : iv.planPro}>{nombreDePlan(venta.plan)}</span>
+                                                    <span className={venta.plan === 'Paperless' ? iv.planPaperless : venta.plan !== 'PRO' ? iv.planLite : iv.planPro}>{nombreDePlan(venta.plan)}</span>
                                                 </div>
                                                 <span className={iv.ventaMeta}>
                                                     {venta.vendedor || '—'} · {dayjs(venta.fecha_venta).format('D MMM')}
@@ -1091,7 +1093,7 @@ export const IngresosSection = ({ year, month, onAniosDisponibles, vista = 'mes'
                                     .map(plan => [plan, barras.series[0].porPlan[plan].reduce((a, b) => a + b, 0)])
                                     .filter(([, n]) => n > 0)
                                     .map(([plan, n]) => (
-                                        <span key={plan}><i style={{ background: COLOR_POR_PLAN[plan] }} />{n} {nombreDePlan(plan)}</span>
+                                        <span key={plan}><i style={{ background: COLOR_POR_PLAN[plan], boxShadow: BORDE_POR_PLAN[plan] ? `inset 0 0 0 1px ${BORDE_POR_PLAN[plan]}` : undefined }} />{n} {nombreDePlan(plan)}</span>
                                     ))}
                                 <span>{formatCurrency(barras.series[0].neto)} {descontarIva ? 'neto' : 'con IVA'}</span>
                             </span>

@@ -12,6 +12,9 @@ import { PINCEL, PINCELES } from '../../Editor/dibujoData'
 import { AjustesPincel } from './AjustesPincel'
 import base from '../../Invitation/Build/PageSections/ToolPanels.module.css'
 import ed from '../SideEventEditor.module.css'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
+import { useInsigniasPlus } from '../PlanPops/planPopsUI'
+import { LIMITES_FREE } from '../planPops'
 import own from './SideWorkspace.module.css'
 
 // Contenido propio de los paneles Diseño e Itinerario de un side event / Pop
@@ -154,6 +157,7 @@ const MiniEstilo = ({ estilo, color, imagen }) => (
 // `movil`: el drawer del editor del celular (EditorMovil): el color del tema
 // se elige con la cuadrícula estilo iOS (ColoresIOS) en lugar del selector.
 export const DesignPanel = ({ current, setBody, esPop, movil = false, onPickImage = null }) => {
+    const verInsignias = useInsigniasPlus()
     const { t } = useTranslation()
     const body = current?.body ?? {}
     const color = body.color ?? '#000000'
@@ -217,6 +221,7 @@ export const DesignPanel = ({ current, setBody, esPop, movil = false, onPickImag
                                 aria-pressed={estiloDe(body) === id}
                                 onClick={() => setBody({ blockStyle: id === 'vidrio' ? null : id })}
                             >
+                                {verInsignias && !LIMITES_FREE.estilosBloque.includes(id) && <InsigniaPlus esquina />}
                                 <MiniEstilo estilo={id} color={color} imagen={body.image} />
                                 {t(`side_events.block_style_${id}`)}
                             </button>
@@ -296,6 +301,7 @@ export const DesignPanel = ({ current, setBody, esPop, movil = false, onPickImag
                                 aria-pressed={(efecto?.type ?? null) === tipo}
                                 onClick={() => elegirEfecto(tipo)}
                             >
+                                {verInsignias && tipo === 'imagenes' && <InsigniaPlus esquina />}
                                 <span className={ed.efectoEmoji} aria-hidden>{EMOJI_EFECTO[tipo ?? 'none']}</span>
                                 {t(`side_events.effect_${tipo ?? 'none'}`)}
                             </button>

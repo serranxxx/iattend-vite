@@ -23,6 +23,7 @@ import temporada2 from '../../assets/pops-azul/inicio-season-2.webp'
 import temporada3 from '../../assets/pops-azul/inicio-season-3.webp'
 import tijeras from '../../assets/pops-azul/tijeras-recorte.png'
 import styles from './PopsInicioAzul.module.css'
+import { MiniaturaPop } from './MiniaturaPop'
 
 /**
  * Inicio del espacio Pops con el estilo "Collage azul · lima" (handoff "App
@@ -200,7 +201,7 @@ export const PopsInicioAzul = ({ movil = false, greeting, pops = [], gratisPop =
                 return (
                     <button key={item.id} type='button' className={styles.chip} onClick={() => onAbrir(item)}>
                         <span className={styles.chipPunto} style={{ background: colorDePop(pop) || '#CDF22B' }}>
-                            {portada ? <img src={portada} alt='' loading='lazy' /> : emojiDePop(pop) || '✨'}
+                            {portada ? <MiniaturaPop src={portada} /> : emojiDePop(pop) || '✨'}
                         </span>
                         <span className={styles.chipNombre}>{(item.name || pop?.name || '').trim() || t('pops_section.untitled')}</span>
                         {dias !== null && <span className={styles.chipCuando}>{cuando(dias)}</span>}

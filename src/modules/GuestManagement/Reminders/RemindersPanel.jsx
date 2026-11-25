@@ -18,6 +18,9 @@ import {
 } from './reminderVariables'
 import { WhatsappBubble } from './WhatsappBubble'
 import { DeadlineDialog } from './DeadlineDialog'
+import { useImagenEncabezado } from './primerCuadro'
+import { InsigniaPlus } from '../../SideEvents/PlanPops/InsigniaPlus'
+import { PRECIO_PLUS } from '../../../pages/Board/PopsApp/usePlanPops'
 import { fetchFailureKinds, mainFailureKind } from './sendFailures'
 import styles from './RemindersPanel.module.css'
 
@@ -36,9 +39,22 @@ const isLeader = (g) => g.companion_id === null || g.companion_id === undefined
  *
  * `preset` lo cambian los atajos (Seguimiento, la barra de selección de las
  * listas): { nonce, templateSlug, segment, manualIds, manualFrom }.
+ *
+ * Pop (`sideEventId`, función de Pops+; SideEvents.jsx): sin mesas, etiquetas,
+ * lado ni prioridad (segmentos y reglas se recortan), nombre del evento en
+ * `eventTitle` y el magic link con `guestPath`. El envío lo hace `onSend`.
  */
 export const RemindersPanel = ({
     invitationId,
+    sideEventId = null,
+    eventTitle,
+    guestPath,
+    // Pop Free: se puede entrar y armar el recordatorio, pero no enviarlo
+    // (insignia Pops+ en el título y el botón lleva a Pasar a Pops+).
+    bloqueoPlus = false,
+    // Insignia Pops+ junto al título sin bloquear (Pop en prueba gratis).
+    insigniaPlus = false,
+    onPasarPlus,
     rowData = [],
     dispatchMap = {},
     tables = [],
@@ -84,7 +100,13 @@ export const RemindersPanel = ({
     const [reqError, setReqError] = useState(null)
 
     const isPro = plan === 'pro'
-    const eventCtx = { invitation, name, rsvpDeadline, eventDate, urlImage }
+    // Imagen del encabezado: si la del link (o, sin ella, la portada) es un
+    // video, va su primer cuadro como JPG (Meta no acepta video ahí).
+    const imagenLink = useImagenEncabezado(urlImage, invitation?.cover?.image?.prod, sideEventId ? `flash-${sideEventId}` : invitationId)
+    const eventCtx = { invitation, name, rsvpDeadline, eventDate, urlImage: imagenLink, eventTitle, guestPath }
+    // Un Pop no tiene mesas, etiquetas, lado ni prioridad.
+    const segmentos = sideEventId ? SEGMENTS.filter((s) => s !== 'sinMesa') : SEGMENTS
+    const camposRegla = sideEventId ? RULE_FIELDS.filter((f) => f === 'state' || f === 'read') : RULE_FIELDS
 
     useEffect(() => {
         let alive = true
@@ -105,12 +127,12 @@ export const RemindersPanel = ({
 
     // Quién ya recibió este mismo recordatorio hace poco: no se puede repetir.
     useEffect(() => {
-        if (!template || !invitationId) { setRecent(new Set()); return }
+        if (!template || (!invitationId && !sideEventId)) { setRecent(new Set()); return }
         let alive = true
         supabase
             .from('invitation_reminder_dispatches')
             .select('guest_id, status')
-            .eq('invitation_id', invitationId)
+            .eq(sideEventId ? 'side_event_id' : 'invitation_id', sideEventId ?? invitationId)
             .eq('reminder_template_id', template.id)
             .gte('created_at', new Date(Date.now() - REPEAT_WINDOW_MS).toISOString())
             .then(({ data }) => {
@@ -118,7 +140,7 @@ export const RemindersPanel = ({
                 setRecent(new Set((data ?? []).filter((d) => d.status !== 'failed').map((d) => Number(d.guest_id))))
             })
         return () => { alive = false }
-    }, [template?.id, invitationId, sent])
+    }, [template?.id, invitationId, sideEventId, sent])
 
     // Cuando el lote termina con fallidos, se lee por qué (Meta lo guarda por item).
     // Copia del último estado del lote: si cierran la isla de progreso,
@@ -140,8 +162,8 @@ export const RemindersPanel = ({
 
     const applySuggestion = (tp) => {
         const s = tp?.suggestion ?? {}
-        setSegment(SEGMENTS.includes(s.segment) ? s.segment : 'todos')
-        setRules(Array.isArray(s.rules) ? s.rules.map((r) => ({ ...r })) : [])
+        setSegment(segmentos.includes(s.segment) ? s.segment : 'todos')
+        setRules(Array.isArray(s.rules) ? s.rules.filter((r) => camposRegla.includes(r.field)).map((r) => ({ ...r })) : [])
         setComb(s.comb === 'or' ? 'or' : 'and')
         resetSelection()
         setLiaOn(Boolean(s.title))
@@ -194,7 +216,7 @@ export const RemindersPanel = ({
     const invitedLeaders = useMemo(() => leaders.filter((g) => g.state !== 'creado'), [leaders])
 
     const segmentCounts = useMemo(() => Object.fromEntries(
-        SEGMENTS.map((s) => [s, invitedLeaders.filter((g) => matchesSegment(g, s, dispatchMap)).length])
+        segmentos.map((s) => [s, invitedLeaders.filter((g) => matchesSegment(g, s, dispatchMap)).length])
     ), [invitedLeaders, dispatchMap])
 
     const audience = useMemo(() => {
@@ -277,7 +299,7 @@ export const RemindersPanel = ({
     }
 
     // ── Envío ────────────────────────────────────────────────────────────
-    const canSend = Boolean(template) && selected.length > 0 && isPro && !sending
+    const canSend = Boolean(template) && selected.length > 0 && isPro && !bloqueoPlus && !sending
 
     const send = async () => {
         if (!canSend) return
@@ -302,9 +324,11 @@ export const RemindersPanel = ({
         ? t('reminders.cta_pick_template')
         : selected.length === 0
             ? t('reminders.cta_pick_recipients')
-            : !isPro
-                ? t('reminders.cta_pro_only')
-                : t('reminders.cta_send', { count: selected.length })
+            : bloqueoPlus
+                ? t('pops_app.go_plus', { price: PRECIO_PLUS })
+                : !isPro
+                    ? t('reminders.cta_pro_only')
+                    : t('reminders.cta_send', { count: selected.length })
 
     // ── Solicitar recordatorio ───────────────────────────────────────────
     const submitRequest = async () => {
@@ -357,7 +381,10 @@ export const RemindersPanel = ({
     const banner = (
         <div className={styles.banner}>
             <div className={styles.bannerTexts}>
-                <span className={styles.bannerTitle}>{t('reminders.banner_title')}</span>
+                <span className={styles.bannerTitle}>
+                    {t('reminders.banner_title')}
+                    {(bloqueoPlus || insigniaPlus) && <InsigniaPlus tam='m' className={styles.bannerInsignia} />}
+                </span>
                 <span className={styles.bannerText}>{t('reminders.banner_text')}</span>
             </div>
             <div className={styles.progress}>
@@ -577,7 +604,7 @@ export const RemindersPanel = ({
                                 <div className={styles.block}>
                                     <span className={styles.blockLabel}>{t('reminders.segment_label')}</span>
                                     <div className={styles.chips}>
-                                        {SEGMENTS.map((s) => (
+                                        {segmentos.map((s) => (
                                             <button
                                                 key={s}
                                                 type="button"
@@ -608,7 +635,7 @@ export const RemindersPanel = ({
                                         return (
                                             <div key={i} className={styles.rule}>
                                                 <select className={styles.select} value={r.field} onChange={(e) => updateRule(i, { field: e.target.value })}>
-                                                    {RULE_FIELDS.map((f) => (
+                                                    {camposRegla.map((f) => (
                                                         <option key={f} value={f} disabled={ruleValues(f, { tags, owners }).length === 0}>
                                                             {t(`reminders.field_${f}`)}
                                                         </option>
@@ -709,13 +736,15 @@ export const RemindersPanel = ({
 
                     <div className={styles.note}>{t('reminders.note_companions')}</div>
                     {invalidCount > 0 && <div className={styles.noteRed}>{t('reminders.note_invalid', { count: invalidCount })}</div>}
-                    {!isPro && <div className={styles.noteLavender}>{t('reminders.note_pro')}</div>}
+                    {bloqueoPlus
+                        ? <div className={styles.noteLavender}>{t('pops_plus.recordatorios_enviar')}</div>
+                        : !isPro && <div className={styles.noteLavender}>{t('reminders.note_pro')}</div>}
 
                     <button
                         type="button"
                         className={styles.cta}
-                        aria-disabled={!canSend || undefined}
-                        onClick={send}
+                        aria-disabled={(bloqueoPlus ? !(template && selected.length > 0) : !canSend) || undefined}
+                        onClick={bloqueoPlus ? () => { if (template && selected.length > 0) onPasarPlus?.() } : send}
                     >
                         <Bell size={16} />
                         {sending ? t('reminders.cta_sending') : ctaLabel}

@@ -24,6 +24,10 @@ export const fetchPrecioPop = async () =>
 export const crearPopGratis = async (payload) =>
     axios.post(`${API_URL}/api/planner/pop`, payload, { headers: await supabaseAuthHeaders() })
 
+// Vista previa del correo de acceso de un Pop (el mismo template que se manda).
+export const fetchCorreoPreviewPop = async (correo) =>
+    axios.get(`${API_URL}/api/planner/pop/correo-preview`, { params: { correo }, headers: await supabaseAuthHeaders() })
+
 export const checkoutPop = async (payload) =>
     axios.post(`${API_URL}/api/planner/pop/checkout`, payload, { headers: await supabaseAuthHeaders() })
 

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
+import { useInsigniasPlus, usePopFree } from '../PlanPops/planPopsUI'
 import { useTranslation } from 'react-i18next'
 import { message, Popconfirm } from 'antd'
 import { Check, Copy, ImagePlus, TriangleAlert } from 'lucide-react'
@@ -30,6 +32,8 @@ const MINI = 52 // ancho de la miniatura de la portada (px)
 export const LinkPanel = ({ current, setBody, onPickImage }) => {
     const { t } = useTranslation()
     const body = current?.body ?? {}
+    const popFree = usePopFree()
+    const verInsignias = useInsigniasPlus()
     const propia = body.linkImage || null
     const conVideo = soloVideos(body)
     const url = urlSide(current)
@@ -105,13 +109,21 @@ export const LinkPanel = ({ current, setBody, onPickImage }) => {
                         className={l.opcion}
                         data-on={Boolean(propia) || undefined}
                         data-falta={(conVideo && !propia) || undefined}
-                        onClick={subir}
+                        // Pop Free: una imagen propia del link es de Pops Plus y no
+                        // se puede probar (se sube un archivo).
+                        aria-disabled={popFree || undefined}
+                        onClick={popFree ? () => message.info(t('pops_plus.link_propia')) : subir}
+                        style={{ position: 'relative', ...(popFree ? { cursor: 'not-allowed' } : {}) }}
                     >
+                        {verInsignias && <InsigniaPlus esquina />}
                         <span className={l.mini}>
                             {propia ? <img src={propia} alt="" /> : <span className={l.miniVacia}><ImagePlus size={18} /></span>}
                         </span>
                         <span className={l.opcionTextos}>
                             <span className={l.opcionTitulo}>{t(propia ? 'side_events.link_opt_upload_change' : 'side_events.link_opt_upload')}</span>
+                            {/* Pop Free: el beneficio de subir una propia es que va sin la
+                                marca de agua de I attend (la automática la lleva). */}
+                            {popFree && <span className={l.opcionSub}>{t('pops_plus.link_sin_marca')}</span>}
                             <span className={l.opcionSub}>{t('side_events.link_size_hint')}</span>
                         </span>
                         {propia && <span className={l.check}><Check size={13} /></span>}

@@ -9,6 +9,7 @@ import { inicialesDePop, portadaDePop, useConfirmados } from './popsDatos'
 import ojos from '../../assets/pops-stickers/craft/ojos.svg'
 import corazon from '../../assets/pops-stickers/craft/corazon.svg'
 import styles from './PopsAzul.module.css'
+import { MiniaturaPop } from './MiniaturaPop'
 
 /**
  * Pops › Clientes y Mis Pops en escritorio con el estilo "Collage azul · lima"
@@ -122,7 +123,7 @@ export const PopsAzul = ({ movil = false, items, onComprarPop, onAbrir, pie, tit
         return (
             <button key={f.item.id} type='button' className={`${styles.filaMovil} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
                 <span className={styles.mini} style={{ background: f.color.fondo, color: f.color.tinta }}>
-                    {f.portada ? <img src={f.portada} alt='' loading='lazy' /> : f.iniciales}
+                    {f.portada ? <MiniaturaPop src={f.portada} /> : f.iniciales}
                 </span>
                 <span className={styles.mTextos}>
                     <span className={styles.mLinea}>
@@ -150,7 +151,7 @@ export const PopsAzul = ({ movil = false, items, onComprarPop, onAbrir, pie, tit
             <button key={f.item.id} type='button' className={`${styles.fila} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
                 <span className={styles.evento}>
                     <span className={styles.mini} style={{ background: f.color.fondo, color: f.color.tinta }}>
-                        {f.portada ? <img src={f.portada} alt='' loading='lazy' /> : f.iniciales}
+                        {f.portada ? <MiniaturaPop src={f.portada} /> : f.iniciales}
                     </span>
                     <span className={styles.eventoTextos}>
                         <span className={styles.nombre}>{f.nombre}</span>

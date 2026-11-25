@@ -283,3 +283,15 @@
     opacity: .45;
     cursor: default;
 }
+
+/* Insignia Plus (Pop Free): junto al título de un formulario con más de 2
+   preguntas, en la lista y en el elegido. */
+.insignia {
+    margin-left: 8px;
+    vertical-align: 2px;
+}
+
+.insigniaElegido {
+    align-self: flex-start;
+    margin-top: 4px;
+}

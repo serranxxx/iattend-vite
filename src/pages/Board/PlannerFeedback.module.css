@@ -114,14 +114,14 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 36px 36px 32px;
+    padding: 24px 24px 20px;
     color: #1c3249;
 }
 
 .cerrar {
     position: absolute;
-    top: 22px;
-    right: 22px;
+    top: 16px;
+    right: 16px;
     display: grid;
     place-items: center;
     width: 40px;
@@ -244,7 +244,7 @@
 
 @media (max-width: 600px) {
     .formulario {
-        padding: 28px 22px 24px;
+        padding: 22px 18px 18px;
     }
 
     .formTitulo {

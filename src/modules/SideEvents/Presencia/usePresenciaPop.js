@@ -30,9 +30,13 @@ export const medirPieza = (el) => {
 }
 
 // Cada pestaña se ve como un emoji (no se enseñan nombres).
-const EMOJIS = ['🦊', '🐼', '🐸', '🦄', '🐙', '🐝', '🦋', '🐢', '🐧', '🦁', '🐨', '🐯', '🐳', '🦉', '🐰', '🐶']
-
-const COLORES = ['#7B61FF', '#F24E1E', '#0FA958', '#1ABCFE', '#E5468F', '#F7A600', '#00A3A3', '#FF7262']
+// Cada emoji trae su color (el de su avatar y su cursor), para que combinen.
+const PERFILES = [
+    ['🦊', '#F28C38'], ['🐼', '#6B7280'], ['🐸', '#4CAF50'], ['🦄', '#B57EDC'],
+    ['🐙', '#E5468F'], ['🐝', '#F2B705'], ['🦋', '#3B82F6'], ['🐢', '#2E9E6B'],
+    ['🐧', '#1C3249'], ['🦁', '#E0A100'], ['🐨', '#8A94A6'], ['🐯', '#F57C00'],
+    ['🐳', '#1ABCFE'], ['🦉', '#8D6E63'], ['🐰', '#F48FB1'], ['🐶', '#C68B59'],
+]
 
 const hash = (s) => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)
 
@@ -55,7 +59,8 @@ export const usePresenciaPop = (popId, { movil = false, seleccion = null, onGuar
         const { uid } = quienSoy()
         const clave = nuevaClave()
         const h = Math.abs(hash(clave))
-        return { clave, uid, emoji: EMOJIS[h % EMOJIS.length], color: COLORES[Math.floor(h / EMOJIS.length) % COLORES.length] }
+        const [emoji, color] = PERFILES[h % PERFILES.length]
+        return { clave, uid, emoji, color }
     }, [])
     const [estados, setEstados] = useState({})
     const canalRef = useRef(null)

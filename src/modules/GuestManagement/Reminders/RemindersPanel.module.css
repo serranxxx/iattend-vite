@@ -46,6 +46,10 @@
 }
 
 .bannerTitle {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
     font-size: 22px;
     font-weight: 600;
     color: #fff;
@@ -985,4 +989,15 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Pop Free: insignia Pops+ junto al título del encabezado. */
+/* Sobre la banda oscura: la insignia en blanco con el "+" rosa para que se lea. */
+.bannerInsignia {
+    background: #FFFFFF;
+    color: #0B1F3A;
+}
+
+.bannerInsignia > span {
+    color: #FF5FA8;
 }

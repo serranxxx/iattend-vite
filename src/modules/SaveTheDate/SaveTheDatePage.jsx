@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { load } from '../../helpers/assets/images'
-import { Button, ColorPicker, DatePicker, Dropdown, Input, Popconfirm, Segmented, Select, Slider, Switch, Tooltip, message } from 'antd'
+import { Button, ColorPicker, DatePicker, Dropdown, Input, Popconfirm, Segmented, Select, Switch, Tooltip, message } from 'antd'
+import { Deslizador as Slider } from '../Editor/Deslizador'
 import { AlignCenter, AlignLeft, AlignRight, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, BellRing, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Eye, Film, Heart, ImagePlus, Link2, MessageCircle, MousePointerClick, Music, Palette, Plus, Search, Send, Share, Trash2, Type, Upload, Video, X } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
 import dayjs from 'dayjs'

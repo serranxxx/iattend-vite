@@ -3,7 +3,6 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 import React, { useEffect, useMemo, useState } from 'react'
-import { toFirstString } from '../../helpers/invitation/newInvitation';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Legend, } from 'chart.js';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircleOutline, IoIosCloseCircleOutline, IoMdAdd, } from 'react-icons/io';
@@ -37,6 +36,7 @@ import { GuestAddTiles } from './GuestAddTiles';
 import { HojaImportar } from './Importar/HojaImportar';
 import { cambiosParaSentar, guardarAsientos } from './Tables/asientos';
 import { RemindersPanel } from './Reminders/RemindersPanel';
+import { useImagenEncabezado } from './Reminders/primerCuadro';
 import { useTranslation } from 'react-i18next';
 import { WhatsappMessages } from './WhatsappMessages/WhatsappMessages'
 import { useLia } from '../../context/LiaContext';
@@ -167,6 +167,9 @@ export default function GuestsPage() {
     })
     const [owners, setOwners] = useState(null)
     const [url_image, setUrl_image] = useState(null)
+    // Encabezado de las plantillas de WhatsApp (invitación): la imagen del link
+    // o la portada; con portada de video, su primer cuadro (Meta no acepta video).
+    const imagenEncabezado = useImagenEncabezado(url_image, invitation?.cover?.image?.prod, id)
     const [plan, setPlan] = useState(null)
     const [invLabel, setInvLabel] = useState(null)
     const [invPhone, setInvPhone] = useState(null)
@@ -934,7 +937,7 @@ export default function GuestsPage() {
                                 {
                                     type: "image",
                                     image: {
-                                        link: url_image ?? toFirstString(invitation.cover.image.prod),
+                                        link: imagenEncabezado,
                                     },
                                 },
                             ],
@@ -1521,7 +1524,7 @@ export default function GuestsPage() {
                 {
                     type: "header",
                     parameters: [
-                        { type: "image", image: { link: url_image ?? toFirstString(invitation.cover.image.prod) } },
+                        { type: "image", image: { link: imagenEncabezado } },
                     ],
                 },
                 {

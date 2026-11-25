@@ -1,0 +1,86 @@
+/* "Enviar" del encabezado del editor de un Pop por enviar (EnviarPop.jsx). */
+.boton {
+    background: #0B1F3A !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+}
+
+.boton:hover {
+    background: #2457A4 !important;
+}
+
+.panel {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px;
+    font-family: inherit;
+}
+
+.titulo {
+    font-size: 16px;
+    color: #0B1F3A;
+}
+
+.intro {
+    margin: -6px 0 2px;
+    font-size: 13px;
+    line-height: 18px;
+    color: #6B7280;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4B5563;
+}
+
+.campo input {
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid #E3E6F0;
+    border-radius: 12px;
+    background: #F7F8FB;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    color: #0B1F3A;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.campo input:focus {
+    border-color: #2457A4;
+    background: #FFFFFF;
+}
+
+.enviar {
+    margin-top: 4px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 14px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.enviar[aria-disabled] {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.enviar:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}

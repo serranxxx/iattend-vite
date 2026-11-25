@@ -14,6 +14,7 @@ import { PopsSection } from './PopsSection'
 import { PopsInicio } from './PopsInicio'
 import { PopsTemaSwitch } from './PopsTemaSwitch'
 import { PopsInicioAzul } from './PopsInicioAzul'
+import { PopsApp, MOSTRAR_IDEAS } from './PopsApp/PopsApp'
 import { usePopsTransicion } from './usePopsTransicion'
 import { TEMAS_POPS, TEMA_POPS_FIJO, temaBasePops, usePopsTema } from './usePopsTema'
 import { useTextures } from '../../context/TexturesContext'
@@ -96,6 +97,7 @@ export const PlannerLayout = ({
     greeting, user, invitations, beneficios, esDeCliente, renderInvitationCard,
     view, onViewChange, dashboard, setFilterSlot, loading,
     onComprar, onComprarPop, onGratis, onGratisPop, onEventoPersonal, onRegalar, onTour, onLogout, onAbrir, onCompartir,
+    onPopParaCliente, onEnviarACliente,
 }) => {
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
@@ -121,7 +123,9 @@ export const PlannerLayout = ({
             .sort((a, b) => Number(esCopiaDePlantilla(b)) - Number(esCopiaDePlantilla(a)))
         : []
     const gratis = beneficios?.free_events ?? 0
-    const gratisPop = beneficios?.free_flash_events ?? 0
+    // Los Pops son ilimitados (ya no hay Pops gratis que contar): todo lo que
+    // anunciaba "Tienes N Pops gratis" se queda apagado.
+    const gratisPop = 0
     const descuento = beneficios?.discount_pct ?? 0
 
     const pops = lista.filter(inv => inv._pop)
@@ -161,6 +165,11 @@ export const PlannerLayout = ({
         { key: 'test', title: t('invitations.space_home'), items: pops },
         { key: 'clients', title: t('invitations.planner_tab_clients'), items: pops.filter(esDeCliente) },
         { key: 'own', title: t('invitations.space_my_pops'), items: pops.filter(inv => !esDeCliente(inv)) },
+        // Ideas y Pagos: páginas de la app de Pops (PopsApp, escritorio y celular).
+        ...(TEMA_POPS_FIJO === 'azul' ? [
+            ...(MOSTRAR_IDEAS ? [{ key: 'ideas', title: t('pops_app.tab_ideas'), items: [] }] : []),
+            { key: 'pagos', title: t('pops_app.pay_title'), items: [] },
+        ] : []),
     ] : [
         { key: 'test', title: t('invitations.space_home'), items: esAdmin ? pruebasAdmin.slice(0, 1) : bodas.filter(esEjemplo) },
         { key: 'clients', title: t('invitations.planner_tab_clients'), items: bodas.filter(esDeCliente) },
@@ -319,10 +328,10 @@ export const PlannerLayout = ({
     const navegar = (haciaPops, accion) => (haciaPops !== modoPops ? transicion(haciaPops, accion) : accion())
 
     // Crear un Pop: con uno gratis, directo a ese flujo; si no, la compra.
-    const crearPop = gratisPop > 0 ? onGratisPop : onComprar
-    // Un cliente solo crea Pops con los gratis que le asignaron.
-    const puedeCrearPop = !esCliente || gratisPop > 0
-    const comprarPop = onComprarPop ?? crearPop
+    // Crear un Pop = el mismo flujo para todos, sin pago (PlannerPopFlow).
+    const crearPop = onGratisPop ?? onComprarPop ?? onComprar
+    const puedeCrearPop = true
+    const comprarPop = crearPop
 
     // setElegida también quita ?view=data: salir del dashboard va en el mismo cambio.
     const abrirSeccion = (key) => navegar(enPops, () => setElegida(key))
@@ -558,7 +567,7 @@ export const PlannerLayout = ({
     const iniciales = (user?.name || '?').trim().charAt(0).toUpperCase()
 
     const modalConocePops = (
-        <PopsOnboarding open={conocePops} onClose={() => setConocePops(false)} onCrear={!esCliente || gratisPop > 0 ? crearPop : undefined} />
+        <PopsOnboarding open={conocePops} onClose={() => setConocePops(false)} onCrear={crearPop} />
     )
 
     const botonComprar = enPops ? (
@@ -586,6 +595,43 @@ export const PlannerLayout = ({
             <div className={styles.decidiendo}>
                 <PlannerSkeleton variante='lista' />
             </div>
+        )
+    }
+
+    // App de Pops (handoff "App de Pops"): sin barra lateral; barra superior con
+    // Inicio · Mis Pops · Ideas (Clientes va dentro de Mis Pops). En el celular
+    // (§10), su header y su barra inferior propios.
+    if (enPops && modoAzul) {
+        const PAGINA_DE = { test: 'inicio', own: 'mispops', clients: 'mispops', ideas: 'ideas', pagos: 'pagos' }
+        const SECCION_DE = { inicio: 'test', mispops: 'own', ideas: 'ideas', pagos: 'pagos' }
+        return (
+            <>
+                {veloPops}
+                {modalConocePops}
+                <PopsApp
+                    user={user}
+                    greeting={greeting}
+                    pagina={PAGINA_DE[activa.key] ?? 'inicio'}
+                    onPagina={(p) => abrirSeccion(SECCION_DE[p])}
+                    pops={pops.filter(inv => !esDeCliente(inv))}
+                    clientes={esCliente ? [] : pops.filter(esDeCliente)}
+                    cargando={loading}
+                    esCliente={esCliente}
+                    puedeCambiarEspacio={puedeCambiar}
+                    resumenEspacios={resumenEspacios}
+                    onCambiarEspacio={cambiarEspacio}
+                    botonRef={popsRef}
+                    puedeCrear={puedeCrearPop}
+                    onCrear={crearPop}
+                    onEnviarPop={onPopParaCliente ?? comprarPop}
+                    onEnviarACliente={onEnviarACliente}
+                    onAbrir={onAbrir}
+                    onConoce={() => setConocePops(true)}
+                    onLogout={onLogout}
+                    pie={piePops}
+                    movil={celular}
+                />
+            </>
         )
     }
 

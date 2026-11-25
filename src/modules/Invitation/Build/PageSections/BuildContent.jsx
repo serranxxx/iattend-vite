@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, } from 'react'
 import { useTranslation } from 'react-i18next';
-import { Button, Dropdown, Grid, Slider, Tooltip } from 'antd';
+import { Button, Dropdown, Grid, Tooltip } from 'antd';
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import 'react-resizable/css/styles.css';
 
 const { useBreakpoint } = Grid;

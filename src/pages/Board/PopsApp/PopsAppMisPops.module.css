@@ -1,0 +1,1570 @@
+/* Pops › Mis Pops (PopsAppMisPops.jsx; handoff "App de Pops", §5). */
+.pagina {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    color: #0B1F3A;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* ── Título y filtros ─────────────────────────────────────────── */
+.cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.titulo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.titulo h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    color: #0B1F3A;
+}
+
+.cuenta {
+    font-size: 16px;
+    font-weight: 700;
+    color: #56627A;
+}
+
+.filtros {
+    display: flex;
+    gap: 6px;
+}
+
+.filtro {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: 1px solid #E3E6F0;
+    background: #FFFFFF;
+    color: #0B1F3A;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filtro[data-activo] {
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.filtro:focus-visible,
+.abrir:focus-visible,
+.mas:focus-visible,
+.menuItem:focus-visible {
+    outline: 2px solid #2457A4;
+    outline-offset: 2px;
+}
+
+.filtroN {
+    opacity: 0.6;
+}
+
+/* ── Estadísticas ─────────────────────────────────────────────── */
+.stats {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 6px;
+    border-radius: 99px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+}
+
+.stat {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 22px;
+    border-right: 1px solid #EEF0F5;
+}
+
+.stat:last-child {
+    border-right: 0;
+}
+
+.statV {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.statLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: #56627A;
+    white-space: nowrap;
+}
+
+/* ── Tabla ────────────────────────────────────────────────────── */
+.tabla {
+    border-radius: 22px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+}
+
+.fila,
+.filaCliente {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid #F1F2F6;
+    font-size: 14px;
+}
+
+.fila {
+    grid-template-columns: minmax(0, 2fr) 1.2fr 0.9fr 0.9fr 0.7fr 0.7fr 0.8fr 120px;
+}
+
+.filaCliente {
+    grid-template-columns: minmax(0, 1.6fr) 1.4fr 0.6fr 1.6fr 0.8fr 210px;
+    gap: 12px;
+    padding: 14px 22px;
+}
+
+.fila:last-child,
+.filaCliente:last-child {
+    border-bottom: 0;
+}
+
+.columnas {
+    padding-top: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #E3E6F0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #8A8582;
+    letter-spacing: 0.04em;
+}
+
+.sinFilas {
+    margin: 0;
+    padding: 28px 18px;
+    font-size: 14px;
+    color: #56627A;
+    text-align: center;
+}
+
+.pop,
+.cliente {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mini {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 11px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0B1F3A;
+}
+
+.mini img,
+.mini video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.nombre {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cliente .nombre {
+    font-weight: 800;
+}
+
+.fecha {
+    font-size: 13px;
+    color: #56627A;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fuerte {
+    font-weight: 800;
+}
+
+.medio {
+    font-weight: 700;
+}
+
+.suave {
+    color: #56627A;
+}
+
+.estado,
+.estadoCliente {
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    background: #F1F2F6;
+    color: #56627A;
+}
+
+.estado[data-estado='activo'] {
+    background: #CDF22B;
+    color: #0B1F3A;
+}
+
+.estado[data-estado='pasado'],
+.estado[data-estado='archivado'] {
+    background: #E3E6F0;
+}
+
+.estadoCliente {
+    height: 22px;
+    padding: 0 9px;
+    color: #0B1F3A;
+}
+
+.acciones {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.abrir,
+.mas,
+.enviarPop,
+.ver {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.abrir {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+.mas {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #E3E6F0;
+    background: #FFFFFF;
+    color: #0B1F3A;
+}
+
+.mas[data-abierto] {
+    background: #F1F2F6;
+}
+
+.menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 5;
+    width: 230px;
+    padding: 8px;
+    border-radius: 18px;
+    background: #FFFFFF;
+    box-shadow: 0 0 12px rgba(11, 31, 58, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.menuItem {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 40px;
+    padding: 0 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0B1F3A;
+}
+
+.menuItem:hover {
+    background: #F1F2F6;
+}
+
+.menuItem[aria-disabled='true'] {
+    cursor: not-allowed;
+    color: #8A8582;
+}
+
+.menuItem[aria-disabled='true']:hover {
+    background: transparent;
+}
+
+.menuTexto {
+    flex: 1;
+    text-align: left;
+}
+
+.nuevo {
+    font-size: 10px;
+    font-weight: 800;
+    color: #FF5FA8;
+}
+
+.peligro {
+    color: #B3264F;
+}
+
+/* ── Estado vacío (1b, variante clara) ────────────────────────── */
+.vacio {
+    position: relative;
+    min-height: 640px;
+    border-radius: 24px;
+    overflow: hidden;
+    background-color: #FFFFFF;
+    background-image: radial-gradient(rgba(36, 87, 164, 0.16) 1.2px, transparent 1.4px);
+    background-size: 24px 24px;
+    border: 1px solid #E3E6F0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 40px;
+    align-items: center;
+    padding: 70px 90px;
+}
+
+.destello,
+.destellito {
+    position: absolute;
+    pointer-events: none;
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+.destello {
+    left: 56px;
+    top: 36px;
+    width: 70px;
+    height: 70px;
+    background: #CDF22B;
+    transform: rotate(-10deg);
+}
+
+.destellito {
+    left: 120px;
+    top: 96px;
+    width: 30px;
+    height: 30px;
+    background: #FF5FA8;
+    transform: rotate(12deg);
+}
+
+.ojos {
+    position: absolute;
+    right: 80px;
+    bottom: 60px;
+    width: 76px;
+    transform: rotate(12deg);
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+}
+
+.vacioIzq {
+    position: relative;
+    height: 500px;
+    color: #2457A4;
+}
+
+.contorno {
+    position: absolute;
+    left: 150px;
+    top: 30px;
+    width: 270px;
+    height: 420px;
+    box-sizing: border-box;
+    border: 3px dashed #2457A4;
+    border-radius: 28px;
+    background: #F3F6FC;
+    transform: rotate(-4deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.tijeras {
+    position: absolute;
+    left: -22px;
+    top: 56px;
+    font-size: 34px;
+    color: #2457A4;
+    transform: rotate(90deg);
+}
+
+.masGrande {
+    all: unset;
+    cursor: pointer;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 0 #9DBB12, 0 12px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.masGrande:hover {
+    transform: translateY(-2px);
+}
+
+.contornoTexto,
+.nota {
+    font-family: 'Patrick Hand', cursive;
+    line-height: 1.1;
+    color: #22489A;
+}
+
+.contornoTexto {
+    font-size: 30px;
+    text-align: center;
+}
+
+.nota {
+    position: absolute;
+    font-size: 24px;
+    white-space: nowrap;
+}
+
+.nota1 { left: 0; top: 70px; transform: rotate(-6deg); }
+.nota2 { left: 440px; top: 120px; transform: rotate(5deg); }
+.nota3 { left: 10px; top: 360px; transform: rotate(4deg); }
+.nota4 { left: 430px; top: 380px; transform: rotate(-4deg); }
+
+.flecha1,
+.flecha2,
+.flecha3,
+.flecha4 {
+    position: absolute;
+    overflow: visible;
+}
+
+.flecha1 { left: 40px; top: 100px; }
+.flecha2 { left: 400px; top: 150px; transform: scaleX(-1); }
+.flecha3 { left: 60px; top: 310px; transform: scaleY(-1); }
+.flecha4 { left: 380px; top: 340px; transform: scale(-1, -1); }
+
+.vacioDer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.tagRosa {
+    background: #FF5FA8;
+    color: #FFFFFF;
+    padding: 4px 14px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 22px;
+    transform: rotate(-4deg);
+}
+
+.recorte {
+    padding: 6px 20px 12px;
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+    white-space: nowrap;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1));
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(11, 31, 58, 0.14);
+}
+
+.recorteNavy {
+    margin-top: 8px;
+    background-color: #0B1F3A;
+    color: #FFFFFF;
+    transform: rotate(-2deg);
+}
+
+.recorteLima {
+    margin: -6px 0 0 40px;
+    background-color: #CDF22B;
+    color: #0B1F3A;
+    transform: rotate(1.5deg);
+}
+
+.vacioTexto {
+    margin: 28px 0 0;
+    max-width: 420px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: #3A4660;
+}
+
+.atajos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.atajo {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 42px;
+    padding: 0 16px;
+    background: #FFFFFF;
+    color: #0B1F3A;
+    border: 1.5px solid #E3E6F0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    transform: rotate(var(--rot, 0deg));
+    box-shadow: 0 4px 10px rgba(11, 31, 58, 0.08);
+}
+
+.atajo:hover {
+    border-color: #0B1F3A;
+}
+
+.ctaGrande {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    position: relative;
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 66px;
+    padding: 0 30px 0 12px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    transform: rotate(-2deg);
+    box-shadow: 0 6px 0 #9DBB12, 0 12px 20px rgba(11, 31, 58, 0.18);
+}
+
+.ctaMas {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #0B1F3A;
+    color: #CDF22B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gratis {
+    position: absolute;
+    right: -28px;
+    top: -28px;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: #FF5FA8;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 0;
+    transform: rotate(14deg);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.atajo:focus-visible,
+.ctaGrande:focus-visible,
+.masGrande:focus-visible {
+    outline: 2px solid #0B1F3A;
+    outline-offset: 3px;
+}
+
+/* ── Clientes ─────────────────────────────────────────────────── */
+.clientes {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.clientesCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.clientesTitulo {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.clientesTitulo h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #0B1F3A;
+}
+
+.clientesSub {
+    font-size: 15px;
+    color: #56627A;
+}
+
+.clientesBotones {
+    display: flex;
+    gap: 10px;
+}
+
+.botonContorno,
+.botonNavy,
+.ventaCta {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+}
+
+.botonContorno {
+    height: 48px;
+    padding: 0 20px;
+    border-radius: 99px;
+    border: 1.5px solid #0B1F3A;
+    font-size: 14px;
+    color: #0B1F3A;
+}
+
+.botonNavy {
+    height: 48px;
+    padding: 0 20px 0 8px;
+    gap: 10px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    font-size: 14px;
+}
+
+.botonNavyMas {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar {
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 50%;
+    background: #EEF1FF;
+    color: #2457A4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.avatarChico {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+}
+
+.enviarPop {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-weight: 800;
+}
+
+.ver {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: 1px solid #E3E6F0;
+    color: #0B1F3A;
+    font-weight: 700;
+}
+
+.ver:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.venta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 30px;
+    align-items: center;
+    padding: 44px;
+    border-radius: 24px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+}
+
+.ventaTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ventaTitulo {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.045em;
+    line-height: 1.1;
+}
+
+.ventaTexto {
+    max-width: 520px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #56627A;
+}
+
+.beneficios {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.ventaCta {
+    align-self: flex-start;
+    margin-top: 6px;
+    height: 52px;
+    padding: 0 24px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 4px 0 #9DBB12;
+}
+
+.bloqueados {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0.55;
+    filter: grayscale(0.3);
+}
+
+.bloqueado {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid #E3E6F0;
+    font-size: 14px;
+}
+
+.bloqueado .nombre {
+    flex: 1;
+}
+
+/* Pantallas angostas de escritorio: el vacío en una columna. */
+@media (max-width: 1180px) {
+    .vacio {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 60px 40px;
+    }
+
+    .vacioIzq {
+        width: 560px;
+        max-width: 100%;
+        justify-self: center;
+    }
+
+    .venta {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .masGrande {
+        transition: none;
+    }
+}
+
+/* ── Celular (prop movil, handoff §10 · 390 px) ───────────────── */
+.mPagina {
+    gap: 14px;
+    min-width: 0;
+}
+
+.mPagina > * {
+    flex: none;
+}
+
+.titulo .mH1 {
+    font-size: 28px;
+}
+
+.mCuenta {
+    font-size: 14px;
+    font-weight: 700;
+    color: #56627A;
+}
+
+.mFiltros {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.mFiltros::-webkit-scrollbar {
+    display: none;
+}
+
+.mFiltro {
+    flex: none;
+    white-space: nowrap;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+.mStats {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+}
+
+.mStat {
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Son tres: la primera (próximo Pop, la más larga) a lo ancho. */
+.mStat:first-child {
+    grid-column: 1 / -1;
+}
+
+.mStatLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: #56627A;
+    overflow-wrap: anywhere;
+}
+
+.mLista {
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+}
+
+.mFila,
+.mFilaCliente {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px 0 0;
+    border-bottom: 1px solid #F1F2F6;
+}
+
+.mFila:last-child,
+.mFilaCliente:last-child {
+    border-bottom: 0;
+}
+
+.mFilaAbrir {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0 14px 14px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mFilaCliente .mFilaAbrir {
+    padding: 12px 0 12px 14px;
+}
+
+.mFilaAbrir[aria-disabled='true'] {
+    cursor: default;
+}
+
+.mFilaAbrir:focus-visible,
+.mMas:focus-visible,
+.mEnviarPop:focus-visible,
+.mBoton:focus-visible,
+.mVentaCta:focus-visible,
+.mAsa:focus-visible {
+    outline: 2px solid #2457A4;
+    outline-offset: 2px;
+}
+
+.mMini {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    font-size: 22px;
+}
+
+.mFilaTextos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.mNombre {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.mNombreCliente {
+    font-size: 14px;
+}
+
+.mFilaMeta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.mFilaMeta .estado {
+    flex: none;
+    height: 20px;
+    padding: 0 8px;
+    font-size: 10px;
+}
+
+.mFecha {
+    font-size: 12px;
+    color: #56627A;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.mResumen {
+    font-size: 12px;
+    color: #3A4660;
+}
+
+.mResumen b {
+    color: #0B1F3A;
+}
+
+.mMas {
+    flex: none;
+    width: 44px;
+    height: 44px;
+}
+
+/* Menú ⋯ como hoja inferior (portal a body). */
+.mVelo {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(11, 31, 58, 0.45);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    animation: mVeloEntra 0.2s ease;
+}
+
+.mHoja {
+    padding: 10px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    border-radius: 28px 28px 0 0;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #0B1F3A;
+    font-family: 'Poppins', sans-serif;
+    animation: mHojaSube 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.mAsa {
+    all: unset;
+    cursor: pointer;
+    align-self: center;
+    width: 64px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mAsa::before {
+    content: '';
+    width: 44px;
+    height: 5px;
+    border-radius: 99px;
+    background: #D5DAE5;
+}
+
+.mHojaPop {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 0 4px 6px;
+}
+
+.mMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mMenu .menuItem {
+    height: 52px;
+    padding: 0 12px;
+    border-radius: 14px;
+    font-size: 15px;
+}
+
+@keyframes mVeloEntra {
+    from { opacity: 0; }
+}
+
+@keyframes mHojaSube {
+    from { transform: translateY(100%); }
+}
+
+/* Clientes */
+.mClientes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.mClientesCabeza {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mClientesTitulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mClientesTitulo h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: #0B1F3A;
+}
+
+.mClientesSub {
+    font-size: 12px;
+    color: #56627A;
+}
+
+.mClientesBotones {
+    display: flex;
+    gap: 8px;
+}
+
+.mBoton {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+    justify-content: center;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.mAvatar {
+    width: 40px;
+    height: 40px;
+    background: #DCE8FF;
+}
+
+.mEnviarPop {
+    flex: none;
+    height: 44px;
+    padding: 0 14px;
+    font-size: 12px;
+}
+
+.mVenta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 20px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.mVentaTitulo {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.mVentaTexto {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #B9C3D3;
+}
+
+.mCandados {
+    display: flex;
+    gap: 6px;
+}
+
+.mCandado {
+    width: 36px;
+    height: 36px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+}
+
+.mVentaCta {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 46px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* Vacío en vertical */
+.mVacio {
+    position: relative;
+    padding: 28px 20px 34px;
+    border-radius: 24px;
+    background-color: #FFFFFF;
+    background-image: radial-gradient(rgba(36, 87, 164, 0.16) 1.2px, transparent 1.4px);
+    background-size: 20px 20px;
+    border: 1px solid #E3E6F0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.mDestello,
+.mDestellito {
+    position: absolute;
+    pointer-events: none;
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+.mDestello {
+    right: 22px;
+    top: 20px;
+    width: 40px;
+    height: 40px;
+    background: #CDF22B;
+    transform: rotate(-10deg);
+}
+
+.mDestellito {
+    right: 58px;
+    top: 54px;
+    width: 18px;
+    height: 18px;
+    background: #FF5FA8;
+    transform: rotate(12deg);
+}
+
+.mLienzo {
+    position: relative;
+    width: 100%;
+    height: 250px;
+}
+
+.mContorno {
+    position: absolute;
+    left: 50%;
+    top: 6px;
+    width: 150px;
+    height: 232px;
+    margin-left: -75px;
+    box-sizing: border-box;
+    border: 3px dashed #2457A4;
+    border-radius: 22px;
+    background: #F3F6FC;
+    transform: rotate(-4deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mTijeras {
+    position: absolute;
+    left: -17px;
+    top: 36px;
+    font-size: 26px;
+    color: #2457A4;
+    transform: rotate(90deg);
+}
+
+.mMasGrande {
+    all: unset;
+    cursor: pointer;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 #9DBB12, 0 8px 14px rgba(11, 31, 58, 0.18);
+}
+
+.mMasGrande:focus-visible {
+    outline: 2px solid #0B1F3A;
+    outline-offset: 3px;
+}
+
+.mContornoTexto,
+.mNota {
+    font-family: 'Patrick Hand', cursive;
+    line-height: 1.1;
+    color: #22489A;
+}
+
+.mContornoTexto {
+    font-size: 20px;
+    text-align: center;
+}
+
+.mNota {
+    position: absolute;
+    max-width: 78px;
+    font-size: 17px;
+}
+
+.mNota1 { left: -6px; top: 24px; transform: rotate(-6deg); }
+.mNota2 { right: 0; top: 120px; transform: rotate(5deg); text-align: right; }
+.mNota3 { left: 4px; bottom: 20px; transform: rotate(4deg); }
+
+.mTitulares {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mRecorte {
+    padding: 4px 14px 8px;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+    white-space: nowrap;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1));
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(11, 31, 58, 0.14);
+}
+
+.mTitulares .recorteNavy {
+    margin-top: 0;
+}
+
+.mRecorteLima {
+    margin: -4px 0 0 30px;
+    background-color: #CDF22B;
+    color: #0B1F3A;
+    transform: rotate(1.5deg);
+}
+
+.mVacioTexto {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #3A4660;
+    text-align: center;
+}
+
+.mAtajos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mAtajo {
+    height: 44px;
+    padding: 0 14px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.mCta {
+    margin: 14px 0 6px;
+    height: 60px;
+    padding: 0 24px 0 10px;
+    gap: 12px;
+    font-size: 20px;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1));
+}
+
+.mCtaMas {
+    width: 40px;
+    height: 40px;
+}
+
+.mGratis {
+    right: -22px;
+    top: -22px;
+    width: 54px;
+    height: 54px;
+    font-size: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mVelo,
+    .mHoja {
+        animation: none;
+    }
+}
+
+/* Clientes = la misma lista que Mis Pops, con el cliente debajo del nombre. */
+.popTextos {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.clienteDe,
+.mCliente {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2457A4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clienteDe::before,
+.mCliente::before {
+    content: '👤 ';
+}
+
+/* Pop de cliente "por enviar": Enviar (lima) antes de Abrir; da de alta al
+   cliente y le manda sus accesos (PlannerSendDrawer). */
+.enviarCliente {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    font-size: 12px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mEnviarCliente {
+    flex: none;
+    height: 44px;
+    padding: 0 14px;
+    font-size: 13px;
+}
+
+.enviarCliente:focus-visible {
+    outline: 2px solid #2457A4;
+    outline-offset: 2px;
+}
+
+/* Esqueleto mientras cargan los Pops (EsqueletoLista). */
+.esqueleto {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.esqBloque {
+    display: block;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #E8ECF5 0%, #F4F6FB 50%, #E8ECF5 100%);
+    background-size: 200% 100%;
+    animation: esqBrillo 1.4s linear infinite;
+}
+
+.esqStats {
+    display: flex;
+    gap: 10px;
+}
+
+.esqStat {
+    width: 210px;
+    height: 58px;
+    border-radius: 99px;
+}
+
+.esqTabla,
+.esqListaMovil {
+    display: flex;
+    flex-direction: column;
+    border-radius: 22px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+}
+
+.esqFila {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #EEF0F5;
+}
+
+.esqFila:last-child {
+    border-bottom: none;
+}
+
+.esqMini {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+}
+
+.esqTextos {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.esqLinea {
+    height: 14px;
+}
+
+.esqCorta {
+    width: 22%;
+    height: 11px;
+}
+
+.esqBoton {
+    flex: none;
+    width: 74px;
+    height: 44px;
+    border-radius: 99px;
+}
+
+.esqListaMovil .esqFila {
+    padding: 14px 16px;
+}
+
+/* Celular: datos en dos columnas, como .mStats. */
+.mPagina .esqStats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.mPagina .esqStat {
+    width: auto;
+    border-radius: 16px;
+}
+
+@keyframes esqBrillo {
+    to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .esqBloque { animation: none; }
+}

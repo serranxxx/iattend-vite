@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Dropdown, Input, Select, Slider, message } from 'antd'
+import { Button, Dropdown, Input, Select, message } from 'antd'
+import { Deslizador as Slider } from '../../modules/Editor/Deslizador'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Palette, Paintbrush, Upload as UploadIcon, Trash2, Save } from 'lucide-react'
 import { supabase } from '../../lib/supabase'

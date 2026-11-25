@@ -1,0 +1,551 @@
+/* Método de pago y facturas (PopsAppPagos.jsx, handoff 2e). */
+.pagina {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    color: #0B1F3A;
+}
+
+.cabeza {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.titulo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.titulo h1 {
+    margin: 0;
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+.volver {
+    all: unset;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2457A4;
+}
+
+.stripe,
+.cancelar button,
+.lima,
+.contorno {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.stripe {
+    height: 48px;
+    padding: 0 20px;
+    background: #0B1F3A;
+    color: #fff;
+    font-size: 14px;
+}
+
+.stripe:hover,
+.cancelar button:hover,
+.lima:hover {
+    transform: translateY(-1px);
+}
+
+.stripe:disabled,
+.cancelar button:disabled,
+.lima:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.volver:focus-visible,
+.stripe:focus-visible,
+.cancelar button:focus-visible,
+.lima:focus-visible,
+.acciones a:focus-visible {
+    outline: 3px solid rgba(36, 87, 164, 0.35);
+    outline-offset: 2px;
+}
+
+.fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 20px;
+}
+
+/* Plan */
+.plan {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 26px;
+    border-radius: 24px;
+    background: #0B1F3A;
+    color: #fff;
+}
+
+.planCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+}
+
+.logo span {
+    color: #CDF22B;
+}
+
+.badge {
+    height: 26px;
+    padding: 0 12px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+}
+
+.badge[data-inactiva] {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+.planDatos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.planDatos span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.planDatos small {
+    font-size: 12px;
+    color: #B9C3D3;
+}
+
+.planDatos b {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+/* Tarjeta */
+.tarjetaCaja,
+.espacio,
+.historial {
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid #E3E6F0;
+}
+
+.tarjetaCaja {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+}
+
+.subtitulo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.tarjeta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 16px;
+    background: #F3F4F8;
+    min-height: 66px;
+    box-sizing: border-box;
+}
+
+.tarjeta > small {
+    color: #56627A;
+    font-size: 13px;
+}
+
+.marca {
+    flex: none;
+    width: 56px;
+    height: 38px;
+    border-radius: 8px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 900;
+    font-style: italic;
+}
+
+.tarjetaDatos {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tarjetaDatos b {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.tarjetaDatos small,
+.nota {
+    font-size: 12px;
+    color: #56627A;
+    line-height: 1.45;
+}
+
+/* Espacio */
+.espacio {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 24px;
+}
+
+.espacioDatos {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.espacioDatos > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.espacioDatos > div:first-child > b {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.pista {
+    height: 10px;
+    border-radius: 99px;
+    background: #E3E6F0;
+    overflow: hidden;
+}
+
+.pista span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: #2457A4;
+}
+
+.espacioAccion {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.espacioAccion small {
+    font-size: 11px;
+    color: #8A8582;
+}
+
+.contorno {
+    height: 42px;
+    padding: 0 18px;
+    border: 1.5px solid #0B1F3A;
+    font-size: 13px;
+}
+
+.contorno:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Historial */
+.historial {
+    display: flex;
+    flex-direction: column;
+}
+
+.historial > .subtitulo {
+    padding: 22px 24px 14px;
+}
+
+.encabezado,
+.renglon {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr 150px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 24px;
+}
+
+.encabezado {
+    border-top: 1px solid #EEF0F5;
+    border-bottom: 1px solid #EEF0F5;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8A8582;
+}
+
+.renglon {
+    padding: 14px 24px;
+    border-bottom: 1px solid #F1F2F6;
+    font-size: 14px;
+}
+
+.renglon:last-child {
+    border-bottom: 0;
+}
+
+.numero {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.gris {
+    color: #56627A;
+}
+
+.estado {
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+}
+
+.acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.acciones a {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 99px;
+    border: 1px solid #E3E6F0;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0B1F3A;
+    text-decoration: none;
+}
+
+.acciones a:hover {
+    background: #F3F4F8;
+    color: #0B1F3A;
+}
+
+.sinFacturas {
+    padding: 22px 24px;
+    font-size: 14px;
+    color: #56627A;
+}
+
+/* Cancelar */
+.cancelar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 24px;
+    border-radius: 24px;
+    border: 1.5px dashed #E3B3C4;
+    background: #fff;
+}
+
+.cancelar > span {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 620px;
+}
+
+.cancelar b {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.cancelar small {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #56627A;
+}
+
+.cancelar button {
+    flex: none;
+    height: 44px;
+    padding: 0 20px;
+    border: 1.5px solid #B3264F;
+    color: #B3264F;
+    font-size: 14px;
+}
+
+/* Sin pagos / error / cargando */
+.vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 32px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid #E3E6F0;
+}
+
+.vacio b {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.vacio span {
+    font-size: 14px;
+    color: #56627A;
+}
+
+.lima {
+    margin-top: 6px;
+    height: 48px;
+    padding: 0 22px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.esqueleto {
+    border-radius: 24px;
+    background: linear-gradient(90deg, #E9EBF2 0%, #F4F5F9 50%, #E9EBF2 100%);
+    background-size: 200% 100%;
+    animation: brillo 1.4s linear infinite;
+}
+
+.alto {
+    height: 190px;
+}
+
+@keyframes brillo {
+    to { background-position: -200% 0; }
+}
+
+@media (max-width: 1000px) {
+    .fila {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .esqueleto { animation: none; }
+    .stripe, .cancelar button, .lima { transition: none; }
+}
+
+/* Celular: título y botón de Stripe uno debajo del otro; cada factura en dos renglones. */
+@media (max-width: 720px) {
+    .cabeza {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .titulo h1 {
+        font-size: 28px;
+    }
+
+    .planDatos b {
+        font-size: 16px;
+    }
+
+    .espacio,
+    .cancelar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .espacioAccion {
+        align-items: stretch;
+    }
+
+    .encabezado {
+        display: none;
+    }
+
+    .renglon {
+        grid-template-columns: 1fr auto;
+        row-gap: 6px;
+        padding: 14px 16px;
+    }
+
+    .renglon > :nth-child(2) {
+        grid-row: 2;
+    }
+
+    .renglon > :nth-child(3) {
+        text-align: right;
+    }
+
+    .renglon > :nth-child(4) {
+        grid-row: 2;
+        grid-column: 2;
+        text-align: right;
+    }
+
+    .acciones {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+
+    .acciones a {
+        height: 40px;
+        padding: 0 16px;
+    }
+
+    .historial > .subtitulo {
+        padding: 18px 16px 10px;
+    }
+}

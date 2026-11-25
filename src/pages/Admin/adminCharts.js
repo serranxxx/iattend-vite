@@ -125,8 +125,11 @@ export const COLOR_POR_ANIO = {
 
 // Ventas por plan (barras apiladas de un año en Ventas). 'Flash' es el valor
 // guardado en ventas.plan para un Pop (check de la tabla): se muestra "Pop".
-export const PLANES_DE_VENTA = ['PRO', 'Lite', 'Flash']
-export const COLOR_POR_PLAN = { PRO: MARCA.navy, Lite: MARCA.lila, Flash: MARCA.verde }
+// Paperless va en crema con su borde (`BORDE_POR_PLAN`): sobre blanco la crema
+// sola casi no se ve.
+export const PLANES_DE_VENTA = ['PRO', 'Lite', 'Paperless', 'Flash']
+export const COLOR_POR_PLAN = { PRO: MARCA.navy, Lite: MARCA.lila, Paperless: MARCA.crema, Flash: MARCA.verde }
+export const BORDE_POR_PLAN = { Paperless: '#C9C2AE' }
 export const nombreDePlan = (plan) => (plan === 'Flash' ? 'Pop' : plan)
 
 // Tooltip para gráficas sobre fondo navy: blanco con texto navy.

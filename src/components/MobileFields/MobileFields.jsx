@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Slider } from 'antd'
+import { Deslizador as Slider } from '../../modules/Editor/Deslizador'
 import { Calendar } from 'lucide-react'
 import styles from './MobileFields.module.css'
 

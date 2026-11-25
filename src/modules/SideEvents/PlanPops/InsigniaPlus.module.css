@@ -1,0 +1,41 @@
+/* Insignia "Pops+" (InsigniaPlus.jsx): navy de Pops, letra gruesa y el "+"
+   en lima. */
+.insignia {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px 3px;
+    border-radius: 999px;
+    background: var(--biz-navy, #0B1F3A);
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.mas {
+    margin-left: 0.5px;
+    color: var(--biz-lima, #CDF22B);
+    font-weight: 900;
+    transform: scale(1.15);
+}
+
+.insignia[data-tam='m'] {
+    padding: 4px 11px 5px;
+    font-size: 14px;
+}
+
+.insignia[data-tam='l'] {
+    padding: 6px 14px 7px;
+    font-size: 18px;
+}
+
+.esquina {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 1;
+}

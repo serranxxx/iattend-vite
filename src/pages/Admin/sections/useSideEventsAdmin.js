@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { traerTodo } from '../analiticaDatos'
+import { traerTodo, traerTodoEnParalelo } from '../analiticaDatos'
 
 /*
   Side events y Pops para Admin → Eventos (la tabla de Side events /
@@ -45,6 +45,26 @@ export const clasificarSide = (side, invitacionPorId, esPrueba, hoy = new Date()
     }
 }
 
+// Solo lo que usan la tabla, el calendario y la topbar. NUNCA `body` completo:
+// en un Pop trae dibujos (puntos de cada trazo), elementos, formularios,
+// patrocinadores…, y con '*' la carga pesaba megas. De `body` solo hacen falta
+// la hora y las fechas (`body->hour` / `body->dates`, que PostgREST resuelve en
+// la base); se vuelven a armar como `body` para que clasificarSide no cambie.
+const COLUMNAS = 'id,name,user_id,user_email,planner_id,invitation_id,credits,created_at'
+const DE_BODY = 'hour:body->hour,dates:body->dates'
+
+const traerSidesLigeros = async () => {
+    let filas
+    try {
+        filas = await traerTodo('side_events', `${COLUMNAS},public_code,${DE_BODY}`)
+    } catch (e) {
+        // Sin la migración de public_code (42703): el link usa el número.
+        if (!/public_code/.test(e.message)) throw e
+        filas = await traerTodo('side_events', `${COLUMNAS},${DE_BODY}`)
+    }
+    return filas.map(({ hour, dates, ...resto }) => ({ ...resto, body: { hour, dates } }))
+}
+
 export const useSideEventsAdmin = (activo) => {
     const [estado, setEstado] = useState({ sides: null, invitadosPorSide: new Map(), error: null })
 
@@ -52,10 +72,8 @@ export const useSideEventsAdmin = (activo) => {
         if (!activo || estado.sides || estado.error) return
         let cancelado = false
         Promise.all([
-            // '*': también trae public_code (el link del evento) sin romper si la
-            // migración todavía no corre.
-            traerTodo('side_events', '*'),
-            traerTodo('side_events_guests', 'id,side_events_id'),
+            traerSidesLigeros(),
+            traerTodoEnParalelo('side_events_guests', 'id,side_events_id'),
         ])
             .then(([filas, invitados]) => {
                 if (cancelado) return

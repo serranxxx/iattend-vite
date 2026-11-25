@@ -1,4 +1,5 @@
-import { ColorPicker, Segmented, Slider, Tooltip } from 'antd'
+import { ColorPicker, Segmented, Tooltip } from 'antd'
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import { ArrowDown, ArrowDownUp, ArrowUp, Maximize } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { darker } from '../../../../helpers/assets/functions'

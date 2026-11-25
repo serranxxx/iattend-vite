@@ -9,7 +9,13 @@
 import { supabase } from '../../../lib/supabase'
 import { storageChanged } from '../../../helpers/services/storageQuota'
 
+// Fichas por versión de la conversión (`pdf-v2.json` = HD + celular; la
+// `pdf.json` es la de la conversión 1). Nunca se sobrescribe un archivo:
+// Storage no deja reemplazar uno que subió otra cuenta (dueño y planner
+// trabajan la misma invitación) → "new row violates row-level security policy".
 export const FICHA = 'pdf.json'
+export const fichaDeVersion = (version) => (version > 1 ? `pdf-v${version}.json` : FICHA)
+const FICHAS = ['pdf-v2.json', FICHA]
 const BUCKET = 'user_images'
 
 export const urlPublica = (path) => supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
@@ -23,11 +29,15 @@ export const carpetaDePdf = (pdf) => {
     return m ? decodeURIComponent(m[1]) : null
 }
 
-export const leerFicha = async (carpeta) => {
-    // download (API) y no la URL pública: la del CDN podría tener un 404 viejo.
-    const { data, error } = await supabase.storage.from(BUCKET).download(`${carpeta}/${FICHA}`)
-    if (error || !data) return null
-    try { return JSON.parse(await data.text()) } catch { return null }
+// La ficha más nueva de la carpeta (si hay de varias conversiones).
+export const leerFicha = async (carpeta, nombres = FICHAS) => {
+    for (const nombre of nombres) {
+        // download (API) y no la URL pública: la del CDN podría tener un 404 viejo.
+        const { data, error } = await supabase.storage.from(BUCKET).download(`${carpeta}/${nombre}`)
+        if (error || !data) continue
+        try { return JSON.parse(await data.text()) } catch { /* sigue con la otra */ }
+    }
+    return null
 }
 
 const medidas = (url) => new Promise((resolve) => {
@@ -71,8 +81,8 @@ export const listarPdfs = async (invitationID) => {
         const { data: archivos } = await supabase.storage.from(BUCKET).list(carpeta, { limit: 200 })
         if (!archivos?.length) return null
         const bytes = archivos.reduce((s, f) => s + (f.metadata?.size ?? 0), 0)
-        const tieneFicha = archivos.some((f) => f.name === FICHA)
-        const ficha = (tieneFicha && (await leerFicha(carpeta))) || (await fichaDeArchivos(carpeta, archivos))
+        const fichas = FICHAS.filter((n) => archivos.some((f) => f.name === n))
+        const ficha = (fichas.length && (await leerFicha(carpeta, fichas))) || (await fichaDeArchivos(carpeta, archivos))
         if (!ficha?.pages?.length) return null
         return { carpeta, ficha: { ...ficha, carpeta }, bytes }
     }))

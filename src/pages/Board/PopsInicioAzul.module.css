@@ -81,7 +81,8 @@
     font-size: 15px;
 }
 
-.chipPunto img {
+.chipPunto img,
+.chipPunto video {
     position: absolute;
     inset: 0;
     width: 100%;

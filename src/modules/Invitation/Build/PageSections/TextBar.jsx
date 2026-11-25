@@ -136,9 +136,9 @@ export const TextBar = ({ target, ts, lock, invitation, setInvitation, setSaved,
 
             {pop('spacing', (
                 <>
-                    <LiveSlider label={t('build_editor.tb_letter')} value={font.letterSpacing ?? 0} min={-10} max={60} onChange={(v, o) => setFont({ letterSpacing: v }, o)} />
-                    <LiveSlider label={t('build_editor.tb_line')} value={font.lineHeight ?? 1.2} min={0.8} max={2.5} step={0.05} format={(v) => Number(v).toFixed(2)} onChange={(v, o) => setFont({ lineHeight: v }, o)} />
-                    <LiveSlider label={t('build_cover.label_weight')} value={font.weight ?? 400} min={100} max={900} step={100} onChange={(v, o) => setFont({ weight: v }, o)} />
+                    <LiveSlider label={t('build_editor.tb_letter')} value={font.letterSpacing ?? 0} min={-10} max={60} color="#1C3249" sinValor onChange={(v, o) => setFont({ letterSpacing: v }, o)} />
+                    <LiveSlider label={t('build_editor.tb_line')} value={font.lineHeight ?? 1.2} min={0.8} max={2.5} step={0.05} color="#8A63A8" sinValor onChange={(v, o) => setFont({ lineHeight: v }, o)} />
+                    <LiveSlider label={t('build_cover.label_weight')} value={font.weight ?? 400} min={100} max={900} step={100} color="#8E9178" sinValor onChange={(v, o) => setFont({ weight: v }, o)} />
                 </>
             ), (
                 <button type="button" className={styles.iconBtn} data-on={open === 'spacing' || undefined} title={t('build_editor.tb_spacing')}>

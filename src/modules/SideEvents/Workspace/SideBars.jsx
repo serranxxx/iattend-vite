@@ -1,6 +1,10 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
+import { useInsigniasPlus } from '../PlanPops/planPopsUI'
+import { LIMITES_FREE } from '../planPops'
 import { useTranslation } from 'react-i18next'
-import { DatePicker, Input, Popover, Segmented, Slider, Switch, Tooltip } from 'antd'
+import { DatePicker, Input, Popover, Segmented, Switch, Tooltip } from 'antd'
+import { Deslizador as Slider } from '../../Editor/Deslizador'
 import dayjs from 'dayjs'
 import { Blend, Clapperboard, CloudOff, CloudSun, Film, GalleryHorizontal, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X, Maximize2, Minimize2, Move, Play, Droplets, Layers, RotateCcw, ZoomIn, ZoomOut, Video } from 'lucide-react'
 import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatEventDateTime } from '../../../helpers/assets/eventDateTime'
@@ -247,6 +251,7 @@ export const BackgroundBar = ({ current, setBody, onChange, esPop, pickMedia, fo
     const { open, setOpen, pop } = usePop()
     const body = current?.body ?? {}
     const media = mediaDePortada(body)
+    const verInsignias = useInsigniasPlus()
     const max = esPop ? MAX_FOTOS_CARRUSEL : 1
     const elegida = media.includes(fotoSel) ? fotoSel : media[0] ?? null
     const veil = body.veil ?? 0
@@ -342,8 +347,10 @@ export const BackgroundBar = ({ current, setBody, onChange, esPop, pickMedia, fo
                 })}
                 {media.length < max && (
                     <Tooltip placement="bottom" title={t(esPop ? 'side_events.cover_add' : 'side_events.canvas_add_image')}>
-                        <button type="button" className={own.fondoAgregar} aria-label={t(esPop ? 'side_events.cover_add' : 'side_events.canvas_add_image')} onClick={() => elegir()}>
+                        <button type="button" className={own.fondoAgregar} style={{ position: 'relative' }} aria-label={t(esPop ? 'side_events.cover_add' : 'side_events.canvas_add_image')} onClick={() => elegir()}>
                             <Plus size={20} />
+                            {/* Free: una sola foto; la 2.ª (carrusel) o un video es Plus. */}
+                            {verInsignias && media.length >= LIMITES_FREE.portada && <InsigniaPlus className={own.insigniaFondo} />}
                         </button>
                     </Tooltip>
                 )}

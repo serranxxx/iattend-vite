@@ -4,6 +4,7 @@ import { ArrowRight, Plus } from 'lucide-react'
 import { inicialesDePop, portadaDePop, useConfirmados } from './popsDatos'
 import { PopsHero } from './PopsHero'
 import styles from './PopsBusiness.module.css'
+import { MiniaturaPop } from './MiniaturaPop'
 
 /**
  * /invitations › Pops con el estilo Business (handoff "Cambia tu estilo" +
@@ -72,7 +73,7 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
         if (movil) {
             return (
                 <button key={f.item.id} type='button' className={`${styles.mFila} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
-                    <span className={styles.mIcono} style={{ background: icono.fondo, color: icono.tinta }}>{f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.iniciales}</span>
+                    <span className={styles.mIcono} style={{ background: icono.fondo, color: icono.tinta }}>{f.portada ? <MiniaturaPop src={f.portada} className={styles.portada} /> : f.iniciales}</span>
                     <span className={styles.filaTexto}>
                         <span className={styles.mNombre}>{f.nombre}</span>
                         {conCorreo && <span className={styles.correo}>{f.correo || t('invitations.pending_send_badge')}</span>}
@@ -89,7 +90,7 @@ export const PopsBusiness = ({ movil = false, greeting, items, gratisPop = 0, pu
         }
         return (
             <button key={f.item.id} type='button' className={`${styles.fila} ${pasado ? styles.pasada : ''}`} onClick={() => onAbrir(f.item)}>
-                <span className={styles.icono} style={{ background: icono.fondo, color: icono.tinta }}>{f.portada ? <img src={f.portada} alt='' loading='lazy' className={styles.portada} /> : f.iniciales}</span>
+                <span className={styles.icono} style={{ background: icono.fondo, color: icono.tinta }}>{f.portada ? <MiniaturaPop src={f.portada} className={styles.portada} /> : f.iniciales}</span>
                 <span className={styles.filaTexto}>
                     <span className={styles.nombre}>{f.nombre}</span>
                     <span className={styles.estado}>

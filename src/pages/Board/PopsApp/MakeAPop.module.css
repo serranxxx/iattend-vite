@@ -1,0 +1,355 @@
+/* Make a Pop (MakeAPop.jsx, handoff "Nuevo Pop"): menú, ventana de correo y
+   sus animaciones. Medidas y tiempos del handoff. */
+
+/* ── Menú ─────────────────────────────────────────────────────────────── */
+.menu {
+    position: fixed;
+    z-index: 1100;
+    width: 320px;
+    box-sizing: border-box;
+    padding: 8px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 0 0 1px #E3E6F0, 0 18px 40px rgba(11, 31, 58, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    animation: caer 0.18s ease-out both;
+}
+
+.menuHoja {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+}
+
+@keyframes caer {
+    0% { transform: translateY(-8px) scale(0.97); opacity: 0 }
+    100% { transform: translateY(0) scale(1); opacity: 1 }
+}
+
+.opcion {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    padding: 12px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: background 0.15s;
+}
+
+.opcion:hover,
+.opcion:focus-visible {
+    background: #EAF1FF;
+}
+
+.opcion:disabled {
+    cursor: progress;
+    opacity: 0.7;
+}
+
+.opcion[aria-disabled] .opcionIcono {
+    opacity: 0.5;
+}
+
+.opcionIcono {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.opcionTextos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.opcionTextos b {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.opcionTextos small {
+    font-size: 12px;
+    color: #56627A;
+}
+
+.chevron {
+    flex: none;
+    color: #56627A;
+}
+
+/* ── Ventana de correo ────────────────────────────────────────────────── */
+.velo {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(11, 31, 58, 0.32);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    animation: aparece 0.25s ease-out both;
+}
+
+@keyframes aparece {
+    from { opacity: 0 }
+    to { opacity: 1 }
+}
+
+/* Al volverse celular o salir volando, el velo se va. */
+.velo[data-fase] {
+    background: transparent;
+    transition: background 0.45s ease-out;
+}
+
+.ventana {
+    width: min(900px, calc(100vw - 32px));
+    height: min(680px, calc(100dvh - 40px));
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(11, 31, 58, 0.3);
+    overflow: hidden;
+    animation: entra 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes entra {
+    0% { transform: translateY(14px) scale(0.97); opacity: 0 }
+    100% { transform: none; opacity: 1 }
+}
+
+.ventanaContenido {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.15s;
+}
+
+.ventana[data-fase] .ventanaContenido {
+    opacity: 0;
+}
+
+/* Enviar ahora: se encoge, se vuelve azul y sale volando arriba a la derecha. */
+.ventana[data-fase='fly'] {
+    animation: vuela 0.95s cubic-bezier(0.55, 0, 0.35, 1) forwards;
+}
+
+@keyframes vuela {
+    0% { transform: none; background: #fff }
+    28% { transform: translateY(30px) scale(0.4, 0.34); border-radius: 60px; background: #2457A4 }
+    42% { transform: translateY(46px) scale(0.34, 0.28) rotate(4deg); border-radius: 80px; background: #2457A4 }
+    100% { transform: translate(60vw, -90vh) scale(0.08) rotate(-28deg); border-radius: 80px; background: #2457A4; opacity: 0.6 }
+}
+
+.barra {
+    flex: none;
+    height: 56px;
+    padding: 0 12px 0 22px;
+    border-bottom: 1px solid #E3E6F0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.barra b {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.cerrar {
+    all: unset;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #56627A;
+}
+
+.cerrar:hover {
+    background: #F3F6FC;
+}
+
+.fila {
+    flex: none;
+    height: 52px;
+    padding: 0 22px;
+    border-bottom: 1px solid #E3E6F0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fila > span {
+    flex: none;
+    width: 60px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8A93A6;
+}
+
+.fila input {
+    all: unset;
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #0B1F3A;
+}
+
+.fila input::placeholder {
+    color: #B5BCCB;
+    font-weight: 500;
+}
+
+.fila > b {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.cuerpo {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 22px;
+    background: #F3F6FC;
+    /* Se sigue pudiendo recorrer, sin la barra. */
+    scrollbar-width: none;
+}
+
+.cuerpo::-webkit-scrollbar {
+    display: none;
+}
+
+/* Vista previa: el correo real (iframe con el HTML del backend), en
+   escritorio a 1100 px escalado al ancho de la caja. */
+.correoCaja {
+    overflow: hidden;
+    border-radius: 16px;
+    background: #2457A4;
+}
+
+.correoIframe {
+    display: block;
+    width: 100%;
+    border: 0;
+    transform-origin: 0 0;
+}
+
+.correoCargando {
+    height: 560px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, #E5ECF8 0%, #F3F6FC 50%, #E5ECF8 100%);
+    background-size: 200% 100%;
+    animation: brillo 1.4s linear infinite;
+}
+
+@keyframes brillo {
+    to { background-position: -200% 0; }
+}
+
+.acciones {
+    flex: none;
+    padding: 14px 22px;
+    border-top: 1px solid #E3E6F0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.secundario,
+.primario {
+    all: unset;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 46px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.secundario {
+    padding: 0 18px;
+    border: 1.5px solid #0B1F3A;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.secundario:hover {
+    background: #F3F6FC;
+}
+
+.primario {
+    margin-left: auto;
+    padding: 0 22px;
+    background: #2457A4;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 4px 0 #0B1F3A;
+}
+
+.primario[aria-disabled] {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.opcion:focus-visible,
+.cerrar:focus-visible,
+.secundario:focus-visible,
+.primario:focus-visible {
+    outline: 3px solid rgba(36, 87, 164, 0.35);
+    outline-offset: 2px;
+}
+
+/* Celular: la ventana ocupa la pantalla; los botones uno sobre otro. */
+.velo[data-movil] .ventana {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+}
+
+.velo[data-movil] .acciones {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+}
+
+.velo[data-movil] .primario {
+    margin-left: 0;
+}
+
+.velo[data-movil] .barra {
+    padding-top: env(safe-area-inset-top);
+    height: calc(56px + env(safe-area-inset-top));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu,
+    .velo,
+    .ventana {
+        animation: none;
+    }
+}

@@ -8,6 +8,7 @@ import { fetchStripeResumen } from '../stripeAdminApi'
 import { calcularCargosPorVenta, calcularKpis, formatCurrency, netoDeVenta } from '../ventasCalculos'
 import { useContador } from '../useContador'
 import { CreadosCard, ReportesCard } from './HoyActividad'
+import { BORDE_POR_PLAN, COLOR_POR_PLAN, PLANES_DE_VENTA, nombreDePlan } from '../adminCharts'
 import styles from './HoySection.module.css'
 
 dayjs.locale('es')
@@ -146,6 +147,8 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
 
     const cargosPorVenta = useMemo(() => calcularCargosPorVenta(ventasDelAnio), [ventasDelAnio])
     const kpis = useMemo(() => calcularKpis(ventas, cargosPorVenta), [ventas, cargosPorVenta])
+    // [plan, ventas] en el orden de PLANES_DE_VENTA (PRO, Lite, Paperless, Pop).
+    const ventasPorPlan = useMemo(() => PLANES_DE_VENTA.map(plan => [plan, ventas.filter(v => v.plan === plan).length]), [ventas])
 
     // El saldo por cobrar se acumula sobre el año en curso.
     const saldoAnual = useMemo(() => {
@@ -294,13 +297,15 @@ export const HoySection = ({ onNavigate, puedeAbrirVentas, tickets, invitations,
                         <span>{kpis.ventasCount === 1 ? 'venta' : 'ventas'}</span>
                     </div>
                     <div className={styles.barraPlanes}>
-                        {kpis.proCount > 0 && <span style={{ flexGrow: kpis.proCount, background: '#1c3249' }} />}
-                        {kpis.liteCount > 0 && <span style={{ flexGrow: kpis.liteCount, background: '#D1BEDD' }} />}
+                        {ventasPorPlan.filter(([, n]) => n > 0).map(([plan, n]) => (
+                            <span key={plan} style={{ flexGrow: n, background: COLOR_POR_PLAN[plan], boxShadow: BORDE_POR_PLAN[plan] ? `inset 0 0 0 1px ${BORDE_POR_PLAN[plan]}` : undefined }} />
+                        ))}
                         {kpis.ventasCount === 0 && <span style={{ flexGrow: 1, background: '#eeeadf' }} />}
                     </div>
                     <div className={styles.leyenda}>
-                        <span><i style={{ background: '#1c3249' }} />{kpis.proCount} PRO</span>
-                        <span><i style={{ background: '#D1BEDD' }} />{kpis.liteCount} Lite</span>
+                        {ventasPorPlan.filter(([plan, n]) => n > 0 || plan === 'PRO' || plan === 'Lite').map(([plan, n]) => (
+                            <span key={plan}><i style={{ background: COLOR_POR_PLAN[plan], boxShadow: BORDE_POR_PLAN[plan] ? `inset 0 0 0 1px ${BORDE_POR_PLAN[plan]}` : undefined }} />{n} {nombreDePlan(plan)}</span>
+                        ))}
                     </div>
 
                     <div className={styles.ventasLista}>

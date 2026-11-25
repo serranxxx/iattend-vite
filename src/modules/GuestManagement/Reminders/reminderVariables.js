@@ -1,4 +1,5 @@
 import { formatAbsoluteDateEs } from '../../../helpers/assets/eventDateTime'
+import { esVideo } from '../../SideEvents/fotosPortada'
 
 // Recordatorios (comunicados) por WhatsApp. Ver docs/recordatorios.md.
 //
@@ -17,7 +18,8 @@ export const REMINDER_VARIABLES = {
     event_title: {
         label: 'Nombre del evento (título de la portada)',
         example: 'Ale & Santiago',
-        resolve: ({ invitation }) => invitation?.cover?.title?.text?.value?.trim() || '',
+        // Un Pop / side event pasa su nombre en `eventTitle`.
+        resolve: ({ invitation, eventTitle }) => (eventTitle ?? invitation?.cover?.title?.text?.value)?.trim() || '',
     },
     event_date: {
         label: 'Fecha del evento',
@@ -38,7 +40,9 @@ export const REMINDER_VARIABLES = {
     invitation_path: {
         label: 'Magic link del invitado (para el botón)',
         example: 'boda/ale-y-santiago?password=K7Q2',
-        resolve: ({ guest, invitation, name }) => {
+        // Un Pop / side event pasa `guestPath(guest)` (side-event/<código>?password=…).
+        resolve: ({ guest, invitation, name, guestPath }) => {
+            if (guestPath) return guest?.password ? guestPath(guest) : ''
             const label = invitation?.generals?.event?.label
             if (!label || !name || !guest?.password) return ''
             return `${label}/${name}?password=${guest.password}`
@@ -46,15 +50,18 @@ export const REMINDER_VARIABLES = {
     },
     // Encabezado de imagen: la imagen del link de la invitación
     // (invitations.url_image, se cambia desde el header) o, si no hay, la
-    // portada — lo mismo que muestra la vista previa del link.
+    // portada — lo mismo que muestra la vista previa del link. Nunca un video
+    // (Meta solo acepta imagen): con portada de video, RemindersPanel pasa en
+    // `urlImage` su primer cuadro ya subido como JPG (primerCuadro.js).
     link_image: {
         label: 'Imagen del link de la invitación',
         example: '',
         image: true,
         missing: 'reminders.missing_link_image',
         resolve: ({ urlImage, invitation }) => {
-            const url = urlImage || invitation?.cover?.image?.prod || ''
-            return /^https:\/\//i.test(url) ? url : ''
+            const prod = invitation?.cover?.image?.prod
+            const candidatos = [urlImage, ...(Array.isArray(prod) ? prod : [prod])]
+            return candidatos.find((u) => typeof u === 'string' && /^https:\/\//i.test(u) && !esVideo(u)) || ''
         },
     },
 }

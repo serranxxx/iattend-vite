@@ -502,3 +502,9 @@
     transform: rotate(-1.5deg);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
+
+/* Insignia Plus en la nota del espacio (Pop Free). */
+.meterInsignia {
+    margin-right: 6px;
+    vertical-align: 1px;
+}

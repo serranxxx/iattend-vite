@@ -22,6 +22,7 @@ import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import { ElementBar } from '../../Invitation/Build/PageSections/ElementBar'
 import { useColorPopover } from '../../Editor/useColorPopover'
 import { ColorPopover } from '../../Editor/ColorPopover'
+import { usePanelColor } from '../../Editor/usePanelColor'
 import { copiaDeElemento, useElementClipboard } from '../../Editor/useElementClipboard'
 import { SideLayers } from './SideLayers'
 import own from './SideWorkspace.module.css'
@@ -362,6 +363,8 @@ export const SideWorkspace = ({
             anclarA: inmersivo ? '[data-paleta-dibujo]' : '[data-editor-left]',
         }
         : barra.colorTarget
+    // El color de las barras se abre en el panel lateral (el del pincel, flotando).
+    const panelColor = usePanelColor({ colorPop: live ? null : colorPop, closeColor, target: colorTarget, palette })
 
     const bar = live ? null
         : modoDibujo ? <DibujoBar trazos={trazos.length} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} media={mediaFondo} dibujoEn={dibujoEnValido} onDibujoEn={setDibujoEn} />
@@ -421,6 +424,7 @@ export const SideWorkspace = ({
             tools={tools}
             activeTool={activeTool}
             toolOpen={toolOpen}
+            panelColor={panelColor}
             onPickTool={pickTool}
             onCloseTool={() => setToolOpen(false)}
             renderTool={renderTool}
@@ -521,7 +525,7 @@ export const SideWorkspace = ({
                 />
             ) : null}
         >
-            {!live && <ColorPopover colorPop={colorPop} closeColor={closeColor} target={colorTarget} palette={palette} />}
+            {!live && <ColorPopover colorPop={colorPop} closeColor={closeColor} target={colorTarget} />}
         </EditorShell>
     )
 }

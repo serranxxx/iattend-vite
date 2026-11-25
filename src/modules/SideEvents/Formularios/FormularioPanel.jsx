@@ -5,6 +5,9 @@ import { message } from 'antd'
 import { Check, ClipboardList, Download, FileText, Lock, Plus } from 'lucide-react'
 import ims from '../Workspace/InteractionMenu.module.css'
 import styles from './FormularioPanel.module.css'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
+import { useInsigniasPlus } from '../PlanPops/planPopsUI'
+import { LIMITES_FREE } from '../planPops'
 import { FormularioVista } from './FormularioVista'
 import { descargarRespuestas } from './descargas'
 import { useMisFormularios, useRespuestasFormulario } from './useFormularios'
@@ -91,6 +94,8 @@ export const FormularioPanel = ({ body, updateForm, eventoId }) => {
     const metaElegido = elegido
         ? metaDe(elegido)
         : t('side_events.frm_n_questions', { count: (publicado?.sections ?? []).reduce((n, s) => n + s.fields.length, 0) })
+    const preguntasElegido = elegido ? contarPreguntas(elegido.items) : (publicado?.sections ?? []).reduce((n, s) => n + s.fields.length, 0)
+    const verInsignias = useInsigniasPlus()
 
     return (
         <div className={ims.panel}>
@@ -135,6 +140,7 @@ export const FormularioPanel = ({ body, updateForm, eventoId }) => {
                                     <span className={styles.miniatura}><FileText size={18} strokeWidth={1.8} /></span>
                                     <span className={styles.col}>
                                         <span className={styles.titulo}>{tituloElegido}</span>
+                                        {verInsignias && preguntasElegido > LIMITES_FREE.preguntas && <InsigniaPlus className={styles.insigniaElegido} />}
                                         <span className={styles.meta}>{metaElegido}</span>
                                     </span>
                                 </div>
@@ -156,10 +162,15 @@ export const FormularioPanel = ({ body, updateForm, eventoId }) => {
                                             {formularios.map((f) => {
                                                 const on = f.id === form?.formId
                                                 const n = usos[f.id] ?? 0
+                                                // Pop Free: un formulario con más de 2 preguntas es de Pops Plus.
+                                                const esPlus = verInsignias && contarPreguntas(f.items) > LIMITES_FREE.preguntas
                                                 return (
                                                     <button key={f.id} type="button" role="option" aria-selected={on} className={styles.opcion} data-on={on || undefined} onClick={() => (on ? setPickerOpen(false) : usar(f))}>
                                                         <span className={styles.col}>
-                                                            <span className={styles.opcionTitulo}>{f.title || t('side_events.frm_untitled')}</span>
+                                                            <span className={styles.opcionTitulo}>
+                                                                {f.title || t('side_events.frm_untitled')}
+                                                                {esPlus && <InsigniaPlus className={styles.insignia} />}
+                                                            </span>
                                                             <span className={styles.opcionMeta}>
                                                                 {t('side_events.frm_n_questions', { count: contarPreguntas(f.items) })} · {n ? t('side_events.frm_used_in', { count: n }) : t('side_events.frm_unused')}
                                                             </span>

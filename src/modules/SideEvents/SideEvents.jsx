@@ -1,7 +1,10 @@
 import * as XLSX from 'xlsx'
 import { esOnline } from './acceso'
 import { TablaInvitados } from './TablaInvitados'
-import { Badge, Button, Checkbox, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Slider, Spin, Switch, Tooltip } from 'antd'
+import { RemindersPanel } from '../GuestManagement/Reminders/RemindersPanel'
+import { irAStripePlus } from '../../pages/Board/PopsApp/suscripcionPlus'
+import { Badge, Button, Checkbox, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Spin, Switch, Tooltip } from 'antd'
+import { Deslizador as Slider } from '../Editor/Deslizador'
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import './side-events.css'
 import '../GuestManagement/guests-redesign.css'
@@ -20,6 +23,10 @@ import { CreditController } from '../../components/Payment/CreditController/Cred
 import { EmojiPop } from './EmojiPop'
 import { emojiSugerido } from '../../helpers/invitation/popEmojis'
 import { copia, estable, mezclarBody } from './mezclarBody'
+import { guardarCamposSideEvent } from './guardarSideEvent'
+import { funcionesPlusEnUso } from './planPops'
+import { marcarPopFree, marcarPopPrueba } from './PlanPops/planPopsUI'
+import { InsigniaPlus } from './PlanPops/InsigniaPlus'
 import { usePresenciaPop } from './Presencia/usePresenciaPop'
 import { CursoresPop } from './Presencia/CursoresPop'
 import { AvataresPresencia } from './Presencia/AvataresPresencia'
@@ -80,11 +87,12 @@ import { puedeGestionarPop } from '../../helpers/invitation/popEvents'
 import { rutaInvitaciones } from '../../helpers/invitation/espacios'
 import { EstadoGuardado } from './EstadoGuardado'
 import { CompartirPop } from './CompartirPop'
+import { EnviarPop } from './EnviarPop'
 import { PopoverAcceso } from './PopoverAcceso'
 import { BotonBuzonPop, BotonBuzonPopMovil } from './BuzonPop'
 import { useBuzonPop } from './useBuzonPop'
 import sInv from './Movil/InvitadosMovil.module.css'
-import { ajusteDe, fotosDePortada, MAX_FOTOS_CARRUSEL, parcheFotos, soloVideos } from './fotosPortada'
+import { ajusteDe, esVideo, fotosDePortada, mediaDePortada, MAX_FOTOS_CARRUSEL, parcheFotos, soloVideos } from './fotosPortada'
 import { uploadImagesSupabase } from '../../helpers/services/uploadImage'
 
 // Selector de estilo del editor de Pops (I attend · Pop · Business · Craft)
@@ -185,6 +193,38 @@ const wallClockToDayjs = (raw) => {
     return match ? dayjs(`${match[1]} ${match[2]}`) : null
 }
 
+
+// Pop en blanco de prueba (MakeAPop en modo prueba → /dashboard/side?pop=prueba).
+// Misma forma que el que crea el backend (iattend--backend helpers/popEvent.js →
+// crearPopEvent): "Mi Pop", hoy, sin foto. Nunca se guarda.
+export const POP_DEMO_ID = 'prueba'
+const popEnBlanco = () => ({
+    id: POP_DEMO_ID,
+    invitation_id: null,
+    planner_id: null,
+    user_id: null,
+    user_email: null,
+    credits: 30,
+    credits_included: 30,
+    pops_plus: true,
+    date: new Date().toISOString(),
+    name: 'Mi Pop',
+    url_image: null,
+    type: 'closed',
+    body: {
+        address: { street: null, number: null, neighborhood: null, zipcode: null, country: null, state: null, city: null, url: null },
+        hour: `${dayjs().format('YYYY-MM-DD')} 00:00:00`,
+        timezone: null,
+        place_name: null,
+        image: null,
+        title: { font: 'Poppins', size: 36, weight: 600, opacity: 1, line_height: 1.4 },
+        font: 'Poppins',
+        color: '#000000',
+        extras: null,
+        hideWeather: false,
+    },
+})
+
 export const SideEvents = () => {
     const { t, i18n } = useTranslation()
     const { setCreditSending, setCreditSuccess, clearCreditState } = useLia()
@@ -256,6 +296,8 @@ export const SideEvents = () => {
     const [searchUser, setSearchUser] = useState(null)
     // Invitados: vista por pasos (la de siempre) o compacta (una tabla con
     // todo, TablaInvitados). Se recuerda en este navegador.
+    // Recordatorios del Pop (Pops+): el mismo panel de la boda en lugar de la lista.
+    const [verRecordatorios, setVerRecordatorios] = useState(false)
     const [vistaInvitados, setVistaInvitados] = useState(() => (localStorage.getItem('iattend_vista_invitados_side') === 'compacta' ? 'compacta' : 'pasos'))
     const cambiarVistaInvitados = (v) => { setVistaInvitados(v); localStorage.setItem('iattend_vista_invitados_side', v) }
     const [filterTag, setFilterTag] = useState(null)
@@ -316,6 +358,14 @@ export const SideEvents = () => {
     // Los créditos son los del propio evento (side_events.credits); los envíos
     // por WhatsApp todavía no están disponibles para Pop.
     const popId = searchParams.get("pop") ?? searchParams.get("flash");
+    // Pop en blanco de prueba (`?pop=prueba`, modo prueba de Make a Pop): se
+    // arma aquí con la misma forma que crea el backend y nada se guarda
+    // (ni autoguardado, ni acceso, ni imagen del link, ni invitados).
+    const popDemo = popId === POP_DEMO_ID;
+    // Pop "para enviar después": todavía sin cliente (user_id vacío, con
+    // planner_id). En el Pop de prueba, si llegó por "Editar y enviar
+    // después" (?porEnviar=1).
+    const [popEnviado, setPopEnviado] = useState(false)
     const esPop = !!popId;
     const creditsTable = esPop ? 'side_events' : 'invitations';
     // Formulario del Pop en la vista compacta de invitados: sus respuestas
@@ -327,11 +377,52 @@ export const SideEvents = () => {
     const { respuestas: respuestasForm, cargar: recargarRespuestas } = useRespuestasFormulario(current?.id, Boolean(formPop))
     const [vistaFormulario, setVistaFormulario] = useState(null) // { tab, guestId }
     const creditsOwnerId = esPop ? popId : id;
+
+    // ── Plan de Pops (Free / Pops Plus, planPops.js) ──
+    // `popPlus`: null mientras se pregunta (no bloquea), true / false después.
+    // Un Pop Free que usa funciones Plus no guarda NADA hasta quitarlas: el
+    // autoguardado se detiene y EstadoGuardado enseña la lista.
+    const [popPlus, setPopPlus] = useState(null)
+    // Prueba gratis de Pops+ del dueño ({ dias, vence } o null): todo funciona,
+    // pero las insignias siguen y el encabezado dice cuándo vence.
+    const [popPrueba, setPopPrueba] = useState(null)
+    useEffect(() => {
+        if (!esPop || !popId) { setPopPlus(null); return undefined }
+        if (popDemo) { setPopPlus(true); return undefined }
+        // Solo en desarrollo: ?free=1 enseña el editor como Pop Free aunque
+        // la cuenta sea Plus (Administración siempre lo es), para revisar el
+        // aviso y los bloqueos. Lo que no usa funciones Plus sí se guarda.
+        if (import.meta.env.DEV && searchParams.get('free') === '1') { setPopPlus(false); return undefined }
+        let vivo = true
+        ;(async () => {
+            try {
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/side-events/${popId}/plan`, { headers: await supabaseAuthHeaders() })
+                if (vivo) { setPopPlus(data?.plus !== false); setPopPrueba(data?.prueba ?? null) }
+            } catch {
+                // Sin la ruta todavía (backend viejo) o sin red: no se bloquea.
+                if (vivo) setPopPlus(true)
+            }
+        })()
+        return () => { vivo = false }
+    }, [esPop, popId, searchParams])
+    const funcionesPlus = esPop && popPlus === false ? funcionesPlusEnUso(current?.body) : []
+    useEffect(() => {
+        marcarPopFree(esPop && popPlus === false)
+        marcarPopPrueba(esPop && popPlus !== false ? popPrueba : null)
+        return () => { marcarPopFree(false); marcarPopPrueba(null) }
+    }, [esPop, popPlus, popPrueba])
+    const popFree = esPop && popPlus === false
+    // Firma de la imagen automática del link: la de la portada y, en un Pop
+    // Free, la marca de agua (al cambiar de plan se rehace).
+    const firmaDelLink = (b) => `${firmaPortada(b)}${popFree ? '|marca' : ''}`
+    const funcionesPlusRef = useRef(funcionesPlus)
+    funcionesPlusRef.current = funcionesPlus
     const hasPendingInfo = !esPop && (!invName || !invLabel || !invPhone || !invOwners?.length)
     const navigate = useNavigate()
     const { subscribe } = useDashboardRealtime()
     // Buzón de WhatsApp del Pop: las respuestas de sus invitados (BuzonPop.jsx).
-    const buzonPop = useBuzonPop(esPop ? popId : null)
+    // Un Pop Free no manda por WhatsApp, así que no tiene buzón.
+    const buzonPop = useBuzonPop(esPop && !popFree && !popDemo ? popId : null)
     // Importar desde Excel: modal dentro del editor (`{ archivo }` = abierto).
     const [importando, setImportando] = useState(null)
     // Pop: los otros eventos del organizador con invitados (para "De otro
@@ -340,6 +431,7 @@ export const SideEvents = () => {
     const [menuAgregar, setMenuAgregar] = useState(false)
     useEffect(() => {
         if (!esPop || !popId) return undefined
+        if (popDemo) { setOtrosEventos([]); return undefined }
         let vivo = true
         ;(async () => {
             try {
@@ -887,6 +979,33 @@ export const SideEvents = () => {
             console.log(error.response?.data || error.message)
         } finally {
             setBulkSending(false)
+        }
+    }
+
+    // Recordatorios de un Pop (Pops+, el mismo panel y lote de la boda:
+    // POST /api/whats/reminders/bulk con sideEventId). Se reservan los
+    // créditos que el backend aceptó; los fallidos se reembolsan al cerrar.
+    const onSendRemindersPop = async (template, reminderItems) => {
+        if (activeBatch?.status === 'processing') {
+            message.warning(t('reminders.batch_in_progress'))
+            return null
+        }
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/whats/reminders/bulk`,
+                { sideEventId: current.id, templateId: template.id, items: reminderItems },
+                { headers: await supabaseAuthHeaders() }
+            )
+            if (!response.data.ok) return null
+            const { batchId, total } = response.data.data
+            await onReserveCredits(total)
+            setActiveBatch({ id: batchId, total, sent: 0, failed: 0, status: 'processing', kind: 'reminder' })
+            return { batchId, total }
+        } catch (error) {
+            message.error(error.response?.data?.code === 'POPS_PLUS'
+                ? t('pops_plus.recordatorios_bloqueo')
+                : (error.response?.data?.msg || t('reminders.send_error')))
+            return null
         }
     }
 
@@ -1472,10 +1591,11 @@ export const SideEvents = () => {
                 onOpenChange={setMenuAgregar}
                 popupRender={() => (
                     <GuestAddTiles
-                        plan={plan}
-                        // Importar con Lia: solo en side events de una
-                        // invitación PRO; un Pop no lo tiene.
-                        sinExcel={esPop}
+                        // Importar con Lia: en side events de una invitación PRO
+                        // y en un Pop Plus; en un Pop Free se ve bloqueado.
+                        plan={esPop ? (popFree ? 'free' : 'pro') : plan}
+                        bloqueoPlus={popFree}
+                        onBloqueado={() => message.info(t('pops_plus.excel'))}
                         onIndividual={() => { setMenuAgregar(false); setDrawerState({
                             currentGuest: null,
                             onEditGuest: false,
@@ -1488,12 +1608,26 @@ export const SideEvents = () => {
                         // Siempre en un Pop: sin otros eventos, la hoja se
                         // abre con su aviso de vacío.
                         topExtra={esPop ? (
-                            <button type="button" className="guest-add-tile guest-add-tile--individual" onClick={() => { setMenuAgregar(false); setImportando({ modo: 'evento' }) }}>
+                            // Pop Free: se ve, pero traer invitados de otro evento es de
+                            // Pops Plus (no se puede probar sin hacerlo de verdad).
+                            <button
+                                type="button"
+                                className={`guest-add-tile guest-add-tile--individual ${popFree ? 'guest-add-tile--plus' : ''}`}
+                                aria-disabled={popFree || undefined}
+                                onClick={() => {
+                                    if (popFree) { message.info(t('pops_plus.de_otro_evento')); return }
+                                    setMenuAgregar(false)
+                                    setImportando({ modo: 'evento' })
+                                }}
+                            >
                                 <span className="guest-add-tile-icon">
                                     <Copy size={18} />
                                 </span>
                                 <span className="guest-add-tile-text">
-                                    <span className="guest-add-tile-title">{t('guests_import.tile_event_title')}</span>
+                                    <span className="guest-add-tile-title">
+                                        {t('guests_import.tile_event_title')}
+                                        {popFree && <InsigniaPlus className="guest-add-tile-insignia" />}
+                                    </span>
                                     <span className="guest-add-tile-sub">{t('guests_import.tile_event_sub')}</span>
                                 </span>
                             </button>
@@ -1980,6 +2114,7 @@ export const SideEvents = () => {
     };
 
     const getSideEvents = async () => {
+        if (popDemo) { setsideEvent([popEnBlanco()]); setGuestCounts({}); return }
         const base = supabase.from('side_events').select('*')
         const { data, error } = await (esPop ? base.eq('id', popId) : base.eq('invitation_id', id))
 
@@ -2033,7 +2168,7 @@ export const SideEvents = () => {
     const getCredits = async () => {
         if (esPop) {
             // Créditos propios del Pop; sin plan ni tope que mostrar.
-            const { data } = await supabase.from('side_events').select('credits').eq('id', popId).maybeSingle()
+            const { data } = popDemo ? { data: { credits: 30 } } : await supabase.from('side_events').select('credits').eq('id', popId).maybeSingle()
             setPlan('pro')
             setSideEventsCap(1)
             setCredits(data?.credits ?? 0)
@@ -2129,13 +2264,14 @@ export const SideEvents = () => {
             if (!body.image) message.warning(t('side_events.link_video_pick'))
             return { url: body.image || current.url_image, linkFirma: null }
         }
-        const firma = firmaPortada(body)
+        const firma = firmaDelLink(body)
         if (body.linkFirma === firma && current.url_image) return { url: current.url_image, linkFirma: firma }
-        if (!portadaConDiseno(body)) return { url: body.image || current.url_image, linkFirma: firma }
+        // Pop Free: aunque sea solo la foto, lleva la marca de agua.
+        if (!portadaConDiseno(body) && !popFree) return { url: body.image || current.url_image, linkFirma: firma }
         const aviso = silencioso ? () => {} : message.loading(t('side_events.link_updating'), 0)
         try {
             const fondo = body.image ? { tipo: 'imagen', url: body.image, ajuste: ajusteDe(body, body.image) } : null
-            const archivo = await componerPortada({ fondo, stickers: body.stickers ?? [], color: body.color, veil: body.veil, titleFont: body.title?.font })
+            const archivo = await componerPortada({ fondo, stickers: body.stickers ?? [], color: body.color, veil: body.veil, titleFont: body.title?.font, marca: popFree })
             const url = await uploadImagesSupabase({ file: archivo, invitationID: `flash-${popId}`, setImages: () => {} })
             return url ? { url, linkFirma: firma } : { url: current.url_image, linkFirma: body.linkFirma }
         } catch (err) {
@@ -2200,6 +2336,7 @@ export const SideEvents = () => {
     }
 
     const saveSideEvent = async ({ conImagen = true, silencioso = false } = {}) => {
+        if (popDemo) return true
         if (!current?.id) return false;
 
         const link = conImagen
@@ -2232,18 +2369,15 @@ export const SideEvents = () => {
             }
         }
 
-        const { error } = await supabase
-            .from('side_events')
-            .update({
-                name: nombre,
-                url_image: urlImage,
-                body: bodyAGuardar,
-            })
-            .eq('id', current.id);
+        const { error } = await guardarCamposSideEvent(current.id, {
+            name: nombre,
+            url_image: urlImage,
+            body: bodyAGuardar,
+        });
 
         if (error) {
             console.error('Error al guardar cambios:', error);
-            message.error(t('side_events.save_error'))
+            message.error(error?.code === 'POPS_PLUS' ? t('pops_plus.no_se_guardo') : t('side_events.save_error'))
             return false;
         }
 
@@ -2300,6 +2434,7 @@ export const SideEvents = () => {
     };
 
     const getGuests = async (sideEventId = current?.id) => {
+        if (popDemo) { setRawData([]); return }
 
         try {
             if (sideEventId) {
@@ -2629,6 +2764,7 @@ export const SideEvents = () => {
     const alternarAcceso = async (forzado) => {
         if (!current?.id || cambiandoAcceso) return false
         const nuevo = forzado ?? (esPublico ? 'closed' : 'open')
+        if (popDemo) { setCurrent((prev) => ({ ...prev, type: nuevo })); return true }
         setCambiandoAcceso(true)
         const { error } = await supabase.from('side_events').update({ type: nuevo }).eq('id', current.id)
         setCambiandoAcceso(false)
@@ -2676,11 +2812,9 @@ export const SideEvents = () => {
     )
 
     const updateURLimage = async (e) => {
+        if (popDemo) return
 
-        const { error } = await supabase
-            .from('side_events')
-            .update({ url_image: e })
-            .eq("id", current.id)
+        const { error } = await guardarCamposSideEvent(current.id, { url_image: e })
 
 
         if (error) {
@@ -2884,6 +3018,9 @@ export const SideEvents = () => {
     // pone el sugerido (por su nombre o fijo por su id) y se guarda con el
     // autoguardado, fuera del historial de deshacer. '' = lo quitó a propósito.
     const popIdActual = esPop ? current?.id : null
+    const porEnviar = esPop && !popEnviado && (popDemo
+        ? searchParams.get('porEnviar') === '1'
+        : (!!current && !current.user_id && !!current.planner_id))
     useEffect(() => {
         if (!popIdActual) return
         const pop = currentRef.current
@@ -3127,6 +3264,10 @@ export const SideEvents = () => {
     // rehace aparte: tras IMAGEN_LINK_MS sin tocar la portada y al salir.
     const guardandoRef = useRef(false)
     const guardarAhora = async ({ conImagen = false } = {}) => {
+        // Pop de prueba: no se guarda nada (se ve como guardado para no asustar).
+        if (popDemo) { setDirty(false); return true }
+        // Pop Free con funciones Plus: no se guarda nada (ni lo demás).
+        if (funcionesPlusRef.current.length) { setEstadoGuardado('plus'); return false }
         if (guardandoRef.current) {
             // Ya hay uno en curso: se intenta otra vez en un momento.
             await new Promise((r) => setTimeout(r, 400))
@@ -3215,10 +3356,24 @@ export const SideEvents = () => {
     }, [currentIdActual])
     const handleSave = () => guardarAhora({ conImagen: true })
 
+    // "Volver a lo guardado" del aviso Plus: el Pop regresa a lo último que
+    // está en la base (baseRef). Es un paso más del historial, así que se
+    // puede deshacer para seguir probando.
+    const quitarFuncionesPlus = () => {
+        const base = baseRef.current
+        if (!base || base.id !== currentRef.current?.id) return
+        updateCurrent((prev) => ({ ...prev, name: base.name, url_image: base.url_image, body: copia(base.body) }))
+        // Ya es lo que está en la base: no hay nada que guardar.
+        setDirty(false)
+        setEstadoGuardado('guardado')
+        setStickerSel([])
+    }
+
     const sinGuardarDesdeRef = useRef(null)
     const hayOtrosRef = useRef(false)
     useEffect(() => {
         if (!current?.id || !dirty) { sinGuardarDesdeRef.current = null; return undefined }
+        if (funcionesPlusRef.current.length) { setEstadoGuardado('plus'); return undefined }
         setEstadoGuardado('pendiente')
         sinGuardarDesdeRef.current ??= Date.now()
         const espera = Math.min(hayOtrosRef.current ? AUTOGUARDADO_ACOMPANADO_MS : AUTOGUARDADO_MS, Math.max(0, sinGuardarDesdeRef.current + AUTOGUARDADO_MAX_MS - Date.now()))
@@ -3230,7 +3385,7 @@ export const SideEvents = () => {
     // del link al día. Sin cambios pendientes no hace nada (pero tampoco deja
     // que el navegador abra "Guardar página").
     const guardarRef = useRef(null)
-    useEffect(() => { guardarRef.current = () => { if (dirty || estadoGuardado === 'error' || imagenLinkVieja(current)) { sinGuardarDesdeRef.current = null; guardarAhora({ conImagen: true }) } } })
+    useEffect(() => { guardarRef.current = () => { if (funcionesPlusRef.current.length) { message.warning(t('pops_plus.no_se_guardo')); return } if (dirty || estadoGuardado === 'error' || imagenLinkVieja(current)) { sinGuardarDesdeRef.current = null; guardarAhora({ conImagen: true }) } } })
     useEffect(() => {
         const onKey = (e) => {
             if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || e.key?.toLowerCase() !== 's') return
@@ -3243,7 +3398,7 @@ export const SideEvents = () => {
 
     // Imagen del link de un Pop: cuando la portada lleva un rato quieta y su
     // firma ya no es la de la imagen guardada.
-    const imagenLinkVieja = (c) => Boolean(esPop && c?.body && !c.body.linkImage && c.body.linkFirma !== firmaPortada(c.body))
+    const imagenLinkVieja = (c) => Boolean(esPop && c?.body && !c.body.linkImage && c.body.linkFirma !== firmaDelLink(c.body))
     useEffect(() => {
         if (!current?.id || !imagenLinkVieja(current)) return undefined
         const timer = setTimeout(() => { if (!dirty) guardarAhora({ conImagen: true }) }, IMAGEN_LINK_MS)
@@ -3261,6 +3416,12 @@ export const SideEvents = () => {
     // Salir: primero termina de guardar (y rehace la imagen del link si hace
     // falta); el aviso de cambios sin guardar solo sale si no se pudo.
     const handleBack = async () => {
+        // Funciones Plus sin guardar: se avisa que se pierde lo no guardado.
+        if (dirty && funcionesPlusRef.current.length) {
+            setLeaveMounted(true)
+            setTimeout(() => setLeaveIn(true), 20)
+            return
+        }
         if (dirty || saving || imagenLinkVieja(currentRef.current ?? current)) {
             const ok = await guardarAhora({ conImagen: true })
             if (!ok) {
@@ -3425,7 +3586,7 @@ export const SideEvents = () => {
     const [stickerSel, setStickerSel] = useState([])
     // Presencia (como Figma): quién más tiene abierto este Pop, sus cursores
     // sobre la pieza y lo que tiene elegido (Presencia/usePresenciaPop.js).
-    const presencia = usePresenciaPop(esPop && current?.id ? current.id : null, {
+    const presencia = usePresenciaPop(esPop && current?.id && !popDemo ? current.id : null, {
         movil: isMobile,
         seleccion: { zona: section ?? null, stickers: stickerSel },
         onGuardadoAjeno: traerRemoto,
@@ -4123,7 +4284,35 @@ export const SideEvents = () => {
 
     // `key` por vista: al cambiar de Pasos a Compacta (o al revés) se monta de
     // nuevo y entra con su transición (gx-vista-entra).
-    const guestsList = vistaInvitados === 'compacta' ? (
+    const panelRecordatorios = esPop && verRecordatorios && (
+        <div key='recordatorios' className='gx gx-recordatorios-compacta gx-vista-entra'>
+            <RemindersPanel
+                sideEventId={current?.id}
+                eventTitle={current?.name}
+                guestPath={(g) => `side-event/${codigoSide(current)}?password=${g.password}`}
+                rowData={rawData}
+                dispatchMap={dispatchMap}
+                rsvpDeadline={current?.rsvp_deadline}
+                eventDate={current?.body?.hour}
+                // Portada de video: su primer cuadro (RemindersPanel lo saca y lo
+                // sube); si no, la imagen del link o la foto de la portada.
+                urlImage={esVideo(mediaDePortada(current?.body)[0]) ? mediaDePortada(current?.body)[0] : (current?.url_image || current?.body?.image)}
+                onSaveRsvpDeadline={onSaveRsvpDeadline}
+                rsvpDisabledDate={rsvpDisabledDate}
+                plan='pro'
+                credits={credits}
+                onSend={onSendRemindersPop}
+                activeBatch={activeBatch}
+                onNeedCredits={() => setBuyCreditsOpen(true)}
+                onBack={() => setVerRecordatorios(false)}
+                bloqueoPlus={popFree}
+                insigniaPlus={esPop && Boolean(popPrueba)}
+                onPasarPlus={() => irAStripePlus('checkout').catch(() => message.error(t('pops_app.stripe_error')))}
+            />
+        </div>
+    )
+
+    const guestsList = panelRecordatorios || (vistaInvitados === 'compacta' ? (
         <div key='compacta' className='gx gx--compacta gx-vista-entra'>
             {renderCompactToolbar()}
             <TablaInvitados
@@ -4170,7 +4359,7 @@ export const SideEvents = () => {
             {renderSortBar(activeKey)}
             {renderCardList(sortForTab(activeKey, visibleFor(tabDataFor(activeKey))), activeKey)}
         </div>
-    )
+    ))
 
     // Encabezado de Invitados (las dos vistas): título a la izquierda y a la
     // derecha la vista (solo íconos) | los envíos (créditos) del Pop y Agregar.
@@ -4195,7 +4384,25 @@ export const SideEvents = () => {
                     </Tooltip>
                 </div>
                 {renderSelectorVista(true)}
+                {/* Recordatorios: función de Pops+. En Free se entra y se arma, pero no se envía. */}
                 {esPop && (
+                    <div className="gx-view-toggle gx-view-toggle--iconos">
+                        <Tooltip title={t('reminders.header_button')}>
+                            <button
+                                type="button"
+                                className="gx-recordatorios-btn"
+                                aria-label={t('reminders.header_button')}
+                                aria-pressed={verRecordatorios}
+                                data-active={verRecordatorios || undefined}
+                                onClick={() => setVerRecordatorios((v) => !v)}
+                            >
+                                <BellRing size={14} />
+                            </button>
+                        </Tooltip>
+                    </div>
+                )}
+                {/* Un Pop Free no tiene envíos automáticos ni créditos: no se enseña nada. */}
+                {esPop && !popFree && (
                     <>
                         <span className="gx-compact-head-divider" aria-hidden />
                         <CreditController id={popId} pop variante="envios" />
@@ -4239,7 +4446,7 @@ export const SideEvents = () => {
                 </button>
 
                 <span className={ed.modalTitle}>{t('side_events.unsaved_title')}</span>
-                <span className={ed.modalText}>{t('side_events.unsaved_text')}</span>
+                <span className={ed.modalText}>{funcionesPlus.length ? t('pops_plus.salir_pierdes') : t('side_events.unsaved_text')}</span>
 
                 <div className={ed.modalActions}>
                     {/* El editor y el listado viven en el mismo componente, así
@@ -4250,14 +4457,16 @@ export const SideEvents = () => {
                     <Button style={{ borderRadius: '99px' }} onClick={closeLeave}>
                         {t('side_events.unsaved_stay')}
                     </Button>
-                    <Button
-                        className='primarybutton--active'
-                        style={{ borderRadius: '99px' }}
-                        loading={leaving}
-                        onClick={saveAndLeave}
-                    >
-                        {t('side_events.unsaved_save')}
-                    </Button>
+                    {!funcionesPlus.length && (
+                        <Button
+                            className='primarybutton--active'
+                            style={{ borderRadius: '99px' }}
+                            loading={leaving}
+                            onClick={saveAndLeave}
+                        >
+                            {t('side_events.unsaved_save')}
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>
@@ -4891,14 +5100,18 @@ export const SideEvents = () => {
                     onCompartirBloqueado={() => handleShare(publicUrl)}
                     estadoGuardado={estadoGuardado}
                     onReintentar={() => guardarAhora({ conImagen: true })}
+                    funcionesPlus={funcionesPlus}
+                    onQuitarPlus={dirty ? quitarFuncionesPlus : null}
                     invitados={activeTab === 'envio' ? (
                         <InvitadosMovil
                             invitados={rawData ?? []}
-                            creditos={esPop ? <CreditController id={popId} pop variante="envios" placement="bottomRight" /> : null}
-                            buzon={esPop ? <BotonBuzonPopMovil popId={popId} buzon={buzonPop} className={sInv.mas} /> : null}
+                            creditos={esPop && !popFree ? <CreditController id={popId} pop variante="envios" placement="bottomRight" /> : null}
+                            buzon={esPop && !popFree ? <BotonBuzonPopMovil popId={popId} buzon={buzonPop} className={sInv.mas} /> : null}
                             onAgregar={() => setDrawerState({ currentGuest: null, onEditGuest: false, companions: [], visible: true })}
-                            onImportar={!esPop && plan === 'pro' ? () => setImportando({ archivo: null }) : null}
-                            onImportarEvento={esPop ? () => setImportando({ modo: 'evento' }) : null}
+                            onImportar={esPop ? () => (popFree ? message.info(t('pops_plus.excel')) : setImportando({ archivo: null })) : plan === 'pro' ? () => setImportando({ archivo: null }) : null}
+                            importarPlus={popFree}
+                            onImportarEvento={esPop ? () => (popFree ? message.info(t('pops_plus.de_otro_evento')) : setImportando({ modo: 'evento' })) : null}
+                            importarEventoPlus={popFree}
                             onEditar={openGuestDrawer}
                             // Por invitar (los que agregó el organizador): la misma acción de Pasos.
                             accion={(g) => (g.state === 'creado' ? renderCreatedAction(g, { corto: true }) : null)}
@@ -5216,6 +5429,14 @@ export const SideEvents = () => {
                         )}
                         <span className={ed.crumb}>
                             <span className={wso.crumbKind}>{esPop ? t('invitations.pop_badge') : 'Side event'} · </span><strong>{current?.name || t('side_events.no_name')}</strong>
+                            {/* Plan del Pop: Free a la vista (Plus no lleva etiqueta). */}
+                            {popFree && <span className={wso.etiquetaFree}>{t('pops_plus.free')}</span>}
+                            {!popFree && popPrueba && (
+                                <span className={`${wso.etiquetaFree} ${wso.etiquetaPrueba}`}>
+                                    <span className={wso.pruebaMarca} aria-hidden>Pops<span className={wso.pruebaMas}>+</span></span>
+                                    {t('pops_plus.prueba_vence', { count: popPrueba.dias })}
+                                </span>
+                            )}
                         </span>
                         {TOUR_SIDE_ACTIVO && (
                             <Tooltip title={t('guests_tour.replay')}>
@@ -5231,7 +5452,7 @@ export const SideEvents = () => {
                         )}
                         {/* Pop: sus créditos junto al título; en Invitados van
                             en el encabezado de la lista (headCompacto). */}
-                        {esPop && activeTab !== 'envio' && (
+                        {esPop && !popFree && activeTab !== 'envio' && (
                             <span className={ed.creditosTitulo}>
                                 <CreditController id={popId} pop variante="envios" placement="bottomLeft" />
                             </span>
@@ -5256,11 +5477,11 @@ export const SideEvents = () => {
                         {esPop && presencia.otros.length > 0 && <CursoresPop otros={presencia.otros} cursores={presencia.cursores} />}
                         {/* Autoguardado: su estado a la izquierda de Público /
                             Compartir (solo se ve mientras guarda y un momento después). */}
-                        <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} />
+                        <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} funcionesPlus={funcionesPlus} onQuitarPlus={dirty ? quitarFuncionesPlus : null} />
                         {/* Pop: su estilo de editor (Pop · Business · Craft), el mismo
                             de la sección Pops; se cambia aquí sin salir. */}
                         {esPop && SELECTOR_ESTILO_EDITOR && <PopsTemaSwitch tema={temaPops} onCambiar={cambiarTemaPops} enLinea temas={temasEditor} />}
-                        {esPop && <BotonBuzonPop popId={popId} buzon={buzonPop} className={`${ed.livePill} ${ed.buzonBtn}`} />}
+                        {esPop && !popFree && <BotonBuzonPop popId={popId} buzon={buzonPop} className={`${ed.livePill} ${ed.buzonBtn}`} />}
                         {/* "Ver en vivo" vive en el dock del área de trabajo. */}
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 
@@ -5287,6 +5508,9 @@ export const SideEvents = () => {
                             )}
                         </span>
 
+                        {/* Pop "para enviar después" (sin cliente): Enviar con
+                            nombre y correo del cliente (EnviarPop.jsx). */}
+                        {porEnviar && <EnviarPop popId={popId} demo={popDemo} className={ed.livePill} onEnviado={() => setPopEnviado(true)} />}
                     </div>
                 </div>
 

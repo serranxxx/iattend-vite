@@ -1,4 +1,5 @@
-import { Button, Row, message, Input, Switch, Slider, Tooltip } from 'antd'
+import { Button, Row, message, Input, Switch, Tooltip } from 'antd'
+import { Deslizador as Slider } from '../../modules/Editor/Deslizador'
 import { useRef, useState } from 'react';
 // import { supabase } from '../../lib/supabase';
 import { IoClose } from 'react-icons/io5';

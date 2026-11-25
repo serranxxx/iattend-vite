@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
+import { useInsigniasPlus } from '../PlanPops/planPopsUI'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { message } from 'antd'
@@ -44,6 +46,7 @@ export const InteractionPanel = ({ body, setBody, eventoId, chatMensajes }) => {
     const chat = Boolean(body?.chat?.enabled)
     const modo = body?.attendeesStyle === 'initials' ? 'initials' : 'emoji'
     const fijado = body?.chat?.pinned?.text ?? null
+    const verInsignias = useInsigniasPlus()
     const [borrador, setBorrador] = useState(fijado ?? '')
     const { mensajes, setMensajes, cargar } = chatMensajes
     const [todos, setTodos] = useState(false)
@@ -199,6 +202,7 @@ export const InteractionPanel = ({ body, setBody, eventoId, chatMensajes }) => {
                                         onClick={() => setChat({ pinned: { text: recortado, updated_at: new Date().toISOString() } })}
                                     >
                                         {etiquetaFijar}
+                                        {verInsignias && <InsigniaPlus className={styles.insigniaEnBoton} />}
                                     </button>
                                 </div>
                                 <div className={styles.pinMeta}>

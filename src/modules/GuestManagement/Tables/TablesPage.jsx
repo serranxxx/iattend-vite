@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './organization-table.css'
-import { Button, Checkbox, Drawer, Dropdown, Input, InputNumber, Progress, Select, Slider, Tooltip, message } from 'antd'
+import { Button, Checkbox, Drawer, Dropdown, Input, InputNumber, Progress, Select, Tooltip, message } from 'antd'
+import { Deslizador as Slider } from '../../Editor/Deslizador'
 import { BsArrowsMove, BsSliders } from 'react-icons/bs'
 import { IoClose } from 'react-icons/io5'
 import { FaAngleDoubleRight, FaList, FaMinus, FaPlus } from 'react-icons/fa'

@@ -13,7 +13,7 @@
 
 import { Bar, Line } from 'react-chartjs-2'
 import { MESES, formatCurrency } from '../ventasCalculos'
-import { COLOR_POR_ANIO, COLOR_POR_PLAN, MARCA, PLANES_DE_VENTA, nombreDePlan, ejeYOculto, opcionesBase, tooltipBase, tooltipOscuro, useTokens } from '../adminCharts'
+import { BORDE_POR_PLAN, COLOR_POR_ANIO, COLOR_POR_PLAN, MARCA, PLANES_DE_VENTA, nombreDePlan, ejeYOculto, opcionesBase, tooltipBase, tooltipOscuro, useTokens } from '../adminCharts'
 import styles from './VentasSection.module.css'
 
 const MESES_CORTOS = MESES.map(m => m.slice(0, 3))
@@ -252,7 +252,7 @@ const etiquetasSobreBarras = {
     },
 }
 
-// Un año: barras apiladas por plan (PRO navy, Lite lila, Pop verde) con el
+// Un año: barras apiladas por plan (PRO navy, Lite lila, Paperless crema, Pop verde) con el
 // total arriba. Varios años: un color por año (navy / lila / verde).
 export const BarrasPorMes = ({ series }) => {
     const tokens = useTokens()
@@ -276,6 +276,8 @@ export const BarrasPorMes = ({ series }) => {
                 data: series[0].porPlan[plan],
                 backgroundColor: COLOR_POR_PLAN[plan],
                 hoverBackgroundColor: COLOR_POR_PLAN[plan],
+                borderColor: BORDE_POR_PLAN[plan],
+                borderWidth: BORDE_POR_PLAN[plan] ? 1 : 0,
                 borderRadius: radioDeLaPunta(dsIndex),
                 borderSkipped: false,
                 maxBarThickness: 34,

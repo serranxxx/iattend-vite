@@ -1,4 +1,5 @@
-import { Button, ColorPicker, Input, Segmented, Slider, Switch } from 'antd'
+import { Button, ColorPicker, Input, Segmented, Switch } from 'antd'
+import { Deslizador as Slider } from '../../../Editor/Deslizador'
 import { Children, Fragment, useLayoutEffect, useRef, useState } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
