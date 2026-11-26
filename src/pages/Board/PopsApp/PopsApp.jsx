@@ -213,7 +213,8 @@ export const PopsApp = ({
 
     // Free: la cinta navy (escritorio); prueba gratis: la cinta lima "Quedarme
     // con Pops+", también en el celular. Con Pops+ (pagado) no hay cinta.
-    const conCinta = pagina !== 'plus' && (Boolean(plan.prueba) || !plan.plus)
+    // Free y la prueba gratis llevan su cinta en todas las páginas (también en la tabla).
+    const conCinta = Boolean(plan.prueba) || !plan.plus
 
     const pestanas = [
         { key: 'inicio', label: t('pops_app.tab_home') },
@@ -467,12 +468,6 @@ export const PopsApp = ({
                 </div>
 
                 <div className={s.derecha}>
-                    {plan.prueba && (
-                        <span className={s.pillPrueba}>
-                            <LogoPops plus tam={16} />
-                            {t('pops_app.trial_days', { count: plan.prueba.dias })}
-                        </span>
-                    )}
                     {/* Free: anillos de Pops activos y espacio + Pops+ (abre su dropdown). */}
                     <ChipPlan plan={plan} onPasarPlus={pasarPlus} />
                     {pagina !== 'inicio' && !sinPops && puedeCrear && (

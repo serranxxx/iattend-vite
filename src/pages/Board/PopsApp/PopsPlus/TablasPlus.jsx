@@ -69,10 +69,10 @@ export const TablaPlusModal = ({ open, onClose, onDetalle, onPlus, esFree = true
                     <span className={s.colPlus}><MarcaPlus className={s.colMarca} /><Precio plus /></span>
                 </div>
                 {TABLA.map(f => (
-                    <div key={f.k} className={s.filaModal}>
+                    <div key={f.k} className={s.filaModal} data-titulo={f.titulo || undefined} data-sub={f.sub || undefined}>
                         <span className={s.nombre}>{t(`pops_plus_app.row.${f.k}`)}</span>
-                        <span className={s.valFree}><Valor v={f.free} /></span>
-                        <span className={s.valPlus}><Valor v={f.plus} navy /></span>
+                        <span className={s.valFree}>{!f.titulo && <Valor v={f.free} />}</span>
+                        <span className={s.valPlus}>{!f.titulo && <Valor v={f.plus} navy />}</span>
                     </div>
                 ))}
                 <div className={s.filaModal} data-pie>
@@ -223,12 +223,14 @@ export const TablaHojaMovil = ({ open, onClose, onDetalle, onPlus, esFree = true
                 </div>
                 <div className={s.hojaTarjeta}>
                     {TABLA.map(f => (
-                        <div key={f.k} className={s.hojaFila}>
+                        <div key={f.k} className={s.hojaFila} data-titulo={f.titulo || undefined} data-sub={f.sub || undefined}>
                             <span className={s.hojaNombre}>{t(`pops_plus_app.row.${f.k}`)}</span>
-                            <span className={s.hojaValores}>
-                                <s>{texto(f.free)}</s>
-                                <b>{texto(f.plus)}</b>
-                            </span>
+                            {!f.titulo && (
+                                <span className={s.hojaValores}>
+                                    <s>{texto(f.free)}</s>
+                                    <b>{texto(f.plus)}</b>
+                                </span>
+                            )}
                         </div>
                     ))}
                 </div>

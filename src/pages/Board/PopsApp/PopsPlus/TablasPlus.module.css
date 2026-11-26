@@ -58,7 +58,7 @@
 }
 
 .modal {
-    width: 720px;
+    width: 800px;
     max-width: 100%;
     max-height: calc(100vh - 48px);
     overflow: auto;
@@ -77,7 +77,7 @@
 
 .filaModal {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 150px 190px;
+    grid-template-columns: minmax(0, 1fr) 250px 190px;
     align-items: stretch;
 }
 
@@ -136,6 +136,7 @@
 
 .filaModal .valFree {
     padding: 12px 16px;
+    white-space: nowrap;
     color: #56627A;
     border-top: 1px solid #EEF0F5;
 }
@@ -310,29 +311,71 @@
     font-size: 28px;
 }
 
+/* Celular: cada fila es el nombre arriba y, debajo, Gratis | Pops+ en dos
+   cuadros (la columna navy no cabe a lo alto en 360 px). */
 .completa[data-movil] .filaCompleta {
-    grid-template-columns: minmax(0, 1fr) 78px 104px;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 10px 14px;
+}
+
+.completa[data-movil] .filaCompleta > span {
+    border-top: 0;
+}
+
+.completa[data-movil] .filaCompleta + .filaCompleta {
+    border-top: 1px solid #EEF0F5;
 }
 
 .completa[data-movil] .filaCompleta .nombre {
-    padding: 10px 14px;
-    font-size: 13px;
-}
-
-.completa[data-movil] .grupoTitulo {
-    padding: 18px 14px 6px;
-    font-size: 11px;
+    grid-column: 1 / -1;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .completa[data-movil] .filaCompleta .valFree,
 .completa[data-movil] .filaCompleta .valPlus {
-    padding: 10px 10px;
+    min-height: 34px;
+    padding: 6px 10px;
+    border-radius: 10px;
     font-size: 12px;
+    line-height: 1.25;
+}
+
+.completa[data-movil] .filaCompleta .valFree {
+    background: #F3F4F8;
+}
+
+/* Encabezado: Gratis y Pops+ en dos tarjetas. */
+.completa[data-movil] .filaCompleta[data-cabeza] {
+    padding: 14px;
+}
+
+.completa[data-movil] .filaCompleta[data-cabeza] > span:first-child,
+.completa[data-movil] .filaCompleta[data-grupo] > span:not(.grupoTitulo),
+.completa[data-movil] .filaCompleta[data-pie] > span:not(.pieNavy) {
+    display: none;
 }
 
 .completa[data-movil] .filaCompleta .colFree,
 .completa[data-movil] .filaCompleta .colPlus {
-    padding: 16px 10px;
+    padding: 12px;
+    border-radius: 14px;
+}
+
+.completa[data-movil] .filaCompleta .colFree {
+    background: #F3F4F8;
+}
+
+.completa[data-movil] .filaCompleta[data-grupo] {
+    padding: 16px 14px 2px;
+}
+
+.completa[data-movil] .grupoTitulo {
+    grid-column: 1 / -1;
+    padding: 0;
+    font-size: 11px;
 }
 
 .completa[data-movil] .precio[data-grande] {
@@ -344,13 +387,18 @@
     font-size: 14px;
 }
 
+.completa[data-movil] .filaCompleta[data-pie] {
+    padding: 14px;
+}
+
 .completa[data-movil] .filaCompleta .pieNavy {
-    padding: 14px 8px 18px;
+    grid-column: 1 / -1;
+    padding: 0;
+    background: none;
 }
 
 .completa[data-movil] .ctaCompleta {
-    font-size: 12px;
-    padding: 0 8px;
+    font-size: 14px;
 }
 
 /* ── ¿Gratis o Pops+? (Inicio) ── */
@@ -792,4 +840,32 @@
     .hojaLista {
         animation: none;
     }
+}
+
+/* Para planners: el título en negritas; sus filas son filas normales. */
+.filaModal[data-titulo] .nombre {
+    font-weight: 700;
+}
+
+.hojaFila[data-titulo] .hojaNombre {
+    font-weight: 700;
+}
+
+/* Un valor gratis largo ("3, con 2 preguntas cada uno") baja de renglón. */
+.hojaValores s {
+    max-width: 112px;
+    white-space: normal;
+    text-align: right;
+    line-height: 1.25;
+}
+
+/* Las listas de la tabla hacen scroll sin barra visible. */
+.hojaTarjeta,
+.modal {
+    scrollbar-width: none;
+}
+
+.hojaTarjeta::-webkit-scrollbar,
+.modal::-webkit-scrollbar {
+    display: none;
 }

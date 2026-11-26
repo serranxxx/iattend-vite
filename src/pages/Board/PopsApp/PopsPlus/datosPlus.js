@@ -12,48 +12,59 @@
 
 // 1c · Tabla resumida (modal).
 export const TABLA = [
-    { k: 'people', free: 'up_to_30', plus: 'unlimited_f' },
-    { k: 'pops', free: 'three', plus: 'unlimited_m' },
-    { k: 'questions', free: 'two_questions', plus: 'all_f' },
-    { k: 'reminders', free: false, plus: true },
-    { k: 'wallet', free: false, plus: true },
-    { k: 'import', free: false, plus: true },
-    { k: 'clients', free: false, plus: true },
-    { k: 'space', free: 'mb50', plus: 'mb500' },
+    { k: 'res_guests', free: 'up_to_30', plus: 'unlimited_f' },
+    { k: 'pops_active', free: 'three', plus: 'unlimited_m' },
+    { k: 'res_questions', free: 'two', plus: 'unlimited_m' },
+    { k: 'res_excel', free: false, plus: true },
+    { k: 'res_wallet', free: false, plus: true },
+    { k: 'res_reminders', free: false, plus: true },
+    { k: 'res_import', free: false, plus: true },
+    // Para planners: un título (sin valores) y sus tres filas.
+    { k: 'res_planner', titulo: true },
+    { k: 'res_planner_create', sub: true, free: false, plus: true },
+    { k: 'res_planner_send', sub: true, free: false, plus: true },
+    { k: 'res_planner_manage', sub: true, free: false, plus: true },
 ]
 
 // 1d · Tabla completa, por grupos.
 export const TABLA_COMPLETA = [
-    { g: 'invite', filas: [
-        { k: 'people', free: 'up_to_30', plus: 'unlimited_f' },
-        { k: 'pops_active', free: 'three', plus: 'unlimited_m' },
-        { k: 'import', free: false, plus: true },
-        { k: 'excel', free: false, plus: true },
+    { g: 'f_invite', filas: [
+        { k: 'f_people', free: 'up_to_30', plus: 'unlimited_f' },
+        { k: 'f_import', free: false, plus: true },
+        { k: 'f_excel', free: false, plus: true },
     ] },
-    { g: 'arrive', filas: [
-        { k: 'basics', free: true, plus: true },
-        { k: 'qr_pass', free: true, plus: true },
-        { k: 'wallet', free: false, plus: true },
-        { k: 'reminders', free: false, plus: true },
-        { k: 'chat', free: true, plus: 'with_pinned' },
+    { g: 'f_who', filas: [
+        { k: 'f_confirm', free: true, plus: true },
+        { k: 'f_attendees', free: true, plus: true },
+        { k: 'f_forms', free: 'f_up_to_3', plus: 'unlimited_m' },
+        { k: 'f_questions', free: 'f_two_per_form', plus: 'f_all_types' },
+        { k: 'f_download', free: false, plus: true },
     ] },
-    { g: 'who', filas: [
-        { k: 'attendees', free: true, plus: true },
-        { k: 'questions_form', free: 'two_per_form', plus: 'all_types' },
-        { k: 'forms', free: 'up_to_3', plus: 'unlimited_m' },
+    { g: 'f_arrive', filas: [
+        { k: 'f_basics', free: true, plus: true },
+        { k: 'f_qr', free: true, plus: true },
+        { k: 'f_wallet', free: false, plus: true },
+        { k: 'f_reminders', free: false, plus: true },
+        { k: 'f_chat', free: true, plus: 'f_pinned' },
     ] },
-    { g: 'look', filas: [
-        { k: 'cover', free: 'one_photo', plus: 'six_video' },
-        { k: 'block_styles', free: 'three', plus: 'all_8' },
-        { k: 'images', free: 'up_to_10', plus: 'unlimited_f' },
-        { k: 'effects', free: true, plus: 'and_custom' },
-        { k: 'link_image', free: 'with_seal', plus: 'yours_no_seal' },
+    { g: 'f_look', filas: [
+        { k: 'f_cover', free: 'f_one_photo', plus: 'f_six_video' },
+        { k: 'f_draw', free: true, plus: true },
+        { k: 'f_styles', free: 'three', plus: 'f_all' },
+        { k: 'f_images', free: 'f_images_free', plus: 'unlimited_m' },
+        { k: 'f_effects', free: 'f_basic', plus: 'f_custom' },
+        { k: 'f_link', free: 'f_seal', plus: 'f_no_seal' },
+        { k: 'f_ads', free: 'f_yes', plus: 'f_no' },
     ] },
-    { g: 'clients', filas: [
-        { k: 'clients_full', free: false, plus: true },
+    { g: 'f_clients', filas: [
+        { k: 'res_planner_create', free: false, plus: true },
+        { k: 'res_planner_send', free: false, plus: true },
+        { k: 'res_planner_manage', free: false, plus: true },
     ] },
-    { g: 'files', filas: [
-        { k: 'space_all', free: 'mb50', plus: 'mb500' },
+    { g: 'f_account', filas: [
+        { k: 'f_pops', free: 'three', plus: 'unlimited_m' },
+        { k: 'f_space', free: 'mb50', plus: 'f_mb500' },
+        { k: 'f_files', free: 'f_kept_while', plus: 'f_kept' },
     ] },
 ]
 
