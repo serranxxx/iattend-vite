@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { MB } from '../../../helpers/services/storageQuota'
+import { pruebaSimulada, useVistaPlanAdmin } from './vistaPlanAdmin'
 
 /*
   Plan de Pops de la cuenta (handoff "App de Pops"): Free ($0) o Pops+.
@@ -15,6 +16,8 @@ import { MB } from '../../../helpers/services/storageQuota'
 */
 
 export const TOPE_POPS_FREE = 3
+// Personas por Pop en Free (trigger pops_limite_invitados, migración 2026-11-23c).
+export const PERSONAS_FREE = 30
 export const MB_FREE = 50
 export const MB_PLUS = 500
 export const PRECIO_PLUS = 259
@@ -58,15 +61,19 @@ export const usePlanPops = ({ user, pops = [], confirmados = {} }) => {
     }, [clave])
 
     // En desarrollo, `?free=1` enseña la cuenta como Free (como en el editor).
-    const forzarFree = import.meta.env.DEV && new URLSearchParams(window.location.search).get('free') === '1'
+    // Administración: "Ver como" Free · Plus · Try (vistaPlanAdmin.js).
+    const vista = useVistaPlanAdmin()
+    const forzarFree = vista === 'free' || (import.meta.env.DEV && new URLSearchParams(window.location.search).get('free') === '1')
     const vigente = suscripcion?.plan === 'plus' && VIGENTE.includes(suscripcion?.status)
         && (!suscripcion?.current_period_end || Date.parse(suscripcion.current_period_end) > Date.now())
     const plus = !forzarFree && (user?.role === 'Administration' || vigente)
     // Prueba gratis que da Admin (trialing sin suscripción de Stripe).
-    const prueba = !forzarFree && vigente && suscripcion.status === 'trialing' && !suscripcion.stripe_subscription_id
+    const pruebaReal = !forzarFree && vigente && suscripcion.status === 'trialing' && !suscripcion.stripe_subscription_id
         ? { vence: suscripcion.current_period_end, dias: Math.ceil((Date.parse(suscripcion.current_period_end) - Date.now()) / 86400000) }
         : null
-    const activos = pops.filter(p => !p._pop?.archived_at && (confirmados[p._pop?.id]?.total ?? 0) > 0).length
+    const prueba = vista === 'try' ? pruebaSimulada() : vista === 'plus' ? null : pruebaReal
+    const listaActivos = pops.filter(p => !p._pop?.archived_at && (confirmados[p._pop?.id]?.total ?? 0) > 0)
+    const activos = listaActivos.length
     const mbUsados = bytes == null ? 0 : Math.round((bytes / MB) * 10) / 10
     const mbTope = plus ? MB_PLUS : MB_FREE
 
@@ -76,10 +83,15 @@ export const usePlanPops = ({ user, pops = [], confirmados = {} }) => {
         renovacion: suscripcion?.current_period_end ?? null,
         cancelada: Boolean(suscripcion?.cancel_at_period_end),
         activos,
+        // Los Pops activos (para dibujar sus lugares: ChipPlan, LugaresGratis).
+        listaActivos,
         tope: TOPE_POPS_FREE,
         enLimite: !plus && activos >= TOPE_POPS_FREE,
         mbUsados,
         mbTope,
+        bytes: bytes ?? 0,
+        // Ids de los Pops de la cuenta (para el desglose del espacio).
+        idsPops: ids,
         espacioCasiLleno: !plus && mbUsados / mbTope >= 0.9,
     }
 }

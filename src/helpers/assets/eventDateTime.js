@@ -106,8 +106,13 @@ export function fechasDelEvento(body) {
 export function lineasDeFechas(body, opts = {}) {
   const fechas = fechasDelEvento(body);
   const partes = fechas.map((raw) => raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/));
+  // Hora de fin de cada fecha ("21:00 – 01:00"), si la tiene.
+  const fin = (raw) => {
+    const h = isAbsoluteInstant(raw) ? null : horaFinDe(body, raw);
+    return h ? ` – ${h}` : "";
+  };
   if (fechas.length < 2 || fechas.some(isAbsoluteInstant) || partes.some((p) => !p)) {
-    return fechas.map((raw) => formatEventDateTime(raw, opts)).filter(Boolean);
+    return fechas.map((raw) => { const t = formatEventDateTime(raw, opts); return t ? t + fin(raw) : ""; }).filter(Boolean);
   }
 
   // Se agrupan las fechas seguidas del mismo mes.
@@ -120,7 +125,7 @@ export function lineasDeFechas(body, opts = {}) {
   });
 
   return grupos.flatMap(({ items }) => {
-    if (items.length === 1) return [formatWallClock(items[0].raw)];
+    if (items.length === 1) return [formatWallClock(items[0].raw) + fin(items[0].raw)];
     const [, y, m] = items[0].p;
     const { month } = getWeekdayAndMonth(Number(y), Number(m), Number(items[0].p[3]));
     const dias = items.map(({ p }) => Number(p[3]));
@@ -128,12 +133,13 @@ export function lineasDeFechas(body, opts = {}) {
     const horas = items.map(({ p }) => `${p[4]}:${p[5]}`);
     // Misma hora: un renglón. Horas distintas: los días juntos y abajo cada
     // hora con su día de la semana ("jue 18:00 · vie 10:00 · sáb 08:00").
-    if (horas.every((h) => h === horas[0])) return [`${lista}, ${horas[0]}`];
+    const finales = items.map(({ raw }) => fin(raw));
+    if (horas.every((h) => h === horas[0]) && finales.every((f) => f === finales[0])) return [`${lista}, ${horas[0]}${finales[0]}`];
     const semana = items.map(({ p }) => getWeekdayAndMonth(Number(p[1]), Number(p[2]), Number(p[3])).weekday.replace(".", ""));
     // Si un día de la semana se repite (el 20 y el 27 son viernes), va también
     // el número para saber cuál es cuál.
     const repetido = new Set(semana).size < semana.length;
-    const conDia = items.map(({ p }, i) => `${semana[i]}${repetido ? ` ${Number(p[3])}` : ""} ${horas[i]}`);
+    const conDia = items.map(({ p }, i) => `${semana[i]}${repetido ? ` ${Number(p[3])}` : ""} ${horas[i]}${finales[i].replace(" – ", "–")}`);
     return [lista, conDia.join(" · ")];
   });
 }
@@ -166,9 +172,102 @@ export function itinerarioPorDia(body) {
 
 // Lo que se guarda en `body` a partir de una lista de fechas: ordenadas, sin
 // repetir, `hour` = la primera y `dates` solo si hay más de una.
-export function cuerpoConFechas(lista) {
-  const dates = [...new Set((lista ?? []).filter(Boolean))].sort();
-  return { hour: dates[0] ?? null, dates: dates.length > 1 ? dates : null };
+// `horasFin` (opcional, alineada con `lista`): la hora de fin "HH:mm" de cada
+// fecha; se vuelve `ends` (ver `finDe`). Sin ella, `ends` no se toca.
+export function cuerpoConFechas(lista, horasFin) {
+  const pares = (lista ?? []).map((f, i) => [f, horasFin?.[i] ?? null]).filter(([f]) => f);
+  const vistos = new Set();
+  const unicos = pares.filter(([f]) => (vistos.has(f) ? false : vistos.add(f))).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  const dates = unicos.map(([f]) => f);
+  const cuerpo = { hour: dates[0] ?? null, dates: dates.length > 1 ? dates : null };
+  if (horasFin) {
+    const ends = {};
+    unicos.forEach(([f, h]) => {
+      const fin = finDesdeHora(f, h);
+      if (fin) ends[String(f).slice(0, 10)] = fin;
+    });
+    cuerpo.ends = Object.keys(ends).length ? ends : null;
+  }
+  return cuerpo;
+}
+
+/* ── Hora de fin y eventos que cruzan la medianoche ──
+   `body.ends = { "YYYY-MM-DD" (día de inicio): "YYYY-MM-DD HH:mm:00" }`: la
+   hora de fin (opcional) de cada fecha del evento, en hora de pared como
+   `hour` / `dates`. El organizador elige solo la hora: si es menor o igual
+   que la de inicio, cae al día siguiente (21:00 → 01:00 del día siguiente).
+   Contraparte en iattend-events: los mismos nombres en src/helpers/functions.ts. */
+
+// "HH:mm" (o la hora de una hora de pared) → minutos del día; sin hora, null.
+export function minutosDeHora(t) {
+  const m = /(?:^|[ T])(\d{1,2}):(\d{2})/.exec(String(t ?? ""));
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+
+const z2 = (n) => String(n).padStart(2, "0");
+const sumarDia = (dia, n) => {
+  const [y, m, d] = String(dia).slice(0, 10).split("-").map(Number);
+  const f = new Date(Date.UTC(y, m - 1, d + n));
+  return `${f.getUTCFullYear()}-${z2(f.getUTCMonth() + 1)}-${z2(f.getUTCDate())}`;
+};
+
+// Hora de fin completa a partir de la de inicio (hora de pared) y la hora
+// "HH:mm" que eligió el organizador: el mismo día o, si no es mayor, el siguiente.
+export function finDesdeHora(inicio, hhmm) {
+  const ini = minutosDeHora(inicio);
+  const fin = minutosDeHora(hhmm);
+  const dia = /^\d{4}-\d{2}-\d{2}/.exec(String(inicio ?? ""))?.[0];
+  if (fin == null || ini == null || !dia) return null;
+  const hora = `${z2(Math.floor(fin / 60))}:${z2(fin % 60)}`;
+  return `${fin > ini ? dia : sumarDia(dia, 1)} ${hora}:00`;
+}
+
+// Hora de fin (hora de pared) de la fecha que empieza ese día; sin día, la
+// de la primera fecha.
+export function finDe(body, dia) {
+  const ends = body?.ends;
+  if (!ends || typeof ends !== "object") return null;
+  const clave = dia ? String(dia).slice(0, 10) : String(fechasDelEvento(body)[0] ?? "").slice(0, 10);
+  return ends[clave] ?? null;
+}
+
+// "HH:mm" de la hora de fin de una fecha (raw = su hora de pared de inicio).
+export function horaFinDe(body, raw) {
+  const fin = finDe(body, String(raw ?? "").slice(0, 10));
+  const m = /[ T](\d{2}:\d{2})/.exec(String(fin ?? ""));
+  return m ? m[1] : null;
+}
+
+// Hora de inicio (hora de pared) del día `dia` del evento; sin ella, la primera.
+export function inicioDe(body, dia) {
+  const fechas = fechasDelEvento(body);
+  return (dia && fechas.find((f) => String(f).slice(0, 10) === dia)) || fechas[0] || null;
+}
+
+// Minutos desde las 00:00 del día de inicio hasta el fin (1500 = 1:00 del día
+// siguiente); sin hora de fin, null.
+export function minutosDelFin(body, dia) {
+  const fin = finDe(body, dia);
+  const inicio = inicioDe(body, dia);
+  const t = minutosDeHora(fin);
+  if (t == null || !inicio) return null;
+  const dias = Math.round((Date.parse(`${String(fin).slice(0, 10)}T00:00Z`) - Date.parse(`${String(inicio).slice(0, 10)}T00:00Z`)) / 86_400_000);
+  return dias * 1440 + t;
+}
+
+// Minutos de un momento del itinerario contados desde las 00:00 de su día,
+// con la medianoche resuelta: una hora menor que la de inicio del evento es
+// del día siguiente (21:00 → 01:00 = 1500). Con hora de fin, solo cuenta como
+// del día siguiente si cae antes de ese fin; sin ella, si es más de 2 h antes
+// del inicio (para que "Llegada 20:30" de un evento a las 21:00 siga antes).
+export function minutosDelMomento(body, dia, time) {
+  const t = minutosDeHora(time);
+  if (t == null) return null;
+  const ini = minutosDeHora(inicioDe(body, dia));
+  if (ini == null || t >= ini) return t;
+  const fin = minutosDelFin(body, dia);
+  if (fin != null) return fin >= 1440 && t + 1440 <= fin ? t + 1440 : t;
+  return t < ini - 120 ? t + 1440 : t;
 }
 
 // Convierte el objeto dayjs que entrega el AntD DatePicker a la hora de

@@ -15,6 +15,8 @@
     onlyConfirmed).
 */
 
+import { fechasDelEvento, finDe, minutosDelMomento } from '../../helpers/assets/eventDateTime'
+
 export const PLATAFORMAS = ['zoom', 'meet', 'youtube', 'link']
 
 // Campos de la dirección de un lugar presencial (body.address) y su etiqueta
@@ -153,21 +155,30 @@ const deMinutos = (min) => {
     return `${d.getUTCFullYear()}-${z(d.getUTCMonth() + 1)}-${z(d.getUTCDate())} ${z(d.getUTCHours())}:${z(d.getUTCMinutes())}`
 }
 
-// Inicio y fin del Pop: primer y último momento del itinerario o, sin él,
-// la hora del Pop y 3 h después (como el calendario).
+// Inicio y fin del Pop: primer momento del itinerario (o la hora del Pop) y
+// la hora de fin del último día (`body.ends`); sin ella, el último momento o,
+// sin él, 3 h después (como el calendario). Una hora del itinerario menor que
+// la de inicio es del día siguiente (minutosDelMomento).
 export const inicioYFin = (body) => {
     const hora = String(body?.hour ?? '').slice(0, 16)
     const dia = hora.slice(0, 10)
     const momentos = (Array.isArray(body?.itinerary) ? body.itinerary : [])
         .filter((m) => /^\d{1,2}:\d{2}/.test(String(m?.time ?? '')))
-        .map((m) => `${String(m.date || dia).slice(0, 10)} ${String(m.time).padStart(5, '0').slice(0, 5)}`)
-        .filter((p) => aMinutos(p) != null)
-        .sort()
-    const inicio = momentos[0] ?? (aMinutos(hora) != null ? hora : null)
-    if (!inicio) return { inicio: null, fin: null }
-    let fin = momentos.length > 1 ? momentos[momentos.length - 1] : null
-    if (!fin || aMinutos(fin) <= aMinutos(inicio)) fin = deMinutos(aMinutos(inicio) + 180)
-    return { inicio, fin }
+        .map((m) => {
+            const d = String(m.date || dia).slice(0, 10)
+            const base = aMinutos(`${d} 00:00`)
+            const t = minutosDelMomento(body, d, m.time)
+            return base != null && t != null ? base + t : null
+        })
+        .filter((n) => n != null)
+        .sort((a, b) => a - b)
+    const ini = momentos[0] ?? aMinutos(hora)
+    if (ini == null) return { inicio: null, fin: null }
+    const fechas = fechasDelEvento(body)
+    const finPared = String(finDe(body, String(fechas[fechas.length - 1] ?? '').slice(0, 10)) ?? '').slice(0, 16)
+    let fi = aMinutos(finPared) ?? (momentos.length > 1 ? momentos[momentos.length - 1] : null)
+    if (fi == null || fi <= ini) fi = ini + 180
+    return { inicio: deMinutos(ini), fin: deMinutos(fi) }
 }
 
 // 134 → "2 h 14 min"; 45 → "45 min"; 1500 → "1 día".

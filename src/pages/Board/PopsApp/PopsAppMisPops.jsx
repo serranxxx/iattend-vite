@@ -3,16 +3,19 @@ import { createPortal } from 'react-dom'
 import axios from 'axios'
 import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
-import { Modal, Tooltip, message } from 'antd'
-import { Archive, ArchiveRestore, Copy, MoreHorizontal, Plus, Send, Trash2 } from 'lucide-react'
+import { Tooltip, message } from 'antd'
+import { Archive, ArchiveRestore, Copy, Lock, MoreHorizontal, Plus, Send } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { supabaseAuthHeaders } from '../../../lib/authHeaders'
 import { colorDePop, emojiDePop } from '../../../helpers/invitation/popEvents'
 import { InsigniaPlus } from '../../../modules/SideEvents/PlanPops/InsigniaPlus'
 import { MiniaturaPop } from '../MiniaturaPop'
 import { horaDePop, inicialesDePop, portadaDePop } from '../popsDatos'
-import { PRECIO_PLUS } from './usePlanPops'
+import { PERSONAS_FREE } from './usePlanPops'
+import { TableroAzul } from '../../../components/TableroAzul/TableroAzul'
+import { LugaresPops, MarcaPlus, MedidorPersonas } from './PopsPlus/PopsPlus'
 import ojos from '../../../assets/pops-stickers/craft/ojos.svg'
+import temporada2 from '../../../assets/pops-azul/inicio-season-2.webp'
 import s from './PopsAppMisPops.module.css'
 
 /*
@@ -23,11 +26,11 @@ import s from './PopsAppMisPops.module.css'
   · Con Pops: filtros Activos · Borradores · Archivo, fila de estadísticas y
     tabla POP · FECHA · ESTADO · CONFIRMADOS · NO VAN · VISTAS · RESPUESTA con
     "Abrir" y el menú ⋯ (Duplicar — Pops+, todavía no existe —, Archivar /
-    Desarchivar y Borrar; uno abierto a la vez).
+    Desarchivar; los Pops no se borran desde aquí; uno abierto a la vez).
       archivo  = archivado (side_events.archived_at) o su fecha ya pasó.
       borrador = sin invitados.
       activo   = lo demás (con invitados y hoy o después, o sin fecha).
-    Archivar y borrar van por el backend (router/sideEventArchivo.js) y se
+    Archivar va por el backend (router/sideEventArchivo.js) y se
     reflejan aquí mismo (el padre no recarga la lista).
   · Clientes (debajo, no para cuentas de cliente): con Pops+ la tabla de
     clientes (Pops agrupados por correo del cliente); en Free la tarjeta de
@@ -37,13 +40,23 @@ import s from './PopsAppMisPops.module.css'
     una tarjeta (⋯ de 44 px abre el menú como hoja inferior), Clientes con
     lista / tarjeta navy de venta y el vacío en vertical. El padre pone el
     header, el scroll y la barra inferior.
+  Pops+ (handoff "Pops+ en la App" 2; Free y Pops+, que no lleva CTA de
+  compra ni franja rosa y cuenta personas sin tope): arriba "Lugares gratis" (los
+  3 lugares dibujados con el emoji de cada Pop activo, en vez del banner
+  cuando aún no llega al límite); la tabla cambia a POP · FECHA · ESTADO ·
+  PERSONAS (medidor N de 30) · RESPUESTA, con la franja rosa "¿Puedo llevar a
+  mi primo?" bajo un Pop al 90 %; "Traer de otro evento" y "Duplicar este
+  Pop" llevan el chip Pops+ y abren la tabla de
+  comparación (Duplicar todavía no existe, ni en Plus: ahí dice
+  "Muy pronto"; el botón "Bajar quién va en Excel" del handoff se quitó; en Plus "Traer de otro evento" abre el Pop); en Plus la
+  misma tabla también para Clientes, con "Enviar" en los Pops por enviar;
+  Clientes es el tablero azul "Hazlo a su nombre. / Mándaselo listo." con la
+  vista previa del correo bloqueada.
   "No van" se cuenta aquí (side_events_guests con state 'rechazado'); las
   vistas del link todavía no se registran: "—".
 */
 
 const API = import.meta.env.VITE_API_URL
-// Personas por Pop en Free (trigger pops_limite_invitados, migración 2026-11-23c).
-const PERSONAS_FREE = 30
 const FILTROS = ['activos', 'borradores', 'archivo']
 const PALETA = ['#FFB3C9', '#9FD8F5', '#FFE14D', '#C8F560', '#FF4D3D', '#2EBE88']
 const ATAJOS = [
@@ -80,18 +93,18 @@ const errorDe = (e) => e?.response?.data?.code
 
 export const PopsAppMisPops = ({
     pops = [], clientes = [], cargando = false, confirmados = {}, plan = {}, aviso = null, esCliente = false,
-    puedeCrear = true, onCrear, onEnviarPop, onEnviarACliente, onAbrir, onPasarPlus, movil = false,
+    puedeCrear = true, onCrear, onEnviarPop, onEnviarACliente, onAbrir, onPasarPlus, onTabla, movil = false,
 }) => {
+    const free = !plan.plus
     const { t, i18n } = useTranslation()
     const [filtro, setFiltro] = useState('activos')
     const [menu, setMenu] = useState(null)
     const [archivados, setArchivados] = useState({})
-    const [borrados, setBorrados] = useState(() => new Set())
     const menuRef = useRef(null)
     const hoy = dayjs().startOf('day')
     const lang = i18n.language?.startsWith('en') ? 'en-US' : 'es-MX'
 
-    const visiblesPops = pops.filter(p => !borrados.has(p._pop?.id))
+    const visiblesPops = pops
     const noVan = useNoVan([...visiblesPops, ...clientes].map(p => p._pop?.id).filter(Boolean))
 
     useEffect(() => {
@@ -151,7 +164,6 @@ export const PopsAppMisPops = ({
             : t('pops_app_mis.client_pending')
     }
     const filasCli = clientes
-        .filter(p => !borrados.has(p._pop?.id))
         // Por enviar = Pop "enviar después", todavía sin cliente (sin user_id):
         // lleva el botón Enviar, que da de alta al cliente (PlannerSendDrawer).
         .map((item, i) => ({ ...filaDe(item, i + pops.length), cliente: nombreCliente(item), porEnviar: !(item.user_id || item._pop?.user_id) }))
@@ -186,26 +198,6 @@ export const PopsAppMisPops = ({
         }
     }
 
-    const borrar = (f) => {
-        setMenu(null)
-        Modal.confirm({
-            title: t('pops_app_mis.delete_title', { name: f.nombre }),
-            content: t('pops_app_mis.delete_text'),
-            okText: t('pops_app_mis.delete_ok'),
-            cancelText: t('pops_app_mis.cancel'),
-            okButtonProps: { danger: true },
-            centered: true,
-            onOk: async () => {
-                try {
-                    await axios.delete(`${API}/api/side-events/${f.id}`, { headers: await supabaseAuthHeaders() })
-                    setBorrados(prev => new Set(prev).add(f.id))
-                    message.success(t('pops_app_mis.deleted_ok'))
-                } catch {
-                    message.error(t('pops_app_mis.delete_error'))
-                }
-            },
-        })
-    }
 
     // Clientes: los Pops que hizo para otros, agrupados por correo del cliente.
     const filasClientes = useMemo(() => {
@@ -243,14 +235,20 @@ export const PopsAppMisPops = ({
     const menuDe = (f, clase = s.menu) => (
         <div className={clase} role='menu'>
             {plan.plus ? (
-                <Tooltip title={t('pops_app_mis.duplicate_soon')} placement='left'>
-                    <button type='button' role='menuitem' className={s.menuItem} aria-disabled>
-                        <Copy size={16} /><span className={s.menuTexto}>{t('pops_app_mis.duplicate')}</span>
-                    </button>
-                </Tooltip>
+                // Pops+: la misma opción con su frase; todavía no existe.
+                <button type='button' role='menuitem' className={`${s.menuItem} ${s.menuPlus}`} aria-disabled onClick={() => message.info(t('pops_app_mis.duplicate_soon'))}>
+                    <span className={s.menuPlusFila}>
+                        <Copy size={16} /><span className={s.menuTexto}>{t('pops_plus_app.duplicate')}</span><span className={s.pronto}>{t('pops_app_mis.duplicate_soon')}</span>
+                    </span>
+                    <span className={s.menuPlusFrase}>{t('pops_plus_app.duplicate_text')}</span>
+                </button>
             ) : (
-                <button type='button' role='menuitem' className={s.menuItem} aria-disabled>
-                    <Copy size={16} /><span className={s.menuTexto}>{t('pops_app_mis.duplicate')}</span><InsigniaPlus />
+                // Free: la opción con su chip y la frase de para qué sirve.
+                <button type='button' role='menuitem' className={`${s.menuItem} ${s.menuPlus}`} onClick={() => { setMenu(null); onTabla?.() }}>
+                    <span className={s.menuPlusFila}>
+                        <Copy size={16} /><span className={s.menuTexto}>{t('pops_plus_app.duplicate')}</span><InsigniaPlus />
+                    </span>
+                    <span className={s.menuPlusFrase}>{t('pops_plus_app.duplicate_text')}</span>
                 </button>
             )}
             <button type='button' role='menuitem' className={s.menuItem} onClick={() => archivar(f)}>
@@ -258,10 +256,7 @@ export const PopsAppMisPops = ({
                 <span className={s.menuTexto}>{t(f.archivado ? 'pops_app_mis.unarchive' : 'pops_app_mis.archive')}</span>
                 <span className={s.nuevo}>{t('pops_app_mis.new')}</span>
             </button>
-            <button type='button' role='menuitem' className={`${s.menuItem} ${s.peligro}`} onClick={() => borrar(f)}>
-                <Trash2 size={16} /><span className={s.menuTexto}>{t('pops_app_mis.delete')}</span>
-                <span className={s.nuevo}>{t('pops_app_mis.new')}</span>
-            </button>
+            {/* Los Pops no se borran desde aquí: solo se archivan. */}
         </div>
     )
 
@@ -346,58 +341,93 @@ export const PopsAppMisPops = ({
         </div>
     )
 
-    const tablaDe = (lista, textoVacio) => (
+    // Free (handoff "Pops+ en la App" 2): PERSONAS con su medidor y la franja
+    // rosa bajo un Pop al 90 % de su tope.
+    const tablaFree = (lista, textoVacio) => (
         <div className={s.tabla}>
-            <div className={`${s.fila} ${s.columnas}`} aria-hidden>
+            <div className={`${s.fila} ${s.filaFree} ${s.columnas}`} aria-hidden>
                 <span>{t('pops_app_mis.col_pop')}</span>
                 <span>{t('pops_app_mis.col_date')}</span>
                 <span>{t('pops_app_mis.col_status')}</span>
-                <span>{t('pops_app_mis.col_confirmed')}</span>
-                <span>{t('pops_app_mis.col_no')}</span>
-                <span>{t('pops_app_mis.col_views')}</span>
+                <span>{t('pops_plus_app.col_people')}</span>
                 <span>{t('pops_app_mis.col_response')}</span>
                 <span />
             </div>
             {lista.length === 0 && <p className={s.sinFilas}>{textoVacio}</p>}
-            {lista.map(f => (
-                <div key={f.item.id} className={s.fila}>
-                    <span className={s.pop}>
-                        <span className={s.mini} style={{ background: f.color }}>
-                            {f.portada ? <MiniaturaPop src={f.portada} /> : (f.emoji || f.iniciales)}
-                        </span>
-                        <span className={s.popTextos}>
-                            <span className={s.nombre}>{f.nombre}</span>
-                            {f.cliente && <small className={s.clienteDe}>{f.cliente}</small>}
-                        </span>
-                    </span>
-                    <span className={s.fecha}>{fechaTexto(f.item)}</span>
-                    <span>{estadoChip(f.estado)}</span>
-                    <span className={s.fuerte}>{confirmadosTexto(f)}</span>
-                    <span className={s.suave}>{f.total == null ? '—' : f.no}</span>
-                    <span className={s.suave}>—</span>
-                    <span className={s.medio}>{respuesta(f)}</span>
-                    <span className={s.acciones} ref={menu === f.id ? menuRef : undefined}>
-                        {f.porEnviar && onEnviarACliente && (
-                            <button type='button' className={s.enviarCliente} onClick={() => onEnviarACliente(f.item)}>
-                                <Send size={14} />{t('pops_app_mis.send')}
-                            </button>
+            {lista.map(f => {
+                const casiLleno = free && (f.total ?? 0) / PERSONAS_FREE >= 0.9
+                return (
+                    <div key={f.item.id} className={s.filaGrupo}>
+                        <div className={`${s.fila} ${s.filaFree}`}>
+                            <span className={s.pop}>
+                                <span className={s.mini} style={{ background: f.color }}>
+                                    {f.portada ? <MiniaturaPop src={f.portada} /> : (f.emoji || f.iniciales)}
+                                </span>
+                                <span className={s.popTextos}>
+                                    <span className={s.nombre}>{f.nombre}</span>
+                                    {f.cliente && <small className={s.clienteDe}>{f.cliente}</small>}
+                                </span>
+                            </span>
+                            <span className={s.fecha}>{fechaTexto(f.item)}</span>
+                            <span>{estadoChip(f.estado)}</span>
+                            {f.total == null ? <span className={s.suave}>—</span> : f.total === 0 ? (
+                                <span className={s.sinInvitados}>
+                                    {t('pops_plus_app.no_guests')}
+                                    <button type='button' className={s.traer} onClick={free ? onTabla : () => onAbrir?.(f.item)}>{t('pops_plus_app.bring')}{free && <InsigniaPlus />}</button>
+                                </span>
+                            ) : (
+                                <MedidorPersonas n={f.total} tope={free ? PERSONAS_FREE : null} etiqueta={false} compacto />
+                            )}
+                            <span className={f.total ? s.medio : s.suave}>{respuesta(f)}</span>
+                            <span className={s.acciones} ref={menu === f.id ? menuRef : undefined}>
+                                {f.porEnviar && onEnviarACliente && (
+                                    <button type='button' className={s.enviarCliente} onClick={() => onEnviarACliente(f.item)}>
+                                        <Send size={14} />{t('pops_app_mis.send')}
+                                    </button>
+                                )}
+                                <button type='button' className={s.abrir} onClick={() => onAbrir?.(f.item)}>{t('pops_app_mis.open')}</button>
+                                <button
+                                    type='button'
+                                    className={s.mas}
+                                    data-abierto={menu === f.id || undefined}
+                                    aria-haspopup='menu'
+                                    aria-expanded={menu === f.id}
+                                    aria-label={t('pops_app_mis.more')}
+                                    onClick={() => setMenu(m => (m === f.id ? null : f.id))}
+                                >
+                                    <MoreHorizontal size={18} />
+                                </button>
+                                {menu === f.id && menuDe(f)}
+                            </span>
+                        </div>
+                        {casiLleno && f.estado !== 'archivado' && f.estado !== 'pasado' && (
+                            <div className={s.franja}>
+                                <span className={s.franjaFrase}>“{t('pops_plus_app.cousin')}”</span>
+                                <span className={s.franjaTexto}>
+                                    {t('pops_plus_app.cousin_text_a', { count: Math.max(0, PERSONAS_FREE - f.total) })}{' '}
+                                    {t('pops_plus_app.cousin_text_b')} <b>Pops+</b> {t('pops_plus_app.cousin_text_c')}
+                                </span>
+                                <button type='button' className={s.franjaCta} onClick={onPasarPlus}>{t('pops_plus_app.open_spots')}</button>
+                            </div>
                         )}
-                        <button type='button' className={s.abrir} onClick={() => onAbrir?.(f.item)}>{t('pops_app_mis.open')}</button>
-                        <button
-                            type='button'
-                            className={s.mas}
-                            data-abierto={menu === f.id || undefined}
-                            aria-haspopup='menu'
-                            aria-expanded={menu === f.id}
-                            aria-label={t('pops_app_mis.more')}
-                            onClick={() => setMenu(m => (m === f.id ? null : f.id))}
-                        >
-                            <MoreHorizontal size={18} />
-                        </button>
-                        {menu === f.id && menuDe(f)}
-                    </span>
-                </div>
-            ))}
+                    </div>
+                )
+            })}
+        </div>
+    )
+
+    // Lugares gratis (Free, sin llegar al límite): reemplaza al banner.
+    // En Pops+ sin tope: los activos dibujados (hasta 5) y sin botón de compra.
+    const lugaresGratis = !plan.enLimite && visiblesPops.length > 0 && (free || plan.activos > 0) && (
+        <div className={s.lugaresGratis} data-plus={!free || undefined}>
+            <LugaresPops activos={plan.listaActivos} tope={free ? plan.tope : Math.min(5, plan.activos)} tam={movil ? 46 : 56} />
+            <div className={s.lugaresTextos}>
+                <b>{free
+                    ? t('pops_plus_app.slots_left', { count: Math.max(0, plan.tope - plan.activos) })
+                    : t('pops_plus_app.slots_plus', { count: plan.activos })}</b>
+                <span>{t(free ? 'pops_plus_app.slots_text' : 'pops_plus_app.slots_text_plus')}</span>
+            </div>
+            {free && <button type='button' className={s.lugaresCta} onClick={onPasarPlus}>{t('pops_plus_app.go_plus')}</button>}
         </div>
     )
 
@@ -426,28 +456,37 @@ export const PopsAppMisPops = ({
                     </div>
                 )}
             </div>
-            {plan.plus ? tablaDe(mostradasCli, vacioCli) : (
-                <div className={s.venta}>
-                    <div className={s.ventaTextos}>
-                        <span className={s.ventaTitulo}>{t('pops_app_mis.sell_title')}</span>
-                        <span className={s.ventaTexto}>{t('pops_app_mis.sell_text')}</span>
-                        <ul className={s.beneficios}>
-                            <li>✓ {t('pops_app_mis.sell_b1')}</li>
-                            <li>✓ {t('pops_app_mis.sell_b2')}</li>
-                            <li>✓ {t('pops_app_mis.sell_b3')}</li>
-                        </ul>
-                        <button type='button' className={s.ventaCta} onClick={onPasarPlus}>{t('pops_app_mis.go_plus', { price: PRECIO_PLUS })}</button>
+            {plan.plus ? tablaFree(mostradasCli, vacioCli) : (
+                // Free (handoff "Pops+ en la App" 2): modo planner en el tablero
+                // azul, con la vista previa del correo al cliente bloqueada.
+                <TableroAzul lineas='banda' className={s.planner}>
+                    <div className={s.plannerTextos}>
+                        <span className={s.plannerFrase}>“{t('pops_plus_app.planner_phrase')}”</span>
+                        <span className={`${s.plannerRecorte} ${s.plannerPapel}`}>{t('pops_plus_app.planner_title_1')}</span>
+                        <span className={`${s.plannerRecorte} ${s.plannerLima}`}>{t('pops_plus_app.planner_title_2')}</span>
+                        <ol className={s.plannerPasos}>
+                            {[1, 2, 3].map(n => <li key={n}><b>{n}</b>{t(`pops_plus_app.planner_step${n}`)}</li>)}
+                        </ol>
+                        <button type='button' className={s.plannerCta} onClick={onPasarPlus}>{t('pops_plus_app.planner_cta')}</button>
                     </div>
-                    <div className={s.bloqueados} aria-hidden>
-                        {ejemplosBloqueados.map(c => (
-                            <div key={c.llave} className={s.bloqueado}>
-                                <span className={`${s.avatar} ${s.avatarChico}`}>{c.iniciales}</span>
-                                <span className={s.nombre}>{c.nombre}</span>
-                                <span>🔒</span>
+                    <div className={s.correo} aria-hidden>
+                        <div className={s.correoBarra}><span /><span /><span /><b>{t('pops_plus_app.planner_mail_bar')}</b></div>
+                        <div className={s.correoCuerpo}>
+                            <div className={s.correoCampos}><span>Mariana Ruiz</span><span>mariana@ventasnorte.mx</span></div>
+                            <div className={s.correoPop}>
+                                <img src={temporada2} alt='' />
+                                <span>
+                                    <b>{t('pops_plus_app.planner_mail_pop')}</b>
+                                    <small>{t('pops_plus_app.planner_mail_meta')}</small>
+                                    <small>{t('pops_plus_app.planner_mail_ready')}</small>
+                                </span>
                             </div>
-                        ))}
+                            <div className={s.correoBotones}><span>{t('pops_plus_app.planner_mail_later')}</span><span>{t('pops_plus_app.planner_mail_now')}</span></div>
+                        </div>
+                        <div className={s.correoVelo}><span><Lock size={14} />{t('pops_plus_app.opens_with')} <MarcaPlus /></span></div>
                     </div>
-                </div>
+                    <img src={ojos} alt='' aria-hidden className={s.plannerOjos} />
+                </TableroAzul>
             )}
         </section>
     )
@@ -586,7 +625,7 @@ export const PopsAppMisPops = ({
                         <div className={s.mCandados} aria-hidden>
                             {ejemplosBloqueados.map(c => <span key={c.llave} className={s.mCandado}>🔒</span>)}
                         </div>
-                        <button type='button' className={s.mVentaCta} onClick={onPasarPlus}>{t('pops_app_mis.go_plus', { price: PRECIO_PLUS })}</button>
+                        <button type='button' className={s.mVentaCta} onClick={onPasarPlus}>{t('pops_plus_app.go_plus')}</button>
                     </div>
                 )}
             </section>
@@ -605,6 +644,7 @@ export const PopsAppMisPops = ({
         return (
             <div className={`${s.pagina} ${s.mPagina}`}>
                 {aviso}
+                {lugaresGratis}
                 <div className={s.titulo}>
                     <h1 className={s.mH1}>{t('pops_app_mis.title')}</h1>
                     <span className={s.mCuenta}>{visiblesPops.length}</span>
@@ -655,6 +695,7 @@ export const PopsAppMisPops = ({
         <div className={s.pagina}>
             {titulo}
             {aviso}
+            {lugaresGratis}
             {visiblesPops.length === 0 ? vacio : (
                 <>
                     <div className={s.stats}>
@@ -662,7 +703,7 @@ export const PopsAppMisPops = ({
                             <div key={i} className={s.stat}><span className={s.statV}>{k.v}</span><span className={s.statLabel}>{k.label}</span></div>
                         ))}
                     </div>
-                    {tablaDe(mostradas, t(`pops_app_mis.empty_filter_${filtro}`))}
+                    {tablaFree(mostradas, t(`pops_app_mis.empty_filter_${filtro}`))}
                 </>
             )}
             {bloqueClientes}

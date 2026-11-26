@@ -1,0 +1,1451 @@
+/* Upsell de los dashboards Lite y Paperless (handoff "Upsell en dashboards
+   Lite y Paperless"). Tokens del handoff: navy #1D3246, verde PRO #A9C38B,
+   lavanda #D8C8E4, sage #C5C6B3, crema #EEE8E2, precio #C9B6F2. Títulos en la
+   serif del dashboard (Young Serif), UI en Poppins. */
+
+/* ── Marco escalado ─────────────────────────────────────── */
+.marco {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.lienzo {
+    transform-origin: top left;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 96px;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    color: #1D3246;
+}
+
+.lienzo h2,
+.lienzo h3,
+.lienzo p {
+    margin: 0;
+}
+
+.rejilla {
+    display: grid;
+    grid-template-columns: 300px repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.rejillaLite {
+    grid-template-rows: 320px 320px;
+}
+
+.rejillaPaperless {
+    grid-template-rows: 300px 340px;
+}
+
+.celdaInv { grid-column: 1; grid-row: 1 / span 2; }
+.celdaGuests { grid-column: 2 / span 3; grid-row: 1; }
+.celdaTables { grid-column: 2; grid-row: 2; }
+.celdaStd { grid-column: 3 / span 2; grid-row: 2; }
+.celdaStdAncho { grid-column: 2 / span 3; grid-row: 1; }
+.celdaPaso { grid-column: 2 / span 3; grid-row: 2; }
+
+/* Las tarjetas del bento llenan su celda. */
+.rejilla > div > :global(.bento_card) {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+}
+
+.rejilla :global(.bento_inv_scene) {
+    min-height: 0;
+}
+
+/* ── Aviso de WhatsApp en Gestión de invitados (Lite) ──── */
+.nudge {
+    all: unset;
+    box-sizing: border-box;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 100%;
+    padding: 10px 12px 10px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .55);
+    color: #1D3246;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.35;
+    cursor: pointer;
+}
+
+.nudge:focus-visible { outline: 2px solid #1D3246; outline-offset: 2px; }
+
+.candado {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #1D3246;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    line-height: 1;
+}
+
+.candadoClaro { background: rgba(255, 255, 255, .16); }
+
+/* En el aviso, el candado va en línea. */
+.nudge .candado {
+    position: static;
+    flex-shrink: 0;
+    padding: 4px 9px;
+}
+
+/* ── Rail PRO ──────────────────────────────────────────── */
+.rail {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    gap: 36px;
+    padding: 40px;
+    border-radius: 32px;
+    background: #1D3246;
+    color: #fff;
+}
+
+.railGlow {
+    position: absolute;
+    right: -120px;
+    top: -160px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(169, 195, 139, .28), rgba(169, 195, 139, 0) 70%);
+    pointer-events: none;
+}
+
+.railIzq {
+    position: relative;
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.railBadge {
+    align-self: flex-start;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #A9C38B;
+    color: #1D3246;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .12em;
+}
+
+.railTitulo {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1.05;
+    text-wrap: pretty;
+}
+
+.railCopy {
+    font-size: 15px;
+    line-height: 1.55;
+    color: #D4DAE2;
+    text-wrap: pretty;
+}
+
+.railPrecio {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.railPrecio > span {
+    font-size: 13px;
+    color: #D4DAE2;
+}
+
+.railPrecio b {
+    margin-right: 6px;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 36px;
+    font-weight: 400;
+    color: #C9B6F2;
+}
+
+.railPrecio small {
+    font-size: 13px;
+    color: #D4DAE2;
+}
+
+.railAcciones {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.railCta {
+    border: 0;
+    padding: 16px;
+    border-radius: 16px;
+    background: #A9C38B;
+    color: #1D3246;
+    font: 600 16px 'Poppins', sans-serif;
+    cursor: pointer;
+}
+
+
+.railLink {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font: 400 14px 'Poppins', sans-serif;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+}
+
+.railTiles {
+    position: relative;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: 230px 230px;
+    gap: 16px;
+}
+
+.tile {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    border-radius: 22px;
+    cursor: pointer;
+    transition: transform .2s ease;
+}
+
+.tile:hover { transform: scale(1.05); }
+.tile:focus-visible { outline: 2px solid #A9C38B; outline-offset: 3px; }
+
+.tileTitulo {
+    padding-right: 60px;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.1;
+}
+
+.tileTituloGrande {
+    padding-right: 70px;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1.05;
+}
+
+.tileTexto {
+    max-width: 220px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #E1E6EE;
+}
+
+.tileTextoCorto {
+    position: relative;
+    max-width: 130px;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.tileNota {
+    margin-top: auto;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Photo Wall: dos filas */
+.tilePhoto {
+    grid-row: 1 / span 2;
+    padding: 24px;
+    gap: 8px;
+    background: #46566F;
+    color: #fff;
+}
+
+.polaroids {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 22px;
+    height: 200px;
+}
+
+.polaroids > span {
+    position: absolute;
+    width: 58%;
+    padding: 7px 7px 26px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, .28);
+    box-sizing: border-box;
+}
+
+.polaroids img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.polaroidA { left: 2%; bottom: 0; transform: rotate(-8deg); }
+.polaroidB { right: 2%; bottom: 18px; transform: rotate(7deg); }
+
+/* WhatsApp */
+.tileWa {
+    background: #C5C6B3;
+    color: #1D3246;
+}
+
+.burbujaWa {
+    padding: 10px 12px;
+    border-radius: 4px 14px 14px 14px;
+    background: #fff;
+    font-size: 12.5px;
+    line-height: 1.45;
+    box-shadow: 0 4px 12px rgba(29, 50, 70, .1);
+}
+
+/* Lia */
+.tileLia {
+    background: #22204A;
+    color: #fff;
+}
+
+.liaCabeza {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.liaCabeza .tileTitulo { padding-right: 0; }
+
+/* Orbe dibujado con la paleta del de Lia (ChatContainer ORB_PALETTE). */
+.orbe {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 30% 30%, #E0E9D4 0%, rgba(224, 233, 212, 0) 38%),
+        radial-gradient(circle at 70% 70%, #aac187 0%, rgba(170, 193, 135, 0) 45%),
+        radial-gradient(circle at 50% 50%, #6D3CFA 0%, #4526A3 70%, #241357 100%);
+    box-shadow: 0 0 14px rgba(109, 60, 250, .45);
+}
+
+.liaPregunta {
+    align-self: flex-end;
+    padding: 8px 12px;
+    border-radius: 14px 4px 14px 14px;
+    background: rgba(255, 255, 255, .14);
+    font-size: 12.5px;
+}
+
+.liaRespuesta {
+    align-self: flex-start;
+    padding: 8px 12px;
+    border-radius: 4px 14px 14px 14px;
+    background: #fff;
+    color: #1D3246;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+/* Side events */
+.tileSide {
+    display: block;
+    background: #EEE8E2;
+    color: #1D3246;
+}
+
+.tileSide .tileTitulo { position: relative; }
+
+.sobres {
+    position: absolute;
+    right: -14px;
+    bottom: -18px;
+    width: 220px;
+    height: 150px;
+}
+
+.sobre {
+    position: absolute;
+    width: 62%;
+    aspect-ratio: 1.45;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(29, 50, 70, .2);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 12px;
+    box-sizing: border-box;
+}
+
+.sobreSolapa {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 55%;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.sobreNombre {
+    position: relative;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 14px;
+}
+
+.sobreA { left: 0; top: 10px; transform: rotate(-8deg); }
+.sobreB { left: 22%; top: 40%; transform: rotate(3deg); }
+.sobreC { right: -4%; top: 0; transform: rotate(10deg); width: 58%; }
+
+/* Pases + Apple Wallet */
+.tilePass {
+    gap: 12px;
+    background: #D8C8E4;
+    color: #1D3246;
+}
+
+.paseMini {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #1D3246;
+    color: #fff;
+    transform: rotate(-2deg);
+}
+
+.paseMini > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.paseMini small {
+    font-size: 10px;
+    letter-spacing: .14em;
+    color: #C9B6F2;
+}
+
+.paseMini b {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.paseMini span {
+    font-size: 11px;
+    color: #D4DAE2;
+}
+
+.paseQr {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background-color: #fff;
+    background-image:
+        repeating-linear-gradient(90deg, #1D3246 0 4px, transparent 4px 8px),
+        repeating-linear-gradient(0deg, #fff 0 4px, transparent 4px 8px);
+    opacity: .95;
+}
+
+/* ── "Tu siguiente paso · Lite" (Paperless) ─────────────── */
+.paso {
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    gap: 32px;
+    padding: 36px;
+    border-radius: 28px;
+    background: #C5C6B3;
+    color: #1D3246;
+    box-shadow: 0 2px 6px rgba(28, 50, 73, .05), 0 10px 28px rgba(28, 50, 73, .08);
+}
+
+.pasoTextos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pasoEyebrow {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: #1D3246;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+}
+
+.pasoTitulo {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1.08;
+    text-wrap: pretty;
+}
+
+.pasoCopy {
+    max-width: 400px;
+    font-size: 15px;
+    line-height: 1.55;
+    text-wrap: pretty;
+}
+
+.pasoAcciones {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pasoCta {
+    display: inline-flex;
+    gap: 6px;
+    border: 0;
+    padding: 14px 22px;
+    border-radius: 14px;
+    background: #1D3246;
+    color: #fff;
+    font: 600 15px 'Poppins', sans-serif;
+    cursor: pointer;
+}
+
+.pasoPrecio { color: #C9B6F2; }
+
+.pasoSecundario {
+    border: 1.5px solid #1D3246;
+    padding: 12.5px 20px;
+    border-radius: 14px;
+    background: transparent;
+    color: #1D3246;
+    font: 600 15px 'Poppins', sans-serif;
+    cursor: pointer;
+}
+
+
+.pasoVista {
+    position: relative;
+    width: 360px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.pasoHoja {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 18px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 14px 30px rgba(29, 50, 70, .12);
+    box-sizing: border-box;
+}
+
+.pasoHojaHead {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5B6675;
+}
+
+.pasoStats {
+    display: flex;
+    gap: 16px;
+    margin: 10px 0 4px;
+}
+
+.pasoStats b {
+    display: block;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.pasoStats small {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pasoFila {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid #F0ECF2;
+}
+
+.pasoAvatar {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #EFE8F4;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.pasoNombre {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.pasoEstado {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #F1EFF2;
+    color: #5B6675;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.pasoMesas {
+    position: absolute;
+    left: 0;
+    bottom: -36px;
+    width: 200px;
+    height: 150px;
+    overflow: hidden;
+    border: 4px solid #fff;
+    border-radius: 18px;
+    background: #D8C8E4;
+    box-shadow: 0 14px 30px rgba(29, 50, 70, .16);
+    transform: rotate(-4deg);
+    box-sizing: border-box;
+}
+
+.pasoMesas > * {
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Comparador ────────────────────────────────────────── */
+.cmp {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 36px 40px 32px;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    color: #1D3246;
+}
+
+.cmpHead {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.cmpTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cmpEyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    color: #6B5583;
+}
+
+.cmpTitulo {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: #1D3246;
+}
+
+.cmpSub {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #5B6675;
+}
+
+.cmpCerrar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: #F1EFF2;
+    color: #1D3246;
+    cursor: pointer;
+}
+
+.cmpTabla {
+    display: flex;
+    flex-direction: column;
+}
+
+.cmpFilaHead,
+.cmpFila,
+.cmpPie {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 9px 12px;
+}
+
+.cmpFilaHead {
+    align-items: flex-end;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ECE8EE;
+}
+
+.cmpFilaResaltada {
+    border-radius: 12px;
+    background: #F1E9F7;
+}
+
+.cmpCeldaNombre {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.cmpCeldaNombre b {
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+.cmpCeldaNombre small {
+    font-size: 12.5px;
+    color: #5B6675;
+}
+
+.cmpCol {
+    width: var(--cmp-col);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    box-sizing: border-box;
+}
+
+.cmpColNombre {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 22px;
+    font-weight: 400;
+}
+
+.cmpColPrecio {
+    font-size: 13px;
+    color: #5B6675;
+}
+
+.cmpSi {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #A9C38B;
+    color: #1D3246;
+}
+
+.cmpNo {
+    width: 16px;
+    height: 2px;
+    border-radius: 2px;
+    background: #D5D0D9;
+}
+
+.cmpPie {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.cmpPieTexto {
+    flex: 1;
+    font-size: 13px;
+    color: #5B6675;
+}
+
+.cmpPie .cmpCol {
+    padding: 0 6px;
+}
+
+.cmpActual {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5B6675;
+    text-align: center;
+}
+
+.cmpMejorar {
+    width: 100%;
+    border: 0;
+    padding: 13px 8px;
+    border-radius: 14px;
+    background: #1D3246;
+    color: #fff;
+    font: 600 14px 'Poppins', sans-serif;
+    cursor: pointer;
+}
+
+
+.cmpMejorar[aria-disabled] {
+    opacity: .45;
+    cursor: default;
+}
+
+
+/* ── Burbuja de Lia (junto al orbe de ChatContainer) ───── */
+.liaBurbuja {
+    position: fixed;
+    right: 96px;
+    bottom: 30px;
+    z-index: 1190;
+    max-width: 230px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 10px 12px 16px;
+    border-radius: 18px 18px 4px 18px;
+    background: #fff;
+    color: #1D3246;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.4;
+    box-shadow: 0 10px 30px rgba(29, 50, 70, .16);
+    cursor: pointer;
+    animation: burbujaEntra .4s cubic-bezier(.22, 1, .36, 1) backwards .6s;
+}
+
+.liaBurbujaCerrar {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: #F1EFF2;
+    color: #5B6675;
+    cursor: pointer;
+}
+
+.liaCandado {
+    position: fixed;
+    right: 20px;
+    bottom: 66px;
+    z-index: 1201;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #A9C38B;
+    color: #1D3246;
+    pointer-events: none;
+}
+
+@keyframes burbujaEntra {
+    from { opacity: 0; transform: translateX(10px) scale(.96); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tile,
+    .liaBurbuja { animation: none; transition: none; }
+    .tile:hover { transform: none; }
+}
+
+/* ── Chip del plan en el header ────────────────────────── */
+.chipPlan {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 3px 3px 3px 12px;
+    border-radius: 999px;
+    background: #F1EBF6;
+    box-sizing: border-box;
+}
+
+.chipPlanLabel {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    color: #6B5583;
+    white-space: nowrap;
+}
+
+.chipPlanBoton {
+    height: 100%;
+    border: 0;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #A9C38B;
+    color: #1D3246;
+    font: 600 12.5px 'Poppins', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+
+/* ══ Celular (handoff "Upsell mobile", DashboardMobile) ══════════════ */
+
+.barraPlan {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 6px 6px 14px;
+    border-radius: 16px;
+    background: #F1EBF6;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    cursor: pointer;
+}
+
+.barraPlanLabel {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: #6B5583;
+}
+
+.barraPlanTexto {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: #5B6675;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.barraPlanPill {
+    flex-shrink: 0;
+    padding: 9px 14px;
+    border-radius: 12px;
+    background: #A9C38B;
+    color: #1D3246;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.nudgeMovil {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #F4F1EC;
+    color: #1D3246;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+    cursor: pointer;
+}
+
+.nudgeMovil > span:first-of-type { flex: 1; }
+
+.nudgeMovil .candado {
+    position: static;
+    flex-shrink: 0;
+    padding: 4px 8px;
+    font-size: 10.5px;
+}
+
+/* Feedback táctil: las tarjetas se encogen un poco al presionarlas. */
+.barraPlan:active,
+.nudgeMovil:active,
+.stdMovil:active,
+.pasoMovilHoja:active,
+.tileMovil:active {
+    transform: scale(.98);
+}
+
+.stdMovil {
+    position: relative;
+    height: 170px;
+    overflow: hidden;
+    border-radius: 22px;
+    background: #3A1A1A;
+    color: #fff;
+    cursor: pointer;
+    transition: transform .15s ease;
+}
+
+.stdMovil > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.stdMovilGrad {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(30, 10, 10, 0) 30%, rgba(30, 10, 10, .85) 100%);
+}
+
+.stdMovilTextos {
+    position: absolute;
+    left: 18px;
+    right: 110px;
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stdMovilTextos b {
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.05;
+}
+
+.stdMovilTextos small {
+    font-family: 'Poppins', sans-serif;
+    font-size: 12.5px;
+}
+
+.stdMovilBoton {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-radius: 12px;
+    background: #fff;
+    color: #1D3246;
+    font: 600 14px 'Poppins', sans-serif;
+}
+
+.pasoMovil {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 28px;
+    background: #C5C6B3;
+    color: #1D3246;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+}
+
+.pasoMovilTitulo {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.08;
+    text-wrap: pretty;
+}
+
+.pasoMovilHoja {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px 6px;
+    border-radius: 18px;
+    background: #fff;
+    cursor: pointer;
+    transition: transform .15s ease;
+}
+
+.pasoMovilStats {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 6px;
+}
+
+.pasoMovilStats b {
+    display: block;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.pasoMovilStats small {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pasoMovilCopy {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ctaMovilNavy {
+    width: 100%;
+    min-height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    border: 0;
+    padding: 8px 16px;
+    border-radius: 16px;
+    background: #1D3246;
+    color: #fff;
+    font: 600 16px 'Poppins', sans-serif;
+    cursor: pointer;
+}
+
+.ctaMovilNavy[aria-disabled] { opacity: .45; cursor: default; }
+
+.ctaPronto {
+    width: 100%;
+    font-size: 11px;
+    font-weight: 500;
+    color: #D4DAE2;
+}
+
+.proMovil {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 20px;
+    border-radius: 28px;
+    background: #1D3246;
+    color: #fff;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+}
+
+.proMovil > * { position: relative; }
+
+.proMovil > .proMovilGlow {
+    position: absolute;
+    right: -90px;
+    top: -110px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(169, 195, 139, .3), rgba(169, 195, 139, 0) 70%);
+    pointer-events: none;
+}
+
+.proMovil .railBadge { font-size: 11px; }
+
+.proMovilTitulo {
+    margin: 0;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.05;
+}
+
+.proMovilCopy {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #D4DAE2;
+}
+
+.proMovilPrecio {
+    margin: 0;
+    font-size: 12px;
+    color: #D4DAE2;
+}
+
+.proMovilPrecio b {
+    margin-right: 4px;
+    font-family: 'Young Serif', Georgia, serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #C9B6F2;
+}
+
+.proMovil .railCta { min-height: 52px; }
+
+/* Carrusel: llega al borde de la pantalla y la siguiente tarjeta se asoma. */
+.carrusel {
+    display: flex;
+    gap: 12px;
+    margin: 0 -16px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 16px;
+    scrollbar-width: none;
+}
+
+.carrusel::-webkit-scrollbar { display: none; }
+
+.tileMovil {
+    flex: 0 0 220px;
+    height: 210px;
+    padding: 16px;
+    box-sizing: border-box;
+    scroll-snap-align: start;
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    transition: transform .15s ease;
+}
+
+.tileMovil:hover { transform: none; }
+.tileMovil .tileTitulo { font-size: 20px; }
+.tileMovil .candado { top: 14px; right: 14px; }
+
+.tileMovil.tilePhoto {
+    grid-row: auto;
+    padding: 16px;
+}
+
+.polaroidsMovil {
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    height: 128px;
+}
+
+.polaroidsMovil > span { width: 52%; padding: 5px 5px 18px; }
+
+.tileMovil .sobres {
+    width: 190px;
+    height: 124px;
+}
+
+.compararMovil {
+    all: unset;
+    box-sizing: border-box;
+    align-self: center;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
+    color: #1D3246;
+    font: 600 14px 'Poppins', sans-serif;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+}
+
+/* ── Hoja inferior del comparador ── */
+.hojaCapa {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: flex;
+    align-items: flex-end;
+}
+
+.hojaVelo {
+    position: absolute;
+    inset: 0;
+    background: rgba(29, 50, 70, .45);
+    animation: hojaVeloEntra .2s ease both;
+}
+
+.hoja {
+    position: relative;
+    width: 100%;
+    max-height: 88%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 28px 28px 0 0;
+    background: #fff;
+    box-shadow: 0 -10px 40px rgba(29, 50, 70, .2);
+    animation: hojaSube .28s cubic-bezier(.2, .8, .2, 1) both;
+    transition: transform .2s ease;
+}
+
+.hojaSaliendo .hojaVelo { animation: hojaVeloSale .2s ease both; }
+.hojaSaliendo .hoja { animation: hojaBaja .24s cubic-bezier(.4, 0, 1, 1) both; }
+
+.hojaAsa {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 6px;
+    touch-action: none;
+    cursor: grab;
+}
+
+.hojaAsa > span {
+    width: 40px;
+    height: 5px;
+    border-radius: 999px;
+    background: #DDD8E0;
+}
+
+.hojaCuerpo {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 4px 20px calc(24px + env(safe-area-inset-bottom));
+    font-family: 'Poppins', 'Manrope', sans-serif;
+    color: #1D3246;
+}
+
+.hojaCuerpo .cmpEyebrow { font-size: 11px; }
+.cmpTituloMovil { font-size: 26px; }
+.cmpSubMovil { font-size: 13.5px; }
+
+.cmpFilaMovil { padding: 8px 10px; }
+.cmpFilaMovil.cmpFilaResaltada { border-radius: 10px; }
+.cmpColNombreMovil { font-size: 16px; }
+
+.cmpNombreMovil {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.cmpSiMovil {
+    width: 22px;
+    height: 22px;
+}
+
+.hojaCtas {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hojaNota {
+    margin: 0;
+    font-size: 12px;
+    color: #5B6675;
+    text-align: center;
+}
+
+@keyframes hojaSube { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes hojaBaja { from { transform: none; } to { transform: translateY(100%); } }
+@keyframes hojaVeloEntra { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hojaVeloSale { from { opacity: 1; } to { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .hoja,
+    .hojaVelo,
+    .hojaSaliendo .hoja,
+    .hojaSaliendo .hojaVelo { animation: none; }
+}
+
+/* Bloques del upsell dentro de DashboardMobile: cada bloque de esa pantalla
+   pone su propio margen lateral de 16 px. */
+.bloqueMovil {
+    margin: 14px 16px 0;
+}
+
+.bloqueMovilPrimero {
+    margin: 12px 16px 14px;
+}
+
+.bloqueMovilCentro {
+    display: flex;
+    justify-content: center;
+    margin: 6px 16px 0;
+}
+
+/* Hover en web: solo un scale de 1 a 1.05 (nada de color ni de posición). */
+.nudge,
+.railCta,
+.pasoCta,
+.pasoSecundario,
+.cmpMejorar,
+.chipPlanBoton,
+.liaBurbuja {
+    transition: transform .2s ease;
+}
+
+@media (hover: hover) {
+    .nudge:hover,
+    .railCta:hover,
+    .pasoCta:hover,
+    .pasoSecundario:hover,
+    .cmpMejorar:not([aria-disabled]):hover,
+    .chipPlanBoton:hover,
+    .liaBurbuja:hover {
+        transform: scale(1.05);
+    }
+}
+
+/* Las tarjetas del bento dentro del tablero del upsell no cambian su sombra
+   al pasar el cursor. */
+.rejilla :global(.bento_card:hover) {
+    box-shadow: 0 2px 6px rgba(28, 50, 73, .05), 0 10px 28px rgba(28, 50, 73, .08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nudge:hover,
+    .railCta:hover,
+    .pasoCta:hover,
+    .pasoSecundario:hover,
+    .cmpMejorar:hover,
+    .chipPlanBoton:hover,
+    .liaBurbuja:hover { transform: none; }
+}

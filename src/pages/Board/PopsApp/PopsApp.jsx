@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dropdown, Tooltip, message } from 'antd'
 import { ChevronDown, ChevronRight, CircleHelp, CircleUserRound, House, LayoutList, LogOut, Moon, Plus, Shield, Sparkles, Sun, UserRound } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import { useConfirmados } from '../popsDatos'
 import { PRECIO_PLUS, usePlanPops } from './usePlanPops'
 import { AvisoLimite, ModalLimite } from './AvisoLimite'
@@ -13,8 +14,14 @@ import { PopsAppPagos } from './PopsAppPagos'
 import { HojaPops } from './HojaPops'
 import { MakeAPop } from './MakeAPop'
 import { irAStripePlus } from './suscripcionPlus'
+import { crearPopGratis } from '../../PlannerEvent/plannerEventApi'
+import { leerBorrador } from '../../../modules/SideEvents/PopInvitado/borradorPop'
+import { tomarAccionPendiente } from '../../../helpers/invitation/espacios'
+import { ponerVistaPlan, useVistaPlanAdmin, VISTAS_PLAN } from './vistaPlanAdmin'
 import { MenuEspacios } from '../EspacioSelector'
 import { PlannerFeedback } from '../PlannerFeedback'
+import { ChipPlan, CintaPlus } from './PopsPlus/PopsPlus'
+import { TablaCompleta, TablaHojaMovil, TablaPlusModal } from './PopsPlus/TablasPlus'
 import s from './PopsApp.module.css'
 
 /*
@@ -25,7 +32,11 @@ import s from './PopsApp.module.css'
   medidor de uso en Free, "Make a Pop" y el avatar con su menú) y la página.
   Plan, Pops activos y espacio: usePlanPops. Los avisos de límite (banner y
   modal) son de aquí; cada página pinta el banner donde le toca (`aviso`).
-  `pagina`: inicio | mispops | ideas | pagos (PlannerLayout la guarda en ?seccion=).
+  `pagina`: inicio | mispops | ideas | pagos | plus (PlannerLayout la guarda en ?seccion=).
+  Pops+ en Free (handoff "Pops+ en la App", PopsPlus/): cinta navy arriba de
+  la barra (escritorio), chip de plan con anillos que abre su dropdown (en el
+  celular, "2 de 3" + Pops+ que abre una hoja), modal de la tabla resumida y
+  la página de la tabla completa (`plus`).
   Celular (`movil`, handoff §10): header con el logo (abre el selector de
   espacio en hoja), chip de Pops activos (Free) y avatar; barra inferior fija
   Inicio · Mis Pops · + · Ideas · Cuenta; el menú del avatar y el límite son
@@ -42,6 +53,9 @@ const Medidor = ({ etiqueta, texto, pct, alerta, ancho }) => (
 // Ideas, oculta de momento (pestaña, barra inferior y ?seccion=ideas). Con
 // true regresa todo: la página PopsAppIdeas sigue en el código.
 export const MOSTRAR_IDEAS = false
+// Mientras Ideas está oculta, su botón sí sale en la barra inferior del celular con
+// la insignia "Soon" y solo avisa "Muy pronto" al tocarlo.
+const IDEAS_PRONTO = !MOSTRAR_IDEAS
 // Botón Claro / Oscuro del menú del avatar, oculto de momento (con true regresa).
 const MOSTRAR_TEMA = false
 
@@ -58,6 +72,7 @@ export const PopsApp = ({
     const navigate = useNavigate()
     // Administración: acceso al panel /admin desde el menú del avatar.
     const esAdmin = user?.role === 'Administration'
+    const vistaPlan = useVistaPlanAdmin()
 
     // Al cambiar de página (Inicio, Mis Pops, Pagos…) se vuelve arriba: la
     // página y cualquier contenedor con scroll que la envuelva.
@@ -107,6 +122,10 @@ export const PopsApp = ({
         }
     }
     const pasarPlus = () => irAStripe('checkout')
+    // Tabla resumida de Gratis / Pops+ (modal) y la completa (página `plus`).
+    const [tabla, setTabla] = useState(false)
+    const abrirTabla = () => setTabla(true)
+    const irATablaCompleta = () => { setTabla(false); onPagina('plus') }
 
     // Regreso de Stripe con el pago hecho: aviso y se limpia la URL.
     useEffect(() => {
@@ -130,6 +149,48 @@ export const PopsApp = ({
     const crear = () => (plan.enLimite ? setModal(true) : setCrearAbierto(v => (v ? false : 'menu')))
     const enviarPop = () => (plan.enLimite ? setModal(true) : setCrearAbierto('mail'))
     const sinPops = todos.length === 0
+
+    // Acción del link de entrada (landing de Pops / editor sin cuenta, ver
+    // `destinoDeLogin` en espacios.js), una sola vez y se quita de la URL:
+    //   guardar-pop → crea el Pop "para mí" y abre su editor con el borrador
+    //                 del navegador (`?borrador=1&luego=compartir|enviar|guardar`).
+    //   plus        → pago de Pops+ (Stripe); si ya es Pops+, el backend dice YA_PLUS.
+    //   crear       → abre Make a Pop.
+    const accionHecha = useRef(false)
+    useEffect(() => {
+        if (accionHecha.current) return
+        const params = new URLSearchParams(window.location.search)
+        // De la URL o, tras Google / Apple, la que guardó el login en la pestaña.
+        const pendiente = tomarAccionPendiente()
+        const accion = params.get('accion') || pendiente?.accion
+        if (!accion) return
+        accionHecha.current = true
+        const luego = params.get('luego') || pendiente?.luego || 'guardar'
+        params.delete('accion')
+        params.delete('luego')
+        const q = params.toString()
+        window.history.replaceState(window.history.state, '', `${window.location.pathname}${q ? `?${q}` : ''}`)
+        if (accion === 'plus') { irAStripe('checkout'); return }
+        if (accion === 'crear') { setCrearAbierto('menu'); return }
+        if (accion !== 'guardar-pop') return
+        const borrador = leerBorrador()
+        if (!borrador) return
+        const cargando = message.loading(t('pop_invitado.creating'), 0)
+        crearPopGratis({ nombre: borrador.name || 'Mi Pop', fecha: dayjs().format('YYYY-MM-DD'), hora: null, destino: 'mio' })
+            .then(({ data }) => {
+                cargando()
+                const id = data?.side_event_id
+                if (!id) throw new Error('sin id')
+                navigate(`/dashboard/side?pop=${id}&borrador=1&luego=${encodeURIComponent(luego)}`)
+            })
+            .catch((err) => {
+                cargando()
+                console.error(err)
+                message.error(t('pop_invitado.create_error'))
+                // El borrador se queda: se puede intentar otra vez desde /crear-pop.
+            })
+    }, [])
+
     const nombre = user?.name?.split(' ')[0] ?? ''
     const inicial = (user?.name || '?').trim().charAt(0).toUpperCase()
 
@@ -150,9 +211,14 @@ export const PopsApp = ({
         />
     )
 
+    // Free: la cinta navy (escritorio); prueba gratis: la cinta lima "Quedarme
+    // con Pops+", también en el celular. Con Pops+ (pagado) no hay cinta.
+    const conCinta = pagina !== 'plus' && (Boolean(plan.prueba) || !plan.plus)
+
     const pestanas = [
         { key: 'inicio', label: t('pops_app.tab_home') },
         { key: 'mispops', label: t('pops_app.tab_my_pops'), n: pops.length || null },
+        // Ideas "Soon" solo en el celular (barra inferior); en escritorio, solo si ya abre.
         ...(MOSTRAR_IDEAS ? [{ key: 'ideas', label: t('pops_app.tab_ideas') }] : []),
     ]
 
@@ -258,7 +324,7 @@ export const PopsApp = ({
                     <div className={s.planFreeCabeza}><b>{t('pops_app.plan_free')}</b><span>$0</span></div>
                     <Medidor etiqueta={t('pops_app.active_pops')} texto={popsTexto} pct={pctPops} alerta={plan.enLimite} />
                     <Medidor etiqueta={t('pops_app.space')} texto={mbTexto} pct={pctMb} alerta={pctMb >= 90} />
-                    <button type='button' className={s.ctaLima} onClick={pasarPlus} disabled={yendo}>{t(yendo ? 'pops_app.going_stripe' : 'pops_app.go_plus', { price: PRECIO_PLUS })}</button>
+                    <button type='button' className={s.ctaLima} onClick={pasarPlus} disabled={yendo}>{t(yendo ? 'pops_app.going_stripe' : 'pops_plus_app.go_plus')}</button>
                 </div>
             )}
             {plan.plus && !movil && (
@@ -285,6 +351,27 @@ export const PopsApp = ({
                     <ChevronRight size={16} className={s.adminFlecha} />
                 </button>
             )}
+            {/* Administración: ver la app como una cuenta Free, Pops+ o en prueba
+                (solo en este navegador; tocar la elegida vuelve al plan real). */}
+            {esAdmin && (
+                <div className={s.verComo} role='group' aria-label={t('pops_plus_app.view_as')}>
+                    <span className={s.verComoEtiqueta}>{t('pops_plus_app.view_as')}</span>
+                    <div className={s.verComoBotones}>
+                        {VISTAS_PLAN.map(v => (
+                            <button
+                                key={v}
+                                type='button'
+                                className={s.verComoBoton}
+                                data-activo={vistaPlan === v || undefined}
+                                aria-pressed={vistaPlan === v}
+                                onClick={() => ponerVistaPlan(vistaPlan === v ? null : v)}
+                            >
+                                {t(`pops_plus_app.view_${v}`)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
             <button type='button' className={s.salir} onClick={onLogout}><LogOut size={15} />{t('invitations.planner_menu_logout')}</button>
         </>
     )
@@ -305,28 +392,23 @@ export const PopsApp = ({
                 {puedeCambiarEspacio && <ChevronDown size={13} className={s.flechita} />}
             </button>
             <div className={s.derechaMovil}>
-                {plan.prueba && (
-                    <span className={`${s.chipPops} ${s.chipPrueba}`}>{t('pops_app.trial_days_short', { count: plan.prueba.dias })}</span>
-                )}
-                {!plan.plus && (
-                    <span className={s.chipPops} data-alerta={plan.enLimite || undefined}>
-                        <span aria-hidden />{popsTexto}
-                    </span>
-                )}
-                <button type='button' className={s.avatarMovil} data-abierto={menu || undefined} onClick={() => setMenu(true)} aria-label={user?.name}>
-                    {inicial}
-                </button>
+                {/* Free y Pops+ (sin el botón de compra); la prueba se ve en su hoja. */}
+                <ChipPlan plan={plan} onPasarPlus={pasarPlus} movil />
+                {/* Sin avatar: la cuenta ya está en la barra de abajo (Cuenta). */}
             </div>
         </header>
     )
-    const tabMovil = (key, label, Icono, onClick, activa) => (
-        <button key={key} type='button' className={s.tabMovil} data-activa={activa || undefined} aria-current={activa ? 'page' : undefined} onClick={onClick}>
-            <span className={s.tabIcono}><Icono size={19} strokeWidth={2.2} /></span>
+    const tabMovil = (key, label, Icono, onClick, activa, pronto = false) => (
+        <button key={key} type='button' className={s.tabMovil} data-activa={activa || undefined} aria-current={activa ? 'page' : undefined} aria-disabled={pronto || undefined} onClick={onClick}>
+            <span className={s.tabIcono}>
+                <Icono size={19} strokeWidth={2.2} />
+                {pronto && <span className={s.prontoMovil}>{t('pops_plus_app.coming_soon')}</span>}
+            </span>
             {label}
         </button>
     )
     const barraInferior = (
-        <nav className={s.barraInferior} data-sin-ideas={!MOSTRAR_IDEAS || undefined} aria-label={t('invitations.space_pops')}>
+        <nav className={s.barraInferior} data-sin-ideas={!(MOSTRAR_IDEAS || IDEAS_PRONTO) || undefined} aria-label={t('invitations.space_pops')}>
             {tabMovil('inicio', t('pops_app.tab_home'), House, () => onPagina('inicio'), pagina === 'inicio' && !menu)}
             {tabMovil('mispops', t('pops_app.tab_my_pops'), LayoutList, () => onPagina('mispops'), pagina === 'mispops' && !menu)}
             <span className={s.masCelda}>
@@ -337,12 +419,20 @@ export const PopsApp = ({
                 )}
             </span>
             {MOSTRAR_IDEAS && tabMovil('ideas', t('pops_app.tab_ideas'), Sparkles, () => onPagina('ideas'), pagina === 'ideas' && !menu)}
+            {IDEAS_PRONTO && tabMovil('ideas', t('pops_app.tab_ideas'), Sparkles, () => message.info(t('pops_app.soon')), false, true)}
             {tabMovil('cuenta', t('pops_app.tab_account'), CircleUserRound, () => setMenu(true), menu || pagina === 'pagos')}
         </nav>
     )
 
     return (
-        <div className={s.app} data-tema={tema} data-movil={movil || undefined}>
+        <div className={s.app} data-tema={tema} data-movil={movil || undefined} data-cinta={conCinta || undefined} style={{ '--alto-cinta': `${movil ? (plan.prueba ? 40 : 36) : 44}px` }}>
+            {/* Cinta navy de Pops+ (Free, escritorio): fija arriba de la barra. */}
+            {conCinta && (
+                <div className={s.cintaFija}>
+                    {/* En la prueba, "Quedarme con Pops+" abre la tabla (y su botón va a Stripe). */}
+                    <CintaPlus pantalla={pagina === 'mispops' ? 'mispops' : 'inicio'} onConocer={abrirTabla} plus={plan.plus} prueba={Boolean(plan.prueba)} onQuedarme={abrirTabla} yendo={yendo} movil={movil} />
+                </div>
+            )}
             {movil ? cabeceraMovil : (
             <header className={s.barra}>
                 <div className={s.izquierda}>
@@ -365,10 +455,12 @@ export const PopsApp = ({
                                 className={s.pestana}
                                 data-activa={activa === p.key || undefined}
                                 aria-current={activa === p.key ? 'page' : undefined}
-                                onClick={() => irA(p.key)}
+                                aria-disabled={p.pronto || undefined}
+                                onClick={() => (p.pronto ? message.info(t('pops_app.soon')) : irA(p.key))}
                             >
                                 {p.label}
                                 {p.n != null && <span className={s.cuenta}>{p.n}</span>}
+                                {p.pronto && <span className={s.pronto}>{t('pops_plus_app.coming_soon')}</span>}
                             </button>
                         ))}
                     </nav>
@@ -381,16 +473,12 @@ export const PopsApp = ({
                             {t('pops_app.trial_days', { count: plan.prueba.dias })}
                         </span>
                     )}
-                    {!plan.plus && (
-                        <div className={s.uso}>
-                            <Medidor etiqueta={t('pops_app.active_pops')} texto={popsTexto} pct={pctPops} alerta={plan.enLimite} ancho={130} />
-                            <Medidor etiqueta={t('pops_app.space')} texto={mbTexto} pct={pctMb} alerta={pctMb >= 90} ancho={150} />
-                        </div>
-                    )}
+                    {/* Free: anillos de Pops activos y espacio + Pops+ (abre su dropdown). */}
+                    <ChipPlan plan={plan} onPasarPlus={pasarPlus} />
                     {pagina !== 'inicio' && !sinPops && puedeCrear && (
-                        <button type='button' ref={makePopRef} className={s.makePop} data-abierto={crearAbierto === 'menu' || undefined} aria-expanded={crearAbierto === 'menu'} onClick={crear}>
+                        <button type='button' ref={makePopRef} className={s.makePop} aria-label={t('pops_app.make_a_pop')} data-abierto={crearAbierto === 'menu' || undefined} aria-expanded={crearAbierto === 'menu'} onClick={crear}>
                             <span className={s.makePopMas}><Plus size={20} strokeWidth={2.6} /></span>
-                            {t('pops_app.make_a_pop')}
+                            <span className={s.makePopTexto}>{t('pops_app.make_a_pop')}</span>
                         </button>
                     )}
                     <div className={s.avatarWrap} ref={menuRef}>
@@ -424,6 +512,7 @@ export const PopsApp = ({
                         onAbrir={onAbrir}
                         onVerMisPops={() => onPagina('mispops')}
                         onPasarPlus={pasarPlus}
+                        onTabla={abrirTabla}
                     />
                 )}
                 {pagina === 'mispops' && (
@@ -442,7 +531,11 @@ export const PopsApp = ({
                         onEnviarACliente={onEnviarACliente}
                         onAbrir={onAbrir}
                         onPasarPlus={pasarPlus}
+                        onTabla={abrirTabla}
                     />
+                )}
+                {pagina === 'plus' && (
+                    <TablaCompleta movil={movil} esFree={!plan.plus} prueba={Boolean(plan.prueba)} onVolver={() => onPagina('inicio')} onPlus={pasarPlus} />
                 )}
                 {MOSTRAR_IDEAS && pagina === 'ideas' && <PopsAppIdeas movil={movil} plan={plan} puedeCrear={puedeCrear} onUsarIdea={crear} />}
                 {pagina === 'pagos' && (
@@ -461,6 +554,9 @@ export const PopsApp = ({
                 onSoloPlus={() => message.info(t('pop_flow.plus_only'))}
             />
             <PlannerFeedback variante='oculta' abierto={sugerencias} onCerrar={() => setSugerencias(false)} />
+            {/* Escritorio: modal en columnas (1c); celular: hoja en lista (D2). */}
+            <TablaPlusModal open={tabla && !movil} onClose={() => setTabla(false)} onDetalle={irATablaCompleta} onPlus={pasarPlus} esFree={!plan.plus} prueba={Boolean(plan.prueba)} />
+            <TablaHojaMovil open={tabla && movil} onClose={() => setTabla(false)} onDetalle={irATablaCompleta} onPlus={pasarPlus} esFree={!plan.plus} prueba={Boolean(plan.prueba)} />
             <ModalLimite movil={movil} open={modal} onClose={() => setModal(false)} onArchivar={() => { setModal(false); onPagina('mispops') }} onPlus={pasarPlus} />
 
             {movil && (

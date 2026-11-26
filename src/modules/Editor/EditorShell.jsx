@@ -163,6 +163,10 @@ export const EditorShell = ({
     // Gestos del tablero inmersivo (LienzoInmersivo): `sinHerramienta` (sin
     // pincel, un dedo mueve el tablero) y `onTapFuera` (tocar fuera de la pieza).
     inmersivoGestos = null,
+    // Pops+ (Pop Free probando funciones Plus): `aviso` = barra arriba de la
+    // pieza cuando no hay barra contextual; `railPie` = al pie del riel (la
+    // prueba gratis). Una herramienta con `plus: true` lleva un punto lima.
+    aviso = null, railPie = null,
     children,
 }) => {
     const { t } = useTranslation()
@@ -451,10 +455,12 @@ export const EditorShell = ({
                                     >
                                         <item.icon size={20} />
                                         {item.aviso && <span className={ws.railAviso} aria-hidden />}
+                                        {!item.aviso && item.plus && <span className={ws.railPlus} aria-hidden />}
                                     </button>
                                 </Tooltip>
                             </div>
                         ))}
+                        {railPie}
                     </div>
 
                     {/* Siempre montado: abre y cierra deslizando su ancho (0 ↔ 340). */}
@@ -496,7 +502,7 @@ export const EditorShell = ({
                 onPointerUp={arrastreUp}
                 onPointerCancel={arrastreUp}
                 style={{
-                    padding: `${bar || barraVivo ? 92 : 20}px ${padR}px ${withColumn ? 20 : 92}px ${padL}px`,
+                    padding: `${bar || barraVivo || (aviso && !live && !withColumn) ? 92 : 20}px ${padR}px ${withColumn ? 20 : 92}px ${padL}px`,
                     transform: keyboardLift ? `translateY(-${keyboardLift}px)` : undefined,
                     transition: cambiandoModo ? 'none' : 'padding 0.25s ease, transform 0.25s ease',
                     // Inmersivo: el tablero de LienzoInmersivo ocupa su lugar.
@@ -552,7 +558,7 @@ export const EditorShell = ({
                 </div>
             )}
             {showLayers && !hideLayers && capasOcultas && (
-                <button type="button" className={ws.layersShow} onClick={() => ocultarCapas(false)}>
+                <button type="button" className={ws.layersShow} data-capas-mostrar onClick={() => ocultarCapas(false)}>
                     <Layers size={16} /> {t('build_editor.layers_title')}
                 </button>
             )}
@@ -563,6 +569,13 @@ export const EditorShell = ({
                 // ancha, como la de Patrocinadores, se acomoda en dos renglones).
                 <div className={ws.elementBar} style={{ left: center, '--barra-max': `${Math.max(280, vp.w - padL - padR - 24)}px` }} data-tour="bar">
                     {bar}
+                </div>
+            )}
+
+            {/* ── Aviso de Pops+ (sin barra contextual) ── */}
+            {aviso && !bar && !live && !withColumn && !inmersivo && (
+                <div className={ws.elementBar} style={{ left: center, '--barra-max': `${Math.max(280, vp.w - padL - padR - 24)}px` }} data-edit-keep>
+                    {aviso}
                 </div>
             )}
 
@@ -592,7 +605,7 @@ export const EditorShell = ({
 
             {/* ── Lateral del modo inmersivo (paleta de dibujo) ── */}
             {inmersivo && lateral && (
-                <div className={ws.lateral} style={{ width: LATERAL_W }} data-edit-keep>
+                <div className={ws.lateral} style={{ width: LATERAL_W }} data-edit-keep data-tour="lateral">
                     {lateral}
                 </div>
             )}

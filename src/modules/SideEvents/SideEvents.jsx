@@ -3,6 +3,7 @@ import { esOnline } from './acceso'
 import { TablaInvitados } from './TablaInvitados'
 import { RemindersPanel } from '../GuestManagement/Reminders/RemindersPanel'
 import { irAStripePlus } from '../../pages/Board/PopsApp/suscripcionPlus'
+import { pruebaSimulada, useVistaPlanAdmin } from '../../pages/Board/PopsApp/vistaPlanAdmin'
 import { Badge, Button, Checkbox, DatePicker, Dropdown, Grid, Input, Layout, message, Modal, Progress, Segmented, Select, Spin, Switch, Tooltip } from 'antd'
 import { Deslizador as Slider } from '../Editor/Deslizador'
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -27,6 +28,10 @@ import { guardarCamposSideEvent } from './guardarSideEvent'
 import { funcionesPlusEnUso } from './planPops'
 import { marcarPopFree, marcarPopPrueba } from './PlanPops/planPopsUI'
 import { InsigniaPlus } from './PlanPops/InsigniaPlus'
+import { ChipFreeEditor, ModalCompartirPlus } from './PlanPops/PruebaPlus'
+import { CintaPlus } from '../../pages/Board/PopsApp/PopsPlus/PopsPlus'
+import { TablaPlusModal } from '../../pages/Board/PopsApp/PopsPlus/TablasPlus'
+import { etiquetasPlus } from './PlanPops/etiquetasPlus'
 import { usePresenciaPop } from './Presencia/usePresenciaPop'
 import { CursoresPop } from './Presencia/CursoresPop'
 import { AvataresPresencia } from './Presencia/AvataresPresencia'
@@ -94,6 +99,10 @@ import { useBuzonPop } from './useBuzonPop'
 import sInv from './Movil/InvitadosMovil.module.css'
 import { ajusteDe, esVideo, fotosDePortada, mediaDePortada, MAX_FOTOS_CARRUSEL, parcheFotos, soloVideos } from './fotosPortada'
 import { uploadImagesSupabase } from '../../helpers/services/uploadImage'
+import { borrarBorrador, guardarBorrador, leerBorrador, rutaCrearCuentaPop } from './PopInvitado/borradorPop'
+import { PedirCuenta } from './PopInvitado/PedirCuenta'
+import { BotonComoFunciona, TourPop } from './PopInvitado/TourPop'
+import invS from './PopInvitado/PopInvitado.module.css'
 
 // Selector de estilo del editor de Pops (I attend · Pop · Business · Craft)
 // en la barra de arriba: oculto por ahora; con true regresa.
@@ -225,7 +234,38 @@ const popEnBlanco = () => ({
     },
 })
 
-export const SideEvents = () => {
+// Pop sin cuenta (`/crear-pop`): el Pop en blanco con lo que la persona ya
+// había hecho en este navegador (borradorPop.js).
+const popDeBorrador = () => {
+    const base = popEnBlanco()
+    const b = leerBorrador()
+    return b ? { ...base, name: b.name || base.name, type: b.type || base.type, body: { ...base.body, ...b.body } } : base
+}
+
+// Mientras corre el tour de "¿Cómo funciona?" (TourPop), la pieza y los paneles
+// enseñan el formulario prendido, la lista de asistentes y el chat aunque el
+// Pop no los tenga (con los ejemplos de
+// siempre: AsistentesMuestra). Solo es lo que se pinta: no toca `current`, el
+// historial ni lo guardado.
+const popDeTour = (pop) => (pop ? {
+    ...pop,
+    body: {
+        ...pop.body,
+        showAttendees: true,
+        chat: { ...(pop.body?.chat ?? {}), enabled: true },
+        form: { ...(pop.body?.form ?? {}), enabled: true },
+        cards: Array.isArray(pop.body?.cards)
+            ? pop.body.cards.map((c) => (c?.key === 'attendees' ? { ...c, hidden: false } : c))
+            : pop.body?.cards,
+    },
+} : pop)
+
+// `invitado`: editor de Pops sin cuenta (ruta /crear-pop). Es el Pop de prueba
+// (?pop=prueba, nada se guarda en la base) con su borrador en localStorage y
+// botón Guardar; Guardar, Invitados / Enviar y Compartir piden crear cuenta
+// (PedirCuenta) y, ya con ella, PopsApp crea el Pop y abre su editor con
+// `?borrador=1&luego=…`, donde este mismo componente aplica el borrador.
+export const SideEvents = ({ invitado = false }) => {
     const { t, i18n } = useTranslation()
     const { setCreditSending, setCreditSuccess, clearCreditState } = useLia()
 
@@ -357,7 +397,7 @@ export const SideEvents = () => {
     // invitación padre (plan, tope, importar invitados de la boda, etiquetas).
     // Los créditos son los del propio evento (side_events.credits); los envíos
     // por WhatsApp todavía no están disponibles para Pop.
-    const popId = searchParams.get("pop") ?? searchParams.get("flash");
+    const popId = invitado ? POP_DEMO_ID : (searchParams.get("pop") ?? searchParams.get("flash"));
     // Pop en blanco de prueba (`?pop=prueba`, modo prueba de Make a Pop): se
     // arma aquí con la misma forma que crea el backend y nada se guarda
     // (ni autoguardado, ni acceso, ni imagen del link, ni invitados).
@@ -385,6 +425,7 @@ export const SideEvents = () => {
     const [popPlus, setPopPlus] = useState(null)
     // Prueba gratis de Pops+ del dueño ({ dias, vence } o null): todo funciona,
     // pero las insignias siguen y el encabezado dice cuándo vence.
+    const vistaPlan = useVistaPlanAdmin()
     const [popPrueba, setPopPrueba] = useState(null)
     useEffect(() => {
         if (!esPop || !popId) { setPopPlus(null); return undefined }
@@ -392,6 +433,8 @@ export const SideEvents = () => {
         // Solo en desarrollo: ?free=1 enseña el editor como Pop Free aunque
         // la cuenta sea Plus (Administración siempre lo es), para revisar el
         // aviso y los bloqueos. Lo que no usa funciones Plus sí se guarda.
+        // Administración con "Ver como" Free · Plus · Try (vistaPlanAdmin.js).
+        if (vistaPlan) { setPopPlus(vistaPlan !== 'free'); setPopPrueba(vistaPlan === 'try' ? pruebaSimulada() : null); return undefined }
         if (import.meta.env.DEV && searchParams.get('free') === '1') { setPopPlus(false); return undefined }
         let vivo = true
         ;(async () => {
@@ -404,7 +447,7 @@ export const SideEvents = () => {
             }
         })()
         return () => { vivo = false }
-    }, [esPop, popId, searchParams])
+    }, [esPop, popId, searchParams, vistaPlan])
     const funcionesPlus = esPop && popPlus === false ? funcionesPlusEnUso(current?.body) : []
     useEffect(() => {
         marcarPopFree(esPop && popPlus === false)
@@ -2114,7 +2157,7 @@ export const SideEvents = () => {
     };
 
     const getSideEvents = async () => {
-        if (popDemo) { setsideEvent([popEnBlanco()]); setGuestCounts({}); return }
+        if (popDemo) { setsideEvent([invitado ? popDeBorrador() : popEnBlanco()]); setGuestCounts({}); return }
         const base = supabase.from('side_events').select('*')
         const { data, error } = await (esPop ? base.eq('id', popId) : base.eq('invitation_id', id))
 
@@ -3241,6 +3284,8 @@ export const SideEvents = () => {
     // En Envío la pieza no se edita, así que se muestra ya publicada; al
     // volver a Diseño regresa el lienzo editable.
     const changeTab = (value) => {
+        // Sin cuenta: Invitados (mandar el Pop) pide crear cuenta.
+        if (invitado && value === 'envio') { pedirCuenta('enviar'); return }
         setActiveTab(value)
         setSection(null)
         setLive(value === 'envio')
@@ -3368,6 +3413,107 @@ export const SideEvents = () => {
         setEstadoGuardado('guardado')
         setStickerSel([])
     }
+
+    // Pops+ en un Pop Free (handoff "Pops+ en la App" 3): pasar a Pops+ (Stripe),
+    // el modal de Compartir con funciones Plus en uso y lo que arma la barra,
+    // las notas y el riel (SideWorkspace → PlanPops/PruebaPlus.jsx).
+    const [yendoPlus, setYendoPlus] = useState(false)
+    const pasarPopPlus = async () => {
+        if (yendoPlus) return
+        setYendoPlus(true)
+        try {
+            await irAStripePlus('checkout')
+        } catch (err) {
+            message.error(t(err?.response?.data?.code === 'YA_PLUS' ? 'pops_app.already_plus' : 'pops_app.stripe_error'))
+            setYendoPlus(false)
+        }
+    }
+    const [compartirPlus, setCompartirPlus] = useState(false)
+    const [tablaPlus, setTablaPlus] = useState(false)
+    const [abrirCompartir, setAbrirCompartir] = useState(0)
+    const etiquetasEnUso = funcionesPlus.length ? etiquetasPlus(t, funcionesPlus, current?.body) : []
+    // Free y Pops+ (en Pops+ no hay nada "probando": sin barra, notas ni modal).
+    const pruebaPlus = esPop && !invitado ? {
+        etiquetas: etiquetasEnUso,
+        onQuitar: dirty ? quitarFuncionesPlus : null,
+        onPlus: pasarPopPlus,
+        yendo: yendoPlus,
+        // Puntos lima del riel: en Free y en la prueba gratis; con Pops+ pagado, no.
+        insignias: popFree || Boolean(popPrueba),
+    } : null
+    // "Pruébalo en este Pop": Pops+ o la herramienta que lo enseña.
+    const accionPruebalo = (accion) => {
+        if (accion === 'plus') { pasarPopPlus(); return }
+        if (activeTab !== 'diseno') changeTab('diseno')
+        setToolRequest({ id: accion, n: Date.now() })
+    }
+    const diaDelPop = /^\d{4}-\d{2}-(\d{2})/.exec(String(current?.body?.hour ?? ''))?.[1]
+
+    // ── Pop sin cuenta (/crear-pop) ──
+    const [pidiendoCuenta, setPidiendoCuenta] = useState(null) // null · 'guardar' · 'enviar' · 'compartir'
+    const pedirCuenta = async (luego = 'guardar') => {
+        // Con sesión abierta no hace falta crear cuenta: directo a crear el Pop.
+        const { data } = await supabase.auth.getSession()
+        if (data?.session) { guardarBorrador(currentRef.current); navigate(rutaCrearCuentaPop(luego, { conSesion: true })); return }
+        setPidiendoCuenta(luego)
+    }
+    const irACrearCuenta = (registro) => {
+        guardarBorrador(currentRef.current)
+        const ruta = rutaCrearCuentaPop(pidiendoCuenta || 'guardar')
+        navigate(registro ? ruta : ruta.replace('mode=register&', ''))
+    }
+    // "¿Cómo funciona?" (TourPop, escritorio): en /crear-pop y en el primer Pop
+    // de la persona (el único Pop suyo o que hizo como planner).
+    const [tourPop, setTourPop] = useState(false)
+    const [primerPop, setPrimerPop] = useState(false)
+    useEffect(() => {
+        if (!esPop || popDemo || !popId) return undefined
+        let vivo = true
+        ;(async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            const uid = session?.user?.id
+            if (!uid) return
+            const { count, error } = await supabase
+                .from('side_events')
+                .select('id', { count: 'exact', head: true })
+                .is('invitation_id', null)
+                .or(`user_id.eq.${uid},planner_id.eq.${uid}`)
+            if (vivo && !error) setPrimerPop((count ?? 0) <= 1)
+        })()
+        return () => { vivo = false }
+    }, [esPop, popDemo, popId])
+    const conComoFunciona = invitado || primerPop
+    // /crear-pop: el tour se abre solo la primera vez (en este navegador; solo
+    // escritorio, donde vive el tour), cuando ya se pintó la pieza.
+    useEffect(() => {
+        if (!invitado || !current?.id || window.innerWidth <= 720) return undefined
+        try { if (localStorage.getItem('iattend_pop_tour_visto') === '1') return undefined } catch { return undefined }
+        const timer = setTimeout(() => {
+            try { localStorage.setItem('iattend_pop_tour_visto', '1') } catch { /* sin storage */ }
+            setTourPop(true)
+        }, 900)
+        return () => clearTimeout(timer)
+    }, [invitado, current?.id])
+
+    // Lo que se arma sin cuenta vive en este navegador.
+    useEffect(() => { if (invitado && current?.body) guardarBorrador(current) }, [invitado, current])
+    // Ya con cuenta (`?borrador=1`): el borrador entra como cambios sin guardar
+    // (el autoguardado lo guarda) y luego, según `luego`, se abre Compartir o
+    // Invitados.
+    const borradorAplicado = useRef(false)
+    useEffect(() => {
+        if (invitado || popDemo || !esPop || borradorAplicado.current || searchParams.get('borrador') !== '1') return
+        if (!current?.id || String(current.id) !== String(popId)) return
+        borradorAplicado.current = true
+        const b = leerBorrador()
+        if (b?.body) {
+            updateCurrent((prev) => ({ ...prev, name: b.name || prev.name, type: b.type || prev.type, body: { ...prev.body, ...b.body } }), { snapshot: false })
+            borrarBorrador()
+        }
+        const luego = searchParams.get('luego')
+        if (luego === 'compartir') setTimeout(() => setAbrirCompartir(Date.now()), 600)
+        if (luego === 'enviar') setTimeout(() => changeTab('envio'), 600)
+    }, [current?.id])
 
     const sinGuardarDesdeRef = useRef(null)
     const hayOtrosRef = useRef(false)
@@ -5081,14 +5227,15 @@ export const SideEvents = () => {
                     onStickerSel={setStickerSel}
                     esPop={esPop}
                     asistentes={esPop ? asistentesDe(rawData) : null}
-                    onBack={handleBack}
+                    // Sin cuenta, "salir" es guardar (pide crear cuenta).
+                    onBack={invitado ? () => pedirCuenta('guardar') : handleBack}
                     stageMorphState={stageMorphState}
                     onUndo={onUndo}
                     onRedo={onRedo}
                     canUndo={undoStack.length > 0}
                     canRedo={redoStack.length > 0}
                     tab={activeTab}
-                    onTab={(v) => { setActiveTab(v); setSection(null) }}
+                    onTab={(v) => { if (invitado && v === 'envio') { pedirCuenta('enviar'); return } setActiveTab(v); setSection(null) }}
                     esPublico={esPublico}
                     onAcceso={alternarAcceso}
                     envolverAcceso={(b) => envolverAcceso(b, 'bottomRight')}
@@ -5096,8 +5243,8 @@ export const SideEvents = () => {
                     // Compartir: modal con la portada, su QR y Copiar link (como
                     // el popover de escritorio).
                     urlPublica={publicUrl}
-                    compartirBloqueado={hasPendingInfo}
-                    onCompartirBloqueado={() => handleShare(publicUrl)}
+                    compartirBloqueado={invitado || hasPendingInfo}
+                    onCompartirBloqueado={() => (invitado ? pedirCuenta('compartir') : handleShare(publicUrl))}
                     estadoGuardado={estadoGuardado}
                     onReintentar={() => guardarAhora({ conImagen: true })}
                     funcionesPlus={funcionesPlus}
@@ -5121,6 +5268,7 @@ export const SideEvents = () => {
                         />
                     ) : null}
                 />
+                <PedirCuenta open={Boolean(pidiendoCuenta)} luego={pidiendoCuenta} onClose={() => setPidiendoCuenta(null)} onCrear={() => irACrearCuenta(true)} onEntrar={() => irACrearCuenta(false)} />
                 {globals}
             </>
         )
@@ -5412,13 +5560,31 @@ export const SideEvents = () => {
     if (current) {
         return (
             <div className={`${ed.pageContainer} ${wso.page}`}>
+                {/* Prueba gratis de Pops+: la misma cinta lima de la app; "Quedarme
+                    con Pops+" abre la tabla, cuyo botón va al pago. */}
+                {esPop && !popFree && popPrueba && !invitado && (
+                    <CintaPlus prueba onQuedarme={() => setTablaPlus(true)} yendo={yendoPlus} />
+                )}
+                <TablaPlusModal
+                    open={tablaPlus}
+                    onClose={() => setTablaPlus(false)}
+                    onDetalle={() => navigate('/invitations?espacio=pops&seccion=plus')}
+                    onPlus={pasarPopPlus}
+                    esFree={false}
+                    prueba
+                />
 
                 {/* Barra mínima: volver, evento, pestañas y acciones */}
                 <div className={`${ed.topBar} ${wso.topBar}`} data-editor-topbar>
                     <div className={ed.topLeft}>
-                        <button className={ed.backBtn} onClick={handleBack} aria-label={t('side_events.back')}>
-                            <ArrowLeft size={17} />
-                        </button>
+                        {/* Sin cuenta no hay a dónde volver: va la marca de Pops. */}
+                        {invitado ? (
+                            <span className={invS.marca}>Pops<small>by I attend</small></span>
+                        ) : (
+                            <button className={ed.backBtn} onClick={handleBack} aria-label={t('side_events.back')}>
+                                <ArrowLeft size={17} />
+                            </button>
+                        )}
                         {/* Pop: su emoji junto al nombre; se elige desde aquí. */}
                         {esPop && (
                             <EmojiPop
@@ -5430,12 +5596,8 @@ export const SideEvents = () => {
                         <span className={ed.crumb}>
                             <span className={wso.crumbKind}>{esPop ? t('invitations.pop_badge') : 'Side event'} · </span><strong>{current?.name || t('side_events.no_name')}</strong>
                             {/* Plan del Pop: Free a la vista (Plus no lleva etiqueta). */}
-                            {popFree && <span className={wso.etiquetaFree}>{t('pops_plus.free')}</span>}
-                            {!popFree && popPrueba && (
-                                <span className={`${wso.etiquetaFree} ${wso.etiquetaPrueba}`}>
-                                    <span className={wso.pruebaMarca} aria-hidden>Pops<span className={wso.pruebaMas}>+</span></span>
-                                    {t('pops_plus.prueba_vence', { count: popPrueba.dias })}
-                                </span>
+                            {!invitado && (popFree || (popPlus !== null && !popPrueba)) && (
+                                <ChipFreeEditor plus={!popFree} dia={diaDelPop ? String(Number(diaDelPop)) : null} onAccion={accionPruebalo} />
                             )}
                         </span>
                         {TOUR_SIDE_ACTIVO && (
@@ -5452,7 +5614,7 @@ export const SideEvents = () => {
                         )}
                         {/* Pop: sus créditos junto al título; en Invitados van
                             en el encabezado de la lista (headCompacto). */}
-                        {esPop && !popFree && activeTab !== 'envio' && (
+                        {esPop && !popFree && !invitado && activeTab !== 'envio' && (
                             <span className={ed.creditosTitulo}>
                                 <CreditController id={popId} pop variante="envios" placement="bottomLeft" />
                             </span>
@@ -5477,11 +5639,13 @@ export const SideEvents = () => {
                         {esPop && presencia.otros.length > 0 && <CursoresPop otros={presencia.otros} cursores={presencia.cursores} />}
                         {/* Autoguardado: su estado a la izquierda de Público /
                             Compartir (solo se ve mientras guarda y un momento después). */}
-                        <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} funcionesPlus={funcionesPlus} onQuitarPlus={dirty ? quitarFuncionesPlus : null} />
+                        {invitado
+                            ? <button type="button" className={invS.guardar} data-tour="guardar" onClick={() => pedirCuenta('guardar')}>{t('pop_invitado.save')}</button>
+                            : <EstadoGuardado estado={estadoGuardado} onReintentar={() => guardarAhora({ conImagen: true })} funcionesPlus={funcionesPlus} onQuitarPlus={dirty ? quitarFuncionesPlus : null} onPasarPlus={pasarPopPlus} />}
                         {/* Pop: su estilo de editor (Pop · Business · Craft), el mismo
                             de la sección Pops; se cambia aquí sin salir. */}
                         {esPop && SELECTOR_ESTILO_EDITOR && <PopsTemaSwitch tema={temaPops} onCambiar={cambiarTemaPops} enLinea temas={temasEditor} />}
-                        {esPop && !popFree && <BotonBuzonPop popId={popId} buzon={buzonPop} className={`${ed.livePill} ${ed.buzonBtn}`} />}
+                        {esPop && !popFree && !invitado && <BotonBuzonPop popId={popId} buzon={buzonPop} className={`${ed.livePill} ${ed.buzonBtn}`} />}
                         {/* "Ver en vivo" vive en el dock del área de trabajo. */}
                         {botonAcceso(`${ed.livePill} ${esPublico ? ed.accesoPublico : ''}`, true)}
 
@@ -5491,8 +5655,11 @@ export const SideEvents = () => {
                                 <CompartirPop
                                     current={current}
                                     url={publicUrl}
-                                    bloqueado={hasPendingInfo}
-                                    onBloqueado={() => message.warning('Completa la información pendiente de tu invitación antes de compartir el link.')}
+                                    bloqueado={invitado || hasPendingInfo || funcionesPlus.length > 0}
+                                    onBloqueado={() => (invitado ? pedirCuenta('compartir') : funcionesPlus.length
+                                        ? setCompartirPlus(true)
+                                        : message.warning('Completa la información pendiente de tu invitación antes de compartir el link.'))}
+                                    abrirPedido={abrirCompartir}
                                 />
                             ) : (
                                 <CustomLink
@@ -5517,7 +5684,7 @@ export const SideEvents = () => {
                 {/* Área de trabajo (riel, pieza, barras, Capas y dock), con la
                     misma experiencia que el editor de la invitación. */}
                 <SideWorkspace
-                    current={current}
+                    current={tourPop && esPop ? popDeTour(current) : current}
                     esPop={esPop}
                     asistentesReales={esPop ? asistentesDe(rawData) : null}
                     carpeta={esPop ? `flash-${popId}` : id}
@@ -5543,6 +5710,26 @@ export const SideEvents = () => {
                     onPaste={esPop && puedeLeerPortapapeles ? pegarDesdePortapapeles : null}
                     toolRequest={toolRequest}
                     stageMorphState={stageMorphState}
+                    pruebaPlus={pruebaPlus}
+                />
+
+                <PedirCuenta open={Boolean(pidiendoCuenta)} luego={pidiendoCuenta} onClose={() => setPidiendoCuenta(null)} onCrear={() => irACrearCuenta(true)} onEntrar={() => irACrearCuenta(false)} />
+                <TourPop open={tourPop} onClose={() => setTourPop(false)} invitado={invitado} onHerramienta={(id) => setToolRequest({ id, n: Date.now() })} />
+                {/* "¿Cómo funciona?" abajo a la derecha: llamativo (lima con halo) en
+                    /crear-pop y en el primer Pop; discreto en los demás. */}
+                {esPop && activeTab === 'diseno' && !live && (
+                    <span className={invS.comoFuncionaEsquina}>
+                        <BotonComoFunciona llamativo={conComoFunciona} onClick={() => { setSection(null); setTourPop(true) }} />
+                    </span>
+                )}
+                {/* Pop Free: Compartir con funciones Plus en uso. */}
+                <ModalCompartirPlus
+                    open={compartirPlus && funcionesPlus.length > 0}
+                    etiquetas={etiquetasEnUso}
+                    onClose={() => setCompartirPlus(false)}
+                    onQuitar={dirty ? () => { quitarFuncionesPlus(); setCompartirPlus(false); setAbrirCompartir(Date.now()) } : null}
+                    onPlus={pasarPopPlus}
+                    yendo={yendoPlus}
                 />
 
                 {globals}

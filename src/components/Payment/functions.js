@@ -153,7 +153,13 @@ export const PRICE_IDS = {
   PLAN_PRO:         'price_1UaFaqAAdNlITNVb73fqH4yd',   // $3,999 — producto "PRO - Contado"
 
   // Upgrade
-  UPGRADE_TO_PRO:   'price_1TlC4RAAdNlITNVbjcRtexSy',
+  UPGRADE_TO_PRO:   'price_1TlC4RAAdNlITNVbjcRtexSy',   // $1,100 — Lite → PRO
+  // Paperless → Lite ($2,050) y Paperless → PRO ($3,150), upsell del
+  // dashboard (pages/Dashboard/Upsell). Live: prod_VhUHtqxFq0KXxh /
+  // prod_VhUHE9CnzG8xM3 (metadata upgrade_from / upgrade_to). Los mismos en
+  // iattend--backend/config/stripe.products.js.
+  UPGRADE_PAPERLESS_TO_LITE: 'price_1Ug5IsAAdNlITNVb4Xa0d98W',   // $2,050
+  UPGRADE_PAPERLESS_TO_PRO:  'price_1Ug5ItAAdNlITNVbxZ9HtdVw',   // $3,150
 
   // Side events
   SIDE_EVENT:       'price_1Tl9kwAAdNlITNVbqroYr991',   // $300
@@ -171,6 +177,8 @@ export const PRODUCTS = {
     [PRICE_IDS.PLAN_PRO]:       { type: "plan", value: "pro" },
 
     [PRICE_IDS.UPGRADE_TO_PRO]: { type: "plan", value: "pro" },
+    ...(PRICE_IDS.UPGRADE_PAPERLESS_TO_LITE ? { [PRICE_IDS.UPGRADE_PAPERLESS_TO_LITE]: { type: "plan", value: "lite" } } : {}),
+    ...(PRICE_IDS.UPGRADE_PAPERLESS_TO_PRO ? { [PRICE_IDS.UPGRADE_PAPERLESS_TO_PRO]: { type: "plan", value: "pro" } } : {}),
 
     [PRICE_IDS.SIDE_EVENT]:     { type: "side", value: "side_event" },
     [PRICE_IDS.SIDE_EVENT_ALT]: { type: "side", value: "side_event" },

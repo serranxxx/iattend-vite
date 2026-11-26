@@ -6,8 +6,12 @@
     `body.wallet.image` o, sin ella, la imagen del link (`url_image`) o la
     foto de la portada.
   · Fecha "NOV 14" y hora "8:00 pm" de `body.hour` (hora de pared, sin huso).
+    Con hora de fin (`body.ends`), el lugar lleva "8:00 pm – 1:00 am"; el
+    encabezado se queda con la de inicio (no cabe más).
   · Un solo lugar: la dirección del evento (con su nombre, `place_name`).
 */
+
+import { finDe } from '../../../helpers/assets/eventDateTime'
 
 const MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
 
@@ -32,6 +36,8 @@ export const datosPasePop = (current) => {
     const pared = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2})/.exec(String(body.hour ?? ''))
     const direccion = textoDireccion(body.address)
     const hora = pared ? hora12(pared[4]) : ''
+    const fin = /[ T](\d{2}:\d{2})/.exec(String(finDe(body) ?? ''))?.[1]
+    const horario = [hora, fin ? hora12(fin) : ''].filter(Boolean).join(' – ')
     return {
         titulo: wallet.title?.trim() || current?.name || 'Tu evento',
         // La foto propia del pase o, sin ella, la imagen del link (la portada
@@ -41,7 +47,7 @@ export const datosPasePop = (current) => {
         imagenPropia: Boolean(wallet.image),
         fecha: pared ? `${Number(pared[3])} ${MESES[Number(pared[2]) - 1]}` : '',
         hora,
-        lugares: direccion ? [{ indice: 0, nombre: body.place_name || '', hora, direccion, principal: true }] : [],
+        lugares: direccion ? [{ indice: 0, nombre: body.place_name || '', hora: horario, direccion, principal: true }] : [],
         itinerario: (body.itinerary ?? []).filter((m) => m.name).map((m) => ({ hora: m.time ? hora12(m.time) || m.time : '', nombre: m.name })),
     }
 }

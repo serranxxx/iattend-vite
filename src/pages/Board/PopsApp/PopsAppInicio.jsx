@@ -5,7 +5,9 @@ import { ArrowLeft, ArrowRight, Play, Plus } from 'lucide-react'
 import { PopsLogo } from '../../../components/PopsLogo/PopsLogo'
 import { TableroAzul } from '../../../components/TableroAzul/TableroAzul'
 import { colorDePop, emojiDePop } from '../../../helpers/invitation/popEvents'
-import { PRECIO_PLUS } from './usePlanPops'
+import { PERSONAS_FREE } from './usePlanPops'
+import { BandaPlusMovil, BotonQuieroPlus, MarcaPlus, MedidorPersonas } from './PopsPlus/PopsPlus'
+import { GratisOPlus } from './PopsPlus/TablasPlus'
 import ojos from '../../../assets/pops-stickers/craft/ojos.svg'
 import corazon from '../../../assets/pops-stickers/craft/corazon.svg'
 import explosion from '../../../assets/pops-stickers/craft/explosion.svg'
@@ -16,7 +18,6 @@ import objeto3 from '../../../assets/pops-azul/col-obj-3.webp'
 import polaroid1 from '../../../assets/pops-azul/col-polaroid-1.webp'
 import polaroid3 from '../../../assets/pops-azul/col-polaroid-3.webp'
 import temporada1 from '../../../assets/pops-azul/inicio-season-1.webp'
-import temporada3 from '../../../assets/pops-azul/inicio-season-3.webp'
 import tijeras from '../../../assets/pops-azul/tijeras-recorte.png'
 import s from './PopsAppInicio.module.css'
 
@@ -32,6 +33,13 @@ import s from './PopsAppInicio.module.css'
     Free, la lámina "Conoce Pops+" (las de "archivar" y "Trae tu lista" se
     quitaron; con una sola lámina no hay puntos ni flechas) y
     "Tus próximos Pops" (hasta 3, de hoy en adelante).
+  Pops+ (handoff "Pops+ en la App" 1; en Free y en Pops+, que no lleva los
+  CTA de compra — "Tienes Pops+" en lugar de "Conoce", sin "Quiero Pops+",
+  personas sin tope —): la primera lámina es Pops+
+  ("Para quien siempre / termina / organizando todo." con las burbujas de
+  frases → solución) y la marca va segunda; "Tus próximos Pops" lleva el
+  medidor "Personas N de 30" (rosa desde el 90 %) y abajo va "¿Gratis o
+  Pops+?" (PopsPlus/TablasPlus.jsx).
   `aviso`: el banner de límite que arma PopsApp, debajo del saludo.
   `movil`: la versión de 390 px (§10), abajo en este archivo.
 */
@@ -150,21 +158,57 @@ const Collage = ({ t }) => (
     </div>
 )
 
+// Burbujas de la lámina Pops+: lo que dice la gente → lo que resuelve.
+const BURBUJAS = [
+    { k: 'eighty', left: 0, top: 28, rot: -3, rotFix: 2 },
+    { k: 'pass', left: 30, top: 190, rot: 2, rotFix: -2 },
+    { k: 'eight', left: 170, top: 312, rot: -1.5, rotFix: 2 },
+]
+
+const LaminaPlus = ({ t, onPasarPlus, plus }) => (
+    <div className={`${s.lamina} ${s.laminaPlus}`}>
+        <div className={s.plusTexto}>
+            <span className={s.plusConoce}>{t(plus ? 'pops_plus_app.have' : 'pops_plus_app.meet')} <MarcaPlus /></span>
+            <span className={`${s.recortePlus} ${s.recorte1}`}>{t('pops_plus_app.hero_1')}</span>
+            <span className={`${s.recortePlus} ${s.recorte2}`}>{t('pops_plus_app.hero_2')}</span>
+            <span className={`${s.recortePlus} ${s.recorte3}`}>{t('pops_plus_app.hero_3')}</span>
+            <p className={s.plusParrafo}>{t('pops_plus_app.hero_text')}</p>
+            {!plus && <BotonQuieroPlus forma='cuadro' className={s.plusCta} onClick={onPasarPlus} />}
+        </div>
+        <div className={s.plusCollage} aria-hidden>
+            <div className={`${s.plusPolaroid} ${s.plusPolaroid1}`}>
+                <span className={s.cinta} />
+                <img src={temporada1} alt='' />
+                <span>{t('pops_plus_app.cap_posada')}</span>
+            </div>
+            <div className={`${s.plusPolaroid} ${s.plusPolaroid2}`}>
+                <img src={polaroid3} alt='' />
+                <span>{t('pops_plus_app.cap_same')}</span>
+            </div>
+            {BURBUJAS.map(b => (
+                <div key={b.k} className={s.burbujaGrupo} style={{ left: b.left, top: b.top, '--rot': `${b.rot}deg` }}>
+                    <span className={s.burbuja}>“{t(`pops_plus_app.bubble.${b.k}`)}”</span>
+                    <span className={s.burbujaFix} style={{ '--rot': `${b.rotFix}deg` }}>{t(`pops_plus_app.bubble.${b.k}_fix`)} ✓</span>
+                </div>
+            ))}
+            <img src={explosion} alt='' className={s.plusSticker} style={{ left: -58, top: -40, width: 56, '--rot': '10deg' }} />
+            <img src={corazon} alt='' className={s.plusSticker} style={{ right: -6, top: 6, width: 64, '--rot': '-14deg' }} />
+        </div>
+    </div>
+)
+
 const Carrusel = ({ t, plan, puedeCrear, onCrear, onVerMisPops, onPasarPlus }) => {
     const [lamina, setLamina] = useState(0)
 
-    // La marca y, solo en Free, "Conoce Pops+".
-    const promos = [
-        null,
-        ...(plan?.plus ? [] : [{ k: 'plus', fotos: [temporada1, temporada3], ir: onPasarPlus }]),
-    ]
+    // Primero Pops+ y luego la marca (en Pops+ la lámina va sin CTA de compra).
+    const promos = [{ k: 'plus' }, null]
     const total = promos.length
     const ir = (i) => setLamina(((i % total) + total) % total)
     const promo = promos[Math.min(lamina, total - 1)]
-    const etiquetas = promos.map(p => (p ? t(`pops_app_home.${p.k}_tag`) : t('pops_app_home.slide_brand')))
+    const etiquetas = promos.map(p => (p ? t('pops_plus_app.slide_plus') : t('pops_app_home.slide_brand')))
 
     return (
-        <TableroAzul lineas='hero' className={s.carrusel} aria-roledescription='carousel' aria-label={t('pops_app_home.carousel_label')}>
+        <TableroAzul lineas='hero' className={s.carrusel} data-free aria-roledescription='carousel' aria-label={t('pops_app_home.carousel_label')}>
             {!promo ? (
                 <div key='l0' className={s.lamina}>
                     <Collage t={t} />
@@ -188,24 +232,7 @@ const Carrusel = ({ t, plan, puedeCrear, onCrear, onVerMisPops, onPasarPlus }) =
                     </div>
                 </div>
             ) : (
-                <div key={`l${lamina}`} className={s.lamina}>
-                    <Polaroid src={promo.fotos[0]} pie={t(`pops_app_home.${promo.k}_cap1`)} className={s.polaroidPromo1} />
-                    <Polaroid src={promo.fotos[1]} pie={t(`pops_app_home.${promo.k}_cap2`)} className={s.polaroidPromo2} />
-                    <img src={destello} alt='' aria-hidden className={s.destelloPromo} />
-                    <img src={tijeras} alt='' aria-hidden className={s.tijeras} style={{ height: 150 }} />
-                    <div className={`${s.texto} ${s.textoPromo}`}>
-                        <span className={s.tagPromo}>{t(`pops_app_home.${promo.k}_tag`)}</span>
-                        <h2 className={s.tituloPromo}>
-                            {t(`pops_app_home.${promo.k}_title_a`)}{' '}
-                            <span className={s.resaltado}>{t(`pops_app_home.${promo.k}_title_b`)}</span>
-                        </h2>
-                        <span className={s.parrafo}>{t(`pops_app_home.${promo.k}_text`, { price: PRECIO_PLUS })}</span>
-                        <button type='button' className={s.ctaPromo} onClick={promo.ir}>
-                            <span className={s.ctaPromoIco}><ArrowRight size={18} strokeWidth={2.6} /></span>
-                            {t(`pops_app_home.${promo.k}_cta`)}
-                        </button>
-                    </div>
-                </div>
+                <LaminaPlus key={`l${lamina}`} t={t} onPasarPlus={onPasarPlus} plus={plan?.plus} />
             )}
 
             {total > 1 && <div className={s.nav}>
@@ -244,7 +271,7 @@ const proximosDe = (pops) => {
         .slice(0, 3)
 }
 
-const Proximos = ({ t, lang, pops, confirmados, onAbrir, onVerMisPops }) => {
+const Proximos = ({ t, lang, pops, confirmados, onAbrir, onVerMisPops, free }) => {
     const lista = proximosDe(pops)
 
     return (
@@ -257,20 +284,19 @@ const Proximos = ({ t, lang, pops, confirmados, onAbrir, onVerMisPops }) => {
                 <div className={s.proximosFila}>
                     {lista.map(({ item }, i) => {
                         const pop = item._pop ?? {}
-                        const si = confirmados?.[pop.id]?.si ?? 0
+                        // Personas (invitados) contra el tope de 30 en Free; en Pops+, sin tope.
                         return (
-                            <button key={item.id ?? pop.id} type='button' className={s.tarjeta} onClick={() => onAbrir?.(item)}>
-                                <span className={s.tarjetaEmoji} style={{ background: colorDePop(pop) || COLORES_PROXIMOS[i % COLORES_PROXIMOS.length] }}>
-                                    {emojiDePop(pop) || '✨'}
+                            <button key={item.id ?? pop.id} type='button' className={`${s.tarjeta} ${s.tarjetaFree}`} onClick={() => onAbrir?.(item)}>
+                                <span className={s.tarjetaFila}>
+                                    <span className={s.tarjetaEmoji} style={{ background: colorDePop(pop) || COLORES_PROXIMOS[i % COLORES_PROXIMOS.length] }}>
+                                        {emojiDePop(pop) || '✨'}
+                                    </span>
+                                    <span className={s.tarjetaTexto}>
+                                        <b>{pop.name || item.name}</b>
+                                        <small>{fechaDePop(item, lang) ?? t('pops_app_home.no_date')}</small>
+                                    </span>
                                 </span>
-                                <span className={s.tarjetaTexto}>
-                                    <b>{pop.name || item.name}</b>
-                                    <small>{fechaDePop(item, lang) ?? t('pops_app_home.no_date')}</small>
-                                </span>
-                                <span className={s.tarjetaCuenta}>
-                                    <b>{si}</b>
-                                    <small>{t('pops_app_home.confirmed', { count: si })}</small>
-                                </span>
+                                <MedidorPersonas n={confirmados?.[pop.id]?.total ?? 0} tope={free ? PERSONAS_FREE : null} />
                             </button>
                         )
                     })}
@@ -356,15 +382,14 @@ const CarruselMovil = ({ t, plan, puedeCrear, onCrear, onVerMisPops, onPasarPlus
                     ? { cta: t('pops_app_home.see_my_pops'), go: onVerMisPops }
                     : { cta: t('pops_app_home.see_prices'), go: onPasarPlus }),
         },
-        ...(plan?.plus ? [] : ['plus']).map(k => ({
-            tag: t(`pops_app_home.${k}_tag`),
-            t1: t(`pops_app_home.${k}_title_a`),
-            t2: t(`pops_app_home.${k}_title_b`),
-            d: t(`pops_app_home.${k}_text`, { price: PRECIO_PLUS }),
-            cta: t(`pops_app_home.${k}_cta`),
-            go: k === 'plus' ? onPasarPlus : onVerMisPops,
-        })),
     ]
+    // La lámina Pops+ va primero (handoff "Pops+ en la App"); en Pops+ sin CTA.
+    laminas.unshift({
+        tag: <>{t(plan?.plus ? 'pops_plus_app.have' : 'pops_plus_app.meet')} <MarcaPlus /></>,
+        d: t('pops_plus_app.hero_text_short'),
+        ...(plan?.plus ? {} : { cta: <>{t('pops_plus_app.want')} <MarcaPlus sobre='lima' /></>, go: onPasarPlus }),
+        plus: true,
+    })
     const total = laminas.length
     const ir = (i) => setLamina(((i % total) + total) % total)
     const l = laminas[Math.min(lamina, total - 1)]
@@ -395,14 +420,41 @@ const CarruselMovil = ({ t, plan, puedeCrear, onCrear, onVerMisPops, onPasarPlus
             onTouchEnd={soltar}
         >
             <img src={corazon} alt='' className={s.st} style={{ right: 16, top: 18, width: 54, '--rot': '-14deg' }} />
-            <div key={`m${lamina}`} className={s.mLamina}>
-                <span className={s.mTag}>{l.tag}</span>
-                <span className={`${s.mEtiquetaChica} ${s.etiquetaPapel} ${s.mEtiquetaChicaPapel}`}>{l.t1}</span>
-                <span className={`${s.mEtiquetaChica} ${s.etiquetaLima} ${s.mEtiquetaChicaLima}`}>{l.t2}</span>
-                <span className={s.mTexto}>{l.d}</span>
-            </div>
+            {l.plus ? (
+                // Lámina Pops+ (handoff "Pops+ en la App · Celular" A): "Conoce Pops+"
+                // sin fondo y tres recortes de papel escalonados que se enciman.
+                <div key={`m${lamina}`} className={s.mLamina}>
+                    <span className={s.mConoce}>{l.tag}</span>
+                    <span className={`${s.mRecorte} ${s.mRecorte1}`}>{t('pops_plus_app.hero_1')}</span>
+                    <span className={`${s.mRecorte} ${s.mRecorte2}`}>{t('pops_plus_app.hero_2')}</span>
+                    <span className={`${s.mRecorte} ${s.mRecorte3}`}>{t('pops_plus_app.hero_3')}</span>
+                    <span className={`${s.mTexto} ${s.mTextoPlus}`}>{l.d}</span>
+                    {/* Sin botón de compra (Pops+) queda aire abajo: dos frases cortas
+                        de las burbujas de escritorio, lado a lado (no agrandan el tablero). */}
+                    {!l.cta && (
+                        <div className={s.mBurbujas} aria-hidden>
+                            {['eighty', 'pass'].map((k, i) => (
+                                <span key={k} className={s.mBurbujaGrupo} style={{ '--rot': `${i ? 2 : -2}deg` }}>
+                                    <span className={s.mBurbuja}>“{t(`pops_plus_app.ribbon.${k}`)}”</span>
+                                    <span className={s.mBurbujaFix}>{t(`pops_plus_app.ribbon.${k}_fix`)} ✓</span>
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div key={`m${lamina}`} className={s.mLamina}>
+                    {/* Lámina de la marca: el logo animado de Pops en lugar de la etiqueta "POPS". */}
+                    <span className={s.mLogo} aria-label={l.tag}>
+                        <PopsLogo size={64} color='#F3F2EE' step={0.1} autoplay={6} alMontar={0.45} />
+                    </span>
+                    <span className={`${s.mEtiquetaChica} ${s.etiquetaPapel} ${s.mEtiquetaChicaPapel}`}>{l.t1}</span>
+                    <span className={`${s.mEtiquetaChica} ${s.etiquetaLima} ${s.mEtiquetaChicaLima}`}>{l.t2}</span>
+                    <span className={s.mTexto}>{l.d}</span>
+                </div>
+            )}
             <div className={s.mPie}>
-                <button type='button' className={s.mCtaLamina} onClick={l.go}>{l.cta}</button>
+                {l.cta ? <button type='button' className={s.mCtaLamina} onClick={l.go}>{l.cta}</button> : <span />}
                 {total > 1 && <div className={s.mPuntos}>
                     {laminas.map((x, i) => (
                         <button
@@ -410,7 +462,7 @@ const CarruselMovil = ({ t, plan, puedeCrear, onCrear, onVerMisPops, onPasarPlus
                             type='button'
                             className={s.mPunto}
                             data-activo={i === lamina || undefined}
-                            aria-label={x.tag}
+                            aria-label={x.plus ? t('pops_plus_app.slide_plus') : x.tag}
                             aria-current={i === lamina || undefined}
                             onClick={() => ir(i)}
                         >
@@ -423,7 +475,7 @@ const CarruselMovil = ({ t, plan, puedeCrear, onCrear, onVerMisPops, onPasarPlus
     )
 }
 
-const ProximosMovil = ({ t, lang, pops, confirmados, onAbrir, onVerMisPops }) => {
+const ProximosMovil = ({ t, lang, pops, confirmados, onAbrir, onVerMisPops, free }) => {
     const lista = proximosDe(pops)
     return (
         <section className={s.mProximos}>
@@ -437,13 +489,23 @@ const ProximosMovil = ({ t, lang, pops, confirmados, onAbrir, onVerMisPops }) =>
                 <div className={s.mFila}>
                     {lista.map(({ item }) => {
                         const pop = item._pop ?? {}
+                        const total = confirmados?.[pop.id]?.total ?? 0
                         const si = confirmados?.[pop.id]?.si ?? 0
                         return (
                             <button key={item.id ?? pop.id} type='button' className={s.mTarjeta} onClick={() => onAbrir?.(item)}>
                                 <span className={s.mTarjetaEmoji}>{emojiDePop(pop) || '✨'}</span>
                                 <b className={s.mTarjetaNombre}>{pop.name || item.name}</b>
                                 <span className={s.mTarjetaFecha}>{fechaDePop(item, lang) ?? t('pops_app_home.no_date')}</span>
-                                <span className={s.mTarjetaCuenta}><b>{si}</b> {t('pops_app_home.confirmed', { count: si })}</span>
+                                {/* Free y al 90 % del tope: "28 de 30 · quedan 2"; si no, confirmados. */}
+                                {free && total / PERSONAS_FREE >= 0.9 ? (
+                                    <span className={s.mTarjetaCuenta}>
+                                        <b>{t('pops_app.of', { n: total, total: PERSONAS_FREE })}</b>
+                                        {' · '}
+                                        <b className={s.mQuedan}>{t('pops_plus_app.left', { count: Math.max(0, PERSONAS_FREE - total) })}</b>
+                                    </span>
+                                ) : (
+                                    <span className={s.mTarjetaCuenta}><b>{si}</b> {t('pops_app_home.confirmed', { count: si })}</span>
+                                )}
                             </button>
                         )
                     })}
@@ -455,25 +517,11 @@ const ProximosMovil = ({ t, lang, pops, confirmados, onAbrir, onVerMisPops }) =>
     )
 }
 
-const PlusMovil = ({ t, onPasarPlus }) => (
-    <div className={s.mPlus}>
-        <span className={s.mPlusTexto}>
-            <span className={s.mPlusLogo}>Pops<span>+</span></span>
-            <span className={s.mPlusDesc}>
-                {t('pops_app_home.plus_card_text', { defaultValue: 'Pops y personas ilimitados, 500 MB y sin publicidad.' })}
-            </span>
-        </span>
-        <button type='button' className={s.mPlusBoton} onClick={onPasarPlus}>
-            {t('pops_app_home.plus_card_price', { price: PRECIO_PLUS, defaultValue: '${{price}}/mes' })}
-        </button>
-    </div>
-)
-
 /* ───────────── Página ───────────── */
 
 export const PopsAppInicio = ({
     greeting, pops = [], cargando = false, confirmados = {}, plan, aviso,
-    puedeCrear, onCrear, onConoce, onAbrir, onVerMisPops, onPasarPlus, movil = false,
+    puedeCrear, onCrear, onConoce, onAbrir, onVerMisPops, onPasarPlus, onTabla, movil = false,
 }) => {
     const { t, i18n } = useTranslation()
     const lang = i18n.language?.startsWith('en') ? 'en-US' : 'es-MX'
@@ -511,8 +559,10 @@ export const PopsAppInicio = ({
                             onVerMisPops={onVerMisPops}
                             onPasarPlus={onPasarPlus}
                         />
-                        <ProximosMovil t={t} lang={lang} pops={pops} confirmados={confirmados} onAbrir={onAbrir} onVerMisPops={onVerMisPops} />
-                        {!plan?.plus && <PlusMovil t={t} onPasarPlus={onPasarPlus} />}
+                        <ProximosMovil t={t} lang={lang} pops={pops} confirmados={confirmados} onAbrir={onAbrir} onVerMisPops={onVerMisPops} free={!plan?.plus} />
+                        {/* Banda Pops+ (handoff "Pops+ en la App · Celular" A6): Free y prueba
+                            gratis; en la prueba su botón abre la tabla, como la cinta. */}
+                        {(!plan?.plus || plan?.prueba) && <BandaPlusMovil onTabla={onTabla} onPlus={plan?.prueba ? onTabla : onPasarPlus} prueba={Boolean(plan?.prueba)} />}
                     </>
                 )}
             </div>
@@ -535,7 +585,9 @@ export const PopsAppInicio = ({
                         onVerMisPops={onVerMisPops}
                         onPasarPlus={onPasarPlus}
                     />
-                    <Proximos t={t} lang={lang} pops={pops} confirmados={confirmados} onAbrir={onAbrir} onVerMisPops={onVerMisPops} />
+                    <Proximos t={t} lang={lang} pops={pops} confirmados={confirmados} onAbrir={onAbrir} onVerMisPops={onVerMisPops} free={!plan?.plus} />
+                    {/* Con Pops+ pagado ya no sale; en Free y en la prueba gratis, sí. */}
+                    {(!plan?.plus || plan?.prueba) && <GratisOPlus plus={plan?.plus} onTabla={onTabla} onPlus={onPasarPlus} />}
                 </>
             )}
         </>

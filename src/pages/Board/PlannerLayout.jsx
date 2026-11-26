@@ -169,6 +169,8 @@ export const PlannerLayout = ({
         ...(TEMA_POPS_FIJO === 'azul' ? [
             ...(MOSTRAR_IDEAS ? [{ key: 'ideas', title: t('pops_app.tab_ideas'), items: [] }] : []),
             { key: 'pagos', title: t('pops_app.pay_title'), items: [] },
+            // Tabla completa de Pops+ ("Explorar a detalle", handoff "Pops+ en la App" 1d).
+            { key: 'plus', title: t('pops_plus_app.full_title'), items: [] },
         ] : []),
     ] : [
         { key: 'test', title: t('invitations.space_home'), items: esAdmin ? pruebasAdmin.slice(0, 1) : bodas.filter(esEjemplo) },
@@ -602,8 +604,8 @@ export const PlannerLayout = ({
     // Inicio · Mis Pops · Ideas (Clientes va dentro de Mis Pops). En el celular
     // (§10), su header y su barra inferior propios.
     if (enPops && modoAzul) {
-        const PAGINA_DE = { test: 'inicio', own: 'mispops', clients: 'mispops', ideas: 'ideas', pagos: 'pagos' }
-        const SECCION_DE = { inicio: 'test', mispops: 'own', ideas: 'ideas', pagos: 'pagos' }
+        const PAGINA_DE = { test: 'inicio', own: 'mispops', clients: 'mispops', ideas: 'ideas', pagos: 'pagos', plus: 'plus' }
+        const SECCION_DE = { inicio: 'test', mispops: 'own', ideas: 'ideas', pagos: 'pagos', plus: 'plus' }
         return (
             <>
                 {veloPops}

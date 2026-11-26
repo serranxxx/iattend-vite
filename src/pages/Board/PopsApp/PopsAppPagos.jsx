@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
 import { supabaseAuthHeaders } from '../../../lib/authHeaders'
-import { PRECIO_PLUS } from './usePlanPops'
 import s from './PopsAppPagos.module.css'
 
 /*
@@ -88,7 +87,7 @@ export const PopsAppPagos = ({ plan, yendo, onVolver, onPortal, onPlus }) => {
                     <b>{t(estado === 'sin' ? 'pops_app.pay_empty_title' : 'pops_app.pay_error')}</b>
                     {estado === 'sin' && <span>{t('pops_app.pay_empty_text')}</span>}
                     {estado === 'sin' && !plan.plus && (
-                        <button type='button' className={s.lima} onClick={onPlus} disabled={yendo}>{t('pops_app.go_plus', { price: PRECIO_PLUS })}</button>
+                        <button type='button' className={s.lima} onClick={onPlus} disabled={yendo}>{t('pops_plus_app.go_plus')}</button>
                     )}
                 </div>
             </div>

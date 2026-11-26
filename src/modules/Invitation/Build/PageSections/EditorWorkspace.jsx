@@ -216,9 +216,12 @@ export const EditorWorkspace = ({
     const [pdfElegido, setPdfElegido] = useState(false)
     // Al cambiar a PDF (Mi PDF) queda elegido, con su barra a la vista.
     useEffect(() => { setPdfElegido(enPdf) }, [enPdf])
-    // Herramientas del riel: Botones solo con la invitación en PDF.
-    const herramientas = TOOLS.filter((x) => !x.soloPdf || enPdf)
+    // Herramientas del riel: Botones solo con la invitación en PDF; Pase
+    // digital no va en Paperless (ese plan no tiene pases para los invitados).
+    const sinPase = plan === 'paperless'
+    const herramientas = TOOLS.filter((x) => (!x.soloPdf || enPdf) && !(sinPase && x.id === 'wallet'))
     useEffect(() => { if (!enPdf && activeTool === 'buttons') setActiveTool('elements') }, [enPdf, activeTool])
+    useEffect(() => { if (sinPase && activeTool === 'wallet') setActiveTool('elements') }, [sinPase, activeTool])
     const seccionPieza = enPdf ? (pdfElegido ? SECCION_PDF : null) : selectedSection
     const selectFromPiece = (type, field) => {
         setPdfElegido(type === SECCION_PDF)

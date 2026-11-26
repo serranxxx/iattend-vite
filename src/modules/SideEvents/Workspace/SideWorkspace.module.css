@@ -28,6 +28,8 @@
 /* Pieza + leyenda, como EditCanvas: la tarjeta de SideCanvas ya trae sus
    390 × 700 y su radio. */
 .canvasWrap {
+    /* Las notas de Pops+ (NotasPlus) se acomodan respecto a la pieza. */
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -154,6 +156,116 @@
 /* Fecha con hora (DD/MM/YYYY HH:mm): más ancha que la de la portada. */
 .dateTime {
     width: 178px;
+}
+
+/* Fechas de un Pop (DateBar): con varias, ancho máximo y scroll de lado
+   (sin barra de scroll). */
+.fechasLista {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: min(560px, 52vw);
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+}
+
+.fechasLista::-webkit-scrollbar {
+    display: none;
+}
+
+.fechasLista[data-orillas="izq"] {
+    mask-image: linear-gradient(to right, transparent, #000 24px);
+}
+
+.fechasLista[data-orillas="der"] {
+    mask-image: linear-gradient(to left, transparent, #000 24px);
+}
+
+.fechasLista[data-orillas="ambas"] {
+    mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+
+/* Menú del "+" de la barra de fecha: compacto. La regla global de los
+   popovers de las barras (data-text-bar, 32 px de redondeo y 18 de relleno)
+   se afloja solo para este. */
+:global(.ant-popover .ant-popover-container:has([data-text-bar][data-menu-compacto])) {
+    padding: 4px;
+    border-radius: 14px;
+}
+
+.menuFecha {
+    display: flex;
+    flex-direction: column;
+}
+
+.menuFechaItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #29262D;
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    text-align: left;
+    cursor: pointer;
+}
+
+.menuFechaItem:hover {
+    background: #F5F3F2;
+}
+
+/* Una fecha de un Pop en la barra: inicio – fin y su ✕ en un solo
+   contenedor; adentro los campos van sin borde. */
+.fechaSola {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+}
+
+.fechaGrupo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    flex: none;
+    padding: 0 2px;
+    border: 1px solid #E4E0E8;
+    border-radius: 12px;
+    background: #FAF9FB;
+}
+
+.fechaGrupo :global(.ant-picker),
+.fechaGrupo :global(.ant-picker:hover),
+.fechaGrupo :global(.ant-picker-focused) {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+.fechaGrupo:focus-within {
+    border-color: #C9B8DC;
+}
+
+/* Hora de fin de un Pop (DateBar) y su marca "+1" si termina al día siguiente. */
+.horaFin {
+    width: 116px;
+}
+
+.finMasUno {
+    margin-left: 2px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: #ede6f3;
+    color: #5b3b78;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: default;
 }
 
 /* Barra de arriba del editor de escritorio: blanca, separada del tablero
@@ -1128,4 +1240,15 @@
 
 .pruebaMas {
     color: #FF5FA8;
+}
+
+/* Pop Free / prueba: fotos de la portada que son de Pops+ (la 2.ª en
+   adelante y los videos), con aro lima (handoff "Pops+ en la App" 3). */
+.fondoItem[data-plus] .fondoMini::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 2.5px #CDF22B;
+    pointer-events: none;
 }

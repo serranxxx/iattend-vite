@@ -61,18 +61,22 @@
     flex-shrink: 0;
     width: auto;
     min-width: max-content;
-    height: 34px;
-    padding: 0 12px;
+    height: 38px;
+    padding: 0 14px;
     border: none;
     border-radius: 999px;
-    background: #F1EAF6;
-    color: #6B3F8A;
-    font-family: inherit;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-family: Poppins, inherit;
+    font-size: 13px;
+    font-weight: 800;
+    gap: 8px;
+    white-space: nowrap;
     cursor: pointer;
 }
 
 .plus:hover {
-    background: #E6D9EF;
+    background: #D7F74F;
 }
 
 .plusPanel {
@@ -129,4 +133,31 @@
     .estado[data-estado="guardando"] svg {
         animation: none;
     }
+}
+
+.plusBotones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.plusBotones .plusQuitar {
+    margin-top: 0;
+}
+
+.plusPasar {
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.plusPasar:hover {
+    background: #D7F74F;
 }

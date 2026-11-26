@@ -1,0 +1,466 @@
+/* Pops+ en el editor de un Pop Free (handoff "Pops+ en la App" 3). */
+
+.marca {
+    font-family: Poppins, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+}
+
+.mas {
+    color: #CDF22B;
+}
+
+/* ── Chip FREE · Pops+ de prueba (junto al nombre) ── */
+.chipFree {
+    height: 30px;
+    margin-left: 10px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 99px;
+    background: #F1F2F6;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Poppins, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #56627A;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background 0.15s ease;
+}
+
+.chipFree:hover {
+    background: #E6E8EF;
+}
+
+/* ── Tarjeta "Pruébalo en este Pop" (popover del chip) ── */
+.tarjeta {
+    width: 260px;
+    padding: 6px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: Poppins, sans-serif;
+    color: #1D1D1B;
+}
+
+.tarjetaCabeza {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tarjetaCabeza b {
+    font-size: 17px;
+    letter-spacing: -0.02em;
+}
+
+.tarjetaTag {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #8A8582;
+}
+
+.tarjetaLista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tarjetaFila {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #F2F0EE;
+}
+
+.tarjetaFila:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.tarjetaFrase {
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 18px;
+    color: #6E6965;
+}
+
+.tarjetaFix {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.tarjetaAccion {
+    border: 0;
+    padding: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2457A4;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tarjetaAccion:hover {
+    color: #0B1F3A;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ── Barra navy sobre la pieza ── */
+.barra {
+    /* El ancho libre entre el panel y Capas (EditorShell), con aire. */
+    width: min(860px, calc(var(--barra-max, 908px) - 48px));
+    box-sizing: border-box;
+    padding: 14px 16px 14px 22px;
+    border-radius: 20px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 18px 40px -14px rgba(11, 31, 58, 0.6);
+    font-family: Poppins, sans-serif;
+    animation: barraEntra 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes barraEntra {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: none; }
+}
+
+.barraMarca {
+    font-size: 28px;
+    letter-spacing: -0.07em;
+    line-height: 1;
+    flex: none;
+}
+
+.barraTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.barraTextos b {
+    font-size: 15px;
+    line-height: 1.3;
+    text-wrap: balance;
+}
+
+.barraUsa {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #C9D2E6;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.barraChip {
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: rgba(205, 242, 43, 0.16);
+    color: #CDF22B;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.barraQuitar,
+.barraPlus {
+    height: 42px;
+    flex: none;
+    border-radius: 99px;
+    font-family: inherit;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.barraQuitar {
+    padding: 0 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: #FFFFFF;
+    font-size: 13px;
+}
+
+.barraQuitar:hover {
+    border-color: #FFFFFF;
+}
+
+.barraPlus {
+    padding: 0 18px;
+    border: 0;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.barraPlus:hover {
+    background: #D7F74F;
+}
+
+.barraPlus:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+/* ── Notas a mano junto a la pieza ── */
+.notas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.nota {
+    position: absolute;
+    left: calc(100% - 26px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transform: rotate(var(--rot, 0deg));
+    white-space: nowrap;
+    animation: notaEntra 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes notaEntra {
+    from { opacity: 0; translate: 10px 0; }
+    to { opacity: 1; translate: 0 0; }
+}
+
+.notaTexto {
+    padding: 4px 10px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 19px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Modal al compartir ── */
+.velo {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    background: rgba(11, 31, 58, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: veloEntra 0.2s ease;
+}
+
+@keyframes veloEntra {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal {
+    position: relative;
+    width: 560px;
+    max-width: 100%;
+    background: #FFFFFF;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    animation: modalEntra 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes modalEntra {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+.modalCabeza {
+    position: relative;
+    height: 150px;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background-color: #2457A4;
+    background-image:
+        linear-gradient(rgba(232, 240, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(rgba(232, 240, 255, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.09) 1px, transparent 1px);
+    background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
+}
+
+.recorte {
+    padding: 6px 14px;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    white-space: nowrap;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.recortePapel {
+    background: #F3F2EE;
+    transform: rotate(-2deg);
+}
+
+.recorteLima {
+    background: #CDF22B;
+    transform: rotate(2deg);
+}
+
+.modalGlobo {
+    position: absolute;
+    right: 24px;
+    top: 14px;
+    width: 62px;
+    transform: rotate(-8deg);
+}
+
+.modalCuerpo {
+    padding: 28px 32px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.modalTexto {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #3A3A36;
+    text-wrap: pretty;
+}
+
+.modalLista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modalItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #F3F4F8;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.modalMini {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 8px;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalMini > span {
+    width: 20px;
+    height: 8px;
+    background: #F3F2EE;
+}
+
+.modalDePaso {
+    font-size: 14px;
+    color: #56627A;
+}
+
+.modalAcciones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.modalQuitar {
+    border: 0;
+    padding: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0B1F3A;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.modalPlus {
+    height: 52px;
+    padding: 0 12px 0 24px;
+    border: 0;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.modalPlus:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+.modalFlecha {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .barra,
+    .nota,
+    .modal {
+        animation: none;
+    }
+}
+
+/* Pop Pops+: el chip es la marca (navy) y la tarjeta no ofrece comprar. */
+.chipFree[data-plus] {
+    background: #0B1F3A;
+    color: #FFFFFF;
+    font-size: 13px;
+}
+
+.chipFree[data-plus]:hover {
+    background: #1E3354;
+}
+
+.tarjetaYa {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1D8A5F;
+    white-space: nowrap;
+}

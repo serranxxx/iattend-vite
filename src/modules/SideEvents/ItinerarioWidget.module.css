@@ -320,6 +320,15 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* Hora de fin del evento, debajo de la hora grande ("a 01:00"). */
+.unicoHasta {
+    margin-top: -6px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.75;
+    font-variant-numeric: tabular-nums;
+}
+
 .unicoChip {
     display: inline-flex;
     align-items: center;

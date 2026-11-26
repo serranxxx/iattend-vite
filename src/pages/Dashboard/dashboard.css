@@ -1606,3 +1606,15 @@
     }
 }
 
+
+/* Upsell Lite / Paperless (Upsell/DashboardUpsell): el tablero hace scroll,
+   así que el fondo se queda fijo en lugar de cubrir solo la primera pantalla. */
+.dashboard_body--upsell .dashboard_bg {
+    position: fixed;
+}
+
+.dashboard_body--upsell .dashboard_stack {
+    width: 100%;
+    max-width: 1200px;
+    padding-top: 24px;
+}

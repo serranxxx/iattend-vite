@@ -3,10 +3,11 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { appContext } from '../../context'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { recordarEspacioDeUrl, rutaInvitaciones } from '../../helpers/invitation/espacios'
+import { destinoDeLogin, guardarAccionPendiente, recordarEspacioDeUrl } from '../../helpers/invitation/espacios'
 import { Eye, EyeOff, Languages } from 'lucide-react'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
+import { LoginPops } from './LoginPops'
 // import i18n from '../../i18n'
 
 const VIDEOS = [
@@ -117,15 +118,35 @@ export const Login = () => {
     const onCreateAccount = searchParams.get('mode') === 'register'
     // `/login?espacio=pops` (correos de acceso de un Pop): entra a ese espacio.
     const [espacio] = useState(() => recordarEspacioDeUrl(window.location.search))
+    // A dónde entra: el espacio y, si el link trae `accion` (landing de Pops,
+    // editor sin cuenta), esa acción para que PopsApp la haga al llegar.
+    const [destino] = useState(() => {
+        guardarAccionPendiente(window.location.search)
+        return destinoDeLogin(espacio, window.location.search)
+    })
+    // `espacio=pops` (correos de acceso de un Pop, landing, `/crear-pop`, `accion=…`):
+    // el login y el registro de Pops (LoginPops, Collage azul) en lugar del de I attend.
+    const loginPops = espacio === 'pops' || new URLSearchParams(window.location.search).has('accion')
+    const [errorEntrar, setErrorEntrar] = useState(null)
 
+    // Cambia entre entrar y crear cuenta sin perder `espacio` / `accion` / `luego`.
     const setOnCreateAccount = (val) => {
-        setSearchParams(val ? { mode: 'register' } : {})
+        const params = new URLSearchParams(searchParams)
+        if (val) params.set('mode', 'register')
+        else params.delete('mode')
+        setSearchParams(params)
     }
 
     const sbLogin = async () => {
         const email = username
+        setErrorEntrar(null)
         const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return console.error('e: ', error.message);
+        if (error) {
+            console.error('e: ', error.message)
+            // Login de Pops: el error va debajo de la contraseña.
+            setErrorEntrar(t('login_pops.wrong'))
+            return
+        }
         else {
 
             getUser(data.user?.id)
@@ -154,7 +175,7 @@ export const Login = () => {
             }
 
             login(user)
-            navigate(rutaInvitaciones(espacio))
+            navigate(destino)
 
         } catch (err) {
             console.error("Error inesperado:", err);
@@ -166,20 +187,24 @@ export const Login = () => {
     const handleGoogleLogin = () => {
         supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: `${window.location.origin}${rutaInvitaciones(espacio)}` },
+            options: { redirectTo: `${window.location.origin}${destino}` },
         })
     }
 
     const handleAppleLogin = () => {
         supabase.auth.signInWithOAuth({
             provider: 'apple',
-            options: { redirectTo: `${window.location.origin}${rutaInvitaciones(espacio)}` },
+            options: { redirectTo: `${window.location.origin}${destino}` },
         })
     }
 
     const handleLogin = () => {
         if (username && password) {
+            // Se limpia la sesión anterior, pero no el Pop que se armó sin cuenta
+            // (/crear-pop): se guarda al entrar (borradorPop.js).
+            const borradorPop = localStorage.getItem('iattend_pop_borrador')
             localStorage.clear();
+            if (borradorPop) localStorage.setItem('iattend_pop_borrador', borradorPop)
             sbLogin()
 
         } else {
@@ -226,8 +251,11 @@ export const Login = () => {
 
             if (data.ok) {
                 messageApi.success(t('login.success_created'))
-                setOnCreateAccount(false)
-
+                // Entra solo con la cuenta recién creada (y sigue a `destino`); si no
+                // se puede, queda en "Iniciar sesión" como antes.
+                const { data: sesion, error: errorSesion } = await supabase.auth.signInWithPassword({ email: username, password })
+                if (!errorSesion && sesion?.user?.id) getUser(sesion.user.id)
+                else setOnCreateAccount(false)
             }
 
         } catch (error) {
@@ -273,6 +301,29 @@ export const Login = () => {
 
     }, [onCreateAccount])
 
+
+    if (!logged && loginPops) {
+        return (
+            <>
+                {contextHolder}
+                <LoginPops
+                    registro={onCreateAccount}
+                    nombre={name}
+                    correo={username}
+                    contrasena={password}
+                    onNombre={setName}
+                    onCorreo={(v) => { setUsername(v); setErrorEntrar(null) }}
+                    onContrasena={(v) => { setPassword(v); setErrorEntrar(null) }}
+                    onEntrar={handleLogin}
+                    onCrear={handleCreate}
+                    onGoogle={handleGoogleLogin}
+                    onApple={handleAppleLogin}
+                    onCambiarModo={setOnCreateAccount}
+                    error={onCreateAccount ? null : errorEntrar}
+                />
+            </>
+        )
+    }
 
     return (
 
@@ -411,7 +462,7 @@ export const Login = () => {
 
             // Con sesión no hay nada que hacer aquí (pasa al volver de Google o
             // Apple): antes se pintaba vacío y el usuario se quedaba atorado.
-            : <Navigate to={rutaInvitaciones(espacio)} replace />
+            : <Navigate to={destino} replace />
 
     )
 }

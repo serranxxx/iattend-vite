@@ -1,0 +1,723 @@
+/* Sistema Pops+ en la app (handoff "Pops+ en la App"). Tokens de PopsApp:
+   navy #0B1F3A · tablero #2457A4 · lima #CDF22B (sombra #9DBB12) ·
+   rosa #FF5FA8 · chip #F1F2F6 · borde #E3E6F0 · texto 2 #56627A. */
+
+/* ── Marca "Pops+" ── */
+.marca {
+    font-family: Poppins, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+}
+
+.marcaMas {
+    color: #CDF22B;
+}
+
+.marca[data-sobre='lima'] .marcaMas {
+    color: #FF5FA8;
+}
+
+.marca[data-sobre='blanco'] .marcaMas {
+    color: #9DBB12;
+}
+
+/* ── "Quiero Pops+" ── */
+.quiero {
+    height: 42px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-family: Poppins, sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.quiero:hover {
+    background: #D7F74F;
+}
+
+.quiero:active {
+    transform: translateY(1px);
+}
+
+.quiero:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* Cuadrado con sombra lima (CTA del tablero azul). */
+.quiero[data-forma='cuadro'] {
+    height: auto;
+    padding: 16px 26px;
+    border-radius: 2px;
+    font-size: 16px;
+    box-shadow: 0 4px 0 #9DBB12, 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.quiero[data-forma='cuadro']:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #9DBB12, 0 6px 12px rgba(0, 0, 0, 0.24);
+}
+
+/* ── Cinta navy ── */
+.cinta {
+    height: 44px;
+    flex: none;
+    padding: 0 24px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    font-family: Poppins, sans-serif;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.cintaMarca {
+    font-size: 16px;
+    flex: none;
+}
+
+.cintaFrases {
+    display: flex;
+    gap: 22px;
+    color: #C9D2E6;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.cintaFrase {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cintaFrase b {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+.cintaSep {
+    opacity: 0.4;
+    margin-right: 16px;
+}
+
+.cintaLink {
+    flex: none;
+    border: 0;
+    padding: 0;
+    background: none;
+    color: #CDF22B;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cintaLink:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 1180px) {
+    .cintaFrase:nth-child(3) {
+        display: none;
+    }
+}
+
+@media (max-width: 960px) {
+    .cintaFrase:nth-child(2) {
+        display: none;
+    }
+}
+
+/* ── Chip de plan (escritorio) ── */
+.chipWrap {
+    position: relative;
+}
+
+.chip {
+    height: 56px;
+    padding: 0 8px 0 16px;
+    border: 0;
+    border-radius: 99px;
+    background: #F3F4F8;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: Poppins, sans-serif;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.chip:hover,
+.chip[data-abierto] {
+    background: #E9EBF2;
+}
+
+.chipDato {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.anillo {
+    flex: none;
+}
+
+.anillo circle {
+    transition: stroke-dasharray 0.4s ease;
+}
+
+.chipPlus {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 99px;
+    background: #CDF22B;
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+}
+
+.dropdown {
+    position: absolute;
+    right: 0;
+    top: 66px;
+    z-index: 40;
+    width: 300px;
+    box-sizing: border-box;
+    padding: 18px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+    border-radius: 20px;
+    box-shadow: 0 20px 44px rgba(11, 31, 58, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    animation: entra 0.18s ease;
+}
+
+@keyframes entra {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.dropBloque {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dropFila {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.dropFila span {
+    color: #56627A;
+}
+
+/* ── Lugares de Pops activos ── */
+.lugares {
+    display: flex;
+    gap: 8px;
+}
+
+.lugar,
+.lugarLibre {
+    flex: 1;
+    height: var(--lugar, 52px);
+    min-width: var(--lugar, 52px);
+    box-sizing: border-box;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lugar {
+    font-size: calc(var(--lugar, 52px) * 0.46);
+}
+
+.lugarLibre {
+    border: 2px dashed #B9C0D3;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 16px;
+    color: #8A8FA3;
+}
+
+/* ── Espacio por tipo ── */
+.barraEspacio {
+    display: flex;
+    height: 14px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: #E3E6F0;
+    gap: 2px;
+}
+
+.barraEspacio span {
+    display: block;
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.barraCargando {
+    background: #B9C0D3;
+}
+
+.leyenda {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: #56627A;
+}
+
+.leyenda > span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.leyendaPunto {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+/* ── Bloque navy del dropdown ── */
+.dropNavy {
+    padding: 14px;
+    border-radius: 16px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dropMarca {
+    font-size: 22px;
+    letter-spacing: -0.06em;
+    line-height: 1;
+}
+
+.cuadros {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.cuadro {
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cuadroEtiqueta {
+    font-size: 12px;
+    color: #9FB2D6;
+}
+
+.cuadroValor {
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+.cuadroValor s {
+    color: #9FB2D6;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.dropCta {
+    width: 100%;
+}
+
+/* ── Chip de plan (celular) ── */
+.chipMovil {
+    height: 36px;
+    padding: 0 4px 0 12px;
+    border: 0;
+    border-radius: 99px;
+    background: #F3F4F8;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Poppins, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.chipMovil [data-alerta] {
+    color: #D63C86;
+}
+
+.chipMovilPlus {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 99px;
+    background: #CDF22B;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+}
+
+.hojaPlan {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 4px 4px 8px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+}
+
+.hojaPlanCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hojaPlanCabeza b {
+    font-size: 18px;
+}
+
+.hojaPlanCabeza span {
+    font-size: 14px;
+    color: #56627A;
+}
+
+.hojaPlanCta {
+    height: 52px;
+    font-size: 15px;
+}
+
+.medidor {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.medidorFila {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.medidorFila span {
+    color: #56627A;
+}
+
+.pista,
+.personasPista {
+    height: 6px;
+    border-radius: 99px;
+    background: #E3E6F0;
+    overflow: hidden;
+}
+
+.pista span,
+.personasPista span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: #0B1F3A;
+}
+
+.pista span[data-alerta],
+.personasPista span[data-alerta] {
+    background: #FF5FA8;
+}
+
+/* ── Personas N de 30 ── */
+.personas {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    font-family: Poppins, sans-serif;
+}
+
+.personasFila {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 13px;
+    color: #0B1F3A;
+}
+
+.personasEtiqueta {
+    color: #56627A;
+}
+
+.personas:not([data-compacto]) .personasPista {
+    height: 8px;
+}
+
+.quedan {
+    color: #D63C86;
+    font-weight: 700;
+}
+
+.lugaresTexto {
+    color: #8A8FA3;
+}
+
+/* Pops+: la marca del chip no es botón de compra (navy, "+" lima). */
+.chipPlus[data-plus],
+.chipMovilPlus[data-plus] {
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.dropTuPlan {
+    height: 36px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #CDF22B;
+}
+
+.personasPista span.pistaLlena {
+    background: #CDF22B;
+}
+
+/* Prueba gratis: cinta lima con "Quedarme con Pops+". */
+.cintaPrueba {
+    background: #CDF22B;
+    color: #0B1F3A;
+    gap: 22px;
+}
+
+.cintaPruebaTexto {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.cintaQuedarme {
+    flex: none;
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.cintaQuedarme:hover {
+    background: #1E3354;
+}
+
+.cintaQuedarme:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+
+/* "+N" cuando hay más Pops activos que lugares dibujados. */
+.lugarMas {
+    flex: 1;
+    height: var(--lugar, 52px);
+    min-width: var(--lugar, 52px);
+    box-sizing: border-box;
+    border-radius: 12px;
+    background: #F1F2F6;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Poppins, sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.cintaPruebaTexto {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ───────── Celular (handoff "Pops+ en la App · Celular") ───────── */
+
+/* A1 · cinta navy de 36 px con una frase y "Conocer →". */
+.cinta[data-movil] {
+    height: 36px;
+    padding: 0 12px;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.cinta[data-movil] .cintaLink {
+    font-size: 12px;
+}
+
+/* B · cinta lima de 40 px: "Pops+ Prueba gratis. ¡Disfrútalo!" + "Quedármelo". */
+.cintaPrueba[data-movil] {
+    height: 40px;
+    padding: 0 8px 0 16px;
+    justify-content: space-between;
+}
+
+.cintaPrueba[data-movil] .cintaPruebaTexto {
+    gap: 6px;
+    font-size: 13px;
+}
+
+.cintaPrueba[data-movil] .cintaMarca {
+    font-size: 14px;
+}
+
+.cintaPrueba[data-movil] .cintaQuedarme {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* A2 · chip: anillo de 20 px + "2/3" + mini Pops+ (28 px). */
+.chipMovil {
+    gap: 6px;
+    padding: 0 4px 0 8px;
+    font-size: 12px;
+}
+
+/* C · hoja de plan. */
+.hojaPlanMovil {
+    gap: 20px;
+    padding: 0 0 14px;
+}
+
+.hojaPlanMovil .dropFila {
+    font-size: 14px;
+}
+
+.hojaPlanMovil .leyenda {
+    font-size: 12px;
+}
+
+.hojaPlanMovil .lugar,
+.hojaPlanMovil .lugarLibre,
+.hojaPlanMovil .lugarMas {
+    border-radius: 14px;
+}
+
+.hojaPlanMovil .lugarLibre {
+    font-size: 17px;
+}
+
+.hojaPlanMovil .dropNavy {
+    padding: 16px;
+    border-radius: 18px;
+}
+
+.hojaPlanMovil .cuadroValor {
+    font-size: 16px;
+}
+
+.hojaPlanMovil .cuadroValor s {
+    font-size: 13px;
+}
+
+.hojaPlanMovil .dropCta {
+    height: 48px;
+    font-size: 15px;
+}
+
+/* A6 · banda Pops+ (reemplaza a PlusMovil). */
+.banda {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 20px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    font-family: Poppins, sans-serif;
+}
+
+.bandaMarca {
+    font-size: 22px;
+    letter-spacing: -0.06em;
+    line-height: 1;
+}
+
+.bandaFrase {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.bandaFrase > span {
+    font-size: 12px;
+    color: #9FB2D6;
+}
+
+.bandaFrase > b {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.bandaPie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.bandaTabla {
+    border: 0;
+    padding: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: #9FB2D6;
+    cursor: pointer;
+}
+
+.bandaCta {
+    height: 44px;
+    padding: 0 16px;
+    font-size: 13px;
+}

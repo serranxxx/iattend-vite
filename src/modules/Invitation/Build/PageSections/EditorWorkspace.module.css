@@ -1090,3 +1090,15 @@
     border-radius: var(--ed-radio-caja);
     color: var(--ed-ink-2);
 }
+
+/* Herramienta con algo de Pops+ (Pop Free): punto lima, como railAviso. */
+.railPlus {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #CDF22B;
+    box-shadow: 0 0 0 2px #fff;
+}

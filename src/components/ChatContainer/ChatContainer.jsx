@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Lia from '../../pages/Lia/Lia'
 import { useLia } from '../../context/LiaContext'
+import { supabase } from '../../lib/supabase'
 import AISiri from '../AISiri/AISiri'
 import './ChatContainer.css'
 
@@ -66,6 +67,19 @@ export const ChatContainer = () => {
     const id = searchParams.get('id')
     const { notifications, dismissAll } = useLia()
 
+    // Lite y Paperless no traen Lia: el orbe se queda, pero no se puede tocar
+    // (el upsell del dashboard lleva su candado y su burbuja, Upsell/BurbujaLia).
+    const [bloqueada, setBloqueada] = useState(false)
+    useEffect(() => {
+        if (!id) { setBloqueada(false); return }
+        let vivo = true
+        supabase.from('invitations').select('plan').eq('id', id).maybeSingle()
+            .then(({ data }) => {
+                if (vivo) setBloqueada(['lite', 'paperless'].includes(String(data?.plan ?? '').toLowerCase()))
+            })
+        return () => { vivo = false }
+    }, [id])
+
     const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth <= MOBILE_BP)
 
     useEffect(() => {
@@ -110,13 +124,14 @@ export const ChatContainer = () => {
     }, [open])
 
     const handleToggle = useCallback(() => {
+        if (bloqueada && !openRef.current) return
         setNotifVisible(false)
         clearTimeout(notifTimer.current)
         const nextOpen = !openRef.current
         if (!mounted && nextOpen) setMounted(true)
         setOpen(nextOpen)
         openRef.current = nextOpen
-    }, [mounted])
+    }, [mounted, bloqueada])
 
     // Apertura desde fuera (el botón flotante de mobile)
     useEffect(() => {
@@ -175,7 +190,7 @@ export const ChatContainer = () => {
     return (
        <div
             ref={containerRef}
-            className={`chat-morph-shell chat-morph-shell--${morphState}${expanded && !isMobileViewport ? ' chat-morph-shell--expanded' : ''}`}
+            className={`chat-morph-shell chat-morph-shell--${morphState}${expanded && !isMobileViewport ? ' chat-morph-shell--expanded' : ''}${bloqueada ? ' chat-morph-shell--bloqueada' : ''}`}
             style={hiddenOnMobile ? { display: 'none' } : isMobileOpen ? {
                 inset: 0,
                 width: '100vw',
@@ -196,13 +211,15 @@ export const ChatContainer = () => {
                 {/* Circle button — visible when closed */}
                 <div
                     className="chat-morph-btn"
-                    role="button"
-                    tabIndex={morphState === 'closed' ? 0 : -1}
-                    aria-label={t('lia.open_chat')}
+                    role={bloqueada ? undefined : 'button'}
+                    tabIndex={morphState === 'closed' && !bloqueada ? 0 : -1}
+                    aria-label={bloqueada ? 'Lia' : t('lia.open_chat')}
                     aria-hidden={morphState !== 'closed'}
+                    aria-disabled={bloqueada || undefined}
+                    style={bloqueada ? { cursor: 'default' } : undefined}
                     onClick={handleToggle}
                     onKeyDown={(e) => { if (isActivateKey(e)) { e.preventDefault(); handleToggle() } }}
-                    onMouseEnter={() => setBtnHovered(true)}
+                    onMouseEnter={() => { if (!bloqueada) setBtnHovered(true) }}
                     onMouseLeave={() => setBtnHovered(false)}
                 >
                     <AISiri

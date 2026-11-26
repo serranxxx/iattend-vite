@@ -1,0 +1,795 @@
+/* Comparación Gratis / Pops+ (handoff "Pops+ en la App" 1, 1c, 1d). */
+
+.resalta {
+    background: #CDF22B;
+    padding: 0 8px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.precio {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+.precio[data-grande] {
+    font-size: 26px;
+}
+
+.precio small {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.precio[data-grande] small {
+    font-size: 13px;
+}
+
+.si {
+    color: #0B1F3A;
+}
+
+.siNavy {
+    color: #CDF22B;
+}
+
+.no {
+    color: #B9C0D3;
+}
+
+/* ── Modal 1c ── */
+.velo {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    background: rgba(11, 31, 58, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: aparece 0.2s ease;
+}
+
+@keyframes aparece {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal {
+    width: 720px;
+    max-width: 100%;
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    background: #FFFFFF;
+    border-radius: 28px;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    animation: sube 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes sube {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+.filaModal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px 190px;
+    align-items: stretch;
+}
+
+.tituloModal {
+    padding: 22px 28px;
+    align-self: center;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+}
+
+.tituloModal .resalta {
+    padding: 0 6px;
+}
+
+.colFree,
+.colPlus {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+}
+
+.filaModal .colFree {
+    padding: 22px 16px;
+}
+
+.filaModal .colPlus {
+    padding: 22px 20px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.colFree b {
+    font-size: 15px;
+}
+
+.colMarca {
+    font-size: 15px;
+}
+
+.nombre,
+.valFree,
+.valPlus {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.filaModal .nombre {
+    padding: 12px 28px;
+    font-weight: 500;
+    border-top: 1px solid #EEF0F5;
+}
+
+.filaModal .valFree {
+    padding: 12px 16px;
+    color: #56627A;
+    border-top: 1px solid #EEF0F5;
+}
+
+.filaModal .valPlus {
+    padding: 12px 20px;
+    font-weight: 700;
+    color: #FFFFFF;
+    background: #0B1F3A;
+    border-top: 1px solid #1E3354;
+}
+
+.detalle {
+    padding: 20px 28px;
+    border: 0;
+    border-top: 1px solid #EEF0F5;
+    background: none;
+    display: flex;
+    align-items: center;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2457A4;
+    cursor: pointer;
+    text-align: left;
+}
+
+.detalle:hover {
+    color: #0B1F3A;
+}
+
+.tuPlan {
+    padding: 20px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8A8FA3;
+    border-top: 1px solid #EEF0F5;
+    display: flex;
+    align-items: center;
+}
+
+.pieNavy {
+    padding: 16px 16px 20px;
+    border-top: 1px solid #1E3354;
+    background: #0B1F3A;
+}
+
+.ctaModal {
+    width: 100%;
+}
+
+/* ── Tabla completa 1d ── */
+.completa {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding-bottom: 32px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+}
+
+.volver {
+    align-self: flex-start;
+    border: 0;
+    padding: 0;
+    background: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2457A4;
+    cursor: pointer;
+}
+
+.volver:hover {
+    color: #0B1F3A;
+}
+
+.completaTitulo {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+}
+
+.tabla {
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.filaCompleta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px 260px;
+}
+
+.filaCompleta[data-cabeza] {
+    align-items: end;
+}
+
+.filaCompleta .colFree {
+    padding: 22px 20px;
+}
+
+.filaCompleta .colFree b,
+.filaCompleta .colMarca {
+    font-size: 18px;
+}
+
+.filaCompleta .colPlus {
+    padding: 22px 24px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.filaCompleta[data-grupo] > span:not(.valPlus) {
+    border-top: 1px solid #E3E6F0;
+}
+
+.grupoTitulo {
+    padding: 22px 32px 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #2457A4;
+}
+
+.filaCompleta .nombre {
+    padding: 10px 32px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.filaCompleta .valFree {
+    padding: 10px 20px;
+    color: #56627A;
+}
+
+.filaCompleta .valPlus {
+    padding: 10px 24px;
+    font-weight: 700;
+    color: #FFFFFF;
+    background: #0B1F3A;
+}
+
+.filaCompleta[data-pie] > span:not(.pieNavy) {
+    border-top: 1px solid #E3E6F0;
+}
+
+.filaCompleta .pieNavy {
+    padding: 20px 24px 28px;
+    border-top: 0;
+}
+
+.ctaCompleta {
+    width: 100%;
+    height: 46px;
+    font-size: 15px;
+}
+
+.completa[data-movil] {
+    gap: 18px;
+}
+
+.completa[data-movil] .completaTitulo {
+    font-size: 28px;
+}
+
+.completa[data-movil] .filaCompleta {
+    grid-template-columns: minmax(0, 1fr) 78px 104px;
+}
+
+.completa[data-movil] .filaCompleta .nombre {
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
+.completa[data-movil] .grupoTitulo {
+    padding: 18px 14px 6px;
+    font-size: 11px;
+}
+
+.completa[data-movil] .filaCompleta .valFree,
+.completa[data-movil] .filaCompleta .valPlus {
+    padding: 10px 10px;
+    font-size: 12px;
+}
+
+.completa[data-movil] .filaCompleta .colFree,
+.completa[data-movil] .filaCompleta .colPlus {
+    padding: 16px 10px;
+}
+
+.completa[data-movil] .precio[data-grande] {
+    font-size: 18px;
+}
+
+.completa[data-movil] .filaCompleta .colFree b,
+.completa[data-movil] .filaCompleta .colMarca {
+    font-size: 14px;
+}
+
+.completa[data-movil] .filaCompleta .pieNavy {
+    padding: 14px 8px 18px;
+}
+
+.completa[data-movil] .ctaCompleta {
+    font-size: 12px;
+    padding: 0 8px;
+}
+
+/* ── ¿Gratis o Pops+? (Inicio) ── */
+.gop {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+    scroll-margin-top: 120px;
+}
+
+.gopCabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.gopTitulo {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.verTabla {
+    height: 46px;
+    padding: 0 20px;
+    border-radius: 99px;
+    border: 1.5px solid #0B1F3A;
+    background: #FFFFFF;
+    color: #0B1F3A;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.verTabla:hover {
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.gopTarjetas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: 20px;
+    align-items: stretch;
+}
+
+.tarjetaFree,
+.tarjetaPlus {
+    position: relative;
+    padding: 32px;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.tarjetaFree {
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+}
+
+.tarjetaPlus {
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.destello {
+    position: absolute;
+    right: 28px;
+    top: -22px;
+    width: 58px;
+    transform: rotate(12deg);
+}
+
+.tarjetaCabeza {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tarjetaTag {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #56627A;
+}
+
+.tarjetaMarca {
+    font-size: 30px;
+    letter-spacing: -0.07em;
+    line-height: 1;
+}
+
+.tarjetaTitulo {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.frases {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.frasesPlus {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 28px;
+}
+
+.frase {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 15px;
+}
+
+.fraseGente {
+    font-weight: 500;
+    color: #8A8FA3;
+}
+
+.fraseGenteNavy {
+    color: #9FB2D6;
+}
+
+.fraseFix {
+    font-weight: 600;
+}
+
+.ademas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #9FB2D6;
+}
+
+.ademas > span:first-child {
+    margin-right: 4px;
+}
+
+.ademasChip {
+    padding: 6px 12px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.tarjetaPie {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px dashed #E3E6F0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tarjetaPieNavy {
+    border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.pieTextos {
+    display: flex;
+    flex-direction: column;
+}
+
+.pieTextos small {
+    color: #56627A;
+    font-size: 13px;
+}
+
+.tarjetaPieNavy .pieTextos > small {
+    color: #9FB2D6;
+}
+
+.pieGrande {
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+}
+
+.pieGrande small {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: inherit !important;
+}
+
+.loTienes {
+    padding: 8px 14px;
+    border-radius: 99px;
+    background: #F1F2F6;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pasar {
+    padding: 16px 24px;
+    border: 0;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.pasar:hover {
+    background: #D7F74F;
+}
+
+@media (max-width: 1100px) {
+    .frasesPlus {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gop[data-movil] {
+    gap: 14px;
+}
+
+.gop[data-movil] .gopCabeza {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.gop[data-movil] .gopTitulo {
+    font-size: 24px;
+}
+
+.gop[data-movil] .verTabla {
+    height: 40px;
+    font-size: 14px;
+}
+
+.gop[data-movil] .gopTarjetas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+.gop[data-movil] .tarjetaFree,
+.gop[data-movil] .tarjetaPlus {
+    padding: 22px;
+    gap: 18px;
+}
+
+.gop[data-movil] .frasesPlus {
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.gop[data-movil] .tarjetaTitulo {
+    font-size: 20px;
+}
+
+.gop[data-movil] .tarjetaPie {
+    flex-wrap: wrap;
+}
+
+.gop[data-movil] .pasar {
+    width: 100%;
+    padding: 14px 20px;
+}
+
+/* Pops+: "Tu plan" en la columna navy y "Lo tienes" en la tarjeta navy. */
+.tuPlanNavy {
+    height: 42px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #CDF22B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.loTienesNavy {
+    background: #CDF22B;
+    color: #0B1F3A;
+}
+
+/* ── D2 · tabla en hoja (celular) ── */
+.veloHoja {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    background: rgba(11, 31, 58, 0.45);
+    animation: aparece 0.2s ease;
+}
+
+.hojaLista {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 90px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    border-radius: 28px 28px 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-family: Poppins, sans-serif;
+    animation: hojaSube 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes hojaSube {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+}
+
+.hojaAsa {
+    flex: none;
+    align-self: center;
+    margin-top: 10px;
+    width: 40px;
+    height: 5px;
+    padding: 0;
+    border: 0;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+}
+
+.hojaCabeza {
+    flex: none;
+    padding: 18px 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hojaMarca {
+    font-size: 30px;
+    letter-spacing: -0.06em;
+    line-height: 1;
+}
+
+.hojaCabeza > span:last-child {
+    font-size: 14px;
+    color: #C9D2E6;
+}
+
+.hojaTarjeta {
+    flex: 1;
+    min-height: 0;
+    margin: 0 12px;
+    background: #FFFFFF;
+    color: #0B1F3A;
+    border-radius: 20px;
+    overflow-y: auto;
+}
+
+.hojaFila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 16px;
+    border-bottom: 1px solid #EEF0F5;
+}
+
+.hojaFila:last-child {
+    border-bottom: 0;
+}
+
+.hojaNombre {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.hojaValores {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.hojaValores s {
+    font-size: 12px;
+    color: #8A8FA3;
+}
+
+.hojaValores b {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: #CDF22B;
+}
+
+.hojaPie {
+    flex: none;
+    padding: 16px 20px calc(30px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hojaCta {
+    height: 52px;
+    font-size: 16px;
+}
+
+.hojaDetalle {
+    align-self: center;
+    border: 0;
+    padding: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: #9FB2D6;
+    cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hojaLista {
+        animation: none;
+    }
+}

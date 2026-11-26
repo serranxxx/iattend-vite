@@ -1,0 +1,816 @@
+/* Login / Crear cuenta de Pops (handoff "Pops — Login y Crear cuenta").
+   Tablero #2457A4 · navy #0B1F3A · lima #CDF22B (sombra #9DBB12) · rosa claro
+   #FFB3C9 · papel #F3F2EE · ticket #F8F5EC · polaroid #FBFAF5. */
+
+.pagina {
+    --mayor: 144px;
+    --menor: 36px;
+    --regla: 24px;
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    background-color: #2457A4;
+    background-image:
+        radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.24) 90%),
+        linear-gradient(rgba(232, 240, 255, 0.6) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.6) 2px, transparent 2px),
+        linear-gradient(rgba(232, 240, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.2) 1px, transparent 1px);
+    background-size: 100% 100%, var(--mayor) var(--mayor), var(--mayor) var(--mayor), var(--menor) var(--menor), var(--menor) var(--menor);
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+}
+
+/* ── Reglas, números y trazos ── */
+.reglaArriba,
+.reglaIzq,
+.reglaDer {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.reglaArriba {
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--regla);
+    background-image:
+        linear-gradient(90deg, rgba(232, 240, 255, 0.62) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 240, 255, 0.62) 2px, transparent 2px);
+    background-size: 12px 7px, var(--mayor) 20px;
+    background-repeat: repeat-x;
+}
+
+.reglaIzq,
+.reglaDer {
+    top: 0;
+    bottom: 0;
+    width: var(--regla);
+    background-image:
+        linear-gradient(rgba(232, 240, 255, 0.62) 1px, transparent 1px),
+        linear-gradient(rgba(232, 240, 255, 0.62) 2px, transparent 2px);
+    background-size: 7px 12px, 20px var(--mayor);
+    background-repeat: repeat-y;
+}
+
+.reglaIzq {
+    left: 0;
+}
+
+.reglaDer {
+    right: 0;
+    background-position: right 0;
+}
+
+.numeros {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    font: 600 11px Poppins, sans-serif;
+    color: rgba(232, 240, 255, 0.62);
+}
+
+.numArriba,
+.numIzq,
+.numDer {
+    position: absolute;
+}
+
+.numArriba {
+    top: 22px;
+    left: calc(var(--mayor) * var(--n) + 4px);
+}
+
+.numIzq {
+    left: 28px;
+    top: calc(var(--mayor) * var(--n) - 6px);
+}
+
+.numDer {
+    right: 28px;
+    top: calc(var(--mayor) * var(--n) - 6px);
+}
+
+.trazo1,
+.trazo2 {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 160vmax;
+    height: 0;
+    border-top: 1.5px solid rgba(232, 240, 255, 0.42);
+    transform: rotate(-38deg);
+    transform-origin: 0 0;
+    pointer-events: none;
+}
+
+.trazo2 {
+    left: 20%;
+    border-top-style: dashed;
+    transform: rotate(-22deg);
+}
+
+.circulo {
+    position: absolute;
+    right: -160px;
+    bottom: -180px;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(232, 240, 255, 0.4);
+    pointer-events: none;
+}
+
+.luz {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 800px 600px at 50% 30%, rgba(255, 244, 200, 0.16), transparent 70%);
+    pointer-events: none;
+}
+
+/* ── Collage (escritorio) ── */
+.collage {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.polaroid {
+    position: absolute;
+    background: #FBFAF5;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+.polaroid img {
+    display: block;
+    object-fit: cover;
+}
+
+.polaroid > span:last-child {
+    display: block;
+    padding: 8px 0 10px;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 22px;
+    text-align: center;
+}
+
+.polaroidCinta {
+    position: absolute;
+    left: 50%;
+    top: -12px;
+    width: 84px;
+    height: 24px;
+    margin-left: -42px;
+    background: rgba(238, 232, 212, 0.85);
+    transform: rotate(4deg);
+}
+
+.polaroidIzq {
+    left: calc(50% - 610px);
+    top: 150px;
+    width: 220px;
+    padding: 12px 12px 0;
+    box-sizing: border-box;
+    transform: rotate(-7deg);
+}
+
+.polaroidIzq img {
+    width: 196px;
+    height: 200px;
+}
+
+.polaroidDer {
+    right: calc(50% - 600px);
+    top: 300px;
+    width: 200px;
+    padding: 11px 11px 0;
+    box-sizing: border-box;
+    transform: rotate(8deg);
+}
+
+.polaroidDer img {
+    width: 178px;
+    height: 180px;
+}
+
+.polaroidDer .polaroidCinta {
+    transform: rotate(-4deg);
+}
+
+.objeto {
+    position: absolute;
+    left: calc(50% - 530px);
+    top: 520px;
+    width: 230px;
+    height: 180px;
+    object-fit: cover;
+    transform: rotate(9deg);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+}
+
+.st {
+    position: absolute;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.stExplosion { left: calc(50% - 420px); top: 110px; width: 84px; transform: rotate(12deg); }
+.stGlobo { left: calc(50% - 624px); top: 690px; width: 78px; transform: rotate(-10deg); }
+.stOjos { right: calc(50% - 420px); top: 600px; width: 72px; transform: rotate(8deg); }
+.stCorazon { right: calc(50% - 580px); top: 660px; width: 90px; transform: rotate(-14deg); }
+.stDestello { right: calc(50% - 340px); top: 150px; width: 54px; }
+
+.tijeras {
+    position: absolute;
+    right: calc(50% - 680px);
+    top: 70px;
+    height: 150px;
+    transform: rotate(-18deg);
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+}
+
+.hechoPorTi {
+    position: absolute;
+    left: calc(50% - 570px);
+    top: 470px;
+    padding: 5px 14px;
+    background: #CDF22B;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 22px;
+    transform: rotate(-5deg);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+
+.stickersMovil {
+    display: none;
+}
+
+/* ── Columna ── */
+.columna {
+    position: relative;
+    z-index: 2;
+    width: 460px;
+    max-width: calc(100% - 40px);
+    margin: 0 auto;
+    padding: 70px 0 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.columna[data-registro] {
+    padding-top: 28px;
+}
+
+.logo {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 28px 14px;
+    background: #F3F2EE;
+    transform: rotate(-2deg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 0 rgba(0, 0, 0, 0.14), 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.28);
+}
+
+.logoCinta {
+    position: absolute;
+    left: 50%;
+    top: -12px;
+    width: 76px;
+    height: 22px;
+    margin-left: -38px;
+    background: rgba(238, 232, 212, 0.85);
+    transform: rotate(3deg);
+}
+
+.logoPops {
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: -0.07em;
+    line-height: 1;
+}
+
+.logoBy {
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 22px;
+    color: #6A6A64;
+}
+
+.logo[data-chico] .logoPops {
+    font-size: 36px;
+}
+
+.logo[data-chico] .logoBy {
+    font-size: 18px;
+}
+
+.titulo {
+    margin: 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.recorte {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: -0.07em;
+    line-height: 1;
+    white-space: nowrap;
+    padding: 6px 18px 10px;
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.28);
+}
+
+.recortePapel {
+    background: #F3F2EE;
+    transform: rotate(-1.5deg);
+}
+
+.recorteLima {
+    position: relative;
+    margin: -4px 0 0 60px;
+    background: #CDF22B;
+    transform: rotate(1deg);
+}
+
+.sub {
+    margin: 12px 0 0;
+    font-size: 16px;
+    color: #E8F0FF;
+    text-align: center;
+}
+
+/* ── Ticket ── */
+.ticketSombra {
+    position: relative;
+    margin-top: 40px;
+    align-self: stretch;
+    transform: rotate(0.6deg);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)) drop-shadow(0 18px 26px rgba(0, 0, 0, 0.28));
+}
+
+.columna[data-registro] .ticketSombra {
+    margin-top: 18px;
+}
+
+.ticketCinta {
+    position: absolute;
+    left: 44px;
+    top: -12px;
+    z-index: 2;
+    width: 96px;
+    height: 24px;
+    background: linear-gradient(180deg, rgba(255, 253, 240, 0.85), rgba(236, 230, 205, 0.78));
+    transform: rotate(-5deg);
+}
+
+.ticket {
+    padding: 34px 32px 40px;
+    background: #F8F5EC;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 97.5% 100%, 95% calc(100% - 10px), 92.5% 100%, 90% calc(100% - 10px), 87.5% 100%, 85% calc(100% - 10px), 82.5% 100%, 80% calc(100% - 10px), 77.5% 100%, 75% calc(100% - 10px), 72.5% 100%, 70% calc(100% - 10px), 67.5% 100%, 65% calc(100% - 10px), 62.5% 100%, 60% calc(100% - 10px), 57.5% 100%, 55% calc(100% - 10px), 52.5% 100%, 50% calc(100% - 10px), 47.5% 100%, 45% calc(100% - 10px), 42.5% 100%, 40% calc(100% - 10px), 37.5% 100%, 35% calc(100% - 10px), 32.5% 100%, 30% calc(100% - 10px), 27.5% 100%, 25% calc(100% - 10px), 22.5% 100%, 20% calc(100% - 10px), 17.5% 100%, 15% calc(100% - 10px), 12.5% 100%, 10% calc(100% - 10px), 7.5% 100%, 5% calc(100% - 10px), 2.5% 100%, 0% calc(100% - 10px));
+}
+
+.columna[data-registro] .ticket {
+    padding: 22px 32px 28px;
+}
+
+.ticketCabeza {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 3px solid #0B1F3A;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.ticketNota {
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 19px;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: #22489A;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.etiqueta {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.input,
+.inputCaja {
+    height: 52px;
+    box-sizing: border-box;
+    padding: 0 16px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1.5px solid #E3E6F0;
+    font-family: inherit;
+    font-size: 15px;
+    color: #0B1F3A;
+    transition: border-color 0.15s ease;
+}
+
+.columna[data-registro] .input,
+.columna[data-registro] .inputCaja {
+    height: 46px;
+}
+
+.input::placeholder {
+    color: #A8A39F;
+}
+
+.input:focus,
+.inputCaja:focus-within {
+    outline: none;
+    border-color: #0B1F3A;
+}
+
+.inputCaja {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.inputCaja[data-error] {
+    border-color: #D23B2E;
+}
+
+.inputSolo {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    outline: none;
+}
+
+.ver {
+    border: 0;
+    padding: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: #56627A;
+    cursor: pointer;
+}
+
+.error {
+    font-size: 12px;
+    color: #D23B2E;
+}
+
+.cta {
+    margin-top: 10px;
+    height: 58px;
+    border: 0;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-family: inherit;
+    font-size: 19px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    transform: rotate(-1deg);
+    box-shadow: 0 5px 0 #9DBB12, 0 12px 20px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cta:hover {
+    transform: rotate(-1deg) translateY(2px);
+    box-shadow: 0 3px 0 #9DBB12, 0 8px 14px rgba(0, 0, 0, 0.18);
+}
+
+.separador {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #8A8FA3;
+}
+
+.separador span {
+    flex: 1;
+    border-top: 2px dashed rgba(11, 31, 58, 0.16);
+}
+
+.sociales {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.google,
+.apple {
+    height: 50px;
+    border-radius: 99px;
+    border: 1.5px solid #0B1F3A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.google {
+    background: #FFFFFF;
+    color: #0B1F3A;
+}
+
+.google:hover {
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.apple {
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+.apple:hover {
+    background: #FFFFFF;
+    color: #0B1F3A;
+}
+
+.pie {
+    margin: 28px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: #E8F0FF;
+}
+
+.columna[data-registro] .pie {
+    margin-top: 16px;
+}
+
+.pieBoton {
+    padding: 5px 14px;
+    border: 0;
+    background: #FFB3C9;
+    color: #0B1F3A;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 22px;
+    transform: rotate(-3deg);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.pieBoton[data-registro] {
+    background: #FFFFFF;
+}
+
+/* Sin espacio para el collage a los lados: se esconde (nunca detrás del formulario). */
+@media (max-width: 1180px) {
+    .collage {
+        display: none;
+    }
+}
+
+/* ── Celular ── */
+@media (max-width: 600px) {
+    .pagina {
+        --mayor: 72px;
+        --menor: 18px;
+        --regla: 14px;
+        background-image:
+            radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.24) 90%),
+            linear-gradient(rgba(232, 240, 255, 0.5) 1.5px, transparent 1.5px),
+            linear-gradient(90deg, rgba(232, 240, 255, 0.5) 1.5px, transparent 1.5px),
+            linear-gradient(rgba(232, 240, 255, 0.16) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(232, 240, 255, 0.16) 1px, transparent 1px);
+    }
+
+    .reglaArriba {
+        background-size: 10px 6px, var(--mayor) 12px;
+    }
+
+    .reglaIzq,
+    .reglaDer {
+        background-size: 7px 10px, 12px var(--mayor);
+    }
+
+    .numeros {
+        font-size: 9px;
+    }
+
+    .numArriba {
+        top: 13px;
+        left: calc(var(--mayor) * var(--n) + 3px);
+    }
+
+    .numIzq {
+        left: 17px;
+        top: calc(var(--mayor) * var(--n) - 5px);
+    }
+
+    .numDer {
+        display: none;
+    }
+
+    .stickersMovil {
+        display: block;
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .stickersMovil img {
+        position: absolute;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+    }
+
+    .mExplosion { right: 20px; top: 70px; width: 60px; transform: rotate(12deg); }
+    .mCorazon { left: 22px; bottom: 40px; width: 56px; transform: rotate(-14deg); }
+    .mDestello { right: 30px; bottom: 70px; width: 40px; }
+
+    .columna {
+        max-width: calc(100% - 40px);
+        padding-top: 90px;
+    }
+
+    .columna[data-registro] {
+        padding-top: 56px;
+    }
+
+    .logoPops {
+        font-size: 40px;
+    }
+
+    .logoBy {
+        font-size: 18px;
+    }
+
+    .logo[data-chico] .logoPops {
+        font-size: 28px;
+    }
+
+    .logo[data-chico] .logoBy {
+        font-size: 15px;
+    }
+
+    .recorte {
+        font-size: 34px;
+    }
+
+    .recorteLima {
+        margin-left: 40px;
+    }
+
+    .sub {
+        font-size: 14px;
+    }
+
+    .ticketSombra {
+        margin-top: 34px;
+        transform: none;
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)) drop-shadow(0 14px 20px rgba(0, 0, 0, 0.26));
+    }
+
+    .ticket,
+    .columna[data-registro] .ticket {
+        padding: 26px 20px 32px;
+        gap: 12px;
+    }
+
+    .ticketCabeza {
+        font-size: 12px;
+    }
+
+    .ticketNota {
+        font-size: 17px;
+    }
+
+    .input,
+    .inputCaja,
+    .columna[data-registro] .input,
+    .columna[data-registro] .inputCaja {
+        height: 48px;
+        padding: 0 14px;
+    }
+
+    .cta {
+        height: 54px;
+        font-size: 18px;
+    }
+
+    .google,
+    .apple {
+        height: 48px;
+        font-size: 14px;
+    }
+
+    .pie {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 14px;
+    }
+
+    .pieBoton {
+        font-size: 20px;
+    }
+}
+
+/* ── Transición Entrar ↔ Crear cuenta ── */
+.logo,
+.logoPops,
+.logoBy {
+    transition: font-size 0.35s cubic-bezier(0.32, 0.72, 0, 1), transform 0.35s ease;
+}
+
+.columna {
+    transition: padding-top 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* El título entra como recortes que se pegan, uno tras otro. */
+.recorte {
+    animation: pegar 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.recortePapel {
+    --rot: -1.5deg;
+}
+
+.recorteLima {
+    --rot: 1deg;
+    animation-delay: 0.08s;
+}
+
+@keyframes pegar {
+    from { opacity: 0; transform: translateY(-14px) rotate(calc(var(--rot) * 4)) scale(1.08); }
+    to { opacity: 1; transform: rotate(var(--rot)); }
+}
+
+.sub {
+    animation: aparecer 0.4s ease 0.12s both;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Cada modo es una hoja nueva: entra deslizándose y girando un poco. */
+.ticketSombra {
+    animation: hojaNueva 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes hojaNueva {
+    from { opacity: 0; transform: translateY(26px) rotate(-2.5deg) scale(0.97); }
+    to { opacity: 1; transform: rotate(0.6deg); }
+}
+
+.pieBoton {
+    animation: rebote 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+
+@keyframes rebote {
+    from { opacity: 0; transform: rotate(-12deg) scale(0.6); }
+    to { opacity: 1; transform: rotate(-3deg); }
+}
+
+@media (max-width: 600px) {
+    @keyframes hojaNueva {
+        from { opacity: 0; transform: translateY(22px) scale(0.97); }
+        to { opacity: 1; transform: none; }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .logo,
+    .logoPops,
+    .logoBy,
+    .columna {
+        transition: none;
+    }
+
+    .recorte,
+    .sub,
+    .ticketSombra,
+    .pieBoton {
+        animation: none;
+    }
+}

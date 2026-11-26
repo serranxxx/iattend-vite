@@ -685,10 +685,22 @@
 
 .modalPrimario {
     flex: 1.3;
+    border-radius: 99px;
     background: #CDF22B;
     color: #0B1F3A;
     font-weight: 800;
-    box-shadow: 0 4px 0 #9DBB12;
+    /* Sombra lima de los CTA de Pops+, con la forma de píldora. */
+    box-shadow: 0 4px 0 #9DBB12, 0 10px 18px rgba(11, 31, 58, 0.18);
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.modalPrimario:hover {
+    background: #D7F74F;
+}
+
+.modalPrimario:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #9DBB12, 0 6px 12px rgba(11, 31, 58, 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1217,4 +1229,157 @@
 /* Make a Pop con su menú abierto: el "+" gira a "×". */
 .makePop[data-abierto] .makePopMas {
     transform: rotate(45deg);
+}
+
+/* Cinta navy de Pops+ (handoff "Pops+ en la App"): fija arriba de la barra,
+   que baja 44 px para quedar debajo. */
+.cintaFija {
+    position: sticky;
+    top: 0;
+    z-index: 51;
+}
+
+.app[data-cinta] .barra {
+    top: var(--alto-cinta, 44px);
+}
+
+.app[data-cinta] .barraMovil {
+    top: var(--alto-cinta, 44px);
+}
+
+/* Administración: "Ver como" Free · Plus · Try (vistaPlanAdmin.js). */
+.verComo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px 10px 16px;
+    border-radius: 18px;
+    background: var(--pa-chip, #F1F2F6);
+}
+
+.verComoEtiqueta {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pa-texto2, #56627A);
+    white-space: nowrap;
+}
+
+.verComoBotones {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 99px;
+    background: #FFFFFF;
+}
+
+.verComoBoton {
+    height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 99px;
+    background: transparent;
+    color: var(--pa-navy, #0B1F3A);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.verComoBoton:hover {
+    background: #E9EBF2;
+}
+
+.verComoBoton[data-activo] {
+    background: var(--pa-navy, #0B1F3A);
+    color: #CDF22B;
+}
+
+/* "by I attend" en un renglón (con el chip de plan del celular no se parte). */
+.selectorMovil .byIattend {
+    white-space: nowrap;
+}
+
+/* Ideas "Soon" (IDEAS_PRONTO): insignia lima en la pestaña y en la barra de abajo. */
+.pronto {
+    height: 18px;
+    padding: 0 7px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pestana[aria-disabled] {
+    cursor: default;
+}
+
+.tabIcono {
+    position: relative;
+}
+
+.prontoMovil {
+    position: absolute;
+    top: -8px;
+    left: 60%;
+    height: 15px;
+    padding: 0 5px;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    display: inline-flex;
+    align-items: center;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+/* Barra de escritorio angosta (laptops, iPad horizontal): nada se parte en dos
+   renglones; se van quitando "by I attend", el texto de Make a Pop y el anillo
+   del espacio, en ese orden. */
+.selector,
+.pestana,
+.makePop,
+.byIattend {
+    white-space: nowrap;
+}
+
+.derecha,
+.izquierda {
+    flex-shrink: 0;
+}
+
+@media (max-width: 1240px) {
+    .barra .byIattend {
+        display: none;
+    }
+}
+
+@media (max-width: 1140px) {
+    .makePopTexto {
+        display: none;
+    }
+
+    .makePop {
+        padding-right: 8px;
+    }
+}
+
+@media (max-width: 1040px) {
+    .barra [data-dato='espacio'] {
+        display: none;
+    }
+
+    .barra {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
 }

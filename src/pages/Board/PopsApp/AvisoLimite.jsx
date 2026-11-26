@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
-import { PRECIO_PLUS, TOPE_POPS_FREE } from './usePlanPops'
+import { TOPE_POPS_FREE } from './usePlanPops'
 import { HojaPops } from './HojaPops'
 import s from './PopsApp.module.css'
 
@@ -55,7 +55,7 @@ export const ModalLimite = ({ open, onClose, onArchivar, onPlus, movil }) => {
                 <ul className={s.hojaBeneficios}>
                     {BENEFICIOS.map(b => <li key={b}><span>✓</span>{t(`pops_app.${b}`)}</li>)}
                 </ul>
-                <button type='button' className={s.hojaPrimario} onClick={onPlus}>{t('pops_app.go_plus', { price: PRECIO_PLUS })}</button>
+                <button type='button' className={s.hojaPrimario} onClick={onPlus}>{t('pops_plus_app.go_plus')}</button>
                 <button type='button' className={s.hojaSecundario} onClick={onArchivar}>{t('pops_app.archive_a_pop')}</button>
                 <button type='button' className={s.hojaAhoraNo} onClick={onClose}>{t('pops_app.not_now')}</button>
             </HojaPops>
@@ -76,7 +76,7 @@ export const ModalLimite = ({ open, onClose, onArchivar, onPlus, movil }) => {
                 </ul>
                 <div className={s.modalAcciones}>
                     <button type='button' className={s.modalSecundario} onClick={onArchivar}>{t('pops_app.archive_a_pop')}</button>
-                    <button type='button' className={s.modalPrimario} onClick={onPlus}>{t('pops_app.go_plus', { price: PRECIO_PLUS })}</button>
+                    <button type='button' className={s.modalPrimario} onClick={onPlus}>{t('pops_plus_app.go_plus')}</button>
                 </div>
             </div>
         </div>,

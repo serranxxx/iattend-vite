@@ -4,6 +4,8 @@ import { CountUp } from './CountUp'
 import { TablesSketch } from './TablesSketch'
 import styles from './DashboardMobile.module.css'
 import { PortadaMiniatura } from './PortadaMiniatura'
+import u from './Upsell/Upsell.module.css'
+import { BarraPlan, CarruselBloqueadas, CompararMovil, NudgeMovil, PasoLiteMovil, StdMovil, TarjetaProMovil } from './Upsell/UpsellMovil'
 
 /* ═══════════════════════════════════════════════════════════════
    Tablero del evento en móvil — handoff "1b · Hero + carriles".
@@ -46,14 +48,33 @@ export const DashboardMobile = ({
     onShare,
     onOpen,
     onOpenTables,
+    // Upsell Lite / Paperless (handoff "Upsell mobile"): barra del plan arriba,
+    // aviso de WhatsApp en la lista, tarjeta PRO, carrusel de lo bloqueado y
+    // el comparador como hoja inferior (`onComparar`). PRO no lo pasa.
+    plan,
+    incluidas,
+    nombres,
+    onComparar,
+    mejora,
 }) => {
     const { t } = useTranslation()
+    const upsell = !!onComparar && (plan === 'lite' || plan === 'paperless')
+    const paperless = upsell && plan === 'paperless'
+    // En Lite, Photo Wall y side events solo quedan en "Más para tu evento"
+    // si la invitación ya los trae; si no, están en el carrusel de PRO.
+    const enMas = (f) => !upsell || incluidas.has(f)
 
     const initials = (name) => (name ?? '')
         .trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '·'
 
     return (
         <div className={styles.page}>
+
+            {upsell && (
+                <div {...rise(0)} className={`${styles.rise} ${u.bloqueMovilPrimero}`}>
+                    <BarraPlan plan={plan} incluidas={incluidas} onComparar={onComparar} mejora={mejora} />
+                </div>
+            )}
 
             {/* ── Hero: la invitación ── */}
             <button type="button" {...rise(0)} className={`${styles.hero} ${styles.rise}`} onClick={onOpen('build')}>
@@ -74,8 +95,7 @@ export const DashboardMobile = ({
                     <h1 className={styles.heroTitle}>{t('dashboard.card_invitation')}</h1>
                     <span className={styles.heroMeta}>
                         {t(published ? 'dashboard.mob_published' : 'dashboard.mob_draft')}
-                        {' · '}
-                        {t('dashboard.mob_passes_sent', { sent: totalPasses, total: passesCap })}
+                        {!paperless && <>{' · '}{t('dashboard.mob_passes_sent', { sent: totalPasses, total: passesCap })}</>}
                     </span>
 
                     <span className={styles.heroActions}>
@@ -103,6 +123,18 @@ export const DashboardMobile = ({
                 </span>
             </button>
 
+            {paperless && (
+                <>
+                    <div {...rise(1)} className={`${styles.rise} ${u.bloqueMovil}`}>
+                        <StdMovil img={stdImg} onAbrir={onOpen('savethedate')} />
+                    </div>
+                    <div {...rise(2)} className={`${styles.rise} ${u.bloqueMovil}`}>
+                        <PasoLiteMovil onComparar={onComparar} mejora={mejora} />
+                    </div>
+                </>
+            )}
+
+            {!paperless && <>
             {/* ── Tira de pases ── */}
             <div {...rise(1)} className={`${styles.metrics} ${styles.rise}`}>
                 <button type="button" className={`${styles.metric} ${styles.metricConfirmed}`} onClick={onOpen('guests')}>
@@ -153,6 +185,7 @@ export const DashboardMobile = ({
                             </div>
                         )
                     }
+                    {upsell && <NudgeMovil esperando={stats.waiting} onComparar={onComparar} />}
                 </div>
             </div>
 
@@ -164,7 +197,7 @@ export const DashboardMobile = ({
                 </div>
 
                 <div className={styles.rail}>
-                    <button type="button" className={`${styles.railCard} ${styles.railWall}`} onClick={onOpen('photowall')}>
+                    {enMas('photo') && <button type="button" className={`${styles.railCard} ${styles.railWall}`} onClick={onOpen('photowall')}>
                         <span className={styles.railTitle}>Photo Wall</span>
                         <span className={styles.railSub}>{t('dashboard.mob_wall_count', { count: photoCount })}</span>
                         <span className={styles.wallScene}>
@@ -172,9 +205,9 @@ export const DashboardMobile = ({
                                 <span key={i} className={styles.polaroid}><img src={src} alt="" /></span>
                             ))}
                         </span>
-                    </button>
+                    </button>}
 
-                    <button type="button" className={`${styles.railCard} ${styles.railSide}`} onClick={onOpen('side')}>
+                    {enMas('side') && <button type="button" className={`${styles.railCard} ${styles.railSide}`} onClick={onOpen('side')}>
                         <span className={styles.railTitle}>{t('dashboard.card_side_events')}</span>
                         <span className={styles.railSub}>{t('dashboard.mob_side_count', { count: sideCount })}</span>
                         <span className={styles.envScene}>
@@ -182,7 +215,7 @@ export const DashboardMobile = ({
                             <span className={styles.env} />
                             <span className={styles.env} />
                         </span>
-                    </button>
+                    </button>}
 
                     {showTables && (
                         <button type="button" className={`${styles.railCard} ${styles.railTables}`} onClick={onOpenTables}>
@@ -205,6 +238,19 @@ export const DashboardMobile = ({
                     </button>
                 </div>
             </div>
+            </>}
+
+            {upsell && (
+                <>
+                    <div {...rise(4)} className={`${styles.rise} ${u.bloqueMovil}`}>
+                        <TarjetaProMovil plan={plan} incluidas={incluidas} mejora={mejora} />
+                    </div>
+                    <div {...rise(5)} className={`${styles.rise} ${u.bloqueMovil}`}>
+                        <CarruselBloqueadas incluidas={incluidas} nombres={nombres} onComparar={onComparar} />
+                    </div>
+                    <div className={u.bloqueMovilCentro}><CompararMovil onComparar={onComparar} /></div>
+                </>
+            )}
 
             {/* ── Feedback ── */}
             {feedbackVisible && (

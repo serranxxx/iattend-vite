@@ -3,11 +3,11 @@ import { InsigniaPlus } from '../PlanPops/InsigniaPlus'
 import { useInsigniasPlus } from '../PlanPops/planPopsUI'
 import { LIMITES_FREE } from '../planPops'
 import { useTranslation } from 'react-i18next'
-import { DatePicker, Input, Popover, Segmented, Switch, Tooltip } from 'antd'
+import { DatePicker, Input, Popover, Segmented, Switch, TimePicker, Tooltip } from 'antd'
 import { Deslizador as Slider } from '../../Editor/Deslizador'
 import dayjs from 'dayjs'
-import { Blend, Clapperboard, CloudOff, CloudSun, Film, GalleryHorizontal, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X, Maximize2, Minimize2, Move, Play, Droplets, Layers, RotateCcw, ZoomIn, ZoomOut, Video } from 'lucide-react'
-import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, formatEventDateTime } from '../../../helpers/assets/eventDateTime'
+import { Blend, CalendarPlus, Clapperboard, Clock, CloudOff, CloudSun, Film, GalleryHorizontal, ImageMinus, ImagePlus, Link2, MapPin, MessageCircle, Pin, Plus, Trash2, Undo2, Users, X, Maximize2, Minimize2, Move, Play, Droplets, Layers, RotateCcw, ZoomIn, ZoomOut, Video } from 'lucide-react'
+import { cuerpoConFechas, dayjsToWallClock, fechasDelEvento, finDesdeHora, formatEventDateTime, horaFinDe } from '../../../helpers/assets/eventDateTime'
 import { LiveSlider } from '../../Invitation/Build/PageSections/barControls'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { CAMPOS_DIRECCION as ADDRESS_FIELDS } from '../acceso'
@@ -61,23 +61,78 @@ const usePop = () => {
 
 /* ── Fecha y hora ── */
 // Hora de pared, sin conversión de timezone. Un Pop puede tener varias
-// fechas (fechasDelEvento / cuerpoConFechas).
+// fechas (fechasDelEvento / cuerpoConFechas) y cada una su hora de fin
+// opcional (`body.ends`, ver finDesdeHora): solo se elige la hora; si no es
+// mayor que la de inicio, es del día siguiente (se marca "+1 día"). Es
+// opcional: el campo "Termina" solo sale si ya hay una hora de fin o si el
+// organizador la pide con el "+" (menú: otro día · hora de terminación).
 export const DateBar = ({ body, setBody, esPop }) => {
     const { t } = useTranslation()
-    const { open, pop } = usePop()
+    const { open, setOpen, pop } = usePop()
+    // Días ("YYYY-MM-DD" de inicio) a los que les pidieron hora de fin con el
+    // "+" y aún no la tienen: cada fecha lleva la suya, opcional.
+    const [pidioFin, setPidioFin] = useState([])
+    const [enfocar, setEnfocar] = useState(null)
+    const listaRef = useRef(null)
+    const cuantas = esPop ? fechasDelEvento(body).length : 1
+    const cuantasAntes = useRef(cuantas)
+    // Qué orilla tiene más fechas escondidas (para el fundido).
+    const [orillas, setOrillas] = useState('')
+    const medirOrillas = () => {
+        const el = listaRef.current
+        if (!el) return
+        const izq = el.scrollLeft > 2
+        const der = el.scrollLeft + el.clientWidth < el.scrollWidth - 2
+        setOrillas(izq && der ? 'ambas' : izq ? 'izq' : der ? 'der' : '')
+    }
+    useLayoutEffect(() => {
+        const el = listaRef.current
+        if (el && cuantas > cuantasAntes.current) el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' })
+        cuantasAntes.current = cuantas
+        medirOrillas()
+    })
     const lista = esPop ? (fechasDelEvento(body).length ? fechasDelEvento(body) : [null]) : [body?.hour]
+    const fines = lista.map((raw) => (raw ? horaFinDe(body, raw) : null))
+    const guardar = (fechas, horas) => setBody(cuerpoConFechas(fechas, horas))
     const cambiar = (i, valor) => {
         if (!esPop) return setBody({ hour: valor })
         const nuevas = [...lista]
         nuevas[i] = valor
-        setBody(cuerpoConFechas(nuevas))
+        guardar(nuevas, fines)
+    }
+    const cambiarFin = (i, hhmm) => {
+        const horas = [...fines]
+        horas[i] = hhmm
+        // Al borrar la hora de fin de un día, su campo se va (vuelve a ser opcional).
+        if (!hhmm) setPidioFin((p) => p.filter((d) => d !== diaDe(lista[i])))
+        guardar(lista, horas)
+    }
+    const diaDe = (raw) => String(raw ?? '').slice(0, 10)
+    const conFin = (i) => Boolean(fines[i]) || pidioFin.includes(diaDe(lista[i]))
+    // Fechas que aún pueden pedir hora de fin desde el menú.
+    const sinFin = lista.map((raw, i) => ({ raw, i })).filter(({ raw, i }) => raw && wallClockToDayjs(raw) && !conFin(i))
+    const pedirFin = (raw) => {
+        setOpen(null)
+        setPidioFin((p) => [...p, diaDe(raw)])
+        setEnfocar(diaDe(raw))
+    }
+    // Un día nuevo no hereda la hora de fin: se la ponen si quieren.
+    const agregarDia = () => {
+        setOpen(null)
+        const ultima = wallClockToDayjs(lista[lista.length - 1])
+        guardar([...lista, ultima ? dayjsToWallClock(ultima.add(1, 'day')) : null], [...fines, null])
     }
     const legacy = body?.hour && !wallClockToDayjs(body.hour)
 
     return (
         <div className={bar.bar} data-edit-keep data-text-bar>
+            {/* Con varias fechas la lista tiene un ancho máximo y se recorre de
+                lado; el "+" y Sombra se quedan fijos. Al agregar un día se va
+                al final. */}
+            <div className={own.fechasLista} ref={listaRef} onScroll={medirOrillas} data-orillas={orillas || undefined}>
             {lista.map((raw, i) => (
-                <span key={`${i}-${raw ?? 'vacia'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                // Inicio, fin y su ✕ van juntos en un contenedor (cuando hay más que el inicio).
+                <span key={`${i}-${raw ?? 'vacia'}`} className={esPop && (conFin(i) || lista.length > 1) ? own.fechaGrupo : own.fechaSola}>
                     <DatePicker
                         className={`${bar.dateInput} ${own.dateTime}`}
                         showTime={{ format: 'HH:mm' }}
@@ -86,25 +141,65 @@ export const DateBar = ({ body, setBody, esPop }) => {
                         value={wallClockToDayjs(raw)}
                         onChange={(d) => d && cambiar(i, dayjsToWallClock(d))}
                     />
+                    {esPop && conFin(i) && raw && wallClockToDayjs(raw) && (
+                        <>
+                            <span className={own.barMuted} aria-hidden>–</span>
+                            <TimePicker
+                                className={`${bar.dateInput} ${own.horaFin}`}
+                                format="HH:mm"
+                                minuteStep={5}
+                                needConfirm={false}
+                                autoFocus={enfocar === diaDe(raw) && !fines[i]}
+                                placeholder={t('side_events.end_time')}
+                                aria-label={t('side_events.end_time')}
+                                value={fines[i] ? dayjs(`2000-01-01 ${fines[i]}`) : null}
+                                onChange={(d) => cambiarFin(i, d ? d.format('HH:mm') : null)}
+                            />
+                            {fines[i] && String(finDesdeHora(raw, fines[i])).slice(0, 10) !== String(raw).slice(0, 10) && (
+                                <Tooltip title={t('side_events.end_next_day')} placement="bottom">
+                                    <span className={own.finMasUno}>+1</span>
+                                </Tooltip>
+                            )}
+                        </>
+                    )}
                     {esPop && lista.length > 1 && (
-                        <button type="button" className={bar.iconBtn} title={t('side_events.date_remove')} onClick={() => setBody(cuerpoConFechas(lista.filter((_, j) => j !== i)))}>
+                        <button type="button" className={bar.iconBtn} title={t('side_events.date_remove')} onClick={() => guardar(lista.filter((_, j) => j !== i), fines.filter((_, j) => j !== i))}>
                             <X size={16} />
                         </button>
                     )}
                 </span>
             ))}
+            </div>
             {esPop && body?.hour && (
-                <button
-                    type="button"
-                    className={bar.iconBtn}
-                    title={t('side_events.date_add')}
-                    onClick={() => {
-                        const ultima = wallClockToDayjs(lista[lista.length - 1])
-                        setBody(cuerpoConFechas([...lista, ultima ? dayjsToWallClock(ultima.add(1, 'day')) : null]))
-                    }}
+                <Popover
+                    open={open === 'agregar'}
+                    onOpenChange={(v) => setOpen(v ? 'agregar' : null)}
+                    trigger="click"
+                    placement="bottom"
+                    arrow={false}
+                    content={(
+                        // Menú compacto (sin el relleno de los popovers de la barra).
+                        <div className={own.menuFecha} data-text-bar data-menu-compacto onMouseDown={(e) => e.stopPropagation()}>
+                            <button type="button" className={own.menuFechaItem} onClick={agregarDia}>
+                                <CalendarPlus size={15} /> {t('side_events.date_add')}
+                            </button>
+                            {/* Con una fecha, "Agregar hora de terminación"; con
+                                varias, una opción por cada día que no la tiene. */}
+                            {sinFin.map(({ raw }) => (
+                                <button key={raw} type="button" className={own.menuFechaItem} onClick={() => pedirFin(raw)}>
+                                    <Clock size={15} />
+                                    {lista.length > 1
+                                        ? t('side_events.end_time_add_day', { dia: wallClockToDayjs(raw).format('D MMM') })
+                                        : t('side_events.end_time_add')}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 >
-                    <Plus size={18} />
-                </button>
+                    <button type="button" className={bar.iconBtn} title={t('side_events.date_more')} data-on={open === 'agregar' || undefined}>
+                        <Plus size={18} />
+                    </button>
+                </Popover>
             )}
             {legacy && (
                 <span className={own.barMuted}>
@@ -307,6 +402,8 @@ export const BackgroundBar = ({ current, setBody, onChange, esPop, pickMedia, fo
                             key={src + i}
                             className={own.fondoItem}
                             data-on={on || undefined}
+                            // Pop (Free y Pops+): las fotos de más (y los videos) son de Pops+, con aro lima.
+                            data-plus={(esPop && (i >= LIMITES_FREE.portada || video)) || undefined}
                             data-arrastrando={arrastrada === i || undefined}
                             data-sobre={(sobre === i && arrastrada !== i) || undefined}
                             draggable={media.length > 1}

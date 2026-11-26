@@ -43,6 +43,7 @@ import GuestsImportPage from '../modules/GuestManagement/GuestsImportPage'
 import { SideEvents } from '../modules/SideEvents/SideEvents'
 import { SaveTheDatePage } from '../modules/SaveTheDate/SaveTheDatePage'
 import { Login } from '../components/Auth/Login'
+import { LoginPopsPreview } from '../components/Auth/LoginPopsPreview'
 import { ScannerPage } from '../pages/Scanner/ScannerPage'
 import Lia from '../pages/Lia/Lia'
 import { PreviewMoodPage } from '../pages/PreviewMood/PreviewMoodPage'
@@ -80,6 +81,9 @@ export const AppRouter = () => {
 
       <Route path="/features" element={<FeaturesPage />} />
       <Route path="/login" element={<Login />} />
+      {/* Editor de Pops sin cuenta (landing → "Make a Pop"): guardar, enviar o
+          compartir piden crear cuenta. SideEvents `invitado`. */}
+      <Route path="/crear-pop" element={<DashboardRealtimeProvider><SideEvents invitado /></DashboardRealtimeProvider>} />
       <Route path="/linktree" element={<LinkTree />} />
       <Route path="/legal" element={<LegalPage />} />
       {/* Documentación de funciones para clientes (docs/funciones) */}
@@ -89,6 +93,8 @@ export const AppRouter = () => {
       <Route path="/preview" element={<PreviewMoodPage />} />
       {/* Solo el wizard: lo usa Admin → Onboarding en un iframe de celular */}
       <Route path="/onboarding-preview" element={<OnboardingPreviewPage />} />
+      {/* Solo en desarrollo: el login de Pops sin cerrar la sesión abierta. */}
+      {import.meta.env.DEV && <Route path="/login-pops-preview" element={<LoginPopsPreview />} />}
       {/* Save the Date gratis, sin cuenta: mismo editor en modo demo */}
       <Route path="/save-the-date" element={<SaveTheDatePage demo />} />
       <Route path="/checkout" element={<CheckoutPage />} />

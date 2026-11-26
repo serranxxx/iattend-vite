@@ -1,0 +1,188 @@
+/* Pop sin cuenta (`/crear-pop`): modal "Guarda tu Pop" y botón Guardar. */
+
+.acciones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.guardar {
+    height: 34px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 99px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-family: Poppins, inherit;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.guardar:hover {
+    background: #D7F74F;
+}
+
+.marca {
+    font-family: Poppins, sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    color: #1D1D1B;
+    white-space: nowrap;
+}
+
+.marca small {
+    margin-left: 6px;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: #6A6A64;
+}
+
+/* ── "¿Cómo funciona?" (TourPop) ── */
+.comoFunciona {
+    position: relative;
+    height: 34px;
+    margin-left: 10px;
+    padding: 0 14px 0 10px;
+    border: 1.5px solid #0B1F3A;
+    border-radius: 99px;
+    background: #FFFFFF;
+    color: #0B1F3A;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: Poppins, inherit;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.comoFunciona:hover {
+    background: #0B1F3A;
+    color: #FFFFFF;
+}
+
+/* Llamativo (sin cuenta y primer Pop): lima con un halo que late. */
+.comoFunciona[data-llamativo] {
+    border-color: #0B1F3A;
+    background: #CDF22B;
+}
+
+.comoFunciona[data-llamativo]::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    box-shadow: 0 0 0 0 rgba(205, 242, 43, 0.7);
+    animation: halo 1.8s ease-out infinite;
+    pointer-events: none;
+}
+
+.comoFunciona[data-llamativo]:hover {
+    background: #0B1F3A;
+    color: #CDF22B;
+}
+
+@keyframes halo {
+    0% { box-shadow: 0 0 0 0 rgba(205, 242, 43, 0.75); }
+    70% { box-shadow: 0 0 0 10px rgba(205, 242, 43, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(205, 242, 43, 0); }
+}
+
+.tour.tour.tour :global(.ant-tour-content) {
+    font-family: Poppins, sans-serif;
+    max-width: min(360px, calc(100vw - 48px));
+}
+
+.tour.tour.tour :global(.ant-tour-section) {
+    padding: 4px;
+    border-radius: 20px;
+    box-shadow: 0 20px 44px rgba(11, 31, 58, 0.22);
+}
+
+.tour.tour.tour :global(.ant-tour-header) {
+    padding: 18px 44px 0 20px;
+}
+
+.tour.tour.tour :global(.ant-tour-title) {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0B1F3A;
+}
+
+.tour.tour.tour :global(.ant-tour-description) {
+    padding: 8px 20px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #3A3A36;
+}
+
+.tour.tour.tour :global(.ant-tour-footer) {
+    padding: 14px 16px 16px 20px;
+}
+
+.tour.tour.tour :global(.ant-tour-close) {
+    top: 16px;
+    inset-inline-end: 14px;
+}
+
+.tour.tour.tour :global(.ant-tour-actions .ant-btn) {
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 99px;
+    font-family: Poppins, sans-serif;
+    font-weight: 700;
+}
+
+/* El morado del tema de antd no va aquí: navy de Pops (antd escribe estos
+   colores con más especificidad, de ahí el !important). */
+.tour.tour.tour :global(.ant-tour-actions .ant-btn.ant-btn-primary) {
+    background: #0B1F3A !important;
+    color: #FFFFFF !important;
+    box-shadow: none;
+}
+
+.tour.tour.tour :global(.ant-tour-actions .ant-btn.ant-btn-primary:hover) {
+    background: #1E3354 !important;
+}
+
+.tourCuenta {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8A8FA3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .comoFunciona[data-llamativo]::after {
+        animation: none;
+    }
+}
+
+/* Pops que no son el primero: el botón abajo a la derecha del editor. */
+.comoFuncionaEsquina {
+    position: fixed;
+    right: 24px;
+    bottom: 22px;
+    z-index: 30;
+}
+
+.comoFuncionaEsquina .comoFunciona {
+    height: 40px;
+    margin-left: 0;
+    padding: 0 16px 0 12px;
+    border-color: transparent;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.comoFuncionaEsquina .comoFunciona[data-llamativo] {
+    border-color: #0B1F3A;
+}

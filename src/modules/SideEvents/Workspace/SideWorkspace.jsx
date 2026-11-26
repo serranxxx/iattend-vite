@@ -38,6 +38,7 @@ import { PatrocinadoresPanel } from './PatrocinadoresPanel'
 import { AccesoPanel } from '../Acceso/AccesoPanel'
 import { normalizarAcceso, publicoDeAcceso } from '../acceso'
 import { patrocinadoresDe } from '../patrocinadores'
+import { BarraPruebaPlus, NotasPlus } from '../PlanPops/PruebaPlus'
 
 // Área de trabajo del editor de side events / Pops en escritorio,
 // con la misma experiencia que el editor de la invitación (ver
@@ -51,6 +52,9 @@ import { patrocinadoresDe } from '../patrocinadores'
 
 // Las herramientas del riel (y del footer del celular): herramientas.js.
 const TOOLS = HERRAMIENTAS
+// Herramientas del riel con algo de Pops+ (imagen del link propia, Apple
+// Wallet): llevan un punto lima. Fotos no lo lleva (se quitó a propósito).
+const HERRAMIENTAS_PLUS = ['link', 'wallet']
 
 // Pieza de edición: la pantalla del iPhone de "Ver en vivo" (SideCanvas
 // .cardIphone = .ios26-content de DevicePreview), para que se vean idénticas.
@@ -66,6 +70,12 @@ export const SideWorkspace = ({
     sendOpen, sendContent, sendIn, tourOpen, sendCompleta = false,
     onUndo, onRedo, canUndo, canRedo, onReplayTour,
     onPaste, toolRequest, stageMorphState,
+    // Pops+ en un Pop Free (handoff "Pops+ en la App" 3; lo arma SideEvents):
+    // { etiquetas, onQuitar, onPlus, yendo, insignias }.
+    pruebaPlus = null,
+    // Lo que va arriba de la pieza cuando no hay barra de Pops+ (p. ej. los
+    // pasos de introducción de /crear-pop, PopInvitado/PasosPop).
+    avisoArriba = null,
 }) => {
     const { t } = useTranslation()
     // "Ver en vivo" como un invitado que ya confirmó (botón del dock).
@@ -81,6 +91,8 @@ export const SideWorkspace = ({
             hint: t(`side_events.ws_tool_${x.id}_hint`),
             // Portada de video: el link necesita una foto subida (LinkPanel).
             ...(x.id === 'link' && soloVideos(current?.body) && !current?.body?.linkImage ? { aviso: t('side_events.link_need_image') } : {}),
+            // Free / prueba: punto lima en las herramientas con algo de Pops+.
+            ...(pruebaPlus?.insignias && HERRAMIENTAS_PLUS.includes(x.id) ? { plus: true } : {}),
         }))
     const openTool = (id) => { setActiveTool(id); setToolOpen(true) }
     const pickTool = (id) => {
@@ -454,6 +466,8 @@ export const SideWorkspace = ({
                         dibujoEn={dibujoEnValido}
                         ajustarFoto={ajustandoFoto && section === 'background' ? fotoElegida : null}
                     />
+                    {/* Pops+: notas a mano que señalan lo que es de Plus en la pieza. */}
+                    {!inmersivo && pruebaPlus?.etiquetas?.length > 0 && <NotasPlus etiquetas={pruebaPlus.etiquetas} />}
                     {/* Con Patrocinadores elegido, la leyenda dice dónde se ven. */}
                     {!inmersivo && <span className={own.caption}>{esPop && section === 'sponsors'
                         ? t(patrocinadoresDe(body).items.length ? `side_events.sponsors_caption_${patrocinadoresDe(body).layout}` : 'side_events.sponsors_caption_empty')
@@ -506,6 +520,9 @@ export const SideWorkspace = ({
             onReplayTour={onReplayTour}
             mediaSider={mediaSider}
             inmersivo={inmersivo}
+            aviso={pruebaPlus?.etiquetas?.length ? (
+                <BarraPruebaPlus etiquetas={pruebaPlus.etiquetas} onQuitar={pruebaPlus.onQuitar} onPlus={pruebaPlus.onPlus} yendo={pruebaPlus.yendo} />
+            ) : avisoArriba}
             inmersivoGestos={{ sinHerramienta: !pincelActivo, onTapFuera: () => { setPincelActivo(false); setStickerSel([]) } }}
             lateral={inmersivo ? (
                 <PaletaDibujo

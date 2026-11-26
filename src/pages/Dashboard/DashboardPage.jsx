@@ -7,7 +7,7 @@ import { HeaderDashboard } from '../../modules/Header/Header'
 import { load } from '../../helpers/assets/images'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Lock, Sparkles, Star } from 'lucide-react'
+import { Lock, MessageCircle, Sparkles, Star } from 'lucide-react'
 import { ProModal } from '../../components/Payment/UpgradeBanner/UpgradeBanner'
 import { PlansModal } from '../../components/Payment/PlansModal/PlansModal'
 import { PlanActivationModal } from '../../components/Payment/PlanActivation/PlanActivationModal'
@@ -21,6 +21,11 @@ import { TablesSketch } from './TablesSketch'
 import { TablesPage } from '../../modules/GuestManagement/Tables/TablesPage'
 import { PortadaMiniatura } from './PortadaMiniatura';
 import { fuenteDePortada, portadaDeInvitacion } from '../../helpers/invitation/portadaInvitacion';
+import { DashboardUpsell } from './Upsell/DashboardUpsell';
+import { ComparadorPlanes } from './Upsell/ComparadorPlanes';
+import { BurbujaLia } from './Upsell/BurbujaLia';
+import { useMejorarPlan } from './Upsell/useMejorarPlan';
+import upsellStyles from './Upsell/Upsell.module.css';
 
 // Foto fija de la tarjeta del Save the Date (bento y versión móvil).
 const STD_CARD_IMG = 'https://jblcqcxckefmydvtrxbi.supabase.co/storage/v1/object/public/user_images/f282bb98-6d9c-446d-8ef6-1dacff261732/1788881927563-savethed.jpg'
@@ -59,6 +64,10 @@ export const DashboardPage = () => {
     const [activation, setActivation] = useState(null)
     const [activatedPlan, setActivatedPlan] = useState(null)
     const [tablesOpen, setTablesOpen] = useState(false)
+    // Comparador de planes del upsell Lite / Paperless: null | { funcion?, destino? }
+    const [comparador, setComparador] = useState(null)
+    // "Mejorar a Lite / PRO" del upsell: directo al pago de Stripe.
+    const mejora = useMejorarPlan(plan, id)
 
     // El feedback dejó de vivir en el header: ahora es un banner del dashboard.
     const {
@@ -261,9 +270,12 @@ export const DashboardPage = () => {
     // etiqueta apunta a PRO en vez de a contratar.
     const wallLocked = !photoWallIncluded;
 
+    // Lite y Paperless: lo bloqueado abre el comparador de planes (upsell) en
+    // lugar del modal de PRO.
+    const conComparador = isLite || plan === 'paperless';
     const openSection = (path) => () => {
-        if (path === 'photowall' && wallLocked) { setProOpen(true); return }
-        if (path === 'side' && sideLocked) { setProOpen(true); return }
+        if (path === 'photowall' && wallLocked) { conComparador ? setComparador({ funcion: 'photo' }) : setProOpen(true); return }
+        if (path === 'side' && sideLocked) { conComparador ? setComparador({ funcion: 'side' }) : setProOpen(true); return }
         handleMoode(path)
     };
 
@@ -338,13 +350,25 @@ export const DashboardPage = () => {
     // la celda del card de feedback la ocupa el CTA del plan.
     const hasCta = isFree || isLite;
     const isPaperless = plan === 'paperless';
+    // Upsell (handoff "Upsell en dashboards Lite y Paperless"): en escritorio,
+    // Lite y Paperless dejan el bento ajustado a la pantalla por un tablero que
+    // hace scroll, con el rail PRO abajo (Upsell/DashboardUpsell). El celular
+    // sigue con DashboardMobile.
+    const upsell = !isMobile && (isLite || isPaperless);
+    // Funciones PRO que la invitación ya trae (Lite de antes con side events o
+    // con Photo Wall): su tile del rail va sin candado y abre la función.
+    const incluidas = new Set([
+        ...(!wallLocked ? ['photo'] : []),
+        ...(isLite && !sideLocked ? ['side'] : []),
+    ]);
+    const abrirIncluida = (f) => handleMoode(f === 'photo' ? 'photowall' : 'side');
 
     // Escala del bento ajustada al viewport (tablet y desktop); ver useBentoFit.
     // .bento_fit ocupa el tamaño ya escalado para que el flex lo centre.
     const bodyRef = useRef(null)
     const bentoRef = useRef(null)
     const bentoFit = useBentoFit(bodyRef, bentoRef,
-        invitation && plan && !isMobile ? (isFree ? 'free' : 'grid') : null,
+        invitation && plan && !isMobile && !upsell ? (isFree ? 'free' : 'grid') : null,
         !isFree && !isPaperless)
     const bentoStyle = isMobile ? undefined : { transform: `scale(${bentoFit.scale})` }
     const fitWrap = (node) => isMobile ? node : (
@@ -453,6 +477,79 @@ export const DashboardPage = () => {
         </div>
     );
 
+    const invCard = (
+        <div
+            className='bento_card bento_inv'
+            onClick={openSection('build')}
+        >
+            <div className='bento_title'>{t('dashboard.card_invitation')}</div>
+            <div className='bento_inv_scene'>
+                <div className='bento_inv_minicard'>
+                    <div className='bento_inv_photo'>
+                        <PortadaMiniatura src={coverSrc} />
+                    </div>
+                    <div className='bento_inv_names'>{coverTitle}</div>
+                    {coverChip && <div className='bento_inv_date'>{coverChip.day} · {coverChip.month} · {coverChip.year}</div>}
+                </div>
+            </div>
+        </div>
+    );
+
+    // Solo lite y pro; en paperless no existe.
+    const guestsCard = (
+        <div
+            className='bento_card bento_guests'
+            onClick={openSection('guests')}
+        >
+            <div className='bento_guests_left'>
+                <div>
+                    <div className='bento_title'>{t('dashboard.card_guests')}</div>
+                    <div className='bento_caption' style={{ marginTop: '10px' }}>{t('dashboard.bento_guests_caption')}</div>
+                </div>
+                <div className='bento_stats'>
+                    <div><CountUp className='bento_stat_num' value={stats.confirmed} /><div className='bento_stat_label'>{t('dashboard.stat_confirmed')}</div></div>
+                    <div><CountUp className='bento_stat_num' value={stats.waiting} /><div className='bento_stat_label'>{t('dashboard.stat_waiting')}</div></div>
+                    <div><CountUp className='bento_stat_num' value={stats.available} /><div className='bento_stat_label'>{t('dashboard.stat_available')}</div></div>
+                </div>
+                {upsell && isLite && stats.waiting > 0 && (
+                    <button
+                        type='button'
+                        className={upsellStyles.nudge}
+                        onClick={(e) => { e.stopPropagation(); setComparador({ funcion: 'wa' }) }}
+                    >
+                        <MessageCircle size={20} />
+                        <span>{t('upsell.nudge_wa', { count: stats.waiting })}</span>
+                        <span className={upsellStyles.candado}><Lock size={11} strokeWidth={2.4} />PRO</span>
+                    </button>
+                )}
+            </div>
+            <div className='bento_sheet_wrap'>
+                <div className='bento_sheet'>
+                    <div className='bento_sheet_head'>
+                        <span>{t('dashboard.card_guests')}</span>
+                        <span>{totalPasses} {t('dashboard.bento_passes')}</span>
+                    </div>
+                    <div className='bento_progress'>
+                        <div style={{ width: `${pctConfirmed}%`, background: '#1c3249' }} />
+                        <div style={{ width: `${pctWaiting}%`, background: '#D1BEDD' }} />
+                    </div>
+                    {shownGuests.map((g, i) => (
+                        <div className='bento_guest_row' key={g.id ?? i}>
+                            <div className='bento_avatar' style={{ background: AVATAR_BGS[i % AVATAR_BGS.length] }}>{initials(g.name)}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div className='bento_guest_name'>{g.name}</div>
+                                {g.tag && <div className='bento_guest_sub'>{g.tag}</div>}
+                            </div>
+                            <div className={isConfirmedState(g.state) ? 'bento_pill_ok' : 'bento_pill_wait'}>
+                                {isConfirmedState(g.state) ? t('dashboard.bento_status_ok') : t('dashboard.bento_status_wait')}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
     // Acomodo de mesas: abre el mapa de mesas en un drawer sobre el dashboard.
     // Solo lite y pro; en paperless no existe.
     const tablesCard = (
@@ -469,13 +566,22 @@ export const DashboardPage = () => {
         invitation && plan ?
             <div className='dashboard-page-container' style={{ overflow: 'hidden' }}>
 
-                <HeaderDashboard mode={'dashboard'} invitation={invitation} />
+                <HeaderDashboard
+                    mode={'dashboard'}
+                    invitation={invitation}
+                    planChip={isLite || isPaperless ? {
+                        plan,
+                        yendo: !!mejora.yendo,
+                        // Lite: "Mejorar a PRO" va al pago; Paperless: "Mejorar plan" abre el comparador.
+                        onClick: () => (isLite ? mejora.ir('pro') : setComparador({})),
+                    } : undefined}
+                />
 
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1' /> */}
                 {/* <img src='/images/loop2.svg' alt='' className='loop_1_1' /> */}
                 <div
                     ref={bodyRef}
-                    className={`dashboard_body${isMobile ? ' dashboard_body--mobile' : ''}${!isMobile && bentoFit.scroll ? ' dashboard_body--scroll' : ''}`}
+                    className={`dashboard_body${isMobile ? ' dashboard_body--mobile' : ''}${!isMobile && (bentoFit.scroll || upsell) ? ' dashboard_body--scroll' : ''}${upsell ? ' dashboard_body--upsell' : ''}`}
                 >
 
                     {/* Fondo: el mismo de la página del planner (dashboard.css → .dashboard_bg) */}
@@ -515,68 +621,26 @@ export const DashboardPage = () => {
                             onShare={shareInvitation}
                             onOpen={openSection}
                             onOpenTables={openTables}
+                            plan={plan}
+                            incluidas={incluidas}
+                            nombres={coverTitle || t('upsell.couple_fallback')}
+                            onComparar={isLite || isPaperless ? setComparador : undefined}
+                            mejora={mejora}
+                        /> : upsell ? <DashboardUpsell
+                            plan={plan}
+                            tarjetas={{ inv: invCard, guests: guestsCard, tables: tablesCard, std: stdCard }}
+                            incluidas={incluidas}
+                            nombres={coverTitle || t('upsell.couple_fallback')}
+                            onComparar={setComparador}
+                            onAbrir={abrirIncluida}
+                            mejora={mejora}
                         /> : fitWrap(<div ref={bentoRef} style={bentoStyle} className={`bento_grid${bentoFit.portrait ? ' bento_grid--portrait' : ''}`}>
 
                             {/* ── Invitación Paperless — lila, alta ── */}
-                            <div
-                                className='bento_card bento_inv'
-                                onClick={openSection('build')}
-                            >
-                                    <div className='bento_title'>{t('dashboard.card_invitation')}</div>
-                                    <div className='bento_inv_scene'>
-                                        <div className='bento_inv_minicard'>
-                                            <div className='bento_inv_photo'>
-                                                <PortadaMiniatura src={coverSrc} />
-                                            </div>
-                                            <div className='bento_inv_names'>{coverTitle}</div>
-                                            {coverChip && <div className='bento_inv_date'>{coverChip.day} · {coverChip.month} · {coverChip.year}</div>}
-                                        </div>
-                                    </div>
-                            </div>
+                            {invCard}
 
                             {/* ── Gestión de invitados — salvia, ancha ── */}
-                            {plan !== 'paperless' &&
-                                <div
-                                    className='bento_card bento_guests'
-                                    onClick={openSection('guests')}
-                                >
-                                    <div className='bento_guests_left'>
-                                        <div>
-                                            <div className='bento_title'>{t('dashboard.card_guests')}</div>
-                                            <div className='bento_caption' style={{ marginTop: '10px' }}>{t('dashboard.bento_guests_caption')}</div>
-                                        </div>
-                                        <div className='bento_stats'>
-                                            <div><CountUp className='bento_stat_num' value={stats.confirmed} /><div className='bento_stat_label'>{t('dashboard.stat_confirmed')}</div></div>
-                                            <div><CountUp className='bento_stat_num' value={stats.waiting} /><div className='bento_stat_label'>{t('dashboard.stat_waiting')}</div></div>
-                                            <div><CountUp className='bento_stat_num' value={stats.available} /><div className='bento_stat_label'>{t('dashboard.stat_available')}</div></div>
-                                        </div>
-                                    </div>
-                                    <div className='bento_sheet_wrap'>
-                                        <div className='bento_sheet'>
-                                            <div className='bento_sheet_head'>
-                                                <span>{t('dashboard.card_guests')}</span>
-                                                <span>{totalPasses} {t('dashboard.bento_passes')}</span>
-                                            </div>
-                                            <div className='bento_progress'>
-                                                <div style={{ width: `${pctConfirmed}%`, background: '#1c3249' }} />
-                                                <div style={{ width: `${pctWaiting}%`, background: '#D1BEDD' }} />
-                                            </div>
-                                            {shownGuests.map((g, i) => (
-                                                <div className='bento_guest_row' key={g.id ?? i}>
-                                                    <div className='bento_avatar' style={{ background: AVATAR_BGS[i % AVATAR_BGS.length] }}>{initials(g.name)}</div>
-                                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                                        <div className='bento_guest_name'>{g.name}</div>
-                                                        {g.tag && <div className='bento_guest_sub'>{g.tag}</div>}
-                                                    </div>
-                                                    <div className={isConfirmedState(g.state) ? 'bento_pill_ok' : 'bento_pill_wait'}>
-                                                        {isConfirmedState(g.state) ? t('dashboard.bento_status_ok') : t('dashboard.bento_status_wait')}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            }
+                            {plan !== 'paperless' && guestsCard}
 
                             {/* ── Side events — crema ── */}
                             {plan !== 'paperless' &&
@@ -636,6 +700,11 @@ export const DashboardPage = () => {
                 </div>
 
                 <ProModal open={proOpen} onClose={() => setProOpen(false)} invitationId={id} />
+
+                {(isLite || isPaperless) && (
+                    <ComparadorPlanes plan={plan} abierto={comparador} onCerrar={() => setComparador(null)} movil={isMobile} mejora={mejora} />
+                )}
+                {upsell && <BurbujaLia plan={plan} onComparar={setComparador} />}
 
                 {/* Misma configuración que el drawer de GuestsPage. */}
                 <Drawer

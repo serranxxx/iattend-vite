@@ -98,9 +98,16 @@ export const CompartirContenido = ({ current, url, visible = true, ancho = ANCHO
     )
 }
 
-export const CompartirPop = ({ current, url, bloqueado, onBloqueado }) => {
+export const CompartirPop = ({ current, url, bloqueado, onBloqueado, abrirPedido }) => {
     const { t } = useTranslation()
     const [abierto, setAbierto] = useState(false)
+    // Abrir desde fuera (p. ej. tras "Quitar y compartir gratis" de Pops+).
+    // (Un momento después: si no, el mismo clic que lo pidió lo cierra como "clic fuera".)
+    useEffect(() => {
+        if (!abrirPedido) return undefined
+        const timer = setTimeout(() => setAbierto(true), 60)
+        return () => clearTimeout(timer)
+    }, [abrirPedido])
     // El estilo del editor de Pops (si tiene): se lee al pintar, cambia con él.
     const tema = temaEditor()
     const contenido = (

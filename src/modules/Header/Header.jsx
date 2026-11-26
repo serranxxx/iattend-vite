@@ -23,6 +23,7 @@ import { SupportTicketModal } from "./SupportTicketModal";
 import { advisorWhatsappUrl } from "../../helpers/contact";
 import { MobileActionsFab } from "./MobileActionsFab";
 import { fuenteDePortada } from "../../helpers/invitation/portadaInvitacion";
+import { ChipPlan } from "../../pages/Dashboard/Upsell/ChipPlan";
 
 const baseProd = "https://www.iattend.events"
 
@@ -209,7 +210,7 @@ export const HeaderBuild = ({ position, isVisible, fixed = true, alwaysSolid = t
         </>
     )
 }
-export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges, sideEventName, onSideEventsBack, onOpenReminders, languagePicker }) => {
+export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteChanges, sideEventName, onSideEventsBack, onOpenReminders, languagePicker, planChip }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -255,6 +256,13 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
     const screens = useBreakpoint();
     const [urlImage, setUrlImage] = useState(null)
     const [name, setName] = useState(null)
+    // Botones por plan. Contador de pases: solo con invitados (Lite y PRO; no
+    // Paperless ni free). Créditos, candado de acceso, mensajes de WhatsApp y
+    // lector de pases: exclusivos de PRO. Mientras carga el plan no se
+    // enseñan los de PRO, para no hacerlos aparecer y desaparecer en un Lite.
+    const [invPlan, setInvPlan] = useState(null)
+    const conInvitados = invPlan !== 'paperless' && invPlan !== 'free'
+    const esPro = invPlan === 'pro'
 
     // Pending info — DB values (for badge count)
     const [invOwners, setInvOwners] = useState([])
@@ -299,6 +307,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             setInvLabel(data.label ?? null)
             setInvPhone(data.phone_number ?? null)
             setInvType(data.type ?? 'closed')
+            setInvPlan(data.plan ? String(data.plan).toLowerCase() : null)
         }
     }
 
@@ -731,13 +740,13 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
     const menuPanel = (
         <div className="hd-menu" ref={menuRef}>
-            {tier === 'xs' && !isEditing && (
+            {tier === 'xs' && !isEditing && conInvitados && (
                 <div className="hd-menu-passes">
                     <PassesPill invitationId={id} getPopupContainer={() => menuRef.current ?? document.body} />
                 </div>
             )}
             {tier === 'xs' && menuItem(<Forward size={16} />, t('dashboard_header.menu_share_link'), shareInvitationLink)}
-            {menuItem(
+            {esPro && menuItem(
                 <MessageCircle size={16} />,
                 t('dashboard_header.menu_messages'),
                 () => setMobileWaOpen(true),
@@ -745,12 +754,12 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
             )}
             {/* Candado de privacidad: en pantallas angostas (iPad vertical) no
                 cabe en la barra y vive aquí. */}
-            {invType != null && menuItem(
+            {invType != null && esPro && menuItem(
                 isPublic ? <LockOpen size={16} /> : <Lock size={16} />,
                 t(isPublic ? 'dashboard_header.menu_access_public' : 'dashboard_header.menu_access_private'),
                 toggleAccess
             )}
-            {!isEditing && menuItem(<QrCode size={16} />, t('dashboard_header.scanner_tooltip'), () => navigate(`/scanner?id=${id}`))}
+            {!isEditing && esPro && menuItem(<QrCode size={16} />, t('dashboard_header.scanner_tooltip'), () => navigate(`/scanner?id=${id}`))}
             {menuItem(<CircleQuestionMark size={16} />, t('dashboard_header.help'), () => setSupportOpen(true))}
         </div>
     )
@@ -827,14 +836,15 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
 
                     {/* ── Centro: créditos ── */}
                     <div className="hd-credits" data-compact={tier === 'xs' || undefined}>
-                        <CreditController id={id} />
+                        {/* Créditos (envíos por WhatsApp): solo PRO. */}
+                        {esPro && <CreditController id={id} />}
                     </div>
 
                     {/* ── Derecha ── */}
                     <div className="hd-right">
 
                         {/* Contador de pases: en el dashboard, no dentro del editor */}
-                        {!isEditing && tier !== 'xs' && (
+                        {!isEditing && tier !== 'xs' && conInvitados && (
                             <PassesPill invitationId={id} showRail={tier === 'full'} showLabel={tier !== 'sm'} />
                         )}
 
@@ -862,7 +872,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                         {/* Idioma que se edita (editor de escritorio). */}
                         {languagePicker}
 
-                        {!inMenu && invType != null && (
+                        {!inMenu && invType != null && esPro && (
                             <Tooltip title={t(isPublic ? 'dashboard_header.access_public_hint' : 'dashboard_header.access_private_hint')}>
                                 <button
                                     type="button"
@@ -878,7 +888,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             </Tooltip>
                         )}
 
-                        {!inMenu && (
+                        {!inMenu && esPro && (
                             <Dropdown
                                 trigger={['click']}
                                 placement='bottomRight'
@@ -894,7 +904,7 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                             </Dropdown>
                         )}
 
-                        {!inMenu && !isEditing && (
+                        {!inMenu && !isEditing && esPro && (
                             <Tooltip title={t('dashboard_header.scanner_tooltip')}>
                                 <button
                                     type="button"
@@ -1039,6 +1049,9 @@ export const HeaderDashboard = ({ saved, mode, onSaveChanges, session, onWriteCh
                                 </Badge>
                             </Dropdown>
                         )}
+
+                        {/* Upsell Lite / Paperless (DashboardPage): "PLAN LITE · Mejorar a PRO". */}
+                        {planChip && !inMenu && <ChipPlan plan={planChip.plan} onClick={planChip.onClick} yendo={planChip.yendo} />}
 
                         {!inMenu && (
                             tier === 'full' ? (

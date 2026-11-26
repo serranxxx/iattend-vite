@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { supabase } from '../../../lib/supabase'
 import { supabaseAuthHeaders } from '../../../lib/authHeaders'
+import { vistaPlanAdmin } from './vistaPlanAdmin'
 
 /*
   Pops+ de la cuenta, para usar fuera de PopsApp (p. ej. el flujo de crear
@@ -28,7 +29,9 @@ export const useCuentaPlus = () => {
                     supabase.from('pops_suscripciones').select('plan, status').eq('user_id', user.id).maybeSingle(),
                 ])
                 const es = perfil?.role === 'Administration' || (sub?.plan === 'plus' && VIGENTE.includes(sub?.status))
-                if (vivo) setPlus(!forzarFree() && es)
+                // Administración con "Ver como" (vistaPlanAdmin.js).
+                const vista = vistaPlanAdmin()
+                if (vivo) setPlus(vista ? vista !== 'free' : (!forzarFree() && es))
             } catch {
                 if (vivo) setPlus(false)
             }

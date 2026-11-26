@@ -438,7 +438,8 @@ export const InvitationsPage = () => {
                 onEventoPersonal={() => navigate('/checkout')}
                 onRegalar={() => setRegalaVisible(true)}
                 onTour={() => setOnboardingOpen(true)}
-                onLogout={() => { logout(); navigate('/login') }}
+                // Desde Pops, de vuelta al login de Pops.
+                onLogout={() => { const enPops = new URLSearchParams(window.location.search).get('espacio') === 'pops'; logout(); navigate(enPops ? '/login?espacio=pops' : '/login') }}
                 onAbrir={abrirEvento}
                 onCompartir={(inv) => copyToClipboard(`${baseProd}/${inv?.data?.generals?.event?.label}/${inv?.data?.generals?.event?.name}`)}
             />

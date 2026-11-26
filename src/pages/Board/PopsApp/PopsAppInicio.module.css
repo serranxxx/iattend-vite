@@ -1567,3 +1567,364 @@
 @media (prefers-reduced-motion: reduce) {
     .esqBloque { animation: none; }
 }
+
+/* ───────── Pops+ en Free (handoff "Pops+ en la App" 1) ───────── */
+
+/* Puntos cuadrados: 10 × 10, el activo 26 × 10 en lima. */
+.carrusel[data-free] .punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 0;
+    background: rgba(232, 240, 255, 0.45);
+}
+
+.carrusel[data-free] .punto[data-activo] {
+    width: 26px;
+    background: #CDF22B;
+}
+
+/* Columna de texto centrada; espacios del handoff: etiqueta → título 22,
+   título → párrafo 32, párrafo → CTA 28. */
+.plusTexto {
+    position: absolute;
+    left: 64px;
+    top: 0;
+    bottom: 0;
+    width: 600px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    color: #0B1F3A;
+}
+
+.plusConoce {
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Tres recortes de papel escalonados que se tocan. */
+.recortePlus {
+    position: relative;
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: -0.07em;
+    line-height: 1;
+    white-space: nowrap;
+    padding: 6px 20px 12px;
+    background: #F3F2EE;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 0 rgba(0, 0, 0, 0.14), 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.3);
+    animation: recorteEntra 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.recorte1 {
+    margin-top: 22px;
+    transform: rotate(-1.5deg);
+}
+
+.recorte2 {
+    margin-top: -4px;
+    margin-left: 40px;
+    background: #CDF22B;
+    transform: rotate(1deg);
+    animation-delay: 0.06s;
+}
+
+.recorte3 {
+    margin-top: -4px;
+    margin-left: 120px;
+    transform: rotate(-1deg);
+    animation-delay: 0.12s;
+}
+
+@keyframes recorteEntra {
+    from { opacity: 0; translate: -14px 0; }
+    to { opacity: 1; translate: 0 0; }
+}
+
+.plusParrafo {
+    margin: 32px 0 0;
+    max-width: 470px;
+    font-size: 17px;
+    line-height: 1.55;
+    color: #E8F0FF;
+    text-wrap: pretty;
+}
+
+.plusCta {
+    margin-top: 28px;
+}
+
+.plusCollage {
+    position: absolute;
+    right: 56px;
+    top: 50%;
+    width: 600px;
+    height: 400px;
+    margin-top: -220px;
+    z-index: 2;
+}
+
+.plusPolaroid {
+    position: absolute;
+    background: #FBFAF5;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.plusPolaroid img {
+    display: block;
+    object-fit: cover;
+}
+
+.plusPolaroid > span:last-child {
+    display: block;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    text-align: center;
+    color: #1D1D1B;
+}
+
+.plusPolaroid1 {
+    left: 250px;
+    top: 10px;
+    width: 178px;
+    padding: 10px 10px 0;
+    box-sizing: border-box;
+    transform: rotate(6deg);
+}
+
+.plusPolaroid1 img {
+    width: 158px;
+    height: 170px;
+}
+
+.plusPolaroid1 > span:last-child {
+    font-size: 21px;
+    padding: 6px 0 8px;
+}
+
+.plusPolaroid2 {
+    left: 430px;
+    top: 150px;
+    width: 150px;
+    padding: 9px 9px 0;
+    box-sizing: border-box;
+    transform: rotate(-7deg);
+}
+
+.plusPolaroid2 img {
+    width: 132px;
+    height: 140px;
+}
+
+.plusPolaroid2 > span:last-child {
+    font-size: 19px;
+    padding: 5px 0 7px;
+}
+
+.plusPolaroid .cinta {
+    width: 70px;
+    margin-left: -35px;
+    top: -12px;
+    background: rgba(243, 242, 238, 0.75);
+    --cinta: -4deg;
+}
+
+.burbujaGrupo {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    transform: rotate(var(--rot, 0deg));
+    animation: burbujaEntra 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.burbujaGrupo:nth-of-type(4) { animation-delay: 0.1s; }
+.burbujaGrupo:nth-of-type(5) { animation-delay: 0.2s; }
+
+@keyframes burbujaEntra {
+    from { opacity: 0; scale: 0.9; }
+    to { opacity: 1; scale: 1; }
+}
+
+.burbuja {
+    padding: 12px 16px;
+    background: #FFFFFF;
+    border-radius: 18px 18px 18px 4px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0B1F3A;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+}
+
+.burbujaFix {
+    margin-left: 24px;
+    padding: 5px 10px;
+    background: #CDF22B;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 20px;
+    color: #0B1F3A;
+    transform: rotate(var(--rot, 0deg));
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+}
+
+.plusSticker {
+    position: absolute;
+    transform: rotate(var(--rot, 0deg));
+    pointer-events: none;
+}
+
+@media (max-width: 1280px) {
+    .plusCollage {
+        right: 16px;
+        scale: 0.82;
+        transform-origin: right center;
+    }
+}
+
+@media (max-width: 1100px) {
+    .plusCollage {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .recortePlus,
+    .burbujaGrupo {
+        animation: none;
+    }
+}
+
+/* Tus próximos Pops en Free: nombre y fecha arriba, "Personas N de 30" abajo. */
+.tarjetaFree {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 18px;
+}
+
+.tarjetaFila {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.tarjetaFree .tarjetaEmoji {
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+}
+
+/* Free (con la lámina Pops+): el carrusel no ocupa toda la pantalla
+   (handoff "Pops+ en la App": 540 px); el collage de la marca sin agrandar. */
+.carrusel[data-free] {
+    height: 560px;
+    min-height: 0;
+}
+
+.carrusel[data-free] .collage {
+    transform: none;
+}
+
+/* ───────── Celular · lámina Pops+ (handoff "Pops+ en la App · Celular" A) ───────── */
+.mConoce {
+    font-size: 14px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.mRecorte {
+    background: #F3F2EE;
+    color: #0B1F3A;
+    padding: 4px 12px 8px;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1.05;
+    white-space: nowrap;
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.26);
+}
+
+.mRecorte1 {
+    transform: rotate(-1.5deg);
+}
+
+.mRecorte2 {
+    margin: -12px 0 0 20px;
+    background: #CDF22B;
+    transform: rotate(1deg);
+}
+
+.mRecorte3 {
+    margin: -12px 0 0 44px;
+    transform: rotate(-1deg);
+}
+
+.mTextoPlus {
+    margin-top: 4px;
+}
+
+@media (max-width: 359px) {
+    .mRecorte {
+        font-size: 24px;
+    }
+}
+
+.mQuedan {
+    color: #D63C86;
+}
+
+/* Celular · lámina de la marca: logo de Pops arriba (en lugar de la etiqueta). */
+.mLogo {
+    display: flex;
+    align-items: center;
+    height: 68px;
+    /* Aire con la orilla del tablero (arriba e izquierda). */
+    margin: 10px 0 8px 6px;
+    filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.16)) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.28));
+}
+
+/* Celular · lámina Pops+: resumen de las burbujas "frase → solución". */
+.mBurbujas {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-top: 10px;
+    max-width: 100%;
+}
+
+.mBurbujaGrupo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    transform: rotate(var(--rot, 0deg));
+}
+
+.mBurbuja {
+    padding: 6px 10px;
+    background: #FFFFFF;
+    color: #0B1F3A;
+    border-radius: 14px 14px 14px 3px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
+}
+
+.mBurbujaFix {
+    margin-left: 10px;
+    padding: 1px 7px;
+    background: #CDF22B;
+    color: #0B1F3A;
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 14px;
+    white-space: nowrap;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.22);
+}

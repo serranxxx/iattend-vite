@@ -210,7 +210,10 @@ export const DesignPanel = ({ current, setBody, esPop, movil = false, onPickImag
                 vidrio = sin valor (lo de siempre). */}
             {esPop && (
                 <div className={base.group}>
-                    <span className={base.groupLabel}>{t('side_events.block_style')}</span>
+                    <span className={base.groupLabel} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                        {t('side_events.block_style')}
+                        <span style={{ fontWeight: 400, fontSize: 12, color: '#8A8582' }}>{t('pops_plus_app.editor.styles_count')}</span>
+                    </span>
                     <span className={base.hint} style={{ marginTop: 0 }}>{t('side_events.block_style_hint')}</span>
                     <div className={ed.efectoGrid}>
                         {ESTILOS_BLOQUE.map((id) => (

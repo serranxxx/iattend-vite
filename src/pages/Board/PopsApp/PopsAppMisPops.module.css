@@ -1568,3 +1568,488 @@
 @media (prefers-reduced-motion: reduce) {
     .esqBloque { animation: none; }
 }
+
+/* ───────── Pops+ en Free (handoff "Pops+ en la App" 2) ───────── */
+
+/* Lugares gratis: los 3 lugares dibujados + frase + "Pasar a Pops+". */
+.lugaresGratis {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 20px 24px;
+    background: #FFFFFF;
+    border: 1px solid #E3E6F0;
+    border-radius: 22px;
+    font-family: Poppins, sans-serif;
+    color: #0B1F3A;
+}
+
+.lugaresGratis > div:first-child {
+    /* Del ancho de sus lugares (3 en Free, hasta 5 en Pops+). */
+    flex: none;
+    width: auto;
+}
+
+.lugaresTextos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lugaresTextos b {
+    font-size: 18px;
+    letter-spacing: -0.02em;
+}
+
+.lugaresTextos span {
+    font-size: 14px;
+    color: #56627A;
+}
+
+.lugaresCta {
+    all: unset;
+    cursor: pointer;
+    height: 46px;
+    padding: 0 20px;
+    border-radius: 99px;
+    background: #CDF22B;
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0B1F3A;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.lugaresCta:hover {
+    background: #D7F74F;
+}
+
+.mPagina .lugaresGratis {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 20px;
+}
+
+.mPagina .lugaresGratis > div:first-child {
+    width: 100%;
+}
+
+.mPagina .lugaresTextos b {
+    font-size: 16px;
+}
+
+.mPagina .lugaresCta {
+    width: 100%;
+    justify-content: center;
+    height: 44px;
+}
+
+/* Tabla Free: POP · FECHA · ESTADO · PERSONAS · RESPUESTA · acciones. */
+.tablaBarra {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 20px 0;
+}
+
+.excel {
+    all: unset;
+    cursor: pointer;
+    height: 38px;
+    padding: 0 8px 0 14px;
+    border-radius: 99px;
+    border: 1px solid #E3E6F0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #56627A;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.excel:hover {
+    border-color: #0B1F3A;
+    color: #0B1F3A;
+}
+
+.fila.filaFree {
+    grid-template-columns: minmax(0, 2.2fr) 1.2fr 1fr 1.6fr 0.8fr 150px;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 0;
+}
+
+.fila.filaFree.columnas {
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.filaGrupo {
+    border-top: 1px solid #E3E6F0;
+}
+
+.sinInvitados {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 13px;
+    color: #56627A;
+}
+
+.traer {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: #0B1F3A;
+    white-space: nowrap;
+}
+
+.traer:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Franja rosa bajo un Pop al 90 % de su tope. */
+.franja {
+    margin: 0 24px 14px 86px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: #FFF1F7;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: Poppins, sans-serif;
+}
+
+.franjaFrase {
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 19px;
+    color: #8C2A5B;
+    white-space: nowrap;
+}
+
+.franjaTexto {
+    flex: 1;
+    font-size: 14px;
+    color: #0B1F3A;
+}
+
+.franjaCta {
+    all: unset;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 800;
+    color: #0B1F3A;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
+/* Menú ⋯ en Free: Duplicar con su chip y su frase. */
+.menu:has(.menuPlus) {
+    width: 330px;
+}
+
+.menuPlus {
+    height: auto;
+    padding: 12px;
+    background: #F7F8FB;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+
+.menuPlusFila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.menuPlusFrase {
+    font-size: 13px;
+    font-weight: 400;
+    color: #56627A;
+    line-height: 1.4;
+    white-space: normal;
+}
+
+/* Clientes · modo planner (Free): tablero azul con el correo bloqueado. */
+.planner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+    gap: 40px;
+    padding: 44px 48px;
+    border-radius: 24px;
+    overflow: hidden;
+    font-family: Poppins, sans-serif;
+}
+
+.plannerTextos {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.plannerFrase {
+    font-family: 'Patrick Hand', 'Chalkboard SE', 'Marker Felt', sans-serif;
+    font-size: 24px;
+    color: #E8F0FF;
+}
+
+.plannerRecorte {
+    padding: 6px 14px;
+    font-size: 40px;
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1;
+    color: #0B1F3A;
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.plannerPapel {
+    background: #F3F2EE;
+    transform: rotate(-2deg);
+}
+
+.plannerLima {
+    margin-left: 22px;
+    background: #CDF22B;
+    transform: rotate(1.5deg);
+}
+
+.plannerPasos {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #FFFFFF;
+    font-size: 15px;
+}
+
+.plannerPasos li {
+    display: flex;
+    gap: 10px;
+}
+
+.plannerPasos b {
+    color: #CDF22B;
+}
+
+.plannerCta {
+    all: unset;
+    cursor: pointer;
+    margin-top: 14px;
+    padding: 16px 24px;
+    background: #CDF22B;
+    border-radius: 2px;
+    box-shadow: 0 4px 0 #9DBB12, 0 10px 18px rgba(0, 0, 0, 0.28);
+    font-size: 16px;
+    font-weight: 800;
+    color: #0B1F3A;
+    transition: transform 0.15s ease;
+}
+
+.plannerCta:hover {
+    transform: translateY(-2px);
+}
+
+.correo {
+    position: relative;
+    z-index: 2;
+    align-self: center;
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    transform: rotate(1.5deg);
+    color: #0B1F3A;
+}
+
+.correoBarra {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #E3E6F0;
+    font-size: 13px;
+    color: #56627A;
+}
+
+.correoBarra span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #FF5F57;
+}
+
+.correoBarra span:nth-child(2) { background: #FEBC2E; }
+.correoBarra span:nth-child(3) { background: #28C840; }
+
+.correoBarra b {
+    margin-left: 10px;
+    font-weight: 400;
+}
+
+.correoCuerpo {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.correoCampos {
+    display: flex;
+    gap: 10px;
+}
+
+.correoCampos span {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #FAFAF9;
+    border: 1.5px solid #E7E3E0;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.correoCampos span:last-child {
+    flex: 1.4;
+}
+
+.correoPop {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 14px;
+    background: #F3F4F8;
+}
+
+.correoPop img {
+    width: 76px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.correoPop > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.correoPop b {
+    font-size: 15px;
+}
+
+.correoPop small {
+    color: #56627A;
+}
+
+.correoBotones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.correoBotones span {
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 99px;
+    border: 1.5px solid #E3E6F0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #8A8FA3;
+}
+
+.correoBotones span:last-child {
+    border: 0;
+    background: #2457A4;
+    color: #FFFFFF;
+}
+
+.correoVelo {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.correoVelo > span {
+    padding: 10px 16px;
+    border-radius: 99px;
+    background: #0B1F3A;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+.plannerOjos {
+    position: absolute;
+    right: 30px;
+    top: 20px;
+    width: 58px;
+    transform: rotate(8deg);
+    z-index: 3;
+}
+
+@media (max-width: 1180px) {
+    .planner {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .correo {
+        max-width: 560px;
+    }
+}
+
+/* Pops+: "Muy pronto" en Duplicar (en lugar del chip). */
+.pronto {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8A8FA3;
+    white-space: nowrap;
+}
+
+/* Hoja ⋯ del celular: "Duplicar este Pop" lleva dos renglones (título y frase),
+   así que no usa la altura fija de 52 px de las demás opciones. */
+.mMenu .menuItem.menuPlus {
+    height: auto;
+    padding: 14px 14px 16px;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.mMenu .menuPlusFila {
+    font-size: 15px;
+}
+
+.mMenu .menuPlusFrase {
+    font-size: 13px;
+}

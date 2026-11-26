@@ -336,3 +336,9 @@
         transform-origin: bottom right;
     }
 }
+
+/* Lite / Paperless: Lia no viene en el plan; el orbe no se puede tocar. */
+.chat-morph-shell--bloqueada.chat-morph-shell--closed,
+.chat-morph-shell--bloqueada .chat-morph-btn {
+    cursor: default;
+}
