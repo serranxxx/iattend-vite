@@ -59,6 +59,14 @@ export default function ReactHost({
   // (REMOTE_DIBUJO: { cambios: { sección: lista }, tipo, id, section }).
   dibujo = null,
   completa = null,
+  // Invitación en PDF → Diseño → Edición avanzada: en lugar de la pieza, el
+  // remoto pinta el dock (o el CONFIRMAR de Lite) para usarlo con los colores
+  // elegidos (iattend-events components/InvitacionPdf/MuestrarioPdf.tsx).
+  // Valor = la página que se edita ('dock', 'pases', 'lia'…); false = la pieza.
+  muestrario = false,
+  // El remoto avisa qué pieza del muestrario se tocó (REMOTE_ESTILO_SLOT):
+  // (sección, fila) para abrirla en el panel.
+  onEstiloSlot,
   onAltura,
   onDibujo,
 }) {
@@ -72,6 +80,8 @@ export default function ReactHost({
   const onReadyRef = useRef(onReady);
   const onAlturaRef = useRef(onAltura);
   useEffect(() => { onAlturaRef.current = onAltura; }, [onAltura]);
+  const onEstiloSlotRef = useRef(onEstiloSlot);
+  useEffect(() => { onEstiloSlotRef.current = onEstiloSlot; }, [onEstiloSlot]);
   const onDibujoRef = useRef(onDibujo);
   useEffect(() => { onDibujoRef.current = onDibujo; }, [onDibujo]);
   const onSelectSectionRef = useRef(onSelectSection);
@@ -107,7 +117,7 @@ export default function ReactHost({
     if (!win) return;
 
     // hash simple para evitar re-envíos idénticos
-    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, dibujo, completa });
+    const hash = JSON.stringify({ config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, dibujo, completa, muestrario });
     if (hash === lastSentHashRef.current && reason !== "ready") return;
     lastSentHashRef.current = hash;
 
@@ -127,6 +137,7 @@ export default function ReactHost({
           plan,
           dibujo,
           completa,
+          muestrario,
           sentAt: Date.now(),
           reason,
         },
@@ -168,6 +179,9 @@ export default function ReactHost({
         // La zona ya está a la vista: no hay que pedirle al remoto que scrollee.
         lastReceivedSectionRef.current = ev.data.payload.section;
         onSelectSectionRef.current?.(ev.data.payload.section, ev.data.payload.field ?? null);
+      }
+      if (ev.data?.type === "REMOTE_ESTILO_SLOT" && ev.data?.payload?.seccion) {
+        onEstiloSlotRef.current?.(ev.data.payload.seccion, ev.data.payload.slot ?? null);
       }
       if (ev.data?.type === "REMOTE_POINTER_DOWN") {
         onPiecePointerDownRef.current?.();
@@ -218,7 +232,7 @@ export default function ReactHost({
   // 2) Re-enviar cada que cambie `config`, `textureOverride` o el idioma activo
   useEffect(() => {
     postProps("config-change");
-  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, dibujo, completa, targetOrigin]);
+  }, [config, textureOverride, fontOverride, activeLang, editMode, selectedSection, textBar, editMovil, vistaConfirmada, plan, dibujo, completa, muestrario, targetOrigin]);
 
   // 2·) Elementos sueltos arrastrados desde los paneles del editor
   // (layerItems.js): el punto llega en px de la ventana y la pieza lo quiere

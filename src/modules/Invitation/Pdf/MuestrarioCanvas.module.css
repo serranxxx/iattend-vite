@@ -1,0 +1,64 @@
+/* Entrar / salir de la Personalización avanzada (EscenaEstilo): la pieza y
+   el dock, una sobre otra, centradas en la caja de la que se ve. */
+.escena {
+    position: relative;
+}
+
+/* Fuera de la Personalización avanzada (o dibujando): sin caja, la pieza en
+   el flujo como siempre y el dock fuera. */
+.escena:not([data-activa]),
+.escena:not([data-activa]) > .capaPieza {
+    display: contents;
+}
+
+.escena:not([data-activa]) > .capaDock {
+    display: none;
+}
+
+.escena[data-activa] > .capaPieza,
+.capaDock {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    filter: none;
+    visibility: visible;
+    transition:
+        opacity 0.32s ease,
+        transform 0.46s cubic-bezier(0.32, 0.72, 0, 1),
+        filter 0.32s ease,
+        visibility 0s linear 0s;
+}
+
+/* La que sale: se desvanece y se encoge; se oculta al terminar. */
+.escena[data-modo='dock'] .capaPieza,
+.escena[data-modo='pieza'] .capaDock {
+    opacity: 0;
+    filter: blur(6px);
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.26s ease,
+        transform 0.36s ease,
+        filter 0.26s ease,
+        visibility 0s linear 0.36s;
+}
+
+.escena[data-modo='dock'] .capaPieza {
+    transform: translate(-50%, -50%) scale(0.94);
+}
+
+/* El dock, al salir, baja un poco (y al entrar sube a su lugar). */
+.escena[data-modo='pieza'] .capaDock {
+    transform: translate(-50%, -46%) scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .capaPieza,
+    .capaDock,
+    .escena[data-modo='dock'] .capaPieza,
+    .escena[data-modo='pieza'] .capaDock {
+        transition: none;
+    }
+}

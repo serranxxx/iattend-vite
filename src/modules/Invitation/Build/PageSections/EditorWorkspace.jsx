@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { message } from 'antd'
-import { CloudUpload, FileText, Images, MousePointerClick, Palette, PenLine, Shapes, Ticket, WandSparkles } from 'lucide-react'
+import { CloudUpload, FileText, Images, MousePointerClick, Palette, PenLine, Shapes, SlidersHorizontal, Ticket, WandSparkles } from 'lucide-react'
 import ReactHost from '../../../../components/Host/ReactHost'
 import { EditCanvas } from './EditCanvas'
 import { EditorShell } from '../../../Editor/EditorShell'
@@ -19,7 +19,10 @@ import { WalletPanelInvitacion } from './WalletPanelInvitacion'
 import { PdfToolPanel } from '../../Pdf/PdfToolPanel'
 import { BotonesPanel } from '../../Pdf/BotonesPanel'
 import { PdfBar } from '../../Pdf/PdfBar'
+import { ModoAvanzadoBar } from '../../Pdf/ModoAvanzadoBar'
 import { esPdf, SECCION_PDF } from '../../Pdf/pdfInvitacion'
+import { objetivoColor as objetivoEstiloPdf, tamMuestrario } from '../../Pdf/estiloPdf'
+import { EscenaEstilo, MuestrarioCanvas } from '../../Pdf/MuestrarioCanvas'
 import { PaletaDibujo } from '../../../SideEvents/Workspace/PaletaDibujo'
 import { DibujoBar } from '../../../SideEvents/Workspace/SideBars'
 import { invitationPalette } from './colorUtils'
@@ -224,6 +227,17 @@ export const EditorWorkspace = ({
     useEffect(() => { if (sinPase && activeTool === 'wallet') setActiveTool('elements') }, [sinPase, activeTool])
     const seccionPieza = enPdf ? (pdfElegido ? SECCION_PDF : null) : selectedSection
     const selectFromPiece = (type, field) => {
+        // Invitación en PDF: tocar CONFIRMAR / el dock en la pieza abre la
+        // Personalización avanzada (Diseño), en la sección del dock.
+        if (type === 'estilo-pdf') {
+            if (movil) return
+            setActiveTool('design')
+            setToolOpen(true)
+            abrirEstilo(true)
+            setTabEstilo('dock')
+            setFilaEstilo(null)
+            return
+        }
         setPdfElegido(type === SECCION_PDF)
         setPieceModule(BLOCKS.has(type) ? type : null)
         onSelectSection?.(type, field)
@@ -238,6 +252,28 @@ export const EditorWorkspace = ({
     const [pincel, setPincel] = useState({ brush: 'pluma', color: '#FFFFFF', size: 8, opacity: 100 })
     const [trazos, setTrazos] = useState([])
     const modoDibujo = !movil && !live && toolOpen && activeTool === 'draw'
+    // Diseño → Edición avanzada (PDF): siempre empieza cerrada; al abrirla y
+    // mientras se ve (panel Diseño o su selector de color), el centro enseña
+    // el muestrario (el dock para usarlo) en lugar de la pieza.
+    const [estiloAbierto, setEstiloAbierto] = useState(false)
+    // Abrirlo no cambia nada de la invitación: sin configurar, todo se ve como siempre.
+    const abrirEstilo = (v) => setEstiloAbierto(v)
+    // Pestaña (sección) y fila abiertas del panel: tocar la vista previa las cambia.
+    const [tabEstilo, setTabEstilo] = useState('dock')
+    const [filaEstilo, setFilaEstilo] = useState(null)
+    const elegirTabEstilo = (sec) => { setTabEstilo(sec); setFilaEstilo(null) }
+    // Lo que se está editando (botón, dock, pases, lia, confirmar): el dock
+    // del centro abre esa página. Con el selector de color abierto, la de su campo.
+    const paginaMuestra = colorPop && colorField?.startsWith('pdf:') && !colorField.startsWith('pdf:palette.') ? colorField.slice(4).split('.')[0] : tabEstilo
+    // El dock se monta la primera vez que se entra y se queda (así la salida y
+    // las siguientes entradas se animan sin recargarlo).
+    const [muestrarioMontado, setMuestrarioMontado] = useState(false)
+    const muestrario = enPdf && !movil && !live && estiloAbierto
+        && ((toolOpen && activeTool === 'design') || (Boolean(colorPop) && Boolean(colorField?.startsWith('pdf:'))))
+    useEffect(() => { if (muestrario) setMuestrarioMontado(true) }, [muestrario])
+    // La escena animada (pieza ↔ dock) solo en el PDF de escritorio, una vez
+    // que se entró, y sin dibujar (dibujando, la pieza crece a todo su largo).
+    const escenaEstilo = enPdf && !movil && !live && !modoDibujo && muestrarioMontado
     const [pincelActivo, setPincelActivo] = useState(true)
     const [seleccionando, setSeleccionando] = useState(false)
     // Elegido en Capas (un trazo): abre Dibujar con la pluma de selección.
@@ -386,6 +422,19 @@ export const EditorWorkspace = ({
             placement: 'left',
             anclarA: '[data-paleta-dibujo]',
         }
+        // Diseño → Edición avanzada de la invitación en PDF (`pdf:<grupo>.<campo>`).
+        : enPdf && colorField?.startsWith('pdf:')
+        ? objetivoEstiloPdf({
+            ruta: colorField.slice(4),
+            invitation,
+            plan,
+            setInvitation,
+            setSaved,
+            cerrar: closeColor,
+            label: colorField.startsWith('pdf:palette.')
+                ? `${t('pdf_estilo.paleta')} · ${t(`pdf_estilo.rol_${colorField.slice(12)}`)}`
+                : `${t(`pdf_estilo.sec_${colorField.slice(4).split('.')[0]}`)} · ${t(`pdf_estilo.slot_${colorField.slice(4).replace('.', '_')}`)}`,
+        })
         : fieldBar === 'dress_colors' && colorField === 'dress' && dressIndex != null && dressColors[dressIndex]
         ? {
             label: t('build_editor.dress_color'),
@@ -531,6 +580,8 @@ export const EditorWorkspace = ({
     // (y la canción, que se elige con el chip de la pieza, lleva la suya).
     const barraPdf = enPdf && !elementoConBarra && fieldBar !== 'song'
     const bar = live ? null
+        // Edición avanzada del PDF: el centro es el dock; arriba, "Modo avanzado" y Salir.
+        : muestrario ? <ModoAvanzadoBar onSalir={() => abrirEstilo(false)} />
         : modoDibujo ? <DibujoBar trazos={trazos.length} onBorrarTodo={borrarTodo} onListo={() => setToolOpen(false)} />
         : barraPdf ? (pdfElegido ? <PdfBar invitation={invitation} invitationID={invitationID} setInvitation={setInvitation} setSaved={setSaved} /> : null)
         : elementoConBarra ? (
@@ -665,7 +716,10 @@ export const EditorWorkspace = ({
     const renderTool = (id) => {
         const item = TOOLS.find((x) => x.id === id)
         return item?.Panel
-            ? <item.Panel onElegir={elegirMovil} movil={movil || undefined} {...(movil && id === 'uploads' ? { draggable: false } : {})} invitation={invitation} invitationID={invitationID} setInvitation={setInvitation} setSaved={setSaved} onSelectSection={onSelectSection} selectedSection={selectedSection} onOpenTool={(next) => { setActiveTool(next); setToolOpen(true) }} activeLang={activeLang} mediaRequest={mediaRequest} clearMedia={() => setMediaRequest(null)} colorTarget={colorTarget} iconRequest={iconRequest} clearIconRequest={() => setIconRequest(null)}
+            ? <item.Panel onElegir={elegirMovil} movil={movil || undefined} {...(movil && id === 'uploads' ? { draggable: false } : {})} invitation={invitation} invitationID={invitationID} setInvitation={setInvitation} setSaved={setSaved} onSelectSection={onSelectSection} selectedSection={selectedSection} onOpenTool={(next) => { setActiveTool(next); setToolOpen(true) }} activeLang={activeLang} mediaRequest={mediaRequest} clearMedia={() => setMediaRequest(null)} colorTarget={colorTarget} iconRequest={iconRequest}
+                plan={plan} onPickColor={movil ? undefined : pickColor} colorAbierto={colorPop ? colorField : null}
+                estiloAbierto={estiloAbierto} onEstiloAbierto={abrirEstilo}
+                estiloTab={tabEstilo} onEstiloTab={elegirTabEstilo} estiloFila={filaEstilo} onEstiloFila={setFilaEstilo} clearIconRequest={() => setIconRequest(null)}
                 // Elegir foto desde un panel: abre Subidos y, al elegir, regresa al panel.
                 onPickImage={(handleImage) => mediaSider.open({ invitationID, handleImage: (url, ...rest) => { handleImage(url, ...rest); setActiveTool(id); setToolOpen(true) } })} />
             : null
@@ -692,6 +746,7 @@ export const EditorWorkspace = ({
                         movil
                         invitation={invitation}
                         invitationID={invitationID}
+                        plan={plan}
                         selectedSection={seccionPieza}
                         onSelectSection={selectFromPiece}
                         onFieldChange={onFieldChange}
@@ -738,14 +793,20 @@ export const EditorWorkspace = ({
 
     return (
         <EditorShell
-            tools={herramientas.map((x) => ({ ...x, title: t(`build_editor.tool_${x.id}`), hint: t(`build_editor.tool_${x.id}_hint`) }))}
+            tools={herramientas.map((x) => (
+                // Con los Controles del invitado abiertos, el panel Diseño se llama así.
+                x.id === 'design' && enPdf && estiloAbierto
+                    ? { ...x, icon: SlidersHorizontal, title: t('pdf_estilo.titulo'), hint: t('pdf_estilo.sub_auto') }
+                    : { ...x, title: t(`build_editor.tool_${x.id}`), hint: t(`build_editor.tool_${x.id}_hint`) }
+            ))}
             activeTool={activeTool}
             toolOpen={toolOpen}
             panelColor={panelColor}
             onPickTool={pickTool}
             onCloseTool={() => setToolOpen(false)}
             renderTool={renderTool}
-            card={{ w: 390, h: 780 }}
+            card={muestrario ? tamMuestrario() : { w: 390, h: 780 }}
+            ajustar={muestrario}
             live={live}
             setLive={setLive}
             device={device}
@@ -755,9 +816,34 @@ export const EditorWorkspace = ({
             // módulos, textos y elementos sueltos.
             onBlur={() => { setPieceModule(null); setTextField(null); setPdfElegido(false); onCanvasBlur?.() }}
             canvas={(
+                <>
+                {/* Personalización avanzada del PDF: el dock (o el CONFIRMAR de
+                    Lite) para usarlo, en lugar de la pieza. EscenaEstilo pone las
+                    dos capas una sobre otra y anima el cambio; la pieza se queda
+                    montada (no se recarga ni se pierde Capas) y el dock también,
+                    después de la primera vez. Fuera de eso (o dibujando, que la
+                    pieza crece a todo su largo) la pieza va como siempre. */}
+                <EscenaEstilo
+                    activa={escenaEstilo}
+                    modoDock={muestrario}
+                    card={muestrario ? tamMuestrario() : { w: 390, h: 780 }}
+                    dock={muestrarioMontado && (
+                        <MuestrarioCanvas
+                            invitation={invitation}
+                            plan={plan}
+                            pagina={paginaMuestra}
+                            // Tocar una pieza del dock elige su sección y su fila en el panel.
+                            onEstiloSlot={(sec, slot) => { setTabEstilo(sec); setFilaEstilo(slot) }}
+                            textureOverride={textureOverride}
+                            fontOverride={fontOverride}
+                            activeLang={activeLang}
+                        />
+                    )}
+                >
                 <EditCanvas
                     invitation={invitation}
                     invitationID={invitationID}
+                    plan={plan}
                     selectedSection={seccionPieza}
                     onSelectSection={selectFromPiece}
                     onFieldChange={onFieldChange}
@@ -784,6 +870,8 @@ export const EditorWorkspace = ({
                     selectedLayer={selectedLayer}
                     dibujo={dibujoPieza}
                 />
+                </EscenaEstilo>
+                </>
             )}
             liveContent={<ReactHost config={invitation} scrollToSection={positionY} onSectionChange={onSectionChange} textureOverride={textureOverride} fontOverride={fontOverride} activeLang={activeLang} onReady={onHostReady} vistaConfirmada={vistaConfirmada} plan={plan} />}
                 vistaConfirmada={vistaConfirmada}

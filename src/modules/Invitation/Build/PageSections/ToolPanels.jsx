@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Popover } from 'antd'
-import { Ban, Check, ChevronRight, Lightbulb, Search } from 'lucide-react'
+import { Modal, Popover } from 'antd'
+import { Ban, Check, ChevronDown, ChevronRight, Lightbulb, Search } from 'lucide-react'
 import { useTextures } from '../../../../context/TexturesContext'
 import { colorCollection } from '../../../../helpers/services/colorPalette'
 import { useAppSetting } from '../../../../hooks/useAppSetting'
 import { ColoresIOS } from '../../../Editor/ColoresIOS'
+import { EstiloAvanzado } from '../../Pdf/EstiloAvanzado'
+import { esPdf } from '../../Pdf/pdfInvitacion'
+import { congelarPaleta, seguirPaleta, tieneAvanzado, tienePaletaPropia } from '../../Pdf/estiloPdf'
 import styles from './ToolPanels.module.css'
 
 // Paneles de herramienta del editor de escritorio (EditorWorkspace, etapa 2):
@@ -36,7 +39,9 @@ const colorPatch = (key, value) => (g) => {
 // anclado a la fila de cuadros (a la derecha del panel, sin tapar los demás
 // cuadros: tocar otro cambia de color sin cerrarlo; clic fuera —también en
 // la pieza— o Esc lo cierran). En el celular (`movil`, dentro del drawer) va debajo de los cuadros.
-const PaletteSwatches = ({ colors, roles, setInvitation, setSaved, movil }) => {
+// `antesDeAbrir(abrir)`: algo que pasa antes de abrir un color (DesignPanel
+// pregunta si el cambio afecta la Personalización avanzada).
+const PaletteSwatches = ({ colors, roles, setInvitation, setSaved, movil, antesDeAbrir }) => {
     const [open, setOpen] = useState(null)
     const rowRef = useRef(null)
     const popRef = useRef(null)
@@ -64,7 +69,11 @@ const PaletteSwatches = ({ colors, roles, setInvitation, setSaved, movil }) => {
     const grid = (
         <div ref={rowRef} className={styles.swatches}>
             {roles.map((role) => (
-                <button key={role.key} type="button" className={styles.swatch} data-open={open === role.key || undefined} aria-expanded={open === role.key} onClick={() => setOpen((k) => (k === role.key ? null : role.key))}>
+                <button key={role.key} type="button" className={styles.swatch} data-open={open === role.key || undefined} aria-expanded={open === role.key} onClick={() => {
+                    if (open === role.key) { setOpen(null); return }
+                    if (!open && antesDeAbrir) { antesDeAbrir(() => setOpen(role.key)); return }
+                    setOpen(role.key)
+                }}>
                     <span className={styles.swatchColor} style={{ background: colors[role.key] }} />
                     <span className={styles.swatchLabel}>{role.label}</span>
                 </button>
@@ -285,10 +294,10 @@ export const IdeasPanel = ({ invitation, setInvitation, setSaved }) => {
 // 4 colores y sugeridas) y Papel de fondo (textura general). Reúne lo que
 // antes eran los paneles Ideas, Paleta y Texturas.
 const SUGGESTED = 6
-// Texturas a la vista: 3 filas de 4 ("Ninguna" + 11).
-const PAPERS = 11
+// Texturas a la vista: 2 filas de 4 ("Sin textura" + 7), handoff "Panel Diseño organizado".
+const PAPERS = 7
 
-export const DesignPanel = ({ invitation, setInvitation, setSaved, movil }) => {
+export const DesignPanel = ({ invitation, setInvitation, setSaved, movil, plan, onPickColor, colorAbierto, estiloAbierto, onEstiloAbierto, estiloTab, onEstiloTab, estiloFila, onEstiloFila }) => {
     const { t } = useTranslation()
     const { textures, loading } = useTextures()
     const generals = invitation?.generals ?? {}
@@ -336,11 +345,79 @@ export const DesignPanel = ({ invitation, setInvitation, setSaved, movil }) => {
         return chosen && !first.includes(chosen) ? [...first.slice(0, PAPERS - 1), chosen] : first
     })()
 
+    // Invitación en PDF con Personalización avanzada: cambiar la paleta de
+    // Diseño pregunta si también la afecta. "Sí" = la personalización usa la
+    // paleta de Diseño (seguirPaleta); "No" = la suya se queda como se ve
+    // (congelarPaleta). Sus cambios por sección, forma y botones no se tocan.
+    // Abrir uno de los 4 colores pregunta una vez mientras el panel esté
+    // abierto; elegir una paleta sugerida pregunta siempre.
+    const decidido = useRef(false)
+    const preguntarAvanzado = (aplicar, { siempre = false } = {}) => {
+        if (!esPdf(invitation) || !tieneAvanzado(invitation) || (!siempre && decidido.current)) { aplicar(null); return }
+        const propia = tienePaletaPropia(invitation)
+        Modal.confirm({
+            title: t('pdf_estilo.pregunta_titulo'),
+            content: t(propia ? 'pdf_estilo.pregunta_propia' : 'pdf_estilo.pregunta_sigue'),
+            okText: t('pdf_estilo.pregunta_si'),
+            cancelText: t('pdf_estilo.pregunta_no'),
+            centered: true,
+            maskClosable: false,
+            onOk: () => { decidido.current = true; aplicar(true) },
+            onCancel: () => { decidido.current = true; aplicar(false) },
+        })
+    }
+    const ajusteAvanzado = (afecta) => (prev) => (afecta == null ? prev : afecta ? seguirPaleta(prev) : congelarPaleta(prev))
+    const elegirPaleta = (c) => preguntarAvanzado((afecta) => {
+        // Un solo paso de deshacer: la decisión y la paleta nueva juntas.
+        setInvitation((prev) => {
+            const n = ajusteAvanzado(afecta)(prev)
+            return { ...n, generals: { ...n.generals, ...palettePatch(c)(n.generals) } }
+        })
+        setSaved(false)
+    }, { siempre: true })
+    const antesDeAbrirColor = (abrir) => preguntarAvanzado((afecta) => {
+        if (afecta != null) {
+            setInvitation(ajusteAvanzado(afecta))
+            setSaved(false)
+        }
+        abrir()
+    })
+    // La paleta sugerida que coincide con la actual (o null = personalizada).
+    const paletaActiva = colorCollection.find((c) => isActivePalette(colors, c)) ?? null
+    // "Ver todas" / "Ver menos" en el mismo lugar, con el chevron que gira.
+    const verTodas = (open, setOpen) => (
+        <button type="button" className={styles.dpVerTodas} onClick={() => setOpen(!open)} aria-expanded={open}>
+            {open ? t('build_editor.design_less') : t('build_editor.design_see_all_f')}
+            <ChevronDown size={16} data-open={open || undefined} />
+        </button>
+    )
     const more = (open, setOpen, label) => (
         <button type="button" className={styles.more} onClick={() => setOpen(!open)}>
             {open ? t('build_editor.design_less') : label} <ChevronRight size={14} data-open={open || undefined} />
         </button>
     )
+
+    // Modo avanzado (invitación en PDF): el panel enseña solo la Edición
+    // avanzada; paletas y texturas regresan al salir.
+    const estiloPdf = esPdf(invitation) && !movil && onPickColor
+        ? (
+            <EstiloAvanzado
+                invitation={invitation}
+                setInvitation={setInvitation}
+                setSaved={setSaved}
+                plan={plan}
+                onPickColor={onPickColor}
+                colorAbierto={colorAbierto}
+                abierto={estiloAbierto}
+                onAbierto={onEstiloAbierto}
+                tab={estiloTab}
+                onTab={onEstiloTab}
+                fila={estiloFila}
+                onFila={onEstiloFila}
+            />
+        )
+        : null
+    if (estiloPdf && estiloAbierto) return estiloPdf
 
     return (
         <>
@@ -368,51 +445,83 @@ export const DesignPanel = ({ invitation, setInvitation, setSaved, movil }) => {
                 </div>
             </div>}
 
-            {/* 2 · Paleta */}
-            <div className={styles.designBlock}>
-                <div className={styles.blockHead}>
-                    <span className={styles.blockTitle}>{t('build_editor.design_palette')}</span>
+            {/* Handoff "Panel Diseño organizado": bloques numerados, más cortos. */}
+            {/* 1 · Paleta actual */}
+            <div className={styles.dpBloque}>
+                <div className={styles.dpCabeza}>
+                    <span className={styles.dpTitulo}>1 · {t('build_editor.design_current_palette')}</span>
+                    <span className={styles.dpDato}>{paletaActiva?.name ?? t('build_editor.design_custom_palette')}</span>
                 </div>
-                <PaletteSwatches colors={colors} roles={roles} setInvitation={setInvitation} setSaved={setSaved} movil={movil} />
+                <div className={styles.dpPaletaActual}>
+                    <PaletteSwatches colors={colors} roles={roles} setInvitation={setInvitation} setSaved={setSaved} movil={movil} antesDeAbrir={antesDeAbrirColor} />
+                </div>
+            </div>
+
+            {/* 2 · Paletas sugeridas (una barra de 4 por paleta; 6 y "Ver todas" en el mismo lugar) */}
+            <div className={styles.dpBloque}>
+                <div className={styles.dpCabeza}>
+                    <span className={styles.dpTitulo}>2 · {t('build_editor.design_suggested')}</span>
+                    <span className={styles.dpDato}>{t('build_editor.design_palettes_count', { n: colorCollection.length })}</span>
+                </div>
                 {allPalettes && (
                     <label className={styles.search}>
                         <Search size={15} />
                         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('build_generals.collection_search')} />
                     </label>
                 )}
-                <div className={styles.paletteGrid}>
+                <div className={styles.dpPaletas}>
                     {(allPalettes ? palettes : colorCollection.slice(0, SUGGESTED)).map((c) => {
                         const active = isActivePalette(colors, c)
                         return (
-                            <button key={c.name} type="button" className={styles.paletteMini} data-active={active || undefined} onClick={() => patchGenerals(setInvitation, setSaved, palettePatch(c))}>
-                                <Strip c={c} size="sm" />
-                                <span className={styles.paletteMiniName}>{c.name}</span>
+                            <button key={c.name} type="button" className={styles.dpPaleta} data-active={active || undefined} aria-pressed={active} onClick={() => elegirPaleta(c)}>
+                                <span className={styles.dpBarra}>
+                                    {[c.primary, c.secondary, c.accent, c.actions].map((color, i) => <span key={i} style={{ background: color }} />)}
+                                </span>
+                                <span className={styles.dpNombre}>{c.name}</span>
                             </button>
                         )
                     })}
                 </div>
                 {allPalettes && palettes.length === 0 && <span className={styles.empty}>{t('build_editor.palette_none')}</span>}
-                {more(allPalettes, (v) => { setAllPalettes(v); setQuery('') }, t('build_editor.design_more_palettes'))}
+                {verTodas(allPalettes, (v) => { setAllPalettes(v); setQuery('') })}
             </div>
 
-            {/* 3 · Papel de fondo */}
-            <div className={styles.designBlock}>
-                <div className={styles.blockHead}>
-                    <span className={styles.blockTitle}>{t('build_editor.design_paper')}</span>
-                    {more(allPapers, setAllPapers, t('build_editor.design_see_all'))}
+            {/* 3 · Textura (cuadros 1:1; 8 y "Ver todas" en el mismo lugar) */}
+            <div className={styles.dpBloque}>
+                <div className={styles.dpCabeza}>
+                    <span className={styles.dpTitulo}>3 · {t('build_editor.design_texture')}</span>
+                    <span className={styles.dpDato}>{paper == null ? t('build_editor.texture_none') : textures.find((x) => x.id === paper)?.name ?? ''}</span>
                 </div>
-                <div className={styles.paperGrid}>
-                    <button type="button" className={styles.paper} data-active={paper == null || undefined} onClick={() => pickPaper(null)} title={t('build_editor.texture_none')}>
-                        <span className={styles.paperThumb} data-none><Ban size={18} /></span>
+                <div className={styles.dpTexturas}>
+                    <button type="button" className={styles.dpTextura} data-active={paper == null || undefined} data-none onClick={() => pickPaper(null)} title={t('build_editor.texture_none')}>
+                        <Ban size={22} />
                     </button>
                     {papers.map((tex) => (
-                        <button key={tex.id} type="button" className={styles.paper} data-active={paper === tex.id || undefined} onClick={() => pickPaper(tex.id)} title={tex.name}>
-                            <span className={styles.paperThumb}><img alt="" src={tex.image} loading="lazy" /></span>
+                        <button key={tex.id} type="button" className={styles.dpTextura} data-active={paper === tex.id || undefined} onClick={() => pickPaper(tex.id)} title={tex.name}>
+                            <img alt="" src={tex.image} loading="lazy" />
                         </button>
                     ))}
-                    {loading && Array.from({ length: PAPERS }).map((_, i) => <span key={`s${i}`} className={styles.paperThumb} data-loading />)}
+                    {loading && Array.from({ length: PAPERS }).map((_, i) => <span key={`s${i}`} className={styles.dpTextura} data-loading />)}
                 </div>
+                {textures.length > PAPERS && verTodas(allPapers, setAllPapers)}
             </div>
+
+            {/* 4 · Dock y secciones: la Personalización avanzada (solo PDF,
+                escritorio) en un bloque propio. */}
+            {estiloPdf && (
+                <div className={styles.dpBloque}>
+                    <div className={styles.dpCabeza}>
+                        <span className={styles.dpTitulo}>4 · {t('build_editor.design_dock')}</span>
+                    </div>
+                    <button type="button" className={styles.dpAvanzada} onClick={() => onEstiloAbierto?.(true)}>
+                        <span className={styles.dpAvanzadaTextos}>
+                            <span className={styles.dpAvanzadaTitulo}>{t('pdf_estilo.titulo')}</span>
+                            <span className={styles.dpAvanzadaSub}>{t('pdf_estilo.sub_auto')}</span>
+                        </span>
+                        <ChevronRight size={18} />
+                    </button>
+                </div>
+            )}
         </>
     )
 }

@@ -320,23 +320,31 @@ versión. Ver §13.
 
 ### 5.1 Diseño (`DesignPanel`)
 
-Lo que define toda la invitación, en orden de decisión y un solo scroll.
-Escribe en `generals`.
+Lo que define toda la invitación, en un solo scroll y en bloques numerados
+(handoff "Panel Diseño organizado": mismo contenido, más corto; clases `dp*`
+de `ToolPanels.module.css`, acento del editor `#16323A`). Escribe en `generals`.
 
-1. **Estilos completos** — oculto hasta prenderlo en el admin
-   (`app_settings.editor_design_styles`). Carrusel de `IDEAS` (8 combos:
-   paleta + tipografía de títulos + de cuerpo); "Ver todos" lo vuelve grid.
-   Aplicar = los 4 colores + color de títulos + las dos tipografías.
-2. **Paleta** — los 4 roles con `ColorPicker` de antd (Fondo = `primary`,
-   Contrastes = `secondary`, Textos = `accent`, Acentos = `actions`), con
-   10 tonos de cada uno como atajos (4 más oscuros, el actual, 5 más claros).
-   Debajo, 6 paletas sugeridas de `colorCollection` en mini-tiras; "Más
-   paletas" despliega todas con buscador por nombre o palabra clave. Elegir
-   una paleta cambia los 4 colores **y** el color de los títulos
-   (`palettePatch`), como "Colección de colores".
-3. **Texturas** ("Papel de fondo") — "Ninguna" + 11 del `TexturesContext`
-   (3 filas de 4); la elegida siempre se ve aunque no esté entre las
-   primeras. "Ver todos" muestra el resto. Escribe `generals.texture`.
+- **Estilos completos** — oculto hasta prenderlo en el admin
+  (`app_settings.editor_design_styles`). Carrusel de `IDEAS` (8 combos:
+  paleta + tipografía de títulos + de cuerpo); "Ver todos" lo vuelve grid.
+  Aplicar = los 4 colores + color de títulos + las dos tipografías.
+1. **Paleta actual** — los 4 roles (Fondo = `primary`, Contrastes =
+   `secondary`, Textos = `accent`, Acentos = `actions`) en una tarjeta, muestras
+   de 48 px; cada una abre `ColoresIOS` (Popover en escritorio, en línea en el
+   celular). A la derecha del título, el nombre de la paleta sugerida que
+   coincide o "Personalizada".
+2. **Paletas sugeridas** — `colorCollection` en tarjetas de 2 columnas, cada
+   una con una barra de 4 segmentos (26 px) y su nombre; 6 a la vista y "Ver
+   todas" / "Ver menos" en el mismo lugar (con buscador al desplegar). El total
+   va junto al título. Elegir una cambia los 4 colores **y** el color de los
+   títulos (`palettePatch`).
+3. **Textura** — cuadros 1:1: "Sin textura" + 7 del `TexturesContext` (la
+   elegida siempre se ve aunque no esté entre las primeras); "Ver todas" /
+   "Ver menos" en el mismo lugar. El nombre de la elegida junto al título.
+   Escribe `generals.texture`.
+4. **Dock y secciones** — solo en una invitación en PDF (escritorio): la fila
+   "Personalización avanzada" que abre el modo avanzado (ver
+   `docs/invitacion-pdf.md`). Abierto, el panel enseña solo esa personalización.
 
 ### 5.2 Elementos (`ElementsPanel`)
 
@@ -472,8 +480,9 @@ sección). Arrastrar una opción la suelta como texto suelto.
 
 - Con un módulo elegido hay un botón de vidrio con ojo tachado (arriba a la
   derecha del bloque) que lo **desactiva** (`<módulo>.active = false`); en
-  edición el módulo apagado no desaparece: se ve opaco con "Activar
-  <nombre>" al centro.
+  edición el módulo apagado no se dibuja: deja un recuadro compacto con
+  "<NOMBRE> · OCULTO", qué es el módulo (`MODULE_DESC`) y "Activar
+  <nombre>" (sin sus tarjetas, fotos ni separador).
 - **Separadores** (`dynamic_separator`) se pintan **entre** bloques, fuera
   del fondo del módulo; tocar uno (o el recuadro "+ Separador" si no tiene)
   elige su bloque y abre `SeparatorBar`.

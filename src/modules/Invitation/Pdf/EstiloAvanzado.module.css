@@ -1,0 +1,516 @@
+/* Diseño → Edición avanzada (invitación en PDF), handoff "Editor de Diseño —
+   paleta, forma, estilo de botón y secciones". Tokens del handoff (morado
+   #6D4AFF, grises del editor); medidas ajustadas al ancho del panel lateral. */
+.bloque {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 16px;
+    color: #1D1B22;
+    scroll-margin-top: 8px;
+}
+
+.cabeza {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+.titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.titulo {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.sub {
+    font-size: 11.5px;
+    color: #6B6B76;
+}
+
+.flecha {
+    flex-shrink: 0;
+    color: #16323d;
+    transition: transform 0.2s ease;
+}
+
+.flecha[data-open] {
+    transform: rotate(90deg);
+}
+
+.cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+/* Bloques separados por una línea (handoff). */
+.seccionPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 18px;
+    border-top: 1px solid #EEEEF2;
+}
+
+.h {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.hSub {
+    margin-top: -4px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #6B6B76;
+}
+
+.etiqueta {
+    margin-top: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #55535E;
+}
+
+/* ── Paleta ── */
+.usarDiseno {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 5px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5B3BE0;
+    cursor: pointer;
+}
+
+.usarDiseno:hover {
+    text-decoration: underline;
+}
+
+.paleta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.rol {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+.rolMuestra {
+    height: 56px;
+    margin-bottom: 4px;
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.15s ease;
+}
+
+.rol[data-on] .rolMuestra,
+.rol:hover .rolMuestra {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 0 0 2px #FFF, 0 0 0 4px #6D4AFF;
+}
+
+.rolNombre {
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.rolSub {
+    font-size: 11px;
+    color: #6B6B76;
+}
+
+/* ── Forma ── */
+.formas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.forma {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 2px 9px;
+    border-radius: 14px;
+    border: 1px solid #E1E1E8;
+    background: #FFF;
+    font-family: inherit;
+    font-size: 11px;
+    color: #1D1B22;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.forma[data-on] {
+    border: 2px solid #6D4AFF;
+    padding: 10px 1px 8px;
+    background: #F8F6FF;
+}
+
+.formaMuestra {
+    width: 44px;
+    height: 16px;
+    border-radius: 9px;
+    background: #2A2A30;
+}
+
+.formaMuestra[data-forma='round'] {
+    border-radius: 5px;
+}
+
+.formaMuestra[data-forma='square'] {
+    border-radius: 1px;
+}
+
+.formaMuestra[data-forma='auto'] {
+    background: repeating-linear-gradient(135deg, #2A2A30 0 6px, #8A8A94 6px 12px);
+}
+
+/* ── Segmentado (sombra) ── */
+.segmentado {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 14px;
+    background: #F1F1F4;
+}
+
+.segmentado button {
+    height: 30px;
+    padding: 0 2px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6B6B76;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.segmentado button[data-on] {
+    background: #FFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    font-weight: 600;
+    color: #1D1B22;
+}
+
+.segmentado[data-chico] {
+    padding: 3px;
+    border-radius: 11px;
+}
+
+.segmentado[data-chico] button {
+    height: 26px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+/* ── Estilo de botón ── */
+.estilos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.estilo {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 6px 6px 9px;
+    border-radius: 14px;
+    border: 1px solid #E1E1E8;
+    background: #FFF;
+    font-family: inherit;
+    font-size: 11.5px;
+    color: #1D1B22;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.estilo[data-on] {
+    border: 2px solid #6D4AFF;
+    padding: 5px 5px 8px;
+    background: #F8F6FF;
+}
+
+/* Fondo con textura para que se note el vidrio (handoff). */
+.estiloFondo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 22% 30%, #E0A060 0 9px, transparent 10px),
+        radial-gradient(circle at 80% 75%, #F1ECD2 0 7px, transparent 8px),
+        linear-gradient(135deg, #A39E7A, #6E6A4E 55%, #4E4C36);
+}
+
+.estiloPildora {
+    display: block;
+    width: 56px;
+    height: 22px;
+    box-sizing: border-box;
+    border-radius: 999px;
+}
+
+/* ── Por sección ── */
+.pestanas {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 2px;
+    margin-top: 2px;
+    padding: 4px;
+    border-radius: 14px;
+    background: #F1F1F4;
+}
+
+.pestanas button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    min-height: 44px;
+    padding: 4px 2px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #6B6B76;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pestanas button[data-on] {
+    background: #FFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    font-weight: 600;
+    color: #1D1B22;
+}
+
+.pestanaCuenta {
+    font-size: 10px;
+    font-weight: 600;
+    color: #6D4AFF;
+}
+
+.filas {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #E8E8EE;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.fila {
+    transition: background 0.15s ease;
+}
+
+.fila + .fila {
+    border-top: 1px solid #EEEEF2;
+}
+
+.fila[data-abierta] {
+    background: #F8F6FF;
+}
+
+.filaCabeza {
+    display: flex;
+    align-items: center;
+}
+
+.filaBoton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 6px 10px 12px;
+    border: none;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+.cuadro {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.filaNombre {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+}
+
+/* Enlazado a su rol (gris) o a otro rol (morado). */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: 99px;
+    background: #F1F1F4;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B6B76;
+}
+
+.chip[data-otro] {
+    background: #EFEAFF;
+    color: #5B3BE0;
+}
+
+.hex {
+    flex-shrink: 0;
+    font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.quitar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    margin-right: 6px;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: #6B6B76;
+    cursor: pointer;
+}
+
+.quitar:hover {
+    background: #F1F1F4;
+    color: #1D1B22;
+}
+
+/* Selector de la fila abierta: los 4 roles y "Otro". */
+.selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 12px 12px 52px;
+}
+
+.nota {
+    font-size: 11.5px;
+    color: #6B6B76;
+}
+
+.circulos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.circulo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 38px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 10px;
+    color: #55535E;
+    cursor: pointer;
+}
+
+.circulo > span {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.circulo[data-otro] > span {
+    background: conic-gradient(#FF5A4E, #FFD25E, #7FE0B5, #8FD3FF, #C9B6FF, #FF8FB8, #FF5A4E);
+}
+
+.circulo[data-on] > span {
+    box-shadow: 0 0 0 2px #FFF, 0 0 0 4px #6D4AFF;
+}
+
+.pieFilas {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px 12px;
+    border-top: 1px solid #EEEEF2;
+}
+
+.pieFilas .etiqueta {
+    margin-top: 0;
+}
+
+.volver {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    border-radius: 99px;
+    border: 1px solid #E1E1E8;
+    background: #FFF;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1D1B22;
+    cursor: pointer;
+}
+
+.volver:hover {
+    background: #F8F6FF;
+}

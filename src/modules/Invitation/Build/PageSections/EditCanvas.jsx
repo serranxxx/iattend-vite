@@ -88,6 +88,9 @@ export const EditCanvas = ({
     movil = false,
     invitation,
     invitationID,
+    // Plan de la invitación: solo se le pasa a la pieza en PDF, para que el
+    // botón CONFIRMAR / el dock salga como lo verá el invitado (Pro o Lite).
+    plan = null,
     selectedSection,
     onSelectSection,
     onFieldChange,
@@ -596,6 +599,7 @@ export const EditCanvas = ({
                 <div className={`${styles.screen} scroll-invitation`}>
                     <ReactHost
                         config={invitation}
+                        plan={esPdf(invitation) ? plan : null}
                         invitationID={invitationID}
                         editMode
                         editMovil={movil}

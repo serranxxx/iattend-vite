@@ -165,10 +165,13 @@ arrastre se divide entre la escala de la tarjeta.
 Con un módulo elegido, la pieza dibuja arriba a la derecha un botón de vidrio
 (blanco con opacidad, no CTA) con un ojo tachado que manda `REMOTE_FIELD_CHANGE { path:
 "<llave>.active", value: false }` (`MODULE_KEY` en `Invitation.tsx`: el de
-Personas es `people`). En modo edición el módulo deshabilitado **no**
-desaparece: se dibuja opaco (se le pasa `active: true` solo para pintarlo) con
-un botón de vidrio "👁 Activar <nombre>" al centro que lo vuelve a encender. En la
-invitación publicada se sigue escondiendo como siempre.
+Personas es `people`). En modo edición el módulo deshabilitado **no** se
+dibuja (antes se pintaba completo y opaco y ensuciaba la pieza): en su lugar va
+un recuadro compacto (`.hiddenCard`) con "<NOMBRE> · OCULTO", una línea de qué
+es el módulo (`MODULE_DESC`, es / en) y el botón de vidrio "👁 Activar <nombre>"
+que lo vuelve a encender. El recuadro lleva la ref del módulo, así que elegirlo
+en Capas sigue haciendo scroll hasta él. En la invitación publicada se sigue
+escondiendo como siempre.
 
 ## Personas (familia) y Avisos (recordatorios)
 

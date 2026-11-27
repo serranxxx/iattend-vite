@@ -145,6 +145,9 @@ export const EditorShell = ({
     panelColor = null,
     // Pieza
     card = { w: 390, h: 780 }, canvas, liveContent,
+    // La pieza siempre ajustada al espacio (sin el zoom elegido): p. ej. el
+    // muestrario de la Edición avanzada del PDF, mucho más ancho que la pieza.
+    ajustar = false,
     live, setLive, device, setDevice, onBlur, onLeaveEdit,
     // "Ver en vivo" como un invitado que ya confirmó (opcional: solo si el
     // editor lo pasa; hoy side events / Pop, SideWorkspace).
@@ -211,7 +214,8 @@ export const EditorShell = ({
     const hideLayers = panelOpen && vp.w < 1100
     const padL = withColumn ? 40 : panelOpen ? 405 : 96
     const padR = withColumn ? columnWidth + 40 : inmersivo ? 96 + LATERAL_W : panelOpen && showLayers && !capasOcultas ? (hideLayers ? 150 : 248) : 96
-    const fitScale = clamp(Math.min((vp.w - padL - padR) / (card.w + 20), (vp.h - 150) / card.h), ZOOM_MIN, 1)
+    // `ajustar` (muestrario, mucho más grande que la pieza) baja del zoom mínimo para caber completo.
+    const fitScale = clamp(Math.min((vp.w - padL - padR) / (card.w + 20), (vp.h - 150) / card.h), ajustar ? 0.2 : ZOOM_MIN, 1)
     // En "Ver en vivo" con la barra Sin confirmar / Confirmado arriba, el
     // dispositivo deja su lugar (como la pieza con la barra de edición).
     const barraVivo = live && !withColumn && Boolean(onVistaConfirmada)
@@ -222,7 +226,7 @@ export const EditorShell = ({
         : fitFor(DEVICE_SIZES[liveDevice] ?? DEVICE_SIZES.ios)
     const zoomBase = withColumn ? columnScale
         : live ? Math.min(zoomMode === 'fit' ? liveFit : zoomMode, liveFit)
-        : zoomMode === 'fit' ? fitScale : hideLayers && ZOOM_STEPS.includes(zoomMode) ? Math.min(zoomMode, fitScale) : zoomMode
+        : zoomMode === 'fit' || ajustar ? fitScale : hideLayers && ZOOM_STEPS.includes(zoomMode) ? Math.min(zoomMode, fitScale) : zoomMode
     const zoom = inmersivo ? zoomBase * 1.5 : zoomBase
     const zoomLabel = zoomMode === 'fit' ? t('build_editor.zoom_fit') : `${Math.round(zoom * 100)}%`
     const center = `calc(${padL}px + (100% - ${padL + padR}px) / 2)`

@@ -186,7 +186,10 @@ export const InteractionPanel = ({ body, setBody, eventoId, chatMensajes }) => {
                     <div>
                         <div className={styles.chatBody}>
                             <div className={styles.block}>
-                                <span className={styles.rowLabel}><Pin size={14} />{t('side_events.chat_pin_title')}</span>
+                                <span className={styles.rowLabel}>
+                                    <Pin size={14} />{t('side_events.chat_pin_title')}
+                                    {verInsignias && <InsigniaPlus className={styles.insigniaEnTitulo} />}
+                                </span>
                                 <div className={styles.pinRow}>
                                     <textarea
                                         className={styles.textarea}
@@ -202,7 +205,6 @@ export const InteractionPanel = ({ body, setBody, eventoId, chatMensajes }) => {
                                         onClick={() => setChat({ pinned: { text: recortado, updated_at: new Date().toISOString() } })}
                                     >
                                         {etiquetaFijar}
-                                        {verInsignias && <InsigniaPlus className={styles.insigniaEnBoton} />}
                                     </button>
                                 </div>
                                 <div className={styles.pinMeta}>

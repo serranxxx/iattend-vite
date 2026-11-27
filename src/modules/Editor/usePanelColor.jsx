@@ -32,6 +32,10 @@ export const usePanelColor = ({ colorPop, closeColor, target, palette }) => {
                 paleta={palette ?? []}
                 sinColor={Boolean(target.allowNone)}
                 cabeza={false}
+                // Con opacidad si el objetivo la maneja (p. ej. Edición avanzada del PDF).
+                opacity={target.onOpacity ? target.opacity ?? 100 : null}
+                onOpacity={target.onOpacity ?? null}
+                opacidadMin={target.opacidadMin ?? 0}
             />
         ),
     }

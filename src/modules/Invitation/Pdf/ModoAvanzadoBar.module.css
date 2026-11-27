@@ -1,0 +1,70 @@
+/* Barra "Modo avanzado" (ModoAvanzadoBar.jsx): azul oscuro de la marca,
+   sobria, para que se note que el centro ya no es la pieza sino el dock. */
+.barra {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 6px 6px 8px;
+    border-radius: 20px;
+    background: #16323D;
+    box-shadow: 0 8px 24px rgba(12, 23, 27, 0.12);
+    color: #FFF;
+    white-space: nowrap;
+}
+
+.etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.textos {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.titulo {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.sub {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.salir {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px 0 12px;
+    border: none;
+    border-radius: 14px;
+    background: #FFF;
+    color: #16323D;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.salir:hover {
+    background: #EEF2F3;
+}
+
+.salir:active {
+    transform: scale(0.97);
+}

@@ -11,7 +11,9 @@ import s from './ColoresIOS.module.css'
   opacidad (si el que lo abre la maneja: `opacity` / `onOpacity`) y una fila
   de colores guardados con "+" (localStorage, compartidos entre editores).
   Hoy lo usa el color del dibujo (ColorPopover con `target.ios`).
-  `value`: hex (#RRGGBB); `onChange(hex, { snapshot })`.
+  `value`: hex (#RRGGBB); `onChange(hex, { snapshot, elegido })`. `elegido`:
+  un color tocado de una vez (cuadrícula, paleta, guardados, cuentagotas,
+  hex), no un arrastre del espectro / deslizadores: quien lo abre puede cerrarse.
   `paleta`: atajos de la invitación / del Pop arriba de las vistas ("De tu
   paleta"); `sinColor`: agrega "sin color" (`transparent`) a esa fila.
 */
@@ -175,7 +177,7 @@ export const ColoresIOS = ({ value, onChange, opacity = null, onOpacity = null, 
     const usarGotero = async () => {
         try {
             const { sRGBHex } = await new window.EyeDropper().open()
-            if (sRGBHex) onChange(sRGBHex.toUpperCase(), { snapshot: true })
+            if (sRGBHex) onChange(sRGBHex.toUpperCase(), { snapshot: true, elegido: true })
         } catch { /* cancelado */ }
     }
 
@@ -214,9 +216,9 @@ export const ColoresIOS = ({ value, onChange, opacity = null, onOpacity = null, 
                 <div className={s.paleta}>
                     <span className={s.etiqueta}>{t('build_editor.cc_palette')}</span>
                     <div className={s.guardados}>
-                        {sinColor && <button type="button" className={`${s.guardado} ${s.sinColor}`} data-on={value === 'transparent' || undefined} aria-label={t('build_editor.color_none')} title={t('build_editor.color_none')} onClick={() => onChange('transparent', { snapshot: true })} />}
+                        {sinColor && <button type="button" className={`${s.guardado} ${s.sinColor}`} data-on={value === 'transparent' || undefined} aria-label={t('build_editor.color_none')} title={t('build_editor.color_none')} onClick={() => onChange('transparent', { snapshot: true, elegido: true })} />}
                         {paleta.map((c) => (
-                            <button key={c} type="button" className={s.guardado} data-on={c.toUpperCase() === color && value !== 'transparent' || undefined} style={{ background: c }} aria-label={c} title={c} onClick={() => onChange(c.toUpperCase(), { snapshot: true })} />
+                            <button key={c} type="button" className={s.guardado} data-on={c.toUpperCase() === color && value !== 'transparent' || undefined} style={{ background: c }} aria-label={c} title={c} onClick={() => onChange(c.toUpperCase(), { snapshot: true, elegido: true })} />
                         ))}
                     </div>
                 </div>
@@ -234,7 +236,7 @@ export const ColoresIOS = ({ value, onChange, opacity = null, onOpacity = null, 
                             className={s.celda}
                             data-on={c === color || undefined}
                             style={{ background: c }}
-                            onClick={() => onChange(c, { snapshot: true })}
+                            onClick={() => onChange(c, { snapshot: true, elegido: true })}
                         />
                     ))}
                 </div>
@@ -294,7 +296,7 @@ export const ColoresIOS = ({ value, onChange, opacity = null, onOpacity = null, 
                                 value={hex ?? color.slice(1)}
                                 onFocus={(e) => { setHex(color.slice(1)); requestAnimationFrame(() => e.target.select()) }}
                                 onChange={(e) => setHex(e.target.value.replace(/[^0-9a-f]/gi, '').slice(0, 6).toUpperCase())}
-                                onBlur={() => { if (hex && hex.length === 6) onChange(`#${hex}`, { snapshot: true }); setHex(null) }}
+                                onBlur={() => { if (hex && hex.length === 6) onChange(`#${hex}`, { snapshot: true, elegido: true }); setHex(null) }}
                                 onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
                                 spellCheck={false}
                             />
@@ -328,7 +330,7 @@ export const ColoresIOS = ({ value, onChange, opacity = null, onOpacity = null, 
                     </button>
                 )}
                 {guardados.map((c) => (
-                    <button key={c} type="button" className={s.guardado} data-on={c === color || undefined} style={{ background: c }} aria-label={c} title={c} onClick={() => onChange(c, { snapshot: true })} />
+                    <button key={c} type="button" className={s.guardado} data-on={c === color || undefined} style={{ background: c }} aria-label={c} title={c} onClick={() => onChange(c, { snapshot: true, elegido: true })} />
                 ))}
                 <button type="button" className={s.agregar} onClick={guardar} aria-label={t('build_editor.colors_save')} title={t('build_editor.colors_save')}>
                     <Plus size={20} />
